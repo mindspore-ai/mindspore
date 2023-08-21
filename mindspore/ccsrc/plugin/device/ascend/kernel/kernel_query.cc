@@ -35,7 +35,7 @@
 #include "utils/trace_base.h"
 #include "kernel/common_utils.h"
 #include "kernel/oplib/oplib.h"
-#include "ops/ops_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -170,7 +170,7 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
   std::vector<AbstractBasePtr> input_args;
   std::for_each(input_list.begin(), input_list.end(),
                 [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
-  auto abs = CheckAndInfer(primitive, input_args);
+  auto abs = ops::CheckAndInfer(primitive, input_args);
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;

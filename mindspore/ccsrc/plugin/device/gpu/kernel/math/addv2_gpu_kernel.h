@@ -24,7 +24,7 @@
 #include <utility>
 #include <functional>
 #include <string>
-#include "ops/complex.h"
+#include "ops/ops_func_impl/complex.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/addv2_impl.cuh"

@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "mindspore/core/ops/grad/logit_grad.h"
+#include "ops/ops_func_impl/logit_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/logit_grad_helper.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"

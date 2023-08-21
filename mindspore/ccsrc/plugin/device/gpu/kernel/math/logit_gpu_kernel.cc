@@ -52,14 +52,14 @@ bool LogitGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 
 bool LogitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::make_shared<ops::Logit>(base_operator->GetPrim());
-  kernel_name_ = kernel_ptr->name();
+  //  auto kernel_ptr = std::make_shared<ops::Logit>(base_operator->GetPrim());
+  //  kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->eps = kernel_ptr->get_eps();
+  //  attr_ptr_->eps = kernel_ptr->get_eps();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;

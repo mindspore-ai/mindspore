@@ -39,7 +39,6 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/shape_utils.h"
-#include "op_def.h"
 
 namespace mindspore {
 namespace ops {
@@ -984,11 +983,10 @@ OP_DTYPE AbstractToDTYPE(const AbstractBasePtr &abs) {
     auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abs_seq);
     if (abs_seq->dynamic_len() || abs_seq->size() == 0) {
-      // TODO: return DT_ANY
+      // todo: return DT_ANY
       return DT_INT;
     }
 
-    auto elem0 = abs_seq->elements()[0];
     if (abs->isa<abstract::AbstractTensor>()) {
       return DT_ARRAY_TENSOR;
     }
@@ -1022,7 +1020,7 @@ AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const std::vector<A
   auto name = primitive->name();
   auto def = GetOpDef(name);
 
-  // TODO: raise Exception when all ops are register by yaml
+  // todo: raise Exception when all ops are register by yaml
   if (def == nullptr) {
     auto op_infer = mindspore::abstract::GetPrimitiveInferImpl(primitive);
 
@@ -1030,7 +1028,7 @@ AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const std::vector<A
       return op_infer.value().InferShapeAndType(nullptr, primitive, input_args);
     }
 
-    MS_LOG(EXCEPTION) << "For Primitive[" << name << "], the InferShapeAndType is not registed.";
+    MS_LOG(EXCEPTION) << "For Primitive[" << name << "], the InferShapeAndType is not registered.";
   }
 
   auto args_num = def->args_.size();
@@ -1041,9 +1039,9 @@ AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const std::vector<A
 
   for (size_t i = 0; i < input_args.size(); i++) {
     auto arg_type = AbstractToDTYPE(input_args[i]);
-    // TODO if DT_ANY, skip check
+    // todo if DT_ANY, skip check
     if (arg_type != def->args_[i].arg_dtype_) {
-      // TODO convert int to String
+      // todo convert int to String
       MS_EXCEPTION(TypeError) << "For Primitive[" << name << "], the type of " << i << "'th input argument must be "
                               << def->args_[i].arg_dtype_ << " but got " << arg_type << ".";
     }
