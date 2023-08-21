@@ -107,22 +107,33 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
   std::vector<IndiceType> y_batch_pointers_ptr_test(bapt);
   std::vector<IndiceType> x_dense_shape_ptr_test(elements[kTwo]);
 
-  cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size, stream);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size, stream_),
+                                     "For 'SparseTensorToCSRSparseMatrix', cudaMemsetAsync y_batch_pointers failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),
+                    cudaMemcpyDeviceToHost, stream_),
+    "For 'SparseTensorToCSRSparseMatrix', cudaMemcpyAsync x_dense_shape failed");
+  if (cudaStreamQuery(stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_),
+                                       "For 'SparseTensorToCSRSparseMatrix', cuda Stream Sync Failed.");
+  }
 
-  cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),
-                  cudaMemcpyDeviceToHost, stream);
-  cudaStreamSynchronize(stream);
   SparseTensorToCSRSparseMatrix<IndiceType>(x_indices_ptr, x_row_indices_ptr, y_col_indices_ptr, y_batch_pointers_ptr,
-                                            elements[kOne], elements[kTwo], stream, device_id_);
+                                            elements[kOne], elements[kTwo], stream_, device_id_);
   if (elements[kTwo] == kRankWithoutBatch) {
     row_num = x_dense_shape_ptr_test[kZero];
     cusparseXcoo2csr(handle_, x_row_indices_ptr, elements[kOne], row_num, y_row_pointers_ptr, CUSPARSE_INDEX_BASE_ZERO);
   } else {
     batch_size = x_dense_shape_ptr_test[kZero];
     row_num = x_dense_shape_ptr_test[kOne];
-    cudaMemcpyAsync(y_batch_pointers_ptr_test.data(), y_batch_pointers_ptr, (batch_size + 1) * sizeof(IndiceType),
-                    cudaMemcpyDeviceToHost, stream);
-    cudaStreamSynchronize(stream);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(y_batch_pointers_ptr_test.data(), y_batch_pointers_ptr, (batch_size + 1) * sizeof(IndiceType),
+                      cudaMemcpyDeviceToHost, stream_),
+      "For 'SparseTensorToCSRSparseMatrix', cudaMemcpyAsync y_batch_pointers failed");
+    if (cudaStreamQuery(stream_) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_),
+                                         "For 'SparseTensorToCSRSparseMatrix', cuda Stream Sync Failed.");
+    }
     for (int i = 0; i < batch_size; ++i) {
       y_batch_pointers_ptr_test[i + 1] = std::max(y_batch_pointers_ptr_test[i + 1], y_batch_pointers_ptr_test[i]);
       int *temp_row_indices_addr = x_row_indices_ptr + y_batch_pointers_ptr_test[i];
@@ -133,15 +144,22 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
                          CUSPARSE_INDEX_BASE_ZERO);
       }
     }
-    cudaMemcpyAsync(y_batch_pointers_ptr, y_batch_pointers_ptr_test.data(), (batch_size + 1) * sizeof(IndiceType),
-                    cudaMemcpyHostToDevice, stream);
-    cudaStreamSynchronize(stream);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(y_batch_pointers_ptr, y_batch_pointers_ptr_test.data(), (batch_size + 1) * sizeof(IndiceType),
+                      cudaMemcpyHostToDevice, stream_),
+      "For 'SparseTensorToCSRSparseMatrix', cudaMemcpyAsync y_batch_pointers_ptr failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_),
+                                       "For 'SparseTensorToCSRSparseMatrix', cuda Stream Sync Failed.")
   }
-  cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(DataType), cudaMemcpyDeviceToDevice,
-                  stream);
-  cudaStreamSynchronize(stream);
-  cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(DataType), cudaMemcpyDeviceToDevice, stream);
-  cudaStreamSynchronize(stream);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(DataType), cudaMemcpyDeviceToDevice,
+                    stream_),
+    "For 'SparseTensorToCSRSparseMatrix', cudaMemcpyAsync failed")
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(DataType), cudaMemcpyDeviceToDevice, stream_),
+    "For 'SparseTensorToCSRSparseMatrix', cudaMemcpyAsync failed")
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_),
+                                     "For 'SparseTensorToCSRSparseMatrix', cuda Stream Sync Failed.")
   return true;
 }
 

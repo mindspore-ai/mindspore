@@ -52,14 +52,19 @@ bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   MS_ERROR_IF_NULL(index);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_ERROR_IF_NULL(out_value);
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
+  MS_ERROR_IF_NULL(cuda_stream);
   int64_t index_host = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                                             reinterpret_cast<cudaStream_t>(stream)),
-                             "Get index to host failed");
+                             cudaMemcpyAsync(&index_host, index, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+                             "For 'TensorArrayRead', get index to host failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
-                             "Get handle to host failed");
+  CHECK_CUDA_RET_WITH_EXCEPT(
+    kernel_node_, cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "For 'TensorArrayRead', get handle to host failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
+  }
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle);
   MS_ERROR_IF_NULL(tensors_);
   if (!tensors_->CheckReadIndexLogical(index_host)) {
@@ -67,10 +72,9 @@ bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   }
   auto value_addr = tensors_->Read(index_host);
   MS_LOG(DEBUG) << "Read value index:" << index_host;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(out_value, value_addr->addr, value_size_, cudaMemcpyDeviceToDevice,
-                                             reinterpret_cast<cudaStream_t>(stream)),
-                             "Get value failed");
+  CHECK_CUDA_RET_WITH_EXCEPT(
+    kernel_node_, cudaMemcpyAsync(out_value, value_addr->addr, value_size_, cudaMemcpyDeviceToDevice, cuda_stream),
+    "Get value failed");
   return true;
 }
 }  // namespace kernel

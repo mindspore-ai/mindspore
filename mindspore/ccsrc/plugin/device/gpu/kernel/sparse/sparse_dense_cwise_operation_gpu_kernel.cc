@@ -165,11 +165,15 @@ bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<Addre
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x1_shape_host.data(), x1_shape, dimension_ * sizeof(int64_t), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy value variable failed.");
+    "For 'SparseDenseCwiseOperation', cudaMemcpy value variable failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x1_indices_host.data(), x1_indices, value_num_ * dimension_ * sizeof(int64_t),
                     cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy value variable failed.");
+    "For 'SparseDenseCwiseOperation', cudaMemcpy value variable failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                       "For 'SparseDenseCwiseOperation', cuda Stream Sync Failed.");
+  }
 
   for (int64_t i = 0; i < value_num_; i++) {
     for (int64_t j = 0; j < dimension_; j++) {

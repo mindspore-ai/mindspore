@@ -233,6 +233,10 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(sum_shape_ptr, dense_shape_ptr, dense_shape_size_ * indices_size_,
                                                      cudaMemcpyDeviceToDevice, cuda_stream_),
                                      "For SparseAdd, cudaMemcpyAsync failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
+                                       "For 'SparseAdd', cuda Stream Sync Failed.");
+  }
   return true;
 }
 

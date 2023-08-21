@@ -155,7 +155,11 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(host_pivots.data(), dev_piv, sizeof(int) * k_, cudaMemcpyDeviceToHost,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
-      "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+      "For 'Lu', cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+    if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                         "cuda Stream Sync Failed.");
+    }
     // cal pivots && permutation major by row.
     for (size_t i = 0; i < k_; ++i) {
       host_pivots[i] -= 1;
@@ -241,7 +245,11 @@ void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(host_pivots.data(), dev_batch_piv, sizeof(int) * batch_size_ * k_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+    "For 'Lu', cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "cuda Stream Sync Failed.");
+  }
   for (size_t i = 0; i < batch_size_; ++i) {
     for (size_t j = 0; j < k_; ++j) {
       host_permuted[i * k_ + j] = j;

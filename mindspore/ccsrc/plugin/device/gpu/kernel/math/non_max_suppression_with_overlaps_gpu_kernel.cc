@@ -164,7 +164,6 @@ bool NMSWithOverlapsFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   if (is_null_input_) {
     return true;
   }
-  stream_ptr_ = stream_ptr;
   T *overlaps = GetDeviceAddress<T>(inputs, kIndex0);
   T *scores = GetDeviceAddress<T>(inputs, kIndex1);
   int *max_output_size = GetDeviceAddress<int>(inputs, kIndex2);
@@ -180,7 +179,12 @@ bool NMSWithOverlapsFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&max_output_size_host, max_output_size, sizeof(int), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemcpy value variable failed.");
+    "For 'NonMaxSuppressionWithOverlaps', cudaMemcpyAsync value variable failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cuda Stream Sync Failed.");
+  }
+
   if (max_output_size_host < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_output_size must be greater than zero , but got "
                   << max_output_size << ".";

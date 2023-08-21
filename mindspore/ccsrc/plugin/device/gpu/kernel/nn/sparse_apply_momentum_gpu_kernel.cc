@@ -179,7 +179,11 @@ bool SparseApplyMomentumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(indices_host.data(), indices, sizeof(S) * global_indices_shape_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpy value variable failed.");
+    "For 'SparseApplyMomentum', cudaMemcpy value variable failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseApplyMomentum', cudaStreamSyncFailed");
+  }
   for (int i = 0; i < global_indices_shape_; i++) {
     if (indices_host[i] >= global_indices_shape_) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' is out of range.";

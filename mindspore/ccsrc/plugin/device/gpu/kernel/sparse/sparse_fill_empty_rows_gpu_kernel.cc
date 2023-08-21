@@ -204,6 +204,10 @@ bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     cudaMemcpyAsync(&real_output_size_, workspace_final_shape_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "SparseFillEmptyRows cudaMemcpyAsync failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseFillEmptyRows', cuda Stream Sync Failed.");
+  }
   return true;
 }
 

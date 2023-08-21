@@ -78,23 +78,35 @@ bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   auto k_ptr = GetDeviceAddress<IndexType>(inputs, kIndex1);
   auto padding_value_ptr = GetDeviceAddress<T>(inputs, kIndex2);
   auto diag_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto any = [](auto &&... args) -> bool { return ((args == nullptr) || ...); };
+  if (any(cuda_stream_, matrix_ptr, k_ptr, padding_value_ptr, diag_ptr)) {
+    return false;
+  }
 
   // Get 'k' and store as [lower_diag_index, upper_diag_index].
   IndexType k_stand;
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr, sizeof(IndexType), cudaMemcpyDeviceToHost),
-                                     "cudaMemcpy input 'k' to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&k_stand, k_ptr, sizeof(IndexType), cudaMemcpyDeviceToHost, cuda_stream_),
+    "For '" << kernel_name_ << "', cudaMemcpyAsync input 'k' to host failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+  }
   int64_t upper_diag_index, lower_diag_index = IntToLong(k_stand);
   if (k_size_ == 1) {
     upper_diag_index = lower_diag_index;
   } else {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr + 1, sizeof(IndexType), cudaMemcpyDeviceToHost),
-                                       "cudaMemcpy input 'k' to host failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&k_stand, k_ptr + 1, sizeof(IndexType), cudaMemcpyDeviceToHost, cuda_stream_),
+      "For '" << kernel_name_ << "', cudaMemcpyAsync input 'k' to host failed.");
+    if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+    }
     upper_diag_index = IntToLong(k_stand);
   }
 
   auto status =
     MatrixDiagPartV3(matrix_ptr, padding_value_ptr, diag_ptr, num_rows_, num_cols_, lower_diag_index, upper_diag_index,
-                     diag_size_, max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, stream_ptr_);
+                     diag_size_, max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, cuda_stream_);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

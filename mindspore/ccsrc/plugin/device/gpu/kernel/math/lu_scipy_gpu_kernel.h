@@ -111,7 +111,11 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
         cudaMemcpyAsync(host_pivots.data(), piv_output_addr, sizeof(int) * k_, cudaMemcpyDeviceToHost,
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots to host.");
+        "For 'LuScipy', cudaMemcpyAsync failed in LUGpuKernelMod::Launch copy pivots to host.");
+      if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
+        CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                           "For 'LuScipy', cuda Stream Sync Failed.");
+      }
 
       // cal pivots && permutation major by row.
       for (size_t i = 0; i < k_; ++i) {

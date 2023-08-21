@@ -63,7 +63,8 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                               cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSyncFailed");
     auto batch_mean = GetDeviceAddress<T>(outputs, kIndex0);
     auto batch_std = GetDeviceAddress<T>(outputs, kIndex1);
     auto running_mean = GetDeviceAddress<T>(outputs, kIndex2);

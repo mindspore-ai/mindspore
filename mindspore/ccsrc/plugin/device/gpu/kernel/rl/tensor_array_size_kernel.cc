@@ -46,7 +46,11 @@ bool TensorArraySizeKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                              cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
-                             "Get handle to host failed");
+                             "For 'TensorArraySize', get handle to host failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "For 'TensorArraySize', cudaStreamSyncFailed");
+  }
   auto tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle);
   MS_ERROR_IF_NULL(tensors_);
   int64_t valid_size = SizeToLong(tensors_->GetValidSize());

@@ -119,12 +119,20 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(h_shape.data(), shape_ptr, sizeof(IndexType) * h_shape.size(), cudaMemcpyDeviceToHost, cuda_stream),
-    "For SparseSplit, cudaMemcpyAsync failed.");
+    "For SparseSplit, cudaMemcpyAsync shape failed.");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
+                                       "For 'SparseSplit', cuda Stream Sync Failed.");
+  }
 
   h_block.resize(num_split + 1);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&h_split_dim, split_dim_ptr, sizeof(IndexType), cudaMemcpyDeviceToHost, cuda_stream),
-    "For SparseSplit, cudaMemcpyAsync failed.");
+    "For SparseSplit, cudaMemcpyAsync split_dim failed.");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
+                                       "For 'SparseSplit', cuda Stream Sync Failed.");
+  }
   h_block[0] = 0;
   int base_range = h_shape[h_split_dim] / num_split;
   size_t res = h_shape[h_split_dim] - base_range * num_split;

@@ -112,6 +112,10 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     cudaMemcpyAsync(host_k_vec.data(), k_device_address, k->size, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "MatrixSetDiagV3GpuKernelMod cuda copy device to host Fail");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'MatrixSetDiagV3', cuda Stream Sync Failed.");
+  }
 
   lower_ = host_k_vec.at(kIndex0);
   upper_ = host_k_vec.at(kIndex0);

@@ -66,8 +66,8 @@ bool RandpermGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     cudaMemcpyAsync(&n, input_device, sizeof(S), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
     kernel_name_ + " Failed to copy error code to host.");
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(),
-                                     kernel_name_ + " cudaDeviceSyncFailed in RandpermGpuKernelMod");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                     kernel_name_ + " cudaStreamSyncFailed in RandpermGpuKernelMod");
 
   // might not be a significant performance gain if this kernel is executed in cuda,
   // so we do the calculations on host and copy to device afterwards.

@@ -202,19 +202,27 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   size_t *x2_shape = GetDeviceAddress<size_t>(workspace, 0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(x2_shape, &x2_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
-                                     "cudaMemcpyAsync x2_shape failed");
+                                     "For 'SparseTensorDenseAdd', cudaMemcpyAsync x2_shape failed");
   constexpr int X1_SHAPE_INDICES = 2;
   std::vector<I> x1_shape(inputs[X1_SHAPE_INDICES]->size / sizeof(I));
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x1_shape.data(), x1_shape_addr, inputs[X1_SHAPE_INDICES]->size, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpyAsync x1_shape failed");
+    "For 'SparseTensorDenseAdd', cudaMemcpyAsync x1_shape failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseTensorDenseAdd', cuda Stream Sync Failed.");
+  }
 
   std::vector<I> x1_indices_host(inputs[0]->size / sizeof(I));
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x1_indices_host.data(), x1_indices_addr, inputs[0]->size, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpyAsync x1_indices failed");
+    "For 'SparseTensorDenseAdd', cudaMemcpyAsync x1_indices failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseTensorDenseAdd', cuda Stream Sync Failed.");
+  }
 
   if (x1_shape.size() != x2_shape_.size()) {
     MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', the input x1_shape size does not equal x2_shape size! "

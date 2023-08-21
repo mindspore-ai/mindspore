@@ -331,6 +331,10 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       cudaMemcpyAsync(&g_norm_hat, g_hat_norm_ptr, reduce_output_size_, cudaMemcpyDeviceToHost,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + kernel_name_ + " cudaMemcpyAsync g_hat_square_sum failed.");
+    if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                         "For '" << kernel_name_ << "', cuda Stream Sync Failed.");
+    }
 
     *trust_ratio = w_norm > 0 ? (g_norm_hat > 0 ? (w_norm / g_norm_hat) : 1) : 1;
     if (*trust_ratio < 0 || std::isnan(*trust_ratio)) {

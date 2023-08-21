@@ -78,7 +78,10 @@ bool CheckNumericsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(flag_host, flag_device, kNumber2 * sizeof(int32_t), cudaMemcpyDeviceToHost, stream),
-    "flag_host cudaMemcpy failed.");
+    "For 'checkNumerics', flag_host cudaMemcpyAsync failed.");
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cuda Stream Sync Failed.");
+  }
   if (flag_host[0] == 1 && flag_host[1] == 1) {
     MS_EXCEPTION(ValueError) << ": Tensor had Inf and NaN values [Op" << kernel_name_ << "].";
   } else if (flag_host[0] == 1 && flag_host[1] == 0) {

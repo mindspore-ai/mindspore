@@ -147,6 +147,10 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&x2_shape[0], dense_shape_ptr2, rank_ * sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "For SparseSparseOperators, cudaMemcpyAsync failed.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
+                                       "For 'SparseSparseOperators', cuda Stream Sync Failed.");
+  }
   for (int64_t n = 0; n < rank_; n++) {
     if (x1_shape[n] != x2_shape[n]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', operands' shapes do not match.";
@@ -166,6 +170,10 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, sum_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "For SparseSparseOperators, failed to cudaMemset.");
+  if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
+                                       "For 'SparseSparseOperators', cuda Stream Sync Failed.");
+  }
   return true;
 }
 

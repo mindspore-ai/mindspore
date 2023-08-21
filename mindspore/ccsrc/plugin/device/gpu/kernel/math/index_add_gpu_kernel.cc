@@ -160,7 +160,10 @@ bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&host_index_mismatch, device_flag, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
-    "cudaMemcpyAsync output failed");
+    "For 'indexAdd', cudaMemcpyAsync output failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed.");
+  }
   if (host_index_mismatch) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << GetShapes(inputs_)
                   << ".";

@@ -105,7 +105,10 @@ bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   }
   CHECK_CUDA_RET_WITH_EXCEPT(
     kernel_node_, cudaMemcpyAsync(&max_index_, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
-    "Copy max_index failed")
+    "For 'DynamicStitch', copy max_index failed");
+  if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For 'DynamicStitch', cudaStreamSyncFailed");
+  }
   return true;
 }
 }  // namespace kernel

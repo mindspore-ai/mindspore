@@ -125,15 +125,19 @@ bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   num_segments_host.resize(kNumber1);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(indices_host.data(), indices_ptr, idx_seg_elements_ * sizeof(S), cudaMemcpyDeviceToHost, stream),
-    "cudaMemcpy failed.");
+    "For '" << kernel_name_ << "', cudaMemcpy failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(segment_ids_host.data(), segment_ids_ptr,
                                                      idx_seg_elements_ * sizeof(S), cudaMemcpyDeviceToHost, stream),
-                                     "cudaMemcpy failed.");
+                                     "For '" << kernel_name_ << "', cudaMemcpy failed.");
   if (!flag_) {
     auto num_segments_ptr = GetDeviceAddress<S>(inputs, kIndex3);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(num_segments_host.data(), num_segments_ptr, sizeof(S), cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpy failed.");
+      "For '" << kernel_name_ << "', cudaMemcpy failed.");
+  }
+  if (cudaStreamQuery(stream) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
+                                       "For '" << kernel_name_ << "', cuda Stream Sync Failed.");
   }
   if (segment_ids_host[0] != 0 && flag_) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_

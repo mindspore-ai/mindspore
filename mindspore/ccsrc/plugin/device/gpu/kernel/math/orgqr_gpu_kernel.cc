@@ -157,7 +157,11 @@ void OrgqrGpuKernelMod::CheckResult(int *dev_info) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(info_gpu.data(), dev_info, sizeof(int) * batch_size_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "Copy device result failed");
+    "For 'Orgqr', Copy device result failed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "cuda Stream Sync Failed.");
+  }
   for (size_t i = 0; i < info_gpu.size(); ++i) {
     if (info_gpu[i] != 0) {
       MS_LOG(INFO) << "For '" << kernel_name_ << "', the compute result has wrong value. The " << -info_gpu[i]

@@ -148,7 +148,11 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
     int info_gpu = 0;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                       "Copy to device result failed");
+                                       "For 'Eign', copy to device result failed");
+    if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                         "For 'Eign', cuda Stream Sync Failed.");
+    }
     if (info_gpu != 0) {
       MS_LOG_EXCEPTION << kernel_name_ << " launch gpu kernel fail for dtype:" << dtype_;
     }

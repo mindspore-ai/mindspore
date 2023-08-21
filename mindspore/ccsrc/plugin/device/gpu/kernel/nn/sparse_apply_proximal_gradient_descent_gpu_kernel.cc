@@ -160,7 +160,11 @@ bool SparseApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vec
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(indices_host.data(), indices, sizeof(S) * global_indices_shape_, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpy value variable failed.");
+    "For 'SparseApplyProximalGradientDescent', cudaMemcpy value variable failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseApplyProximalGradientDescent', cudaStreamSyncFailed");
+  }
   for (int i = 0; i < global_indices_shape_; i++) {
     if (indices_host[i] >= global_indices_shape_) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' is out of range.";
@@ -169,8 +173,13 @@ bool SparseApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vec
   }
 
   std::vector<T> l1host(1);
-  cudaMemcpyAsync(l1host.data(), l1, sizeof(T) * 1, cudaMemcpyDeviceToHost,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(l1host.data(), l1, sizeof(T) * 1, cudaMemcpyDeviceToHost,
+                                                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                     "For 'SparseApplyProximalGradientDescent', cudaMemcpy value variable failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'SparseApplyProximalGradientDescent', cudaStreamSyncFailed");
+  }
 
   if (l1host[0] > 0) {
     auto status = CalSparseApplyProximalGradientDescent(

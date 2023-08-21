@@ -90,15 +90,14 @@ void CumulativeLogsumexpGpuKernelMod::Reshape() {
 template <typename T>
 bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+                                                   const std::vector<AddressPtr> &outputs) {
   if (is_null_input_) {
     return true;
   }
   auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
-  if (any(input_addr, output_addr, cuda_stream)) {
+  if (any(input_addr, output_addr, cuda_stream_)) {
     return false;
   }
   if (is_dynamic_shape_) {
@@ -107,20 +106,29 @@ bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     if (axis_addr->size == sizeof(int)) {
       int axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
+      if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+        CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+      }
       axis_ = axis_tmp;
     } else if (inputs.at(kIndex1)->size == sizeof(int64_t)) {
       int64_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
+      if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+        CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+      }
       axis_ = static_cast<int>(axis_tmp);
     } else if (inputs.at(kIndex1)->size == sizeof(int16_t)) {
       int16_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
+      if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
+        CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
+      }
       axis_ = static_cast<int>(axis_tmp);
     } else {
       MS_LOG(ERROR) << "The dtype of 'axis' should be int16, int32 or int64";
@@ -136,7 +144,7 @@ bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     Reshape();
   }
   auto status = CumulativeLogsumexp(input_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_,
-                                    stride2_, exclusive_, reverse_, device_id_, cuda_stream);
+                                    stride2_, exclusive_, reverse_, device_id_, cuda_stream_);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

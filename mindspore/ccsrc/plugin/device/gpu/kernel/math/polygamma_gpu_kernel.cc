@@ -84,8 +84,11 @@ bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     cudaMemcpyAsync(&a_val, a, sizeof(T1), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For '" << kernel_name_ << "', "
             << "cudaMemcpy input 'a' to host failed.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name_ << "', "
-                                                                      << "cudaDeviceSyncFailed");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For '" << kernel_name_ << "', "
+                                               << "cudaStreamSyncFailed");
+  }
   cudaError_t status = cudaErrorNotReady;
   if (a_val == static_cast<T1>(0)) {
     status = CalDigamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));

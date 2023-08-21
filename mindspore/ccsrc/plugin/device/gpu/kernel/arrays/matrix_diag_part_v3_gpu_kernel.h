@@ -44,7 +44,7 @@ class MatrixDiagPartV3GpuKernelMod : public NativeGpuKernelMod, public MatchKern
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -70,7 +70,7 @@ class MatrixDiagPartV3GpuKernelMod : public NativeGpuKernelMod, public MatchKern
   int64_t diag_size_{0};
   bool left_align_super_diag_;
   bool left_align_sub_diag_;
-  cudaStream_t stream_ptr_{nullptr};
+  cudaStream_t cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

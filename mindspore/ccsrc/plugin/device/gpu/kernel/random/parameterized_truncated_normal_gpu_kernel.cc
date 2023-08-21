@@ -138,7 +138,11 @@ bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<ke
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(stdevs_host.data(), stdevs, stdevs_elements_ * sizeof(T), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cudaMemcpy for 'stdevs' failed.");
+    "For 'PrarmeterizedTruncatedNormal', cudaMemcpy for 'stdevs' failed.");
+  if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For 'PrarmeterizedTruncatedNormal', cudaStreamSyncFailed");
+  }
   for (int64_t i = 0; i < stdevs_elements_; i++) {
     if (stdevs_host[i] <= zero) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'stdevs' should be greater than zero.";
