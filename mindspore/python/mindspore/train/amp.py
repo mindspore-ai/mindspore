@@ -451,6 +451,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
         network = nn.WithLossCell(network, loss_fn)
     return network
 
+
 def _is_grad_accumulation(mcell):
     if mcell.cls_name == "GradAccumulationCell":
         return True
@@ -458,6 +459,7 @@ def _is_grad_accumulation(mcell):
         if _is_grad_accumulation(cell):
             return True
     return False
+
 
 def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
     """
