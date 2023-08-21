@@ -19,7 +19,6 @@ from mindspore.ops._op_impl._custom_op.flash_attention.constants import DTYPE_SI
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP16
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP32
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import L0C
-from mindspore.ops._op_impl._custom_op.flash_attention.constants import L1
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import UB
 
 
@@ -321,27 +320,16 @@ class TikOpsUtils:
                 )
         return vec_rec_ub
 
-    def row_sum_cube_impl(self, matrix_l1_K1MK0_ed, rowsum_ub, m, k, precision_type):
+    def row_sum_cube_impl(self, matrix_l1_K1MK0_ed, right_all_one_matrix_l1, rowsum_ub, m, k, precision_type):
         """用cube实现矩阵行和：右乘一个shape=(n,1)全一矩阵
         :param matrix_l1_K1MK0_ed: input tensor with shape (K1, M, K0)
-        :param rowsum_ub: output tensor stores the row sum of input tensor.
+        :param right_all_one_matrix_l1: input tensor with shape (K, 16)
+        :param rowsum_ub: output tensor stores the row sum of input tensor
         :param m: actual tensor height
         :param k: actual tensor width
         :return: row sum of the output tensor
         """
         K1, M, K0 = matrix_l1_K1MK0_ed.shape
-        K = K1 * K0
-
-        # 构造全一右矩阵，由于cube无法处理shape=(n, 1)，所以shape=(n, 16)，全一矩阵不需分形
-        right_all_one_matrix_ub = self.tik_instance.Tensor(
-            FP16, (K, 16), name="right_all_one_matrix_ub", scope=UB
-        )
-        self.tik_instance.h_duplicate(right_all_one_matrix_ub, 1.0)
-        right_all_one_matrix_l1 = self.tik_instance.Tensor(
-            FP16, (K1 * K0, 16), name="right_all_one_matrix_l1", scope=L1
-        )
-        self.cont_data_mv_1_bust(dst=right_all_one_matrix_l1, src=right_all_one_matrix_ub, burst=K)
-
         # 调用matmul实现rowsum，结果shape=(m, 16)，取每行的第一个数
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             row_sum_ub_N1MN0 = self.matmul_compute(matrix_l1_K1MK0_ed, right_all_one_matrix_l1, m, k, 16,
@@ -352,6 +340,7 @@ class TikOpsUtils:
                     cur_row_sum = self.tik_instance.Scalar(FP32, init_value=row_sum_ub_MN_ed[idx, 0])
                     rowsum_ub[idx].set_as(cur_row_sum)
             else:
+                # row_sum_ub_MN_ed 先转置，然后取一行, 替换原来按行操作: lij_ub[i].set_as(row_sum_ub_MN_ed[i, 0])
                 row_sum_ub_trans = self.tik_instance.Tensor(FP16, (16, M), name="row_sum_ub_trans", scope=UB)
                 row_sum_ub_trans = self.transpose_matrix(row_sum_ub_MN_ed, row_sum_ub_trans, M, True)
                 self.cont_data_mv_1_bust(dst=rowsum_ub, src=row_sum_ub_trans, burst=M // 16)

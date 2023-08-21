@@ -151,12 +151,80 @@ class FlashAttention(metaclass=ABCMeta):
         """compute one core"""
         raise NotImplementedError
 
+    @abstractmethod
+    def prepare_global_ones(self):
+        """prepare global ones"""
+        raise NotImplementedError
+
     def get_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_idx):
         """get gm offset"""
         gm_offset = (batch_start + batch_idx) * h * w + block_idx * block_h * self.N0
         return gm_offset
 
-    def get_core_bath_info(self):
+    def get_cur_tr_block_num(self, tr_idx):
+        """get cur tr block_num"""
+        cur_prev_block_num = min(tr_idx, self.prev_block_num)
+        cur_next_block_num = min(self.next_block_num, self.Tc - tr_idx - 1)
+        block_num = cur_prev_block_num + 1 + cur_next_block_num
+        return block_num
+
+    def get_total_block_num(self):
+        """get total block num"""
+        block_num = 0
+        for b_idx in range(self.B):
+            for tr_idx in range(self.Tr):
+                block_num += self.get_cur_tr_block_num(tr_idx)
+        return block_num
+
+    def update_core_task_map(self,
+                             core_b_map,
+                             core_b_tr_map,
+                             core_idx,
+                             b_start,
+                             b_end,
+                             tr_start,
+                             tr_end):
+        """update core task map"""
+        core_b_map[core_idx][0] = min(core_b_map[core_idx][0], b_start)
+        if tr_end == 0:  # 跨head，但跨过的head不会被当前的core处理
+            core_b_map[core_idx][1] = max(core_b_map[core_idx][1], b_end - 1)
+        else:
+            core_b_map[core_idx][1] = max(core_b_map[core_idx][1], b_end)
+        for b_idx in range(b_start, b_end + 1):
+            if b_idx == b_end and tr_end == 0:  # 跨head，但跨过的head不会被当前的core处理
+                break
+            elif b_idx == b_start and b_idx == b_end:  # 没跨head
+                core_b_tr_map[core_idx][b_idx] = (tr_start, tr_end)
+            elif b_idx == b_start:  # 跨head，第一个head
+                core_b_tr_map[core_idx][b_idx] = (tr_start, self.Tr)
+            elif b_idx == b_end:  # 跨head，最后一个head
+                core_b_tr_map[core_idx][b_idx] = (0, tr_end)
+            else:  # 跨head，中间的head
+                core_b_tr_map[core_idx][b_idx] = (0, self.Tr)
+
+    def convert_py_dict_to_tik_tensor(self, core_b_map, core_b_tr_map):
+        """convert py dict to tik tensor"""
+        # python dict -> tik tensor
+        # [batch_start, batch_idx_end] -> [batch_start, batch_num]
+        # [tr_start, tr_idx_end] -> [tr_start, tr_idx_end)
+        core_idx_to_batch_info = self.tik_instance.Tensor(
+            "int32", (self.core_num, 2), name="core_idx_to_batch_info", scope=UB
+        )
+        core_idx_to_tr_info = self.tik_instance.Tensor(
+            "int32", (self.core_num, self.B, 2), name="core_idx_to_tr_info", scope=UB
+        )
+        for core_idx in core_b_map.keys():
+            batch_start, batch_end = core_b_map[core_idx]
+            core_idx_to_batch_info[core_idx, 0] = batch_start
+            core_idx_to_batch_info[core_idx, 1] = batch_end - batch_start + 1
+            for batch_idx in core_b_tr_map[core_idx].keys():
+                tr_start, tr_end = core_b_tr_map[core_idx][batch_idx]
+                core_idx_to_tr_info[core_idx, batch_idx, 0] = tr_start
+                core_idx_to_tr_info[core_idx, batch_idx, 1] = tr_end
+
+        return core_idx_to_batch_info, core_idx_to_tr_info
+
+    def get_core_task_info(self):
         """
         Get batch start and batch number of each NPU core.
         :return: Tensor([[core_1_batch_start, core_1_batch_num],...,[core_m_batch_start,
@@ -167,53 +235,38 @@ class FlashAttention(metaclass=ABCMeta):
         if self.core_num > self.B * self.Tr:
             self.core_num = self.B * self.Tr
 
-        task_idx_to_batch_tr_idx = dict()
-        for task_idx in range(self.B * self.Tr):
-            batch_idx = task_idx // self.Tr
-            tr_idx = task_idx % self.Tr
-            task_idx_to_batch_tr_idx[task_idx] = [batch_idx, tr_idx]
-
-        core_idx_to_batch_idx = defaultdict(lambda: [100000, -1])
-        core_idx_to_tr_idx = defaultdict(lambda: defaultdict(lambda: [100000, -1]))
-        task_start = 0
-        avg_task_num_per_core, remain_task = divmod(self.B * self.Tr, self.core_num)
-
+        total_blk_num = self.get_total_block_num()
+        b_start = 0
+        tr_start = 0
+        remain_blk_num = total_blk_num
+        core_b_map = defaultdict(lambda: [100000, -1])
+        core_b_tr_map = defaultdict(lambda: defaultdict(list))
         for core_idx in range(self.core_num):
-            cur_core_task_num = avg_task_num_per_core
-            if core_idx < remain_task:
-                cur_core_task_num += 1
-            task_end = task_start + cur_core_task_num
-            for task_idx in range(task_start, task_end):
-                try:
-                    batch_idx, tr_idx = task_idx_to_batch_tr_idx[task_idx]
-                except KeyError:
-                    raise ValueError("The argument 'task_idx' is not valid.")
-                batch_start_end_pair = core_idx_to_batch_idx[core_idx]
-                if batch_idx < batch_start_end_pair[0]:
-                    batch_start_end_pair[0] = batch_idx
-                if batch_idx > batch_start_end_pair[1]:
-                    batch_start_end_pair[1] = batch_idx
-                tr_start_end_pair = core_idx_to_tr_idx[core_idx][batch_idx]
-                if tr_idx < tr_start_end_pair[0]:
-                    tr_start_end_pair[0] = tr_idx
-                if tr_idx > tr_start_end_pair[1]:
-                    tr_start_end_pair[1] = tr_idx
-            task_start = task_end
-
-        core_idx_to_batch_info = self.tik_instance.Tensor(
-            "int32", (self.core_num, 2), name="core_idx_to_batch_info", scope=UB
-        )
-        core_idx_to_tr_info = self.tik_instance.Tensor(
-            "int32", (self.core_num, self.B, 2), name="core_idx_to_tr_info", scope=UB
-        )
-        for core_idx in core_idx_to_batch_idx:
-            batch_start, batch_end = core_idx_to_batch_idx[core_idx]
-            core_idx_to_batch_info[core_idx, 0] = batch_start
-            core_idx_to_batch_info[core_idx, 1] = batch_end - batch_start + 1
-            for batch_idx in core_idx_to_tr_idx[core_idx]:
-                tr_start, tr_end = core_idx_to_tr_idx[core_idx][batch_idx]
-                core_idx_to_tr_info[core_idx, batch_idx, 0] = tr_start
-                core_idx_to_tr_info[core_idx, batch_idx, 1] = tr_end + 1
+            cur_core_blk_num = 0
+            cur_each_core_blk_num = remain_blk_num // (self.core_num - core_idx)
+            cur_core_finished = False
+            b_end = b_start
+            tr_end = tr_start
+            while b_end < self.B:
+                while tr_end < self.Tr:
+                    cur_tr_blk_num = self.get_cur_tr_block_num(tr_end)
+                    if abs(cur_core_blk_num - cur_each_core_blk_num) <= \
+                            (cur_core_blk_num + cur_tr_blk_num - cur_each_core_blk_num):
+                        self.update_core_task_map(core_b_map, core_b_tr_map, core_idx, b_start, b_end, tr_start, tr_end)
+                        remain_blk_num -= cur_core_blk_num
+                        cur_core_finished = True
+                        break
+                    else:
+                        cur_core_blk_num += cur_tr_blk_num
+                        tr_end += 1
+                        if tr_end == self.Tr:
+                            tr_end = 0
+                            b_end += 1
+                if cur_core_finished:
+                    b_start = b_end
+                    tr_start = tr_end
+                    break
+        core_idx_to_batch_info, core_idx_to_tr_info = self.convert_py_dict_to_tik_tensor(core_b_map, core_b_tr_map)
         return core_idx_to_batch_info, core_idx_to_tr_info
 
     def get_attn_mask_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_h_idx, block_w, block_w_idx):
@@ -332,8 +385,8 @@ class FlashAttention(metaclass=ABCMeta):
     def compute_process(self):
         """The compute process of FlashAttention"""
         self.init()
-
-        core_idx_to_batch_info, core_idx_to_tr_info = self.get_core_bath_info()
+        self.prepare_global_ones()
+        core_idx_to_batch_info, core_idx_to_tr_info = self.get_core_task_info()
         with self.tik_instance.for_range(begint=0, endt=self.core_num, name="core_index",
                                          block_num=self.core_num) as core_idx:
             batch_start_s = self.tik_instance.Scalar("int32", name="batch_start_s")
