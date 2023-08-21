@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "random/utils.h"
 
 using namespace std;
 
@@ -37,6 +38,8 @@ const auto kRankOne = 1;
 const auto kRankTwo = 2;
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
+const uint32_t kCountsIndex = 2;
+const uint32_t kStatesIndex = 3;
 constexpr int64_t kParallelDataNums = 40 * 1024;
 constexpr int64_t kNumPerThread = 2048;
 using RNG_Engine = std::mt19937;
@@ -46,47 +49,27 @@ bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
 }  // namespace
 
 namespace aicpu {
-uint64_t GetSeed(const CpuKernelContext &ctx, uint64_t count, uint64_t state) {
-  uint64_t final_seed = 0;
-  auto attr_seed = ctx.GetAttr("seed");
-  auto attr_seed2 = ctx.GetAttr("seed2");
-  if (count != 0) {
-    final_seed = state;
-  } else if (attr_seed2 != nullptr && attr_seed2->GetInt() != 0) {
-    final_seed = static_cast<uint64_t>(attr_seed2->GetInt());
-  } else if (attr_seed != nullptr && attr_seed->GetInt() != 0) {
-    final_seed = static_cast<uint64_t>(attr_seed->GetInt());
-  } else {
-    std::random_device r;
-    final_seed = r();
-  }
-  return final_seed;
-}
-
 template <typename T_in, typename T_out>
-uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *input_count, Tensor *input_state, Tensor *output,
-                  const CpuKernelContext &ctx) {
+uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, const CpuKernelContext &ctx) {
   const auto &input_shape = input_0->GetTensorShape();
   const auto input_rank = input_shape->GetDims();
   int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
   int64_t num_classes = input_shape->GetDimSize(input_rank - 1);
   int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
-  // count the execution times of the op
-  uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
-  // seed of the op, passed between executions, which make op stateful
-  uint64_t state = *(reinterpret_cast<uint64_t *>(input_state->GetData()));
 
-  // setup random engine
+  // get random seed and setup generator
   RNG_Engine rng;
-  auto seed = GetSeed(ctx, count, state);
-  rng.seed(seed);
-  auto count_ptr = reinterpret_cast<uint64_t *>(input_count->GetData());
-  ++count_ptr[0];
-  if (count_ptr[0] == 0) {
-    ++count_ptr[0];
+  uint32_t kernel_ret = 0;
+  AttrValue *seed_ptr = ctx.GetAttr("seed");
+  AttrValue *seed2_ptr = ctx.GetAttr("seed2");
+  uint64_t seed = (seed_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed_ptr->GetInt());
+  uint64_t seed2 = (seed2_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed2_ptr->GetInt());
+  uint64_t rng_seed =
+    random::GetCpuKernelRandomStates(ctx, kCountsIndex, kStatesIndex, seed, seed2, "Multinomial", &kernel_ret);
+  if (kernel_ret != KERNEL_STATUS_OK) {
+    return KERNEL_STATUS_INNER_ERROR;
   }
-  auto state_ptr = reinterpret_cast<uint64_t *>(input_state->GetData());
-  state_ptr[0] = static_cast<uint64_t>(rng());
+  rng.seed(rng_seed);
 
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
   auto output_data = reinterpret_cast<T_out *>(output->GetData());
@@ -187,8 +170,6 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Multinomial check input and output number failed.");
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
-  Tensor *input_count = ctx.Input(kThirdInputIndex);
-  Tensor *input_state = ctx.Input(kFourthInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
 
   // check input datatype
@@ -243,8 +224,7 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   SetMap();
-  calls_[static_cast<int>(input0_datatype)][static_cast<int>(data_type)](input_0, input_1, input_count, input_state,
-                                                                         output, ctx);
+  calls_[static_cast<int>(input0_datatype)][static_cast<int>(data_type)](input_0, input_1, output, ctx);
   calls_.clear();
   return KERNEL_STATUS_OK;
 }

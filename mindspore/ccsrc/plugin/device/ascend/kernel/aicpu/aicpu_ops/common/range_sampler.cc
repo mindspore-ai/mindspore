@@ -27,7 +27,7 @@ RangeSampler::~RangeSampler() {}
 
 void RangeSampler::SampleBatch(bool unique, std::vector<int64_t> &batch) const {}
 
-void RangeSampler::SampleBatchGetExpectedCount(bool unique, int64_t seed, std::vector<int64_t> &batch,
+void RangeSampler::SampleBatchGetExpectedCount(bool unique, uint64_t seed, std::vector<int64_t> &batch,
                                                std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
                                                std::vector<float> &extras_expected_count) const {
   SampleBatchGetExpectedCountAvoid(unique, seed, batch, batch_expected_count, extras, extras_expected_count,
@@ -51,7 +51,7 @@ static const int32_t kint32max = static_cast<int32_t>(0x7FFFFFFF);
 
 }  // namespace
 
-void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, std::vector<int64_t> &batch,
+void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, std::vector<int64_t> &batch,
                                                     std::vector<float> &batch_expected_count,
                                                     std::vector<int64_t> extras,
                                                     std::vector<float> &extras_expected_count,
@@ -63,9 +63,7 @@ void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, s
     return;
   }
 
-  std::random_device rd;
-  int64_t seed_rng = (seed != 0) ? seed : rd();
-  rnd_.seed(static_cast<uint64_t>(seed_rng));
+  rng_.seed(seed);
   if (unique) {
     if (batch_size + avoided_values.size() > static_cast<size_t>(range_)) {
       AICPU_LOGE("the value should be less than range_: %d, but got %d", range_, batch_size + avoided_values.size());
@@ -120,7 +118,7 @@ UniformSampler::UniformSampler(int64_t range) : RangeSampler(range), inv_range_(
 
 int64_t UniformSampler::Sample() const {
   aicpu::distinct_uniform_int_distribution<> dis(0, range_ - 1);
-  return dis.exec(&rnd_);
+  return dis.exec(&rng_);
 }
 
 float UniformSampler::Probability(int64_t value) const { return inv_range_; }
@@ -130,7 +128,7 @@ LogUniformSampler::LogUniformSampler(int64_t range) : RangeSampler(range), log_r
 int64_t LogUniformSampler::Sample() const {
   std::uniform_real_distribution<float> uni_real(0.0, 1.0);
 
-  const int64_t value = static_cast<int64_t>(exp(uni_real(rnd_) * log_range_)) - 1;
+  const int64_t value = static_cast<int64_t>(exp(uni_real(rng_) * log_range_)) - 1;
   if (value < 0) {
     AICPU_LOGE("value: %d should be >= 0", value);
     return 0;

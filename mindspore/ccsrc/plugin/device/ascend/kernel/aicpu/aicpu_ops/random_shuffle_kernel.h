@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_OPS_AICPU_GATHER_GRAD_KERNELS_H_
-#define AICPU_OPS_AICPU_GATHER_GRAD_KERNELS_H_
+#ifndef AICPU_AICPU_OPS_RANDOM_SHUFFLE_KERNEL_H_
+#define AICPU_AICPU_OPS_RANDOM_SHUFFLE_KERNEL_H_
 
 #include <vector>
 #include <random>
@@ -23,7 +23,8 @@
 namespace aicpu {
 class RandomShuffleKernel : public KernelBase {
  public:
-  RandomShuffleKernel() : KernelBase("RandomShuffleKernel") {}
+  RandomShuffleKernel()
+      : KernelBase("RandomShuffleKernel"), block_num_(1), block_size_(1), data_size_(0), seed_(0), seed2_(0) {}
   ~RandomShuffleKernel() = default;
 
  protected:
@@ -36,10 +37,12 @@ class RandomShuffleKernel : public KernelBase {
   uint32_t ScalarShuffle();
   uint32_t TensorShuffle();
 
-  size_t block_num_{1};
-  size_t block_size_{1};
-  size_t data_size_{0};
-  std::default_random_engine generator_;
+  size_t block_num_;
+  size_t block_size_;
+  size_t data_size_;
+  uint64_t seed_;
+  uint64_t seed2_;
+  std::default_random_engine rng_;
 };
 }  // namespace aicpu
-#endif  // AICPU_OPS_AICPU_GATHER_GRAD_KERNELS_H_
+#endif  // AICPU_AICPU_OPS_RANDOM_SHUFFLE_KERNEL_H_

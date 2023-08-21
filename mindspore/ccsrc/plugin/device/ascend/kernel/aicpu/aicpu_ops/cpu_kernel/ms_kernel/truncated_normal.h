@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_TRUNCATEDNORMAL_H_
 #define AICPU_KERNELS_NORMALIZED_TRUNCATEDNORMAL_H_
 
+#include <random>
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
@@ -30,7 +31,10 @@ class TruncatedNormalCpuKernel : public CpuKernel {
  private:
   uint32_t DataAndTypeCheck(CpuKernelContext &ctx);
   template <typename T>
-  static uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint64_t seed_ = 0;
+  uint64_t seed2_ = 0;
+  std::default_random_engine rng_;
 };
 }  // namespace aicpu
-#endif
+#endif  // AICPU_KERNELS_NORMALIZED_TRUNCATEDNORMAL_H_

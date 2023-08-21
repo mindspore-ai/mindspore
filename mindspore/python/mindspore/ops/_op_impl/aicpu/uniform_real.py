@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 uniform_real_op_info = AiCPURegOp("UniformReal") \
     .fusion_type("OPAQUE") \
     .input(0, "shape", "required") \
-    .input(1, "seed", "required") \
-    .input(2, "seed2", "required") \
+    .input(1, "counts", "required") \
+    .input(2, "states", "required") \
     .output(0, "output", "required") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
-    .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.U64_Default, DataType.U64_Default, DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(uniform_real_op_info)

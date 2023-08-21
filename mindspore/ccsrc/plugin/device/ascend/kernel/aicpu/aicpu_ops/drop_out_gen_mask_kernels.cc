@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "drop_out_gen_mask_kernels.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/drop_out_gen_mask_kernels.h"
 #include <cfloat>
 #include <ctime>
-#include <random>
 #include <memory.h>
 
 #include "aicpu_sharder/aicpu_sharder.h"
@@ -29,8 +28,8 @@ namespace aicpu {
 namespace {
 std::random_device e;
 const size_t kIndexOutput = 4;
-const size_t kOffsetIndex2 = 2;
-const size_t kOffsetIndex3 = 3;
+const uint32_t kCountsIndex = 2;
+const uint32_t kStatesIndex = 3;
 const size_t kAlign = 127;
 }  // namespace
 
@@ -373,7 +372,14 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
 #else  // compiled on x86 arch
 
 uint32_t DropOutGenMaskKernel::DoCompute() {
-  std::default_random_engine te(time(0));
+  // get random generator seed
+  uint32_t kernel_ret = 0;
+  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_,
+                                                        "DropoutGenMask", &kernel_ret);
+  if (kernel_ret != kAicpuKernelStateSucess) {
+    return kAicpuKernelStateFailed;
+  }
+  rng_.seed(rng_seed);
   std::bernoulli_distribution b(keep_prob_);
   const uint8_t mask[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
   uint64_t byteCount = count_ >> 3;
@@ -381,7 +387,7 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
   for (uint64_t i = 0; i < byteCount; ++i) {
     out_[i] = 0x00;
     for (const auto &m : mask) {
-      if (b(te)) {
+      if (b(rng_)) {
         out_[i] = static_cast<uint8_t>(out_[i] | m);
       }
     }
@@ -393,23 +399,21 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
 #endif
 
 uint32_t DropOutGenMaskKernel::ParseKernelParam() {
-  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> nodedef_map = node_def_.attrs();
+  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
+  AICPU_LOGI("MyPrint::DropOutGenMaskKernel::ParseKernelParam");
   AICPU_LOGEVENT("InputNum=[%zu], OutputNum=[%zu], ioAddrNum=[%zu], seed exist: %d, seed2 exist: %d.",
-                 node_def_.inputs_size(), node_def_.outputs_size(), io_addrs_.size(), nodedef_map.contains("seed"),
-                 nodedef_map.contains("seed2"));
-
-  aicpuops::AttrValue seed0 = nodedef_map["seed"];
-  aicpuops::AttrValue seed1 = nodedef_map["seed2"];
-  seed0_ = static_cast<uint64_t>(seed0.i());
-  seed1_ = static_cast<uint64_t>(seed1.i());
-  if (seed0_ == 0 && seed1_ == 0) {
-    seed0_ = e();
-    seed1_ = e();
+                 node_def_.inputs_size(), node_def_.outputs_size(), io_addrs_.size(), attrs.contains("seed"),
+                 attrs.contains("seed2"));
+  seed_ = static_cast<uint64_t>(attrs["seed"].i());
+  seed2_ = static_cast<uint64_t>(attrs["seed2"].i());
+  if (seed_ == 0 && seed2_ == 0) {
+    seed_ = e();
+    seed2_ = e();
   }
-  g_key[0] = static_cast<uint64_t>(seed1_);
-  g_key[1] = static_cast<uint64_t>(seed0_);
-  g_offset[0] = *reinterpret_cast<uint64_t *>(io_addrs_[kOffsetIndex2]);
-  g_offset[1] = *reinterpret_cast<uint64_t *>(io_addrs_[kOffsetIndex3]);
+  g_key[0] = static_cast<uint64_t>(seed_);
+  g_key[1] = static_cast<uint64_t>(seed2_);
+  g_offset[0] = *reinterpret_cast<uint64_t *>(io_addrs_[kCountsIndex]);
+  g_offset[1] = *reinterpret_cast<uint64_t *>(io_addrs_[kStatesIndex]);
 
   uint64_t tmp_count = 1;
   aicpuops::Tensor shape_tensor = node_def_.inputs(0);

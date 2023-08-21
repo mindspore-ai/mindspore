@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "random/utils.h"
 
 #include <Eigen/Dense>
 #include <algorithm>
@@ -31,6 +32,8 @@ using namespace std;
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 5;
+const uint32_t kCountsIndex = 5;
+const uint32_t kStatesIndex = 6;
 const char *kParameterizedTruncatedNormal = "ParameterizedTruncatedNormal";
 using RNG_Engine = std::mt19937;
 static constexpr int kMaxIterations = 1000;
@@ -64,7 +67,7 @@ T GetBatchSizeCheckDims(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void Generate(int64_t size, T mean, T stddev, T minval, T maxval, T **output_ptr, RNG_Engine &rng) {
+void Generate(int64_t size, T mean, T stddev, T minval, T maxval, T **output_ptr, std::mt19937 &rng) {
   auto output = *output_ptr;
   std::normal_distribution<double> normal_dist(0, 1);
   std::uniform_real_distribution<double> unifrom_dist(0, 1);
@@ -216,6 +219,12 @@ void Generate(int64_t size, T mean, T stddev, T minval, T maxval, T **output_ptr
 template <typename T_shape, typename T_val>
 uint32_t BatchGenerate(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
+  Tensor *input_1 = ctx.Input(1);
+  Tensor *input_2 = ctx.Input(2);
+  Tensor *input_3 = ctx.Input(3);
+  Tensor *input_4 = ctx.Input(4);
+  Tensor *output = ctx.Output(0);
+
   auto output_shape = reinterpret_cast<T_shape *>(input_0->GetData());
   // check shape
   auto batch_size = output_shape[0];
@@ -224,36 +233,25 @@ uint32_t BatchGenerate(CpuKernelContext &ctx) {
     sample_size *= output_shape[i];
   }
 
-  Tensor *input_3 = ctx.Input(3);
-  Tensor *input_4 = ctx.Input(4);
-  Tensor *input_1 = ctx.Input(1);
-  Tensor *input_2 = ctx.Input(2);
-  Tensor *output = ctx.Output(0);
-
-  auto output_data = reinterpret_cast<T_val *>(output->GetData());
   auto means = reinterpret_cast<T_val *>(input_1->GetData());
   auto stdevs = reinterpret_cast<T_val *>(input_2->GetData());
   auto minvals = reinterpret_cast<T_val *>(input_3->GetData());
   auto maxvals = reinterpret_cast<T_val *>(input_4->GetData());
+  auto output_data = reinterpret_cast<T_val *>(output->GetData());
 
-  // setup seed
-  int64_t final_seed = 0;
-  auto attr_seed = ctx.GetAttr("seed");
-  if (attr_seed != nullptr) {
-    final_seed = attr_seed->GetInt();
+  // get random seed and setup generator
+  std::mt19937 rng;
+  uint32_t kernel_ret = 0;
+  AttrValue *seed_ptr = ctx.GetAttr("seed");
+  AttrValue *seed2_ptr = ctx.GetAttr("seed2");
+  uint64_t seed = (seed_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed_ptr->GetInt());
+  uint64_t seed2 = (seed2_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed2_ptr->GetInt());
+  uint64_t rng_seed = random::GetCpuKernelRandomStates(ctx, kCountsIndex, kStatesIndex, seed, seed2,
+                                                       "ParameterizedTruncatedNormal", &kernel_ret);
+  if (kernel_ret != KERNEL_STATUS_OK) {
+    return KERNEL_STATUS_INNER_ERROR;
   }
-  if (final_seed == 0) {
-    auto attr_seed2 = ctx.GetAttr("seed2");
-    if (attr_seed2 != nullptr) {
-      final_seed = attr_seed2->GetInt();
-    }
-  }
-
-  // setup random engine
-  std::random_device r;
-  RNG_Engine rng;
-  final_seed = final_seed ? final_seed : r();
-  rng.seed(final_seed);
+  rng.seed(rng_seed);
 
   vector<T_val *> params = {means, stdevs, minvals, maxvals};
 

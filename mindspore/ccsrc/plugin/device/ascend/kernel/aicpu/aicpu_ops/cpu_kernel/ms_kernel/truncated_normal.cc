@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #include <cmath>
 #include <ctime>
 #include <iostream>
-#include <random>
 
+#include "random/utils.h"
 #include "cpu_ops_kernel.h"
 #include "cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
@@ -30,6 +30,8 @@ const uint32_t kInputNum = 1;
 const uint32_t kOutputNum = 1;
 const uint32_t kInputDims = 1;
 const uint32_t kInputSizes = 2;
+const uint32_t kCountsIndex = 1;
+const uint32_t kStatesIndex = 2;
 const char *kTruncatedNormal = "TruncatedNormal";
 }  // namespace
 
@@ -38,14 +40,11 @@ template <typename T>
 uint32_t TruncatedNormalCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
-  auto output_nums = output->NumElements();
-  AttrValue *seed_ptr = ctx.GetAttr("seed");
-  auto seed_base1 = (seed_ptr == nullptr) ? 0 : (seed_ptr->GetInt());
-  AttrValue *seed2_ptr = ctx.GetAttr("seed2");
-  auto seed_base2 = (seed2_ptr == nullptr) ? 0 : (seed2_ptr->GetInt());
-  auto output_type = output->GetDataType();
   auto input_data_nums = input->NumElements();
   auto input_data = reinterpret_cast<T *>(input->GetData());
+  auto output_type = output->GetDataType();
+  auto output_nums = output->NumElements();
+
   std::vector<int64_t> out_put_dims;
   for (auto i = 0; i < input_data_nums; ++i) {
     if (*(input_data + i) <= 0) {
@@ -54,14 +53,21 @@ uint32_t TruncatedNormalCpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
     out_put_dims.push_back(input_data[i]);
   }
-  std::random_device rd;
-  size_t seedc = seed_base2 != 0 ? seed_base2 : (seed_base1 != 0 ? seed_base1 : rd());
-  std::default_random_engine final_seed(seedc);
+
+  // get random generator seed
+  uint32_t kernel_ret = 0;
+  uint64_t rng_seed =
+    random::GetCpuKernelRandomStates(ctx, kCountsIndex, kStatesIndex, seed_, seed2_, "TruncatedNormal", &kernel_ret);
+  if (kernel_ret != KERNEL_STATUS_OK) {
+    return KERNEL_STATUS_INNER_ERROR;
+  }
+  rng_.seed(rng_seed);
+
   if (output_type == DT_FLOAT16) {
     auto output_data = reinterpret_cast<Eigen::half *>(output->GetData());
     std::normal_distribution<float> dis(0, 1);
     for (int j = 0; j < output_nums;) {
-      auto data = dis(final_seed);
+      auto data = dis(rng_);
       if (data >= -2 && data <= 2) {
         *(output_data + j) = static_cast<Eigen::half>(data);
         ++j;
@@ -71,7 +77,7 @@ uint32_t TruncatedNormalCpuKernel::DoCompute(CpuKernelContext &ctx) {
     auto output_data = reinterpret_cast<float_t *>(output->GetData());
     std::normal_distribution<float> dis(0, 1);
     for (int j = 0; j < output_nums;) {
-      auto data = dis(final_seed);
+      auto data = dis(rng_);
       if (data >= -2 && data <= 2) {
         *(output_data + j) = data;
         ++j;
@@ -81,7 +87,7 @@ uint32_t TruncatedNormalCpuKernel::DoCompute(CpuKernelContext &ctx) {
     auto output_data = reinterpret_cast<double_t *>(output->GetData());
     std::normal_distribution<double> dis(0, 1);
     for (int j = 0; j < output_nums;) {
-      auto data = dis(final_seed);
+      auto data = dis(rng_);
       if (data >= -2 && data <= 2) {
         *(output_data + j) = data;
         ++j;
@@ -112,6 +118,13 @@ uint32_t TruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kTruncatedNormal);
   KERNEL_HANDLE_ERROR(DataAndTypeCheck(ctx), " TruncatedNormal input elements value  check failed.");
   auto input_datatype = ctx.Input(0)->GetDataType();
+
+  // get attrs
+  AttrValue *seed_ptr = ctx.GetAttr("seed");
+  AttrValue *seed2_ptr = ctx.GetAttr("seed2");
+  seed_ = (seed_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed_ptr->GetInt());
+  seed2_ = (seed2_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed2_ptr->GetInt());
+
   uint32_t ret;
   switch (input_datatype) {
     case DT_INT32:

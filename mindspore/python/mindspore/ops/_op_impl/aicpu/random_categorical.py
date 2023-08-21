@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,25 +21,45 @@ random_categorical_op_info = AiCPURegOp("RandomCategorical") \
     .input(0, "logits", "required") \
     .input(1, "num_sample", "required") \
     .input(2, "seed", "required") \
+    .input(3, "counts", "required") \
+    .input(4, "states", "required") \
     .output(0, "output", "required") \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I16_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.I32_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I64_Default, DataType.U64_Default,
+                  DataType.U64_Default, DataType.I64_Default) \
     .get_op_info()
 
 @op_info_register(random_categorical_op_info)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,9 @@ class SDBBExt2CpuKernel : public CpuKernel {
 
   static const int kResultTypeNum = 4;
   static const int kKeyNum = 2;
-  using ResultType = Array<uint32_t, kResultTypeNum>;
+  using ResultType = random::Array<uint32_t, kResultTypeNum>;
   using ResultElementType = uint32_t;
-  using Key = Array<uint32_t, kKeyNum>;
+  using Key = random::Array<uint32_t, kKeyNum>;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
@@ -75,15 +75,15 @@ class SDBBExt2CpuKernel : public CpuKernel {
   int max_attempts;
   bool use_image_if_no_bounding_boxes;
 
-  PhiloxRandom generator_;
+  random::PhiloxRandom generator_;
 
   float RandFloat();
   uint32_t Uniform(uint32_t n);
 
   uint64_t New64();
   void InitPhiloxRandom(int64_t seed, int64_t seed2);
-  ResultType unused_results_;
-  int used_result_index_ = PhiloxRandom::kResultElementCount;
+  random::PhiloxRandom::ResultType unused_results_;
+  int used_result_index_ = random::PhiloxRandom::kResultElementCount;
   ResultElementType GenerateSingle();
 
   // Image

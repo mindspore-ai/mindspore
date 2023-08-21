@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ void SDBBExt2CpuKernel::InitPhiloxRandom(int64_t seed, int64_t seed2) {
     seed = New64();
     seed2 = New64();
   }
-  generator_ = PhiloxRandom(seed, seed2);
+  generator_ = random::PhiloxRandom(seed, seed2);
 }
 
 float SDBBExt2CpuKernel::RandFloat() {
@@ -83,7 +83,7 @@ uint32_t SDBBExt2CpuKernel::Uniform(uint32_t n) {
 }
 
 SDBBExt2CpuKernel::ResultElementType SDBBExt2CpuKernel::GenerateSingle() {
-  if (used_result_index_ == PhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::PhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }

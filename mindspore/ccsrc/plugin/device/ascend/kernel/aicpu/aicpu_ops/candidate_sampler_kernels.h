@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_LOG_UNIFORM_CANDIDATE_SAMPLER_KERNELS_H
-#define AICPU_LOG_UNIFORM_CANDIDATE_SAMPLER_KERNELS_H
+#ifndef AICPU_AICPU_OPS_CANDIDATE_SAMPLER_KERNELS_H
+#define AICPU_AICPU_OPS_CANDIDATE_SAMPLER_KERNELS_H
 
+#include <random>
 #include <utility>
 #include "common/kernel_base.h"
 #include "common/kernel_errcode.h"
@@ -28,7 +29,15 @@
 namespace aicpu {
 class CandidateSamplerKernel : public KernelBase {
  public:
-  explicit CandidateSamplerKernel(const std::string &kernel_name) : KernelBase(kernel_name){};
+  explicit CandidateSamplerKernel(const std::string &kernel_name)
+      : KernelBase(kernel_name),
+        num_true_(0),
+        num_sampled_(0),
+        unique_(false),
+        range_max_(0),
+        seed_(0),
+        batch_size_(0),
+        kernel_name_(kernel_name){};
   ~CandidateSamplerKernel() = default;
 
  protected:
@@ -46,8 +55,9 @@ class CandidateSamplerKernel : public KernelBase {
   int64_t seed_;
   std::unique_ptr<RangeSampler> sampler_;
 
-  int batch_size_ = 0;
+  int batch_size_;
   std::vector<int64_t> x_shape_;
+  std::string kernel_name_;
 
   ::aicpuops::DataType x_dtype_ = ::aicpuops::DataType::MS_UNKNOWN;
   ::aicpuops::DataType true_expected_count_dtype_ = ::aicpuops::DataType::MS_UNKNOWN;
@@ -75,4 +85,4 @@ class UniformCandidateSamplerKernel : public CandidateSamplerKernel {
 };
 
 }  // namespace aicpu
-#endif  // AICPU_LOG_UNIFORM_CANDIDATE_SAMPLER_KERNELS_H
+#endif  // AICPU_AICPU_OPS_CANDIDATE_SAMPLER_KERNELS_H
