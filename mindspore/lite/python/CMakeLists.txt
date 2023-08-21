@@ -15,6 +15,7 @@ if(Python3_FOUND)
     include_directories(${Python3_NumPy_INCLUDE_DIRS})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../core/)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../ccsrc/plugin/device/cpu/kernel/)
 
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
       add_compile_definitions(MSLITE_ENABLE_CLOUD_INFERENCE)

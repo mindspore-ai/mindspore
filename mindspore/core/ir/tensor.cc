@@ -681,6 +681,7 @@ Tensor::Tensor(const Tensor &tensor)
       tensor_name_(tensor.tensor_name_),
       address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
+  set_device_info(tensor.device_info());
 }
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
@@ -707,6 +708,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       tensor_name_(tensor.tensor_name_),
       address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
+  set_device_info(tensor.device_info());
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {

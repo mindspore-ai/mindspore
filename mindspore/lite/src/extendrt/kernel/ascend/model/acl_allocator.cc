@@ -154,8 +154,14 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     }
     return kSuccess;
   }
+  aclrtContext curr_context;
+  auto ret = aclrtGetCurrentContext(&curr_context);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Get current runtime context failed.";
+    return kLiteError;
+  }
   int32_t can_access_peer;
-  auto ret = aclrtDeviceCanAccessPeer(&can_access_peer, src_device_id, dst_device_id);
+  ret = aclrtDeviceCanAccessPeer(&can_access_peer, src_device_id, dst_device_id);
   if (ret != ACL_ERROR_NONE || can_access_peer != 1) {
     MS_LOG(ERROR) << "ret: " << ret << ", can_access_peer: " << can_access_peer;
     return kLiteError;
@@ -190,6 +196,11 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
   }
   if (current_device_id != GetCurrentDeviceId()) {
     ResetDeviceId(current_device_id);
+  }
+  ret = aclrtSetCurrentContext(curr_context);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Set runtime context failed.";
+    return kLiteError;
   }
   return kSuccess;
 }

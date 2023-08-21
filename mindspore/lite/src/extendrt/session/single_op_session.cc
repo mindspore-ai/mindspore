@@ -345,6 +345,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
       kernel_args_.inputs[i]->SetHostData(std::make_shared<kernel::Address>(input.data_c(), input.Size()));
       kernel_args_.inputs[i]->SetData(nullptr);
     }
+    kernel_args_.inputs[i]->SetDeviceId(input.device_info().device_id_);
   }
   if (outputs->empty()) {
     std::transform(kernel_args_.outputs.begin(), kernel_args_.outputs.end(), std::back_inserter(*outputs),
@@ -373,6 +374,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
       kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(output.data_c(), output.Size()));
       kernel_args_.outputs[i]->SetData(nullptr);
     }
+    kernel_args_.outputs[i]->SetDeviceId(output.device_info().device_id_);
   }
   return kSuccess;
 }

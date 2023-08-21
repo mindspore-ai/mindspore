@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
 #include "include/api/types.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
+#include "pybind11/stl.h"
 
 namespace mindspore::lite {
 namespace py = pybind11;
@@ -33,7 +34,8 @@ std::shared_ptr<MSTensor> create_tensor(DataType data_type, const std::vector<in
                                         const std::string &device_type, int device_id);
 std::shared_ptr<MSTensor> create_tensor_by_tensor(const MSTensor &tensor, const std::string &device_type,
                                                   int device_id);
-
+std::shared_ptr<MSTensor> create_tensor_by_numpy(const py::array &input, const std::string &device_type,
+                                                 int32_t device_id);
 PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.doc() = "MindSpore Lite";
   ContextPyBind(m);
@@ -49,5 +51,6 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   TensorPyBind(m);
   m.def("create_tensor", &create_tensor);
   m.def("create_tensor_by_tensor", &create_tensor_by_tensor);
+  m.def("create_tensor_by_numpy", &create_tensor_by_numpy);
 }
 }  // namespace mindspore::lite

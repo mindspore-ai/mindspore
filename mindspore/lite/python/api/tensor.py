@@ -348,8 +348,8 @@ class Tensor:
                     raise TypeError(
                         f"user set dtype is not equal tensor dtype, user's dtype: {dtype}, "
                         f"tensor dtype is: {tensor_dtype}.")
-                self._tensor = _c_lite_wrapper.create_tensor_by_tensor(tensor._tensor, device_type, device_id)
-                self._tensor.set_data_from_numpy(tensor.get_data_to_numpy())
+                numpy_data = tensor.get_data_to_numpy()
+                self._tensor = _c_lite_wrapper.create_tensor_by_numpy(numpy_data, device_type, device_id)
             # use numpy to init tensor
             elif isinstance(tensor, numpy.ndarray):
                 numpy_shape = tensor.shape
@@ -365,9 +365,7 @@ class Tensor:
                     raise TypeError(
                         f"user set dtype is not equal numpy dtype, user dtype: {dtype}, "
                         f"numpy dtype is: {numpy_dtype}.")
-                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(ms_dtype), numpy_shape,
-                                                             device_type, device_id)
-                self.set_data_from_numpy(tensor)
+                self._tensor = _c_lite_wrapper.create_tensor_by_numpy(tensor, device_type, device_id)
             else:
                 raise TypeError(
                     f"tensor must be MindSpore Lite's Tensor._tensor or numpy ndarray, but got {type(tensor)}.")

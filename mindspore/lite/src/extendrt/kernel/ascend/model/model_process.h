@@ -49,7 +49,7 @@ struct AclTensorInfo {
 
 class ModelProcess {
  public:
-  explicit ModelProcess(const AclModelOptionsPtr &options) : options_(options) {}
+  explicit ModelProcess(const AclModelOptionsPtr &options) : options_(options), device_id_(options->device_id) {}
   ~ModelProcess();
 
   bool Load(const void *om_data, size_t om_data_size);
@@ -124,6 +124,7 @@ class ModelProcess {
   aclmdlIODims *dynamic_dims_ = nullptr;
   void *weight_ptr_ = nullptr;
   bool is_sharing_workspace_ = false;
+  int32_t device_id_ = 0;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
