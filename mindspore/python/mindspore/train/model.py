@@ -453,6 +453,9 @@ class Model:
         if self._backbone_is_train != is_train:
             network.set_train(is_train)
             self._backbone_is_train = is_train
+        if os.getenv('MS_GE_TRAIN') == '1':
+            network.set_train(True)
+            self._backbone_is_train = True
         return network
 
     def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
