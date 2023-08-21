@@ -73,7 +73,7 @@ add_custom_command(
   COMMAND
     python3 ${CMAKE_CURRENT_SOURCE_DIR}/../akg/gen_custom_op_files.py
     ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/config
-    ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/${VENDOR_NAME}
+    ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/${VENDOR_IMPL}
 )
 
 add_custom_command(
