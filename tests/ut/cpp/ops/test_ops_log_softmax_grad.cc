@@ -15,23 +15,23 @@
  */
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/logit_grad.h"
+#include "ops/ops_func_impl/log_softmax_grad.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(LogitGrad, MultiInputOpParams);
+OP_FUNC_IMPL_TEST_DECLARE(LogSoftmaxGrad, MultiInputOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(
-  LogitGrad,
+  LogSoftmaxGrad,
   testing::Values(
-    MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar<float>(-1.0)}},
+    MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar<int64_t>(-1)}},
     MultiInputOpParams{{{2, -1}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{2, 3}, {2, -1}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar(kValueAny)}},
-    MultiInputOpParams{{{2, -1}, {-1, -1}}, {kFloat32, kFloat32}, {{2, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
-    MultiInputOpParams{{{-1, -1}, {2, -1}}, {kFloat32, kFloat32}, {{-1, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
+    MultiInputOpParams{{{2, -1}, {-1, -1}}, {kFloat32, kFloat32}, {{-1, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
+    MultiInputOpParams{{{-1, -1}, {2, -1}}, {kFloat32, kFloat32}, {{2, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{-1, -1}, {-1, -1}}, {kFloat32, kFloat32}, {{-1, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{-2}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{2, 3}, {-2}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar(kValueAny)}},

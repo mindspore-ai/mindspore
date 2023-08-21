@@ -19,27 +19,21 @@
 namespace mindspore {
 namespace ops {
 BaseShapePtr LogitGradFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
+                                           const std::vector<AbstractBasePtr> &input_args) const {
   auto grad_shape = input_args[kIndex0]->GetShape();
   auto x_shape = input_args[kIndex1]->GetShape();
-  MS_EXCEPTION_IF_NULL(grad_shape);
-  MS_EXCEPTION_IF_NULL(x_shape);
   const auto grad_shape_vec = grad_shape->GetShapeVector();
   const auto x_shape_vec = x_shape->GetShapeVector();
   if (MS_UNLIKELY((IsDynamic(grad_shape_vec) && !IsDynamic(x_shape_vec)) ||
                   (IsDynamicRank(grad_shape_vec) && !IsDynamicRank(x_shape_vec)))) {
-    return x_shape;
+    return x_shape->Clone();
   }
-  return grad_shape;
+  return grad_shape->Clone();
 }
 
-TypePtr LogitGradFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto grad_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(grad_type);
-  return grad_type;
+TypePtr LogitGradFuncImpl::InferType(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[kIndex0]->GetType()->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

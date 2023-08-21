@@ -20,7 +20,6 @@
 #include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
-#include "mindspore/core/ops/grad/log_softmax_grad.h"
 
 namespace mindspore {
 namespace kernel {

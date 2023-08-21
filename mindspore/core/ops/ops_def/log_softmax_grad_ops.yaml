@@ -1,0 +1,13 @@
+#operator log_softmax_grad
+log_softmax_grad:
+    args:
+        x:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        axis:
+            dtype: int
+            init: -1
+    returns:
+        dx:
+            dtype: tensor

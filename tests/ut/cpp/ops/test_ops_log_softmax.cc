@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOG_MATRIX_DETERMINANT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOG_MATRIX_DETERMINANT_H_
-
-#include <vector>
-#include "ops/ops_func_impl/op_func_impl.h"
+#include <memory>
+#include "common/common_test.h"
+#include "ops/ops_func_impl/log_softmax.h"
+#include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API LogMatrixDeterminantFuncImpl : public OpFuncImpl {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
+OP_FUNC_IMPL_TEST_DECLARE(LogSoftmax, EltwiseOpParams);
+
+OP_FUNC_IMPL_TEST_CASES(
+  LogSoftmax,
+  testing::Values(
+    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {CreateScalar<int64_t>(-1)}},
+    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32, {CreateScalar(kValueAny)}},
+    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32, {CreateScalar(kValueAny)}},
+    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32, {CreateScalar(kValueAny)}}
+  ));
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LOG_MATRIX_DETERMINANT_H_

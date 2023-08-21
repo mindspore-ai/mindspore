@@ -1,0 +1,3 @@
+log_softmax_grad:
+    description: |
+        Computes gradient for the Log Softmax activation.

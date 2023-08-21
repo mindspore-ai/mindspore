@@ -15,17 +15,17 @@
  */
 
 #include "ops/ops_func_impl/log_matrix_determinant.h"
+
+#include <memory>
+
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+                                                      const std::vector<AbstractBasePtr> &input_args) const {
   const auto x_shape = input_args[kIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
   const auto x_shape_vec = x_shape->GetShapeVector();
   if (IsDynamicRank(x_shape_vec)) {
     auto dyn_shape = std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
@@ -40,8 +40,7 @@ BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primit
   auto x_col = x_shape_vec[x_rank - kIndex2];
   auto shape = std::make_shared<abstract::TensorShape>(ShapeVector(x_shape_vec.begin(), x_shape_vec.end() - kIndex2));
   auto output_shapes = std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{shape, shape});
-  if (x_row == abstract::TensorShape::kShapeDimAny ||
-      x_col == abstract::TensorShape::kShapeDimAny) {
+  if (x_row == abstract::TensorShape::kShapeDimAny || x_col == abstract::TensorShape::kShapeDimAny) {
     return output_shapes;
   }
   MS_CHECK_VALUE(x_row == x_col,
@@ -55,9 +54,7 @@ BaseShapePtr LogMatrixDeterminantFuncImpl::InferShape(const PrimitivePtr &primit
 
 TypePtr LogMatrixDeterminantFuncImpl::InferType(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
 }
 }  // namespace ops

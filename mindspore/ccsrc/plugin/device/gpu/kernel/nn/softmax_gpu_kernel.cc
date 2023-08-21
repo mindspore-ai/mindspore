@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/nn/softmax_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "mindspore/core/ops/softmax.h"
-#include "mindspore/core/ops/log_softmax.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,9 +55,10 @@ int SoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   std::vector<int> axis;
   if (kernel_name_ == "LogSoftmax") {
     is_log_softmax_ = true;
-    auto log_soft_max_ptr = std::dynamic_pointer_cast<ops::LogSoftmax>(base_operator);
-    auto log_soft_axis = LongToInt(log_soft_max_ptr->get_axis());
-    axis.push_back(log_soft_axis);
+    // Todo, dynamic shape
+    // auto log_soft_max_ptr = std::dynamic_pointer_cast<ops::LogSoftmax>(base_operator);
+    // auto log_soft_axis = LongToInt(log_soft_max_ptr->get_axis());
+    // axis.push_back(log_soft_axis);
   } else {
     is_log_softmax_ = false;
     auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(base_operator);

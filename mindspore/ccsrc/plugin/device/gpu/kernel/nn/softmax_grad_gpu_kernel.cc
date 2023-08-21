@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/softmax_grad_gpu_kernel.h"
-#include "mindspore/core/ops/grad/log_softmax_grad.h"
 #include "mindspore/core/ops/grad/softmax_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
@@ -56,9 +55,10 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   shape_size_ = input_shape.size();
   if (kernel_name_ == "LogSoftmaxGrad") {
     algo_ = CUDNN_SOFTMAX_LOG;
-    auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
-    auto axis = LongToInt(log_soft_max_grad_ptr->get_axis());
-    InitSizeByAxis(input_shape, axis);
+    // Todo, dynamic shape
+    // auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
+    // auto axis = LongToInt(log_soft_max_grad_ptr->get_axis());
+    // InitSizeByAxis(input_shape, axis);
   } else {
     algo_ = CUDNN_SOFTMAX_ACCURATE;
     std::vector<int> axis;

@@ -48,9 +48,10 @@ int LogSoftmaxGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  axis_ = kernel_ptr->get_axis();
+  // Todo, dynamic shape
+  // auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
+  // MS_EXCEPTION_IF_NULL(kernel_ptr);
+  // axis_ = kernel_ptr->get_axis();
   auto src_shape = inputs[0]->GetDeviceShapeAdaptively();
   if (axis_ >= SizeToLong(src_shape.size())) {
     axis_ = SizeToLong(src_shape.size()) - 1;

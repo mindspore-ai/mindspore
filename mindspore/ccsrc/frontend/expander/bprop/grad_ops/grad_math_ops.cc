@@ -828,7 +828,7 @@ REG_BPROP_BUILDER("Logit").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto eps = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dx = ib->Emit("LogitGrad", {dout, x, eps});
-  return {dx};
+  return {dx, ib->OutZeros(eps)};
 });
 
 DEF_PURE_SHAPE_CALC(g_cdist)

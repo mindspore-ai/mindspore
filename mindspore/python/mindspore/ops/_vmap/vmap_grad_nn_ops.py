@@ -699,23 +699,19 @@ def get_upsample_grad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.LogSoftmaxGrad)
 def get_log_softmax_vmap_rule(prim, axis_size):
     """VmapRule for 'LogSoftmaxGrad' operation."""
-    if isinstance(prim, str):
-        axis = -1
-    else:
-        axis = prim.axis
-
-    def vmap_rule(x_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, grad_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
         grad, _ = grad_bdim
+        axis, _ = axis_bdim
         x_ndim = F.rank(x) - 1
 
         batch_axis = axis + x_ndim if axis < 0 else axis
         batch_axis = batch_axis if batch_axis < x_dim else batch_axis + 1
 
-        dx = G.LogSoftmaxGrad(axis=batch_axis)(x, grad)
+        dx = F.log_softmax_grad(x, grad, batch_axis)
         return dx, x_dim
 
     return vmap_rule

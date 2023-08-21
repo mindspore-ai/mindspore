@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/log_softmax.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,8 +30,9 @@ bool LogSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::LogSoftmax>(base_operator->GetPrim());
-  axis_ori_ = LongToInt(kernel_ptr->get_axis());
+  // Todo, dynamic shape
+  // auto kernel_ptr = std::make_shared<ops::LogSoftmax>(base_operator->GetPrim());
+  // axis_ori_ = LongToInt(kernel_ptr->get_axis());
   return true;
 }
 
