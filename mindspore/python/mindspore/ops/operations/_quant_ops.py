@@ -212,7 +212,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min_value, max_value)
     """
     support_quant_bit = [4, 7, 8]
-    ascend_support_x_rank = [2, 4]
+    ascend_support_x_rank = [2, 3, 4]
 
     @prim_attr_register
     def __init__(self, ema=False, ema_decay=0.999, channel_axis=1):
@@ -226,11 +226,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
         self.ema_decay = validator.check_float_range(ema_decay, 0, 1, validator.INC_BOTH, 'ema_decay', self.name)
-        if self.is_ascend:
-            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, validator.INC_BOTH,
-                                                          'channel_axis', self.name)
-        else:
-            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(
             inputs=['x', 'min', 'max'], outputs=['min_up', 'max_up'])
 
