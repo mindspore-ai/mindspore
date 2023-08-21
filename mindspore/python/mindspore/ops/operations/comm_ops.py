@@ -1004,6 +1004,13 @@ class NeighborExchangeV2(Primitive):
         self.format = data_format
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_eliminate', True)
+        self.rank_size = get_group_size(_get_group(group))
+        for rank_id in send_rank_ids:
+            if rank_id != -1:
+                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int, "send_rank_id")
+        for rank_id in recv_rank_ids:
+            if rank_id != -1:
+                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int, "recv_rank_id")
 
     def __call__(self, tensor):
         raise NotImplementedError
