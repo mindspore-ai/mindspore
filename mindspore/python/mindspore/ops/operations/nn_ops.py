@@ -1218,54 +1218,6 @@ class InstanceNormV2(Primitive):
         validator.check_bool(is_training, "is_training", self.name)
 
 
-class BNTrainingReduce(Primitive):
-    """
-    The BNTrainingReduce interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("1.5", "ops.BatchNorm", False)
-    @prim_attr_register
-    def __init__(self, data_format="NCHW"):
-        """Initialize BNTrainingReduce."""
-        self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'data_format' is {self.format} and "
-                             f"the platform is {context.get_context('device_target')}.")
-        self.add_prim_attr('data_format', self.format)
-
-
-class BNTrainingUpdate(Primitive):
-    """
-    The BNTrainingUpdate interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("1.5", "ops.BatchNorm", False)
-    @prim_attr_register
-    def __init__(self, isRef=True, epsilon=1e-5, factor=0.1, data_format="NCHW"):
-        """Initialize BNTrainingUpdate."""
-        self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
-                                outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
-        validator.check_value_type("isRef", isRef, [bool], self.name)
-        validator.check_value_type("epsilon", epsilon, [float], self.name)
-        validator.check_value_type("factor", factor, [float], self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', 'BNTrainingUpdate')
-        self.factor = validator.check_float_range(factor, 0, 1, validator.INC_BOTH, 'factor', 'BNTrainingUpdate')
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'data_format' is {self.format} and "
-                             f"the platform is {context.get_context('device_target')}.")
-        self.add_prim_attr('data_format', self.format)
-
-
 class BatchNorm(PrimitiveWithInfer):
     r"""
     Batch Normalization for input data and updated parameters.
@@ -2023,56 +1975,6 @@ class MaxPoolV1(Primitive):
 
         self.add_prim_attr("kernel_size", kernel_size_adapted)
         self.add_prim_attr("strides", strides_adapted)
-
-
-class MaxPoolWithArgmax(Primitive):
-    r"""
-    :class:`mindspore.ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
-    use :class:`mindspore.ops.MaxPoolWithArgmaxV2` instead.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
-        >>> maxpool_arg_op = ops.MaxPoolWithArgmax(pad_mode="VALID", kernel_size=2, strides=1)
-        >>> output_tensor, argmax = maxpool_arg_op(x)
-        >>> print(output_tensor)
-        [[[[ 5.  6.  7.]
-           [ 9. 10. 11.]]
-          [[17. 18. 19.]
-           [21. 22. 23.]]
-          [[29. 30. 31.]
-           [33. 34. 35.]]]]
-    """
-
-    @deprecated("2.0", "ops.MaxPoolWithArgmaxV2", False)
-    @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
-        """Initialize MaxPoolWithArgmax."""
-        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
-        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
-        validator.check_value_type('strides', strides, [int, tuple], self.name)
-        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
-        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
-        self.add_prim_attr("pad_mode", self.pad_mode)
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
-                             f"but got the 'data_format' is {self.format} and "
-                             f"the platform is {context.get_context('device_target')}.")
-        self.kernel_size = _check_positive_int_or_tuple(
-            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
-        self.kernel_size = (1, self.kernel_size[-2], self.kernel_size[-1], 1)
-        self.add_prim_attr("kernel_size", self.kernel_size)
-
-        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, allow_four=False, ret_four=True)
-        self.strides = (1, self.strides[-2], self.strides[-1], 1)
-        self.add_prim_attr("strides", self.strides)
-
 
 class MaxPool3D(Primitive):
     r"""
@@ -3956,38 +3858,6 @@ class L2Normalize(Primitive):
         self.axis = axis
 
 
-class DropoutGenMask(Primitive):
-    """
-    The DropoutGenMask interface is deprecated, please use the :class:`mindspore.ops.Dropout` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("1.5", "ops.Dropout", False)
-    @prim_attr_register
-    def __init__(self, Seed0=0, Seed1=0):
-        """Initialize DropoutGenMask."""
-        self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
-        validator.check_value_type("Seed0", Seed0, [int], self.name)
-        validator.check_value_type("Seed1", Seed1, [int], self.name)
-        self.add_prim_attr("side_effect_hidden", True)
-
-
-class DropoutDoMask(Primitive):
-    """
-    The DropoutDoMask interface is deprecated, please use the :class:`mindspore.ops.Dropout` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("1.5", "ops.Dropout", False)
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-
 class ResizeBilinear(PrimitiveWithInfer):
     r"""
     This API is deprecated, please use the :class:`mindspore.ops.ResizeBilinearV2` instead.
@@ -4166,26 +4036,6 @@ class OneHot(Primitive):
         validator.check_value_type("axis", axis, [int], self.name)
 
 
-class Gelu(PrimitiveWithInfer):
-    """
-    Same as operator GeLU. Gelu will be deprecated in the future.
-    Please use GeLU instead.
-    """
-
-    @deprecated("1.1", "GeLU", True)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Gelu"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
-        return input_x
-
-
 class GeLU(Primitive):
     r"""
     Gaussian Error Linear Units activation function.
@@ -4230,26 +4080,6 @@ class GeLU(Primitive):
     def __init__(self):
         """Initialize GeLU"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-
-class FastGelu(PrimitiveWithInfer):
-    """
-    Same as operator FastGeLU. FastGelu will be deprecated in the future.
-    Please use FastGeLU instead.
-    """
-
-    @deprecated("1.1", "FastGeLU", True)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize FastGelu."""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
-        return input_x
 
 
 class FastGeLU(Primitive):

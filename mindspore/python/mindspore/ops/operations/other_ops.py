@@ -19,7 +19,6 @@ from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
-from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
@@ -736,27 +735,6 @@ class Pull(PrimitiveWithInfer):
 
     def infer_dtype(self, key_dtype, weight_dtype):
         return mstype.float32
-
-
-class identity(Primitive):
-    """
-    The :class:`mindspore.ops.identity` interface is deprecated, please use the :class:`mindspore.nn.Identity` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    # Side effect will propagated from the first argument to return value.
-    side_effect_propagate = 1
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize identity."""
-        self.add_prim_attr('side_effect_propagate', 1)
-
-    @deprecated('2.0', 'nn.Identity', False)
-    def __call__(self, x):
-        return x
 
 
 class PyInterpret(Primitive):

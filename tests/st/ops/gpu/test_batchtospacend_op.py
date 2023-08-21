@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops.operations.array_ops as ops
+import mindspore.ops.operations as ops
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
