@@ -60,7 +60,7 @@ class AscendDeviceResManager : public DeviceResManager {
                                        const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
 
   bool CreateStream(size_t *stream_id) const override;
-  void *GetStream(size_t stream_id) const override;
+
   bool DestroyStream(size_t stream_id) const override;
 
   bool SyncStream(size_t stream_id) const override;

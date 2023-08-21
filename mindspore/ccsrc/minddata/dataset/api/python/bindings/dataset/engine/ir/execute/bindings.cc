@@ -30,6 +30,12 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       return execute;
                     }))
                     .def("__call__",
+                         [](PyExecute &self, const std::shared_ptr<Tensor> &de_tensor) {
+                           std::shared_ptr<Tensor> de_output_tensor;
+                           THROW_IF_ERROR(self(de_tensor, &de_output_tensor));
+                           return de_output_tensor;
+                         })
+                    .def("__call__",
                          [](PyExecute &self, const std::vector<std::shared_ptr<Tensor>> &input_tensor_list) {
                            // Python API only supports cpu for eager mode
                            std::vector<std::shared_ptr<dataset::Tensor>> de_output_tensor_list;

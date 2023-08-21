@@ -35,16 +35,6 @@ class CpuMapJob : public MapJob {
 
   // A pure virtual run function to execute a cpu map job
   Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override;
-
-#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
-  // A pure virtual run function to execute a npu map job for Ascend910B DVPP
-  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out, device::DeviceContext *device_context,
-             const size_t &stream_id) override {
-    RETURN_STATUS_UNEXPECTED("The run operation is not implemneted in CPU platform.");
-  }
-#endif
-
-  MapTargetDevice Type() override { return MapTargetDevice::kCpu; }
 };
 
 }  // namespace dataset

@@ -16,14 +16,6 @@ set(DATASET_CORE_SRC_FILES
         ascend_resource.cc
         )
 
-if(DEFINED ASCEND_VERSION)
-    if(${ASCEND_VERSION} STREQUAL "910b")
-        set(DATASET_CORE_SRC_FILES
-            ${DATASET_CORE_SRC_FILES}
-            device_tensor_ascend910b.cc)
-    endif()
-endif()
-
 ms_protobuf_generate(EXAMPLE_SRCS EXAMPLE_HDRS example.proto)
 ms_protobuf_generate(FEATURE_SRCS FEATURE_HDRS feature.proto)
 add_library(core OBJECT ${DATASET_CORE_SRC_FILES} ${EXAMPLE_SRCS} ${FEATURE_SRCS})

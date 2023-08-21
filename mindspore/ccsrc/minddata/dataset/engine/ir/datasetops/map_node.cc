@@ -82,29 +82,6 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
       RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");
     }
   }
-
-#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
-  // whether mixing DVPP operators with CPU operators
-  bool dvpp_op_flag = false;
-  bool cpu_op_flag = false;
-  std::string op_names = "";
-  for (const auto &op : operations_) {
-    if (op->Type() == MapTargetDevice::kAscend910B) {
-      dvpp_op_flag = true;
-    } else {
-      cpu_op_flag = true;
-    }
-    op_names += op->Name() + ", ";
-  }
-
-  if (dvpp_op_flag == true && cpu_op_flag == true) {
-    MS_LOG(WARNING) << "The dvpp operator(s) and cpu operator(s) are used together which may lead to low efficiency. "
-                    << "The operations are: " << op_names
-                    << "you are advised to use just one or more dvpp operators in the same map operation "
-                    << "to achieve higher efficiency.";
-  }
-#endif
-
   auto map_op =
     std::make_shared<MapOp>(input_columns_, output_columns_, operations_, num_workers_, connector_que_size_);
 

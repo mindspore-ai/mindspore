@@ -174,10 +174,6 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
 bool AscendStreamMng::DestroyAllStreams() {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   for (const auto &stream : streams_) {
-    if (stream == nullptr) {
-      // stream had been released, so skip it
-      continue;
-    }
     const auto ret = aclrtDestroyStream(stream);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";

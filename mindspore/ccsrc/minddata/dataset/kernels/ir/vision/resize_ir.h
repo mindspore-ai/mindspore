@@ -34,8 +34,7 @@ constexpr char kResizeOperation[] = "Resize";
 
 class ResizeOperation : public TensorOperation {
  public:
-  ResizeOperation(const std::vector<int32_t> &size, InterpolationMode interpolation,
-                  const std::string &device_target = "CPU");
+  ResizeOperation(const std::vector<int32_t> &size, InterpolationMode interpolation);
 
   ~ResizeOperation() override;
 
@@ -49,12 +48,9 @@ class ResizeOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
-  MapTargetDevice Type() override;
-
  private:
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
-  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset
