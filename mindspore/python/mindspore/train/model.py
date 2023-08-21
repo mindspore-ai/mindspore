@@ -232,9 +232,12 @@ class Model:
         self.enable_recovery = False
         self._backbone_is_train = True
         self.need_load_ckpt = False
-        self._lite_predictor = None
+        self._lite_full_predictor = None
+        self._lite_incremental_predictor = None
         self._mindspore_lite = None
         self._lite_infer = True  # if backend lite infer fails, set False
+        self._mindspore_lite_model_group_id = Model.gen_model_groupid()
+
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -1479,7 +1482,25 @@ class Model:
 
         return eval_result
 
-    def _predict_lite(self, *predict_data):
+    global_mindspore_lite_model_group_id = 0
+    @staticmethod
+    def gen_model_groupid():
+        """
+        Generate output predictions for the input samples using backend 'lite'.
+
+        Args:
+            predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
+                The predict data, can be a single tensor,
+                a list of tensor, or a tuple of tensor.
+
+        Returns:
+            Tensor, array(s) of predictions.
+        """
+        mindspore_lite_model_group_id = Model.global_mindspore_lite_model_group_id
+        Model.global_mindspore_lite_model_group_id = Model.global_mindspore_lite_model_group_id + 1
+        return mindspore_lite_model_group_id
+
+    def _predict_lite(self, *predict_data, config=None):
         """
         Generate output predictions for the input samples using backend 'lite'.
 
@@ -1503,32 +1524,66 @@ class Model:
                 device_id = context.get_context('device_id')
                 if device_id and isinstance(device_id, int):
                     lite_context_input.gpu.device_id = device_id
+                if context.get_auto_parallel_context("parallel_mode") == context.ParallelMode.SEMI_AUTO_PARALLEL:
+                    from mindspore.communication import init, get_rank
+                    init()
+                    lite_context_input.gpu.rank_id = get_rank()
             elif device_target == 'ascend':
                 device_id = context.get_context('device_id')
                 if device_id and isinstance(device_id, int):
                     lite_context_input.ascend.device_id = device_id
+                if context.get_auto_parallel_context("parallel_mode") == context.ParallelMode.SEMI_AUTO_PARALLEL:
+                    from mindspore.communication import init, get_rank
+                    init()
+                    lite_context_input.ascend.rank_id = get_rank()
+                    lite_context_input.ascend.provider = "ge"
             else:
                 raise RuntimeError(f"For predict lite, device target should be in ['gpu', 'cpu', 'ascend']"
                                    f" but got {device_target}")
-
             return lite_context_input
 
         if not self._mindspore_lite:
             self._mindspore_lite = importlib.import_module('mindspore_lite')
 
-        check_input_data(*predict_data, data_class=Tensor)
-        if not self._lite_predictor:
-            lite_context = _get_lite_context(self._mindspore_lite.Context())
-            self._lite_predictor = \
-                self._mindspore_lite.lite_infer.LiteInfer(self, *predict_data, context=lite_context)
+        use_past = False    # default execute full model inference
+        model_group_id = None
+        if self._predict_network.get_flags().__contains__("is_first_iteration"):
+            is_first_iteration = self._predict_network.get_flags()['is_first_iteration']
+            if isinstance(is_first_iteration, bool):
+                use_past = not is_first_iteration
+                model_group_id = self._mindspore_lite_model_group_id
 
-        inputs = self._lite_predictor.get_inputs()
-        if len(predict_data) != len(inputs):
-            raise RuntimeError(f"For 'Model.predict', numbers of predict_data {len(predict_data)} "
-                               f"is not equal to numbers of net input {len(inputs)}")
-        for i, single_data in enumerate(predict_data):
-            inputs[i].set_data_from_numpy(single_data.asnumpy())
-        outputs: list = self._lite_predictor.predict(inputs)
+        check_input_data(*predict_data, data_class=Tensor)
+        if use_past:
+            # Execute incremental model inference
+            if not self._lite_incremental_predictor:
+                lite_context = _get_lite_context(self._mindspore_lite.Context())
+                self._lite_incremental_predictor = \
+                    self._mindspore_lite.lite_infer.LiteInfer(self, *predict_data, context=lite_context,
+                                                              model_group_id=model_group_id, config=config)
+
+            inputs = self._lite_incremental_predictor.get_inputs()
+            if len(predict_data) != len(inputs):
+                raise RuntimeError(f"For 'Model.predict', numbers of predict_data {len(predict_data)} "
+                                   f"is not equal to numbers of net input {len(inputs)}")
+            for i, single_data in enumerate(predict_data):
+                inputs[i].set_data_from_numpy(single_data.asnumpy())
+            outputs: list = self._lite_incremental_predictor.predict(inputs)
+        else:
+            # Execute full model inference
+            if not self._lite_full_predictor:
+                lite_context = _get_lite_context(self._mindspore_lite.Context())
+                self._lite_full_predictor = \
+                    self._mindspore_lite.lite_infer.LiteInfer(self, *predict_data, context=lite_context,
+                                                              model_group_id=model_group_id, config=config)
+
+            inputs = self._lite_full_predictor.get_inputs()
+            if len(predict_data) != len(inputs):
+                raise RuntimeError(f"For 'Model.predict', numbers of predict_data {len(predict_data)} "
+                                   f"is not equal to numbers of net input {len(inputs)}")
+            for i, single_data in enumerate(predict_data):
+                inputs[i].set_data_from_numpy(single_data.asnumpy())
+            outputs: list = self._lite_full_predictor.predict(inputs)
         if not outputs:
             return Tensor(outputs)
         if len(outputs) == 1:
@@ -1536,7 +1591,7 @@ class Model:
         outputs = [Tensor(single_output.get_data_to_numpy()) for single_output in outputs]
         return tuple(outputs)
 
-    def predict(self, *predict_data, backend=None):
+    def predict(self, *predict_data, backend=None, config=None):
         """
         Generate output predictions for the input samples.
 
@@ -1546,6 +1601,17 @@ class Model:
                 a list of tensor, or a tuple of tensor.
             backend (str): Select predict backend, this parameter is an experimental feature
                 and is mainly used for MindSpore Lite cloud-side inference. Default: ``False`` .
+            config (dict, optional): Enabled when the backend is 'lite'. config includes two parts,
+                config_path ('configPath', str) and config_item (str, dict). When config_item is set,
+                its priority is higher than config_path. Set rank table file for inference. The content
+                of the configuration file is as follows:
+                .. code-block::
+                    [ascend_context]
+                    rank_table_file=[path_a](storage initial path of the rank table file)
+                When set
+                .. code-block::
+                    config_dict = {"ascend_context" : {"rank_table_file" : "path_b"}}
+                The path_b from the config_dict will be used to compile the model.
 
         Returns:
             Tensor, array(s) of predictions.
@@ -1567,7 +1633,7 @@ class Model:
         if backend == "lite" and self._lite_infer:
             # pylint: disable=broad-except
             try:
-                return self._predict_lite(*predict_data)
+                return self._predict_lite(*predict_data, config=config)
             except RuntimeError:
                 self._lite_infer = False
                 logger.warning("Lite inference failed, fallback to original inference!")
