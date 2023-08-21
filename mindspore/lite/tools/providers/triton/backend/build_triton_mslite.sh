@@ -22,7 +22,7 @@ function Run_Build() {
   fi
 
   # compile triton mslite backend
-  cd ${open_source_ms_path}/mindspore/lite/tools/providers/triton/backend
+  cd ${open_source_ms_path}/mindspore/lite/tools/providers/triton/backend/
   rm -rf build; mkdir build; cd build;
   cmake -DCMAKE_INSTALL_PREFIX:PATH=../install -DTRITON_RAPID_JSON_PATH:PATH=./third_party/RapidJSON/include .. || exit 1
   make install -j ${thread_num} || exit 1
@@ -30,9 +30,9 @@ function Run_Build() {
   echo "build for triton backend success"
 
   # cp to release package folder
-  mkdir -p ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/backend/ || exit 1
+  mkdir -p ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/ || exit 1
   cp -r ${open_source_ms_path}/mindspore/lite/tools/providers/triton/backend/install/backends/mslite \
-      ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/backend/ || exit 1
+      ${open_source_ms_path}/output/mindspore-lite-${version}-linux-${platform}/tools/providers/triton/ || exit 1
   echo "cp triton backend so to release pkg success"
 
   cd ${open_source_ms_path}/output
