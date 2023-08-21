@@ -79,6 +79,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
   bool IsDumpEnabled();
   void PyNativeModeCheck();
+  void CheckGEBackend();
   bool IsHCCLKernelInput(const std::string &kernel_name) const;
 
   void ClearGraph() { graphs_.clear(); }

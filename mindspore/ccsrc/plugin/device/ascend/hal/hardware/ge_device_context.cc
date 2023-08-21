@@ -37,12 +37,13 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "toolchain/adx_datadump_server.h"
+#include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 }  // namespace
@@ -82,6 +83,7 @@ void GeDeviceContext::Initialize() {
   (void)rtGetIsHeterogenous(&is_heterogenous);
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
   InitGe(ms_context);
+  InitDump();
   if (ms_context->EnableAoeOnline()) {
     transform::InitializeAoeUtil();
   }
@@ -97,6 +99,7 @@ void GeDeviceContext::Destroy() {
   if (ms_context->EnableAoeOnline()) {
     transform::DestroyAoeUtil();
   }
+  FinalizeDump();
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
@@ -224,27 +227,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
     (*ge_options)["ge.exec.formatMode"] = "1";
   }
-  // set up dump options
-  auto dump_env = common::GetEnv(kMindsporeDumpConfig);
-  if (!dump_env.empty()) {
-    auto &dump_parser = DumpJsonParser::GetInstance();
-    dump_parser.Parse();
-    (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
-    (*ge_options)["ge.exec.dumpPath"] = dump_parser.path();
-    // Parse() make sure that input_output is less than 3.
-    (*ge_options)["ge.exec.dumpMode"] = kGeDumpMode[dump_parser.input_output()];
-    // DumpStep is set to "all" by default
-    if (dump_parser.iteration_string() != "all") {
-      (*ge_options)["ge.exec.dumpStep"] = dump_parser.iteration_string();
-    }
-    if (dump_parser.dump_mode() == 1) {
-      (*ge_options)["ge.exec.dumpLayer"] = dump_parser.dump_layer();
-      MS_LOG(INFO) << "Set dumplayer to: " << (*ge_options)["ge.exec.dumpLayer"];
-    }
-    MS_LOG(INFO) << "The enable dump state is " << (*ge_options)["ge.exec.enableDump"] << ", save dump path is "
-                 << (*ge_options)["ge.exec.dumpPath"] << ", dump mode is " << kGeDumpMode[dump_parser.input_output()]
-                 << ", dump step is " << dump_parser.iteration_string() << ".";
-  }
+
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
@@ -263,6 +246,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(ms_context_ptr, ge_options);
+  SetDumpOptions(ge_options);
 
   auto env_job_id = common::GetEnv("JOB_ID");
   if (!env_job_id.empty()) {
@@ -323,6 +307,57 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   // enable deterministic
   (*ge_options)[::ge::DETERMINISTIC] = ms_context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? "1" : "0";
   UseOpDebugConfig(ge_options);
+}
+
+void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_options) const {
+  MS_EXCEPTION_IF_NULL(ge_options);
+  // set up dump options
+  auto &dump_parser = DumpJsonParser::GetInstance();
+  dump_parser.Parse();
+  if (dump_parser.async_dump_enabled()) {
+    (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
+    auto dump_path = FileUtils::CreateNotExistDirs(dump_parser.path());
+    if (!dump_path.has_value()) {
+      MS_LOG(EXCEPTION) << "Invalid dump path: " << dump_parser.path();
+    }
+    (*ge_options)["ge.exec.dumpPath"] = dump_path.value();
+    // Parse() make sure that input_output is less than 3.
+    (*ge_options)["ge.exec.dumpMode"] = kGeDumpMode[dump_parser.input_output()];
+    // DumpStep is set to "all" by default
+    if (dump_parser.iteration_string() != "all") {
+      (*ge_options)["ge.exec.dumpStep"] = dump_parser.iteration_string();
+    }
+    if (dump_parser.dump_mode() == 1) {
+      (*ge_options)["ge.exec.dumpLayer"] = dump_parser.dump_layer();
+      MS_LOG(INFO) << "Set dumplayer to: " << (*ge_options)["ge.exec.dumpLayer"];
+    }
+    if (dump_parser.IsTensorDump()) {
+      (*ge_options)["ge.exec.dumpData"] = "tensor";
+    } else {
+      (*ge_options)["ge.exec.dumpData"] = "stats";
+    }
+    if (dump_parser.op_debug_mode() > 0) {
+      (*ge_options)["ge.exec.enableDump"] = "0";
+      (*ge_options)["ge.exec.enableDumpDebug"] = "1";
+      switch (dump_parser.op_debug_mode()) {
+        case 1:
+          (*ge_options)["ge.exec.dumpDebugMode"] = "aicore_overflow";
+          break;
+        case 2:
+          (*ge_options)["ge.exec.dumpDebugMode"] = "atomic_overflow";
+          break;
+        case 3:
+          (*ge_options)["ge.exec.dumpDebugMode"] = "all";
+          break;
+        default:
+          break;
+      }
+    }
+
+    MS_LOG(INFO) << "The enable dump state is " << (*ge_options)["ge.exec.enableDump"] << ", save dump path is "
+                 << (*ge_options)["ge.exec.dumpPath"] << ", dump mode is " << kGeDumpMode[dump_parser.input_output()]
+                 << ", dump step is " << dump_parser.iteration_string() << ".";
+  }
 }
 
 void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
@@ -402,6 +437,34 @@ bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &inst_context)
                  << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   }
   return true;
+}
+
+void GeDeviceContext::InitDump() const {
+  auto &dump_parser = DumpJsonParser::GetInstance();
+  dump_parser.Parse();
+  if (!dump_parser.async_dump_enabled()) {
+    return;
+  }
+  if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
+    (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
+  }
+  if (AdxDataDumpServerInit() != 0) {
+    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
+  }
+}
+
+void GeDeviceContext::FinalizeDump() const {
+  auto &dump_parser = DumpJsonParser::GetInstance();
+  dump_parser.Parse();
+  if (!dump_parser.async_dump_enabled()) {
+    return;
+  }
+  if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
+    mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
+  }
+  if (AdxDataDumpServerUnInit() != 0) {
+    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
+  }
 }
 
 DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
