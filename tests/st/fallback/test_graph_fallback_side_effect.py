@@ -14,6 +14,8 @@
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
 
+import os
+import shutil
 import pytest
 import numpy as np
 import mindspore as ms
@@ -21,6 +23,8 @@ from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore import jit
 import mindspore.amp as amp
+import mindspore.nn as nn
+from mindspore.common.initializer import One, Normal
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -364,7 +368,6 @@ def test_fallback_dtype_is_cond():
     assert out == 0
 
 
-@pytest.mark.skip("the PyExecute is in the other graph and the parameter not get user data")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -399,3 +402,119 @@ def test_if_after_for_in_if_numpy():
     net = PyExecuteNet(UserDefinedNet2())
     output = net()
     assert (output.asnumpy() == [3, 4]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_save_load():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with side effect operate from third-party module.
+    Expectation: No exception.
+    """
+    class LinearNet(nn.Cell):
+        def __init__(self, path_file):
+            super(LinearNet, self).__init__()
+            self.path_file = path_file
+            self.dense = nn.Dense(10, 1)
+
+        def construct(self, x):
+            x = self.dense(x)
+            np.save(self.path_file, x.asnumpy())
+            np.load('/tmp/test_fallback_save_load/tensor1.npy')
+            return x
+
+    file_name = 'tensor1'
+    path = f"/tmp/test_fallback_save_load/"
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.makedirs(path)
+    model = LinearNet(os.path.join(path, file_name))
+    input_x = Tensor(shape=(1, 10), dtype=ms.float32, init=One())
+    output = model(input_x)
+    print("output:", output)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_save_load_with_annotation():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with side effect operate from third-party module.
+    Expectation: No exception.
+    """
+    class LinearNet3(nn.Cell):
+        def __init__(self, path_file):
+            super(LinearNet3, self).__init__()
+            self.path_file = path_file
+            self.dense = nn.Dense(10, 1)
+
+        def construct(self, x):
+            x = self.dense(x)
+            np.save(self.path_file, x.asnumpy())
+            np.load('/tmp/test_fallback_save_load_with_annotation/tensor2.npy')  # @jit.typing: side_effect
+            return x
+
+    file_name = 'tensor2'
+    path = f"/tmp/test_fallback_save_load_with_annotation/"
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.makedirs(path)
+    model = LinearNet3(os.path.join(path, file_name))
+    input_x = Tensor(shape=(1, 10), dtype=ms.float32, init=One())
+    output = model(input_x)
+    print("output:", output)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+
+
+class TransformerNet(nn.Cell):
+    def __init__(self, file):
+        super().__init__()
+        self.file = file
+        self.transformer = nn.Transformer(d_model=10, nhead=2)
+        self.dense = nn.Dense(10, 1)
+
+    def construct(self, x, tgt):
+        transformer_out = self.transformer(x, tgt)
+        dense_output = self.dense(transformer_out[-1])
+        np.save(self.file, dense_output.asnumpy())
+        return dense_output.asnumpy(), Tensor(np.array([1, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_save_with_side_effect():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with side effect operate from third-party module.
+    Expectation: No exception.
+    """
+    file_path = './Tensor'
+    model = TransformerNet(file_path)
+    input1_1 = Tensor(shape=(20, 32, 10), dtype=ms.float32, init=One())
+    input1_2 = Tensor(shape=(20, 32, 10), dtype=ms.float32, init=Normal())
+
+    dense_output, tensor_out = model(input1_1, input1_2)
+    assert np.allclose(dense_output, np.load('./Tensor.npy'))
+    os.remove('./Tensor.npy')
+    assert (tensor_out.asnumpy() == [1, 2]).all()
