@@ -18,6 +18,7 @@ import numpy as np
 
 from mindspore import Tensor, jit, context
 from mindspore.common import mutable
+from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -843,3 +844,91 @@ def test_sequence_getitem_with_slice_2():
     assert len(ret[1]) == 2
     assert ret[1][0] == 1
     assert np.all(ret[1][1].asnumpy() == np.array([5, 4, 3, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_ops_with_grad():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = ("1", [1, 2], x, x+1, x)
+        return m.count(x)
+
+    x = Tensor([3])
+    grad = GradOperation()(foo)(x)
+    assert grad == Tensor([0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_ops_with_grad_2():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = ("1", [1, 2], x, x+1, x)
+        return m.index(x)
+
+    x = Tensor([3])
+    grad = GradOperation()(foo)(x)
+    assert grad == Tensor([0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_ops_with_grad_3():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = ("1", [1, 2], x, x+1, x)
+        return m[x]
+
+    x = Tensor([3])
+    grad = GradOperation()(foo)(x)
+    assert grad == Tensor([0])
+
+
+@pytest.mark.skip(reason="PyExecuteGradient with AbstractAny extra input")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_ops_with_grad_4():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        m = ("1", [1, 2], x, x+1, x)
+        return m[x]
+
+    x = Tensor([3])
+    context.set_context(mode=context.PYNATIVE_MODE)
+    grad1 = GradOperation()(foo)(x)
+    context.set_context(mode=context.GRAPH_MODE)
+    grad2 = GradOperation()(foo)(x)
+    assert grad1 == grad2
