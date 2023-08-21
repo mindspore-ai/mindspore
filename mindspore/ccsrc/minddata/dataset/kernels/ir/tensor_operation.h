@@ -51,6 +51,8 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
 
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 
+  virtual MapTargetDevice Type() { return MapTargetDevice::kCpu; }
+
  protected:
   bool random_op_;
 };

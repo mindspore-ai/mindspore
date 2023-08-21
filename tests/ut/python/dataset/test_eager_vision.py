@@ -98,6 +98,178 @@ def test_eager_resize_py():
     assert img.size == (64, 96)
 
 
+def skip_test_eager_resize_dvpp():
+    """
+    Feature: Resize op when Ascend910B
+    Description: Test eager support for Resize with Dvpp
+    Expectation: Output image info from op is correct
+    """
+
+    # HWC
+    img = cv2.imread("../data/dataset/apple.jpg")
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_resize = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img_resize), img_resize.shape))
+
+    assert img_resize.shape == (64, 32, 3)
+
+    # check the result
+    check_img = cv2.imread("../data/dataset/testAscend910BDvpp/apple_dvpp_resize.png")
+    check_img = cv2.cvtColor(check_img, cv2.COLOR_BGR2RGB)
+    assert (img_resize == check_img).all()
+
+    # interpolation is BILINEAR
+    img_resize1 = vision.Resize(size=(64, 32), interpolation=vision.Inter.BILINEAR).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img_resize1), img_resize1.shape))
+    assert img_resize1.shape == (64, 32, 3)
+
+    # check the result
+    check_img1 = cv2.imread("../data/dataset/testAscend910BDvpp/apple_dvpp_resize_BILINEAR.png")
+    check_img1 = cv2.cvtColor(check_img1, cv2.COLOR_BGR2RGB)
+    assert (img_resize1 == check_img1).all()
+
+    # interpolation is NEAREST
+    img_resize2 = vision.Resize(size=(64, 32), interpolation=vision.Inter.NEAREST).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img_resize2), img_resize2.shape))
+    assert img_resize2.shape == (64, 32, 3)
+
+    # check the result
+    check_img2 = cv2.imread("../data/dataset/testAscend910BDvpp/apple_dvpp_resize_NEAREST.png")
+    check_img2 = cv2.cvtColor(check_img2, cv2.COLOR_BGR2RGB)
+    assert (img_resize2 == check_img2).all()
+
+    # interpolation is CUBIC
+    img_resize3 = vision.Resize(size=(64, 32), interpolation=vision.Inter.CUBIC).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img_resize3), img_resize3.shape))
+    assert img_resize3.shape == (64, 32, 3)
+
+    # check the result
+    check_img3 = cv2.imread("../data/dataset/testAscend910BDvpp/apple_dvpp_resize_CUBIC.png")
+    check_img3 = cv2.cvtColor(check_img3, cv2.COLOR_BGR2RGB)
+    assert (img_resize3 == check_img3).all()
+
+    # interpolation is BICUBIC
+    img_resize4 = vision.Resize(size=(64, 32), interpolation=vision.Inter.BICUBIC).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img_resize4), img_resize4.shape))
+    assert img_resize4.shape == (64, 32, 3)
+
+    # check the result
+    check_img4 = cv2.imread("../data/dataset/testAscend910BDvpp/apple_dvpp_resize_BICUBIC.png")
+    check_img4 = cv2.cvtColor(check_img4, cv2.COLOR_BGR2RGB)
+    assert (img_resize4 == check_img4).all()
+
+    ## # need dvpp ready
+    ## # the input is HW
+    ## img = np.ones([224, 224], dtype=np.uint8)
+    ## img_resize_hw = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    ## assert img_resize_hw.shape == (64, 32)
+
+    ## # the input is HW1
+    ## img = np.ones([224, 224, 1], dtype=np.uint8)
+    ## img_resize_hw1 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    ## assert img_resize_hw1.shape == (64, 32)
+
+    ## # the input is 1HW1
+    ## img = np.ones([1, 224, 224, 1], dtype=np.uint8)
+    ## img_resize_1hw1 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    ## assert img_resize_1hw1.shape == (64, 32)
+
+    ## # the input is 3HW1
+    ## img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    ## img_resize_3hw1 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    ## assert img_resize_3hw1.shape == (3, 64, 32)
+
+    # the input is 3HW3
+    img = np.ones([3, 224, 224, 3], dtype=np.uint8)
+    img_resize_3hw3 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert img_resize_3hw3.shape == (3, 64, 32, 3)
+
+    # the input is 6HW3
+    img = np.ones([6, 224, 224, 3], dtype=np.uint8)
+    img_resize_6hw3 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert img_resize_6hw3.shape == (6, 64, 32, 3)
+
+    # the input is float HW3
+    img = np.ones([224, 224, 3], dtype=np.float32)
+    img_resize_float_hw3 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert img_resize_float_hw3.shape == (64, 32, 3)
+    assert img_resize_float_hw3.dtype == np.float32
+
+    # the input is float 9HW3
+    img = np.ones([9, 224, 224, 3], dtype=np.float32)
+    img_resize_float_9hw3 = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert img_resize_float_9hw3.shape == (9, 64, 32, 3)
+    assert img_resize_float_9hw3.dtype == np.float32
+
+
+def skip_test_eager_resize_dvpp_exception():
+    """
+    Feature: Resize op when Ascend910B
+    Description: Test eager support for Resize with Dvpp when invalid input
+    Expectation: Success
+    """
+
+    f = open("../data/dataset/apple.jpg", "rb")
+    img = f.read()
+    f.close()
+
+    # the input is bytes
+    with pytest.raises(TypeError) as error_info:
+        img = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert "Input should be NumPy or PIL image" in str(error_info.value)
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert "The input tensor is not HW, HWC or NHWC." in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert "The channel of input tensor HWC is not 1 or 3." in str(error_info.value)
+
+    # the input is HW4
+    img = np.ones([224, 224, 4], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert "The channel of input tensor HWC is not 1 or 3." in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Resize(size=(64, 32)).device("Ascend")(img)
+    assert "The input tensor is not HW, HWC or NHWC." in str(error_info.value)
+
+    img = cv2.imread("../data/dataset/apple.jpg")
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # the interpolation is invalid
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.AREA).device("Ascend")(img)
+    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.PILCUBIC).device("Ascend")(img)
+    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.ANTIALIAS).device("Ascend")(img)
+    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+
+    # the device(device_target) is invalid
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.Resize(size=(64, 32)).device(12)
+    assert "Argument device_target with value 12 is not of type [<class 'str'>]" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.Resize(size=(64, 32)).device("Asscend")
+    assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+
 def test_eager_rescale():
     """
     Feature: Rescale op
@@ -624,3 +796,5 @@ if __name__ == '__main__':
     test_eager_invalid_image_cutout()
     test_eager_invalid_image_randomcolor()
     test_eager_invalid_image_randomsharpness()
+    skip_test_eager_resize_dvpp()
+    skip_test_eager_resize_dvpp_exception()

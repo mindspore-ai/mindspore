@@ -31,7 +31,17 @@ class GpuMapJob : public MapJob {
   ~GpuMapJob();
 
   // A pure virtual run function to execute a cpu map job
-  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override;
+  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) override {
+    RETURN_STATUS_UNEXPECTED("The run operation is not implemneted in GPU platform.");
+  }
+
+#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
+  // A pure virtual run function to execute a npu map job for Ascend910B DVPP
+  Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out, device::DeviceContext *device_context,
+             const size_t &stream_id) override {
+    RETURN_STATUS_UNEXPECTED("The run operation is not implemneted in GPU platform.");
+  }
+#endif
 };
 
 }  // namespace dataset
