@@ -38,6 +38,7 @@
 using mindspore::profiler::ProfilerManager;
 #endif
 #include "include/common/utils/tensor_future.h"
+#include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
 namespace pynative {
@@ -116,8 +117,11 @@ void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
 void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
-  auto prim_py = op_run_info->op_grad_info->op_prim->cast<PrimitivePyPtr>();
-  MS_EXCEPTION_IF_NULL(prim_py);
+  auto prim = op_run_info->op_grad_info->op_prim;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  if (prim_py == nullptr) {
+    return;
+  }
   auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
   auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_grad_info->op_prim->cast<PrimitivePyPtr>()));
   new_prim->EnableSharedMutex();
@@ -417,6 +421,17 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
   UpdateStubTensor(op_run_info);
 }
 
+void ForwardExecutor::OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const {
+  auto prim = op_run_info->op_grad_info->op_prim;
+  auto op_name = prim->name();
+  if (EnablePipeline(op_name) && expander::bprop::HasBpropExpander(op_name) &&
+      abstract::GetFrontendPrimitiveInferImpl(prim).has_value()) {
+    auto new_prim = std::make_shared<Primitive>(*prim);
+    new_prim->EnableSharedMutex();
+    op_run_info->op_grad_info->op_prim = new_prim;
+  }
+}
+
 FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bool stub) {
   if (args.size() != static_cast<size_t>(RunOpArgsEnum::PY_ARGS_NUM)) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
@@ -432,6 +447,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
   }
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
+  OpRunInfoUsePrimC(op_run_info);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);

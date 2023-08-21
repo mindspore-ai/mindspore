@@ -121,6 +121,7 @@ class ForwardExecutor {
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
+  void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
 
  private:
   bool init_{false};

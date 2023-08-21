@@ -26,6 +26,7 @@ void BpropTask::Run() {
                                      runtime::ProfilerRecorder::kNoName, false);
   MS_LOG(DEBUG) << "run construct bprop task";
   run_task_();
+  run_task_ = nullptr;
   MS_LOG(DEBUG) << "finish construct bprop task";
 }
 }  // namespace pynative
