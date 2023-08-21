@@ -100,5 +100,7 @@ bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_type
 ShapeVector PoolToNHWC(const ShapeVector &v);
 ShapeVector ConvToNHWC(const ShapeVector &v);
 ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin = 0, int64_t end = -1);
+NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x);
+NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_GRAD_OPS_COMMON_UTILS_H_

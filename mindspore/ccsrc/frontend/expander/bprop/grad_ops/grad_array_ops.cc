@@ -1951,5 +1951,36 @@ REG_BPROP_BUILDER("SegmentMean").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   }
   return {dx, ib->OutZeros(segment_ids)};
 });
+
+REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto mask = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  dout = ib->Cast(dout, kFloat32);
+  auto dx = ib->Emit("MaskedFill", {dout, mask, ib->Tensor(0, kFloat32)});
+  auto dupdates = ib->Cast(ib->Reshape(ib->ZerosLike(updates), {-1}), kFloat32);
+  auto dupdates_val = ib->Cast(ib->Emit("MaskedSelect", {dout, mask}), kFloat32);
+  auto dupdates_val_shape = ib->Shape(dupdates_val, true);
+  // length = dupdates_val_shape[0]
+  auto length = ib->Emit(
+    "StridedSlice",
+    {dupdates_val_shape, ib->Value<ShapeVector>({0}), ib->Value<ShapeVector>({1}), ib->Value<ShapeVector>({1})},
+    {{"begin_mask", MakeValue<int64_t>(0)},
+     {"end_mask", MakeValue<int64_t>(0)},
+     {"ellipsis_mask", MakeValue<int64_t>(0)},
+     {"new_axis_mask", MakeValue<int64_t>(0)},
+     {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+  length = ib->Cast(length, kInt64);
+  auto scatter_indices = ib->Range(ib->Reshape(length, ShapeVector()));
+  dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
+                      {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
+  dupdates = ib->Reshape(dupdates, ib->Shape(updates));
+  return {ib->Cast(dx, ib->GetDtype(x)), ib->OutZeros(mask), ib->Cast(dupdates, ib->GetDtype(updates))};
+});
+
+REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("ParameterizedTruncatedNormal").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

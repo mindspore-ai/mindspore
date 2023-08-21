@@ -1925,5 +1925,76 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Eps").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
+REG_BPROP_BUILDER("EuclideanNorm").SetBody(BODYFUNC(ib) {
+  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
+  auto x = ib->GetInput(kIndex0);
+  auto axes = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto scale_v = ib->RealDiv(dout, out);
+  if ((!keep_dims) && (ib->GetShape(x).size() > 0)) {
+    scale_v = ib->Emit("ExpandDims", {scale_v, axes});
+  }
+  return {ib->Mul(x, scale_v), ib->OutZeros(axes)};
+});
+
+REG_BPROP_BUILDER("MatrixTriangularSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto adjoint_a = GetValue<bool>(ib->GetAttr("adjoint"));
+  auto lower_a = GetValue<bool>(ib->GetAttr("lower"));
+  auto matrix = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto grad_rhs = ib->Emit("MatrixTriangularSolve", {matrix, dout},
+                           {{"lower", MakeValue(lower_a)}, {"adjoint", MakeValue(!adjoint_a)}});
+  NodePtr grad_rhs_temp;
+  NodePtr out_temp;
+  if (((ib->GetDtype(matrix)) == kComplex64) || ((ib->GetDtype(matrix)) == kComplex128)) {
+    auto grad_rhs_temp = Adjoint(ib, grad_rhs);
+    auto out_temp = Adjoint(ib, out);
+  } else {
+    grad_rhs_temp = MatrixTranspose(ib, grad_rhs);
+    out_temp = MatrixTranspose(ib, out);
+  }
+  NodePtr grad_matrix;
+  auto m_rank = ib->GetShape(matrix).size();
+  auto NegMatMul = [&ib, &grad_matrix, &m_rank](const NodePtr &a, const NodePtr &b) {
+    if (m_rank == 2) {
+      grad_matrix = ib->MatMul(a, b, false, false);
+    } else {
+      grad_matrix = ib->BatchMatMul(a, b, false, false);
+    }
+    grad_matrix = ib->Neg(grad_matrix);
+  };
+  if (adjoint_a) {
+    NegMatMul(out, grad_rhs_temp);
+  } else {
+    NegMatMul(grad_rhs, out_temp);
+  }
+  auto BandPart = [&ib](const NodePtr &matrix, int lower, int upper) -> NodePtr {
+    if (((ib->GetDtype(matrix)) == kComplex64) || ((ib->GetDtype(matrix)) == kComplex128)) {
+      auto grad_matrix_real =
+        ib->Emit("MatrixBandPart", {ib->Emit("Real", {matrix}), ib->Value(lower), ib->Value(upper)});
+      auto grad_matrix_imag =
+        ib->Emit("MatrixBandPart", {ib->Emit("Imag", {matrix}), ib->Value(lower), ib->Value(upper)});
+      return ib->Emit("Complex", {grad_matrix_real, grad_matrix_imag});
+    } else {
+      return ib->Emit("MatrixBandPart", {matrix, ib->Value(lower), ib->Value(upper)});
+    }
+  };
+  if (lower_a) {
+    grad_matrix = BandPart(grad_matrix, -1, 0);
+  } else {
+    grad_matrix = BandPart(grad_matrix, 0, -1);
+  }
+  return {grad_matrix, grad_rhs};
+});
+
+REG_BPROP_BUILDER("NanToNum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Mul(dout, (ib->Emit("IsFinite", {x})));
+  return {dx};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
