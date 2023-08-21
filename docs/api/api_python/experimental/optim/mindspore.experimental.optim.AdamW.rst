@@ -17,7 +17,6 @@ mindspore.experimental.optim.AdamW
                 &\textbf{initialize} : m_0 \leftarrow 0 \text{ (first moment)}, v_0 \leftarrow 0
                     \text{ ( second moment)}, \: \widehat{v_0}^{max}\leftarrow 0              \\[-1.ex]
                 &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
-
                 &\hspace{5mm}\textbf{if} \: \textit{maximize}:                                       \\
                 &\hspace{10mm}g_t           \leftarrow   -\nabla_{\theta} f_t (\theta_{t-1})          \\
                 &\hspace{5mm}\textbf{else}                                                           \\
