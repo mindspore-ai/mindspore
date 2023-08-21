@@ -22,6 +22,10 @@ function PrePareLocal() {
       cp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/cloud_infer/models_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/ascend/*.config ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/models_ascend_on_the_fly_quant_ge_cloud.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/models_ascend_fake_model_on_the_fly_quant_ge_cloud.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/models_ascend_fake_model_full_quant_ge_cloud.cfg ${benchmark_test_path} || exit 1
+      cp -r ./../${config_folder}/quant ${benchmark_test_path} || exit 1
   else
       cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
   fi
