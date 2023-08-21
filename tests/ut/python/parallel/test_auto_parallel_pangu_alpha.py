@@ -461,7 +461,7 @@ class VocabEmbedding(Cell):
         super(VocabEmbedding, self).__init__()
         self.embedding_table = Parameter(initializer(param_init, [vocab_size, embedding_size]),
                                          name='embedding_table', parallel_optimizer=False)
-        self.gather = P.GatherV2().shard(((1, 1), (2, 1)))
+        self.gather = P.Gather().shard(((1, 1), (2, 1)))
 
     def construct(self, input_ids):
         output = self.gather(self.embedding_table, input_ids, 0)
