@@ -34,7 +34,7 @@ bool CollectiveNode::Start(const uint32_t &timeout) {
   }
 
   InitServerHandler();
-  CreateTcpServer();
+  CreateTcpServer(ClusterContext::instance()->port_range());
   InitNodeInfo(NodeRole::WORKER);
   InitCommandHandler();
 

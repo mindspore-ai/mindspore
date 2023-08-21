@@ -409,9 +409,13 @@ int SocketOperation::Listen(const std::string &url) {
 
   // bind
   if (::bind(listenFd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(SocketAddress)) != 0) {
-    MS_LOG(ERROR) << "Failed to call bind, url: " << url.c_str() << " " << strerror(errno);
+    MS_LOG(WARNING) << "Failed to call bind, url: " << url.c_str() << " " << strerror(errno);
     if (close(listenFd) != 0) {
       MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
+    }
+    // If this address is already in use, return -2 to the caller so it can distinguish from other return value.
+    if (errno == EADDRINUSE) {
+      return kAddressInUseError;
     }
     return -1;
   }

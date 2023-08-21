@@ -32,8 +32,9 @@ class TCPComm;
 
 class BACKEND_EXPORT TCPServer : public RPCServerBase {
  public:
-  explicit TCPServer(bool enable_ssl = false);
-  ~TCPServer() override;
+  explicit TCPServer(bool enable_ssl = false, const ServerPortRange &port_range = {})
+      : RPCServerBase(enable_ssl, port_range), tcp_comm_(nullptr) {}
+  ~TCPServer() override = default;
 
   // Init the tcp server using the specified url.
   bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) override;
@@ -53,6 +54,8 @@ class BACKEND_EXPORT TCPServer : public RPCServerBase {
 
  private:
   bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb);
+
+  bool StartSocketWithinPortRange(const MemAllocateCallback &allocate_cb);
 
   // The basic TCP communication component used by the server.
   std::unique_ptr<TCPComm> tcp_comm_;

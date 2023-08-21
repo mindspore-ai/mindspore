@@ -24,6 +24,9 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+// This is the return value that represents the address is in use errno.
+constexpr int kAddressInUseError = -2;
+
 class Connection;
 
 union SocketAddress {

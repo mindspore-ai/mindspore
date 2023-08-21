@@ -227,7 +227,7 @@ class AbstractNode : public Node {
 
   bool IsWorkerOrServer0(const std::unordered_map<std::string, NodeInfo> &info);
 
-  void CreateTcpServer();
+  void CreateTcpServer(const std::pair<uint32_t, uint32_t> &port_range = {});
 
   void UpdateClusterState(const ClusterState &state);
 

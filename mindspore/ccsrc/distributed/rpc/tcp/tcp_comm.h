@@ -53,10 +53,10 @@ class TCPComm {
 
   // Create the server socket represented by url.
   // allocate_cb is the method used to allocate memory when server receiving message from the remote.
-  bool StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb);
+  int StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb);
 
   // Create the server socket with local IP and random port.
-  bool StartServerSocket(const MemAllocateCallback &allocate_cb);
+  int StartServerSocket(const MemAllocateCallback &allocate_cb);
 
   // Connection operation for a specified destination.
   bool Connect(const std::string &dst_url, const MemFreeCallback &free_cb);
