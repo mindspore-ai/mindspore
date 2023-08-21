@@ -34,21 +34,21 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, s
 
 
 class SGD(Optimizer):
-    """
+    r"""
     Stochastic Gradient Descent optimizer.
 
     .. math::
-            v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
+        v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
     If nesterov is True:
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
+        p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
     If nesterov is False:
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+        p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     To be noticed, for the first step, :math:`v_{t+1} = gradient`.
 

@@ -6,17 +6,17 @@ mindspore.experimental.optim.SGD
     随机梯度下降算法。
 
     .. math::
-            v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
+        v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
     如果nesterov为True：
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
+        p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
     如果nesterov为False：
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+        p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     需要注意的是，对于训练的第一步 :math:`v_{t+1} = gradient`。其中，p、v和u分别表示 `parameters`、`accum` 和 `momentum`。
 
