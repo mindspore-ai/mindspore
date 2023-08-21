@@ -196,6 +196,9 @@ class SequenceSlice(Primitive):
         """Initialize SequenceSlice"""
         self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
 
+    def __call__(self, sequence, start, stop, step):
+        return sequence[start:stop:step]
+
 
 class InSequence(Primitive):
     r"""

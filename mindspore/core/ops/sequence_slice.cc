@@ -120,6 +120,10 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
     // If the length of input sequence is dynamic length, the length of sliced sequence should also be dynamic length.
     return seq_abs->Clone();
   }
+  if (seq_abs->size() != 0 && CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
+    // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
+    return std::make_shared<abstract::AbstractAny>();
+  }
   auto start_abs = input_args[start_index];
   MS_EXCEPTION_IF_NULL(start_abs);
   auto end_abs = input_args[end_index];
@@ -135,9 +139,7 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
           (elem->isa<abstract::AbstractTensor>() &&
            elem->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() == 1 &&
            elem->cast<abstract::AbstractTensorPtr>()->shape()->shape()[0] == 1))) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name
-                              << "', the element in the input should be a scalar or a tensor with one scalar, but got "
-                              << elem->ToString();
+      return std::make_shared<abstract::AbstractAny>();
     }
   }
 

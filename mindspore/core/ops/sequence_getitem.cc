@@ -70,11 +70,15 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
   }
   // Input or index is variable, items shape and type should be same.
   if (index_value == kValueAny) {
+    SetSequenceElementsUseFlagsRecursively(queue, true);
+    if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
+      // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
+      return std::make_shared<abstract::AbstractAny>();
+    }
     const auto &elements = queue->elements();
     CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
     auto ret = elements[0];
     MS_EXCEPTION_IF_NULL(ret);
-    SetSequenceElementsUseFlagsRecursively(queue, true);
     return abstract::AbstractBroaden(ret);
   }
   // For constant index, return input[index] of sequence.
