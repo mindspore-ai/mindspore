@@ -44,10 +44,6 @@ int GroupConvCreatorNewInputTensor(GroupConvolutionStruct *group_conv, KernelBas
 }
 
 int GroupConvCreatorNewOutputTensor(GroupConvolutionStruct *group_conv, KernelBase *new_conv) {
-  if (group_conv->conv_base_.base_.param_->quant_type_ != Quant_None) {
-    return NNACL_ERR;
-  }
-
   TensorC *out_tensor = (TensorC *)malloc(sizeof(TensorC));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(out_tensor);
   out_tensor->format_ = Format_NHWC;
