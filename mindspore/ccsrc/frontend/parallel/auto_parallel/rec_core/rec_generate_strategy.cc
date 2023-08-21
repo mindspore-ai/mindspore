@@ -98,7 +98,7 @@ std::pair<size_t, size_t> FindIndexOfOperatorOutgoing(const std::vector<std::sha
       if (input_tensor_names[i][j] == input_tensor_names[iter_ops][0] &&
           ops[i]->selected_strategy()->GetInputNumber() != 0) {
         outgoing_op_index = i;
-        iter_op_inputs = j - 1;
+        iter_op_inputs = std::min(j - 1, ops[outgoing_op_index]->inputs_shape().size() - 1);
         found = true;
         break;
       }
@@ -227,6 +227,21 @@ Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
   return strategies;
 }
 
+Strategies PrepareStandAlone(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
+  Strategies stra;
+  Dimensions dim;
+
+  for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info().size(); i++) {
+    dim.clear();
+    for (size_t j = 0; j < ops[iter_ops]->inputs_tensor_info()[i].shape().size(); j++) {
+      dim.push_back(1);
+    }
+    stra.push_back(dim);
+  }
+
+  return stra;
+}
+
 Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   size_t numDev = g_device_manager->DeviceNum();
 
@@ -237,7 +252,7 @@ Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> 
     MS_LOG(EXCEPTION) << "The number of devices is 0";
   }
 
-  for (size_t i = 0; i < ops[iter_ops]->outputs_shape().size(); i++) {
+  for (size_t i = 0; i < ops[iter_ops]->inputs_shape().size(); i++) {
     dim.clear();
     if (LongToSize(ops[iter_ops]->inputs_shape()[i][0]) % numDev == 0) {
       dim.push_back(numDev);
@@ -1424,7 +1439,7 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   if (type == SOFTMAX || type == LOG_SOFTMAX) {
     return PrepareSoftMax(ops, iter_ops, basic_stra);
   }
-  if (type == FLATTEN) {
+  if (type == FLATTEN || type == GATHERD) {
     return PrepareDataParallel(ops, iter_ops);
   }
   if (type == LAYER_NORM) {
@@ -2228,6 +2243,25 @@ void RecStrategyPropagator::GenerateStrategyV1() {
   AjustToNoTraining();
 }
 
+size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
+  size_t changes = 0;
+  for (size_t iter_ops = 0; iter_ops < ops_.size(); iter_ops++) {
+    auto pos = ops_[iter_ops]->name().find("Info");
+    auto name = ops_[iter_ops]->name().substr(0, pos);
+    if (name == STAND_ALONE) {
+      Strategies stra = PrepareStandAlone(ops_, iter_ops);
+      ApplyStrategy(iter_ops, stra);
+      changes++;
+    }
+    if (name == BATCH_PARALLEL) {
+      Strategies stra = PrepareDataParallel(ops_, iter_ops);
+      ApplyStrategy(iter_ops, stra);
+      changes++;
+    }
+  }
+  return changes;
+}
+
 void RecStrategyPropagator::GenerateStrategyV3() {
   MS_EXCEPTION_IF_NULL(graph_);
   MS_EXCEPTION_IF_NULL(eli_list_);
@@ -2237,6 +2271,7 @@ void RecStrategyPropagator::GenerateStrategyV3() {
   size_t changes;
   changes = CopyMainOperatorsStrategy();
   MS_LOG(INFO) << "CopyMainOperatorsStrategy has " << changes << "changes";
+  AssignStandaloneAndBatchParallelOpStrategy();
 
   for (auto min_devices = g_device_manager->stage_device_num(); min_devices > 1; min_devices /= SIZE_TWO) {
     size_t pass_changes = 1;

@@ -29,13 +29,15 @@
 
 namespace mindspore {
 namespace parallel {
-static const std::set<OperatorType> ElementWiseOpType = {
-  OperatorType::kRecReLU,      OperatorType::kRecLog,        OperatorType::kRecExp,          OperatorType::kRecAdd,
-  OperatorType::kRecElmWiseOp, OperatorType::kRecBiasAdd,    OperatorType::kRecSub,          OperatorType::kRecMul,
-  OperatorType::kRecDiv,       OperatorType::kRecSqueeze,    OperatorType::kRecReduce,       OperatorType::kRecCast,
-  OperatorType::kRecReshape,   OperatorType::kRecGatherV2,   OperatorType::kRecArgWithValue, OperatorType::kRecSoftmax,
-  OperatorType::kRecOneHot,    OperatorType::kRecExpandDims, OperatorType::kRecStridedSlice, OperatorType::kRecCum,
-  OperatorType::kRecLayerNorm, OperatorType::kRecFlatten};
+static const std::set<OperatorType> EliminateOpType = {
+  OperatorType::kRecReLU,         OperatorType::kRecLog,           OperatorType::kRecExp,
+  OperatorType::kRecAdd,          OperatorType::kRecElmWiseOp,     OperatorType::kRecBiasAdd,
+  OperatorType::kRecSub,          OperatorType::kRecMul,           OperatorType::kRecDiv,
+  OperatorType::kRecSqueeze,      OperatorType::kRecReduce,        OperatorType::kRecCast,
+  OperatorType::kRecReshape,      OperatorType::kRecGatherV2,      OperatorType::kRecArgWithValue,
+  OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
+  OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
+  OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -60,6 +62,10 @@ const std::map<std::string, OperatorType> DictOpType{
   {REDUCE_MAX, OperatorType::kRecReduce},
   {REDUCE_MIN, OperatorType::kRecReduce},
   {REDUCE_MEAN, OperatorType::kRecReduce},
+  {STAND_ALONE, OperatorType::kRecStandAlone},
+  {GET_NEXT, OperatorType::kRecUnknownType},
+  {VIRTUAL_DATA_SET, OperatorType::kRecUnknownType},
+  {BATCH_PARALLEL, OperatorType::kRecBatchParallel},
   {GATHERV2, OperatorType::kRecGatherV2},
   {EXPAND_DIMS, OperatorType::kRecExpandDims},
   {STRIDEDSLICE, OperatorType::kRecStridedSlice},
@@ -174,7 +180,9 @@ const std::map<std::string, OperatorType> DictOpType{
   {STACK, OperatorType::kRecElmWiseOp},
   {"Select", OperatorType::kRecElmWiseOp},
   {"Concat", OperatorType::kRecElmWiseOp},
-  {"Tile", OperatorType::kRecElmWiseOp}};
+  {"Tile", OperatorType::kRecElmWiseOp},
+  {MASKED_FILL, OperatorType::kRecElmWiseOp},
+  {GATHERD, OperatorType::kRecBatchParallel}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 

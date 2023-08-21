@@ -44,13 +44,21 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   NewOp.name = ops[iter_ops]->name();
   NewOp.info = InfoType::kApplication;
 
+  auto pos = ops[iter_ops]->name().find("Info");
+  auto name = ops[iter_ops]->name().substr(0, pos);
   auto op_type = ops[iter_ops]->type();
   auto idx = DictOpType.find(op_type);
-  if (idx == DictOpType.end()) {
+  if (idx != DictOpType.end()) {
+    NewOp.apply.op_type = DictOpType.at(op_type);
+  } else if (name == STAND_ALONE) {
+    MS_LOG(INFO) << ops[iter_ops]->type() << ": standalone operator.";
+    NewOp.apply.op_type = OperatorType::kRecStandAlone;
+  } else if (name == BATCH_PARALLEL) {
+    MS_LOG(INFO) << ops[iter_ops]->type() << ": batch parallel operator.";
+    NewOp.apply.op_type = OperatorType::kRecBatchParallel;
+  } else {
     NewOp.apply.op_type = OperatorType::kRecUnknownType;
     MS_LOG(INFO) << ops[iter_ops]->name() << ": Unknown operator type " << op_type;
-  } else {
-    NewOp.apply.op_type = DictOpType.at(op_type);
   }
 
   if (ops[iter_ops]->outputs_shape().size() == SIZE_ZERO) {
@@ -423,7 +431,7 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
   MS_EXCEPTION_IF_NULL(graph);
   for (size_t node_index = 0; node_index < graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
-    if (ElementWiseOpType.find(type) != ElementWiseOpType.end()) {
+    if (EliminateOpType.find(type) != EliminateOpType.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }
