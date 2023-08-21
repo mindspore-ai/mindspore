@@ -24,15 +24,6 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-inline std::string ShapeVectorToString(const ShapeVector &shape) {
-  std::string str_shape = "";
-  for (auto &item : shape) {
-    str_shape += std::to_string(item) + ", ";
-  }
-  str_shape = str_shape.length() >= 2 ? str_shape.substr(0, str_shape.length() - 2) : str_shape;
-  return str_shape;
-}
-
 inline size_t SizeOf(const ShapeVector &shape) {
   size_t data_size = 1;
   for (auto dim : shape) {
@@ -41,7 +32,7 @@ inline size_t SizeOf(const ShapeVector &shape) {
       return 0;
     }
     if (SIZE_MAX / dim < data_size) {
-      MS_EXCEPTION(ValueError) << "The product value of shape (" << ShapeVectorToString(shape)
+      MS_EXCEPTION(ValueError) << "The product value of shape (" << shape
                                << ") exceeds the maximum value of size_t: " << SIZE_MAX;
     }
     data_size *= static_cast<size_t>(dim);
@@ -55,8 +46,7 @@ inline bool IsDynamicRank(const ShapeVector &shape) {
   }
   if (std::any_of(shape.cbegin(), shape.cend(),
                   [](ShapeValueDType s) { return s == abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got (" << ShapeVectorToString(shape)
-                             << ").";
+    MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got (" << shape << ").";
   }
   return false;
 }
@@ -68,8 +58,7 @@ inline bool IsDynamicShape(const ShapeVector &shape) {
 
 inline bool IsDynamic(const ShapeVector &shape) {
   if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << ShapeVectorToString(shape)
-                             << ").";
+    MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << shape << ").";
   }
   return IsDynamicRank(shape) || IsDynamicShape(shape);
 }

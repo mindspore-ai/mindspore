@@ -18,9 +18,6 @@
 
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "minddata/dataset/core/data_type.h"
-#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
-#include "acl/acl_base.h"
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -89,41 +86,6 @@ inline TypeId DETypeToMSType(dataset::DataType data_type) {
       return kTypeUnknown;
   }
 }
-
-#if (defined(WITH_BACKEND) || defined(ENABLE_ACL)) && defined(ASCEND910B)
-inline aclDataType DETypeToaclDataType(dataset::DataType data_type) {
-  switch (data_type.value()) {
-    case dataset::DataType::DE_BOOL:
-      return aclDataType::ACL_BOOL;
-    case dataset::DataType::DE_INT8:
-      return aclDataType::ACL_INT8;
-    case dataset::DataType::DE_UINT8:
-      return aclDataType::ACL_UINT8;
-    case dataset::DataType::DE_INT16:
-      return aclDataType::ACL_INT16;
-    case dataset::DataType::DE_UINT16:
-      return aclDataType::ACL_UINT16;
-    case dataset::DataType::DE_INT32:
-      return aclDataType::ACL_INT32;
-    case dataset::DataType::DE_UINT32:
-      return aclDataType::ACL_UINT32;
-    case dataset::DataType::DE_INT64:
-      return aclDataType::ACL_INT64;
-    case dataset::DataType::DE_UINT64:
-      return aclDataType::ACL_UINT64;
-    case dataset::DataType::DE_FLOAT16:
-      return aclDataType::ACL_FLOAT16;
-    case dataset::DataType::DE_FLOAT32:
-      return aclDataType::ACL_FLOAT;
-    case dataset::DataType::DE_FLOAT64:
-      return aclDataType::ACL_DOUBLE;
-    case dataset::DataType::DE_STRING:
-      return aclDataType::ACL_STRING;
-    default:
-      return aclDataType::ACL_DT_UNDEFINED;
-  }
-}
-#endif
 }  // namespace dataset
 }  // namespace mindspore
 

@@ -24,7 +24,7 @@ from mindspore.dataset.core.validator_helpers import check_value, check_uint8, F
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32, check_int32, check_tensor_op, deprecator_factory, check_valid_str
+    check_pos_int32, check_int32, check_tensor_op, deprecator_factory
 from mindspore.dataset.transforms.validators import check_transform_op_type
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
@@ -337,16 +337,6 @@ def check_resize_interpolation(method):
 
         return method(self, *args, **kwargs)
 
-    return new_method
-
-def check_device_target(method):
-    """A wrapper that wraps a parameter checker"""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [device_target], _ = parse_user_args(method, *args, **kwargs)
-        check_valid_str(device_target, ["CPU", "Ascend"], "device_target")
-        return method(self, *args, **kwargs)
     return new_method
 
 

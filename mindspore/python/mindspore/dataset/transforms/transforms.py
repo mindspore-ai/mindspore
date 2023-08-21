@@ -45,7 +45,6 @@ class TensorOperation:
         super().__init__()
         self.implementation = None
         self.callable_op_ = None
-        self.device_target = "CPU"
 
     def __call__(self, *input_tensor_list):
         """

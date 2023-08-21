@@ -106,11 +106,9 @@ enum class DATASET_API ManualOffloadMode {
 
 /// \brief Target devices to perform map operation.
 enum class DATASET_API MapTargetDevice {
-  kCpu = 0,     ///< CPU Device.
-  kGpu,         ///< Gpu Device.
-  kAscend310,   ///< Ascend310 Device.
-  kAscend910B,  ///< Ascend910B Device.
-  kInvalid = 100
+  kCpu,       ///< CPU Device.
+  kGpu,       ///< Gpu Device.
+  kAscend310  ///< Ascend310 Device.
 };
 
 /// \brief Possible options for mel_type in MelscaleFbanks.

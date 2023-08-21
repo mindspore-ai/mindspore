@@ -76,7 +76,7 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
     check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, check_rotate, check_slice_patches, \
     check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, check_to_tensor, \
-    check_device_target, FLOAT_MAX_INTEGER
+    FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -432,7 +432,7 @@ class Affine(ImageTensorOperation):
 
             - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
-            - ``Inter.AREA`` , means resample method is pixel area interpolation.
+            - ``Inter.AREA`` :, means resample method is pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Optional `fill_value` to fill the area
             outside the transform in the output image. There must be three elements in tuple and the value
@@ -1976,7 +1976,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
             - ``Inter.CUBIC`` , cubic interpolation, the same as Inter.BICUBIC.
             - ``Inter.PILCUBIC`` , cubic interpolation based on the implementation of Pillow,
               only numpy.ndarray input is supported.
-            - ``Inter.AREA`` , pixel area interpolation, only numpy.ndarray input is supported.
+            - ``Inter.AREA`` :, pixel area interpolation, only numpy.ndarray input is supported.
 
     Raises:
         TypeError: If `start_points` is not of type Sequence[Sequence[int, int]].
@@ -2096,7 +2096,7 @@ class RandAugment(ImageTensorOperation):
             - ``Inter.NEAREST`` , nearest-neighbor interpolation.
             - ``Inter.BILINEA`` , bilinear interpolation.
             - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` , pixel area interpolation.
+            - ``Inter.AREA`` :, pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
@@ -2232,7 +2232,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
 
             - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
-            - ``Inter.AREA`` , means resample method is pixel area interpolation.
+            - ``Inter.AREA`` :, means resample method is pixel area interpolation.
 
         fill_value (Union[int, tuple[int]], optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
@@ -2675,7 +2675,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
             - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
-            - ``Inter.AREA`` , means interpolation method is pixel area interpolation.
+            - ``Inter.AREA`` :, means interpolation method is pixel area interpolation.
 
             - ``Inter.PILCUBIC`` , means interpolation method is bicubic interpolation like implemented in pillow, input
               should be in 3 channels format.
@@ -3350,7 +3350,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
 
             - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
-            - ``Inter.AREA`` , means interpolation method is pixel area interpolation.
+            - ``Inter.AREA`` :, means interpolation method is pixel area interpolation.
 
             - ``Inter.PILCUBIC`` , means interpolation method is bicubic interpolation like implemented in pillow, input
               should be in 3 channels format.
@@ -3625,7 +3625,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
 
             - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
-            - ``Inter.AREA`` , means the interpolation method is pixel area interpolation.
+            - ``Inter.AREA`` :, means the interpolation method is pixel area interpolation.
 
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
             expand the output image to make it large enough to hold the entire rotated image.
@@ -4032,7 +4032,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend``
+        ``CPU``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4065,47 +4065,10 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             self.implementation = Implementation.PY
         self.random = False
 
-    @check_device_target
-    def device(self, device_target="CPU"):
-        """
-        Set the device for the current operator execution.
-
-        Args:
-            device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
-
-        Raises:
-            TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
-
-        Supported Platforms:
-            ``CPU`` ``Ascend``
-
-        Examples:
-            >>> import mindspore.dataset as ds
-            >>> import mindspore.dataset.vision as vision
-            >>> from mindspore.dataset.vision import Inter
-            >>>
-            >>> decode_op = vision.Decode()
-            >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC).device("Ascend")
-            >>> transforms_list = [decode_op, resize_op]
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-            ...                                                 input_columns=["image"])
-
-        Tutorial Examples:
-            - `Illustration of vision transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
-        """
-        self.device_target = device_target
-        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The InterpolationMode is not supported by DVPP. It is {}.".format(self.interpolation))
-        return self
-
     def parse(self):
         if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation), self.device_target)
+        return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation))
 
     def _execute_py(self, img):
         """
@@ -4141,7 +4104,7 @@ class ResizedCrop(ImageTensorOperation):
             - ``Inter.LINEAR`` , bilinear interpolation.
             - ``Inter.NEAREST`` , nearest-neighbor interpolation.
             - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` , pixel area interpolation.
+            - ``Inter.AREA`` :, pixel area interpolation.
             - ``Inter.PILCUBIC`` , cubic interpolation based on the implementation of Pillow
 
     Raises:
@@ -4757,7 +4720,7 @@ class TrivialAugmentWide(ImageTensorOperation):
             - ``Inter.NEAREST`` , nearest-neighbor interpolation.
             - ``Inter.BILINEA`` , bilinear interpolation.
             - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` , pixel area interpolation.
+            - ``Inter.AREA`` :, pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.

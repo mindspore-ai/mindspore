@@ -160,9 +160,6 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const { return true; }
-
-  virtual void *GetStream(size_t stream_id) const { return nullptr; };
-
   // Destroy a stream bound to the input parameter "stream_id".
   virtual bool DestroyStream(size_t stream_id) const { return true; }
 
