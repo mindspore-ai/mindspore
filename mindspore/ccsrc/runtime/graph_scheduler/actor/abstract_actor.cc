@@ -26,7 +26,9 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   // The unused data may be invalid ptr.
   if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
-                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag();
+                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
+                      << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
+                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
   }
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
@@ -211,13 +213,12 @@ void AbstractActor::SendOutputData(
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
-  for (size_t output_data_arrow_index = 0; output_data_arrow_index < output_data_list.size();
-       ++output_data_arrow_index) {
-    auto &output_data = output_data_list[output_data_arrow_index];
+  for (size_t i = 0; i < output_data_list.size(); ++i) {
+    auto &output_data = output_data_list[i];
     MS_EXCEPTION_IF_NULL(output_data.first);
     auto &to_op_id = output_data.first->op_id_;
-    auto &output_data_arrow = output_data_arrows[output_data_arrow_index];
-    UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes[output_data_arrow_index], context);
+    auto &output_data_arrow = output_data_arrows[i];
+    UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes[i], context);
     // The index of output data will be modified the real actor input index in the fusion actor, so need recovery the
     // fusion actor index before sending output data to the fusion actor.
     if (TEST_FLAG(output_data.second, kOutputDataFlagToFusion)) {

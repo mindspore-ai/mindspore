@@ -81,18 +81,22 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
   auto elems = seq_abs->elements();
   MS_EXCEPTION_IF_CHECK_FAIL(elems.size() >= 1, "Element size is less than 1.");
   MS_EXCEPTION_IF_NULL(elems[0]);
-  if (!elems[0]->isa<abstract::AbstractScalar>()) {
-    MS_LOG(EXCEPTION) << "The 0'th element of sequence must be a scalar, but got:" << elems[0]->ToString();
+  if (!elems[0]->isa<abstract::AbstractScalar>() && !elems[0]->isa<abstract::AbstractTensor>()) {
+    MS_LOG(EXCEPTION) << "The 0'th element of sequence must be a scalar, but got:" << seq_abs->ToString();
   }
 
-  auto fixed_type = elems[0]->BuildType()->type_id();
+  auto fixed_type = (elems[0]->isa<abstract::AbstractScalar>()
+                       ? elems[0]->BuildType()->type_id()
+                       : elems[0]->cast<abstract::AbstractTensorPtr>()->element()->BuildType()->type_id());
   for (size_t i = 1; i < elems.size(); i++) {
     MS_EXCEPTION_IF_NULL(elems[i]);
-    if (!elems[i]->isa<abstract::AbstractScalar>()) {
+    if (!elems[i]->isa<abstract::AbstractScalar>() && !elems[i]->isa<abstract::AbstractTensor>()) {
       MS_LOG(EXCEPTION) << "The " << i << "'th element of sequence must be a scalar, but got:" << elems[i]->ToString();
     }
     MS_EXCEPTION_IF_NULL(elems[i]->BuildType());
-    auto follow_type = elems[i]->BuildType()->type_id();
+    auto follow_type = (elems[i]->isa<abstract::AbstractScalar>()
+                          ? elems[i]->BuildType()->type_id()
+                          : elems[i]->cast<abstract::AbstractTensorPtr>()->element()->BuildType()->type_id());
     if (fixed_type != follow_type) {
       MS_LOG(EXCEPTION) << "Different type found between 0'th element[Type: " << fixed_type << "] and " << i
                         << "'th element[Type: " << follow_type << "]";
@@ -140,6 +144,9 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
                       << ") is invalid.";
   }
 
+  MS_LOG(DEBUG) << "Create tensor by node:" << input_node_with_index.first->DebugString()
+                << " index:" << input_node_with_index.second << " type:" << type << " shape:" << shape
+                << " abstract:" << abs->ToString();
   return std::make_shared<tensor::Tensor>(type, shape);
 }
 
@@ -168,6 +175,11 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
         depended_value->set_device_address(out_addr, false);
         return depended_value;
       }
+      MS_LOG(DEBUG) << "Get depend value tensor for node:" << node->DebugString() << " input index:" << i
+                    << " input node:" << input_node_with_index.first->DebugString() << " index"
+                    << input_node_with_index.second << " node addr:" << input_node_with_index.first
+                    << " device_address:" << input_device_address->at(i)
+                    << " type id:" << input_device_address->at(i)->type_id();
       depended_value->data_sync_directly(input_device_address->at(i));
       PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
                    node->fullname_with_scope(), true);
@@ -193,6 +205,10 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                     << ", use user data instead of address.";
       return depended_value;
     }
+    MS_LOG(DEBUG) << "Get depend value tensor for node:" << node->DebugString() << " input index:" << i
+                  << " input node:" << input_node_with_index.first->DebugString() << " index"
+                  << input_node_with_index.second << " node addr:" << input_node_with_index.first
+                  << " sync for device tensor:" << output_addr;
     depended_value->data_sync();
     PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
                  node->fullname_with_scope(), true);
@@ -499,6 +515,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     MS_LOG(EXCEPTION) << "The first input of the cnode should be either a primitive or a function graph, but get: "
                       << inputs[0]->fullname_with_scope();
   }
+  MS_LOG(DEBUG) << "InferShape end, node:" << cnode->fullname_with_scope();
 }
 
 inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {

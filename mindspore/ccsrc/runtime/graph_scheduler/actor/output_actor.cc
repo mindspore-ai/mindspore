@@ -176,8 +176,8 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   MS_EXCEPTION_IF_NULL(input_data->data_);
   MS_EXCEPTION_IF_NULL(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
-                << ") receive the input op data and output position:" << input_data->index_;
-
+                << ") receive the input op data and output position:" << input_data->index_
+                << " device tensor:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr();
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
@@ -260,6 +260,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
       nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape());
     MS_EXCEPTION_IF_NULL(tensor_device_address);
+    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << " type:" << tensor_device_address->type_id()
+                  << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index
+                  << " output position:" << output_position;
     tensor->set_device_address(tensor_device_address);
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
   }
@@ -324,6 +327,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << ", output node: " << output_node->fullname_with_scope();
       }
     } else {
+      MS_LOG(DEBUG) << "Swap ptr:" << tensor_device_address->GetPtr() << " from device tensor:" << device_tensor
+                    << " to :" << tensor_device_address;
       // Move the device ptr from device_tensor to tensor_device_address.
       device_tensor->Swap(tensor_device_address.get());
     }

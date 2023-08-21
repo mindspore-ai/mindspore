@@ -355,6 +355,26 @@ void UseCacheToCompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext
   }
 }
 
+void CollectValueNodeForKernelGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &nodes = TopoSort(graph->get_return());
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<ValueNode>()) {
+      continue;
+    }
+    const auto &value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    const auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<Primitive>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Add value node:" << node->DebugString() << " for kernel graph:" << graph->ToString();
+    graph->AddValueNodeToGraph(value_node);
+  }
+}
+
 GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrList &outputs,
                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -402,7 +422,8 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), output.get());
     MS_LOG(DEBUG) << "Set kernel build info for node:" << output->DebugString() << " output num:" << output_num;
   }
-
+  CollectValueNodeForKernelGraph(graph);
+  DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
   DeviceAddressUtils::CreateGraphOutputDeviceAddress(device_context, graph);
   return graph->graph_id();
 }

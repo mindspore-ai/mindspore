@@ -219,7 +219,7 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
   MS_EXCEPTION_IF_NULL(context);
   {
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
-    if (!CopyInputData(context)) {
+    if (!CopyInputData(context, graph_)) {
       std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
@@ -289,15 +289,15 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   OnDebugFinish(context);
 }
 
-bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
+bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(graph_);
+  MS_EXCEPTION_IF_NULL(graph);
   if (device_contexts_.empty() || device_contexts_[0] == nullptr ||
       device_contexts_[0]->device_res_manager_ == nullptr) {
     MS_LOG(ERROR) << "Invalid device context for actor:" << GetAID();
     return false;
   }
-  auto &input_nodes = graph_->input_nodes();
+  auto &input_nodes = graph->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if (i >= node_device_tensors_.size()) {
       MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << node_device_tensors_.size() << ".";
@@ -323,6 +323,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
         // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for supporting
         // zero copy.
         node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
+        node_device_tensor->set_user_data(input_device_tensor->user_data());
         node_device_tensor->set_from_mem_pool(false);
         continue;
       }

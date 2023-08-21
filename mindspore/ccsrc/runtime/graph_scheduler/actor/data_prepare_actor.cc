@@ -716,7 +716,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
       CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
       continue;
     }
-    MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope() << ", output index: " << i;
+    MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << i;
     tensor->set_device_address(device_tensor);
     UpdateRefCount(device_tensor.get(), true);
 
@@ -926,6 +926,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
           device_tensor->host_shape());
         MS_EXCEPTION_IF_NULL(host_tensor_address);
+        MS_LOG(DEBUG) << "Create device tensor:" << host_tensor_address << " type:" << host_tensor_address->type_id();
         host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
       } else {
         host_tensor_address = device_tensor;

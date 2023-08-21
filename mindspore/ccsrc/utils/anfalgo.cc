@@ -396,6 +396,21 @@ size_t AnfAlgo::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   return result;
 }
 
+std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithOutMonadAndParameter(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(node);
+  std::vector<KernelWithIndex> real_output;
+  for (const auto &node_with_index : graph_outputs) {
+    MS_EXCEPTION_IF_NULL(node_with_index.first);
+    if (HasAbstractMonad(node_with_index.first) || node_with_index.first->isa<Parameter>() ||
+        node_with_index.first->isa<ValueNode>()) {
+      continue;
+    }
+    real_output.emplace_back(node_with_index);
+  }
+  return real_output;
+}
+
 std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithIndex(const AnfNodePtr &node) {
   auto ret = GetAllOutputWithIndexInner(node);
   std::map<AnfNodePtr, size_t> value_node_index;

@@ -1841,6 +1841,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
         pre_device_tensor->host_shape());
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
+    MS_LOG(DEBUG) << "Create device tensor:" << copy_actor->output_ << " type:" << copy_actor->output_->type_id();
     if (copy_actor->output_->GetDeviceType() != to_device_context->GetDeviceType()) {
       MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The device type is not equal, output device type:"
                                  << copy_actor->output_->GetDeviceType()
@@ -2640,6 +2641,8 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
+    MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
+                  << " type:" << other_type_device_tensor->type_id();
     SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
   }
 }
@@ -2682,6 +2685,8 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
       device_tensor->host_shape());
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
+    MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
+                  << " type:" << other_type_device_tensor->type_id();
     SchedulerHelper::AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
   }
 }
@@ -2736,7 +2741,8 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     new_device_tensor->set_user_data(sub_device_tensor->user_data());
     SchedulerHelper::AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);
     MS_LOG(INFO) << "Add device tensor store by root graph parameter:" << root_graph_parameter->fullname_with_scope()
-                 << ", backend node:" << backend_node->DebugString() << ", type:" << device_context->GetDeviceType();
+                 << ", backend node:" << backend_node->DebugString() << ", type:" << device_context->GetDeviceType()
+                 << " device_tensor:" << new_device_tensor;
   }
 }
 

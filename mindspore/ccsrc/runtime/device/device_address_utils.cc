@@ -77,6 +77,7 @@ void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const DeviceContext 
   // Create device for map tensor node and the ptr size is 1 byte.
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, 1, kOpFormat_DEFAULT, TypeId::kNumberTypeInt8, ShapeVector(), user_data);
+  MS_LOG(DEBUG) << "Create device tensor:" << device_address << " type:" << device_address->type_id();
   AnfAlgo::SetOutputAddr(device_address, index, node.get());
 }
 
@@ -153,7 +154,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
 
       device_address->set_from_persistent_mem(item->isa<Parameter>());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
-                    << " addr:" << device_address;
+                    << " addr:" << device_address << " type:" << device_address->type_id();
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -314,7 +315,7 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
         device_address->SetNodeIndex(kernel, i);
       }
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
-                    << " addr:" << device_address;
+                    << " addr:" << device_address << " type:" << device_address->type_id();
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
   }
@@ -344,7 +345,8 @@ void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *dev
       auto address_size = AnfAlgo::GetOutputTensorMemSize(output, i);
       auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(output, i));
-      MS_LOG(DEBUG) << "Create addr for node:" << output->DebugString() << " addr:" << device_address;
+      MS_LOG(DEBUG) << "Create addr for node:" << output->DebugString() << " addr:" << device_address
+                    << " type:" << device_address->type_id();
       AnfAlgo::SetOutputAddr(device_address, i, output.get());
     }
   }
@@ -643,6 +645,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id(),
     old_device_address->host_shape());
+  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
   MS_EXCEPTION_IF_NULL(new_device_address);
   new_device_address->set_original_ref_count(old_device_address->original_ref_count());
   new_device_address->ResetRefCount();

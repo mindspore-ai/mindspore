@@ -39,6 +39,7 @@
 #include "kernel/kernel_build_info.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
