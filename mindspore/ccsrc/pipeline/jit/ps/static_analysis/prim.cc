@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <regex>
 
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -2271,9 +2272,9 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
 }
 }  // namespace
 
-EvalResultPtr PrimitiveTransformEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
-                                                    const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
-                                                    const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr PrimitiveFunctionTransformEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
+                                                            const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                                                            const AnfNodeConfigPtr &out_conf) {
   // Convert Primitive to PrimitiveFunction.
   MS_EXCEPTION_IF_NULL(out_conf);
   auto cnode = out_conf->node()->cast<CNodePtr>();
@@ -2287,28 +2288,60 @@ EvalResultPtr PrimitiveTransformEvaluator::EvalPrim(const AnalysisEnginePtr &eng
     (void)new_inputs.emplace_back(cnode->input(i));
   }
   // Append PrimitivePy arguments to the inputs.
-  if (prim_->isa<PrimitivePy>()) {
-    auto prim_py = prim_->cast<PrimitivePyPtr>();
-    py::dict init_args =
-      python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_INIT_ARGS, prim_py->GetPyObj());
-    for (const auto &arg : init_args) {
-      auto arg_name = arg.first.cast<std::string>();
-      py::object arg_value = init_args[arg.first];
-      ValuePtr converted_ret = nullptr;
-      bool converted = parse::ConvertData(arg_value, &converted_ret);
-      if (!converted) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: " << arg_name << " in Primitive '"
-                                   << prim_->name() << "'.";
-      }
-      (void)CheckAndConvertUtils::ConvertAttrValueToInt(prim_->name(), arg_name, &converted_ret);
-      (void)new_inputs.emplace_back(NewValueNode(converted_ret));
+  auto prim_py = prim_->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  py::dict init_args =
+    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_INIT_ARGS, prim_py->GetPyObj());
+  for (const auto &arg : init_args) {
+    auto arg_name = arg.first.cast<std::string>();
+    py::object arg_value = init_args[arg.first];
+    ValuePtr converted_ret = nullptr;
+    bool converted = parse::ConvertData(arg_value, &converted_ret);
+    if (!converted) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: " << arg_name << " in Primitive '"
+                                 << prim_->name() << "'.";
     }
+    (void)CheckAndConvertUtils::ConvertAttrValueToInt(prim_->name(), arg_name, &converted_ret);
+    (void)new_inputs.emplace_back(NewValueNode(converted_ret));
   }
 
   auto new_cnode = fg->NewCNodeInOrder(new_inputs);
   auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   MS_LOG(DEBUG) << "Transform Primitive: " << prim_->ToString() << ", node: " << cnode->DebugString()
                 << ", new cnode:" << new_cnode->DebugString();
+  return engine->ForwardConfig(out_conf, new_conf);
+}
+
+EvalResultPtr PrimitiveFunctionPartialEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
+                                                          const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                                                          const AnfNodeConfigPtr &out_conf) {
+  // Convert {PartialAbstractClosure(PrimitiveFunction), a, b}(x, y) to {PrimitiveFunction, x, y, a, b}.
+  auto prim_abs_closure = primal_func_->cast<PrimitiveAbstractClosurePtr>();
+  MS_EXCEPTION_IF_NULL(prim_abs_closure);
+  auto prim_func = prim_abs_closure->prim()->cast<PrimitiveFunctionPtr>();
+  MS_EXCEPTION_IF_NULL(prim_func);
+  AnfNodePtrList new_inputs{NewValueNode(prim_func)};
+
+  MS_EXCEPTION_IF_NULL(out_conf);
+  auto cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (size_t i = 1; i < cnode->size(); i++) {
+    (void)new_inputs.emplace_back(cnode->input(i));
+  }
+  // Ignore the first input which is ClassType.
+  MS_EXCEPTION_IF_NULL(partial_node_);
+  auto partial_cnode = partial_node_->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(partial_cnode);
+  for (size_t i = 1; i < partial_cnode->size(); i++) {
+    (void)new_inputs.emplace_back(partial_cnode->input(i));
+  }
+
+  auto fg = out_conf->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto new_cnode = fg->NewCNodeInOrder(new_inputs);
+  auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+  MS_LOG(INFO) << "Convert Partial PrimitiveFunction: " << prim_func->ToString() << ". node: " << cnode->DebugString()
+               << ", new cnode:" << new_cnode->DebugString();
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
@@ -2963,21 +2996,6 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   }
 };
 
-bool IsContainUndetermined(const AbstractBasePtr &arg) {
-  MS_EXCEPTION_IF_NULL(arg);
-  if (arg->isa<AbstractSequence>()) {
-    auto seq_arg = arg->cast_ptr<AbstractSequence>();
-    return std::any_of(seq_arg->elements().begin(), seq_arg->elements().end(), IsContainUndetermined);
-  }
-
-  if (arg->isa<AbstractKeywordArg>()) {
-    auto kw_arg = arg->cast_ptr<AbstractKeywordArg>();
-    return IsContainUndetermined(kw_arg->get_arg());
-  }
-
-  return arg->isa<AbstractUndetermined>() && arg->IsBroaden();
-}
-
 class CreateInstanceEvaluator : public TransitionPrimEvaluator {
  public:
   CreateInstanceEvaluator() : TransitionPrimEvaluator("CreateInstanceEvaluator") {}
@@ -2989,8 +3007,43 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     if (args_abs_list.empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "'args_abs_list' should not be empty";
     }
-    constexpr size_t type_index = 0;
-    auto arg_class_type = args_abs_list[type_index];
+    constexpr size_t class_index = 0;
+    auto class_obj = GetPythonObject(args_abs_list[class_index]);
+    // Get the create instance obj's parameters, `params` may contain tuple(args, kwargs).
+    auto [params, is_prim_variable] = GetParameters(args_abs_list, class_obj);
+    if (is_prim_variable) {
+      return CreatePrimitiveInstanceWithVariableArgs(args_abs_list, class_obj, engine, out_conf);
+    }
+    // Create class instance.
+    auto obj = parse::data_converter::CreatePythonObject(class_obj, params);
+    if (py::isinstance<py::none>(obj)) {
+      MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_obj)
+                        << "` failed, only support to create 'Cell', 'Primitive' or "
+                        << "user-defined Class decorated with 'jit_class'.";
+    }
+
+    // Process the object.
+    MS_EXCEPTION_IF_NULL(out_conf->node());
+    TraceGuard guard(std::make_shared<TraceResolve>(out_conf->node()->debug_info()));
+    ValuePtr converted_res = nullptr;
+    bool converted = parse::ConvertData(obj, &converted_res, true);
+    if (!converted) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
+    }
+    MS_EXCEPTION_IF_NULL(converted_res);
+    // To check isolated side effect for the func graph who returns constant.
+    HandleSideEffect(obj, converted_res, engine, out_conf);
+
+    if (converted_res->isa<FuncGraph>()) {
+      AddToManager(engine, converted_res->cast<FuncGraphPtr>());
+    }
+    AbstractBasePtr res = ToAbstract(converted_res, AnalysisContext::DummyContext(), out_conf);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
+
+  py::object GetPythonObject(const AbstractBasePtr &arg_class_type) const {
     MS_EXCEPTION_IF_NULL(arg_class_type);
     TypePtr type = arg_class_type->GetTypeTrack();
     MS_EXCEPTION_IF_NULL(type);
@@ -3011,30 +3064,12 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
         << "CreateInstanceEvaluator the type_obj should be an object of ClassType or MsClassObject, but got "
         << type_obj->ToString() << ".";
     }
-    auto class_type = type_obj->obj();
     MS_LOG(DEBUG) << "Get class type: " << type_obj->ToString() << ".";
+    return type_obj->obj();
+  }
 
-    // Get the create instance obj's parameters, `params` may contain tuple(args, kwargs).
-    py::tuple params = GetParameters(args_abs_list);
-    // Create class instance.
-    auto obj = parse::data_converter::CreatePythonObject(class_type, params);
-    if (py::isinstance<py::none>(obj)) {
-      MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_type)
-                        << "` failed, only support to create \'Cell\', \'Primitive\' or "
-                        << "user-defined Class decorated with \'jit_class\'.";
-    }
-
-    // Process the object.
-    MS_EXCEPTION_IF_NULL(out_conf->node());
-    TraceGuard guard(std::make_shared<TraceResolve>(out_conf->node()->debug_info()));
-    ValuePtr converted_res = nullptr;
-    bool converted = parse::ConvertData(obj, &converted_res, true);
-    if (!converted) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
-    }
-    MS_EXCEPTION_IF_NULL(converted_res);
-
-    // To check isolated side effect for the func graph who returns constant.
+  void HandleSideEffect(const py::object &obj, const ValuePtr &converted_res, const AnalysisEnginePtr &engine,
+                        const AnfNodeConfigPtr &out_conf) const {
     if (engine->check_side_effect()) {
       MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", converted_res: " << converted_res->ToString();
       auto prim = GetValueWithoutDoSignature(converted_res)->cast<PrimitivePtr>();
@@ -3051,20 +3086,9 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
         }
       }
     }
-
-    if (converted_res->isa<FuncGraph>()) {
-      AddToManager(engine, converted_res->cast<FuncGraphPtr>());
-    }
-    AbstractBasePtr res = ToAbstract(converted_res, AnalysisContext::DummyContext(), out_conf);
-    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-    return infer_result;
   }
 
-  py::tuple GetParameters(const AbstractBasePtrList &args_abs_list) const {
-    if (args_abs_list.empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected arguments num, the min arguments num must be 1, but got 0.";
-    }
+  std::pair<py::tuple, bool> GetParameters(const AbstractBasePtrList &args_abs_list, const py::object &obj) const {
     // Exclude class type by minus 1;
     std::size_t params_size = args_abs_list.size() - 1;
     auto params = py::tuple(params_size);
@@ -3072,19 +3096,56 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       // Only support the Scalar parameters type. Bypass class type by offset with 1.
       auto arg = args_abs_list[i + 1];
       MS_EXCEPTION_IF_NULL(arg);
-      if (IsContainUndetermined(arg)) {
-        MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-        MS_EXCEPTION_IF_NULL(args_abs_list[0]->BuildValue());
-        MS_EXCEPTION(TypeError) << "The " << i << "th initializing input to create instance for "
-                                << args_abs_list[0]->BuildValue()->ToString()
+      auto param_value = arg->BuildValue();
+      MS_EXCEPTION_IF_NULL(param_value);
+      if (param_value == kValueAny) {
+        // If obj is a Primitive class and has variable arguments, just return and go through another process.
+        if (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG)) {
+          return {params, true};
+        }
+        MS_EXCEPTION(TypeError) << "The " << i << "th initializing input to create instance for " << py::str(obj)
                                 << " should be a constant, but got: " << arg->ToString();
       }
-      // Because the Tensor's AbstractTensor can't get value from GetValueTrack.
-      ValuePtr param_value = arg->BuildValue();
       py::object param = ValueToPyData(param_value);
       params[i] = param;
     }
-    return params;
+    return {params, false};
+  }
+
+  EvalResultPtr CreatePrimitiveInstanceWithVariableArgs(const AbstractBasePtrList &args_abs_list, const py::object &obj,
+                                                        const AnalysisEnginePtr &engine,
+                                                        const AnfNodeConfigPtr &out_conf) const {
+    // Create Primitive instance with variable arguments.
+    constexpr size_t class_type_index = 0;
+    ValuePtr value = args_abs_list[class_type_index]->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
+    auto class_type = value->cast<parse::ClassTypePtr>();
+    if (class_type == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Expect a ClassType, but got " << value->ToString();
+    }
+
+    // Get class name: "class 'ops.operation.OP'" -> "OP"
+    std::string class_type_name = class_type->name();
+    std::regex e("class '.*\\.(.*)'");
+    std::smatch result;
+    bool found = std::regex_search(class_type_name, result, e);
+    if (!found) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to get class name from `" << class_type_name << "`";
+    }
+    constexpr size_t match_index = 1;
+    std::string class_name = result.str(match_index);
+    MS_LOG(DEBUG) << "Create Primitive instance, convert " << class_type_name << " to " << class_name;
+    auto prim_func = std::make_shared<PrimitiveFunction>(class_name);
+    AbstractBasePtrList partial_args_abs_list;
+    // Ignore the first input which is ClassType.
+    for (size_t i = 1; i < args_abs_list.size(); i++) {
+      (void)partial_args_abs_list.emplace_back(args_abs_list[i]);
+    }
+    auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim_func);
+    auto ret_val =
+      std::make_shared<abstract::PartialAbstractClosure>(func_ptr, partial_args_abs_list, out_conf->node());
+    ret_val->set_is_primitive_function_partial(true);
+    return std::make_shared<EvalResult>(ret_val, std::make_shared<AttrValueMap>());
   }
 };
 

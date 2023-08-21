@@ -909,16 +909,16 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<SwitchEvaluator>();
   }
 
-  // Convert Primitive to PrimitiveFunction.
-  if (!prim->isa<PrimitiveFunction>()) {
-    return std::make_shared<PrimitiveTransformEvaluator>(prim);
+  // Convert PrimitivePy to PrimitiveFunction.
+  if (prim->isa<PrimitivePy>()) {
+    return std::make_shared<PrimitiveFunctionTransformEvaluator>(prim);
   }
 
   if (!IsPrimitiveEquals(prim, prim::kPrimMakeTuple) && !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
     if (eval_impl_opt.has_value()) {
       // Find prim infer function in the prim function map return a standard evaluator
-      // TODO: this will be deprecated when all ops are defined by yaml
+      // TODO(DynamicShape): this will be deprecated when all ops are defined by yaml
       auto eval_impl = eval_impl_opt.value();
       if (eval_impl.IsImplInferShapeAndType()) {
         return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
@@ -971,7 +971,8 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
     if (is_new) {
       iter->second = GetPrimEvaluator(primitive, shared_from_this());
       if (iter->second == nullptr) {
-        MS_LOG(EXCEPTION) << "Operator '" << primitive->name() << "' is invalid.";
+        MS_LOG(EXCEPTION) << "Operator '" << primitive->name()
+                          << "' is invalid, or no matching evaluator could be found.";
       }
     }
     return iter->second;
@@ -1056,8 +1057,13 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
   if (iter != constructors_app_.end()) {
     return iter->second;
   }
-  auto primal_evaluator = GetEvaluatorFor(primal_func);
-  auto partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
+  EvaluatorPtr partial_evaluator = nullptr;
+  if (func->is_primitive_function_partial()) {
+    partial_evaluator = std::make_shared<PrimitiveFunctionPartialEvaluator>(primal_func, func->node());
+  } else {
+    auto primal_evaluator = GetEvaluatorFor(primal_func);
+    partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
+  }
   auto result = constructors_app_.emplace(std::move(part_pair), std::move(partial_evaluator));
   return result.first->second;
 }

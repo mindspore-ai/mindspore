@@ -14,23 +14,66 @@
 # ============================================================================
 import numpy as np
 import mindspore as ms
-from mindspore import nn
-from mindspore import ops
-from mindspore import context
+from mindspore import nn, ops, mutable
 
 
-class TestNet(nn.Cell):
-    def __init__(self):
+class Net1(nn.Cell):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         super().__init__()
-        self.avg_pool = ops.AvgPool()
+        self.avg_pool = ops.AvgPool(kernel_size, strides, pad_mode, data_format)
 
     def construct(self, x):
         return self.avg_pool(x)
 
 
+class Net2(nn.Cell):
+    def construct(self, x, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        op = ops.AvgPool(kernel_size, strides, pad_mode, data_format)
+        return op(x)
+
+
 def test_avg_pool():
-    context.set_context(mode=context.GRAPH_MODE)
+    """
+    Feature: DynamicShape.
+    Description: Test AvgPool with dynamic shape.
+    Expectation: No exception.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = TestNet()
+    net = Net1()
     out = net(x)
+    print("out:", out)
+
+
+def test_avg_pool_create_instance_const_args():
+    """
+    Feature: DynamicShape.
+    Description: Create AvgPool instance with constant arguaments.
+    Expectation: No exception.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
+    kernel_size = 1
+    strides = 1
+    pad_mode = "valid"
+    data_format = "NCHW"
+    net = Net2()
+    out = net(x, kernel_size, strides, pad_mode, data_format)
+    print("out:", out)
+
+
+def test_avg_pool_create_instance_var_args():
+    """
+    Feature: DynamicShape.
+    Description: Create AvgPool instance with variable arguaments.
+    Expectation: No exception.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
+    kernel_size = mutable(1)
+    strides = mutable(1)
+    pad_mode = "valid"
+    data_format = "NCHW"
+    net = Net2()
+    out = net(x, kernel_size, strides, pad_mode, data_format)
     print("out:", out)

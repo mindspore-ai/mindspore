@@ -807,6 +807,10 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
   return primitive_data->obj;
 }
 
+PrimitiveFunction::PrimitiveFunction(const PrimitivePtr &prim) : Primitive(*prim) {}
+
+PrimitiveFunction::PrimitiveFunction(const std::string &name) : Primitive(name, false) {}
+
 abstract::AbstractBasePtr PrimitiveFunction::ToAbstract() {
   return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<PrimitiveFunction>(), nullptr);
 }

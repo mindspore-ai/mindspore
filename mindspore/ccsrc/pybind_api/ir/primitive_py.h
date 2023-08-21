@@ -162,7 +162,8 @@ class PrimitivePyAdapter {
 
 class PrimitiveFunction : public Primitive {
  public:
-  PrimitiveFunction(const PrimitivePtr &prim) : Primitive(*prim){};
+  explicit PrimitiveFunction(const PrimitivePtr &prim);
+  explicit PrimitiveFunction(const std::string &name);
   ~PrimitiveFunction() override = default;
   MS_DECLARE_PARENT(PrimitiveFunction, Primitive);
   bool operator==(const Value &other) const override;

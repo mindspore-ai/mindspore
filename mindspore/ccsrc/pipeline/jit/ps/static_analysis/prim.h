@@ -34,7 +34,7 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
-  StandardPrimEvaluator(const PrimitivePtr &primitive)
+  explicit StandardPrimEvaluator(const PrimitivePtr &primitive)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive) {}
   ~StandardPrimEvaluator() override = default;
   MS_DECLARE_PARENT(StandardPrimEvaluator, TrivialPrimEvaluator);
@@ -197,17 +197,33 @@ class SwitchLayerEvaluator final : public Evaluator {
   }
 };
 
-class PrimitiveTransformEvaluator : public TransitionPrimEvaluator {
+class PrimitiveFunctionTransformEvaluator : public TransitionPrimEvaluator {
  public:
-  explicit PrimitiveTransformEvaluator(const PrimitivePtr primitive)
-      : TransitionPrimEvaluator("PrimitiveTransformEvaluator"), prim_(primitive) {}
-  ~PrimitiveTransformEvaluator() override = default;
-  MS_DECLARE_PARENT(PrimitiveTransformEvaluator, TransitionPrimEvaluator)
+  explicit PrimitiveFunctionTransformEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("PrimitiveFunctionTransformEvaluator"), prim_(primitive) {}
+  ~PrimitiveFunctionTransformEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunctionTransformEvaluator, TransitionPrimEvaluator)
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 
  private:
   PrimitivePtr prim_;
+};
+
+class PrimitiveFunctionPartialEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit PrimitiveFunctionPartialEvaluator(const AbstractFunctionPtr &primal_func, const AnfNodePtr &partial_node)
+      : TransitionPrimEvaluator("PrimitiveFunctionPartialEvaluator"),
+        primal_func_(primal_func),
+        partial_node_(partial_node) {}
+  ~PrimitiveFunctionPartialEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunctionPartialEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  AbstractFunctionPtr primal_func_;
+  AnfNodePtr partial_node_;
 };
 
 class ConstexprEvaluator : public TransitionPrimEvaluator {

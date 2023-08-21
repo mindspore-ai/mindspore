@@ -315,8 +315,20 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] node The CNode this PartialAbstractClosure evaluated from.
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
 
+  /// \brief Get whether is partial primitive function.
+  ///
+  /// \return Whether is partial primitive function.
+  bool is_primitive_function_partial() const { return is_primitive_function_partial_; }
+
+  /// \brief Set whether is partial primitive function.
+  ///
+  /// \param[in] flag Whether is partial primitive function.
+  void set_is_primitive_function_partial(bool flag) { is_primitive_function_partial_ = flag; }
+
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
+    auto abs = std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
+    abs->set_is_primitive_function_partial(is_primitive_function_partial_);
+    return abs;
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -335,6 +347,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   AbstractBasePtrList args_abs_list_;
   // The ANFNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
+  bool is_primitive_function_partial_{false};
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 
