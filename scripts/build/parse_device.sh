@@ -60,7 +60,6 @@ parse_device()
       # building 310 package by giving specific -V 310 instruction
       if [[ "X$DEVICE_VERSION" == "X310" ]]; then
         ENABLE_ACL="on"
-        export ENABLE_AKG="off"
       # universal ascend package, building 910b package by giving specific -V 910b instruction
       elif [[ "X$DEVICE_VERSION" == "X910" || "X$DEVICE_VERSION" == "X910b" ]]; then
         export ENABLE_D="on"
@@ -74,6 +73,7 @@ parse_device()
         exit 1
       fi
       export DEVICE_VERSION=
+      export ENABLE_AKG="off"
     elif [[ "X$D" == "Xcpu" ]]; then
       export ENABLE_CPU="on"
       export ENABLE_MPI="on"
