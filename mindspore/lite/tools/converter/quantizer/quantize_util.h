@@ -50,6 +50,8 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
 
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims);
 
+int GetFollowedNodePreferredDim(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &dims);
+
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data);

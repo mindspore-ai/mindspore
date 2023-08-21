@@ -537,6 +537,26 @@ int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<in
   return 0;
 }
 
+int GetFollowedNodePreferredDim(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &dims) {
+  auto manager = mindspore::Manage(func_graph, true);
+  auto node_users = manager->node_users()[cnode];
+  if (node_users.empty()) {
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " cnode is isolated.";
+    return 0;
+  }
+  if (node_users.size() > 1) {
+    MS_LOG(WARNING) << "The cnode dont has only one followed node";
+    return 0;
+  }
+  auto node_user = node_users.begin();
+  if (!utils::isa<CNodePtr>(node_user->first)) {
+    MS_LOG(WARNING) << "The followed op: " << node_user->first->fullname_with_scope() << " is not cnode";
+    return 0;
+  }
+  auto node_user_cnode = utils::cast<CNodePtr>(node_user->first);
+  return GetPreferredDim(node_user_cnode, node_user->second - 1, dims);
+}
+
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims) {
   std::vector<int> shape;
   for (auto dim : dims) {
