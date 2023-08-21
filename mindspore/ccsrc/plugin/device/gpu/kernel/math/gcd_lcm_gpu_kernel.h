@@ -23,7 +23,7 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/gcd.h"
+#include "mindspore/core/ops/ops_func_impl/gcd.h"
 #include "mindspore/core/ops/lcm.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"

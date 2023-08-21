@@ -1,0 +1,10 @@
+#operator gcd
+gcd:
+    args:
+        x1:
+            dtype: tensor
+        x2:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
