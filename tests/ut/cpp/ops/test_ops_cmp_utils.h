@@ -57,6 +57,22 @@ static auto eltwise_op_default_cases = testing::Values(
 #define ELTWISE_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(op_name) \
   OP_FUNC_IMPL_TEST_DECLARE(op_name, EltwiseOpParams)         \
   OP_FUNC_IMPL_TEST_CASES(op_name, eltwise_op_default_cases);
+
+static auto binary_shape_equals_default_cases = testing::Values(
+    MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+    MultiInputOpParams{{{2, -1}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+    MultiInputOpParams{{{2, 3}, {2, -1}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+    MultiInputOpParams{{{2, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
+    MultiInputOpParams{{{-1, -1}, {2, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
+    MultiInputOpParams{{{-1, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+    MultiInputOpParams{{{-2}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+    MultiInputOpParams{{{-1, -1}, {-2}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+    MultiInputOpParams{{{-2}, {-2}}, {kFloat16, kFloat16}, {{-2}}, {kFloat16}, {}}
+);
+
+#define BINARY_SHAPE_EQUALS_TEST_WITH_DEFAULT_CASES(op_name) \
+  OP_FUNC_IMPL_TEST_DECLARE(op_name, MultiInputOpParams)         \
+  INSTANTIATE_TEST_CASE_P(Test##op_name, Test##op_name, binary_shape_equals_default_cases);
 }  // namespace ops
 }  // namespace mindspore
 

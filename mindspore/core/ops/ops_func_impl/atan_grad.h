@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ATAN_GRAD_H_
-#define MINDSPORE_CORE_OPS_ATAN_GRAD_H_
-#include <map>
-#include <memory>
-#include <string>
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ATAN_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ATAN_GRAD_H_
+
+#include "mindapi/base/macros.h"
+#include "ops/ops_func_impl/eltwise_grad_op.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAtanGrad = "AtanGrad";
-class MIND_API AtanGrad : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(AtanGrad);
-  AtanGrad() : BaseOperator(kNameAtanGrad) {}
-};
+class MIND_API AtanGradFuncImpl : public EltwiseGradOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ATAN_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ATAN_GRAD_H_

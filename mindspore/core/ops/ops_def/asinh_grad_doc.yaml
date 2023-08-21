@@ -1,0 +1,3 @@
+asinh_grad:
+    description: |
+        Performs grad of Asinh operation.

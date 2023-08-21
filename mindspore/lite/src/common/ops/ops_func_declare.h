@@ -244,7 +244,7 @@
 #include "ops/is_finite.h"
 #include "ops/lin_space.h"
 #include "ops/uniform_real.h"
-#include "ops/grad/abs_grad.h"
+#include "ops/ops_func_impl/abs_grad.h"
 #include "ops/splice.h"
 #include "ops/log_softmax.h"
 #include "ops/call.h"
