@@ -86,6 +86,14 @@ class FlashAttentionBwd(FlashAttention):
             input_gm_list.append(self.alibi_mask_gm)
         return input_gm_list
 
+    def prepare_global_ones(self):
+        """Prepare global ones tensor in L1 for cube impl row_sum"""
+        self.ones_l1 = self.tik_instance.Tensor(FP16, (self.d, 16), name="ones_l1", scope=L1)
+        with self.tik_instance.new_stmt_scope(disable_sync=False):
+            ones_ub = self.tik_instance.Tensor(FP16, (self.d, 16), name="ones_ub", scope=UB)
+            self.tik_instance.h_duplicate(ones_ub, 1.0)
+            self.cont_data_mv_1_bust(dst=self.ones_l1, src=ones_ub, burst=self.d)
+
     def compute_Pij(self, Qi_l1_K1MK0_ed, KjT_l1_K1NK0_ed, m, k, n, lm_gm_offset, attn_mask_gm_offset,
                     dropout_mask_gm_offset, alibi_mask_gm_offset):
         """Refer to Algorithm 4 line11-14 in FlashAttention implement Pij computation"""
@@ -155,11 +163,10 @@ class FlashAttentionBwd(FlashAttention):
                                         sid=0, nburst=self.N1, burst=q_blk_height * self.N0 // 16,
                                         src_stride=(self.Nq - q_blk_height) * self.N0 // 16, dst_stride=0)
             self.tik_instance.h_mul(Oi_ub, dOi_ub, Oi_ub)
-            dOi_Oi_l1 = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_aligned, self.N0),
-                                                 name="dOi_Oi_l1", scope=L1)
-
-            self.cont_data_mv_1_bust(dst=dOi_Oi_l1, src=Oi_ub, burst=q_blk_height_aligned * self.d // 16)
-            self.tik_ops_utils.row_sum_cube_impl(dOi_Oi_l1, Di_ub, q_blk_height,
+            dOi_Oi_l1_K1MK0 = self.tik_instance.Tensor(FP16, (self.d // self.N0, q_blk_height_aligned, self.N0),
+                                                       name="dOi_Oi_l1_K1MK0", scope=L1)
+            self.cont_data_mv_1_bust(dst=dOi_Oi_l1_K1MK0, src=Oi_ub, burst=q_blk_height_aligned * self.d // 16)
+            self.tik_ops_utils.row_sum_cube_impl(dOi_Oi_l1_K1MK0, self.ones_l1, Di_ub, q_blk_height,
                                                  self.actual_d, precision_type=FP16)
 
     def compute_dSij(self, Pij_ub, dOi_l1_K1MK0_ed, VjT_K1NK0_ed, Di_ub, kv_blk_height, q_blk_height,
