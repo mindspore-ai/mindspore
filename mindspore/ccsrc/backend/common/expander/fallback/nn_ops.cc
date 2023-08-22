@@ -39,14 +39,27 @@ REG_FALLBACK_BUILDER("SiLUGrad").SetBody(BODYFUNC(ib) {
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto &x_shape = inputs.at(kIndex0);
+    auto &w_shape = inputs.at(kIndex1);
     ShapeVector reshape_x_shape = {-1, x_shape.back()};
-    ShapeVector reshape_ret_shape = x_shape;
-    reshape_ret_shape.back() = -1;
-    return {reshape_x_shape, reshape_ret_shape};
+    ShapeVector reshape_w_shape = {-1, w_shape.back()};
+    ShapeVector reshape_ret_shape;
+    if (x_shape.size() != 1) {
+      reshape_ret_shape = x_shape;
+      reshape_ret_shape.back() = -1;
+    }
+    return {reshape_x_shape, reshape_w_shape, reshape_ret_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     constexpr const int64_t kRank2 = 2;
-    return {kRank2, IsDynamicRank(inputs[0]) ? -1LL : static_cast<int64_t>(inputs[0].size())};
+    int64_t ret_size = -1LL;
+    if (!IsDynamicRank(inputs[0])) {
+      if (inputs[0].size() == 1) {
+        ret_size = 0;
+      } else {
+        ret_size = inputs[0].size();
+      }
+    }
+    return {kRank2, kRank2, ret_size};
   });
 
 REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
@@ -54,19 +67,21 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   NodePtrList reshape_shapes;
-  bool need_reshape = (IsDynamicRank(x->shape()) || x->shape().size() != kRank2);
+  bool is_dynamic_rank = IsDynamicRank(x->shape()) || IsDynamicRank(w->shape());
+  bool need_reshape = (is_dynamic_rank || x->shape().size() != kRank2 || w->shape().size() != kRank2);
   if (need_reshape) {
-    reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x});
+    reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x, w});
     x = ib->Reshape(x, reshape_shapes[kIndex0]);
+    w = ib->Reshape(w, reshape_shapes[kIndex1]);
   }
   auto ret = ib->MatMul(x, w, false, true);
   auto has_bias = ib->GetAttr<bool>("has_bias");
   if (has_bias) {
     auto b = ib->GetInput(kIndex2);
-    ret = ib->Emit("BiasAdd", {ret, b}, {{"format", MakeValue(kOpFormat_NCHW)}});
+    ret = ib->Add(ret, b);
   }
   if (need_reshape) {
-    ret = ib->Reshape(ret, reshape_shapes[kIndex1]);
+    ret = ib->Reshape(ret, reshape_shapes[kIndex2]);
   }
   return {ret};
 });

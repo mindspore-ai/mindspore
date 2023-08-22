@@ -72,9 +72,17 @@ int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   auto input1_shape = inputs[kIndex0]->GetShapeVector();
 
   auto dims = output_shape.size();
+  if (dims == 0) {
+    m_ = n_ = 1;
+    k_ = input1_shape[0];
+    lda_ = SizeToInt(k_);
+    ldb_ = SizeToInt(k_);
+    ldc_ = SizeToInt(n_);
+    return KRET_OK;
+  }
   if (dims < kDimLowerLimit) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2, but got "
-                      << dims;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2"
+                      << " if the dim of w is 1, but got " << dims;
   }
 
   m_ = output_shape[dims - kDimOffset2];

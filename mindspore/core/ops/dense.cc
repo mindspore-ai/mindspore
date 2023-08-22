@@ -72,30 +72,54 @@ class DenseInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(w->shape());
     auto x_shp = x->shape()->shape();
     auto w_shp = w->shape()->shape();
+    ShapeVector ret_shape;
     if (IsDynamicRank(x_shp) || IsDynamicRank(w_shp)) {
-      ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
+      ret_shape.push_back(abstract::Shape::kShapeRankAny);
       return std::make_shared<abstract::Shape>(ret_shape);
     }
 
-    const size_t W_SHAPE_SIZE = 2;
-    if (w_shp.size() != W_SHAPE_SIZE) {
-      MS_EXCEPTION(ValueError) << "The size of w should be equal to 2.";
-    }
-    if (x_shp.size() < W_SHAPE_SIZE) {
-      MS_EXCEPTION(ValueError) << "The size of x should be larger than 1.";
-    }
-
     bool has_bias = false;
-    if (input_args.size() == 3) {
+    const size_t kZero = 0;
+    const size_t kOne = 1;
+    const size_t kTwo = 2;
+    const size_t kThree = 3;
+    if (input_args.size() == kThree) {
       auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
       has_bias = b != nullptr;
+    }
+    if (w_shp.size() == kOne) {
+      const auto kDimW = " if the dim of w is 1.";
+      if (x_shp.size() != kOne) {
+        MS_EXCEPTION(ValueError) << "The dim of x should be equal to 1" << kDimW;
+      }
+      if (x_shp[0] != w_shp[0]) {
+        MS_EXCEPTION(ValueError) << "The value of x.shape[0] should be equal to w.shape[0]" << kDimW;
+      }
       if (has_bias) {
+        auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
         MS_EXCEPTION_IF_NULL(b->shape());
         auto b_shp = b->shape()->shape();
-        const size_t B_SHAPE_SIZE = 1;
-        if (b_shp.size() != B_SHAPE_SIZE) {
-          MS_EXCEPTION(ValueError) << "The size of b should be equal to 1.";
+        if (b_shp.size() != kZero) {
+          MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0" << kDimW;
         }
+      }
+      return std::make_shared<abstract::Shape>(ret_shape);
+    }
+
+    const auto kDimW = " if the dim of w is 2.";
+    if (w_shp.size() != kTwo) {
+      MS_EXCEPTION(ValueError) << "The dim of w should be equal to 1 or 2.";
+    }
+    if (x_shp.size() < kTwo) {
+      MS_EXCEPTION(ValueError) << "The dim of x should be larger than 1" << kDimW;
+    }
+
+    if (has_bias) {
+      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
+      MS_EXCEPTION_IF_NULL(b->shape());
+      auto b_shp = b->shape()->shape();
+      if (b_shp.size() != kZero && b_shp.size() != kOne) {
+        MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0 or 1" << kDimW;
       }
     }
     (void)primitive->SetAttrs({{"has_bias", MakeValue(has_bias)}});
@@ -104,10 +128,9 @@ class DenseInfer : public abstract::OpInferBase {
     auto w_row = w_shp[1];
     if (x_col != -1 && w_row != -1 && x_col != w_row && x_col >= 0 && w_row >= 0) {
       MS_EXCEPTION(ValueError) << "Dense shape error, got x_col: " << x_col << ", w_row: " << w_row
-                               << ". In Dense x_col and w_row should be equal.";
+                               << ". In Dense x_col and w_row should be equal." << kDimW;
     }
 
-    ShapeVector ret_shape;
     ret_shape.assign(x_shp.begin(), x_shp.end() - 1);
     ret_shape.push_back(w_shp[0]);
     return std::make_shared<abstract::Shape>(ret_shape);
