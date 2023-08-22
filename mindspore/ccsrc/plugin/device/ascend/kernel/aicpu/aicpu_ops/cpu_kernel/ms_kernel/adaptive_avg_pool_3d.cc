@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "adaptive_avg_pool_3d.h"
+#include "cpu_kernel/ms_kernel/adaptive_avg_pool_3d.h"
 
 #include <cassert>
 #include <cmath>
+#include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace {
 const char *kAdaptiveAvgPool3d = "AdaptiveAvgPool3d";
@@ -69,7 +68,7 @@ inline int EndIndex(int offset, int out_size, int in_size) {
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool3dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) {
     for (auto d = start; d < end; d++) {
       // calculate average
@@ -125,7 +124,7 @@ uint32_t AdaptiveAvgPool3dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALA
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dOutTemplate(CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool3dOutTemplate(const CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
 
   auto input_shape_ptr = input.GetTensorShape();

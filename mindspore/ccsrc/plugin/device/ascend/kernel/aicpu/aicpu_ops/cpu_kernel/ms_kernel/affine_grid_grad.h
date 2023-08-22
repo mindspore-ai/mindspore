@@ -18,8 +18,8 @@
 
 #include <Eigen/Dense>
 #include <vector>
-#include "cpu_ops_kernel.h"
-#include "cpu_types.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/bcast.h"
 
 using Eigen::MatrixXd;
@@ -35,22 +35,22 @@ class AffineGridGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T0>
-  uint32_t AffineGridGradCheck(CpuKernelContext &ctx);
+  uint32_t AffineGridGradCheck(const CpuKernelContext &ctx);
   template <typename T, typename T0>
-  uint32_t AffineGridGradCompute(CpuKernelContext &ctx);
+  uint32_t AffineGridGradCompute(const CpuKernelContext &ctx);
   template <typename T, typename T0>
-  uint32_t AffineGridGradCompute_4D(CpuKernelContext &ctx, bool align_corners);
+  uint32_t AffineGridGradCompute_4D(const CpuKernelContext &ctx, bool align_corners);
   template <typename T0>
-  Eigen::MatrixXf make_base_grid_4D(CpuKernelContext &ctx, Eigen::VectorXd vecX, Eigen::VectorXd vecY);
+  Eigen::MatrixXf make_base_grid_4D(const CpuKernelContext &ctx, Eigen::VectorXd vecX, Eigen::VectorXd vecY);
   template <typename T, typename T0>
-  uint32_t DoCompute_4D(CpuKernelContext &ctx, Eigen::MatrixXf all);
+  uint32_t DoCompute_4D(const CpuKernelContext &ctx, Eigen::MatrixXf all);
   template <typename T, typename T0>
-  uint32_t AffineGridGradCompute_5D(CpuKernelContext &ctx, bool align_corners);
+  uint32_t AffineGridGradCompute_5D(const CpuKernelContext &ctx, bool align_corners);
   template <typename T0>
-  Eigen::MatrixXf make_base_grid_5D(CpuKernelContext &ctx, Eigen::VectorXd vecX, Eigen::VectorXd vecY,
+  Eigen::MatrixXf make_base_grid_5D(const CpuKernelContext &ctx, Eigen::VectorXd vecX, Eigen::VectorXd vecY,
                                     Eigen::VectorXd vecZ);
   template <typename T, typename T0>
-  uint32_t DoCompute_5D(CpuKernelContext &ctx, Eigen::MatrixXf all);
+  uint32_t DoCompute_5D(const CpuKernelContext &ctx, Eigen::MatrixXf all);
 };
 }  // namespace aicpu
 #endif

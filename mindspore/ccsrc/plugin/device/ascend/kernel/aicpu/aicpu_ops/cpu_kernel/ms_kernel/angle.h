@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ANGLE_H_
 #define AICPU_KERNELS_NORMALIZED_ANGLE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class AngleCpuKernel : public CpuKernel {
@@ -29,10 +29,10 @@ class AngleCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AngleCheck(CpuKernelContext &ctx);
+  uint32_t AngleCheck(const CpuKernelContext &ctx);
 
   template <typename T, typename t>
-  uint32_t AngleCompute(CpuKernelContext &ctx);
+  uint32_t AngleCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

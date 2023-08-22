@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "bartlett_window.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/bartlett_window.h"
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -59,7 +60,7 @@ uint32_t BartlettWindowCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t BartlettWindowCpuKernel::BartlettWindowCheck(CpuKernelContext &ctx) {
+uint32_t BartlettWindowCpuKernel::BartlettWindowCheck(const CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_info = ctx.Output(0);
   DataType input_type = input_info->GetDataType();
@@ -84,14 +85,14 @@ uint32_t BartlettWindowCpuKernel::BartlettWindowCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename DT_VAL>
-uint32_t BartlettWindowCpuKernel::BartlettWindowCompute(CpuKernelContext &ctx) {
+uint32_t BartlettWindowCpuKernel::BartlettWindowCompute(const CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_info = ctx.Output(0);
   auto input_x = reinterpret_cast<T *>(input_info->GetData());
   auto output_y = reinterpret_cast<DT_VAL *>(output_info->GetData());
   AttrValue *attr_per = ctx.GetAttr("periodic");
   bool attr_per_value = (attr_per == nullptr) ? true : attr_per->GetBool();
-  const int64_t window_length = (*input_x);
+  const int64_t window_length = static_cast<int64_t>(*input_x);
 
   if (*input_x == 1) {
     *output_y = static_cast<DT_VAL>(1.);

@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "argmin_with_value.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/argmin_with_value.h"
+#include <vector>
+#include <string>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -28,7 +30,7 @@ const char *kArgMinWithValue = "ArgMinWithValue";
 
 namespace aicpu {
 template <class T>
-uint32_t ExecArgMinWithValue(CpuKernelContext &ctx) {
+uint32_t ExecArgMinWithValue(const CpuKernelContext &ctx) {
   // Get Tensors
   Tensor *input_tensor = ctx.Input(kFirstInputIndex);
   Tensor *indice_tensor = ctx.Output(kFirstOutputIndex);

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "cpu_kernel/ms_kernel/adaptive_avg_pool_2d.h"
-
+#include <vector>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace {
 const char *kAdaptiveAvgPool2d = "AdaptiveAvgPool2D";
@@ -63,7 +61,7 @@ struct AdaptiveCalcArgs {
 
 namespace aicpu {
 template <typename SCALAR_T>
-SCALAR_T ComputeSum(int64_t span_h, int64_t span_w, SCALAR_T *in_point, AdaptiveCalcArgs<SCALAR_T> &args) {
+SCALAR_T ComputeSum(int64_t span_h, int64_t span_w, SCALAR_T *in_point, const AdaptiveCalcArgs<SCALAR_T> &args) {
   SCALAR_T sum = static_cast<SCALAR_T>(0.);
   for (int in_h = 0; in_h < span_h; in_h++) {
     for (int in_w = 0; in_w < span_w; in_w++) {
@@ -104,14 +102,14 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T> 
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool2dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) { ComputeSingleThread(start, end, args); };
   SWITCH_PARALLEL(shard_frame, args.size_d, num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
   auto input_shape_ptr = input.GetTensorShape();
   KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input 0 shape failed.");

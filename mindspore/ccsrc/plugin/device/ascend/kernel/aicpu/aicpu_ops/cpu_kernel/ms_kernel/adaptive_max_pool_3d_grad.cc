@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "adaptive_max_pool_3d_grad.h"
+#include "cpu_kernel/ms_kernel/adaptive_max_pool_3d_grad.h"
 
 #include <algorithm>
 #include <iostream>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace {
 const char *kAdaptiveMaxPool3dGrad = "AdaptiveMaxPool3dGrad";
@@ -189,12 +190,13 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCheck(CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCheck(const CpuKernelContext &ctx) {
   auto input_grad = ctx.Input(0);
   auto input_x = ctx.Input(1);
   auto input_argmax = ctx.Input(2);
   auto output = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "AdaptiveMaxPool3dGrad check params failed.");
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                      "AdaptiveMaxPool3dGrad check params failed.");
 
   const int64_t dim_num = input_x->GetTensorShape()->GetDims();
   KERNEL_CHECK_FALSE(dim_num == 4 || dim_num == 5, KERNEL_STATUS_PARAM_INVALID,
@@ -219,7 +221,7 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCheck(CpuKernelCon
 }
 
 template <typename T1, typename T2>
-uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCompute(CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCompute(const CpuKernelContext &ctx) {
   auto input_grad = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input_argmax = reinterpret_cast<int32_t *>(ctx.Input(2)->GetData());
   auto output = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());

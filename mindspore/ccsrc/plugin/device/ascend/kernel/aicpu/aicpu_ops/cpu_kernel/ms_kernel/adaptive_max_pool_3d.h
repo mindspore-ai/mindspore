@@ -16,7 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_H_
 #define AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include <vector>
 
 namespace aicpu {
 
@@ -29,9 +30,9 @@ class AdaptiveMaxPool3dCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AdaptiveMaxPool3dCheckAndSetShape(CpuKernelContext &ctx);
+  uint32_t AdaptiveMaxPool3dCheckAndSetShape(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t AdaptiveMaxPool3dCompute(CpuKernelContext &ctx);
+  uint32_t AdaptiveMaxPool3dCompute(const CpuKernelContext &ctx);
   int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index);
 };
 }  // namespace aicpu

@@ -18,11 +18,11 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADJUST_SATURATION_H_
 #define AICPU_KERNELS_NORMALIZED_ADJUST_SATURATION_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class AdjustSaturationCpuKernel final : public CpuKernel {
-  virtual std::uint32_t Compute(CpuKernelContext &ctx) override final;
+  virtual std::uint32_t Compute(CpuKernelContext &ctx) final;
 };
 }  // namespace aicpu
 #endif

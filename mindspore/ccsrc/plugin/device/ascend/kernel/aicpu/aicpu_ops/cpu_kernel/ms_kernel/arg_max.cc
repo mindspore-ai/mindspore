@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "arg_max.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/arg_max.h"
+#include <vector>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -102,41 +104,41 @@ uint32_t ArgMaxCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2, typename T3>
-uint32_t ArgMaxCpuKernel::ArgMaxCompute(CpuKernelContext &ctx) {
+uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   // get x
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   auto input_shape = input_data->GetTensorShape();
   std::vector<int64_t> dims = input_shape->GetDimSizes();
-  const int32_t dims_num = input_shape->GetDims();
-  int64_t dims_addr[dims_num];
+  const int32_t kDimsNum = input_shape->GetDims();
+  int64_t dims_addr[kDimsNum];
   int64_t tmp0 = 1;
-  for (int32_t i = dims_num - 1; i > -1; i--) {
+  for (int32_t i = kDimsNum - 1; i > -1; i--) {
     dims_addr[i] = tmp0;
     tmp0 *= dims[i];
   }
   // get dimension
   Tensor *axes_data = ctx.Input(1);
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
-  if (axes_data_addr[0] > dims_num - 1 || axes_data_addr[0] < -dims_num) {
-    KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -dims_num, dims_num - 1,
+  if (axes_data_addr[0] > kDimsNum - 1 || axes_data_addr[0] < -kDimsNum) {
+    KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum, kDimsNum - 1,
                      axes_data_addr[0]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (axes_data_addr[0] < 0) {
-    axes_data_addr[0] += dims_num;
+    axes_data_addr[0] += kDimsNum;
   }
   // get y
   Tensor *output_data = ctx.Output(0);
   auto output_data_addr = reinterpret_cast<T3 *>(output_data->GetData());
   int64_t output_data_num = output_data->NumElements();
   if (output_data_num * sizeof(T3) < kDataSize) {
-    int64_t output_seq[dims_num];
+    int64_t output_seq[kDimsNum];
     output_seq[axes_data_addr[0]] = 0;
     for (int64_t i = 0; i < output_data_num; i++) {
       int64_t tmp = i;
       int64_t addr_base = 0;
-      for (int64_t j = dims_num - 1; j > -1; j--) {
+      for (int64_t j = kDimsNum - 1; j > -1; j--) {
         if (j == axes_data_addr[0]) {
           continue;
         }
@@ -164,11 +166,11 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(CpuKernelContext &ctx) {
     }
     auto shard_compute = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        int64_t output_seq[dims_num];
+        int64_t output_seq[kDimsNum];
         output_seq[axes_data_addr[0]] = 0;
         int64_t tmp = i;
         int64_t addr_base = 0;
-        for (int64_t j = dims_num - 1; j > -1; j--) {
+        for (int64_t j = kDimsNum - 1; j > -1; j--) {
           if (j == axes_data_addr[0]) {
             continue;
           }

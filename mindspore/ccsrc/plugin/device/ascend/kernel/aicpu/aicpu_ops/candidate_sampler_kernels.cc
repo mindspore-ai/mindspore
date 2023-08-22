@@ -104,12 +104,14 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
   std::transform(sampled_candidate.begin(), sampled_candidate.end(), sampled_candidate_raw.begin(),
                  [&](int64_t x) { return static_cast<T>(x); });
   int true_count_size = batch_size * num_true_ * sizeof(float);
-  int ret1 = memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(T),
-                      (void *)&sampled_candidate_raw.front(), sampled_candidate_raw.size() * sizeof(T));
-  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[4]), true_count_size, (void *)&true_expected_count.front(),
-                      true_count_size);
-  int ret3 = memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), num_sampled_ * sizeof(float),
-                      (void *)&sampled_expected_count.front(), sampled_expected_count.size() * sizeof(float));
+  int ret1 =
+    memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(T),
+             reinterpret_cast<void *>(&sampled_candidate_raw.front()), sampled_candidate_raw.size() * sizeof(T));
+  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[4]), true_count_size,
+                      reinterpret_cast<void *>(&true_expected_count.front()), true_count_size);
+  int ret3 =
+    memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), num_sampled_ * sizeof(float),
+             reinterpret_cast<void *>(&sampled_expected_count.front()), sampled_expected_count.size() * sizeof(float));
   if (ret1 < 0 || ret2 < 0 || ret3 < 0) {
     AICPU_LOGE("memcpy_s failed!");
     return kAicpuKernelStateFailed;

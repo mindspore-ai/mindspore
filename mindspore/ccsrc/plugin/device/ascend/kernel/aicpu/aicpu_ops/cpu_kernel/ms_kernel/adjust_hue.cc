@@ -15,16 +15,19 @@
  * limitations under the License.
  */
 
-#include "adjust_hue.h"
+#include "cpu_kernel/ms_kernel/adjust_hue.h"
 
 #include <unsupported/Eigen/CXX11/Tensor>
-
+#include <algorithm>
+#include <memory>
 #include <iostream>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
+
 namespace {
 const char *kAdjustHue = "AdjustHue";
 const std::int64_t kAdjustHueParallelNum = 8 * 1024;
@@ -70,8 +73,9 @@ inline std::uint32_t ExtraCheckAdjustHue(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustHue(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
-  return NormalCheck(ctx, kAdjustHueTwo, kAdjustHueOne) ? KERNEL_STATUS_PARAM_INVALID : ExtraCheckAdjustHue(ctx);
+inline std::uint32_t CheckAdjustHue(const CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
+  return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAdjustHueTwo, kAdjustHueOne) ? KERNEL_STATUS_PARAM_INVALID
+                                                                                        : ExtraCheckAdjustHue(ctx);
 }
 }  // namespace detail
 
@@ -230,7 +234,7 @@ RgbTuple hsv2rgb(const float h, const float s, const float v) {
 }
 
 template <typename T>
-uint32_t AdjustHueCpuKernel::DoCompute(CpuKernelContext &ctx, const ComputeOptions &options) {
+uint32_t AdjustHueCpuKernel::DoCompute(const CpuKernelContext &ctx, const ComputeOptions &options) {
   const Tensor *input = options.input;
   const Tensor *delta = options.delta;
   Tensor *output = options.output;
@@ -277,7 +281,7 @@ uint32_t AdjustHueCpuKernel::DoCompute(CpuKernelContext &ctx, const ComputeOptio
 }
 
 template <typename T>
-uint32_t AdjustHueCpuKernel::DoComputeHalf(CpuKernelContext &ctx, const ComputeOptions &options) {
+uint32_t AdjustHueCpuKernel::DoComputeHalf(const CpuKernelContext &ctx, const ComputeOptions &options) {
   const Tensor *input = options.input;
   const Tensor *delta = options.delta;
   Tensor *output = options.output;

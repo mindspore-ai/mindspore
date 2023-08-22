@@ -1,12 +1,29 @@
-#include "avgpoolgrad.h"
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cpu_kernel/ms_kernel/avgpoolgrad.h"
 
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
-
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace {
 const char *AVGPOOLGRAD = "AvgPoolGrad";
@@ -67,13 +84,14 @@ uint32_t GetOutputSize(int64_t input_size, int64_t kernel_size, int64_t stride, 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CheckAvgPoolGrad(CpuKernelContext &ctx) {
+uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
   // Check whether input or output is nullptr
   Tensor *tensor_in_shape = ctx.Input(0);
   Tensor *out_backprop = ctx.Input(1);
   const std::vector<std::string> attr = {"ksize", "strides", "padding"};
 
-  KERNEL_CHECK_FALSE(NormalCheck(ctx, kAvgPoolGradInputNum, kAvgPoolGradOutputNum, attr) == KERNEL_STATUS_OK,
+  KERNEL_CHECK_FALSE(NormalCheck(const_cast<CpuKernelContext &>(ctx), kAvgPoolGradInputNum, kAvgPoolGradOutputNum,
+                                 attr) == KERNEL_STATUS_OK,
                      KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] NormalCheck input and output failed.");
 
   // For avgpooling, tensor_in_shape should have 1 dimension, and 4 elements.
@@ -114,10 +132,12 @@ uint32_t CheckAvgPoolGrad(CpuKernelContext &ctx) {
   // check data format string, optional
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
   std::string data_format_NCHW("NCHW"), data_format_NHWC("NHWC");
+  std::string data_format;
+
   if (attr_data_format == nullptr) {
-    std::string data_format = data_format_NHWC;
+    data_format = data_format_NHWC;
   } else {
-    std::string data_format = attr_data_format->GetString();
+    data_format = attr_data_format->GetString();
     bool data_format_cond = (data_format_NCHW == data_format) || (data_format_NHWC == data_format);
     if (!data_format_cond) {
       KERNEL_LOG_ERROR(
@@ -133,7 +153,7 @@ uint32_t CheckAvgPoolGrad(CpuKernelContext &ctx) {
 }
 
 template <class T>
-uint32_t ComputeAvgPoolGradImpl(CpuKernelContext &ctx) {
+uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
   Tensor *tensor_in_shape = ctx.Input(0);
   EigenTensor tensor_in_shape_eigen_tensor(tensor_in_shape, tensor_in_shape->GetData());
   Tensor *out_backprop = ctx.Input(1);
@@ -177,7 +197,7 @@ uint32_t ComputeAvgPoolGradImpl(CpuKernelContext &ctx) {
     out_backprop_rows = out_backprop->GetTensorShape()->GetDimSize(2);
     out_backprop_cols = out_backprop->GetTensorShape()->GetDimSize(3);
 
-    dims = (int32_t *)tensor_in_shape->GetData();
+    dims = reinterpret_cast<int32_t *>(tensor_in_shape->GetData());
     in_rows = static_cast<int64_t>(*(dims + 2));
     in_cols = static_cast<int64_t>(*(dims + 3));
 
@@ -194,7 +214,7 @@ uint32_t ComputeAvgPoolGradImpl(CpuKernelContext &ctx) {
     out_backprop_cols = out_backprop->GetTensorShape()->GetDimSize(2);
     out_backprop_depth = out_backprop->GetTensorShape()->GetDimSize(3);
 
-    dims = (int *)tensor_in_shape->GetData();
+    dims = reinterpret_cast<int *>(tensor_in_shape->GetData());
     in_rows = static_cast<int64_t>(*(dims + 1));
     in_cols = static_cast<int64_t>(*(dims + 2));
 

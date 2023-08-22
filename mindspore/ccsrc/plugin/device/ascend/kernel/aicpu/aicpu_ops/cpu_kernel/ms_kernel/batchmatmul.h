@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_HOST_BATCHMATMUL_H_
 #define AICPU_KERNELS_HOST_BATCHMATMUL_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class BatchMatMulCpuKernel : public CpuKernel {
@@ -28,7 +28,7 @@ class BatchMatMulCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
