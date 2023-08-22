@@ -25,7 +25,9 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_info.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
+#ifdef ENABLE_AKG
 #include "plugin/device/ascend/kernel/akg/akg_kernel_metadata.h"
+#endif
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"
@@ -336,7 +338,12 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
 
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:
+#ifdef ENABLE_AKG
       AkgMetadataInfo(kernel_node, kernel_info_list);
+#else
+      MS_LOG(EXCEPTION) << "Not supported AKG kernel: " << kernel_node->fullname_with_scope()
+                        << " because ENABLE_AKG is not defined";
+#endif
       break;
     default:
       KernelQueryAll(kernel_node, kernel_info_list);

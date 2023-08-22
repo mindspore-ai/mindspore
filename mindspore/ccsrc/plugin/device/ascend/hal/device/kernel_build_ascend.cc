@@ -26,7 +26,9 @@
 #include "ops/conv_pool_ops.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
+#ifdef ENABLE_AKG
 #include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_build.h"
+#endif
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
@@ -146,10 +148,14 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   }
   bool akg_ret = true;
   if (!akg_nodes.empty()) {
+#ifdef ENABLE_AKG
     kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
     profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAkgKernel_AkgAscendKernelBuild", 0, 0, 0);
     akg_ret = akg_ascend_kernel_builder.SingleOpParallelBuild(akg_nodes);
     profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAkgKernel_AkgAscendKernelBuild", 0, 0, 1);
+#else
+    MS_LOG(EXCEPTION) << "Can not compile AKG nodes because ENABLE_AKG is not defined";
+#endif
   }
   for (const auto &anf_node : other_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
