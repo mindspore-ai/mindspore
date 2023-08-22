@@ -66,10 +66,16 @@ using mindspore::abstract::AbstractSequencePtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
+using StringSet = std::set<std::string>;
+using StringSetPtr = std::shared_ptr<StringSet>;
 
 constexpr auto kInternalDictSelfStr = "__internal_dict_self__";
 constexpr auto kInternalDictKeyStr = "__internal_dict_key__";
 constexpr auto kInternalDictValueStr = "__internal_dict_value__";
+static const PrimitiveSet inplace_prim_set{
+  prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
+  prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
+};
 
 namespace {
 static constexpr size_t kMaxSeqRecursiveDepth = 6;
@@ -725,8 +731,9 @@ std::pair<AnfNodePtr, AnfNodePtr> ExtractKwargsNode(const AnfNodePtr &node) {
 class AfterOptARewriter : public BaseRewriter {
  public:
   using ThisClass = AfterOptARewriter;
-  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager) {}
+  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager,
+                    const StringSetPtr &value_with_inplace)
+      : BaseRewriter(root_graph, manager), data_with_inplace_(value_with_inplace) {}
   ~AfterOptARewriter() override = default;
 
  protected:
@@ -1803,11 +1810,6 @@ class AfterOptARewriter : public BaseRewriter {
     prim::kPrimListLessEqual,   prim::kPrimTupleLessThan,     prim::kPrimListLessThan,     prim::kPrimTupleLessEqual,
     prim::kPrimListGreaterThan, prim::kPrimTupleGreaterEqual, prim::kPrimListGreaterEqual, prim::kPrimSequenceSlice};
 
-  static inline const PrimitiveSet inplace_prim_set_{
-    prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
-    prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
-  };
-
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -1908,6 +1910,29 @@ class AfterOptARewriter : public BaseRewriter {
     return res;
   }
 
+  bool IsValueListWithInplace(const ValueNodePtr &value_node) const {
+    if (!fallback::EnableFallbackList()) {
+      return false;
+    }
+
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto abs = value_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+    if (!list_abs->has_list_py_obj()) {
+      return false;
+    }
+    py::list list_object = *(list_abs->list_py_obj<py::list>());
+    // The value list  do not need to convert to PyExecute if:
+    //   1. The list is created within graph.
+    //   2. The list and its elements do not perform any inplace operation.
+    if (list_abs->create_in_graph() && !CheckSeqWithInplace(list_object)) {
+      return false;
+    }
+    return true;
+  }
+
   AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
                                    bool py_execute_input) {
     MS_EXCEPTION_IF_NULL(fg);
@@ -1947,13 +1972,9 @@ class AfterOptARewriter : public BaseRewriter {
                                            py_execute_input);
     }
     if (value->isa<ValueList>()) {
-      if (!fallback::EnableFallbackList()) {
-        if (py_execute_input) {
-          return ValueListConvertPyExecute(fg, value_node, value);
-        } else {
-          return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeList,
-                                               py_execute_input);
-        }
+      if (!IsValueListWithInplace(value_node) && !py_execute_input) {
+        return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeList,
+                                             py_execute_input);
       }
       return RebuildValueList(fg, value_node);
     }
@@ -1969,7 +1990,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return;
     }
-    if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, inplace_prim_set_) &&
+    if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, inplace_prim_set) &&
         !IsOneOfPrimitiveCNode(cnode, seq_prim_set_)) {
       return;
     }
@@ -2089,57 +2110,6 @@ class AfterOptARewriter : public BaseRewriter {
     return nullptr;
   }
 
-  AnfNodePtr ValueListConvertPyExecute(const FuncGraphPtr &func_graph, const ValueNodePtr &value_node,
-                                       const ValuePtr &value) {
-    MS_EXCEPTION_IF_NULL(value);
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto value_list = value->cast<ValueListPtr>();
-    MS_EXCEPTION_IF_NULL(value_list);
-    auto values = value_list->value();
-
-    // Script and local parameters keys
-    constexpr auto internal_element_str_prefix = "__internal_list_element_";
-    std::stringstream script_buffer;
-    script_buffer << "list((";
-    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    for (size_t i = 0; i < values.size(); ++i) {
-      std::string element_name_str = internal_element_str_prefix + std::to_string(i) + "__";
-      script_buffer << element_name_str << ", ";
-      const auto element_name = std::make_shared<StringImm>(element_name_str);
-      (void)key_value_names_list.emplace_back(NewValueNode(element_name));
-    }
-    script_buffer << "))";
-    const std::string &script = script_buffer.str();
-    const auto script_str = std::make_shared<StringImm>(script);
-    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
-
-    // Pack the local parameters values, not support list, tuple, or dict.
-    auto abs_list = dyn_cast<abstract::AbstractList>(value_node->abstract());
-    MS_EXCEPTION_IF_NULL(abs_list);
-    const auto &abs_list_elements = abs_list->elements();
-    if (abs_list_elements.size() != values.size()) {
-      MS_LOG(EXCEPTION) << "The size of value list should be same as the size of abstract list.";
-    }
-    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-    for (size_t i = 0; i < values.size(); ++i) {
-      auto element = values[i];
-      auto element_vnode = NewValueNode(element);
-      element_vnode->set_debug_info(value_node->debug_info());
-      element_vnode->set_abstract(abs_list_elements[i]);
-      auto converted_element = GetPyExecuteFromValue(func_graph, element_vnode, element, true);
-      converted_element->set_debug_info(value_node->debug_info());
-      (void)key_value_list.emplace_back(converted_element);
-    }
-    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
-
-    // Build the new dict node.
-    const auto list_value_node = fallback::CreatePyExecuteCNodeInOrder(
-      func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, value_node->debug_info());
-    list_value_node->set_abstract(value_node->abstract());
-    MS_LOG(DEBUG) << "List value node convert to PyExecute node: " << list_value_node->DebugString();
-    return list_value_node;
-  }
-
   AnfNodePtr PackDictValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
     const auto &keys_values = dict->value();
     auto abs_dict = dyn_cast<abstract::AbstractDictionary>(value_node->abstract());
@@ -2185,6 +2155,24 @@ class AfterOptARewriter : public BaseRewriter {
     auto make_dict_node = ConstructNewDictNode(fg, make_key_tuple_node, make_value_tuple_node);
     make_dict_node->set_debug_info(value_node->debug_info());
     return make_dict_node;
+  }
+
+  bool CheckSeqWithInplace(const py::sequence &seq) const {
+    if (py::isinstance<py::list>(seq)) {
+      const auto &seq_str = fallback::GetPyObjectPtrStr(seq);
+      if (data_with_inplace_->find(seq_str) != data_with_inplace_->end()) {
+        return true;
+      }
+    }
+    for (const auto &obj : seq) {
+      if (py::isinstance<py::list>(obj) && CheckSeqWithInplace(py::list(obj))) {
+        return true;
+      }
+      if (py::isinstance<py::tuple>(obj) && CheckSeqWithInplace(py::tuple(obj))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   AnfNodePtr RebuildValueList(const FuncGraphPtr &fg, const ValueNodePtr &value_node) const {
@@ -2300,31 +2288,47 @@ class AfterOptARewriter : public BaseRewriter {
     // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
     return ConvertToAbstractTuple(abs, 0);
   }
-};
-}  // namespace
 
-bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->AddFuncGraph(root);
-  BeforeOptARewriter rewriter(root, manager);
-  return rewriter.Execute();
+ private:
+  StringSetPtr data_with_inplace_;
+};
+
+void FindValueWithInplaceInner(const FuncGraphPtr &graph, const StringSetPtr &value_with_inplace) {
+  MS_EXCEPTION_IF_NULL(graph);
+  AnfNodePtr return_node = graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
+  constexpr size_t sequence_index = 1;
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsOneOfPrimitiveCNode(node, inplace_prim_set)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto sequence_node = cnode->input(sequence_index);
+    MS_EXCEPTION_IF_NULL(sequence_node);
+    if (!IsValueNode<ValueList>(sequence_node)) {
+      continue;
+    }
+    auto abs = sequence_node->abstract();
+    if (abs == nullptr || !abs->isa<abstract::AbstractList>()) {
+      continue;
+    }
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    auto list_py_object = *abs_list->list_py_obj<py::list>();
+    MS_LOG(DEBUG) << "Found list python object in inplace: " << py::str(list_py_object);
+    const auto &list_py_object_str = fallback::GetPyObjectPtrStr(list_py_object);
+    (void)value_with_inplace->insert(list_py_object_str);
+  }
 }
 
-bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(root);
-  MS_EXCEPTION_IF_NULL(resource);
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->AddFuncGraph(root);
-  AfterOptARewriter rewriter(root, manager);
-  bool change = rewriter.Execute();
-  if (rewriter.need_renormalized()) {
-    abstract::AbstractBasePtrList new_args_spec;
-    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
-                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
-    (void)pipeline::Renormalize(resource, root, new_args_spec);
+void FindValueWithInplace(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource,
+                          const StringSetPtr &value_with_inplace) {
+  const auto func_graphs_used_total = root->func_graphs_used_total();
+  for (const auto &fg : func_graphs_used_total) {
+    FindValueWithInplaceInner(fg, value_with_inplace);
   }
-  return change;
+  FindValueWithInplaceInner(root, value_with_inplace);
 }
 
 bool CheckNeedConvertList(const AbstractBasePtr &abs) {
@@ -2425,25 +2429,6 @@ bool ConvertToPyExecuteList(const FuncGraphPtr &graph, const FuncGraphManagerPtr
   return change;
 }
 
-bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
-  auto manager = resource->manager();
-  const auto func_graphs_used_total = root->func_graphs_used_total();
-  bool change = false;
-  for (const auto &fg : func_graphs_used_total) {
-    auto cur_change = ConvertToPyExecuteList(fg, manager);
-    change = change || cur_change;
-  }
-  bool root_change = ConvertToPyExecuteList(root, manager);
-  change = change || root_change;
-  if (change) {
-    abstract::AbstractBasePtrList new_args_spec;
-    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
-                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
-    (void)pipeline::Renormalize(resource, root, new_args_spec);
-  }
-  return change;
-}
-
 static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr return_node = graph->get_return();
@@ -2481,6 +2466,52 @@ static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGrap
 
     former_node = latter_node;
     change = true;
+  }
+  return change;
+}
+}  // namespace
+
+bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(root);
+  BeforeOptARewriter rewriter(root, manager);
+  return rewriter.Execute();
+}
+
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(root);
+  MS_EXCEPTION_IF_NULL(resource);
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(root);
+  StringSetPtr value_with_inplace = std::make_shared<StringSet>();
+  FindValueWithInplace(root, resource, value_with_inplace);
+  AfterOptARewriter rewriter(root, manager, value_with_inplace);
+  bool change = rewriter.Execute();
+  if (rewriter.need_renormalized()) {
+    abstract::AbstractBasePtrList new_args_spec;
+    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)pipeline::Renormalize(resource, root, new_args_spec);
+  }
+  return change;
+}
+
+bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+  auto manager = resource->manager();
+  const auto func_graphs_used_total = root->func_graphs_used_total();
+  bool change = false;
+  for (const auto &fg : func_graphs_used_total) {
+    auto cur_change = ConvertToPyExecuteList(fg, manager);
+    change = change || cur_change;
+  }
+  bool root_change = ConvertToPyExecuteList(root, manager);
+  change = change || root_change;
+  if (change) {
+    abstract::AbstractBasePtrList new_args_spec;
+    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)pipeline::Renormalize(resource, root, new_args_spec);
   }
   return change;
 }

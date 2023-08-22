@@ -2374,7 +2374,7 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
   MS_LOG(DEBUG) << "Generate python object for new value node.";
   py::object py_list_obj = fallback::GeneratePyObj(abs);
-  fallback::AttachListObjToAbs(abs, py_list_obj);
+  fallback::AttachListObjToAbs(abs, py_list_obj, true);
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
@@ -2461,7 +2461,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     if (preset_type->isa<List>()) {
       AbstractListPtr res_list = fallback::GenerateAbstractList(shape, preset_type, true);
       auto list_obj = GetPySeqObjectFromNode(node);
-      res_list->set_list_py_obj<py::list>(list_obj);
+      res_list->set_list_py_obj<py::list>(list_obj, false);
       res = res_list;
     } else {
       res = std::make_shared<AbstractTensor>(preset_type, shape);

@@ -767,7 +767,8 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
     if (old_sequence_abs_list->has_list_py_obj()) {
       MS_LOG(DEBUG) << "old AbstractList has python object, attach it to new AbstractList.";
       auto list_obj = old_sequence_abs_list->list_py_obj<py::list>();
-      new_sequence_abs->set_list_py_obj(list_obj);
+      auto create_in_graph = old_sequence_abs_list->create_in_graph();
+      new_sequence_abs->set_list_py_obj(list_obj, create_in_graph);
     }
   }
 

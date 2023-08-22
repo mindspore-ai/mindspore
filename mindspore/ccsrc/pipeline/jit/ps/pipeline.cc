@@ -212,7 +212,7 @@ AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, boo
   auto is_dynamic_len = CheckAndConvertToVariableLenSequence(arg, ret);
   if (fallback::EnableFallbackList() && !broaden && !is_dynamic_len) {
     // Attach corresponding list python object for constant list input.
-    fallback::AttachListObjToAbs(ret, arg);
+    fallback::AttachListObjToAbs(ret, arg, false);
   }
   return ret;
 }
