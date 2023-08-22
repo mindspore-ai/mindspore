@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/extendrt/kernel/primitive_type.h"
+#include "src/infer/primitive_type.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::kernel {
@@ -36,11 +36,15 @@ class PrimitiveTypeHelper {
     return iter->second;
   }
 
-  std::string FBType2PBType(const schema::PrimitiveType &fb_type) const {
+  std::string FBType2PBType(const int &fb_type) const {
     if (fb_type < 0 || fb_type > schema::PrimitiveType_MAX) {
       return "";
     }
     return fb2pb_[fb_type];
+  }
+
+  std::string FBType2PBType(const schema::PrimitiveType &fb_type) const {
+    return FBType2PBType(static_cast<int>(fb_type));
   }
 
  private:
@@ -77,10 +81,16 @@ PrimitiveType::PrimitiveType(mindspore::schema::PrimitiveType primitive_type) : 
   protocolbuffers_type_ = PrimitiveTypeHelper::Instance().FBType2PBType(flatbuffers_type_);
 }
 
-bool PrimitiveType::operator==(const std::string &other) { return protocolbuffers_type_ == other; }
-bool PrimitiveType::operator!=(const std::string &other) { return protocolbuffers_type_ != other; }
-bool PrimitiveType::operator==(mindspore::schema::PrimitiveType other) { return flatbuffers_type_ == other; }
-bool PrimitiveType::operator!=(mindspore::schema::PrimitiveType other) { return flatbuffers_type_ != other; }
+PrimitiveType::PrimitiveType(int primitive_type) : flatbuffers_type_(primitive_type) {
+  protocolbuffers_type_ = PrimitiveTypeHelper::Instance().FBType2PBType(flatbuffers_type_);
+}
+
+bool PrimitiveType::operator==(const std::string &other) const { return protocolbuffers_type_ == other; }
+bool PrimitiveType::operator!=(const std::string &other) const { return protocolbuffers_type_ != other; }
+bool PrimitiveType::operator==(mindspore::schema::PrimitiveType other) const { return flatbuffers_type_ == other; }
+bool PrimitiveType::operator!=(mindspore::schema::PrimitiveType other) const { return flatbuffers_type_ != other; }
+bool PrimitiveType::operator==(int other) const { return flatbuffers_type_ == other; }
+bool PrimitiveType::operator!=(int other) const { return flatbuffers_type_ != other; }
 
 PrimitiveType &PrimitiveType::operator=(const std::string &other) {
   protocolbuffers_type_ = other;
@@ -94,8 +104,16 @@ PrimitiveType &PrimitiveType::operator=(const mindspore::schema::PrimitiveType &
   return *this;
 }
 
-std::string PrimitiveType::PBType() const { return this->protocolbuffers_type_; }
+PrimitiveType &PrimitiveType::operator=(int other) {
+  flatbuffers_type_ = other;
+  protocolbuffers_type_ = PrimitiveTypeHelper::Instance().FBType2PBType(flatbuffers_type_);
+  return *this;
+}
 
-schema::PrimitiveType PrimitiveType::FBType() const { return this->flatbuffers_type_; }
+std::string PrimitiveType::TypeName() const { return this->protocolbuffers_type_; }
+
+schema::PrimitiveType PrimitiveType::SchemaType() const {
+  return static_cast<schema::PrimitiveType>(this->flatbuffers_type_);
+}
 #endif
 }  // namespace mindspore::kernel

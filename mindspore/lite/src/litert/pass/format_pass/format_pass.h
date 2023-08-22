@@ -23,11 +23,16 @@
 #include <string>
 #include "src/executor/kernel_exec.h"
 #include "src/executor/sub_graph_kernel.h"
+#include "src/litert/pass/format_pass/pass_utils.h"
 
 namespace mindspore::lite::pass {
 class FormatPass {
  public:
-  explicit FormatPass(mindspore::Format format, std::string name) : format_(format), name_(std::move(name)) {}
+  explicit FormatPass(mindspore::Format format, std::string name,
+                      CreateFormatTransposeFunc create_format_transpose_func)
+      : format_(format),
+        name_(std::move(name)),
+        create_format_transpose_func_(std::move(create_format_transpose_func)) {}
   virtual ~FormatPass() = default;
   virtual int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors) = 0;
 
@@ -36,12 +41,13 @@ class FormatPass {
  protected:
   Format format_ = DEFAULT_FORMAT;
   std::string name_{};
+  CreateFormatTransposeFunc create_format_transpose_func_ = nullptr;
 };
 using FormatPassPtr = std::shared_ptr<FormatPass>;
 
 class FormatOptimize {
  public:
-  int AddPass(FormatPassPtr pass);
+  int AddPass(const FormatPassPtr &pass);
   int RunPass(kernel::SubGraphKernel *graph, std::vector<Tensor *> *tensors);
 
  private:
@@ -50,10 +56,12 @@ class FormatOptimize {
 using FormatOptimizePtr = std::shared_ptr<FormatOptimize>;
 
 int DoFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
-                 std::vector<mindspore::lite::Tensor *> *tensors, mindspore::Format graph_format);
+                 std::vector<mindspore::lite::Tensor *> *tensors, mindspore::Format graph_format,
+                 const CreateFormatTransposeFunc &create_format_transpose_func);
 
 int RuntimeFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
                       std::vector<mindspore::lite::Tensor *> *tensors,
-                      mindspore::Format format = mindspore::Format::NHWC);
+                      mindspore::Format format = mindspore::Format::NHWC,
+                      const CreateFormatTransposeFunc &create_format_transpose_func = nullptr);
 }  // namespace mindspore::lite::pass
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_FORMAT_PASS_H_

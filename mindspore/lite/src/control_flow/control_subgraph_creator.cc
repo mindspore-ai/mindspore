@@ -22,7 +22,7 @@
 
 namespace mindspore::lite {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::LiteKernel *kernel) {
+kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::MSKernel *kernel) {
   kernel::SubGraphKernel *sub_graph = nullptr;
   switch (type) {
     case kernel::kEntranceSubGraph: {
@@ -38,7 +38,7 @@ kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, 
   return sub_graph;
 }
 #else
-kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::LiteKernel *kernel) {
+kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::MSKernel *kernel) {
   return nullptr;
 }
 #endif

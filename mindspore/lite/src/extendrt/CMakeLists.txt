@@ -20,17 +20,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
     set(MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_matmul.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_reshape.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/cxx_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/nnacl/nnacl_lib.cc
         )
 
     set(MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/cnode_infer_manager.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/kernel_mod_kernel.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
 
     file(GLOB DELEGATE_OPS ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ops/*.cc)
@@ -45,6 +40,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/model_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/base_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/single_op_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/memory_offload_session.cc
@@ -75,7 +71,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_executor/mindrt_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_flow.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/primitive_type.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../infer/primitive_type.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc

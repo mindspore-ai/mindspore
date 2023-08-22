@@ -163,11 +163,17 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/huffman_decode.cc
         ${SRC_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
         ${SRC_DIR}/extendrt/delegate/plugin/tensorrt_executor_plugin.cc
+        ${SRC_DIR}/infer/primitive_type.cc
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
 )
+
+if(MSLITE_ENABLE_CUSTOM_KERNEL)
+    file(GLOB KERNEL_REG_SRC ${SRC_DIR}/registry/*.cc)
+    set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
+endif()
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC
@@ -318,6 +324,13 @@ set(LITE_SRC
         ${CORE_DIR}/ir/anf.cc
         ${CORE_DIR}/base/base.cc
         )
+
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${SRC_DIR}/extendrt/kernel/base_kernel.cc
+            )
+endif()
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)

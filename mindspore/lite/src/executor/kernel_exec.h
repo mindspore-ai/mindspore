@@ -36,6 +36,9 @@
 #include "include/api/delegate.h"
 #include "extendrt/mindir_loader/abstract_kernel.h"
 #include "include/lite_types.h"
+#include "src/infer/primitive_type.h"
+#include "src/infer/tensor.h"
+#include "src/infer/context.h"
 
 namespace mindspore::lite {
 using KernelCallBack = std::function<bool(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs,
@@ -85,7 +88,7 @@ class KernelExec {
     this->out_kernels_.clear();
   }
 
-  explicit KernelExec(std::shared_ptr<Kernel> kernel) : kernel_(kernel) {
+  explicit KernelExec(std::shared_ptr<MSKernel> kernel) : kernel_(std::move(kernel)) {
     this->in_kernels_.clear();
     this->out_kernels_.clear();
   }
@@ -96,8 +99,7 @@ class KernelExec {
 
   virtual int Execute(const KernelCallBack &before, const KernelCallBack &after) {
     if (before != nullptr) {
-      if (!before(this->in_tensors(), this->out_tensors(),
-                  {this->name(), schema::EnumNamePrimitiveType(this->type())})) {
+      if (!before(this->in_tensors(), this->out_tensors(), {this->name(), TypeName(type())})) {
         MS_LOG(WARNING) << "run kernel before_callback failed, name: " << this->name();
       }
     }
@@ -105,8 +107,7 @@ class KernelExec {
     auto ret = DoExecute();
 
     if (after != nullptr) {
-      if (!after(this->in_tensors(), this->out_tensors(),
-                 {this->name(), schema::EnumNamePrimitiveType(this->type())})) {
+      if (!after(this->in_tensors(), this->out_tensors(), {this->name(), TypeName(type())})) {
         MS_LOG(WARNING) << "run kernel after_callback failed, name: " << this->name();
       }
     }
@@ -119,25 +120,16 @@ class KernelExec {
     return kernel_->Prepare();
   }
 
-  bool IsBuiltin() { return desc_.provider == kBuiltin; }
+  virtual bool IsBuiltin() { return desc_.provider == kBuiltin; }
 
-  virtual int InferShape() {
-    auto &inputs = in_tensors();
-    auto &outputs = out_tensors();
-    if (!IsBuiltin()) {
-      return lite::KernelInferShape(inputs, outputs, kernel()->primitive(), context_->GetProviders(),
-                                    context_->get_schema_version(), kernel_.get());
-    } else {
-      return reinterpret_cast<LiteKernel *>(kernel_.get())->InferShape();
-    }
-  }
+  virtual int InferShape() { return kernel_->InferShape(); }
 
   virtual int ReSize() {
     MS_ASSERT(kernel_ != nullptr);
     return kernel_->ReSize();
   }
 
-  OpParameter *op_parameter() const {
+  virtual OpParameter *op_parameter() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<LiteKernel>(kernel_)->op_parameter();
@@ -213,14 +205,12 @@ class KernelExec {
     return checker != nullptr && checker(in_tensors(), out_tensors());
   }
 
-  schema::PrimitiveType type() const {
+  virtual PrimitiveType type() const {
     MS_ASSERT(kernel_ != nullptr);
-    return kernel_->type();
+    return PrimitiveType(std::static_pointer_cast<Abstractkernel>(kernel_)->type());
   }
 
-  std::string type_str() const { return schema::EnumNamePrimitiveType(this->type()); }
-
-  void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) {
+  virtual void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_in_tensors(in_tensors);
@@ -235,7 +225,7 @@ class KernelExec {
     }
   }
 
-  void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
+  virtual void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_in_tensor(in_tensor, index);
@@ -247,7 +237,7 @@ class KernelExec {
     }
   }
 
-  void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
+  virtual void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_out_tensors(out_tensors);
@@ -274,7 +264,7 @@ class KernelExec {
     }
   }
 
-  const std::vector<lite::Tensor *> &in_tensors() const {
+  virtual const std::vector<lite::Tensor *> &in_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->in_tensors();
@@ -294,7 +284,7 @@ class KernelExec {
     }
   }
 
-  const std::vector<lite::Tensor *> &out_tensors() const {
+  virtual const std::vector<lite::Tensor *> &out_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
       return std::static_pointer_cast<Abstractkernel>(kernel_)->out_tensors();
@@ -375,18 +365,17 @@ class KernelExec {
 
   virtual std::string ToString() const;
 
-  Kernel *kernel() { return kernel_.get(); }
-
-  void RepalceKernel(std::shared_ptr<Kernel> kernel);
+  MSKernel *kernel() const { return kernel_.get(); }
 
   void SetOpenGLTextureEnable(bool enable) { enable_gl_texture_ = enable; }
 
   bool GetOpenGLTextureEnable() const { return enable_gl_texture_; }
 
  protected:
-  std::shared_ptr<Kernel> kernel_ = nullptr;
+  Kernel *get_schema_primitive_kernel() const { return reinterpret_cast<Kernel *>(kernel_.get()); }
+
+  std::shared_ptr<MSKernel> kernel_ = nullptr;
   KernelKey desc_;
-  std::string op_type_{};  // merge op_type_ and desc_.type into type-wrapper while redesign infer-kernel
   // tensor will free in ~lite_session()
   std::vector<KernelExec *> in_kernels_;
   std::vector<KernelExec *> out_kernels_;

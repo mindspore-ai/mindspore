@@ -160,7 +160,7 @@ int DynamicSession::RunKernel(int index, const KernelHook &before, const KernelH
     MS_CHECK_TRUE_MSG(execute_index_ >= 0, RET_ERROR, "Kernel-index is out-of-side.");
     auto kernel = kernels_[execute_index_];
     if (before) {
-      auto res = before(kernel, {kernel->name(), schema::EnumNamePrimitiveType(kernel->type())}, sample_num_);
+      auto res = before(kernel, {kernel->name(), kernel::TypeName(kernel->type())}, sample_num_);
       MS_CHECK_TRUE_MSG(res, RET_ERROR, "Run pre-hook failed.");
     }
     std::vector<void *> in_datas;
@@ -180,7 +180,7 @@ int DynamicSession::RunKernel(int index, const KernelHook &before, const KernelH
       return ret;
     }
     if (after) {
-      auto res = after(kernel, {kernel->name(), schema::EnumNamePrimitiveType(kernel->type())}, sample_num_);
+      auto res = after(kernel, {kernel->name(), kernel::TypeName(kernel->type())}, sample_num_);
       MS_CHECK_TRUE_MSG(res, RET_ERROR, "Run after-hook failed.");
     }
     for (auto tensor : kernel->in_tensors()) {

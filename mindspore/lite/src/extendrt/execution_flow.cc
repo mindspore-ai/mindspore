@@ -32,6 +32,7 @@ InferKernel *ExecutionFlow::ConstructFusionKernel() {
   kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
   // SCHEMA_VERSION::SCHEMA_CUR = 0
+  // extendrt subgraph will be implemented later.
   auto subgraph_kernel =
     kernel::KernelExecUtil::CreateSubGraphKernel(kernels_, &inputs_, &outputs_, cur_sub_graph_type, *context_, 0);
   if (subgraph_kernel == nullptr) {

@@ -56,7 +56,7 @@ void KernelExec::InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask
 std::string KernelExec::ToString() const {
   std::ostringstream oss;
   oss << "KernelExec: " << this->name();
-  oss << ", Type: " << this->type_str() << std::endl;
+  oss << ", Type: " << this->type() << std::endl;
   oss << this->in_tensors().size() << " InputTensors:" << std::endl;
   for (auto tensor : in_tensors()) {
     oss << tensor->ToString() << std::endl;
@@ -89,13 +89,5 @@ int KernelExec::DoExecute() {
     }
   }
   return ret;
-}
-
-void KernelExec::RepalceKernel(const std::shared_ptr<Kernel> kernel) {
-  if (desc_.provider == kBuiltin) {
-    std::static_pointer_cast<LiteKernel>(kernel_)->set_parameter(nullptr);  // set nullptr, don't release op_parameter
-    kernel_.reset();
-    kernel_ = kernel;
-  }
 }
 }  // namespace mindspore::kernel

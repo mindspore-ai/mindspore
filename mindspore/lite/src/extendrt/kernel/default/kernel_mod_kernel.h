@@ -13,36 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_KERNEL_MOD_KERNEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_KERNEL_MOD_KERNEL_H_
 
 #include <memory>
 #include <utility>
 #include <vector>
 #include <string>
-#include "src/litert/lite_kernel.h"
+#include "src/extendrt/kernel/base_kernel.h"
 #include "kernel/kernel.h"
 #include "ops/base_operator.h"
 
 namespace mindspore::kernel {
-class LiteKernelMod : public LiteKernel {
+class KernelModKernel : public BaseKernel {
  public:
-  explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
-                         CNodePtr cnode, std::vector<lite::Tensor *> in_tensors,
-                         std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx)
-      : LiteKernel(nullptr, std::move(in_tensors), std::move(out_tensors), ctx),
+  KernelModKernel(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
+                  CNodePtr cnode, const std::vector<InferTensor *> &in_tensors,
+                  const std::vector<InferTensor *> &out_tensors, const InferContext *ctx)
+      : BaseKernel({base_operator, cnode}, ctx),
         kernel_mod_(std::move(kernel_mod)),
         base_operator_(std::move(base_operator)),
-        cnode_(std::move(cnode)) {}
-  ~LiteKernelMod() override = default;
+        cnode_(std::move(cnode)) {
+    this->set_in_tensors(in_tensors);
+    this->set_out_tensors(out_tensors);
+  }
+  ~KernelModKernel() override = default;
 
   int Prepare() override;
   int InferShape() override;
   int ReSize() override;
   int Run() override;
-
- public:
-  std::string KernelType() const { return base_operator_->name(); }
 
  private:
   KernelModPtr kernel_mod_;
@@ -50,4 +50,4 @@ class LiteKernelMod : public LiteKernel {
   CNodePtr cnode_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_KERNEL_MOD_KERNEL_H_

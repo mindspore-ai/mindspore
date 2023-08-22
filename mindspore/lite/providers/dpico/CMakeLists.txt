@@ -25,6 +25,7 @@ file(GLOB_RECURSE DPICO_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/manager/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../mock_kernel.cc
         )
 
 add_library(dpico_acl_adapter SHARED ${DPICO_RUNTIME_SRC})

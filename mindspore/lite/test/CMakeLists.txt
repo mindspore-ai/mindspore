@@ -145,6 +145,8 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/runtime/kernel_executor_tests.cc)
 endif()
 
+set(TEST_LITE_SRC ${TEST_LITE_SRC} ${LITE_DIR}/src/litert/cxx_api/kernel.cc)
+
 set(TEST_SRC
         ${TEST_UT_SRC}
         ${TEST_LITE_SRC}

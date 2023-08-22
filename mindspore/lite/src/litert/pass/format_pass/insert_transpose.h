@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "src/litert/pass/format_pass/pass_utils.h"
 #include "src/executor/kernel_exec.h"
@@ -26,7 +27,8 @@
 namespace mindspore::lite::pass {
 class InsertTranspose : public FormatPass {
  public:
-  explicit InsertTranspose(Format format) : FormatPass(format, "InsertTranspose") {}
+  explicit InsertTranspose(Format format, CreateFormatTransposeFunc create_format_transpose_func)
+      : FormatPass(format, "InsertTranspose", std::move(create_format_transpose_func)) {}
   virtual ~InsertTranspose() = default;
   int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors);
 

@@ -29,7 +29,7 @@
 #include "utils/hash_map.h"
 #include "include/api/status.h"
 #include "kernel/common_utils.h"
-#include "src/extendrt/kernel/primitive_type.h"
+#include "src/infer/primitive_type.h"
 
 namespace mindspore {
 namespace lite {

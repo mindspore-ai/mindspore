@@ -21,8 +21,12 @@
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/pass/format_pass/format_pass.h"
+#include "src/litert/pass/format_pass/pass_utils.h"
 #include "tools/optimizer/graph/node_infershape.h"
 #include "src/common/draw/drawer.h"
+#include "src/extendrt/kernel/nnacl/nnacl_base_kernel.h"
+#include "src/extendrt/kernel/extendrt_kernel_exec.h"
+#include "nnacl/format_transpose_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -124,9 +128,51 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
   return true;
 }
 
+namespace {
+kernel::KernelExec *CreateFormatTransFunc(InferTensor *input, InferTensor *output,
+                                          const pass::TransInfoPair &trans_info, const std::string &name,
+                                          const InferContext *ctx, const kernel::KernelKey &desc) {
+  auto param = reinterpret_cast<FormatTransposeParameter *>(malloc(sizeof(FormatTransposeParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Malloc FormatTransposeParameter failed.";
+    return nullptr;
+  }
+  (void)memset(param, 0, sizeof(FormatTransposeParameter));
+  param->op_parameter_.type_ = static_cast<int>(schema::PrimitiveType_FormatTranspose);
+  param->src_format_ = static_cast<FormatC>((trans_info.src_format_));
+  param->dst_format_ = static_cast<FormatC>((trans_info.dst_format_));
+  kernel::KernelKey format_transpose_key = desc;
+  format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
+  format_transpose_key.format = NHWC;
+  format_transpose_key.data_type = input->data_type();
+
+  auto lite_kernel = KernelRegistry::GetInstance()->GetLiteKernel({input}, {output}, ctx, &format_transpose_key,
+                                                                  reinterpret_cast<OpParameter *>(param));
+  if (lite_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create format-transpose lite-kernel failed.";
+    free(param);
+    return nullptr;
+  }
+  auto base_kernel = new (std::nothrow) kernel::NNACLBaseKernel(std::shared_ptr<kernel::LiteKernel>(lite_kernel));
+  if (base_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create format-transpose base-kernel failed.";
+    return nullptr;
+  }
+  auto *kernel_exec = new (std::nothrow) kernel::ExtendRTKernelExec(std::shared_ptr<kernel::MSKernel>(base_kernel));
+  if (kernel_exec == nullptr) {
+    MS_LOG(ERROR) << "Create format-transpose kernel-exec failed.";
+    return nullptr;
+  }
+  kernel_exec->set_desc(format_transpose_key);
+  kernel_exec->set_context(ctx);
+  kernel_exec->set_name(name);
+  return kernel_exec;
+}
+}  // namespace
+
 Status SingleGraphScheduler::OptimizeTranspose(std::vector<InferKernel *> *kernels) {
   auto tensors = execution_flow_->GetTensors();
-  auto ret = pass::DoFormatPass(kernels, &tensors, compile_option_->graph_format);
+  auto ret = pass::DoFormatPass(kernels, &tensors, compile_option_->graph_format, CreateFormatTransFunc);
   if (ret != RET_OK) {
     MS_LOG(INFO) << "Run Optimize transpose pass failed.";
     return kLiteError;

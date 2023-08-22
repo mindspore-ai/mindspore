@@ -439,7 +439,7 @@ if(MSLITE_ENABLE_TRAIN)
     set(SUPPORT_TRAIN on)
 endif()
 
-if(MSLITE_ENABLE_NPU)
+if(MSLITE_ENABLE_NPU AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     set(SUPPORT_NPU on)
     if(NOT PLATFORM_ARM)
         message(FATAL_ERROR "NPU only support platform arm.")
@@ -889,7 +889,7 @@ endif()
 
 include(${LITE_DIR}/cmake/lite_dependences.cmake)
 
-if(MSLITE_GPU_BACKEND STREQUAL opencl)
+if(MSLITE_GPU_BACKEND STREQUAL opencl AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     add_definitions(-DGPU_OPENCL)
     gene_opencl(${CMAKE_CURRENT_SOURCE_DIR}/src/litert/kernel/opencl/cl)
     gene_opencl(${CMAKE_CURRENT_SOURCE_DIR}/src/litert/kernel/opencl/cl/int8)

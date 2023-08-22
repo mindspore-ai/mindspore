@@ -18,13 +18,15 @@
 #define MINDSPORE_LITE_SRC_LITERT_PASS_FORMAT_PASS_ELIMINATE_TRANSPOSE_H_
 
 #include <vector>
+#include <utility>
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "src/litert/pass/format_pass/transpose_strategy.h"
 
 namespace mindspore::lite::pass {
 class EliminateTranspose : public FormatPass {
  public:
-  explicit EliminateTranspose(Format format) : FormatPass(format, "EliminateTranspose") {}
+  explicit EliminateTranspose(Format format, CreateFormatTransposeFunc create_format_transpose_func)
+      : FormatPass(format, "EliminateTranspose", std::move(create_format_transpose_func)) {}
   virtual ~EliminateTranspose() = default;
   int RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors);
 

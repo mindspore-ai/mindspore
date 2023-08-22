@@ -20,7 +20,7 @@
 namespace mindspore::kernel {
 int ExitSubGraphKernel::Execute(const KernelCallBack &, const KernelCallBack &) { return lite::RET_OK; }
 
-SubGraphKernel *ExitSubGraphKernel::Create(Kernel *kernel) {
+SubGraphKernel *ExitSubGraphKernel::Create(MSKernel *kernel) {
   auto sub_kernel = new (std::nothrow) kernel::ExitSubGraphKernel(kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create entrance subgraph failed!";

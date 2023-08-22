@@ -56,7 +56,7 @@ inline bool AIsInB(const T0 *a, const T1 *b) {
   return std::find(b->begin(), b->end(), a) != b->end();
 }
 
-inline bool PredIs(const KernelExec *node, PrimitiveType type, std::vector<KernelExec *> *nodes) {
+inline bool PredIs(const KernelExec *node, schema::PrimitiveType type, std::vector<KernelExec *> *nodes) {
   MS_ASSERT(node);
   if (node->in_kernels().size() == 1) {
     KernelExec *pred = node->in_kernels().front();

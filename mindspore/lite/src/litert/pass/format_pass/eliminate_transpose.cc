@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <set>
 #include <queue>
 #include "src/litert/pass/format_pass/eliminate_transpose.h"
 #include "src/litert/kernel_exec_util.h"
@@ -44,9 +45,11 @@ int TransFullyFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans
   return RET_OK;
 }
 int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans_kernel0,
-                        kernel::KernelExec *trans_kernel1, const TransInfoPair &trans_info) {
+                        kernel::KernelExec *trans_kernel1, const TransInfoPair &trans_info,
+                        const CreateFormatTransposeFunc &create_format_transpose_func) {
   CHECK_NULL_RETURN(trans_kernel0);
   CHECK_NULL_RETURN(trans_kernel1);
+  CHECK_NULL_RETURN(create_format_transpose_func);
   auto ctx = trans_kernel0->Context();
   auto desc = trans_kernel0->desc();
   auto in_tensor = trans_kernel0->in_tensors().at(0);
@@ -56,7 +59,7 @@ int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *tr
   subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
   // new trans kernel: src_format -> dst_format
   auto trans_name = trans_kernel0->name() + "_and_" + trans_kernel1->name() + "_fusion";
-  auto kernel = CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, ctx, desc);
+  auto kernel = create_format_transpose_func(in_tensor, out_tensor, trans_info, trans_name, ctx, desc);
   CHECK_NULL_RETURN(kernel);
   if (in_kernel != nullptr) {
     in_kernel->AddOutKernel(kernel);
@@ -114,7 +117,8 @@ int PackConstData(Tensor *tensor, const TransInfoPair &pre_trans) {
 }
 
 int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                const TransInfoPair &pre_trans) {
+                const TransInfoPair &pre_trans, const CreateFormatTransposeFunc &create_format_transpose_func) {
+  CHECK_NULL_RETURN(create_format_transpose_func);
   for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
     auto in_tensor = kernel->in_tensors().at(i);
     if (in_tensor->IsConst()) {
@@ -126,7 +130,8 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
       continue;
     }
     auto ret =
-      InsertPreTranspose(subgraph, kernel, all_tensors, TransInfoPair(pre_trans.dst_format_, pre_trans.src_format_), i);
+      InsertPreTranspose(subgraph, kernel, all_tensors, TransInfoPair(pre_trans.dst_format_, pre_trans.src_format_), i,
+                         create_format_transpose_func);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert pre transpose for " << kernel->name() << "(index: " << i
                     << ") while eliminating transposes crossing kernel failed";
@@ -137,7 +142,8 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
 }
 
 int DoPostFusion(kernel::SubGraphKernel *subgraph, const kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                 const TransInfoPair &post_trans) {
+                 const TransInfoPair &post_trans, const CreateFormatTransposeFunc &create_format_transpose_func) {
+  CHECK_NULL_RETURN(create_format_transpose_func);
   for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
     auto tensor = kernel->out_tensors().at(i);
     auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(kernel, tensor);
@@ -154,7 +160,7 @@ int DoPostFusion(kernel::SubGraphKernel *subgraph, const kernel::KernelExec *ker
       for (auto &in_tensor_of_out_kernel_idx : in_tensor_of_out_kernel_idxes) {
         ret = InsertPreTranspose(subgraph, out_kernel, all_tensors,
                                  TransInfoPair(post_trans.dst_format_, post_trans.src_format_),
-                                 in_tensor_of_out_kernel_idx);
+                                 in_tensor_of_out_kernel_idx, create_format_transpose_func);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Insert pre transpose kernel for op: " << out_kernel->name() << " input tensor "
                         << in_tensor_of_out_kernel_idx << " failed.";
@@ -198,12 +204,12 @@ int EliminateTranspose::EliminateForSingleKernel(kernel::SubGraphKernel *subgrap
     }
 
     graph_changed_ = true;
-    ret = DoPreFusion(subgraph, kernel, all_tensors, pre_trans);
+    ret = DoPreFusion(subgraph, kernel, all_tensors, pre_trans, this->create_format_transpose_func_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Fusion for pre transpose of " << kernel->name() << " failed.";
       return RET_ERROR;
     }
-    ret = DoPostFusion(subgraph, kernel, all_tensors, post_trans);
+    ret = DoPostFusion(subgraph, kernel, all_tensors, post_trans, this->create_format_transpose_func_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Fusion for post transpose of " << kernel->name() << " failed.";
       return RET_ERROR;
@@ -348,7 +354,7 @@ int EliminateTranspose::DoubleTransposeFusion(kernel::SubGraphKernel *subgraph) 
       // pattern, the previous dest format and the post source format are same
       // op1: format1 -> format2, op2: format2 -> format3, like: nhwc2nchw & nchw2nc4hw4 -> nhwc2nc4hw4
       TransInfoPair new_trans_info(pre_trans_info.src_format_, post_trans_info.dst_format_);
-      ret = TransHeadTailFusion(subgraph, pre_kernel, kernel, new_trans_info);
+      ret = TransHeadTailFusion(subgraph, pre_kernel, kernel, new_trans_info, this->create_format_transpose_func_);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Fusion " << pre_kernel->name() << " and " << kernel->name() << " failed";

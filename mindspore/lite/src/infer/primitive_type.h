@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_PRIMITIVE_TYPE_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_PRIMITIVE_TYPE_H_
+#ifndef MINDSPORE_LITE_SRC_INFER_PRIMITIVE_TYPE_H_
+#define MINDSPORE_LITE_SRC_INFER_PRIMITIVE_TYPE_H_
 
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
@@ -40,33 +40,61 @@ class PrimitiveType {
   PrimitiveType() = default;
   explicit PrimitiveType(std::string primitive_type);
   explicit PrimitiveType(mindspore::schema::PrimitiveType primitive_type);
+  explicit PrimitiveType(int primitive_type);
   virtual ~PrimitiveType() = default;
 
-  bool operator==(const std::string &other);
-  bool operator!=(const std::string &other);
-  bool operator==(mindspore::schema::PrimitiveType other);
-  bool operator!=(mindspore::schema::PrimitiveType other);
+  bool operator==(const std::string &other) const;
+  bool operator!=(const std::string &other) const;
+  bool operator==(mindspore::schema::PrimitiveType other) const;
+  bool operator!=(mindspore::schema::PrimitiveType other) const;
+  bool operator==(int other) const;
+  bool operator!=(int other) const;
 
   PrimitiveType &operator=(const std::string &other);
   PrimitiveType &operator=(const mindspore::schema::PrimitiveType &other);
+  PrimitiveType &operator=(int other);
 
-  std::string PBType() const;
-  schema::PrimitiveType FBType() const;
+  std::string TypeName() const;
+  schema::PrimitiveType SchemaType() const;
 
  private:
   std::string protocolbuffers_type_;
-  schema::PrimitiveType flatbuffers_type_{schema::PrimitiveType_NONE};
+  int flatbuffers_type_{schema::PrimitiveType_NONE};
 };
+#endif
+
+inline std::string TypeName(const PrimitiveType &type) {
+#ifdef ENABLE_CLOUD_INFERENCE
+  return type.TypeName();
+#else
+  return schema::EnumNamePrimitiveType(type);
+#endif
+}
+
+inline schema::PrimitiveType SchemaType(const PrimitiveType &type) {
+#ifdef ENABLE_CLOUD_INFERENCE
+  return type.SchemaType();
+#else
+  return type;
+#endif
+}
 
 inline std::ostream &operator<<(std::ostream &os, const PrimitiveType &type) {
-  os << type.PBType();
+  os << TypeName(type);
   return os;
 }
 
+#ifdef USE_GLOG
 inline LogStream &operator<<(LogStream &stream, const PrimitiveType &type) {
-  stream << "[PrimitiveType: " << type.PBType() << "]";
+  stream << TypeName(type);
   return stream;
 }
 #endif
 }  // namespace mindspore::kernel
+namespace mindspore::lite {
+inline bool IsContain(const std::vector<schema::PrimitiveType> &vec, const kernel::PrimitiveType &element) {
+  return std::any_of(vec.begin(), vec.end(),
+                     [&element](const schema::PrimitiveType &stype) { return element == stype; });
+}
+}  // namespace mindspore::lite
 #endif

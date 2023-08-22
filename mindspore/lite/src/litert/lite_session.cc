@@ -520,7 +520,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::KernelExec *> &kern
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
-      if (!IsPackedOp(static_cast<int>(kernel->type()))) {
+      if (!IsPackedOp(static_cast<int>(kernel::SchemaType(kernel->type())))) {
         continue;
       }
     } else {
@@ -544,7 +544,7 @@ void LiteSession::MarkSharedWeight(const std::vector<kernel::KernelExec *> &kern
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
-      if (IsPackedOp(static_cast<int>(kernel->type()))) {
+      if (IsPackedOp(static_cast<int>(kernel::SchemaType(kernel->type())))) {
         continue;
       }
     } else {

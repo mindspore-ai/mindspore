@@ -35,6 +35,8 @@ class MS_API Kernel : public IKernel<schema::Primitive> {
     Initialize();
   }
   virtual ~Kernel() = default;
+
+  int InferShape() override;
   /// \brief obtain kernel's type.
   ///
   /// \return kernel's type.

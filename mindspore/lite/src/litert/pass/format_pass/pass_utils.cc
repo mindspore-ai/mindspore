@@ -16,10 +16,7 @@
 
 #include "src/litert/pass/format_pass/pass_utils.h"
 #include <string>
-#include <map>
 #include <vector>
-#include <memory>
-#include "src/litert/kernel_registry.h"
 #include "nnacl/format_transpose_parameter.h"
 #include "nnacl/arg_min_max_parameter.h"
 
@@ -45,34 +42,6 @@ bool IsOppositiveTranspose(const TransInfoPair &trans0, const TransInfoPair &tra
   } else {
     return false;
   }
-}
-
-kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const TransInfoPair &trans_info,
-                                          const std::string &name, const lite::InnerContext *ctx,
-                                          const kernel::KernelKey &desc) {
-  auto param = reinterpret_cast<FormatTransposeParameter *>(malloc(sizeof(FormatTransposeParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "Malloc FormatTransposeParameter failed.";
-    return nullptr;
-  }
-  (void)memset(param, 0, sizeof(FormatTransposeParameter));
-  param->op_parameter_.type_ = static_cast<int>(schema::PrimitiveType_FormatTranspose);
-  param->src_format_ = static_cast<FormatC>((trans_info.src_format_));
-  param->dst_format_ = static_cast<FormatC>((trans_info.dst_format_));
-  kernel::KernelKey format_transpose_key = desc;
-  format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
-  format_transpose_key.format = NHWC;
-  format_transpose_key.data_type = input->data_type();
-
-  kernel::KernelExec *kernel = nullptr;
-  auto ret = KernelRegistry::GetInstance()->GetKernelExec({input}, {output}, ctx, nullptr, format_transpose_key,
-                                                          reinterpret_cast<OpParameter *>(param), &kernel);
-  if (ret != RET_OK || kernel == nullptr) {
-    free(param);
-    return nullptr;
-  }
-  kernel->set_name(name);
-  return kernel;
 }
 
 bool SetShape(const Tensor *src_tensor, Tensor *dst_tensor) {
@@ -123,7 +92,11 @@ bool TransTensorShapeAndFormat(Tensor *tensor, Format dst_format) {
 }
 
 int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, std::vector<Tensor *> *all_tensors,
-                       const TransInfoPair &trans_info, const size_t &index) {
+                       const TransInfoPair &trans_info, const size_t &index, const CreateFormatTransposeFunc &func) {
+  if (func == nullptr) {
+    MS_LOG(ERROR) << "CreateFormatTransposeFunc is nullptr.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   auto trans_name = kernel->name() + "_pre_" + std::to_string(index);
   auto in_tensor = kernel->in_tensors().at(index);
   auto in_tensor_shape = in_tensor->shape();
@@ -142,8 +115,7 @@ int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ker
     return RET_ERROR;
   }
 
-  auto trans_kernel =
-    CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());
+  auto trans_kernel = func(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());
   if (trans_kernel == nullptr) {
     delete out_tensor;
     return RET_NULL_PTR;
@@ -155,7 +127,12 @@ int InsertPreTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ker
 }
 
 int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel,
-                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index) {
+                        std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const size_t &index,
+                        const CreateFormatTransposeFunc &func) {
+  if (func == nullptr) {
+    MS_LOG(ERROR) << "CreateFormatTransposeFunc is nullptr.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   auto trans_name = kernel->name() + "_post_" + std::to_string(index);
 
   auto out_tensor = kernel->out_tensors().at(index);
@@ -175,8 +152,7 @@ int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ke
     return RET_ERROR;
   }
 
-  auto trans_kernel =
-    CreateFormatTranspose(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());
+  auto trans_kernel = func(in_tensor, out_tensor, trans_info, trans_name, kernel->Context(), kernel->desc());
   if (trans_kernel == nullptr) {
     delete out_tensor;
     return RET_NULL_PTR;

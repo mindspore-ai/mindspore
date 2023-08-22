@@ -66,7 +66,7 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
     }
 
     // to be realized: 1. get type from kernel; 2. flag for transpose weight.
-    std::string type_name = schema::EnumNamePrimitiveType(kernel->type());
+    std::string type_name = kernel::TypeName(kernel->type());
     auto find_result = cloud_format_kernel_list.find(type_name);
     if (find_result == cloud_format_kernel_list.end()) {
       MS_LOG(INFO) << "Kernel(" << kernel->name() << ") has different format(" << FormatEnumToString(kernel_format)
@@ -85,7 +85,8 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
         TransposeConstData(kernel, index);
         continue;
       }
-      auto ret = InsertPreTranspose(graph, kernel, tensors, TransInfoPair(format_, kernel_format), index);
+      auto ret = InsertPreTranspose(graph, kernel, tensors, TransInfoPair(format_, kernel_format), index,
+                                    create_format_transpose_func_);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Insert pre transpose for op: " << kernel->name() << ", index: " << index << ", failed";
         return RET_ERROR;
@@ -93,7 +94,8 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
     }
 
     for (size_t i = 0; i < kernel->out_kernels().size(); i++) {
-      auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i);
+      auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i,
+                                     create_format_transpose_func_);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Insert post transpose for op: " << kernel->name() << ", index: " << i << ", failed";
         return RET_ERROR;
@@ -102,7 +104,8 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
     // graph output node has no output kernels, take care of these nodes
     if (IsContain(graph->out_nodes(), kernel)) {
       for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
-        auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i);
+        auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i,
+                                       create_format_transpose_func_);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Insert post transpose for op: " << kernel->name() << ", index: " << i << ", failed";
           return RET_ERROR;

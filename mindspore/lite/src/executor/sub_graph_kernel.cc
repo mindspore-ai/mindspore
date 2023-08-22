@@ -85,14 +85,10 @@ int SubGraphKernel::InferShape() {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->InferShape();
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
-                   << "flag set to false.";
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:" << kernel->type() << "flag set to false.";
       infer_ret = RET_INFER_INVALID;
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
-                    << ", name:" << kernel->name();
+      MS_LOG(ERROR) << "InferShape failed, type: " << kernel->type() << ", name:" << kernel->name();
       return RET_INFER_ERR;
     }
   }
@@ -111,13 +107,9 @@ int SubGraphKernel::ReSize() {
     }
     auto ret = kernel->InferShape();
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
-                   << "flag set to false.";
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:" << kernel->type() << "flag set to false.";
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
-                    << ", name: " << kernel->name();
+      MS_LOG(ERROR) << "InferShape failed, type: " << kernel->type() << ", name: " << kernel->name();
       return RET_INFER_ERR;
     }
     if (ret == RET_OK) {

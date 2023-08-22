@@ -30,7 +30,7 @@ class OpenCLSubGraph : public SubGraphKernel {
  public:
   OpenCLSubGraph(const std::vector<kernel::KernelExec *> &inKernels,
                  const std::vector<kernel::KernelExec *> &outKernels, const std::vector<kernel::KernelExec *> &nodes,
-                 Kernel *kernel)
+                 MSKernel *kernel)
       : SubGraphKernel(inKernels, outKernels, nodes, kernel) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
     if (nodes.front()->desc().data_type == kNumberTypeFloat16) {

@@ -354,7 +354,7 @@ bool KernelExecUtil::IsOutputSubGraph(const KernelExec *subgraph_kernel) {
 namespace {
 SubGraphKernel *CreateCustomSubGraph(std::vector<KernelExec *> &&input_kernels,
                                      std::vector<KernelExec *> &&output_kernels,
-                                     const std::vector<KernelExec *> &kernels, Kernel *kernel) {
+                                     const std::vector<KernelExec *> &kernels, MSKernel *kernel) {
   auto sub_kernel = new (std::nothrow) CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create custom subgraph failed!";
@@ -382,6 +382,7 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
   }
   auto lite_kernel = new (std::nothrow) LiteKernel(nullptr, input_tensors, output_tensors, &context);
   if (lite_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create subgraph lite-kernel failed.";
     return nullptr;
   }
   std::vector<KernelExec *> input_kernels = SubgraphInputNodes(kernels);
@@ -583,7 +584,7 @@ std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(const KernelExec 
 
   std::vector<KernelExec *> partial_nodes{};
   auto call_input_node = call_inputs.front();
-  switch (call_input_node->type()) {
+  switch (SchemaType(call_input_node->type())) {
     case schema::PrimitiveType_PartialFusion: {
       partial_nodes.push_back(call_input_node);
       break;
@@ -643,7 +644,7 @@ KernelExec *KernelExecUtil::GetPartialOutputCall(const KernelExec *partial_node)
 
   KernelExec *call_node = nullptr;
   auto partial_output_node = partial_outputs.front();
-  switch (partial_output_node->type()) {
+  switch (SchemaType(partial_output_node->type())) {
     case schema::PrimitiveType_Call: {
       call_node = partial_output_node;
       break;

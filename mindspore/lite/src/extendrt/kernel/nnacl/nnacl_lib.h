@@ -32,7 +32,7 @@ class NNACLLib : public KernelLib {
 
   bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const std::string &backend,
                const Format &format = DEFAULT_FORMAT) const override;
-  LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+  BaseKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 
   InferKernel *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,

@@ -20,6 +20,6 @@
 #include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::lite {
-kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::LiteKernel *kernel);
+kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::MSKernel *kernel);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_

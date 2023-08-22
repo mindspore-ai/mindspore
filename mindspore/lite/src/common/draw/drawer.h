@@ -21,7 +21,7 @@
 
 #include "src/executor/sub_graph_kernel.h"
 
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#ifdef ENABLE_CLOUD_INFERENCE
 #include "src/extendrt/graph_compiler/compile_result.h"
 #endif
 
@@ -41,7 +41,7 @@ class Drawer {
   std::string GetNextFileName(const std::string &name);
 
   void Draw(const kernel::SubGraphKernel *graph, const std::string &name = "");
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#ifdef ENABLE_CLOUD_INFERENCE
   void Draw(const CompileResult *graph, const std::string &name = "");
 #endif
 

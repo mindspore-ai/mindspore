@@ -75,7 +75,7 @@ class SubGraphKernelAdapterGraph : public AdapterGraph {
                                                             const MarkFilter &mark_filter = nullptr) {
     auto adapter_graph = std::make_shared<SubGraphKernelAdapterGraph>(graph);
     auto nodes = graph->immutable_nodes();
-    auto ret = kernel::KernelExecUtil::TopologicalSortNodes(&nodes);
+    auto ret = kernel::KernelExecUtil::TopologicalSortNodes(&nodes, graph->in_nodes());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "TopologicalSortNodes failed";
       return nullptr;
