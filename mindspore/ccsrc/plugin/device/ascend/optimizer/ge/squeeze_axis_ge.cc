@@ -42,10 +42,10 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
                              "Squeeze node axis attr error, squeeze node: " + squeeze_cnode->DebugString() +
                                ", axis value: " + axis_value->ToString());
   auto &value_sequence = axis_value->cast<ValueSequencePtr>()->value();
+  auto shape_vec = common::AnfAlgo::GetOutputInferShape(squeeze_cnode->input(1), 0);
+  const auto dim = shape_vec.size();
   std::vector<int64_t> axis;
   if (value_sequence.empty()) {
-    auto shape_vec = common::AnfAlgo::GetOutputInferShape(squeeze_cnode->input(1), 0);
-    const auto dim = shape_vec.size();
     for (size_t i = 0; i < dim; ++i) {
       if (shape_vec[i] != 1) {
         continue;
@@ -56,10 +56,9 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
     return node;
   }
 
-  auto axis_size = value_sequence.size();
   for (const auto &value : value_sequence) {
     auto axis_data = AnfUtils::GetIntValue(value);
-    auto real_idx = (axis_data < 0) ? axis_data + axis_size : axis_data;
+    auto real_idx = (axis_data < 0) ? axis_data + dim : axis_data;
     (void)axis.emplace_back(real_idx);
   }
   prim->set_attr(kAttrAxis, MakeValue(axis));
