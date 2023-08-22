@@ -252,8 +252,7 @@ static void InsertAllReduceToNodeInput(const CNodePtr &node, const std::string &
   InsertNode(allreduce_op, node, index, node->input(index), func_graph, instance_name);
 }
 
-bool InsertAllReduceOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                        const FuncGraphManagerPtr &manager, const size_t devices) {
+bool InsertAllReduceOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, const size_t devices) {
   int64_t device_num = devices;
   if (device_num <= 1) {
     return true;
@@ -292,7 +291,6 @@ bool InsertAllReduceOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
           MS_LOG(INFO) << "Here should insert AllReduce Ops: ";
           InsertAllReduceToNodeInput(expect_add, HCCL_WORLD_GROUP, PARALLEL_GLOBALNORM);
           AnfNodePtr expect_reshape = expect_matmul_cnode->input(1);
-
           if (!expect_reshape->isa<CNode>()) {
             continue;
           }
@@ -327,7 +325,7 @@ bool InsertAllReduceOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
 }
 
 bool InsertAllReduceOpsForFFN(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                              const FuncGraphManagerPtr &manager, const size_t devices) {
+                              const size_t devices) {
   MS_EXCEPTION_IF_NULL(root);
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
@@ -350,12 +348,10 @@ bool InsertAllReduceOpsForFFN(const std::vector<AnfNodePtr> &all_nodes, const Fu
     MS_EXCEPTION_IF_NULL(batchmatmul_prim);
     if (batchmatmul_prim->HasAttr(IN_STRATEGY)) {
       auto batchmatmul_stra = batchmatmul_prim->GetAttr(IN_STRATEGY);
-      //      MS_LOG(INFO) << "Extract information: matmul strategy " << matmul_stra->ToString();
       if (batchmatmul_stra == nullptr) {
         continue;
       }
       auto batchmatmul_var = GetValue<vector<Shape>>(batchmatmul_stra);
-      //      auto matmul_var = matmul_stra->cast<ValueTuplePtr>();
       if (batchmatmul_var.size() > 0) {
         Dimensions sub_a_strategy = batchmatmul_var.at(0);
         Dimensions sub_b_strategy = batchmatmul_var.at(1);
@@ -370,8 +366,7 @@ bool InsertAllReduceOpsForFFN(const std::vector<AnfNodePtr> &all_nodes, const Fu
   return true;
 }
 
-bool ModifyReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                      const FuncGraphManagerPtr &manager, const size_t devices) {
+bool ModifyReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, const size_t devices) {
   int64_t device_num = devices;
   MS_EXCEPTION_IF_NULL(root);
   for (auto &node : all_nodes) {
@@ -425,8 +420,7 @@ bool ModifyReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphP
   return true;
 }
 
-bool ModifySoftmaxReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                             const FuncGraphManagerPtr &manager, const size_t devices) {
+bool ModifySoftmaxReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, const size_t devices) {
   int64_t device_num = devices;
   MS_EXCEPTION_IF_NULL(root);
   for (auto &node : all_nodes) {
@@ -465,7 +459,6 @@ bool ModifySoftmaxReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const Fun
       continue;
     }
     Shape origin_dst_shape = GetValue<std::vector<int64_t>>(reshape_node_input->cast<ValueNodePtr>()->value());
-
     if (origin_dst_shape.size() != 4) {
       continue;
     }
@@ -558,8 +551,7 @@ void InitRefMap(const FuncGraphPtr &root) {
   }
 }
 
-static void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res,
-                             const FuncGraphPtr &root, size_t rank_id) {
+static void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res, size_t rank_id) {
   MS_LOG(INFO) << "Begin set parallel shape";
   // check null for param and cnode
   auto param_shape = parameter->Shape();
@@ -615,7 +607,7 @@ static void DoParameterSliceShape(const FuncGraphPtr &root, size_t rank_id) {
     auto iter = l_RefMap.find(parameter);
     if (iter != l_RefMap.cend()) {
       MS_LOG(INFO) << "SetParallelShape for parameter: " << parameter->ToString();
-      SetParallelShape(parameter, l_RefMap[parameter], root, rank_id);
+      SetParallelShape(parameter, l_RefMap[parameter], rank_id);
       SetSharedParameterFlag(root, parameter);
       continue;
     }
@@ -704,7 +696,7 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
   }
 }
 
-void ExtractGraphInformation(const std::vector<AnfNodePtr> &all_nodes, const size_t devices) {
+void ExtractGraphInformation(const std::vector<AnfNodePtr> &all_nodes) {
   MS_LOG(INFO) << "ExtractInformation";
   SetStridedSliceSplitStrategy(all_nodes);
   for (auto &node : all_nodes) {
@@ -777,8 +769,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
   (void)manager->Replace(node, replace_output);
 }
 
-static void ReplaceGatherOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                             const FuncGraphManagerPtr &manager, const size_t devices) {
+static void ReplaceGatherOps(const std::vector<AnfNodePtr> &all_nodes, const size_t devices) {
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
@@ -802,8 +793,7 @@ static void ReplaceGatherOps(const std::vector<AnfNodePtr> &all_nodes, const Fun
   }
 }
 
-static void FixReturnRedistribution(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
-                                    const FuncGraphManagerPtr &manager, const size_t devices) {
+static void FixReturnRedistribution(const FuncGraphPtr &root, const size_t devices) {
   MS_LOG(INFO) << "FixReturnRedistribution";
   CNodePtr ret = root->get_return();
   AnfNodePtr expect_matmul = ret->input(1);
@@ -819,13 +809,6 @@ static void FixReturnRedistribution(const std::vector<AnfNodePtr> &all_nodes, co
   MS_LOG(INFO) << "return_input_shapes size" << return_input_shapes.size();
   if (return_input_shapes.size() == 1) {
     MS_LOG(INFO) << "return_input_shapes: " << return_input_shapes[0][0] << return_input_shapes[0][1];
-    auto des_shape = return_input_shapes[0];
-    auto des_size = return_input_shapes[0][1];
-    auto origin_size = des_size / devices;
-    Shape origin_shape;
-    origin_shape.push_back(origin_size);
-    ConstructOperator constructor;
-    constructor.UpdateTensorShape(origin_shape);
     GenerateGraph gen_g = GenerateGraph(expect_matmul->cast<CNodePtr>()->attrs());
     if (gen_g.Init(ret) != SUCCESS) {
       MS_LOG(ERROR) << "MatMul->Return"
@@ -837,15 +820,56 @@ static void FixReturnRedistribution(const std::vector<AnfNodePtr> &all_nodes, co
     OperatorAttrs matmul_attrs = {transpose_a_attr, transpose_b_attr};
     auto matmul = gen_g.PushBack({gen_g.NewOpInst(prim::kPrimMatMul->name(), matmul_attrs), gen_g.virtual_input_node(),
                                   gen_g.virtual_input_node()});
-    auto reshape = gen_g.PushBack({gen_g.NewOpInst(prim::kPrimReshape->name()), matmul, CreateTuple(origin_shape)});
-    auto allgather = gen_g.PushBack({NewAllGatherNode(ALL_GATHER, HCCL_WORLD_GROUP), reshape});
-    auto reshape2 = gen_g.PushBack({gen_g.NewOpInst(prim::kPrimReshape->name()), allgather, CreateTuple(des_shape)});
-    std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(matmul, 1), std::make_pair(matmul, 2)};
-    auto replace_graph = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
-      std::make_pair(input_nodes, reshape2));
-    MS_LOG(INFO) << "StepReplaceGraph " << expect_matmul->ToString();
-    StepReplaceGraph(replace_graph, expect_matmul->cast<CNodePtr>());
-    return;
+
+    if (return_input_shapes[0][0] == 1) {
+      auto des_shape = return_input_shapes[0];
+      auto des_size = return_input_shapes[0][1];
+      auto origin_size = des_size / devices;
+      Shape origin_shape;
+      origin_shape.push_back(origin_size);
+      ConstructOperator constructor;
+      constructor.UpdateTensorShape(origin_shape);
+
+      auto reshape = gen_g.PushBack({gen_g.NewOpInst(prim::kPrimReshape->name()), matmul, CreateTuple(origin_shape)});
+      auto allgather = gen_g.PushBack({NewAllGatherNode(ALL_GATHER, HCCL_WORLD_GROUP), reshape});
+      auto reshape2 = gen_g.PushBack({gen_g.NewOpInst(prim::kPrimReshape->name()), allgather, CreateTuple(des_shape)});
+      std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(matmul, 1), std::make_pair(matmul, 2)};
+      auto replace_graph = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+        std::make_pair(input_nodes, reshape2));
+      MS_LOG(INFO) << "StepReplaceGraph " << expect_matmul->ToString();
+      StepReplaceGraph(replace_graph, expect_matmul->cast<CNodePtr>());
+      return;
+
+    } else {
+      auto allgather = gen_g.PushBack({NewAllGatherNode(ALL_GATHER, HCCL_WORLD_GROUP), matmul});
+      // split
+      int64_t split_count = devices;
+      Attr split_axis_attr = std::make_pair(AXIS, MakeValue(0));
+      Attr split_count_attr = std::make_pair(OUTPUT_NUM, MakeValue(split_count));
+      OperatorAttrs split_attrs = {split_axis_attr, split_count_attr};
+      auto split = gen_g.PushBack({gen_g.NewOpInst(SPLIT, split_attrs), allgather});
+
+      // tuple get item and make tuple
+      std::vector<AnfNodePtr> maketuple_inputs;
+      maketuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+      for (int64_t i = 0; i < split_count; ++i) {
+        auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), split, CreatInt64Imm(i)});
+        maketuple_inputs.push_back(tuple_get_item);
+      }
+      auto maketuple = gen_g.PushBack(maketuple_inputs);
+
+      // concat
+      Attr concat_axis_attr = std::make_pair(AXIS, MakeValue(1));
+      OperatorAttrs concat_attrs = {concat_axis_attr};
+      auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT, concat_attrs), maketuple});
+
+      std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(matmul, 1), std::make_pair(matmul, 2)};
+      auto replace_graph = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+        std::make_pair(input_nodes, concat));
+      MS_LOG(INFO) << "StepReplaceGraph " << expect_matmul->DebugString();
+      StepReplaceGraph(replace_graph, expect_matmul->cast<CNodePtr>());
+      return;
+    }
   }
   return;
 }
@@ -856,6 +880,10 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   // control whether use model_parallel mode
+  if (device_num == 0 || device_num > 8) {
+    MS_LOG(EXCEPTION) << "Error: device_num is <= 0 or > 8.";
+    return false;
+  }
 
   MSLogTime msTime;
   msTime.Start();
@@ -878,26 +906,25 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
   MarkForwardCNode(root);
   InitRefMap(root);
   // extract shape and strategy, set operator_info
-  ExtractGraphInformation(all_nodes, device_num);
-  //  ExtractInformation(all_nodes, device_num);
+  ExtractGraphInformation(all_nodes);
 
   MS_LOG(INFO) << "Now Assigned insert AllReduce opsl";
 
-  if (!InsertAllReduceOps(all_nodes, root, manager, device_num)) {
+  if (!InsertAllReduceOps(all_nodes, root, device_num)) {
     MS_LOG(EXCEPTION) << "Assigned insert AllReduce ops failed.";
   }
-  if (!InsertAllReduceOpsForFFN(all_nodes, root, manager, device_num)) {
+  if (!InsertAllReduceOpsForFFN(all_nodes, root, device_num)) {
     MS_LOG(EXCEPTION) << "Assigned insert AllReduce ops failed.";
   }
-  if (!ModifyReshapeOps(all_nodes, root, manager, device_num)) {
+  if (!ModifyReshapeOps(all_nodes, root, device_num)) {
     MS_LOG(EXCEPTION) << "Modify Reshape Ops failed.";
   }
-  if (!ModifySoftmaxReshapeOps(all_nodes, root, manager, device_num)) {
+  if (!ModifySoftmaxReshapeOps(all_nodes, root, device_num)) {
     MS_LOG(EXCEPTION) << "Modify Reshape Ops failed.";
   }
 
-  ReplaceGatherOps(all_nodes, root, manager, device_num);
-  FixReturnRedistribution(all_nodes, root, manager, device_num);
+  ReplaceGatherOps(all_nodes, device_num);
+  FixReturnRedistribution(root, device_num);
   DoParameterSliceShape(root, rank_id);
 #ifdef ENABLE_DUMP_IR
   if (context->CanDump(kIntroductory)) {
