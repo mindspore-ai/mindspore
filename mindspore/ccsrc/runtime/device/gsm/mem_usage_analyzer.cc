@@ -141,6 +141,9 @@ void MemUsageAnalyzer::AddFusedTensorInfo() {
     if (info->input_tensors_.empty()) {
       continue;
     }
+    if (info->output_tensors_.empty()) {
+      continue;
+    }
     auto input_info = add_fused_tensor(info->input_tensors_, i);
     auto output_info = add_fused_tensor(info->output_tensors_, i);
     input_info->index_ = output_info->tensor_id_;

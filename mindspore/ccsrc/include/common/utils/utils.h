@@ -590,6 +590,7 @@ COMMON_EXPORT bool IsOneOfDynRankNeedPadShape(const std::string &format);
 COMMON_EXPORT bool IsOneOfUnsignedType(const TypeId &type_id);
 
 COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
+COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

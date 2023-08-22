@@ -16,6 +16,10 @@
 
 #include "include/common/utils/utils.h"
 
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+#else
+#include <sys/statfs.h>
+#endif
 #include <set>
 #include <string>
 #include "ops/array_op_name.h"
@@ -282,4 +286,22 @@ size_t GetSystemMemorySize(const std::string &key) {
   return mem_size * kKBToByte;
 #endif
 }
+
+size_t GetSystemFreeDiskSize(const std::string &path) {
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+  // Do not implement
+  return 0;
+#else
+  struct statfs disk_info;
+  int ret = statfs(path.c_str(), &disk_info);
+  if (ret != 0) {
+    MS_LOG(WARNING) << "Failed to get disk directory " << path << " size, check whether the directory is created.";
+    return 0;
+  }
+  size_t block_size = disk_info.f_bsize;
+  size_t fb_size = disk_info.f_bfree;
+  return block_size * fb_size;
+#endif
+}
+
 }  // namespace mindspore

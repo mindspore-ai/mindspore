@@ -24,6 +24,8 @@
 
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/offload_context.h"
+#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "runtime/device/gsm/swap_strategy_builder.h"
 #include "runtime/device/memory_offload_strategy.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
@@ -36,6 +38,26 @@ constexpr size_t kSecondVirtualNodeOffset = 1;
 constexpr char kOffloadTargetCPU[] = "cpu";
 constexpr char kOffloadTargetDisk[] = "disk";
 namespace {
+constexpr char HCCL_WORLD_GROUP[] = "hccl_world_group";
+constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
+size_t GetLocalRankSize() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::string world_group;
+  if (backend == kAscendDevice || backend == kDavinciDevice) {
+    world_group = HCCL_WORLD_GROUP;
+  } else if (backend == kGPUDevice) {
+    world_group = NCCL_WORLD_GROUP;
+  } else {
+    MS_LOG(WARNING) << "Invalid communication backend: " << backend << ", currently only support Ascend/GPU backend.";
+    return 1;
+  }
+  const auto &collective_manager = distributed::collective::CollectiveManager::instance();
+  MS_EXCEPTION_IF_NULL(collective_manager);
+  return collective_manager->GetLocalGroupSize(world_group);
+}
+
 ControlActor *GetCtrlActor(const ControlNodeParserPtr &parser, const KernelGraphPtr &graph,
                            const string &actor_suffix) {
   MS_EXCEPTION_IF_NULL(parser);
@@ -160,7 +182,12 @@ std::shared_ptr<device::SwapContext> GetSwapContext() {
   const auto &swap_context = std::make_shared<device::SwapContext>();
   const auto max_hbm_size = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
   swap_context->hbm_mem_size_ = FloatToSize(max_hbm_size * kGBToByte * offload_context->hbm_ratio());
-  swap_context->cpu_mem_size_ = static_cast<size_t>(offload_context->offload_cpu_size() * offload_context->cpu_ratio());
+  auto cpu_mem_size = offload_context->offload_cpu_size();
+  if (!mindspore::IsStandAlone() && !offload_context->cpu_size_configured()) {
+    size_t rank_size = GetLocalRankSize();
+    cpu_mem_size = cpu_mem_size / rank_size;
+  }
+  swap_context->cpu_mem_size_ = static_cast<size_t>(cpu_mem_size * offload_context->cpu_ratio());
   swap_context->disk_mem_size_ = offload_context->offload_disk_size();
   MS_LOG(INFO) << "Hbm size:" << swap_context->hbm_mem_size_ << ", cpu memory size:" << swap_context->cpu_mem_size_
                << ", disk size:" << swap_context->disk_mem_size_ << " to generate the offload strategy";

@@ -68,6 +68,13 @@ size_t OffloadContext::offload_cpu_size() {
 
 void OffloadContext::set_offload_disk_size(size_t offload_disk_size) { offload_disk_size_ = offload_disk_size; }
 
+size_t OffloadContext::offload_disk_size() {
+  if (offload_disk_size_ == 0) {
+    offload_disk_size_ = mindspore::GetSystemFreeDiskSize(offload_path_);
+  }
+  return offload_disk_size_;
+}
+
 void OffloadContext::set_enable_aio(bool enable_aio) { enable_aio_ = enable_aio; }
 
 bool OffloadContext::enable_aio() {

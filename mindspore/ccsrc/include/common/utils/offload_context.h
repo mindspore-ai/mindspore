@@ -42,7 +42,7 @@ class COMMON_EXPORT OffloadContext {
   size_t offload_cpu_size();
 
   void set_offload_disk_size(size_t offload_disk_size);
-  size_t offload_disk_size() const { return offload_disk_size_; }
+  size_t offload_disk_size();
 
   void set_enable_aio(bool enable_aio);
   bool enable_aio();
