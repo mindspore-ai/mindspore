@@ -93,7 +93,7 @@ def _check_parallel_envs():
 
 def init(backend_name=None):
     """
-    Initialize distributed backends required by communication services, e.g. HCCL/NCCL. It is usually used in
+    Initialize distributed backends required by communication services, e.g. HCCL/NCCL/MCCL. It is usually used in
     distributed parallel scenarios and set before using communication services.
 
     Note:
