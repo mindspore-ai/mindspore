@@ -29,11 +29,7 @@ ExecutionFlow::~ExecutionFlow() {
 
 InferKernel *ExecutionFlow::ConstructFusionKernel() {
   kernel::KernelExecUtil::FindAllInoutKernels(kernels_);
-  if (kernels_.size() == 0) {
-    MS_LOG(ERROR) << "CreateSubGraphKernel failed, kernels size is 0";
-    return nullptr;
-  }
-  kernel::SubGraphType cur_sub_graph_type = this->GetSubGraphType(kernels_[0]);
+  kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
   // SCHEMA_VERSION::SCHEMA_CUR = 0
   // extendrt subgraph will be implemented later.
@@ -65,49 +61,5 @@ std::string ExecutionFlow::Dump() const {
   }
   oss << "]" << std::endl;
   return oss.str();
-}
-
-mindspore::kernel::SubGraphType ExecutionFlow::GetSubGraphType(abstract::Kernel *kernel) {
-  if (kernel == nullptr) {
-    return kernel::kNotSubGraph;
-  }
-
-  auto provider = kernel->desc().provider;
-  auto data_type = kernel->desc().data_type;
-  auto arch = kernel->desc().arch;
-
-  if (provider != kernel::kBuiltin) {
-    // if support custom kernel, should return kernel::kCustomSubGraph
-    MS_LOG(ERROR) << "not support non-build-in kernel";
-    return kernel::kNotSubGraph;
-  }
-
-  // control flow sub graph is dealt in here
-
-  // normal float compute sub graph
-  switch (arch) {
-    case kernel::kCPU: {
-      if (data_type == kNumberTypeFloat16) {
-        return kernel::kCpuFP16SubGraph;
-      }
-      if (data_type == kNumberTypeFloat32) {
-        return kernel::kCpuFP32SubGraph;
-      }
-      return kernel::kCpuFP32SubGraph;
-    }
-    case kernel::kGPU: {
-      if (data_type == kNumberTypeFloat16) {
-        return kernel::kGpuFp16SubGraph;
-      }
-      if (data_type == kNumberTypeFloat32) {
-        return kernel::kGpuFp32SubGraph;
-      }
-      return kernel::kGpuFp32SubGraph;
-    }
-    case kernel::kACL:
-      return kernel::kAclSubGraph;
-    default:
-      return kernel::kNotSubGraph;
-  }
 }
 }  // namespace mindspore::infer

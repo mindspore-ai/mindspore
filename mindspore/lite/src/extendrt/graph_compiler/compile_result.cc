@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include "ops/base_operator.h"
 #include "utils/hash_map.h"
 #include "include/api/status.h"
@@ -333,21 +332,6 @@ StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, I
     return AppendTensor(output_tensor);
   }
   return kSuccess;
-}
-
-bool CompileNode::NeedInferShape() {
-  for (auto output : outputs_) {
-    auto shape = output->shape();
-    if (std::any_of(shape.begin(), shape.end(), [](int dim) {
-          if (dim < 0) {
-            return true;
-          }
-          return false;
-        })) {
-      return true;
-    }
-  }
-  return false;
 }
 
 std::string CompileResult::Dump(int indent) const {

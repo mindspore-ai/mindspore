@@ -51,8 +51,6 @@ class CompileNode {
   InferTensor *GetOutput(size_t i) const { return outputs_.at(i); }
   size_t OutputSize() const { return outputs_.size(); }
 
-  bool NeedInferShape();
-
   void SetName(const std::string &name) { name_ = name; }
   void AppendInputTensor(InferTensor *tensor);
   void AppendOutputTensor(InferTensor *tensor);

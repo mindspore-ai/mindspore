@@ -73,8 +73,9 @@ bool ExecutionPlan::PrepareKernels() {
 
 bool ExecutionPlan::MallocTensorData(abstract::Kernel *subgraph_kernel) {
   auto subgraph = dynamic_cast<kernel::SubGraphKernel *>(subgraph_kernel);
-  if (subgraph == nullptr) {
-    MS_LOG(ERROR) << "kernel is not sub graph kernel";
+  if (subgraph->desc().arch != kernel::KERNEL_ARCH::kCPU) {
+    MS_LOG(ERROR)
+      << "ExecutionPlan::MallocTensorData subgraph target is not CPU, cannot malloc data with default allocator";
     return false;
   }
   auto kernel_list = subgraph->nodes();
