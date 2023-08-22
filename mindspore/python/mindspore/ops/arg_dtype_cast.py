@@ -62,3 +62,44 @@ def type_it(src_data, cast_type):
         raise TypeError(f'{src_data} is the wrong data type.')
 
     raise TypeError("Unsupported type cast")
+
+
+class ArgHandleKind(Enum):
+    ToKernelSize = 1
+    ToStrides = 2
+    ToDilations = 3
+    ToPaddings = 4
+
+
+def expand_int_tuple(arg_name, arg_value, dst_len):
+    """
+    Process an int number or a tuple with one, two or four ints.
+    If arg is an int number or a tuple with one int number, s
+    return (arg, arg) if dst_len==2 or (1, 1, arg, arg) if dst_len==4.
+    If arg is a tuple with two int number, return (arg, arg) if dst_len==2.
+    If arg is a tuple with four int number, return (arg[2], arg[3]) if dst_len==2 or arg if dst_len==4.
+    """
+    if isinstance(arg_value, int) or len(arg_value) == 1:
+        if dst_len == 2:
+            return (arg_value, arg_value)
+        if dst_len == 4:
+            return (arg_value, arg_value, arg_value, arg_value)
+    if len(arg_value) == 2:
+        if dst_len == 2:
+            return arg_value
+    if len(arg_value) == 4:
+        if dst_len == 2:
+            return (arg_value[2], arg_value[3])
+        if dst_len == 4:
+            return arg_value
+    raise TypeError(f"For arg '{arg_name}', the value must be an int number or a tuple of two "
+                    "or four int numbers.")
+
+
+def arg_handle(arg_name, arg_value, handle_type):
+    if handle_type == ArgHandleKind.ToKernelSize or handle_type == ArgHandleKind.ToStrides or \
+            handle_type == ArgHandleKind.ToDilations:
+        return expand_int_tuple(arg_name, arg_value, 2)
+    if handle_type == ArgHandleKind.ToPaddings:
+        return expand_int_tuple(arg_name, arg_value, 4)
+    raise TypeError(f"Unsupported handle type for arg '{arg_name}'")

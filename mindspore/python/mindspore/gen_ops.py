@@ -82,6 +82,63 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     return gen_py
 
 
+def process_args(args):
+    """process arg for yaml, get arg_name, default value, cast type, pre-handler, etc."""
+    args_name = []
+    args_assign = []
+    init_args_with_default = []
+    for arg_name, arg_info in args.items():
+        dtype = arg_info.get('dtype')
+
+        init_value = arg_info.get('init')
+        if init_value is None:
+            continue
+        if init_value == 'NO_VALUE':
+            init_args_with_default.append(f"""{arg_name}""")
+        elif init_value == 'None':
+            init_args_with_default.append(f"""{arg_name}={init_value}""")
+        else:
+            if dtype == 'str':
+                init_value = '"' + init_value + '"'
+            init_args_with_default.append(f"""{arg_name}={init_value}""")
+        args_name.append(arg_name)
+
+        assign_str = ""
+        type_cast = arg_info.get('type_cast')
+        type_cast_set = None
+        if type_cast:
+            type_cast_set = {ct.strip() for ct in type_cast.split(",")}
+        if type_cast_set:
+            assign_str += f'type_it({arg_name}, '
+            type_cast_list = []
+
+            if 'int' in type_cast_set:
+                type_cast_list.append('INT')
+            if 'tuple[int]' in type_cast_set:
+                type_cast_list.append('TUPLE')
+            if 'scalar' in type_cast_set:
+                type_cast_list.append('SCALAR')
+            # add more type cast kind here
+
+            assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
+            if dtype == 'tuple[int]':
+                assign_str += '_TO_TUPLE)'
+            if dtype == 'list[int]':
+                assign_str += '_TO_LIST)'
+            if dtype == 'tensor':
+                assign_str += '_TO_TENSOR)'
+        else:
+            assign_str += arg_name
+
+        arg_handler = arg_info.get('arg_handler')
+        if arg_handler is not None:
+            assign_str = f'arg_handle({assign_str}, ArgHandleKind.{arg_handler})'
+
+        assign_str = f"""        self.{arg_name} = """ + assign_str
+        args_assign.append(assign_str)
+    return args_name, args_assign, init_args_with_default
+
+
 def generate_py_primitive(yaml_data):
     """
     generate python primitive
@@ -90,57 +147,13 @@ def generate_py_primitive(yaml_data):
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+        class_def = operator_data.get('class')
+        if class_def:
+            item = class_def.get("name")
+            if item:
+                class_name = item
 
-        init_args_with_default = []
-        init_args = []
-        args_assign = []
-        for arg_name, arg_info in args.items():
-            dtype = arg_info.get('dtype')
-            type_cast = arg_info.get('type_cast')
-            type_cast_set = None
-            if type_cast:
-                type_cast_set = {ct.strip() for ct in type_cast.split(",")}
-
-            init_value = arg_info.get('init')
-            if init_value is None:
-                continue
-
-            if init_value == 'NO_VALUE':
-                init_args_with_default.append(f"""{arg_name}""")
-            elif init_value == 'None':
-                init_args_with_default.append(f"""{arg_name}={init_value}""")
-            else:
-                if dtype == 'str':
-                    init_value = '"' + init_value + '"'
-                init_args_with_default.append(f"""{arg_name}={init_value}""")
-
-            init_args.append(arg_name)
-
-            assign_str = f"""        self.{arg_name} = """
-
-            if type_cast_set:
-                assign_str += f'type_it({arg_name}, '
-                type_cast_list = []
-
-                if 'int' in type_cast_set:
-                    type_cast_list.append('INT')
-                if 'tuple[int]' in type_cast_set:
-                    type_cast_list.append('TUPLE')
-                if 'scalar' in type_cast_set:
-                    type_cast_list.append('SCALAR')
-                #add more type cast kind here
-
-                assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
-                if dtype == 'tuple[int]':
-                    assign_str += '_TO_TUPLE)'
-                if dtype == 'list[int]':
-                    assign_str += '_TO_LIST)'
-                if dtype == 'tensor':
-                    assign_str += '_TO_TENSOR)'
-            else:
-                assign_str += arg_name
-            args_assign.append(assign_str)
-
+        init_args, args_assign, init_args_with_default = process_args(args)
         args_assign = '\n'.join(assign for assign in args_assign)
         primitive_code = f"""
 class {class_name}(Primitive):
@@ -174,9 +187,14 @@ namespace mindspore::ops {{
 
     op_name_gen = ''
     op_name_gen += op_name_head
-    for operator_name, _ in yaml_data.items():
-        OpName = ''.join(word.capitalize() for word in operator_name.split('_'))
-        op_name_gen += f"""constexpr auto kName{OpName} = "{OpName}";
+    for operator_name, operator_data in yaml_data.items():
+        k_name_op = ''.join(word.capitalize() for word in operator_name.split('_'))
+        class_def = operator_data.get('class')
+        if class_def:
+            item = class_def.get("name")
+            if item:
+                k_name_op = item
+        op_name_gen += f"""constexpr auto kName{k_name_op} = "{k_name_op}";
 """
 
     op_name_gen += op_name_end
@@ -317,7 +335,8 @@ OpDef g{class_name} = {{
 
 
 if __name__ == "__main__":
-    work_path = ''
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    work_path = os.path.join(current_path, '../../../')
     if len(sys.argv) > 1:
         work_path = sys.argv[1]
 

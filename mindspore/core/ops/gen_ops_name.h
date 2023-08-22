@@ -17,15 +17,34 @@
 #define MINDSPORE_CORE_OP_NAME_H_
 
 namespace mindspore::ops {
+constexpr auto kNameAbs = "Abs";
+constexpr auto kNameAcosh = "Acosh";
+constexpr auto kNameAcos = "Acos";
+constexpr auto kNameAsinh = "Asinh";
+constexpr auto kNameAsin = "Asin";
+constexpr auto kNameAtanh = "Atanh";
+constexpr auto kNameAtan = "Atan";
+constexpr auto kNameBoolNot = "BoolNot";
+constexpr auto kNameCeil = "Ceil";
+constexpr auto kNameComplex = "Complex";
+constexpr auto kNameConj = "Conj";
+constexpr auto kNameCos = "Cos";
 constexpr auto kNameEig = "Eig";
 constexpr auto kNameEqual = "Equal";
-constexpr auto kNameLog1p = "Log1p";
-constexpr auto kNameReLU = "ReLU";
-constexpr auto kNameReLU6 = "ReLU6";
+constexpr auto kNameErfc = "Erfc";
+constexpr auto kNameErfinv = "Erfinv";
+constexpr auto kNameErf = "Erf";
+constexpr auto kNameExpm1 = "Expm1";
+constexpr auto kNameFloorDiv = "FloorDiv";
+constexpr auto kNameFloorMod = "FloorMod";
+constexpr auto kNameFloor = "Floor";
 constexpr auto kNameReLU6Grad = "ReLU6Grad";
+constexpr auto kNameReLU6 = "ReLU6";
 constexpr auto kNameReluGrad = "ReluGrad";
-constexpr auto kNameRsqrt = "Rsqrt";
+constexpr auto kNameReLU = "ReLU";
 constexpr auto kNameRsqrtGrad = "RsqrtGrad";
+constexpr auto kNameRsqrt = "Rsqrt";
+constexpr auto kNameTrace = "Trace";
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OP_NAME_H_
