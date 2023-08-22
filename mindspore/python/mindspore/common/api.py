@@ -571,6 +571,8 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
+        compile_once(bool): The function would be compiled only once with risk even if the free variables were changed.
+            Default: ``False`` .
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
@@ -694,8 +696,6 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
-        compile_once(bool): The function would be compiled only once with risk even if the free variables were changed.
-            Default: ``False`` .
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is

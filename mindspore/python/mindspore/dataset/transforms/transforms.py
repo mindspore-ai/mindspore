@@ -476,7 +476,7 @@ class Mask(TensorOperation):
             ``Relational.GT``, ``Relational.LE``, ``Relational.GE``, take ``Relational.EQ`` as example,
             EQ refers to equal.
         constant (Union[str, int, float, bool]): Constant to be compared to.
-        dtype (mindspore.dtype, optional): Type of the generated mask. Default: ``mstype.bool\_``.
+        dtype (mindspore.dtype, optional): Type of the generated mask. Default: ``mstype.bool_``.
 
     Raises:
         TypeError: `operator` is not of type Relational.

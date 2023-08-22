@@ -81,6 +81,9 @@ class Metric(metaclass=ABCMeta):
     Never use this class directly, but instantiate one of its subclasses instead, for examples,
     :class:`mindspore.train.MAE`, :class:`mindspore.train.Recall` etc.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
@@ -116,9 +119,6 @@ class Metric(metaclass=ABCMeta):
         1.399999976158142
         >>> print(metric.indexes)
         [0, 2]
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
     """
     def __init__(self):
         self._indexes = None

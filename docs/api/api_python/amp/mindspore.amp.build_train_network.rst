@@ -6,7 +6,7 @@ mindspore.amp.build_train_network
     构建混合精度训练网络。
 
     .. note::
-        - 使用 `custom_mixed_precision` 或 `auto_mixed_precision` 进行精度转换后，不支持再次使用其他接口进行精度转换。
+        - 使用 :func:`mindspore.amp.custom_mixed_precision` 或 :func:`mindspore.amp.auto_mixed_precision` 进行精度转换后，不支持再次使用其他接口进行精度转换。
           如果使用 `build_train_network` 来训练转换后的网络，则需要将 `level` 配置为 ``O0`` 以避免重复的精度转换。
 
     参数：

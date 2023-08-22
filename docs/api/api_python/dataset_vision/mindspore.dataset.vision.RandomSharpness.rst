@@ -9,9 +9,9 @@ mindspore.dataset.vision.RandomSharpness
         - **degrees** (Union[list, tuple], 可选) - 锐度调节系数的随机选取范围，需为非负数，按照(min, max)顺序排列。如果min与max相等，将使用固定的调节系数进行处理。默认值： ``(0.1, 1.9)`` 。
 
     异常：
-        - **TypeError** - 如果 `degree` 的类型不为list或tuple。
-        - **ValueError** - 如果 `degree` 为负数。
-        - **ValueError** - 如果 `degree` 采用 (max, min) 格式而不是 (min, max)。
+        - **TypeError** - 如果 `degrees` 的类型不为list或tuple。
+        - **ValueError** - 如果 `degrees` 为负数。
+        - **ValueError** - 如果 `degrees` 采用 (max, min) 格式而不是 (min, max)。
 
     教程样例：
         - `视觉变换样例库
