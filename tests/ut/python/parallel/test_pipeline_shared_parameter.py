@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -22,6 +23,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell
+from mindspore._extends import cell_attr_register
 
 class DatasetLenet():
     def __init__(self, data, label, length=3):
@@ -96,6 +98,21 @@ class Net(nn.Cell):
         return out
 
 
+class LazyInlineNet(nn.Cell):
+    @cell_attr_register
+    def __init__(self, stra1, stra2, param=None):
+        super().__init__()
+        self.cell1 = MatMulCell(stra1, stra2)
+        self.cell1.pipeline_stage = 0
+        self.cell2 = MatMulCell2(stra1, stra2)
+        self.cell2.pipeline_stage = 1
+
+    def construct(self, x, label):
+        out, param = self.cell1(x)
+        out = self.cell2(out, param)
+        return out
+
+
 def test_pipeline_split_stage0():
     context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -124,3 +141,51 @@ def test_pipeline_split_stage1():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_lazy_inline_stage0():
+    """
+    Feature: share parameter in lazy inline
+    Description: two cell share one parameter
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    exec_shell = "export MS_DEV_CELL_REUSE=2"
+    os.system(exec_shell)
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+    exec_shell = "unset MS_DEV_CELL_REUSE"
+    os.system(exec_shell)
+
+
+def test_pipeline_lazy_inline_stage1():
+    """
+    Feature: share parameter in lazy inline
+    Description: two cell share one parameter
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    exec_shell = "export MS_DEV_CELL_REUSE=2"
+    os.system(exec_shell)
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell2.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+    exec_shell = "unset MS_DEV_CELL_REUSE"
+    os.system(exec_shell)
