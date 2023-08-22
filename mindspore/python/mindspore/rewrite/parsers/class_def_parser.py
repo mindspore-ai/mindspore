@@ -240,11 +240,12 @@ class ClassDefParser(Parser):
     def _process_father_classes(stree, node: ast.ClassDef) -> bool:
         """Process father class."""
         father_classes = []
-        for base in node.bases:
-            parser: Parser = ParserRegister.instance().get_parser(type(base)) # ast.Name or ast.Attribute
-            father_class_name = parser.process(stree, base, None)
+        for idx, base in enumerate(node.bases):
+            father_class_name = ClassDefParser.get_ast_name(base)
+            if not father_class_name:
+                continue
             father_classes.append(father_class_name)
-            if father_class_name == "Cell" or ".Cell" in father_class_name:
+            if father_class_name == "Cell":
                 continue
             for k, m in sys.modules.items():
                 if k in ("_ast", "ast"):
@@ -254,6 +255,7 @@ class ClassDefParser(Parser):
                     if not inspect.isclass(father_class_def):
                         continue
                     ClassDefParser._process_one_father_class(stree, father_class_def, father_class_name)
+                    node.bases[idx] = ast.Name(id=father_class_name, ctx=ast.Load())
                     break
             else:
                 logger.error(f"Get instance of father_class {father_class_name} failed during parsing ast.ClassDef.")
