@@ -22,6 +22,7 @@
 #include "extendrt/delegate/plugin/litert_executor_plugin.h"
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "extendrt/delegate/plugin/ascend_native_executor_plugin.h"
+#include "extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
 
 namespace mindspore {
 namespace {
@@ -120,6 +121,13 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
         }
         if (device_context->GetProvider() == "ascend_native") {
           return kAscendNativeSession;
+        }
+        if (device_context->GetProvider() == mindrt_cpu_provider) {
+          if (!kernel::AscendKernelPlugin::Register()) {
+            MS_LOG(ERROR) << "Failed to register Ascend plugin";
+            return kNoneSession;
+          }
+          return kDefaultSession;
         }
         return kSingleOpSession;
       }
