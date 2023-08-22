@@ -43,7 +43,7 @@ if [[ ${level} == "level1" ]]; then
 fi
 models_triton_config=${basepath}/../${config_folder}/models_triton.cfg
 
-backend_directory=${pkg_path}/mindspore-lite-${version}-linux-aarch64/tools/providers/triton/backend/
+backend_directory=${pkg_path}/mindspore-lite-${version}-linux-aarch64/tools/providers/triton/
 # Set ms models output path
 model_repository=${models_path}/triton_models/
 
