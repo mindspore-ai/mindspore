@@ -13,8 +13,6 @@ endif()
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 set(EXTENDRT_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt)
 set(EXECUTOR_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt/unified_executor)
-set(ACL_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend/tbe_and_aicpu/makepkg/packages)
-set(ACL_OPP_DST_DIR ${RUNTIME_PKG_NAME}/tools/custom_kernels/ascend)
 
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
 set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include)
@@ -256,6 +254,25 @@ function(__install_white_list_ops)
             COMPONENT ${RUNTIME_COMPONENT_NAME}
             )
 endfunction()
+
+function(__install_ascend_tbe_and_aicpu)
+    set(TBE_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend/tbe_and_aicpu/makepkg/packages)
+    set(TBE_OPP_DST_DIR ${RUNTIME_PKG_NAME}/tools/custom_kernels/ascend/tbe_and_aicpu)
+    install(DIRECTORY ${TBE_CUSTOM_OPP_DIR} DESTINATION ${TBE_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TBE_CUSTOM_OPP_DIR}/../install.sh DESTINATION
+                  ${TBE_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TBE_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
+                  ${TBE_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+endfunction()
+
+function(__install_ascend_ascendc)
+    set(ASCEMDC_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend/ascendc/makepkg/packages)
+    set(ASCENDC_OPP_DST_DIR ${RUNTIME_PKG_NAME}/tools/custom_kernels/ascend/ascendc)
+    install(DIRECTORY ${ASCEMDC_CUSTOM_OPP_DIR} DESTINATION ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${CMAKE_BINARY_DIR}/ascendc_scripts/install.sh DESTINATION
+            ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+endfunction()
+
 # full mode will also package the files of lite_cv mode.
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     # full header files
@@ -441,11 +458,8 @@ if(PLATFORM_ARM64)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            __install_ascend_tbe_and_aicpu()
+            __install_ascend_ascendc()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -693,11 +707,8 @@ elseif(PLATFORM_ARM32)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            __install_ascend_tbe_and_aicpu()
+            __install_ascend_ascendc()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -896,9 +907,8 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            __install_ascend_tbe_and_aicpu()
+            __install_ascend_ascendc()
             if(MSLITE_ASCEND_TARGET)
                 install(TARGETS ascend_native_plugin
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -909,8 +919,6 @@ else()
                 install(TARGETS hccl_plugin
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
-            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION
-                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so

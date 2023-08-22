@@ -202,7 +202,7 @@ function ConfigGPU() {
 function InstallAscendCustomOps() {
     echo "prepare to install ascend custom op at: ${benchmark_test_path}/ascend_custom_op"
     cd ${benchmark_test_path}/mindspore-lite-${version}-linux-${arch}/
-    install_script="bash tools/custom_kernels/ascend/install.sh --install-path=${benchmark_test_path}/ascend_custom_op"
+    install_script="bash tools/custom_kernels/ascend/tbe_and_aicpu/install.sh --install-path=${benchmark_test_path}/ascend_custom_op"
     ${install_script}
     install_result=$?
     if [ ${install_result} != 0 ]; then
