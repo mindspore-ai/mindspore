@@ -93,6 +93,12 @@ def test_ops_save_checkpoint(mode):
     assert 'conv1.weight' not in output_param_dict2
     assert 'fc1.bias' not in output_param_dict2
 
+    empty_list = []
+    append_dict = {"lr": 0.01}
+    ms.save_checkpoint(empty_list, "./lenet_empty_list.ckpt", append_dict=append_dict)
+    output_empty_list = ms.load_checkpoint("./lenet_empty_list.ckpt")
+    assert "lr" in output_empty_list
+
     file_list = os.listdir(os.getcwd())
     ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
     for file_name in ckpt_list:
