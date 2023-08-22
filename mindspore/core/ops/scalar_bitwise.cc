@@ -33,8 +33,8 @@ template <typename T>
 T BitwiseImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   if (op_name == mindspore::kScalarBitwiseAndOpName) {
     return x & y;
   } else {

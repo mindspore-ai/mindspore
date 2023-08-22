@@ -44,8 +44,8 @@ template <typename T>
 ValuePtr AddImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
 #ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
@@ -64,8 +64,8 @@ template <typename T>
 ValuePtr SubImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
 #ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
@@ -84,8 +84,8 @@ template <typename T>
 ValuePtr MulImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
 #ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
@@ -104,8 +104,8 @@ template <typename T>
 ValuePtr DivImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   T zero = 0;
   if (y == zero) {
     MS_EXCEPTION(ValueError) << "The divisor could not be zero. But the divisor is zero now.";
@@ -124,8 +124,8 @@ template <typename T>
 ValuePtr FloorDivImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   T zero = 0;
   if (y == zero) {
     MS_EXCEPTION(ValueError) << "The divisor could not be zero. But the divisor is zero now.";
@@ -147,8 +147,8 @@ template <typename T>
 ValuePtr ModImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   T zero = 0;
   if (y == zero) {
     MS_EXCEPTION(ValueError) << "Cannot perform modulo operation on zero.";
@@ -169,8 +169,8 @@ template <typename T>
 ValuePtr EqImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x_tmp = GetScalarValue<T>(op_name, x_value);
-  auto y_tmp = GetScalarValue<T>(op_name, y_value);
+  auto x_tmp = GetScalarCastValue<T>(op_name, x_value);
+  auto y_tmp = GetScalarCastValue<T>(op_name, y_value);
   auto x = static_cast<double>(x_tmp);
   auto y = static_cast<double>(y_tmp);
   if (std::isinf(x) && std::isinf(y)) {
@@ -185,8 +185,8 @@ template <typename T>
 ValuePtr LtImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   return MakeValue(x < y);
 }
 
@@ -194,8 +194,8 @@ template <typename T>
 ValuePtr GtImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   return MakeValue(x > y);
 }
 
@@ -203,8 +203,8 @@ template <typename T>
 ValuePtr LeImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   return MakeValue(x <= y);
 }
 
@@ -212,8 +212,8 @@ template <typename T>
 ValuePtr GeImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   return MakeValue(x >= y);
 }
 
@@ -221,8 +221,8 @@ template <typename T>
 ValuePtr PowImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
   MS_EXCEPTION_IF_NULL(y_value);
-  auto x = GetScalarValue<T>(op_name, x_value);
-  auto y = GetScalarValue<T>(op_name, y_value);
+  auto x = GetScalarCastValue<T>(op_name, x_value);
+  auto y = GetScalarCastValue<T>(op_name, y_value);
   return MakeValue(static_cast<T>(std::pow(x, y)));
 }
 

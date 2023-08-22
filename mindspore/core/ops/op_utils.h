@@ -119,7 +119,7 @@ template <typename T>
 AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
-T GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+T GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
 
 TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name);
 

@@ -788,7 +788,7 @@ template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractTuple>(const Pr
                                                                         const std::vector<AbstractBasePtr> &input_args);
 
 template <typename T>
-T GetScalarValue(const std::string &op_name, const ValuePtr &elem) {
+T GetScalarCastValue(const std::string &op_name, const ValuePtr &elem) {
   T res;
   MS_EXCEPTION_IF_NULL(elem);
   if (elem->isa<Int64Imm>()) {
@@ -831,17 +831,17 @@ T GetScalarValue(const std::string &op_name, const ValuePtr &elem) {
   return res;
 }
 
-template int64_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template int32_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template int16_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template int8_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template uint64_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template uint32_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template uint16_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template uint8_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template double GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template float GetScalarValue(const std::string &op_name, const ValuePtr &elem);
-template bool GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template int64_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template int32_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template int16_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template int8_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template uint64_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template uint32_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template uint16_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template uint8_t GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template double GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template float GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
+template bool GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
 
 TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name) {
   static std::map<TypeId, size_t> prio_map = {{kNumberTypeFloat64, 1},
