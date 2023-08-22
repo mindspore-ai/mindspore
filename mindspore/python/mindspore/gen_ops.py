@@ -253,7 +253,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         returns = operator_data.get('returns')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         opdef_map_str += f"""
-    {{"{operator_name}", &g{class_name}}},"""
+    {{"{class_name}", &g{class_name}}},"""
         gen_include += f"""
 #include "{func_impl_dir}/{operator_name}.h\""""
 
