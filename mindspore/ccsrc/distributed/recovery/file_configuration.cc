@@ -63,6 +63,9 @@ bool FileConfiguration::Flush() {
   }
   // Write all the configuration items into local file.
   std::ofstream output_file(file_);
+  if (!output_file.is_open()) {
+    MS_LOG(EXCEPTION) << "Open output file '" << file_ << "' failed!";
+  }
   output_file << values_.dump();
   output_file.close();
 
