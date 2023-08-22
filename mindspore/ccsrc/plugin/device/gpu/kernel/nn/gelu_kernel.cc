@@ -19,7 +19,7 @@
 #include <functional>
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/gelu.h"
+#include "mindspore/core/ops/ops_func_impl/gelu.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,10 +58,8 @@ std::vector<KernelAttr> GeLUGpuKernelMod::GetOpSupport() {
 
 bool GeLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GeLU>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+  auto prim = base_operator->GetPrim();
+  auto kernel_name_ = prim->name();
   if (inputs.size() != kGeluInputsNum || outputs.size() != kGeluOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kGeluInputsNum << " and "
                   << kGeluOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
