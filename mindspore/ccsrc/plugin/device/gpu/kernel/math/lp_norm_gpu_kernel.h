@@ -69,7 +69,6 @@ class LpNormGpuKernelMod : public NativeGpuKernelMod {
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_axis_;
-  std::vector<size_t> output_stride_;
   size_t input_elements_{};
   size_t output_elements_{};
   LpNormFunc kernel_func_;

@@ -48,11 +48,9 @@ void LpNormGpuKernelMod::InitWorkSpaceSizeList() {
   const size_t device_input_shape_size = input_shape_.size() * sizeof(size_t);
   // The workspace for device output axis.
   const size_t device_axis_shape_size = output_axis_.size() * sizeof(size_t);
-  // The workspace for device output stride.
-  const size_t device_output_stride_size = output_stride_.size() * sizeof(size_t);
 
   workspace_size_list_.clear();
-  workspace_size_list_ = {device_input_shape_size, device_axis_shape_size, device_output_stride_size};
+  workspace_size_list_ = {device_input_shape_size, device_axis_shape_size};
   // If in half, ms need high precision, so malloc device middle output.
   if (data_type_ == kNumberTypeFloat16) {
     constexpr auto high_precision_unit = 2;
@@ -119,12 +117,6 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
       output_axis_.emplace_back(i);
     }
   }
-  output_stride_.clear();
-  output_stride_.resize(output_axis_.size());
-  output_stride_[output_stride_.size() - 1] = 1;
-  for (int i = static_cast<int>(output_stride_.size() - 2); i >= 0; --i) {
-    output_stride_[i] = output_stride_[i + 1] * output_shape_[i + 1];
-  }
   output_elements_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   InitWorkSpaceSizeList();
   return KRET_OK;
@@ -142,7 +134,6 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   auto device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto device_axis_output = GetDeviceAddress<size_t>(workspace, kIndex1);
-  auto device_output_stride = GetDeviceAddress<size_t>(workspace, kIndex2);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(device_input_shape, input_shape_.data(), input_shape_.size() * sizeof(size_t),
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
@@ -152,11 +143,6 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     cudaMemcpyAsync(device_axis_output, output_axis_.data(), output_axis_.size() * sizeof(size_t),
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync output_axis_ failed");
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(device_output_stride, output_stride_.data(), output_stride_.size() * sizeof(size_t),
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "LpNormGpuKernelMod cudaMemcpyAsync output_shape_ failed");
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(output, 0, output_elements_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
@@ -169,13 +155,13 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(middle_output, 0, middle_output_size),
                                       "LpNormGpuKernelMod failed  to set middle output cuda memory to zeros.");
     auto status = CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output,
-                            device_output_stride, output_axis_.size(), output_elements_, p_, epsilon_, middle_output,
-                            output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+                            output_axis_.size(), output_elements_, p_, epsilon_, middle_output, output, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
     CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     auto status = CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output,
-                            device_output_stride, output_axis_.size(), output_elements_, p_, epsilon_, nullptr, output,
-                            device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+                            output_axis_.size(), output_elements_, p_, epsilon_, nullptr, output, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
     CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
