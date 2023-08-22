@@ -82,19 +82,28 @@ bool InferCheckerOutput(const std::vector<Tensor *> &inputs, const std::vector<T
 }
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive, std::set<std::string> &&providers, int schema_version) {
+                     const void *primitive, std::set<std::string> &&providers, int schema_version,
+                     const kernel::Kernel *kernel) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  if (primitive == nullptr) {
+  if (primitive == nullptr && kernel == nullptr) {
     return RET_NOT_SUPPORT;
   }
   std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
-  if (IsCustomNode(primitive, schema_version)) {
+  bool is_custom_node = false;
+  if (kernel == nullptr) {
+    if (IsCustomNode(primitive, schema_version)) {
+      is_custom_node = true;
+    }
+  } else if (kernel->type() == schema::PrimitiveType_Custom) {
+    is_custom_node = true;
+  }
+  if (is_custom_node) {
     kernel_interface = registry::RegisterKernelInterface::GetKernelInterface(
-      "", static_cast<const schema::Primitive *>(primitive), nullptr);
+      "", static_cast<const schema::Primitive *>(primitive), kernel);
   } else {
     for (auto &&provider : providers) {
       kernel_interface = registry::RegisterKernelInterface::GetKernelInterface(
-        provider, static_cast<const schema::Primitive *>(primitive), nullptr);
+        provider, static_cast<const schema::Primitive *>(primitive), kernel);
       if (kernel_interface != nullptr) {
         break;
       }
@@ -113,7 +122,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return mindspore::MSTensor(std::make_shared<LiteTensorImpl>(tensor));
   });
   auto ret =
-    kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive), nullptr);
+    kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive), kernel);
   if (ret == kLiteInferInvalid) {
     for (auto output : outputs) {
       output->set_shape({-1});

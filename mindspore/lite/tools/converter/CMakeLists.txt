@@ -196,26 +196,23 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 )
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
-add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
-add_compile_definitions(ENABLE_CLOUD_INFERENCE)
-add_compile_definitions(SUPPORT_TRAIN)
-set(SUPPORT_TRAIN on)
+    add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+    add_compile_definitions(ENABLE_CLOUD_INFERENCE)
+    add_compile_definitions(SUPPORT_TRAIN)
+    set(SUPPORT_TRAIN on)
 
-# string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-# string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    set(MINDIR_MODEL_SRC
+            ${MINDIR_MODEL_SRC}
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
+            )
 
-set(MINDIR_MODEL_SRC
-        ${MINDIR_MODEL_SRC}
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
-        )
-
-set(MINDIR_KERNEL_SRC
-        ${MINDIR_KERNEL_SRC}
-        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
+    set(MINDIR_KERNEL_SRC
+            ${MINDIR_KERNEL_SRC}
+            ${SRC_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
 endif()
 
 set(LITE_SRC
@@ -324,13 +321,6 @@ set(LITE_SRC
         ${CORE_DIR}/ir/anf.cc
         ${CORE_DIR}/base/base.cc
         )
-
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${SRC_DIR}/extendrt/kernel/base_kernel.cc
-            )
-endif()
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)

@@ -51,14 +51,14 @@ class CompileResultBuilder {
   StatusCode OptimizeGraph();
   // methods about node
   StatusCode CreateAndAppendNode(const CNodePtr &cnode);
-  StatusCode AppendInputCNodeToInputs(const CNodePtr &cnode, const CompileNode *compile_node);
-  StatusCode AppendInputParameterToInputs(const ParameterPtr &param_node, const CompileNode *compile_node);
-  StatusCode AppendInputValueNodeToInputs(const ValueNodePtr &value_node, const CompileNode *compile_node);
+  StatusCode AppendInputCNodeToInputs(const CNodePtr &cnode, const CompileNodePtr &compile_node);
+  StatusCode AppendInputParameterToInputs(const ParameterPtr &param_node, const CompileNodePtr &compile_node);
+  StatusCode AppendInputValueNodeToInputs(const ValueNodePtr &value_node, const CompileNodePtr &compile_node);
   // methods about tensor
   static StatusCode CreateTensorsFromAbstract(const mindspore::abstract::AbstractBasePtr &abstract,
                                               std::vector<std::unique_ptr<InferTensor>> *results,
                                               Format format = DEFAULT_FORMAT);
-  StatusCode BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNode *compile_node);
+  StatusCode BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNodePtr &compile_node);
   // methods about optimize
   StatusCode RemoveSeqGetItemNode();
   StatusCode RemoveMakeSeqNode();

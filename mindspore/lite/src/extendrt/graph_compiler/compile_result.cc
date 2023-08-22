@@ -74,7 +74,7 @@ kernel::KernelAttr CompileNode::GetKernelAttr() const {
   return attr;
 }
 
-CompileNode *CompileNode::Create(CNodePtr cnode) {
+CompileNodePtr CompileNode::Create(CNodePtr cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
@@ -84,11 +84,7 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
                   << ") is : " << cnode->input(0);
     return nullptr;
   }
-  auto node = new (std::nothrow) CompileNode(cnode->fullname_with_scope(), kernel::PrimitiveType(primitive->name()));
-  if (node == nullptr) {
-    MS_LOG(ERROR) << "Alloc CompileNode for " << cnode->fullname_with_scope() << " failed.";
-    return nullptr;
-  }
+  auto node = std::make_shared<CompileNode>(cnode->fullname_with_scope(), kernel::PrimitiveType(primitive->name()));
   ops::PrimitiveCPtr primc{nullptr};
   if (utils::isa<ops::PrimitiveCPtr>(primitive)) {
     primc = utils::cast<ops::PrimitiveCPtr>(primitive);
@@ -97,13 +93,11 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
     auto primc_creator_iter = ops_primc_fns.find(node->type_.TypeName());
     if (primc_creator_iter == ops_primc_fns.end()) {
       MS_LOG(ERROR) << "Can not find primitive_c create function for: " << node->type_;
-      delete (node);
       return nullptr;
     }
     primc = primc_creator_iter->second();
     if (primc == nullptr) {
       MS_LOG(ERROR) << "Create primitive_c failed, type: " << node->type_;
-      delete (node);
       return nullptr;
     }
     primc->SetAttrs(primitive->attrs());
@@ -112,14 +106,12 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
   auto baseops_creator_iter = baseops_fns.find(node->type_.TypeName());
   if (baseops_creator_iter == baseops_fns.end()) {
     MS_LOG(ERROR) << "Can not find base-operator create function for: " << node->type_;
-    delete (node);
     return nullptr;
   }
   auto baseops_creator = baseops_creator_iter->second;
   node->base_operator_ = baseops_creator(primc);
   if (node->base_operator_ == nullptr) {
     MS_LOG(ERROR) << "Create base-operator failed, type: " << node->type_;
-    delete (node);
     return nullptr;
   }
   node->cnode_ = std::move(cnode);
@@ -153,7 +145,7 @@ void CompileNode::ReplaceInputTensor(InferTensor *dst, const InferTensor *src) {
     inputs_.begin(), inputs_.end(), [&src](InferTensor *ele) { return ele == src; }, dst);
 }
 
-CompileNode *CompileResult::GetNode(const std::string &name) {
+CompileNodePtr CompileResult::GetNode(const std::string &name) {
   auto iter = node_map_.find(name);
   if (iter == node_map_.end()) {
     return nullptr;
@@ -162,7 +154,7 @@ CompileNode *CompileResult::GetNode(const std::string &name) {
   }
 }
 
-CompileNode *CompileResult::GetArgNode(const std::string &name) {
+CompileNodePtr CompileResult::GetArgNode(const std::string &name) {
   auto iter = arg_node_map_.find(name);
   if (iter == arg_node_map_.end()) {
     return nullptr;
@@ -171,7 +163,7 @@ CompileNode *CompileResult::GetArgNode(const std::string &name) {
   }
 }
 
-std::vector<CompileNode *> &CompileResult::GetMutableNodes() {
+std::vector<CompileNodePtr> &CompileResult::GetMutableNodes() {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -191,7 +183,7 @@ std::vector<InferTensor *> &CompileResult::GetMutableOutputs() {
   return outputs_;
 }
 
-StatusCode CompileResult::AppendNode(CompileNode *node) {
+StatusCode CompileResult::AppendNode(CompileNodePtr node) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -210,7 +202,7 @@ StatusCode CompileResult::AppendNode(CompileNode *node) {
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendArgNode(CompileNode *node) {
+StatusCode CompileResult::AppendArgNode(CompileNodePtr node) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -274,7 +266,8 @@ StatusCode CompileResult::AppendOutputTensor(InferTensor *tensor, bool is_borrow
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendNodeInputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeInputTensor(const CompileNodePtr &compile_node, InferTensor *tensor,
+                                                bool is_borrow) {
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr";
     return kLiteInputParamInvalid;
@@ -304,7 +297,8 @@ StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, In
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendNodeOutputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeOutputTensor(const CompileNodePtr &compile_node, InferTensor *tensor,
+                                                 bool is_borrow) {
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr";
     return kLiteInputParamInvalid;
@@ -360,17 +354,6 @@ std::string CompileResult::Dump(int indent) const {
   oss << GenIndent(indent + 1) << "]" << std::endl;
   oss << GenIndent(indent) << "}" << std::endl;
   return oss.str();
-}
-
-CompileResult::~CompileResult() {
-  for (auto &node : nodes_) {
-    delete (node);
-  }
-  nodes_.clear();
-  for (auto &node : arg_nodes_) {
-    delete (node);
-  }
-  arg_nodes_.clear();
 }
 }  // namespace lite
 }  // namespace mindspore

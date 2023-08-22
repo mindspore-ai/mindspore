@@ -45,7 +45,7 @@ class MemoryOffloadInferStrategyBuilder : public device::SwapStrategyBuilder {
 
   std::shared_ptr<device::SwapContext> context_{nullptr};
   size_t prefetch_mem_size_{0};
-  std::map<lite::CompileNode *, size_t> node_to_mem_size_;
+  std::map<lite::CompileNodePtr, size_t> node_to_mem_size_;
   std::map<const Tensor *, size_t> tensor_to_index_;
   std::map<const Tensor *, size_t> tensor_to_kernel_id_;  // output tensor, node/kernel id
   std::map<const Tensor *, std::set<size_t>> tensor_usedby_kernel_ids_;

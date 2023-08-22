@@ -22,8 +22,10 @@
 
 namespace mindspore {
 namespace lite {
-int FallBackInferShape(const CompileResultPtr &node_list, Format format, InferContext *context);
-int FallBackInferShape(const FuncGraphPtr &graph, Format format, InferContext *context);
+int GraphFallBackInferShape(const CompileResultPtr &node_list, Format format, InferContext *context);
+int GraphFallBackInferShape(const FuncGraphPtr &graph, Format format, InferContext *context);
+int NodeFallBackInferShape(const CompileNodePtr &node, Format format, InferContext *context);
+int NodeFallBackInferShape(const CNodePtr &node, Format format = Format::NCHW);
 }  // namespace lite
 }  // namespace mindspore
 

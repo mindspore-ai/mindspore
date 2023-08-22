@@ -7,5 +7,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime/include/third_party)
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src COMMON_SRC3)
 
-add_library(mslite_proposal SHARED ${COMMON_SRC3} ${CMAKE_CURRENT_SOURCE_DIR}/../mock_kernel.cc)
+add_library(mslite_proposal SHARED ${COMMON_SRC3}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/litert/cxx_api/kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/registry/kernel_interface_registry.cc)
 target_link_libraries(mslite_proposal ${LINK_LOCAT_LIB})

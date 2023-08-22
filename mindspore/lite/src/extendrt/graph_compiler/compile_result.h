@@ -36,7 +36,7 @@ namespace lite {
 class CompileNode {
  public:
   explicit CompileNode(std::string name, const kernel::PrimitiveType &type) : name_(std::move(name)), type_(type) {}
-  static CompileNode *Create(CNodePtr cnode);
+  static std::shared_ptr<CompileNode> Create(CNodePtr cnode);
 
   virtual ~CompileNode() = default;
 
@@ -66,16 +66,16 @@ class CompileNode {
   std::vector<InferTensor *> inputs_{};
   std::vector<InferTensor *> outputs_{};
 };
+using CompileNodePtr = std::shared_ptr<CompileNode>;
 
 class CompileResult {
  public:
   CompileResult() = default;
+  virtual ~CompileResult() = default;
 
-  virtual ~CompileResult();
-
-  CompileNode *GetNode(const std::string &name);
-  CompileNode *GetArgNode(const std::string &name);
-  const std::vector<CompileNode *> &GetNodes() const { return nodes_; }
+  CompileNodePtr GetNode(const std::string &name);
+  CompileNodePtr GetArgNode(const std::string &name);
+  const std::vector<CompileNodePtr> &GetNodes() const { return nodes_; }
   size_t NodeSize() const { return nodes_.size(); }
   const std::vector<InferTensor *> &GetTensors() const { return tensors_; }
   size_t TensorSize() const { return tensors_.size(); }
@@ -85,21 +85,21 @@ class CompileResult {
   const std::vector<InferTensor *> &GetOutputs() const { return outputs_; }
   InferTensor *GetOutput(size_t i) const { return outputs_.at(i); }
   size_t OutputSize() const { return outputs_.size(); }
-  const std::vector<CompileNode *> &GetParamNodes() const { return param_nodes_; }
-  const std::vector<CompileNode *> &GetReturnNodes() const { return return_nodes_; }
+  const std::vector<CompileNodePtr> &GetParamNodes() const { return param_nodes_; }
+  const std::vector<CompileNodePtr> &GetReturnNodes() const { return return_nodes_; }
 
-  std::vector<CompileNode *> &GetMutableNodes();
+  std::vector<CompileNodePtr> &GetMutableNodes();
   std::vector<InferTensor *> &GetMutableInputs();
   std::vector<InferTensor *> &GetMutableOutputs();
-  StatusCode AppendNode(CompileNode *node);
-  StatusCode AppendArgNode(CompileNode *node);
+  StatusCode AppendNode(CompileNodePtr node);
+  StatusCode AppendArgNode(CompileNodePtr node);
   StatusCode AppendTensor(InferTensor *tensor);
   StatusCode AppendInputTensor(InferTensor *tensor, bool is_borrow = false);
   StatusCode AppendOutputTensor(InferTensor *tensor, bool is_borrow = false);
 
-  StatusCode AppendNodeInputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow = false);
+  StatusCode AppendNodeInputTensor(const CompileNodePtr &compile_node, InferTensor *tensor, bool is_borrow = false);
   StatusCode AppendNodeInputTensor(const std::string &node_name, InferTensor *tensor, bool is_borrow = false);
-  StatusCode AppendNodeOutputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow = false);
+  StatusCode AppendNodeOutputTensor(const CompileNodePtr &compile_node, InferTensor *tensor, bool is_borrow = false);
   StatusCode AppendNodeOutputTensor(const std::string &node_name, InferTensor *tensor, bool is_borrow = false);
 
   void Assemble() { this->assembled_ = true; }
@@ -108,16 +108,16 @@ class CompileResult {
 
  private:
   bool assembled_ = false;
-  std::vector<CompileNode *> nodes_{};
+  std::vector<CompileNodePtr> nodes_{};
   std::vector<InferTensor *> tensors_{};
   std::vector<InferTensor *> inputs_{};
   std::vector<InferTensor *> outputs_{};
-  HashMap<std::string, CompileNode *> node_map_{};
+  HashMap<std::string, CompileNodePtr> node_map_{};
   HashMap<std::string, InferTensor *> tensor_map_{};
-  std::vector<CompileNode *> param_nodes_{};
-  std::vector<CompileNode *> return_nodes_{};
-  std::vector<CompileNode *> arg_nodes_{};
-  HashMap<std::string, CompileNode *> arg_node_map_{};
+  std::vector<CompileNodePtr> param_nodes_{};
+  std::vector<CompileNodePtr> return_nodes_{};
+  std::vector<CompileNodePtr> arg_nodes_{};
+  HashMap<std::string, CompileNodePtr> arg_node_map_{};
 };
 using CompileResultPtr = std::shared_ptr<CompileResult>;
 }  // namespace lite

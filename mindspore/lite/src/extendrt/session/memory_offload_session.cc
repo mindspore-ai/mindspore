@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #include "src/extendrt/session/memory_offload_session.h"
@@ -32,8 +33,8 @@ Status MemoryOffloadInferSession::Init(const std::shared_ptr<Context> &context, 
   return SingleOpInferSession::Init(context, config_info);
 }
 
-kernel::KernelModKernel *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(const CNodePtr &cnode,
-                                                                                lite::CompileNode *compile_node) {
+kernel::KernelModKernel *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(
+  const CNodePtr &cnode, const lite::CompileNodePtr &compile_node) {
   auto kernel_name = kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
@@ -68,8 +69,8 @@ kernel::KernelModKernel *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(
   return lite_kernel_mod;
 }
 
-Status MemoryOffloadInferSession::BuildCustomAscendKernel(const CNodePtr &cnode, lite::CompileNode *compile_node) {
-  auto kernel = BuildCustomAscendKernelImpl(cnode, compile_node);
+Status MemoryOffloadInferSession::BuildCustomAscendKernel(const CNodePtr &cnode, CompileNodePtr compile_node) {
+  auto kernel = BuildCustomAscendKernelImpl(cnode, std::move(compile_node));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Build ascend kernel failed for node: " << cnode->fullname_with_scope();
     return kLiteError;
