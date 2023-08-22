@@ -54,6 +54,8 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
 RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kGraphMode; }
 
 void GeDeviceContext::Initialize() {
+  GilReleaseWithCheck gil_release;
+  std::lock_guard<std::mutex> lock(init_mutex_);
   if (initialized_) {
     return;
   }
