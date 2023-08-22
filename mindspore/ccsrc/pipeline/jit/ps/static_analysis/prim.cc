@@ -2290,8 +2290,8 @@ EvalResultPtr PrimitiveFunctionTransformEvaluator::EvalPrim(const AnalysisEngine
   // Append PrimitivePy arguments to the inputs.
   auto prim_py = prim_->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
-  py::dict init_args =
-    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_INIT_ARGS, prim_py->GetPyObj());
+  py::dict init_args = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
+                                                parse::PYTHON_MOD_GET_PRIMITIVE_INIT_ARGS, prim_py->GetPyObj());
   for (const auto &arg : init_args) {
     auto arg_name = arg.first.cast<std::string>();
     py::object arg_value = init_args[arg.first];
