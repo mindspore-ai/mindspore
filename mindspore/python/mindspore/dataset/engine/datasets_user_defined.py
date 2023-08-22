@@ -966,34 +966,10 @@ class NumpySlicesDataset(GeneratorDataset):
             specified only when `num_shards` is also specified.
 
     Note:
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Raises:
         RuntimeError: If len of column_names does not match output len of data.

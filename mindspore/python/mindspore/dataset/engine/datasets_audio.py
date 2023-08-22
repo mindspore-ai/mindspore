@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,34 +81,10 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -222,34 +198,10 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -364,34 +316,10 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -514,34 +442,10 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -661,34 +565,10 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -798,34 +678,10 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1002,34 +858,10 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
-          The table below shows what input arguments are allowed and their expected behavior.
+        - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
+          used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
-    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter `sampler`
-         - Parameter `shuffle`
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    .. include:: mindspore.dataset.sampler.txt
 
     Examples:
         >>> import mindspore.dataset as ds

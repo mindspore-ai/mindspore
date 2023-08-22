@@ -53,7 +53,7 @@
 
         - `source` 参数接收用户自定义的Python函数（PyFuncs），不要将 `mindspore.nn` 和 `mindspore.ops` 目录下或其他的网络计算算子添加
           到 `source` 中。
-        - 入参 `num_samples` ， `shuffle` ， `num_shards` ， `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
+        - 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
     .. include:: mindspore.dataset.sampler.rst
 

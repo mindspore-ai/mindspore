@@ -22,7 +22,7 @@
         - **extra_metadata** (bool, 可选) - 用于指定是否额外输出一个数据列用于表示图片元信息。如果为True，则将额外输出一个名为 `[_meta-filename, dtype=string]` 的数据列。默认值： ``False`` 。
         - **decrypt** (callable, 可选) - 图像解密函数，接受加密的图片路径并返回bytes类型的解密数据。默认值： ``None`` ，不进行解密。
 
-    [表1] 根据不同 `task` 参数设置，生成数据集具有不同的输出列：
+    根据不同 `task` 参数设置，生成数据集具有不同的输出列：
 
     +-------------------------+----------------------------------------------+
     | `task`                  |   输出列                                     |
@@ -79,33 +79,9 @@
         - 当参数 `extra_metadata` 为 ``True`` 时，还需使用 `rename` 操作删除额外数据列 '_meta-filename'的前缀 '_meta-'，
           否则迭代得到的数据行中不会出现此额外数据列。
         - 暂不支持指定 `sampler` 参数为 :class:`mindspore.dataset.PKSampler`。
-        - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
+        - 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
-    .. list-table:: [表2] 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - 参数 `sampler`
-         - 参数 `shuffle`
-         - 预期数据顺序
-       * - None
-         - None
-         - 随机排列
-       * - None
-         - True
-         - 随机排列
-       * - None
-         - False
-         - 顺序排列
-       * - `sampler` 实例
-         - None
-         - 由 `sampler` 行为定义的顺序
-       * - `sampler` 实例
-         - True
-         - 不允许
-       * - `sampler` 实例
-         - False
-         - 不允许
+    .. include:: mindspore.dataset.sampler.rst
 
     **关于COCO数据集：**
 
