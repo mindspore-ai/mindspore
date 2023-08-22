@@ -3635,6 +3635,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
                                      const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(block);
   const py::object target_obj = python_adapter::GetPyObjAttr(target, "value");
+  TraceGuard trace_guard(GetLocation(target_obj));
   std::string target_id_str;
   AnfNodePtr target_node = nullptr;
   auto node_type = ast()->GetNodeType(target_obj);
@@ -3657,7 +3658,10 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
       target_node = ParseExprNode(block, target_obj);
     }
   }
-  MS_EXCEPTION_IF_NULL(target_node);
+  if (target_node == nullptr) {
+    MS_LOG(EXCEPTION) << "In graph mode, only attribute and name of class members can be assigned. But got "
+                      << node_type_name << ".";
+  }
   const auto &attr_str = python_adapter::GetPyObjAttr(target, "attr").cast<std::string>();
   MS_LOG(DEBUG) << "target node: " << target_node->DebugString() << ", target name: " << target_id_str
                 << ", attr: " << attr_str;
