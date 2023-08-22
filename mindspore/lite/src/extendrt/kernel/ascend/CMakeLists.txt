@@ -15,11 +15,7 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
         )
 set(ASCEND_SRC ${ASCEND_SRC} ${TOP_DIR}/mindspore/lite/src/litert/kernel/ascend/src/acl_mem_manager.cc)
 
-file(GLOB_RECURSE ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-        "../acl/*.cc")
-
-add_library(ascend_kernel_plugin_mid OBJECT ${ASCEND_SRC} ${ACL_SRC})
-add_library(ascend_kernel_plugin SHARED $<TARGET_OBJECTS:ascend_kernel_plugin_mid>)
+add_library(ascend_kernel_plugin SHARED ${ASCEND_SRC})
 add_dependencies(ascend_kernel_plugin fbs_inner_src)
 add_dependencies(ascend_kernel_plugin mindspore-extendrt)
 target_link_libraries(ascend_kernel_plugin mindspore-extendrt)

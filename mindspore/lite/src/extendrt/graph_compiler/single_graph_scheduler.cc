@@ -32,9 +32,12 @@ namespace mindspore {
 namespace lite {
 InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   DrawDot(node_list.get(), "start_schedule");
-  MS_ASSERT(compile_option_ != nullptr);
-  // try infer shape, if failed, will infer shape by kernel
-  (void)FallBackInferShape(node_list, compile_option_->graph_format, context_.get());
+  // infer shape
+  auto infer_ret = FallBackInferShape(node_list, compile_option_->graph_format, context_.get());
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+    MS_LOG(ERROR) << "InferShape CompileResult node failed.";
+    return nullptr;
+  }
   DrawDot(node_list.get(), "fallback_infershape");
 
   execution_flow_ = std::make_shared<infer::ExecutionFlow>();
@@ -71,7 +74,7 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     return nullptr;
   }
 
-  auto infer_ret = kernel->InferShape();
+  infer_ret = kernel->InferShape();
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape SubGraph kernel failed.";
     return nullptr;
@@ -93,19 +96,7 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
       MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";
       return RET_NOT_SUPPORT;
     }
-    auto desc = kernel_exec->desc();
-    if (compile_option_->backend == kernel::kBackendCPU) {
-      desc.arch = kernel::KERNEL_ARCH::kCPU;
-    } else if (compile_option_->backend == kernel::kBackendAscend) {
-      desc.arch = kernel::KERNEL_ARCH::kACL;
-    } else if (compile_option_->backend == kernel::kBackendGPU) {
-      desc.arch = kernel::KERNEL_ARCH::kGPU;
-    } else {
-      desc.arch = kernel::KERNEL_ARCH::kCPU;
-    }
     kernel_exec->set_name(node->GetName());
-    kernel_exec->set_desc(desc);
-    kernel_exec->set_context(context_.get());
     kernels.push_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);

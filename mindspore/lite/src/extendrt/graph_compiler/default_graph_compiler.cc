@@ -54,10 +54,6 @@ void DefaultGraphCompiler::InitCompileOption(const FuncGraphPtr &graph) {
   if (input_format_value != nullptr) {
     option_->graph_input_format = Format(GetValue<int32_t>(input_format_value));
   }
-
-  if (inner_context_->IsDeviceTypeEnabled(lite::DT_ASCEND)) {
-    option_->backend = kernel::kBackendAscend;
-  }
 }
 
 std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {

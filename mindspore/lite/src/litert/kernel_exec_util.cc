@@ -415,9 +415,6 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
     case kExitSubGraph: {
       sub_graph = lite::CreateControlSubgraph(type, lite_kernel);
     } break;
-    case kAclSubGraph: {
-      sub_graph = new (std::nothrow) AclSubGraph(input_kernels, output_kernels, kernels, lite_kernel);
-    } break;
     default: {
       MS_LOG(ERROR) << "not support subgraph type: " << type;
       delete lite_kernel;

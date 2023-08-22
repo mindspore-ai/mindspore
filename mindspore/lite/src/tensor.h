@@ -122,23 +122,6 @@ class Tensor {
     }
   }
 
-  std::vector<int64_t> shape64() const {
-    return std::vector<int64_t>(tensor_c_.shape_, tensor_c_.shape_ + tensor_c_.shape_size_);
-  }
-
-  void set_shape64(const std::vector<int64_t> &shape) {
-    if (shape.size() > MAX_SHAPE_SIZE) {
-      FreeData();
-      tensor_c_.shape_size_ = 0;
-      MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << shape.size();
-      return;
-    }
-    tensor_c_.shape_size_ = shape.size();
-    for (size_t i = 0; i < shape.size(); ++i) {
-      tensor_c_.shape_[i] = shape[i];
-    }
-  }
-
   int DimensionSize(size_t index) const;
 
   int64_t ElementsNum() const;

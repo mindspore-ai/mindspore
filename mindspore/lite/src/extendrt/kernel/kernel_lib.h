@@ -67,7 +67,6 @@ class KernelLib {
     }
     auto desc = kernel_exec->desc();
     desc.format = spec.format;
-    desc.data_type = spec.attr.GetInputAttr(0).dtype;
     kernel_exec->set_desc(desc);
     kernel_exec->set_context(ctx);
     return kernel_exec;

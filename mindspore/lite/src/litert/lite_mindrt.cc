@@ -84,9 +84,6 @@ TypeId GetSubgraphInTensorDataType(const kernel::KernelExec *kernel, const lite:
     return tensor->data_type();
   }
 #endif
-  if (kernel->subgraph_type() == kernel::kAclSubGraph) {
-    return tensor->data_type();
-  }
   if (kernel->subgraph_type() != kernel::kGpuFp16SubGraph || tensor->IsGraphInput() || tensor->IsGraphOutput()) {
     if (tensor->data_type() == kNumberTypeFloat16 || tensor->data_type() == kNumberTypeFloat32) {
       return kernel->desc().data_type;
