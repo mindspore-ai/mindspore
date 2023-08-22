@@ -266,6 +266,31 @@ bool HasSubgraph(const std::shared_ptr<AnfGraph> &func_graph) {
   }
   return false;
 }
+
+bool IsMakeTupleWithNullValue(const AnfNodePtr &node, const AnfNodePtr &input) {
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) && input->isa<ValueNode>()) {
+    auto type = input->Type();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->isa<Tuple>()) {
+      auto tuple_type = type->cast<std::shared_ptr<Tuple>>();
+      MS_EXCEPTION_IF_NULL(tuple_type);
+      if (tuple_type->elements().empty()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool IsMonad(const AnfNodePtr &node) {
+  return IsValueNode<UMonad>(node) || IsValueNode<IOMonad>(node) || HasAbstractMonad(node);
+}
+
+bool IsOverFlowNode(const AnfNodePtr &node, const AnfNodePtr &input) {
+  return IsPrimitiveCNode(input, prim::kPrimNPUClearFloatStatusV2) ||
+         IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2) ||
+         IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2);
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -2013,34 +2038,24 @@ AnfNodePtr DfGraphConvertor::GetRealInputNode(const CNodePtr &node, const AnfNod
   return pred;
 }
 
-bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) const {
+bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) {
   if (node == nullptr || input == nullptr) {
     MS_LOG(ERROR) << "Node or input is null.";
     return false;
   }
   // Ignore the null ValueTupe in MakeTuple
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) && input->isa<ValueNode>()) {
-    auto type = input->Type();
-    MS_EXCEPTION_IF_NULL(type);
-    if (type->isa<Tuple>()) {
-      auto tuple_type = type->cast<std::shared_ptr<Tuple>>();
-      MS_EXCEPTION_IF_NULL(tuple_type);
-      if (tuple_type->elements().empty()) {
-        return false;
-      }
-    }
+  if (IsMakeTupleWithNullValue(node, input)) {
+    return false;
   }
 
-  // UpdateState has no data input
-  if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+  // skip NoOp
+  auto op = Convert(node);
+  if (op != nullptr && op->GetOpType() == kTypeNoOp) {
     return false;
   }
 
   // skip input of UMonad, IOMonad
-  if (IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input)) {
-    return false;
-  }
-  if (HasAbstractMonad(input)) {
+  if (IsMonad(input)) {
     return false;
   }
 
@@ -2061,9 +2076,7 @@ bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &inp
 
   // The NPUClearFloatStatusV2 of GE has no input and output, and the NPUGetFloatStatusV2 has no input.
   // The extra data edges of MindSpore need to be converted to control edges of GE.
-  if (IsPrimitiveCNode(input, prim::kPrimNPUClearFloatStatusV2) ||
-      IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2) ||
-      IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2)) {
+  if (IsOverFlowNode(node, input)) {
     return false;
   }
 
