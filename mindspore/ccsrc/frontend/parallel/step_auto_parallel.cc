@@ -1413,19 +1413,19 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, isTraining, param_users_ops_index, root);
 
-  if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
-    MS_LOG(INFO) << "Init selected strategy succeeded.";
-  } else {
-    MS_LOG(ERROR) << "Init selected strategy failed.";
-    return FAILED;
-  }
-
   // print the selected strategy
   for (auto &op : entire_costgraph->GetOperators()) {
     StrategyPtr s_strategy = op->selected_strategy();
     if (s_strategy != nullptr) {
       MS_LOG(INFO) << op->name() << ": The strategy is: " << s_strategy->ToString();
     }
+  }
+
+  if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
+    MS_LOG(INFO) << "Init selected strategy succeeded.";
+  } else {
+    MS_LOG(ERROR) << "Init selected strategy failed.";
+    return FAILED;
   }
 
   (void)IgnoreOperatorsInCostGraph();

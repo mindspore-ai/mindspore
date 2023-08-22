@@ -93,9 +93,7 @@ double GetWeights(const Graph::NodeType &node) {
     return cost_ptr->GetMaxCostIn();
   } else if (op.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
-    auto cost_ptr = std::make_shared<CostBatchParallel>();
-
-    return cost_ptr->GetMaxCostIn();
+    return 0.0;
   } else if (op.op_type == OperatorType::kRecStandAlone) {
     // For StandAlone type
     return 0.0;
@@ -206,8 +204,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     return cost_ptr->GetOptimalStr(node);
   } else if (node.apply.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
-    auto cost_ptr = std::make_shared<CostBatchParallel>();
-    return cost_ptr->GetOptimalStr(node);
+    StrategyRec default_strategy;
+    return default_strategy;
   } else if (node.apply.op_type == OperatorType::kRecStandAlone) {
     // For stand_alone type
     StrategyRec default_strategy;

@@ -243,7 +243,7 @@ Strategies PrepareStandAlone(const std::vector<std::shared_ptr<OperatorInfo>> &o
 }
 
 Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
-  size_t numDev = g_device_manager->DeviceNum();
+  size_t numDev = g_device_manager->stage_device_num();
 
   Strategies stra;
   Dimensions dim;
@@ -1470,9 +1470,11 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
       stra.push_back(s);
       stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
     } else {
+      // When the strategy is from the smaller tensor, make the strategy all 1.
       Dimensions broadcast_revise_s(first_tensor_dim, 1);
       stra.push_back(broadcast_revise_s);
-      stra.push_back(s);
+      Dimensions broadcast_s(s.size(), 1);
+      stra.push_back(broadcast_s);
     }
   } else if (second_tensor_dim > first_tensor_dim) {  // Do Broadcasting in the first tensor.
     if (s_dim == second_tensor_dim) {
@@ -1480,7 +1482,9 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
       stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
       stra.push_back(s);
     } else {
-      stra.push_back(s);
+      // When the strategy is from the smaller tensor, make the strategy all 1.
+      Dimensions broadcast_s(s.size(), 1);
+      stra.push_back(broadcast_s);
       Dimensions broadcast_revise_s(second_tensor_dim, 1);
       stra.push_back(broadcast_revise_s);
     }
@@ -1791,7 +1795,6 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyForward(size_t m
   for (size_t iter_list = no_stra_op_list_->size(); iter_list > 0; iter_list--) {
     size_t iter_ops = no_stra_op_list_->at(iter_list - 1);
     Strategies stra;
-    MS_LOG(INFO) << "Handling i=" << iter_ops << " " << ops_[iter_ops]->name();
     size_t incoming_op_index = FindIndexOfOperatorIncoming(ops_, input_tensor_names_, iter_ops);
     Dimensions s = GetInputStrategy(graph_, ops_, index_list_, iter_ops, incoming_op_index);
     if (IsDimensionsEmpty(s) || DevicesForDimensions(s) < min_devices ||
@@ -1801,6 +1804,7 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyForward(size_t m
       stra = GenerateStrategiesFromStrategy(ops_, iter_ops, s);
       ApplyStrategy(iter_ops, stra);
       ++changes;
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(stra);
     }
   }
 
@@ -1831,6 +1835,7 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyBackward(size_t 
       stra = GenerateStrategiesFromStrategy(ops_, iter_ops, s);
       ++changes;
       ApplyStrategy(iter_ops, stra);
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(stra);
     }
   }
   *no_stra_op_list_ = no_stra_op_list_bis;
@@ -2252,11 +2257,13 @@ size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
       Strategies stra = PrepareStandAlone(ops_, iter_ops);
       ApplyStrategy(iter_ops, stra);
       changes++;
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(stra);
     }
     if (name == BATCH_PARALLEL) {
       Strategies stra = PrepareDataParallel(ops_, iter_ops);
       ApplyStrategy(iter_ops, stra);
       changes++;
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(stra);
     }
   }
   return changes;
