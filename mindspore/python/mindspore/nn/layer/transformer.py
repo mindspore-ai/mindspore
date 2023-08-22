@@ -184,6 +184,7 @@ class MultiheadAttention(Cell):
         self.add_zero_attn = add_zero_attn
         self.k_is_v = False
         self.q_is_k = False
+        self.dtype = dtype
 
     def __call__(self, *args, **kwargs):
         query = kwargs.get('query', args[0])
@@ -224,7 +225,7 @@ class MultiheadAttention(Cell):
                 attn_mask=attn_mask, use_separate_proj_weight=True,
                 q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
                 v_proj_weight=self.v_proj_weight, average_attn_weights=average_attn_weights,
-                k_is_v=self.k_is_v, q_is_k=self.q_is_k)
+                k_is_v=self.k_is_v, q_is_k=self.q_is_k, dtype=self.dtype)
         else:
             attn_output, attn_output_weights = multi_head_attention_forward(
                 query, key, value, self.embed_dim, self.num_heads,
@@ -234,7 +235,7 @@ class MultiheadAttention(Cell):
                 training=self.training,
                 key_padding_mask=key_padding_mask,
                 attn_mask=attn_mask, average_attn_weights=average_attn_weights,
-                k_is_v=self.k_is_v, q_is_k=self.q_is_k)
+                k_is_v=self.k_is_v, q_is_k=self.q_is_k, dtype=self.dtype)
 
         if self.batch_first and is_batched:
             attn_output = attn_output.swapaxes(1, 0)

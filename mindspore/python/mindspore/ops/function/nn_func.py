@@ -7016,10 +7016,10 @@ def _in_projection_packed(q, k, v, w, b, k_is_v, q_is_k):
     return linear(q, w_q, b_q), linear(k, w_k, b_k), linear(v, w_v, b_v)
 
 
-def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_causal, is_training):
+def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_causal, is_training, dtype):
     """scaled dot product attention"""
     embed_size = query.shape[-1]
-    scaling_factor = Tensor(embed_size, mstype.float32).sqrt().sqrt()
+    scaling_factor = Tensor(embed_size, dtype).sqrt().sqrt()
     query = query / scaling_factor
 
     if is_causal:
@@ -7112,7 +7112,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
                                  out_proj_bias, training=True, key_padding_mask=None, attn_mask=None,
                                  use_separate_proj_weight=False, q_proj_weight=None, k_proj_weight=None,
                                  v_proj_weight=None, static_k=None, static_v=None, average_attn_weights=True,
-                                 is_causal=False, k_is_v=False, q_is_k=False):
+                                 is_causal=False, k_is_v=False, q_is_k=False, dtype=mstype.float32):
     """multi head attetion forward function"""
     is_batched = _check_qkv_shape(query.ndim, key.ndim, value.ndim)
     if key_padding_mask is not None:
@@ -7269,7 +7269,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
     v = v.view((bsz, num_heads, src_len, head_dim))
 
     attn_output, attn_output_weights = _scaled_dot_product_attention(
-        q, k, v, attn_mask, dropout_p, is_causal, training)
+        q, k, v, attn_mask, dropout_p, is_causal, training, dtype)
     attn_output = attn_output.transpose(2, 0, 1, 3).view((bsz * tgt_len, embed_dim))
 
     attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
