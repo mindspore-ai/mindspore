@@ -86,6 +86,8 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
 }
 
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
   auto x_shape = GetShapeFromTensor(input_args[0]);
   auto y_shape = GetShapeFromTensor(input_args[1]);
 

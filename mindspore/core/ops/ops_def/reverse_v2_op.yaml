@@ -1,0 +1,12 @@
+#operator reverse_v2
+reverse_v2:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      init: NO_VALUE
+      type_cast: list[int]
+  returns:
+    output:
+      dtype: tensor

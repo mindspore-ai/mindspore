@@ -102,11 +102,12 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
   return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 
-REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
-  (void)std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
-  return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
+REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto shift = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto neg_shift = ib->Neg(shift);
+  return {ib->Emit("Roll", {dout, axis, neg_shift}), ib->OutZeros(axis), ib->OutZeros(shift)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dynamic_resize_nearest_neighbor)
