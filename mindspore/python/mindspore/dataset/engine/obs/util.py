@@ -274,7 +274,7 @@ def exclusive_lock(func):
                 finally:
                     fcntl.flock(fd, fcntl.LOCK_UN)
         if os.path.exists(lock_file):
-            os.chmod(lock_file, stat.S_IRUSER | stat.S_IWUSER)
+            os.chmod(lock_file, stat.S_IRUSR | stat.S_IWUSR)
         return result
     return wrapped_func
 
