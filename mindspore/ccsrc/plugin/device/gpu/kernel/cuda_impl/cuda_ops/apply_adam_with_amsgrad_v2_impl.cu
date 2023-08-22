@@ -50,7 +50,8 @@ __global__ void CalApplyAdamWithAmsgradV2Kernel(const size_t size, const int64_t
     auto new_learning_rate = lr[batch] * sqrtFunc(one - beta2_power[batch]) / (one - beta1_power[batch]);
     m[pos] += (grad[pos] - m[pos]) * (one - static_cast<T>(*beta1));
     output_m[pos] = m[pos];
-    v[pos] += (grad[pos] * grad[pos] - v[pos]) * (one - static_cast<T>(*beta2));
+    v[pos] += (static_cast<T>(static_cast<double>(grad[pos]) * static_cast<double>(grad[pos])) - v[pos]) *
+              (one - static_cast<T>(*beta2));
     output_v[pos] = v[pos];
     vhat[pos] = maxFunc(vhat[pos], v[pos]);
     output_vhat[pos] = vhat[pos];
