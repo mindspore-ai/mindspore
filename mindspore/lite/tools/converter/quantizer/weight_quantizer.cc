@@ -383,11 +383,11 @@ int WeightQuantizer::InsertDequantNode(const FuncGraphPtr &func_graph, const CNo
     MS_LOG(INFO) << tensor_name << " insert WeightQuant node";
     auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
     if (type_id == kNumberTypeFloat32) {
-      status =
-        quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
+      status = quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32,
+                                                         axis, true);
     } else {
-      status =
-        quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
+      status = quant_manager.InsertQuantDtypeCastFlyNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16,
+                                                         axis, true);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";

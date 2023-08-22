@@ -49,7 +49,11 @@ class InsertQuantNodeManager {
                              quant::QuantType curr_quant_type);
 
   int InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                                  TypeId src_dtype, TypeId dst_dtype, int axis);
+                                  TypeId src_dtype, TypeId dst_dtype, int axis, bool is_quant_attribute = false);
+
+  CNodePtr CreateQuantInputCastNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr input_node,
+                                    TypeId src_dtype, TypeId dst_dtype,
+                                    const std::vector<schema::QuantParamT> &input_quant_params, int axis);
 
   int InsertFSEDecodeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId dst_dtype);
 
