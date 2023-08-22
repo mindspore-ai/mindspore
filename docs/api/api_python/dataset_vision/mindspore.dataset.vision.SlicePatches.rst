@@ -3,7 +3,7 @@ mindspore.dataset.vision.SlicePatches
 
 .. py:class:: mindspore.dataset.vision.SlicePatches(num_height=1, num_width=1, slice_mode=SliceMode.PAD, fill_value=0)
 
-    在水平和垂直方向上将Tensor切片为多个块。适合于Tensor高宽较大的使用场景。如果将 `num_height` 和 `num_width` 都设置为 1，则Tensor将保持不变。输出Tensor的数量等于 num_height*num_width。
+    在水平和垂直方向上将Tensor切片为多个块。适合于Tensor高宽较大的使用场景。如果将 `num_height` 和 `num_width` 都设置为 1，则Tensor将保持不变。输出Tensor的数量等于 :math:`num\_height * num\_width`。
 
     参数：
         - **num_height** (int, 可选) - 垂直方向的切块数量。默认值： ``1`` 。

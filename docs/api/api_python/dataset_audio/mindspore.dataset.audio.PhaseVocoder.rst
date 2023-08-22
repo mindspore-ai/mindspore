@@ -7,7 +7,7 @@ mindspore.dataset.audio.PhaseVocoder
 
     参数：
         - **rate** (float) - 加速比率。
-        - **phase_advance** (numpy.ndarray) - 每个频段的预期相位提前量，shape为（freq, 1）。
+        - **phase_advance** (numpy.ndarray) - 每个频段的预期相位提前量，shape为<freq, 1>。
 
     异常：
         - **TypeError** - 当 `rate` 的类型不为float。

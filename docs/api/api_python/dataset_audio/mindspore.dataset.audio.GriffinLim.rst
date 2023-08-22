@@ -25,7 +25,7 @@ mindspore.dataset.audio.GriffinLim
         - **TypeError** - 如果 `n_fft` 的类型不为int。
         - **ValueError** - 如果 `n_ftt` 不为正数。
         - **TypeError** - 如果 `n_iter` 的类型不为int。
-        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **ValueError** - 如果 `n_iter` 不为正数。
         - **TypeError** - 如果 `win_length` 的类型不为int。
         - **ValueError** - 如果 `win_length` 为负数。
         - **TypeError** - 如果 `hop_length` 的类型不为int。

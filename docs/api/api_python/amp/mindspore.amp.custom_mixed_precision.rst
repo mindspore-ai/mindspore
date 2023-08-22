@@ -10,7 +10,7 @@ mindspore.amp.custom_mixed_precision
 
     .. note::
         - 使用 `custom_mixed_precision` 进行精度转换后，不支持再次使用其他接口进行精度转换。
-          如果使用 `Model` 和 `build_train_network` 等接口来训练转换后的网络，则需要将 `amp_level` 配置
+          如果使用 :class:`mindspore.train.Model` 和 :func:`mindspore.amp.build_train_network` 等接口来训练转换后的网络，则需要将 `amp_level` 配置
           为 ``O0`` 以避免重复的精度转换。
         - 当使用黑名单时，Primitive类型还未支持。
 

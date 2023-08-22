@@ -1223,7 +1223,7 @@ class FiveCrop(PyTensorOperation):
 
 
 class GaussianBlur(ImageTensorOperation):
-    """
+    r"""
     Blur input image with the specified Gaussian kernel.
 
     Args:
@@ -1234,7 +1234,8 @@ class GaussianBlur(ImageTensorOperation):
             Default: ``None``. The value must be positive. If only a float is provided, the sigma will be
             (sigma, sigma).
             If a sequence of float is provided, it must be a sequence of 2 values which represents (width, height).
-            If ``None`` is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
+            If ``None`` is provided, the sigma will be calculated as
+            :math:`((kernel\_size - 1) * 0.5 - 1) * 0.3 + 0.8`.
 
     Raises:
         TypeError: If `kernel_size` is not of type int or Sequence[int].
