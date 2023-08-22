@@ -231,6 +231,7 @@ namespace mindspore::ops {{
 """
 
         op_param_gen += f"""}};
+
 """
     op_param_gen += op_param_end
     return op_param_gen
@@ -322,12 +323,13 @@ if __name__ == "__main__":
 
     yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
+    yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
 
 
     if len(sys.argv) < 3:
         ops_yaml_str = 'echo "#gen ops yaml"> ' + f'{yaml_path}'
         os.system(ops_yaml_str)
-        append_str = "ls mindspore/core/ops/ops_def/*op.yaml |xargs -i cat {} >> " + f'{yaml_path}'
+        append_str = 'ls ' + f'{yaml_dir_path}' + '*op.yaml |xargs -i cat {} >> ' + f'{yaml_path}'
         os.system(append_str)
 
     if len(sys.argv) > 3:
