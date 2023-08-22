@@ -895,20 +895,21 @@ int RemoveInputNodeQuantParam(const CNodePtr &cnode, size_t index) {
   auto input_node = cnode->input(index);
   CHECK_NULL_RETURN(input_node);
   auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (IsGraphInput(input_node) && cnode_primitive->HasAttr(quant::kGraphInputQuantParam)) {
-    cnode_primitive->EraseAttr(quant::kGraphInputQuantParam);
-    return RET_OK;
-  } else if (input_node->isa<mindspore::CNode>() && cnode_primitive->HasAttr(quant::kQuantParam)) {
-    cnode_primitive->EraseAttr(quant::kQuantParam);
-    return RET_OK;
+  if (IsGraphInput(input_node)) {
+    if (cnode_primitive->HasAttr(quant::kGraphInputQuantParam)) {
+      cnode_primitive->EraseAttr(quant::kGraphInputQuantParam);
+    }
+  } else if (input_node->isa<mindspore::CNode>()) {
+    if (cnode_primitive->HasAttr(quant::kQuantParam)) {
+      cnode_primitive->EraseAttr(quant::kQuantParam);
+    }
   } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
-    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
+    auto input_tensor = quant::GetNodeTensor(input_node);
     CHECK_NULL_RETURN(input_tensor);
     input_tensor->set_quant_param({});
-    return RET_OK;
   } else {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input node with index: " << index
-                  << " Not supported for quant param";
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " index: " << index << " is not support "
+                  << input_node->type_name() << " type.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -936,6 +937,10 @@ std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, s
     auto input_cnode = input_node->cast<mindspore::CNodePtr>();
     auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
     MS_CHECK_TRUE_MSG(input_cnode_primitive != nullptr, {}, "Primitive is nullptr.");
+    if (!input_cnode_primitive->HasAttr(quant::kQuantParam)) {
+      MS_LOG(WARNING) << input_node->fullname_with_scope() << " dont have quant param.";
+      return {};
+    }
     auto quantization_param_value = input_cnode_primitive->GetAttr(quant::kQuantParam);
     MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, {}, "quantization_param_value is nullptr.");
     auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
@@ -1025,5 +1030,50 @@ std::vector<schema::QuantParamT> CloneQuantParam(const std::vector<schema::Quant
     dst.push_back(quant_param_clone);
   }
   return dst;
+}
+
+int CalBiasQuantParams(const std::vector<schema::QuantParamT> &active_params,
+                       const std::vector<schema::QuantParamT> &weight_params,
+                       std::vector<schema::QuantParamT> *bias_params) {
+  std::vector<double> input_scales;
+  std::vector<double> filter_scales;
+  std::vector<double> bias_scales;
+  size_t sizeX = active_params.size();
+  for (size_t i = 0; i < sizeX; i++) {
+    input_scales.emplace_back(active_params[i].scale);
+  }
+  size_t sizeY = weight_params.size();
+  if (sizeX != sizeY) {
+    if (sizeX > 1 && sizeY > 1) {
+      MS_LOG(ERROR) << "input and filter's scale count cannot match!";
+      return RET_ERROR;
+    }
+  }
+  for (size_t i = 0; i < sizeY; i++) {
+    filter_scales.emplace_back(weight_params[i].scale);
+  }
+  size_t size = std::max(sizeX, sizeY);
+  for (size_t i = 0; i < size; i++) {
+    auto scaleX = sizeX > 1 ? input_scales[i] : input_scales[0];
+    auto scaleY = sizeY > 1 ? filter_scales[i] : filter_scales[0];
+    bias_scales.push_back(scaleX * scaleY);
+  }
+  MS_ASSERT(!bias_scales.empty());
+
+  // set bias quant param
+  for (double bias_scale : bias_scales) {
+    schema::QuantParamT quant_param;
+    if (bias_scale == 0) {
+      MS_LOG(WARNING) << "bias_scale is 0, and set bias_scale to 1.";
+      quant_param.scale = 1;
+    } else {
+      quant_param.scale = bias_scale;
+    }
+    quant_param.numBits = k32Bit;
+    quant_param.zeroPoint = 0;
+    quant_param.inited = true;
+    bias_params->push_back(quant_param);
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite::quant

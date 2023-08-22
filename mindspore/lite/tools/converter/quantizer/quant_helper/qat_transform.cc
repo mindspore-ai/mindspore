@@ -55,7 +55,8 @@ STATUS QATTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Run quant type determine failed.";
     return ret;
   }
-  ret = StaticWeightQuantInfo(func_graph);
+  auto per_channel_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+  ret = StaticWeightQuantInfo(func_graph, per_channel_primitive_types);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Quant Weight failed.";
     return RET_ERROR;
@@ -130,10 +131,7 @@ bool QATTransform::CheckWeightQuantExist(const CNodePtr &cnode) {
 }
 
 int QATTransform::StaticWeightQuantInfo(const FuncGraphPtr &func_graph,
-                                        std::set<PrimitivePtr> per_channel_primitive_types) {
-  if (per_channel_primitive_types.empty()) {
-    per_channel_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
-  }
+                                        const std::set<PrimitivePtr> &per_channel_primitive_types) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto quant_param_holder = GetCNodeQuantHolder(cnode);
     if (quant_param_holder == nullptr) {

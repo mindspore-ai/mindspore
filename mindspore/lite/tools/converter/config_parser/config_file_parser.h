@@ -70,6 +70,7 @@ struct FullQuantString {
   std::string bias_correction;
   std::string target_device;
   std::string per_channel;
+  std::string smooth_alpha;
 };
 
 struct RegistryInfoString {

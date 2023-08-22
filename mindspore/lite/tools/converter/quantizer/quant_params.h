@@ -175,6 +175,7 @@ struct FullQuantParam {
   bool bias_correction = true;
   bool per_channel = true;
   TargetDevice target_device = CPU;
+  double smooth_alpha = 0.5f;
 };
 
 struct TransformQuantParam {
