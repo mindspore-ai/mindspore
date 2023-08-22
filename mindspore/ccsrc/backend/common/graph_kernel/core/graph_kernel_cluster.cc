@@ -468,13 +468,16 @@ void GraphKernelCluster::DumpToFile() {
     return;
   }
   std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
+  ChangeFileMode(filepath, S_IWUSR);
   std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
     MS_LOG(ERROR) << "Open dump file '" << filepath << "' failed!";
+    ChangeFileMode(filepath, S_IRUSR);
     return;
   }
   fout << dump_buf_.str() << std::endl;
   fout.close();
+  ChangeFileMode(filepath, S_IRUSR);
 }
 
 // The GetItem node should be clustered with its real input.

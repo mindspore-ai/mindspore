@@ -126,7 +126,7 @@ def _dump_split_info(use_repo, graph_str, graph, subgraphs, graph_mode, graph_li
     graph_kernel_dump_path = "graph_kernel_dump"
     utils.create_dir(graph_kernel_dump_path)
     filename = os.path.join(graph_kernel_dump_path, "graph_kernel_split_mode.%d.txt" % os.getpid())
-    with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT), "a+") as f:
+    with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT, 0o600), "a+") as f:
         f.write("********** main graph: {} **********\n".format(graph.name))
         f.write("input json:\n{}\n".format(graph_str))
         f.write("graph desc:\n{}\n".format(str(graph)))
