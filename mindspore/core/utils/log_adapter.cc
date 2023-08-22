@@ -721,6 +721,16 @@ __attribute__((constructor)) MS_CORE_API void common_log_init(void) {
 MS_CORE_API void common_log_init(void) {
 #endif
 #ifdef USE_GLOG
+  if (!mindspore::GetEnv("GLOG_USER_DEFINE").empty()) {
+    if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
+      FLAGS_logfile_mode = 0600;
+    }
+    MS_LOG(WARNING) << "Users configure glog related parameters themselves, "
+                       "and log information is managed by the users themselves.";
+    mindspore::InitSubModulesLogLevel();
+    return;
+  }
+
   // Do not use glog predefined log prefix
   FLAGS_log_prefix = false;
   // Write log to files real-time
@@ -730,9 +740,9 @@ MS_CORE_API void common_log_init(void) {
     FLAGS_v = static_cast<int>(mindspore::MsLogLevel::kWarning);
   }
 
-  // Set default log file mode to 0640
+  // Set default log file mode to 0600
   if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
-    FLAGS_logfile_mode = 0640;
+    FLAGS_logfile_mode = 0600;
   }
   // Set default log file max size to 50 MB
   FLAGS_max_log_size = 50;
