@@ -516,7 +516,7 @@
             Cell类型，Cell本身。
 
         教程样例：
-            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#训练与评估实现>`_
+            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#训练与评估>`_
 
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 

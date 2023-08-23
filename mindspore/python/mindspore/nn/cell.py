@@ -1652,7 +1652,7 @@ class Cell(Cell_):
 
         Tutorial Examples:
             - `Model Training - Implementing Training and Evaluation
-              <https://mindspore.cn/tutorials/en/master/beginner/train.html#implementing-training-and-evaluation>`_
+              <https://mindspore.cn/tutorials/en/master/beginner/train.html#training-and-evaluation>`_
         """
         if mode:
             self._phase = 'train'
