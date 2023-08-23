@@ -27,8 +27,8 @@ constexpr size_t kInputNum = 3;
 constexpr size_t kOutputNum = 1;
 
 template <typename T, typename S>
-bool MaxPool3DGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool MaxPool3DGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -36,7 +36,7 @@ bool MaxPool3DGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<Address
   S *index_addr = GetDeviceAddress<S>(inputs, kIndex2);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'MaxPool3DWithArgmaxGrad' failed to cudaMemsetAsync");
   auto status = CalMaxPool3DGradWithArgmax(dy_addr, index_addr, x_dhw_, dy_dhw_, dy_ncdhw_, dx_addr, device_id_,
                                            reinterpret_cast<cudaStream_t>(cuda_stream_));

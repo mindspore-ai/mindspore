@@ -107,15 +107,15 @@ void SplitCpuKernelMod::LaunchSplit(T *input, T **output, size_t /* size */) {
 }
 
 template <typename T>
-bool SplitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T **output = reinterpret_cast<T **>(workspace[0]->addr);
+bool SplitCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T **output = reinterpret_cast<T **>(workspace[0]->device_ptr());
   for (size_t i = 0; i < outputs.size(); i++) {
-    output[i] = reinterpret_cast<T *>(outputs[i]->addr);
+    output[i] = reinterpret_cast<T *>(outputs[i]->device_ptr());
   }
-  size_t size = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t size = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   LaunchSplit(input, output, size);
   return true;
 }
@@ -139,8 +139,8 @@ void SplitCpuKernelMod::CheckParam() {
   }
 }
 
-bool SplitCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
+bool SplitCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);

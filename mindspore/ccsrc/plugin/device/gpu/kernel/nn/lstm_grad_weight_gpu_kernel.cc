@@ -135,9 +135,9 @@ int LstmGradWeightGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -157,7 +157,7 @@ bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(dw_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)), "cudaMemSet Failed");
+    cudaMemsetAsync(dw_addr, 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)), "cudaMemSet Failed");
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnRNNBackwardWeights(handle_, rnn_desc_, seq_len_, x_desc_.get(), x_addr, hx_desc_, hx_addr, y_desc_.get(),

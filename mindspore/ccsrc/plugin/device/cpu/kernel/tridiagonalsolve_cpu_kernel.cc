@@ -71,14 +71,14 @@ int TridiagonalSolveCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool TridiagonalSolveCPUKernelMod::DoComputeWithPartPivoting_(const std::vector<AddressPtr> &inputs,
-                                                              const std::vector<AddressPtr> &outputs, size_t nth_batch,
-                                                              int i) {
-  T *a = reinterpret_cast<T *>(inputs[0]->addr);
+bool TridiagonalSolveCPUKernelMod::DoComputeWithPartPivoting_(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs,
+                                                              size_t nth_batch, int i) {
+  T *a = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(a);
-  T *b = reinterpret_cast<T *>(inputs[1]->addr);
+  T *b = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(b);
-  T *value = reinterpret_cast<T *>(outputs[0]->addr);
+  T *value = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(value);
 
   if (i == -1) {
@@ -163,14 +163,14 @@ bool TridiagonalSolveCPUKernelMod::DoComputeWithPartPivoting_(const std::vector<
 }
 
 template <typename T>
-bool TridiagonalSolveCPUKernelMod::DoComputeWithoutPartPivoting_(const std::vector<AddressPtr> &inputs,
-                                                                 const std::vector<AddressPtr> &outputs,
+bool TridiagonalSolveCPUKernelMod::DoComputeWithoutPartPivoting_(const std::vector<KernelTensor *> &inputs,
+                                                                 const std::vector<KernelTensor *> &outputs,
                                                                  size_t nth_batch, int i) {
-  T *a = reinterpret_cast<T *>(inputs[0]->addr);
+  T *a = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(a);
-  T *b = reinterpret_cast<T *>(inputs[1]->addr);
+  T *b = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(b);
-  T *value = reinterpret_cast<T *>(outputs[0]->addr);
+  T *value = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(value);
   if (i == -1) {
     a += nth_batch * IntToSize(diags_size_);
@@ -233,8 +233,9 @@ bool TridiagonalSolveCPUKernelMod::DoComputeWithoutPartPivoting_(const std::vect
   return true;
 }
 
-bool TridiagonalSolveCPUKernelMod::ChooseDataType_(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs, size_t nth_batch, int i) {
+bool TridiagonalSolveCPUKernelMod::ChooseDataType_(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs, size_t nth_batch,
+                                                   int i) {
   if (partial_pivoting_) {
     if (dtype_ == kNumberTypeFloat32) {
       res_ = DoComputeWithPartPivoting_<float>(inputs, outputs, nth_batch, i);
@@ -263,8 +264,8 @@ bool TridiagonalSolveCPUKernelMod::ChooseDataType_(const std::vector<AddressPtr>
   return res_;
 }
 
-bool TridiagonalSolveCPUKernelMod::CheckInputValue_(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs) {
+bool TridiagonalSolveCPUKernelMod::CheckInputValue_(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), InputSize, "TridiagonalSolve");
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OutputSize, "TridiagonalSolve");
 
@@ -300,8 +301,8 @@ bool TridiagonalSolveCPUKernelMod::CheckInputValue_(const std::vector<kernel::Ad
 }
 
 template <typename T>
-bool TridiagonalSolveCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool TridiagonalSolveCPUKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   res_ = CheckInputValue_(inputs, outputs);
   if (!res_) {
     return res_;

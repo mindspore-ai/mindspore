@@ -80,27 +80,28 @@ bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
-  auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
-  auto groundtruth_box = reinterpret_cast<T *>(inputs[1]->addr);
-  auto deltas = reinterpret_cast<T *>(outputs[0]->addr);
+bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto anchor_box = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto groundtruth_box = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto deltas = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  if (inputs[0]->size != inputs[1]->size) {
+  if (inputs[0]->size() != inputs[1]->size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the memory size of inputs 'anchor_box' and 'groundtruth_box' "
                      "must be the same, but got the memory size of 'anchor_box': "
-                  << inputs[0]->size << " and the memory size of 'groundtruth_box': " << inputs[1]->size;
+                  << inputs[0]->size() << " and the memory size of 'groundtruth_box': " << inputs[1]->size();
     return false;
   }
 
   const size_t coordinate = 4;
-  const size_t block_size = inputs[0]->size / sizeof(T);
+  const size_t block_size = inputs[0]->size() / sizeof(T);
   if ((block_size % coordinate) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the memory size of input 'anchor_box' must be a multiple of 4, "
                      "but got the memory size of 'anchor_box': "
-                  << inputs[0]->size;
+                  << inputs[0]->size();
     return false;
   }
 

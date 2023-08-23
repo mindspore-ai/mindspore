@@ -182,13 +182,13 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdagradV2Cpu
 }
 
 template <typename T>
-bool SparseApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &workspace,
-                                                    const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *grad = reinterpret_cast<float *>(inputs[2]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[3]->addr);
+bool SparseApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                                    const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *accum = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *grad = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[3]->device_ptr());
 
   for (int64_t index = 0; index < batch_size_; index++) {
     SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});

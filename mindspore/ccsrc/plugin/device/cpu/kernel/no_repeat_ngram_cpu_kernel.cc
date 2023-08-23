@@ -91,14 +91,14 @@ void NoRepeatNGramCpuKernelMod::CheckAndInitParams() {
 }
 
 template <typename T>
-bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNoRepeatNGramInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNoRepeatNGramOutputsNum, kernel_name_);
-  auto state_seq = GetDeviceAddress<int32_t>(inputs, kIndex0);
-  auto log_probs = GetDeviceAddress<T>(inputs, kIndex1);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto *state_seq = reinterpret_cast<int32_t *>(inputs[kIndex0]->device_ptr());
+  auto *log_probs = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(state_seq);
   MS_EXCEPTION_IF_NULL(log_probs);
   MS_EXCEPTION_IF_NULL(output);

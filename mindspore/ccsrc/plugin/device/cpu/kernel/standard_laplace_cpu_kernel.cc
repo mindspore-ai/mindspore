@@ -38,9 +38,9 @@ bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kStandardLaplaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardLaplaceOutputsNum, kernel_name_);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]->addr);

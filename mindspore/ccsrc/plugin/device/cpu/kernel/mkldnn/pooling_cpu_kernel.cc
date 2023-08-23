@@ -211,13 +211,13 @@ std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool PoolingCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+bool PoolingCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
   ExecutePrimitive();
 
-  T *dst = reinterpret_cast<T *>(outputs[0]->addr);
+  T *dst = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (divisor_override_ != 0) {
     ReComputeDivisor(dst);
     return true;
@@ -231,8 +231,9 @@ bool PoolingCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   return false;
 }
 
-bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool PoolingCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 

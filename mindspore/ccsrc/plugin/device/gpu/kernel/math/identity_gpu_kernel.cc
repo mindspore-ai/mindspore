@@ -38,11 +38,12 @@ bool IdentityGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool IdentityGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool IdentityGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  cudaError_t ret = cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+  cudaError_t ret = cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                                     reinterpret_cast<cudaStream_t>(cuda_stream_));
   if (ret) {
     MS_LOG(ERROR) << "cudaMemcpyAsync failed in IdentityGpuKernelMod::Lanuch, error code is " << ret;

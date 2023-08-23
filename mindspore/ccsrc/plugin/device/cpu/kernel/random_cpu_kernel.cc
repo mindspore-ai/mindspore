@@ -35,13 +35,14 @@ constexpr size_t kUniformRealOutputsNum = 1;
 constexpr size_t kStandardNormalOutputsNum = 1;
 constexpr char kKernelName[] = "Random";
 }  // namespace
-void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<AddressPtr> &outputs) {
+
+void LaunchStandardNormal(std::default_random_engine  *rng,  const std::vector<KernelTensor *> &outputs) {
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
-
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(float);
-
+  size_t num_sample = outputs[0]->size() / sizeof(float);
+  
   // Init random normal generator.
   std::normal_distribution<float> distribution;
 
@@ -51,20 +52,20 @@ void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<Add
   }
 }
 
-void LaunchUniformInt(std::mt19937 *rng, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &outputs) {
+void LaunchUniformInt(std::mt19937 *rng, const std::vector<KernelTensor *> &inputs,
+                      const std::vector<KernelTensor *> &outputs) {
   // Init min/max values.
-  int min_val = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  int max_val = reinterpret_cast<int *>(inputs[2]->addr)[0];
+  int min_val = reinterpret_cast<int *>(inputs[1]->device_ptr())[0];
+  int max_val = reinterpret_cast<int *>(inputs[2]->device_ptr())[0];
   if (max_val <= min_val) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', invalid min/max values: (" << min_val << "/" << max_val << ")";
   }
 
   // Init output address.
-  auto output = reinterpret_cast<int *>(outputs[0]->addr);
+  auto output = reinterpret_cast<int *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(int);
+  size_t num_sample = outputs[0]->size() / sizeof(int);
 
   // Init random int generator.
   std::uniform_int_distribution<> distrib(min_val, max_val - 1);
@@ -75,12 +76,13 @@ void LaunchUniformInt(std::mt19937 *rng, const std::vector<AddressPtr> &inputs,
   }
 }
 
-void LaunchUniformReal(std::mt19937 *rng, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs) {
+void LaunchUniformReal(std::mt19937 *rng,
+                       const std::vector<KernelTensor *> &outputs) {
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(int);
+  size_t num_sample = outputs[0]->size() / sizeof(int);
 
   // Init random real generator.
   std::uniform_real_distribution<> distrib(0.0, 1.0);
@@ -124,9 +126,9 @@ int RandomCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (random_op_type_ == RANDOM_OP_NORMAL) {
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_type_);
     LaunchStandardNormal(&dfrng_, outputs);
@@ -137,7 +139,7 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_type_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_type_);
-    LaunchUniformReal(&mtrng_, inputs, outputs);
+    LaunchUniformReal(&mtrng_, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "

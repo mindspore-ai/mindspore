@@ -30,8 +30,8 @@ class CTCLossV2GradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
   CTCLossV2GradGpuKernelMod() = default;
   ~CTCLossV2GradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -52,8 +52,8 @@ class CTCLossV2GradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
 
  private:
   template <typename S, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   // Variables for the operator itself
   int64_t blank_{0};

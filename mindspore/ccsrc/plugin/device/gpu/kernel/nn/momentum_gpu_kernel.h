@@ -33,8 +33,8 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
   MomentumGpuKernelMod() = default;
   ~MomentumGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     launch_func_(this, inputs, stream_ptr);
     return true;
   }
@@ -71,9 +71,9 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
   bool use_nesterov_{false};
 
   template <typename T, typename S, typename G>
-  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, void *stream_ptr);
+  void LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, void *stream_ptr);
   using LaunchFunc =
-    std::function<void(MomentumGpuKernelMod *, const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+    std::function<void(MomentumGpuKernelMod *, const std::vector<kernel::KernelTensor *> &, void *stream_ptr)>;
   LaunchFunc launch_func_;
 
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;

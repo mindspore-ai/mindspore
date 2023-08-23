@@ -45,8 +45,8 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return launch_kernel_func_(this, inputs, workspace, outputs);
   }
@@ -63,8 +63,8 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void RunSvd(const size_t m, const size_t n, const size_t batch, T *d_a, int *dev_info, T *output_s, T *d_output_u,
               T *d_output_v);
@@ -78,8 +78,8 @@ class SvdGpuKernelMod : public NativeGpuKernelMod {
   void CheckResult(int *dev_info);
 
   using LaunchKernelFunc =
-    std::function<bool(SvdGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SvdGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   using InitSizeListsFunc = std::function<void(SvdGpuKernelMod *)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
   static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> func_list_;

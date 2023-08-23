@@ -64,9 +64,10 @@ void FakeLearnedScaleQuantPerLayerGradGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(input_size_);  // input_quant
 }
 
-bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<KernelTensor *> &outputs,
+                                                           void *stream_ptr) {
   float *grad_input = GetDeviceAddress<float>(outputs, kIndex0);
   float *grad_alpha = GetDeviceAddress<float>(outputs, kIndex1);
   float *gradient = GetDeviceAddress<float>(inputs, kIndex0);

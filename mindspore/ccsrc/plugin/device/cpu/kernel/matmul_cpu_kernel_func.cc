@@ -132,17 +132,17 @@ void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const s
   }
 }
 
-bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   if (kernel_ == nullptr) {
     return false;
   }
   for (size_t i = 0; i < in_size_; i++) {
-    in_[i]->data_ = inputs[i]->addr;
+    in_[i]->data_ = inputs[i]->device_ptr();
   }
   for (size_t i = 0; i < out_size_; i++) {
-    out_[i]->data_ = outputs[i]->addr;
+    out_[i]->data_ = outputs[i]->device_ptr();
   }
   int ret = kernel_->Prepare(kernel_);
   if (ret != 0) {

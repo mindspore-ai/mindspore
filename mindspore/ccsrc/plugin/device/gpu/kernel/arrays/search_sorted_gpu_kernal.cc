@@ -86,9 +86,9 @@ int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename S, typename T>
-bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   CheckParam<S, T>(inputs, outputs);
   auto sequence_ptr = GetDeviceAddress<S>(inputs, kSearchSortedIndex0);
@@ -134,24 +134,24 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 }
 
 template <typename S, typename T>
-void SearchSortedGpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
+void SearchSortedGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   constexpr size_t kInputSize = 2;
   constexpr size_t kOutputSize = 1;
   if (inputs.size() != kInputSize) {
     MS_LOG(ERROR) << "Input number is: " << inputs.size() << ", but SearchSorted needs" << kInputSize << " inputs.";
   }
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
-                  << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
+                  << inputs[1]->size() << " and the dimension of output " << outputs[0]->size();
   }
   if (outputs.size() != kOutputSize) {
     MS_LOG(ERROR) << "Output number is " << outputs.size() << ", but SearchSorted needs " << kOutputSize << " outputs";
   }
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
-    MS_LOG(ERROR) << "The output dimensions " << outputs[0]->size << " must match the dimensions of input values "
-                  << inputs[1]->size;
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
+    MS_LOG(ERROR) << "The output dimensions " << outputs[0]->size() << " must match the dimensions of input values "
+                  << inputs[1]->size();
   }
 }
 

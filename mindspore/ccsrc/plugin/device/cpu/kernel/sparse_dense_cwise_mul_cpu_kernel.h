@@ -36,8 +36,8 @@ class SparseDenseCwiseMulCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -49,11 +49,13 @@ class SparseDenseCwiseMulCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> dense_shape_;
   TypeId data_type_ = {kTypeUnknown};
   template <typename T>
-  void ComputeMul(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void ComputeMul(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void SparseDenseCwiseMulNoBcastCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void SparseDenseCwiseMulNoBcastCompute(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void SparseDenseCwiseMulBcastCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void SparseDenseCwiseMulBcastCompute(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

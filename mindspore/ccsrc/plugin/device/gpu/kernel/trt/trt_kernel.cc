@@ -72,14 +72,14 @@ void TrtKernelMod::ReleaseResource() {
   runtime_.reset();
 }
 
-bool TrtKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs, void *stream) {
+bool TrtKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                          const std::vector<KernelTensor *> &outputs, void *stream) {
   MS_EXCEPTION_IF_NULL(context_);
   std::vector<void *> device_buffer;
   std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(device_buffer),
-                 [](const AddressPtr &input) { return input->addr; });
+                 [](const KernelTensor *input) { return input->device_ptr(); });
   std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(device_buffer),
-                 [](const AddressPtr &output) { return output->addr; });
+                 [](const KernelTensor *output) { return output->device_ptr(); });
   return context_->enqueueV2(device_buffer.data(), reinterpret_cast<cudaStream_t>(stream), nullptr);
 }
 }  // namespace kernel

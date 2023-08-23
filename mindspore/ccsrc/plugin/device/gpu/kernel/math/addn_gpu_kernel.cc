@@ -54,14 +54,15 @@ int AddNFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   cudaError_t status = cudaErrorNotReady;
   status =
-    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    FillDeviceArray(outputs[0]->size() / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size / sizeof(T))};
+  std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size() / sizeof(T))};
   for (size_t i = 0; i < num_input_; i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     status = BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(

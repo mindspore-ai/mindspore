@@ -111,13 +111,14 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool ConvCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

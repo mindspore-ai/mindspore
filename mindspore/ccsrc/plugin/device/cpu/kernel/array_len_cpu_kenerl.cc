@@ -51,10 +51,10 @@ int ArrayLenCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-bool ArrayLenCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int *>(outputs[0]->addr);
+bool ArrayLenCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto output_addr = reinterpret_cast<int *>(outputs[0]->device_ptr());
   output_addr[0] = input_shape_[0];
   return true;
 }

@@ -55,8 +55,8 @@ void TransposeFwdCpuKernelMod::CheckPermValue() {
 }
 
 template <typename T>
-void TransposeFwdCpuKernelMod::InitPerm(const std::vector<kernel::AddressPtr> &inputs) {
-  auto perm_ptr = static_cast<T *>(inputs[kIndex1]->addr);
+void TransposeFwdCpuKernelMod::InitPerm(const std::vector<kernel::KernelTensor *> &inputs) {
+  auto perm_ptr = static_cast<T *>(inputs[kIndex1]->device_ptr());
   std::vector<T> perm{perm_ptr, perm_ptr + perm_shape_[0]};
   perm_.clear();
   (void)std::transform(perm.begin(), perm.end(), std::back_inserter(perm_),
@@ -121,9 +121,9 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   return KRET_OK;
 }
 
-bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
 
@@ -207,10 +207,10 @@ std::vector<KernelAttr> TransposeFwdCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = static_cast<T *>(inputs[0]->addr);
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
+void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  const auto *input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
 
   if (got_perm_value_) {
     auto task = [&](size_t start, size_t end) {
@@ -222,8 +222,8 @@ void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     return;
   }
 
-  data_num_ = inputs[0]->size / sizeof(T);
-  size_t data_count = (inputs[0]->size) / sizeof(T);
+  data_num_ = inputs[0]->size() / sizeof(T);
+  size_t data_count = (inputs[0]->size()) / sizeof(T);
   if (perm_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {
     ParallelRun(input_addr, output_addr, data_count);
     return;

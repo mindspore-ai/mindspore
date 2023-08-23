@@ -110,16 +110,16 @@ int BernoulliCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBernoulliInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBernoulliOutputsNum, kernel_name_);
 
   InitMSPhiloxRandom(seed_, offset_);
 
   input_elements_nums = std::accumulate(x_shape_.begin(), x_shape_.end(), int64_t(1), std::multiplies<int64_t>());
-  auto p = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto p = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto y = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   int64_t p_dims = static_cast<int64_t>(p_shape_.size());
   int64_t x_dims = static_cast<int64_t>(x_shape_.size());
   auto p_num = p_dims == 0 ? 1 : p_shape_[0];

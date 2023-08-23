@@ -33,8 +33,8 @@ class CSRSparseMatrixToDenseGpuKernelMod : public NativeGpuKernelMod {
   CSRSparseMatrixToDenseGpuKernelMod() = default;
   ~CSRSparseMatrixToDenseGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
@@ -49,14 +49,14 @@ class CSRSparseMatrixToDenseGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &others);
   void InitSizeLists();
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   using CSRSparseMatrixToDenseFunc =
-    std::function<bool(CSRSparseMatrixToDenseGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(CSRSparseMatrixToDenseGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, CSRSparseMatrixToDenseFunc>> func_list_;
   CSRSparseMatrixToDenseFunc kernel_func_;
   bool is_null_input_{false};

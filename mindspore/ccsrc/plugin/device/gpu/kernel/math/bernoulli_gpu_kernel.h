@@ -30,8 +30,8 @@ class BernoulliGpuKernelMod : public NativeGpuKernelMod {
   BernoulliGpuKernelMod() { ResetResource(); }
   ~BernoulliGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -53,11 +53,11 @@ class BernoulliGpuKernelMod : public NativeGpuKernelMod {
   void CheckBernoulliShape();
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using BernoulliFunc =
-    std::function<bool(BernoulliGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(BernoulliGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   int64_t seed_{-1};

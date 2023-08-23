@@ -47,8 +47,8 @@ class DenseGradGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cublasSetStream failed");
     VARIABLE_NOT_USED(workspace);
@@ -59,15 +59,16 @@ class DenseGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
 #if CUDA_VERSION >= 11000
   cublasComputeType_t GetComputeType();
 #endif
 
-  using DenseGradFunc = std::function<bool(DenseGradGpuKernelMod *, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  using DenseGradFunc =
+    std::function<bool(DenseGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   DenseGradFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, DenseGradGpuKernelMod::DenseGradFunc>> kernel_attr_vec_;
 

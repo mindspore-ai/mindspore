@@ -41,9 +41,9 @@ void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   is_need_retrieve_output_shape_ = true;
 }
 
-bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadAndShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadAndShiftOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
@@ -58,12 +58,12 @@ bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  T *cum_sum_arr = reinterpret_cast<T *>(inputs[1]->addr);
-  T shift_idx = *reinterpret_cast<T *>(inputs[2]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *cum_sum_arr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T shift_idx = *reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   if (shift_idx < 0 || shift_idx >= static_cast<T>(cum_sum_size_)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -73,7 +73,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   size_t output_size = static_cast<size_t>(cum_sum_arr[cum_sum_size_ - 1]);
   size_t shift_size = static_cast<size_t>(cum_sum_arr[shift_idx]);
   size_t valid_size = static_cast<size_t>(cum_sum_arr[shift_idx + 1]) - shift_size;
-  int ret = memset_s(output, outputs[0]->size, -1, type_size_ * output_size);
+  int ret = memset_s(output, outputs[0]->size(), -1, type_size_ * output_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }

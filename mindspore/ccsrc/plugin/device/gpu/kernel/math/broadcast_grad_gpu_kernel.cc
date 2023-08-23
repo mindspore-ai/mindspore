@@ -97,16 +97,17 @@ int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool BroadcastOpGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool BroadcastOpGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   auto x1 = GetDeviceAddress<T>(inputs, kIndex0);
   auto x2 = GetDeviceAddress<T>(inputs, kIndex1);
   auto dy = GetDeviceAddress<T>(inputs, kIndex2);
   auto dx1 = GetDeviceAddress<T>(outputs, kIndex0);
   auto dx2 = GetDeviceAddress<T>(outputs, kIndex1);
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx1, 0, outputs[kIndex0]->size, cuda_stream_),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx1, 0, outputs[kIndex0]->size(), cuda_stream_),
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx2, 0, outputs[kIndex1]->size, cuda_stream_),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(dx2, 0, outputs[kIndex1]->size(), cuda_stream_),
                                     "BroadcastOpGradGpuKernelMod cudaMemSet Failed");
   cudaError_t status = cudaErrorNotReady;
   if (need_broadcast_) {

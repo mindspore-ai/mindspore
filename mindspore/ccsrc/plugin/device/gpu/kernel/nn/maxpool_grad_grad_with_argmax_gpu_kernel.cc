@@ -61,9 +61,9 @@ int MaxPoolGradGradWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_op
 }
 
 template <typename T, typename I>
-bool MaxPoolGradGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &,
-                                                         const std::vector<AddressPtr> &outputs) {
+bool MaxPoolGradGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradGradWithArgmaxInputsNum, kernel_name_);
 
   T *grad_addr = GetDeviceAddress<T>(inputs, kIndex1);

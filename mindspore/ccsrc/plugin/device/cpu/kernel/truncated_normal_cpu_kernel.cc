@@ -82,8 +82,8 @@ int TruncatedNormalCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool TruncatedNormalCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool TruncatedNormalCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   MS_ERROR_IF_NULL(kernel_func_);
@@ -91,18 +91,18 @@ bool TruncatedNormalCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, 
 }
 
 template <typename T1, typename T2, typename T3>
-bool TruncatedNormalCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T1 *>(inputs[0]->addr);
-  size_t input_elem_num = inputs[0]->size / sizeof(T1);
+bool TruncatedNormalCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  size_t input_elem_num = inputs[0]->size() / sizeof(T1);
   for (size_t i = 0; i < input_elem_num; i++) {
     if (input[i] <= 0) {
       MS_EXCEPTION(ValueError) << "Each dimension must be greater than zero.";
     }
   }
 
-  auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
-  size_t output_elem_num = outputs[0]->size / sizeof(T2);
+  auto output = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
+  size_t output_elem_num = outputs[0]->size() / sizeof(T2);
 
   std::normal_distribution<double> dis(0, 1);
   auto task = [&](size_t start, size_t end) {

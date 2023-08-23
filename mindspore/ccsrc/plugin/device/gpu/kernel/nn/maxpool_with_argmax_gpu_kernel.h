@@ -64,8 +64,8 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod {
         output_size_(0) {}
   ~MaxPoolWithArgmaxGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -76,14 +76,14 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  using MaxPoolWithArgmaxFunc =
-    std::function<bool(MaxPoolWithArgmaxGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using MaxPoolWithArgmaxFunc = std::function<bool(
+    MaxPoolWithArgmaxGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   void SetPad();
   MaxPoolWithArgmaxFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxFunc>> func_list_;

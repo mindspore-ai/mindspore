@@ -62,14 +62,14 @@ int CheckValidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool CheckValidGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
+bool CheckValidGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *anchor_boxes_addr = GetDeviceAddress<T>(inputs, 0);
   T *img_metas_addr = GetDeviceAddress<T>(inputs, 1);
   S *valid_addr = GetDeviceAddress<S>(outputs, 0);
 
   constexpr size_t coordinate = 4;
-  const size_t block_size = inputs[0]->size / sizeof(T);
+  const size_t block_size = inputs[0]->size() / sizeof(T);
   if ((block_size % coordinate) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
     return false;

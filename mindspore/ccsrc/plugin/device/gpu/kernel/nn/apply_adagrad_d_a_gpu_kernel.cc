@@ -118,8 +118,9 @@ std::vector<KernelAttr> ApplyAdagradDAGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   stream_ptr_ = stream_ptr;
@@ -130,22 +131,22 @@ bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T, typename T1, typename T2, typename T3, typename T4>
-bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *lr = reinterpret_cast<T1 *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T2 *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T3 *>(inputs[kL2Index]->addr);
-  const auto *global_step = reinterpret_cast<T4 *>(inputs[kGlobalStepIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T1 *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T2 *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T3 *>(inputs[kL2Index]->device_ptr());
+  const auto *global_step = reinterpret_cast<T4 *>(inputs[kGlobalStepIndex]->device_ptr());
 
-  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto *output_accum = reinterpret_cast<T *>(outputs[kAccumIndex]->addr);
-  auto *output_squared_accum = reinterpret_cast<T *>(outputs[kSquaredAccumIndex]->addr);
+  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
+  auto *output_accum = reinterpret_cast<T *>(outputs[kAccumIndex]->device_ptr());
+  auto *output_squared_accum = reinterpret_cast<T *>(outputs[kSquaredAccumIndex]->device_ptr());
 
   auto status =
     ApplyAdagradDA(batch_size_, input_elements_, var, accum, squared_accum, grad, lr, l1, l2, global_step, output_var,

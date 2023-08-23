@@ -104,9 +104,9 @@ void LuGpuKernelMod::BufferSize(T *batch_output_addr, int *lwork) {
 }
 
 template <typename T, typename S>
-void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                 "cusolverDnSetStream failed");
   T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
@@ -192,9 +192,9 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
   T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
   S *batch_piv_output_addr = nullptr;
@@ -280,8 +280,9 @@ void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-bool LuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool LuGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   // If m_ / batch_size_ <= 128 :
   // We use batched cublas api is faster by empiricism, for small matrices or large batch.
   // Otherwise:

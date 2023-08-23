@@ -88,11 +88,11 @@ int IOUCpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_opera
 }
 
 template <typename T>
-bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto anchor_boxes = reinterpret_cast<T *>(inputs[ANCHOR_BOXES]->addr);
-  auto gt_boxes = reinterpret_cast<T *>(inputs[GT_BOXES]->addr);
-  auto iou_score = reinterpret_cast<T *>(outputs[IOU_VALUE]->addr);
+bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  auto anchor_boxes = reinterpret_cast<T *>(inputs[ANCHOR_BOXES]->device_ptr());
+  auto gt_boxes = reinterpret_cast<T *>(inputs[GT_BOXES]->device_ptr());
+  auto iou_score = reinterpret_cast<T *>(outputs[IOU_VALUE]->device_ptr());
 
   // multithreading
   auto task = [&anchor_boxes, &gt_boxes, &iou_score, this](size_t start, size_t end) {

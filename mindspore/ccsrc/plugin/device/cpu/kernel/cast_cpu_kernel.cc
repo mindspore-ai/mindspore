@@ -34,8 +34,8 @@ class CastCpuKernelFunc : public CpuKernelFunc {
   CastCpuKernelFunc() = default;
   ~CastCpuKernelFunc() override = default;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  private:
   TypeId source_dtype_{kTypeUnknown};
@@ -67,14 +67,12 @@ void Cast(CastCpuKernelFunc<S, T> *content, const S *in, T *out, size_t size) {
 }
 
 template <typename S, typename T>
-bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = GetDeviceAddress<S>(inputs, kIndex0);
-  auto *output = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input);
-  MS_EXCEPTION_IF_NULL(output);
+bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<S *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
-  Cast<S, T>(this, input, output, outputs[0]->size / sizeof(T));
+  Cast<S, T>(this, input, output, outputs[0]->size() / sizeof(T));
   return true;
 }
 

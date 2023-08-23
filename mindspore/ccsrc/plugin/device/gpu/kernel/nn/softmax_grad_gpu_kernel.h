@@ -33,8 +33,8 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   SoftmaxGradGpuKernelMod() = default;
   ~SoftmaxGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -70,11 +70,11 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using SoftmaxGradGpuLaunchFunc =
-    std::function<bool(SoftmaxGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(SoftmaxGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
 
  private:
   void InitSizeByAxis(const std::vector<size_t> input_shape, const int axis) {

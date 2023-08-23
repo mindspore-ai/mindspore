@@ -73,10 +73,11 @@ T MvlgammaCpuKernelMod::MvlgammaSingle(const T &x, const int64_t &p) const {
 }
 
 template <typename T>
-bool MvlgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x = static_cast<T *>(inputs[0]->addr);
-  auto output_y = static_cast<T *>(outputs[0]->addr);
+bool MvlgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = static_cast<T *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < static_cast<size_t>(input_tensor_size_); i++) {
     *(output_y + i) = MvlgammaSingle<T>(*(input_x + i), attr_p_);

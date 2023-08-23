@@ -142,8 +142,9 @@ cudaError_t DenseGpuKernelMod::FillBias(T *src, T *dst, cudaStream_t stream) {
 }
 
 template <typename T, typename S>
-bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto x = GetDeviceAddress<T>(inputs, kIndex0);
   auto w = GetDeviceAddress<T>(inputs, kIndex1);
   auto out = GetDeviceAddress<T>(outputs, kIndex0);

@@ -58,12 +58,12 @@ inline void CheckInput(T x) {
 }
 
 template <typename T>
-void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
-  const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
-  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->addr) : nullptr;
-  auto *loss = reinterpret_cast<T *>(outputs[0]->addr);
+void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  const auto *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *input_y = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->device_ptr()) : nullptr;
+  auto *loss = reinterpret_cast<T *>(outputs[0]->device_ptr());
   std::vector<T> tmp_loss(input_size_);
   auto epsilon = static_cast<T>(1e-12);
   auto one = static_cast<T>(1);
@@ -117,8 +117,9 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 }
 
-bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   const size_t expect_inputs_num = weight_defined_ ? kBceInputsNumWithWeight : kBceInputsNumWithWeight - 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceOutputsNum, kernel_name_);

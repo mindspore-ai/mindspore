@@ -66,9 +66,9 @@ int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   return KRET_OK;
 }
 
-bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_type_ == kNumberTypeFloat16) {
     return LaunchKernel<float16>(inputs, outputs);
   } else if (input_type_ == kNumberTypeFloat32) {
@@ -98,14 +98,14 @@ bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_ptr);
 
-  size_t data_nums = outputs[0]->size / sizeof(T);
+  size_t data_nums = outputs[0]->size() / sizeof(T);
   if (SizeToLong(data_nums) <= kParallelDataNums) {
     auto ret_code = memcpy_s(output_ptr, data_nums * sizeof(T), input_ptr, data_nums * sizeof(T));
     if (ret_code != EOK) {

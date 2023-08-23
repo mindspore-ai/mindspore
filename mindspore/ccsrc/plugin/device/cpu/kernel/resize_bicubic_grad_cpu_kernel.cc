@@ -343,13 +343,13 @@ int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) const {
+bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) const {
   auto dy = GetDeviceAddress<float>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(dy);
   auto dx = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(dx);
-  size_t dx_size = outputs[kIndex0]->size;
+  size_t dx_size = outputs[kIndex0]->size();
   if (memset_s(dx, dx_size, 0, dx_size) != EOK) {
     MS_EXCEPTION(ValueError) << "Memset Failed!";
   }

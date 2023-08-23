@@ -143,13 +143,13 @@ int MaxPoolWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MaxPoolWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto *x = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+bool MaxPoolWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *x = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
-  auto *output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto *output = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
-  auto *mask = reinterpret_cast<int32_t *>(outputs.at(kIndex1)->addr);
+  auto *mask = reinterpret_cast<int32_t *>(outputs.at(kIndex1)->device_ptr());
   MS_EXCEPTION_IF_NULL(mask);
   int cWeight;
   int hWeight;

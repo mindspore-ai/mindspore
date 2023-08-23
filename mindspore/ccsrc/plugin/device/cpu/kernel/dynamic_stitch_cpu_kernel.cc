@@ -30,8 +30,8 @@ int64_t GetShapeSize(const ShapeVector &shape) {
 }
 
 template <typename T>
-bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicStitchOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   int first_dim_size = 0;
@@ -39,7 +39,7 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   input_tuple_num_ = input_count / 2;
   int max_index = -1;
   for (size_t i = 0; i < input_tuple_num_; ++i) {
-    auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
+    auto indice = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
     auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
     for (auto j = 0; j < shape_size; ++j) {
       max_index = std::max(indice[j], max_index);
@@ -65,12 +65,12 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     out_dims[num_out_dims - 1] *= result_shape[in_dim];
   }
 
-  auto merged = reinterpret_cast<T *>(outputs[0]->addr);
+  auto merged = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t slice_size = LongToSize(out_dims[1]);
   size_t slice_bytes = slice_size * sizeof(T);
   for (size_t i = 0; i < input_tuple_num_; i++) {
-    auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
-    auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->addr);
+    auto indice = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
+    auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->device_ptr());
     auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
     for (auto j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);

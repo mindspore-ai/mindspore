@@ -125,9 +125,9 @@ int SparseAddGradCpuKernelMod::CompareTwoIndices(const T &a_indices, const T &b_
 }
 
 template <typename T, typename S>
-bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the number of inputs should be " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
@@ -138,17 +138,17 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   }
   size_t size_t_indices_column = LongToSize(indices_column_);
   // Inputs
-  const auto dout = reinterpret_cast<T *>(inputs[kDoutIdx]->addr);
-  const auto x1_indices = reinterpret_cast<S *>(inputs[kX1IndicesIdx]->addr);
-  const auto x2_indices = reinterpret_cast<S *>(inputs[kX2IndicesIdx]->addr);
-  const auto out_indices = reinterpret_cast<S *>(inputs[kOutIndicesIdx]->addr);
+  const auto dout = reinterpret_cast<T *>(inputs[kDoutIdx]->device_ptr());
+  const auto x1_indices = reinterpret_cast<S *>(inputs[kX1IndicesIdx]->device_ptr());
+  const auto x2_indices = reinterpret_cast<S *>(inputs[kX2IndicesIdx]->device_ptr());
+  const auto out_indices = reinterpret_cast<S *>(inputs[kOutIndicesIdx]->device_ptr());
   // Outputs
-  auto dx1 = reinterpret_cast<T *>(outputs[kDx1Idx]->addr);
-  auto dx2 = reinterpret_cast<T *>(outputs[kDx2Idx]->addr);
+  auto dx1 = reinterpret_cast<T *>(outputs[kDx1Idx]->device_ptr());
+  auto dx2 = reinterpret_cast<T *>(outputs[kDx2Idx]->device_ptr());
 
-  const int64_t x1_indices_num = SizeToLong(inputs[kX1IndicesIdx]->size / (sizeof(S) * size_t_indices_column));
-  const int64_t x2_indices_num = SizeToLong(inputs[kX2IndicesIdx]->size / (sizeof(S) * size_t_indices_column));
-  const int64_t out_indices_num = SizeToLong(inputs[kOutIndicesIdx]->size / (sizeof(S) * size_t_indices_column));
+  const int64_t x1_indices_num = SizeToLong(inputs[kX1IndicesIdx]->size() / (sizeof(S) * size_t_indices_column));
+  const int64_t x2_indices_num = SizeToLong(inputs[kX2IndicesIdx]->size() / (sizeof(S) * size_t_indices_column));
+  const int64_t out_indices_num = SizeToLong(inputs[kOutIndicesIdx]->size() / (sizeof(S) * size_t_indices_column));
 
   memset_s(dx1, sizeof(T) * x1_indices_num, 0, sizeof(T) * x1_indices_num);
   memset_s(dx2, sizeof(T) * x2_indices_num, 0, sizeof(T) * x2_indices_num);

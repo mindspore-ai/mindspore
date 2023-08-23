@@ -84,25 +84,25 @@ int SparseTensorDenseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename I, typename T>
-bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  if (outputs[0]->size == 0) {
+bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = static_cast<I *>(inputs[0]->addr);
-  const auto *values_addr = static_cast<T *>(inputs[1]->addr);
-  const auto *shape_addr = static_cast<I *>(inputs[2]->addr);
-  const auto *x2_addr = static_cast<T *>(inputs[3]->addr);
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(I);
-  const size_t values_length = inputs[1]->size / sizeof(T);
-  const size_t x2_length = inputs[3]->size / sizeof(T);
-  const size_t out_length = outputs[0]->size / sizeof(T);
+  const auto *indices_addr = static_cast<I *>(inputs[0]->device_ptr());
+  const auto *values_addr = static_cast<T *>(inputs[1]->device_ptr());
+  const auto *shape_addr = static_cast<I *>(inputs[2]->device_ptr());
+  const auto *x2_addr = static_cast<T *>(inputs[3]->device_ptr());
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
+  const size_t indices_length = inputs[0]->size() / sizeof(I);
+  const size_t values_length = inputs[1]->size() / sizeof(T);
+  const size_t x2_length = inputs[3]->size() / sizeof(T);
+  const size_t out_length = outputs[0]->size() / sizeof(T);
   size_t rank = output_shape_.size();
   for (size_t i = 0; i < x2_length; i++) {
     if (i > out_length) {

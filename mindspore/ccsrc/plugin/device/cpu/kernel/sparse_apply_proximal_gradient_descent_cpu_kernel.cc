@@ -135,18 +135,18 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
 
 template <typename I, typename T>
 bool SparseApplyProximalGradientDescentCpuKernelMod::LaunchKernel(
-  const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-  const std::vector<kernel::AddressPtr> &outputs) const {
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+  const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyProximalGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyProximalGradientDescentOutputsNum, kernel_name_);
 
-  auto var = static_cast<T *>(inputs[0]->addr);
-  auto grad = static_cast<T *>(inputs[4]->addr);
-  auto indices = static_cast<I *>(inputs[5]->addr);
-  auto alpha_scalar = static_cast<T *>(inputs[1]->addr)[0];
-  auto l1_scalar = static_cast<T *>(inputs[2]->addr)[0];
-  auto l2_scalar = static_cast<T *>(inputs[3]->addr)[0];
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->device_ptr());
+  auto grad = static_cast<T *>(inputs[4]->device_ptr());
+  auto indices = static_cast<I *>(inputs[5]->device_ptr());
+  auto alpha_scalar = static_cast<T *>(inputs[1]->device_ptr())[0];
+  auto l1_scalar = static_cast<T *>(inputs[2]->device_ptr())[0];
+  auto l2_scalar = static_cast<T *>(inputs[3]->device_ptr())[0];
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < indices_size_; i++) {
     I index = indices[i];

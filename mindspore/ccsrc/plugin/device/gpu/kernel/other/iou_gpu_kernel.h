@@ -33,8 +33,8 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
   IOUGpuKernelMod() {}
   ~IOUGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, outputs, stream_ptr);
   }
 
@@ -47,10 +47,11 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+                    void *stream_ptr);
 
-  using IOULaunchFunc = std::function<bool(IOUGpuKernelMod *, const std::vector<AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &, void *)>;
+  using IOULaunchFunc = std::function<bool(IOUGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   IOULaunchFunc kernel_func_;

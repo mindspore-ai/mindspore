@@ -39,8 +39,8 @@ class ApplyAddSignGpuKernelMod : public NativeGpuKernelMod {
   ApplyAddSignGpuKernelMod() { ResetResource(); }
   ~ApplyAddSignGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -60,10 +60,11 @@ class ApplyAddSignGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S, typename G>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using ApplyAddSignFunc = std::function<bool(ApplyAddSignGpuKernelMod *, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using ApplyAddSignFunc =
+    std::function<bool(ApplyAddSignGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
  private:
   size_t t_size_{1};

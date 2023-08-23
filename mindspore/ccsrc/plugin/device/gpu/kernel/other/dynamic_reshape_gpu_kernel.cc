@@ -47,9 +47,9 @@ std::vector<std::pair<KernelAttr, DynamicReshapeKernelMod::LaunchFunc>> DynamicR
    &DynamicReshapeKernelMod::LaunchKernel<int64_t>}};
 
 template <typename S>
-bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto data_addr = GetDeviceAddress<unsigned char>(inputs, 0);
   auto shape_addr = GetDeviceAddress<S>(inputs, 1);

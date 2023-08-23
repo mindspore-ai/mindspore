@@ -121,12 +121,13 @@ static void hsv_to_rgb(float h, float s, float v, T *r, T *g, T *b) {
 }
 
 template <typename T>
-bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input{static_cast<T *>(inputs[0]->addr)};
-  auto scale{static_cast<std::float_t *>(inputs[1]->addr)};
-  auto output{static_cast<T *>(outputs[0]->addr)};
+bool LaunchAdjustSaturationKernel(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto input{static_cast<T *>(inputs[0]->device_ptr())};
+  auto scale{static_cast<std::float_t *>(inputs[1]->device_ptr())};
+  auto output{static_cast<T *>(outputs[0]->device_ptr())};
   constexpr int64_t kChannelSize = 3;
-  std::int64_t num_elements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  std::int64_t num_elements = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
   auto sharder_adjustsaturation = [input, scale, output, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
       float h, s, v;
@@ -168,9 +169,9 @@ bool AdjustSaturationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_type_ == kNumberTypeFloat32) {
     return detail::LaunchAdjustSaturationKernel<float>(inputs, outputs);
   } else if (input_type_ == kNumberTypeFloat16) {

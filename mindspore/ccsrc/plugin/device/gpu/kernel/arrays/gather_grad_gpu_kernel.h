@@ -36,8 +36,8 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
   explicit GatherGradGpuKernelMod(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   ~GatherGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -50,14 +50,15 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+                    void *stream_ptr);
 
  private:
   int GetGatherDGradDimValue(const BaseOperatorPtr &base_operator);
   void CalculateDim(int axis);
 
-  using GatherGradOpFunc = std::function<bool(GatherGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &, void *)>;
+  using GatherGradOpFunc = std::function<bool(GatherGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &, void *)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::GatherGradOpFunc>>>
     kernel_attr_map_;
   GatherGradOpFunc kernel_func_;

@@ -57,9 +57,9 @@ int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   return KRET_OK;
 }
 
-bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSubAndFilterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSubAndFilterOutputNum, kernel_name_);
   if (x_dtype_ == kNumberTypeInt32) {
@@ -74,13 +74,13 @@ bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  T max_num = *reinterpret_cast<T *>(inputs[1]->addr);
-  T offset = *reinterpret_cast<T *>(inputs[2]->addr);
-  T *filter_res = reinterpret_cast<T *>(outputs[0]->addr);
-  T *filter_idx = reinterpret_cast<T *>(outputs[1]->addr);
+void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T max_num = *reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T offset = *reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T *filter_res = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *filter_idx = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   int64_t count = 0;
   for (size_t i = 0; i < batch_size_; ++i) {

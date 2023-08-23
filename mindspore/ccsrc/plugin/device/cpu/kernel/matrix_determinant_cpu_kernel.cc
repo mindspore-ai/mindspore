@@ -65,9 +65,9 @@ int MatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool MatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> & /* workspace */,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchMatrixDeterminant<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -83,11 +83,11 @@ bool MatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
 
   size_t m = LongToSize(input_[input_.size() - 1]);

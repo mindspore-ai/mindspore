@@ -53,8 +53,8 @@ const std::vector<KernelAttr> supported_kernel_attrs = {
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32)};
 
 // Check whether input, output and workspace address numbers are valid
-void CheckAddrNum(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs) {
+void CheckAddrNum(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_addr_num_expected = 2;
   constexpr size_t workspace_addr_num_expected = 6;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == input_addr_num_expected, "The size of input address should be 2.");
@@ -106,9 +106,9 @@ int ClipByNormGpuKernelMod<T, S>::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool ClipByNormGpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ClipByNormGpuKernelMod<T, S>::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   CheckAddrNum(inputs, workspace, outputs);
   DoLaunch(inputs, workspace, outputs, stream_ptr);
@@ -116,9 +116,9 @@ bool ClipByNormGpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Get address
   T *x_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *clip_norm_addr = GetDeviceAddress<S>(inputs, kIndex1);

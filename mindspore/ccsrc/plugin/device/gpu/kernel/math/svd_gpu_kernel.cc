@@ -260,8 +260,9 @@ void SvdGpuKernelMod::LaunchSvd(const size_t m, const size_t n, T *d_input, T *o
 }
 
 template <typename T>
-bool SvdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool SvdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                 "CusolverDnSetStream failed");
 

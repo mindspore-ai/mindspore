@@ -90,9 +90,9 @@ int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &workspace,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &workspace,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   // the input grad of backward process is the output of forward process
   auto grad_output_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(grad_output_ptr);
@@ -108,7 +108,7 @@ bool UpsampleNearest3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   } else {
     grad_input_ptr = GetDeviceAddress<S>(outputs, kIndex0);
     MS_EXCEPTION_IF_NULL(grad_input_ptr);
-    int ret = memset_s(outputs[kIndex0]->addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
+    int ret = memset_s(outputs[kIndex0]->device_ptr(), outputs[kIndex0]->size(), 0, outputs[kIndex0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
     }

@@ -38,16 +38,16 @@ bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::Init(const BaseOperatorPtr &
 }
 
 template <typename T, typename S>
-bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                 const std::vector<AddressPtr> &workspace,
-                                                                 const std::vector<AddressPtr> &outputs,
+bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                                 const std::vector<KernelTensor *> &workspace,
+                                                                 const std::vector<KernelTensor *> &outputs,
                                                                  void *stream_ptr) {
   T *logits_addr = GetDeviceAddress<T>(inputs, 0);
   S *labels_addr = GetDeviceAddress<S>(inputs, 1);
   T *dout_addr = GetDeviceAddress<T>(inputs, 2);
   T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
 
-  auto status = SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr,
+  auto status = SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size() / sizeof(T), logits_addr, labels_addr, dout_addr,
                                                   outputs_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

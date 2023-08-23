@@ -102,29 +102,29 @@ int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   T *x = nullptr;
   if (kernel_type_ == "ScatterNdUpdate") {
-    x = reinterpret_cast<T *>(inputs[0]->addr);
+    x = reinterpret_cast<T *>(inputs[0]->device_ptr());
   } else {
-    x = reinterpret_cast<T *>(outputs[0]->addr);
-    auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
+    x = reinterpret_cast<T *>(outputs[0]->device_ptr());
+    auto ret = memcpy_s(x, outputs[0]->size(), inputs[0]->device_ptr(), inputs[0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
     }
   }
 
-  S *indices = reinterpret_cast<S *>(inputs[1]->addr);
-  T *updates = reinterpret_cast<T *>(inputs[2]->addr);
+  S *indices = reinterpret_cast<S *>(inputs[1]->device_ptr());
+  T *updates = reinterpret_cast<T *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(updates);
 
   std::vector<size_t> offset_vec;
   offset_vec.resize(num_units_);
-  size_t x_mem_size = inputs[0]->size;
+  size_t x_mem_size = inputs[0]->size();
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       size_t offset = 0;
@@ -157,7 +157,7 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
     }
   }
 
-  if (memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size) != EOK) {
+  if (memcpy_s(outputs[0]->device_ptr(), outputs[0]->size(), x, inputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', it does memory copy fail.";
   }
   return true;

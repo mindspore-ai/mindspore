@@ -71,9 +71,9 @@ int MatrixDiagPartV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagPartV3GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   auto matrix_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   auto k_ptr = GetDeviceAddress<IndexType>(inputs, kIndex1);
   auto padding_value_ptr = GetDeviceAddress<T>(inputs, kIndex2);

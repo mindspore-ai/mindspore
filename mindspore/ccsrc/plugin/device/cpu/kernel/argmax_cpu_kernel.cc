@@ -31,35 +31,36 @@ int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(S
 
 template <typename T, typename S>
 bool check_validation(const std::vector<int64_t> &shape, const int64_t num_before_axis, const int64_t num_after_axis,
-                      const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
+                      const std::vector<kernel::KernelTensor *> &inputs,
+                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMaxInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kArgMaxOutputsNum, kKernelName);
   auto data_size = sizeof(T);
   int64_t input_size = get_element_num(shape) * static_cast<int64_t>(data_size);
   int64_t output_num = num_before_axis * num_after_axis;
   int64_t output_size = output_num * static_cast<int64_t>(sizeof(S));
-  if (static_cast<int64_t>(inputs[0]->size) != input_size) {
+  if (static_cast<int64_t>(inputs[0]->size()) != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' must be equal to " << input_size
-                      << ", but got the memory size is " << inputs[0]->size;
+                      << ", but got the memory size is " << inputs[0]->size();
   }
-  if (static_cast<int64_t>(outputs[0]->size) != output_size) {
+  if (static_cast<int64_t>(outputs[0]->size()) != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of output must be equal to " << output_size
-                      << ", but got the memory size is " << outputs[0]->size;
+                      << ", but got the memory size is " << outputs[0]->size();
   }
   return true;
 }
 }  // namespace
 
 template <typename T, typename S>
-bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   if (!check_validation<T, S>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;
   }
 
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<S *>(outputs[0]->addr);
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
 
   auto task = [&](size_t start, size_t end) {
     size_t num_after_axis = LongToSize(num_after_axis_);

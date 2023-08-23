@@ -44,13 +44,13 @@ bool FillV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool FillV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool FillV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   const auto output = outputs[kIndex0];
-  auto *output_data = static_cast<T *>(output->addr);
-  auto *value_data = static_cast<T *>(inputs[kIndex1]->addr);
-  size_t lens = static_cast<size_t>(output->size / sizeof(T));
+  auto *output_data = static_cast<T *>(output->device_ptr());
+  auto *value_data = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  size_t lens = static_cast<size_t>(output->size() / sizeof(T));
   auto task = [output_data, value_data](const size_t start, const size_t end) {
     for (size_t i = start; i < end; i++) {
       output_data[i] = *value_data;

@@ -63,10 +63,10 @@ int CeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
 std::vector<KernelAttr> CeluCpuKernelMod::GetOpSupport() { return kernel_attr; }
 
-bool CeluCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs) {
-  auto in_data = static_cast<float *>(inputs[0]->addr);
-  auto out_data = static_cast<float *>(outputs[0]->addr);
+bool CeluCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                              const std::vector<KernelTensor *> &outputs) {
+  auto in_data = static_cast<float *>(inputs[0]->device_ptr());
+  auto out_data = static_cast<float *>(outputs[0]->device_ptr());
 
   auto task = [this, in_data, out_data](size_t start, size_t end) {
     auto src = in_data + start;

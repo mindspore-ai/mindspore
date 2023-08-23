@@ -77,15 +77,15 @@ int ConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOutputsNum, kernel_name_);
 
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num_; ++j) {
-    auto *tmp_addr = reinterpret_cast<T *>(inputs[j]->addr);
+    auto *tmp_addr = reinterpret_cast<T *>(inputs[j]->device_ptr());
     (void)input_addr_list.emplace_back(tmp_addr);
   }
   if (input_flat_shape_list_.size() == 0 || input_flat_shape_list_[0].size() == 0) {

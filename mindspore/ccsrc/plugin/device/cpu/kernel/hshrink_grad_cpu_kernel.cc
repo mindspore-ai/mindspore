@@ -66,15 +66,15 @@ int HShrinkGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return static_cast<int>(KRET_OK);
 }
 
-bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool HShrinkGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkGradOutputsNum, kernel_name_);
-  auto *dy = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  auto *dy = reinterpret_cast<float *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  auto *x = reinterpret_cast<float *>(inputs[kIndex1]->addr);
+  auto *x = reinterpret_cast<float *>(inputs[kIndex1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  auto *dx = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto *dx = reinterpret_cast<float *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
   auto task = [dy, x, dx, this](size_t start, size_t end) {

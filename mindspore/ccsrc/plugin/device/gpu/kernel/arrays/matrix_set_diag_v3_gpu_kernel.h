@@ -33,8 +33,8 @@ class MatrixSetDiagV3GpuKernelMod : public NativeGpuKernelMod {
   MatrixSetDiagV3GpuKernelMod() = default;
   ~MatrixSetDiagV3GpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -52,9 +52,11 @@ class MatrixSetDiagV3GpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using MatrixDiagV3Func = std::function<bool(MatrixSetDiagV3GpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using MatrixDiagV3Func =
+    std::function<bool(MatrixSetDiagV3GpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
   void ResetResource() noexcept;
 

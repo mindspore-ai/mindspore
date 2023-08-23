@@ -80,9 +80,9 @@ int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   return KRET_OK;
 }
 
-bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -103,11 +103,11 @@ bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::Add
 }
 
 template <typename T>
-void ResizeNearestNeighborGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &outputs) {
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+void ResizeNearestNeighborGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto ret = memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed. Error no: " << ret;
   }

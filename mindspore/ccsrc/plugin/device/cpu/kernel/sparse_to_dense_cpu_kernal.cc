@@ -63,25 +63,25 @@ int SparseToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename I, typename T>
-bool SparseToDenseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseToDenseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseOutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  const auto *values_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(I);
-  const size_t values_length = inputs[1]->size / sizeof(T);
+  const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->device_ptr());
+  const auto *values_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const size_t indices_length = inputs[0]->size() / sizeof(I);
+  const size_t values_length = inputs[1]->size() / sizeof(T);
   size_t rank = output_shape_.size();
 
   for (size_t i = 0; i < values_size_; ++i) {

@@ -36,8 +36,8 @@ class RollingCpuKernelFunc : public DeprecatedCpuKernelFunc {
 
   void InitFunc(const CNodePtr &kernel_node) override;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   void InitInputOutputSize(const CNodePtr &, std::vector<size_t> *, std::vector<size_t> *,
@@ -209,18 +209,15 @@ void RollingCpuKernelFunc<T, S>::MethodSwitch() {
 }
 
 template <typename T, typename S>
-bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto workspace_addr = GetDeviceAddress<size_t>(workspace, kIndex0);
-  auto output_addr = GetDeviceAddress<S>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_addr);
-  MS_EXCEPTION_IF_NULL(workspace_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
+  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto workspace_addr = reinterpret_cast<size_t *>(workspace[kIndex0]->device_ptr());
+  auto output_addr = reinterpret_cast<S *>(outputs[kIndex0]->device_ptr());
 
   T nan_value;
   if constexpr (std::is_same_v<T, float>) {

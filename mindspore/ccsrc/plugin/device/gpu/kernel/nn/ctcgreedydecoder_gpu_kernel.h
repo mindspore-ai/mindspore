@@ -37,8 +37,8 @@ class CTCGreedyDecoderGpuKernelMod : public NativeGpuKernelMod {
   CTCGreedyDecoderGpuKernelMod() = default;
   ~CTCGreedyDecoderGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -53,11 +53,11 @@ class CTCGreedyDecoderGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using CTCGreedyDecoderFunc =
-    std::function<bool(CTCGreedyDecoderGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using CTCGreedyDecoderFunc = std::function<bool(
+    CTCGreedyDecoderGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, CTCGreedyDecoderFunc>> func_list_;
   void SyncOutputShape() override;
   CTCGreedyDecoderFunc kernel_func_;

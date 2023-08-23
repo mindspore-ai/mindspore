@@ -101,12 +101,13 @@ bool GLUCpuKernelMod::SplitCompute(T *input_data_ptr, T *output_data_ptr) {
 }
 
 template <typename T>
-bool GLUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool GLUCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGLUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGLUOutputsNum, kernel_name_);
-  auto *input_ptr = static_cast<T *>(inputs[kIndex0]->addr);
-  auto *output_ptr = static_cast<T *>(outputs[kIndex0]->addr);
+  auto *input_ptr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output_ptr = static_cast<T *>(outputs[kIndex0]->device_ptr());
   if (split_dim_ == 0) {
     return SplitWithDimZero<T>(input_ptr, output_ptr);
   } else {

@@ -45,8 +45,8 @@ class Expm1CpuKernelMod : public NativeCpuKernelMod {
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -60,7 +60,8 @@ class Expm1CpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs) const;
 
   TypeId input_dtype_{kTypeUnknown};
 };

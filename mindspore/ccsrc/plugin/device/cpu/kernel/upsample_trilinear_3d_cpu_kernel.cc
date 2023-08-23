@@ -108,9 +108,9 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename T, typename S>
-bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &workspace,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &workspace,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
   auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(x_ptr);
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -128,7 +128,7 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   int64_t output_width = y_shape_[kIndex4];
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
-    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
+    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size(), x_ptr, outputs[kIndex0]->size());
     if (cpy_ret != EOK) {
       MS_EXCEPTION(MemoryError) << "For " << kernel_name_ << ", memcpy_s to output failed.";
     }

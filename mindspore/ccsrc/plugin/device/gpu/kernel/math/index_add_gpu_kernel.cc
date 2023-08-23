@@ -139,18 +139,19 @@ bool IndexAddGpuKernelMod::CheckParams() {
 }
 
 template <typename T>
-bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexAddOutputsNum, kernel_name_);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *index = reinterpret_cast<int *>(inputs[kIndex1]->addr);
-  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *index = reinterpret_cast<int *>(inputs[kIndex1]->device_ptr());
+  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   int *device_flag = GetDeviceAddress<int>(workspace, 0);
   cudaMemsetAsync(device_flag, 0, sizeof(int), cuda_stream);
   int host_index_mismatch = 0;

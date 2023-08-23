@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/sparse_apply_r_m_s_prop_cpu_kernel.h"
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/sparse_apply_r_m_s_prop.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -191,15 +192,15 @@ bool SparseApplyRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename I>
-bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto *var = static_cast<T *>(inputs.at(kIndex0)->addr);
-  auto *ms = static_cast<T *>(inputs.at(kIndex1)->addr);
-  auto *mom = static_cast<T *>(inputs.at(kIndex2)->addr);
-  auto lr = static_cast<T *>(inputs.at(kIndex3)->addr)[kDim0];
-  auto *grad = static_cast<T *>(inputs.at(kIndex4)->addr);
-  auto *indices = static_cast<I *>(inputs.at(kIndex5)->addr);
+bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *var = static_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto *ms = static_cast<T *>(inputs.at(kIndex1)->device_ptr());
+  auto *mom = static_cast<T *>(inputs.at(kIndex2)->device_ptr());
+  auto lr = static_cast<T *>(inputs.at(kIndex3)->device_ptr())[kDim0];
+  auto *grad = static_cast<T *>(inputs.at(kIndex4)->device_ptr());
+  auto *indices = static_cast<I *>(inputs.at(kIndex5)->device_ptr());
   const auto rho = this->rho_;
   const auto momentum = this->momentum_;
   const auto epsilon = this->epsilon_;

@@ -54,20 +54,20 @@ int NanToNumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNanToNumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNanToNumOutputsNum, kernel_name_);
-  auto input = static_cast<T *>(inputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
 
   T posinf_value = static_cast<T>(posinf_value_);
   T neginf_value = static_cast<T>(neginf_value_);
   T nan_value = static_cast<T>(nan_value_);
-  size_t total = inputs[0]->size / sizeof(T);
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output, &posinf_value, &neginf_value, &nan_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (input[i] > static_cast<T>(0) && isinf(input[i])) {

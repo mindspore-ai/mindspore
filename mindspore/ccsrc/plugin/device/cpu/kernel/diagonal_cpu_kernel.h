@@ -29,8 +29,8 @@ class DiagonalCpuKernelMod : public NativeCpuKernelMod {
   DiagonalCpuKernelMod() = default;
   ~DiagonalCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -45,10 +45,12 @@ class DiagonalCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
-  using DiagonalLaunchFunc = std::function<bool(DiagonalCpuKernelMod *, const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs)>;
+  using DiagonalLaunchFunc =
+    std::function<bool(DiagonalCpuKernelMod *, const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs)>;
 
   static std::vector<std::pair<KernelAttr, DiagonalLaunchFunc>> func_list_;
   DiagonalLaunchFunc kernel_func_;

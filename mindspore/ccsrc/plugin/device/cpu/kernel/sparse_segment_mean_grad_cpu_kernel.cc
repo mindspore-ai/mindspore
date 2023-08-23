@@ -61,19 +61,19 @@ int SparseSegmentMeanGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentMeanGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentMeanGradOutputsNum, kernel_name_);
   constexpr size_t kMultiply = 1;
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) / x_shape_[kIndex0];
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
-  int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->device_ptr());
+  auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->device_ptr());
+  auto y_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   for (size_t i = 0; i < num_elements; i++) {
     y_addr[i] = (T)0;

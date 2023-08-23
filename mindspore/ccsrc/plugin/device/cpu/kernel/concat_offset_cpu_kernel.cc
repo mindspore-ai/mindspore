@@ -86,9 +86,9 @@ int ConcatOffsetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
 
   auto x_rank = SizeToLong(input_shapes_[kIndex0].size());
   if (axis_ < -x_rank || axis_ >= x_rank) {

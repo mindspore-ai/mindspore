@@ -35,14 +35,14 @@ void AllGatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   ranks_group_ = common::AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
 }
 
-bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAllGatherInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAllGatherOutputsNum, kernel_name_);
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  auto input_data_num = inputs[0]->size / sizeof(float);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto input_data_num = inputs[0]->size() / sizeof(float);
   return MPIAllGather(input_addr, output_addr, ranks_group_, input_data_num);
 }
 

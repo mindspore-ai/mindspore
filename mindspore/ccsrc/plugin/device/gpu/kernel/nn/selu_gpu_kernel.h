@@ -30,8 +30,8 @@ class SeluGpuKernelMod : public NativeGpuKernelMod {
  public:
   SeluGpuKernelMod() = default;
   ~SeluGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -49,9 +49,9 @@ class SeluGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using SeluFunc = std::function<bool(SeluGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using SeluFunc = std::function<bool(SeluGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   bool is_null_input_{false};

@@ -94,9 +94,9 @@ int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (input_num_ == 0) {
     return true;
   }
@@ -104,7 +104,7 @@ bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_device = GetDeviceAddress<T *>(workspace, 0);
   int *len_axis_device = GetDeviceAddress<int>(workspace, 1);
-  size_t element_num = outputs[0]->size / sizeof(T) / input_num_;
+  size_t element_num = outputs[0]->size() / sizeof(T) / input_num_;
   for (int i = 0; i < input_num_; i++) {
     T *tmp_addr = input_addr + i * element_num;
     inputs_host_[i] = tmp_addr;

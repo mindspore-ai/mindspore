@@ -27,16 +27,17 @@ constexpr const size_t kFastGeluInputsNum = 1;
 constexpr const size_t kFastGeluOutputsNum = 1;
 
 template <typename T>
-bool FastGeLUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool FastGeLUCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluOutputsNum, kernel_name_);
-  T *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T x = input[i];

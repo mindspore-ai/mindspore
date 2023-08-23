@@ -179,21 +179,22 @@ void CumSumCpuKernelMod::Reshape() {
 }
 
 template <typename T>
-bool CumSumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *ws = reinterpret_cast<T *>(workspace[kIndex0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool CumSumCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *ws = reinterpret_cast<T *>(workspace[kIndex0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(input, ws, output)) {
     return false;
   }
   const auto &axis_addr = inputs.at(kIndex1);
   MS_EXCEPTION_IF_NULL(axis_addr);
-  if (axis_addr->size == sizeof(int)) {
-    axis_ = *reinterpret_cast<int *>(axis_addr->addr);
-  } else if (axis_addr->size == sizeof(int64_t)) {
-    axis_ = static_cast<int>(*reinterpret_cast<int64_t *>(axis_addr->addr));
+  if (axis_addr->size() == sizeof(int)) {
+    axis_ = *reinterpret_cast<int *>(axis_addr->device_ptr());
+  } else if (axis_addr->size() == sizeof(int64_t)) {
+    axis_ = static_cast<int>(*reinterpret_cast<int64_t *>(axis_addr->device_ptr()));
   } else {
     MS_LOG(ERROR) << "The dtype of 'axis' should be int or int64";
     return false;
@@ -205,7 +206,7 @@ bool CumSumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
 
   // multithreading
-  size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(T)) : 1;
+  size_t lens = inputs[kIndex0]->size() > 0 ? static_cast<size_t>(inputs[kIndex0]->size() / sizeof(T)) : 1;
   auto task = [this, &input, &output, &ws](size_t start, size_t end) {
     start = start / dims_[kIndex1];
     end = end / dims_[kIndex1];

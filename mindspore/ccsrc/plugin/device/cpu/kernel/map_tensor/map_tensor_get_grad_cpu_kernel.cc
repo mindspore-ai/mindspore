@@ -113,9 +113,9 @@ void MapTensorGetGradCpuKernelMod::SyncOutputShape() {
 }
 
 template <typename KeyType>
-bool MapTensorGetGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool MapTensorGetGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   // The real hash table should be accessed by user data.
   if (output_user_data_.empty()) {
     MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
@@ -131,9 +131,9 @@ bool MapTensorGetGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     auto hash_table_ptr = user_data->get<CPUHashTable<KeyType, float>>(kUserDataData);
     MS_EXCEPTION_IF_NULL(hash_table_ptr);
 
-    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                  inputs.at(kIndex1)->size / sizeof(KeyType),
-                                  static_cast<float *>(inputs.at(kIndex2)->addr), nullptr);
+    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                  inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                  static_cast<float *>(inputs.at(kIndex2)->device_ptr()), nullptr);
   } else {
     MS_LOG(EXCEPTION) << "CPU hash table does not support value type:" << value_type;
   }

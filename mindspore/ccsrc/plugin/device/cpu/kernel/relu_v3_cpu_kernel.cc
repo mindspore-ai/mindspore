@@ -26,16 +26,17 @@ constexpr auto kReLUV3 = "ReLUV3";
 constexpr const size_t kReLUV3InputsNum = 1;
 constexpr const size_t kReLUV3OutputsNum = 1;
 template <typename T>
-bool ReLUV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ReLUV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReLUV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReLUV3OutputsNum, kernel_name_);
-  auto *input = static_cast<T *>(inputs[kIndex0]->addr);
+  auto *input = static_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *output = static_cast<T *>(outputs[kIndex0]->addr);
+  auto *output = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [input, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T v = input[i];

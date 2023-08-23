@@ -163,9 +163,9 @@ void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_
 }
 
 template <typename T>
-bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &workspace,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolverH_, stream), "CusolverDnSetStream failed");
   T *input = GetDeviceAddress<T>(inputs, kIndex0);

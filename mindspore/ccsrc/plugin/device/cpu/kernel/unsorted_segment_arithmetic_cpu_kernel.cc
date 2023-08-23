@@ -88,14 +88,14 @@ bool UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(T *input_addr, S *ids_ad
 }
 
 template <typename T, typename S>
-bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<kernel::KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   T init_value = GetInitValue<T>(kernel_name_);
 
-  T *input_src_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  S *ids_src_addr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  T *output_src_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_src_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  S *ids_src_addr = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  T *output_src_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   for (int64_t i = 0; i < batch_size_; i++) {
     T *input_addr = input_src_addr + i * in_stride_;

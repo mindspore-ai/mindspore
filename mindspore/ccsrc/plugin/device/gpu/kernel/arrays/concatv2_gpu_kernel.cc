@@ -55,16 +55,17 @@ const std::vector<std::pair<KernelAttr, ConcatV2FwdGpuKernelMod::KernelRunFunc>>
   return func_list;
 }
 
-bool ConcatV2FwdGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ConcatV2FwdGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   stream_ptr_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
-bool ConcatV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool ConcatV2FwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (input_num_ == 0) {
     return true;
   }

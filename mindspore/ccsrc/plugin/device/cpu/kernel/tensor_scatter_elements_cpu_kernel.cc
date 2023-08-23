@@ -144,16 +144,16 @@ bool TensorScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func
 }
 
 template <typename T, typename S>
-bool TensorScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorScatterElementsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorScatterElementsOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *indices = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto buffer_size = outputs[kIndex0]->size;
+  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *indices = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto buffer_size = outputs[kIndex0]->size();
   auto memcpy_task = [&](size_t start, size_t end) {
     size_t size = (end - start) * sizeof(T);
     auto ret = memcpy_s(output + start, size, input + start, size);

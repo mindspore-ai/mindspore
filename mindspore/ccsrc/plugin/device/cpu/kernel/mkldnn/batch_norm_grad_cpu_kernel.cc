@@ -114,9 +114,9 @@ void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
   // From CPUKernelExecutor::LaunchKernel
@@ -130,33 +130,34 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     return false;
   }
 
-  auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
-  auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
+  auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->device_ptr());
+  auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size(), inputs[SCALE]->device_ptr(), inputs[SCALE]->size());
   if (scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Scale memcpy error!";
   }
-  auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
-  auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size / sizeof(float)), max_size, 0, max_size);
+  auto max_size = workspace[SCALE_BIAS]->size() - inputs[SCALE]->size();
+  auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size() / sizeof(float)), max_size, 0, max_size);
   if (bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Bias memset 0 error.";
   }
 
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->addr);
-  SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->addr);
-  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->addr);
-  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->device_ptr());
   ExecutePrimitive();
 
-  auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->addr);
-  auto diff_scale_ret = memcpy_s(outputs[DSCALE]->addr, outputs[DSCALE]->size, wksp_out, inputs[SCALE]->size);
+  auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->device_ptr());
+  auto diff_scale_ret =
+    memcpy_s(outputs[DSCALE]->device_ptr(), outputs[DSCALE]->size(), wksp_out, inputs[SCALE]->size());
   if (diff_scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_scale memcpy to output[1] error.";
   }
-  auto diff_bias_ret = memcpy_s(outputs[DBIAS]->addr, outputs[DBIAS]->size,
-                                wksp_out + (outputs[DSCALE]->size / sizeof(float)), outputs[DBIAS]->size);
+  auto diff_bias_ret = memcpy_s(outputs[DBIAS]->device_ptr(), outputs[DBIAS]->size(),
+                                wksp_out + (outputs[DSCALE]->size() / sizeof(float)), outputs[DBIAS]->size());
   if (diff_bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
   }

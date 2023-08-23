@@ -110,8 +110,8 @@ int MultinomialWithReplacementCpuKernelMod::Resize(const BaseOperatorPtr &base_o
 }
 
 template <typename T>
-bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMultinomialWithReplacementInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMultinomialWithReplacementOutputsNum, kernel_name_);
 
@@ -119,9 +119,9 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'numsamples' should be a nonnegative number, but got "
                              << numsamples_ << ".";
   }
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto seed = *reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto offset = *reinterpret_cast<int64_t *>(inputs[2]->addr);
+  auto x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto seed = *reinterpret_cast<int64_t *>(inputs[1]->device_ptr());
+  auto offset = *reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
   if (init_state_) {
     init_seed_ = seed;
     init_offset_ = offset;
@@ -160,7 +160,7 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
   for (int64_t i = 0; i < output_size; i++) {
     RandomData[i] = static_cast<T>(RandFloat());
   }
-  auto y = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto y = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
   for (int64_t i = 0; i < num_row_; i++) {
     if (replacement_ == true) {
       auto out = y + i * numsamples_;

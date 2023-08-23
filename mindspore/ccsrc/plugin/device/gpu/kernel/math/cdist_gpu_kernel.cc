@@ -90,8 +90,9 @@ int CdistGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool CdistGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool CdistGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   T *input_y = GetDeviceAddress<T>(inputs, 1);
   T *out_data = GetDeviceAddress<T>(outputs, 0);

@@ -139,12 +139,12 @@ FUNTYPE &AdaptiveMaxPool3DGradCpuKernelMod::GetFuncList() const {
 }
 
 template <typename T1, typename T2>
-bool AdaptiveMaxPool3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto input_grad = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto input_argmax = reinterpret_cast<int32_t *>(inputs[2]->addr);
-  auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
+bool AdaptiveMaxPool3DGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto input_grad = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  auto input_argmax = reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
   const int64_t output_num_data = std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<size_t>(1),
                                                   [=](size_t a, size_t b) { return a * b; });
   const T2 data_zero = static_cast<T2>(0);
@@ -168,12 +168,12 @@ bool AdaptiveMaxPool3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPt
   return true;
 }
 
-bool AdaptiveMaxPool3DGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs) {
-  auto input_grad = reinterpret_cast<Eigen::half *>(inputs[0]->addr);
-  auto input_argmax = reinterpret_cast<int32_t *>(inputs[2]->addr);
-  auto output = reinterpret_cast<Eigen::half *>(outputs[0]->addr);
+bool AdaptiveMaxPool3DGradCpuKernelMod::LaunchKernelHalf(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  auto input_grad = reinterpret_cast<Eigen::half *>(inputs[0]->device_ptr());
+  auto input_argmax = reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<Eigen::half *>(outputs[0]->device_ptr());
   const int64_t output_num_data = std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<size_t>(1),
                                                   [=](size_t a, size_t b) { return a * b; });
   const float data_zero = static_cast<float>(0);

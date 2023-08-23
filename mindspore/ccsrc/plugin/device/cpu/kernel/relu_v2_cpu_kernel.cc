@@ -26,18 +26,19 @@ constexpr auto kReLUV2 = "ReLUV2";
 constexpr const size_t kReLUV2InputsNum = 1;
 constexpr const size_t kReLUV2OutputsNum = 2;
 template <typename T>
-bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReLUV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReLUV2OutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
-  auto *mask = reinterpret_cast<uint8_t *>(outputs[kIndex1]->addr);
+  auto *mask = reinterpret_cast<uint8_t *>(outputs[kIndex1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(mask, false);
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [input, mask, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T v = input[i];

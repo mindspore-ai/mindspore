@@ -31,8 +31,8 @@ class EmbeddingLookUpCommGradCpuKernelMod : public DeprecatedNativeCpuKernelMod 
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -42,7 +42,7 @@ class EmbeddingLookUpCommGradCpuKernelMod : public DeprecatedNativeCpuKernelMod 
   }
 
   template <typename T>
-  void InitSplitNum(const std::vector<kernel::AddressPtr> &inputs);
+  void InitSplitNum(const std::vector<kernel::KernelTensor *> &inputs);
 
  private:
   size_t split_num_;

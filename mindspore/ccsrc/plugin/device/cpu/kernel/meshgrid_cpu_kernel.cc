@@ -125,9 +125,10 @@ void MeshgridCpuKernelMod::Mul(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
-  auto *ones_addr = reinterpret_cast<T *>(workspace[kIndex0]->addr);
+bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *ones_addr = reinterpret_cast<T *>(workspace[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(ones_addr, false);
   auto task = [&ones_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -144,9 +145,9 @@ bool MeshgridCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input_index = (i <= 1 && swap_indexing_ == true) ? 1 - i : i;
     input_shape_[input_index] = output_shape_[input_index];
-    auto *input = reinterpret_cast<T *>(inputs[i]->addr);
+    auto *input = reinterpret_cast<T *>(inputs[i]->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-    auto *output = reinterpret_cast<T *>(outputs[i]->addr);
+    auto *output = reinterpret_cast<T *>(outputs[i]->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(output, false);
     Mul<T>(input, ones_addr, output);
     input_shape_[input_index] = 1;

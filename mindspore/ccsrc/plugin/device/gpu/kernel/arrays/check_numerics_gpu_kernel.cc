@@ -64,9 +64,9 @@ int CheckNumericsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool CheckNumericsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool CheckNumericsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int32_t *flag_device = GetDeviceAddress<int32_t>(workspace, 0);

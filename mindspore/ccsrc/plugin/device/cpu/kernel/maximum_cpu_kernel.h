@@ -39,8 +39,8 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -74,8 +74,8 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   bool need_broadcast_{false};
   size_t input_x_num_{1};

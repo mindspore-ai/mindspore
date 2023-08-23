@@ -38,8 +38,8 @@ class ExtractVolumePatchesGpuKernelMod : public NativeGpuKernelMod,
   ExtractVolumePatchesGpuKernelMod() = default;
   ~ExtractVolumePatchesGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -59,8 +59,9 @@ class ExtractVolumePatchesGpuKernelMod : public NativeGpuKernelMod,
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   void *cuda_stream_{nullptr};
   std::vector<int64_t> kernel_size_;

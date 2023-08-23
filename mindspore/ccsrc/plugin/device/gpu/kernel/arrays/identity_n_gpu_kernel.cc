@@ -54,14 +54,14 @@ int IdentityNGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool IdentityNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool IdentityNGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (uint64_t i = 0; i < inputs.size(); i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     T *output_addr = GetDeviceAddress<T>(outputs, i);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, input_addr, inputs[i]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, input_addr, inputs[i]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "cudaMemcpyAsync value variable failed.");
   }

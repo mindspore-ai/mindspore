@@ -97,13 +97,13 @@ size_t SetOuputValue(S *addr, const std::vector<T> &grad_reduce_idx) {
 }
 
 template <typename T, typename S>
-bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                            const std::vector<kernel::AddressPtr> &,
-                                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                            const std::vector<kernel::KernelTensor *> &,
+                                                            const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<size_t> ranks = {input_size_list_[0] / sizeof(T), input_size_list_[1] / sizeof(T)};
   std::vector<std::vector<T>> reverse_shapes(kDynamicBroadcastGradientArgsInputsNum);
   if (!is_null_input0_) {
-    const T *s0_addr = static_cast<T *>(inputs[0]->addr);
+    const T *s0_addr = static_cast<T *>(inputs[0]->device_ptr());
     for (size_t j = 0; j < ranks[0]; j++) {
       reverse_shapes[0].push_back(s0_addr[ranks[0] - j - 1]);
     }
@@ -111,15 +111,15 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<ke
     ranks[0] = 0;
   }
   if (!is_null_input1_) {
-    const T *s1_addr = static_cast<T *>(inputs[1]->addr);
+    const T *s1_addr = static_cast<T *>(inputs[1]->device_ptr());
     for (size_t j = 0; j < ranks[1]; j++) {
       reverse_shapes[1].push_back(s1_addr[ranks[1] - j - 1]);
     }
   } else {
     ranks[1] = 0;
   }
-  S *r0_addr = static_cast<S *>(outputs[0]->addr);
-  S *r1_addr = static_cast<S *>(outputs[1]->addr);
+  S *r0_addr = static_cast<S *>(outputs[0]->device_ptr());
+  S *r1_addr = static_cast<S *>(outputs[1]->device_ptr());
 
   std::vector<std::vector<T>> grad_reduce_idx(kDynamicBroadcastGradientArgsInputsNum);
   size_t max_rank = ranks[0] > ranks[1] ? ranks[0] : ranks[1];

@@ -58,8 +58,9 @@ bool KLDivLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-bool KLDivLossGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool KLDivLossGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(kernel_func_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
@@ -134,11 +135,12 @@ bool KLDivLossGradCpuKernelMod::CheckParams() const {
 }
 
 template <typename T>
-bool KLDivLossGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto *input_grad = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *input_target = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool KLDivLossGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto *input_grad = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *input_target = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto *y = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_grad(input_grad, input_grad_shape_size_, 1);
   Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1>> array_target(input_target, input_target_shape_size_, 1);

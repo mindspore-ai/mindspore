@@ -71,15 +71,15 @@ void SpaceToBatchNDCpuKernelMod::CheckParam() {
 }
 
 template <typename T>
-bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   // check all shapes, blocks and paddings are valid
   CheckParam();
 
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * static_cast<size_t>(output_size_));
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  int ret = memset_s(output, outputs[0]->size(), 0, sizeof(T) * static_cast<size_t>(output_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }

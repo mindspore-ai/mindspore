@@ -53,7 +53,8 @@ int SoftplusGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool SoftplusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool SoftplusGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto status =

@@ -106,9 +106,9 @@ void UnpackCpuKernelMod::InitIOSize() {
   (void)workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
 }
 
-bool UnpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool UnpackCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
   if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -119,13 +119,13 @@ bool UnpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<unsigned char *>(inputs[0]->addr);
-  auto **outputs_host = reinterpret_cast<unsigned char **>(workspace[0]->addr);
+bool UnpackCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<unsigned char *>(inputs[0]->device_ptr());
+  auto **outputs_host = reinterpret_cast<unsigned char **>(workspace[0]->device_ptr());
   for (size_t i = 0; i < outputs.size(); i++) {
-    outputs_host[i] = reinterpret_cast<unsigned char *>(outputs[i]->addr);
+    outputs_host[i] = reinterpret_cast<unsigned char *>(outputs[i]->device_ptr());
   }
 
   size_t total_size = input_size_ * sizeof(T);

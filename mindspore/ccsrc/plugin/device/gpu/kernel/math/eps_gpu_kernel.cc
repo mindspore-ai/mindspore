@@ -71,10 +71,10 @@ T getEpsilon() {
 }
 
 template <typename T>
-bool EpsGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+bool EpsGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(output);
   T min_val = getEpsilon<T>();

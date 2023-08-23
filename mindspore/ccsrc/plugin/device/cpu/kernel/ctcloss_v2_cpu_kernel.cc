@@ -151,15 +151,15 @@ bool CTCLossV2CpuKernelMod::IndexProcessing(const T *in_len_p, const T *tar_len_
 }
 
 template <typename S, typename T>
-bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto log_probs_p = static_cast<S *>(inputs[kIndex0]->addr);
-  auto tar_p = static_cast<T *>(inputs[kIndex1]->addr);
-  auto in_len_p = static_cast<T *>(inputs[kIndex2]->addr);
-  auto tar_len_p = static_cast<T *>(inputs[kIndex3]->addr);
-  auto neg_log_p = static_cast<S *>(outputs[kIndex0]->addr);
-  auto log_alpha_p = static_cast<S *>(outputs[kIndex1]->addr);
+bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  auto log_probs_p = static_cast<S *>(inputs[kIndex0]->device_ptr());
+  auto tar_p = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto in_len_p = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto tar_len_p = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto neg_log_p = static_cast<S *>(outputs[kIndex0]->device_ptr());
+  auto log_alpha_p = static_cast<S *>(outputs[kIndex1]->device_ptr());
   std::vector<int64_t> target_offsets(LongToSize(batch_sizes_));
   if (!IndexProcessing<T>(in_len_p, tar_len_p, &target_offsets)) {
     return false;

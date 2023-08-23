@@ -41,8 +41,8 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
   AdaptiveMaxPool2dCpuKernelMod() = default;
   ~AdaptiveMaxPool2dCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -64,8 +64,8 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   using FuncList = std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>>;
 

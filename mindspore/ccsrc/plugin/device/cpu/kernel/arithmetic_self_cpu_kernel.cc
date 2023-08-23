@@ -91,19 +91,19 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
   ~ArithmeticSelfCpuKernelFunc() override = default;
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
   BaseOperatorPtr base_op{nullptr};
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalEqual(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchLogicalEqual(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchLogicalNot(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchKernelFloat16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelComplex(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::string kernel_name_{kUnknown};
   TypeId dtype_{kTypeUnknown};
 };
@@ -736,10 +736,11 @@ void Identity(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-bool IdentityCpuFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+bool IdentityCpuFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                     const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   Identity<T>(input, output, lens);
   return true;
 }
@@ -768,9 +769,9 @@ void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
   base_op = base_operator;
 }
 
-bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -814,28 +815,28 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
   return true;
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
+void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() / sizeof(bool);
   LogicalEqual(this, input, output, lens);
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
+void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() / sizeof(bool);
   LogicalNot(this, input, output, lens);
 }
 
 template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
+void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
@@ -887,11 +888,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
 }
 
 template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
+void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
@@ -924,11 +925,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
   func_pair->second(this, input, output, lens);
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = static_cast<float16 *>(inputs[0]->addr);
-  auto *output = static_cast<float16 *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(float16);
+void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = static_cast<float16 *>(inputs[0]->device_ptr());
+  auto *output = static_cast<float16 *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(float16);
   static const std::unordered_map<
     std::string, std::function<void(ArithmeticSelfCpuKernelFunc *, const float16 *, float16 *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimNeg->name(), Neg<float16>},     {prim::kPrimAcosh->name(), Acosh<float16>},

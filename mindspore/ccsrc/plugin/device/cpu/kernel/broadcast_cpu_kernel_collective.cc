@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/broadcast_cpu_kernel_collective.h"
 
 #include <set>
+#include <string>
 #include <functional>
 #include <memory>
 
@@ -62,19 +63,20 @@ std::vector<KernelAttr> BroadcastCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool BroadcastCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool BroadcastCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }
   std::size_t data_size = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    data_size += inputs[i]->size;
+    data_size += inputs[i]->size();
   }
-  bool ret = MsCollectiveCommLib::GetInstance().Broadcast(inputs[0]->addr, outputs[0]->addr, data_size / sizeof(float),
-                                                          input_dtype_, root_rank_, kMCCLGlobalGroupName);
+  bool ret = MsCollectiveCommLib::GetInstance().Broadcast(inputs[0]->device_ptr(), outputs[0]->device_ptr(),
+                                                          data_size / sizeof(float), input_dtype_, root_rank_,
+                                                          kMCCLGlobalGroupName);
   if (!ret) {
     MS_LOG(ERROR) << "BroadcastCPUKernelMod launch failed.";
   }

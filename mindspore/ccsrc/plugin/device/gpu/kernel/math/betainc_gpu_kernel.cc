@@ -67,15 +67,16 @@ int BetaincGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return ret;
 }
 
-bool BetaincGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> &workspace,
-                                 const std::vector<kernel::AddressPtr> &outputs, void *cuda_stream) {
+bool BetaincGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &workspace,
+                                 const std::vector<kernel::KernelTensor *> &outputs, void *cuda_stream) {
   return kernel_func_(this, inputs, outputs, workspace, cuda_stream);
 }
 
 template <typename T>
-bool BetaincGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                       const std::vector<AddressPtr> &workspace, void *cuda_stream) {
+bool BetaincGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs,
+                                       const std::vector<KernelTensor *> &workspace, void *cuda_stream) {
   T *input_a = GetDeviceAddress<T>(inputs, kAIndex);
   T *input_b = GetDeviceAddress<T>(inputs, kBIndex);
   T *input_x = GetDeviceAddress<T>(inputs, kXIndex);

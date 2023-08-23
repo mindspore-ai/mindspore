@@ -39,8 +39,8 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override;
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
@@ -49,7 +49,7 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void InitDeviceData(const std::vector<AddressPtr> &inputs, std::vector<void *> *input_device_data);
+  void InitDeviceData(const std::vector<KernelTensor *> &inputs, std::vector<void *> *input_device_data);
   std::vector<int64_t> SetInputFlag(std::vector<int64_t> *string_pos, size_t input_tensor_num);
   std::string GetString(size_t tensor_index, size_t original_index, void *input_host_data);
 

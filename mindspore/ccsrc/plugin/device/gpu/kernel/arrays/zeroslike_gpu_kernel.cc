@@ -41,13 +41,13 @@ bool ZerosLikeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool ZerosLikeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  void *output_device_address = outputs[kIndex0]->addr;
+bool ZerosLikeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  void *output_device_address = outputs[kIndex0]->device_ptr();
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     // have to use a float literal instead of an int literal because of ambiguous half() overload.
-    cudaMemsetAsync(output_device_address, 0, inputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(output_device_address, 0, inputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemset failed");
   return true;
 }

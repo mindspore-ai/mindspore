@@ -35,8 +35,8 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
   StridedSliceGradGpuKernelMod() = default;
   ~StridedSliceGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, outputs);
   }
@@ -59,10 +59,11 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
   std::vector<int64_t> shapex_;
 
  private:
-  using StridedSliceGradLaunchFunc = std::function<bool(
-    StridedSliceGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using StridedSliceGradLaunchFunc =
+    std::function<bool(StridedSliceGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   template <typename T, typename S = int64_t>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void FillEmptyDims(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
                      ShapeVector *input_shape);
   void ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride, const ShapeVector &input_shape,

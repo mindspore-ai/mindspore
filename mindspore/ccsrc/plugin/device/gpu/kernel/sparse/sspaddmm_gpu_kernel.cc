@@ -95,8 +95,9 @@ int SspaddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T, typename S>
-bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool SspaddmmGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   S *x1_indices = GetDeviceAddress<S>(inputs, 0);
   T *x1_values = GetDeviceAddress<T>(inputs, 1);
   S *x1_shape = GetDeviceAddress<S>(inputs, 2);

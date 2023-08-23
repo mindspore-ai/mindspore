@@ -90,9 +90,9 @@ int CholeskyInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int *dev_info = GetDeviceAddress<int>(workspace, 0);

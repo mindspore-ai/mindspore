@@ -151,9 +151,9 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename S>
-bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

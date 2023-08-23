@@ -32,8 +32,8 @@ class ReLUGradGpuKernelMod : public NativeGpuKernelMod {
   ReLUGradGpuKernelMod() = default;
   ~ReLUGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -46,12 +46,12 @@ class ReLUGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using ReLUGradLaunchFunc =
-    std::function<bool(ReLUGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using ReLUGradLaunchFunc = std::function<bool(ReLUGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   ReLUGradLaunchFunc kernel_func_;

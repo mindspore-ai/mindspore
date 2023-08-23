@@ -121,19 +121,15 @@ void InplaceIndexAddCpuKernelMod::CheckParams() {
 }
 
 template <typename T>
-bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInplaceIndexAddOutputsNum, kernel_name_);
-  auto x = GetDeviceAddress<T>(inputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(x);
-  auto indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
-  MS_EXCEPTION_IF_NULL(indices);
-  auto y = GetDeviceAddress<T>(inputs, kIndex2);
-  MS_EXCEPTION_IF_NULL(y);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(output);
+  auto *x = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *indices = static_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto *y = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto *output = static_cast<T *>(outputs[kIndex0]->device_ptr());
   CheckParams();
   // check indices's value is valid
   auto axis = LongToSize(axis_);

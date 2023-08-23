@@ -92,9 +92,9 @@ void ApplyPowerSignGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T, typename S, typename G>
-bool ApplyPowerSignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool ApplyPowerSignGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, 0);
   T *accumulation = GetDeviceAddress<T>(inputs, 1);
   S *learning_rate = GetDeviceAddress<S>(inputs, 2);
@@ -130,11 +130,11 @@ bool ApplyPowerSignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                                gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(variable_out, variable, outputs.at(kIndex0)->size, cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(variable_out, variable, outputs.at(kIndex0)->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpyAsync output failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(accumulation_out, accumulation, outputs.at(kIndex1)->size, cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(accumulation_out, accumulation, outputs.at(kIndex1)->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpyAsync output failed");
   return true;

@@ -36,8 +36,8 @@ class L2NormalizeGradCpuFunc : public CpuKernelFunc {
                 const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int CheckInputShape(const ShapeVector &output_shape);
@@ -95,15 +95,15 @@ int L2NormalizeGradCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool L2NormalizeGradCpuFunc<T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool L2NormalizeGradCpuFunc<T>::RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeGradOutputsNum, kernel_name_);
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y = reinterpret_cast<T *>(inputs[1]->addr);
-  auto dout = reinterpret_cast<T *>(inputs[2]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_size = outputs[0]->size / sizeof(T);
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto y = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto dout = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_size = outputs[0]->size() / sizeof(T);
   auto task = [this, input_x, y, dout, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       std::vector<size_t> high_dim_index = OneDimIndexToHighDimIndex(i);

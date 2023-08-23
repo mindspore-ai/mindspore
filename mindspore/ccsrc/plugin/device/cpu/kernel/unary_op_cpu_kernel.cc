@@ -77,8 +77,8 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
     GetUnaryOpFunc();
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override {
     auto output = outputs.front();
     const auto input_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<S>(outputs, 0);
@@ -87,7 +87,7 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
     }
     ParallelLaunchAutoSearch(
       std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
-      output->size / sizeof(S), this, &parallel_search_info_);
+      output->size() / sizeof(S), this, &parallel_search_info_);
     return true;
   }
 

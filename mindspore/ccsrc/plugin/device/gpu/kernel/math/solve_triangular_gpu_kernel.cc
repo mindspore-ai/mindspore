@@ -109,9 +109,9 @@ int SolveTriangularGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, cuda_stream_), "cublasSetStream failed");
   auto inputa_addr = GetDeviceAddress<T>(inputs, 0);
   auto inputb_addr = GetDeviceAddress<T>(inputs, 1);

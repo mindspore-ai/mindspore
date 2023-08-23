@@ -30,8 +30,8 @@ class CheckValidCpuKernelMod : public NativeCpuKernelMod {
  public:
   CheckValidCpuKernelMod() = default;
   ~CheckValidCpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     if (is_null_input_) {
       return true;
     }
@@ -48,11 +48,12 @@ class CheckValidCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void CheckParams(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using CheckValidFunc = std::function<bool(CheckValidCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using CheckValidFunc = std::function<bool(CheckValidCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, CheckValidFunc>> func_list_;
   CheckValidFunc kernel_func_;
   std::vector<int64_t> anchor_box_shape_{};

@@ -44,14 +44,14 @@ int ErfinvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool ErfinvCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ErfinvCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kErfinvInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kErfinvOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t total = inputs[0]->size / sizeof(T);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     // coefficient of the rational approximation on range [-0,7, 0.7]
     const T a[4] = {T(0.886226899), T(-1.645349621), T(0.914624893), T(-0.140543331)};

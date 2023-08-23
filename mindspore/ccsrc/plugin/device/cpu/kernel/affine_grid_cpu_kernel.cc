@@ -74,14 +74,14 @@ int AffineGridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<int64_t> out_shape;
-  auto data_theta = reinterpret_cast<T *>(inputs[0]->addr);
+  auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_size_data);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
   size_t H = static_cast<size_t>(output_size_data[2]);
@@ -144,14 +144,14 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
 }
 
 template <typename T>
-void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<int64_t> out_shape;
-  auto data_theta = reinterpret_cast<T *>(inputs[0]->addr);
+  auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_size_data);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
   size_t D = static_cast<size_t>(output_size_data[2]);
@@ -236,9 +236,9 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
 }
 
 template <typename T>
-bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (output_size_dims_[0] == 4) {
     LaunchKernel_3D<T>(inputs, outputs);
   } else if (output_size_dims_[0] == kColNum5) {

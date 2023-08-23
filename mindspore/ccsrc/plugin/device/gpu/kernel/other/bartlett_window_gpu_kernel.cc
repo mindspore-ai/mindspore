@@ -71,9 +71,9 @@ int BartlettWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T, typename S>
-bool BartlettWindowGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool BartlettWindowGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output = GetDeviceAddress<S>(outputs, 0);
   auto status = CalBartlettWindow(output_elements_, input, periodic_, output, device_id_,

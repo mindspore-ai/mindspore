@@ -634,7 +634,7 @@ void StridedSliceV2CpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t 
 }
 
 template <typename T>
-void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs) {
+void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vector<kernel::KernelTensor *> &inputs) {
   if (begin_shape_.size() != 1 || end_shape_.size() != 1 || stride_shape_.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'begin', 'end', 'strides' should be equal "
@@ -642,9 +642,9 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vect
                       << begin_shape_.size() << ", the dimension of 'end': " << end_shape_.size()
                       << ", and the dimension of 'strides': " << stride_shape_.size();
   }
-  auto begin_ptr = static_cast<T *>(inputs[1]->addr);
-  auto end_ptr = static_cast<T *>(inputs[2]->addr);
-  auto strides_ptr = static_cast<T *>(inputs[3]->addr);
+  auto begin_ptr = static_cast<T *>(inputs[1]->device_ptr());
+  auto end_ptr = static_cast<T *>(inputs[2]->device_ptr());
+  auto strides_ptr = static_cast<T *>(inputs[3]->device_ptr());
   std::vector<T> begin{begin_ptr, begin_ptr + begin_shape_[0]};
   std::vector<T> end{end_ptr, end_ptr + end_shape_[0]};
   std::vector<T> stride{strides_ptr, strides_ptr + stride_shape_[0]};
@@ -652,8 +652,8 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vect
   InitSliceParam<T>(op_, &begin, &end, &stride);
 }
 
-void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &) {
+void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<kernel::KernelTensor *> &) {
   // for begin, end, stride are not const input
   if (dtype_attr_ == kNumberTypeInt32) {
     StridedSliceV2LaunchDynamicType<int32_t>(inputs);
@@ -666,14 +666,14 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kerne
   }
 }
 
-bool StridedSliceV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> & /* workspace */,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceV2CpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() == kStridedSliceV2DynamicInputsNum) {
     StridedSliceV2LaunchCal(inputs, outputs);
   }
-  auto input_addr = static_cast<uint8_t *>(inputs[0]->addr);
-  auto output_addr = static_cast<uint8_t *>(outputs[0]->addr);
+  auto input_addr = static_cast<uint8_t *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<uint8_t *>(outputs[0]->device_ptr());
 
   int thread_std = 2;
   int thread_num = slice_param_.op_parameter_.thread_num_;

@@ -99,9 +99,9 @@ int MapTensorPutWithStatusCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &,
-                                                      const std::vector<AddressPtr> &outputs) {
+bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &,
+                                                      const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutWithStatusInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutWithStatusOutputNum, kernel_name_);
@@ -115,10 +115,10 @@ bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressP
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<device::cpu::CPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                inputs.at(kIndex1)->size / sizeof(KeyType),
-                                static_cast<ValueType *>(inputs.at(kIndex2)->addr),
-                                static_cast<HashTableElementStatus *>(inputs.at(kIndex3)->addr), nullptr);
+  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                static_cast<ValueType *>(inputs.at(kIndex2)->device_ptr()),
+                                static_cast<HashTableElementStatus *>(inputs.at(kIndex3)->device_ptr()), nullptr);
 }
 
 void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {

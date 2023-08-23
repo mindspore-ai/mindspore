@@ -243,23 +243,16 @@ void NMSWithMaskCpuKernelMod::ReducePass(const int num, bool *sel_boxes, const b
 }
 
 template <typename T>
-bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexDataBuff]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexIndexBuff]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexRowMask]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexOutput]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexSelIdx]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexSelBoxes]);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->addr);
-  auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->addr);
-  auto row_mask = reinterpret_cast<bool *>(workspace[kIndexRowMask]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kIndexOutput]->addr);
-  auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->addr);
-  auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->addr);
+bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->device_ptr());
+  auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->device_ptr());
+  auto row_mask = reinterpret_cast<bool *>(workspace[kIndexRowMask]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[kIndexOutput]->device_ptr());
+  auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->device_ptr());
+  auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->device_ptr());
 
   NmsBitonicSortByKeyKernel<T>(num_input_, ceil_power_2_, input, data_buff, index_buff, box_size_);
   size_t total_val = IntToSize(num_input_ * num_input_);

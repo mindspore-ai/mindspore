@@ -80,9 +80,9 @@ bool RaggedTensorToSparseCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-bool RaggedTensorToSparseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool RaggedTensorToSparseCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   switch (splits_type_) {
     case kNumberTypeInt32:
       switch (values_type_) {
@@ -200,14 +200,14 @@ void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>>
 }
 
 template <typename T2>
-void RaggedTensorToSparseCpuKernelMod::OutPutSparseValues(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs) const {
+void RaggedTensorToSparseCpuKernelMod::OutPutSparseValues(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) const {
   int64_t input2_value_num = 0;
-  auto output2_ptr = static_cast<T2 *>(outputs[1]->addr);
-  auto input2_ptr = static_cast<T2 *>(inputs[n_]->addr);
+  auto output2_ptr = static_cast<T2 *>(outputs[1]->device_ptr());
+  auto input2_ptr = static_cast<T2 *>(inputs[n_]->device_ptr());
 
-  input2_value_num = static_cast<int64_t>(inputs[n_]->size / sizeof(T2));
+  input2_value_num = static_cast<int64_t>(inputs[n_]->size() / sizeof(T2));
   for (int64_t i = 0; i < input2_value_num; i++) {
     output2_ptr[i] = input2_ptr[i];
   }
@@ -234,11 +234,11 @@ void RaggedTensorToSparseCpuKernelMod::OutPutSparseDenseShape(const std::vector<
 }
 
 template <typename T1, typename T2>
-bool RaggedTensorToSparseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &workspace,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  auto *output1_ptr = static_cast<int64_t *>(outputs[0]->addr);
-  auto *output3_ptr = static_cast<int64_t *>(outputs[2]->addr);
+bool RaggedTensorToSparseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *output1_ptr = static_cast<int64_t *>(outputs[0]->device_ptr());
+  auto *output3_ptr = static_cast<int64_t *>(outputs[2]->device_ptr());
   auto input_num = inputs.size();
   n_ = static_cast<int64_t>(input_num - 1);
   if (n_ <= 0) {
@@ -247,8 +247,8 @@ bool RaggedTensorToSparseCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   }
   std::vector<std::vector<T1>> input1(n_);
   for (int64_t i = 0; i < n_; ++i) {
-    auto input1_ptr = static_cast<T1 *>(inputs[kRttsInputStart + i]->addr);
-    int64_t inputs_1 = static_cast<int64_t>(inputs[kRttsInputStart + i]->size / sizeof(T1));
+    auto input1_ptr = static_cast<T1 *>(inputs[kRttsInputStart + i]->device_ptr());
+    int64_t inputs_1 = static_cast<int64_t>(inputs[kRttsInputStart + i]->size() / sizeof(T1));
     for (int64_t j = 0; j < inputs_1; j++) {
       input1[i].push_back(*(input1_ptr + j));
     }

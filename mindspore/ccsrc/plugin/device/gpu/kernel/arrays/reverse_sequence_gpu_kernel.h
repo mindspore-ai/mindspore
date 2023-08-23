@@ -37,8 +37,8 @@ class ReverseSequenceGpuKernelMod : public NativeGpuKernelMod {
   ReverseSequenceGpuKernelMod() = default;
   ~ReverseSequenceGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -51,12 +51,12 @@ class ReverseSequenceGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using ReverseSequenceLaunchFunc =
-    std::function<bool(ReverseSequenceGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using ReverseSequenceLaunchFunc = std::function<bool(
+    ReverseSequenceGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   ReverseSequenceLaunchFunc kernel_func_;

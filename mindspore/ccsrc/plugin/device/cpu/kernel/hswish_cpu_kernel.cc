@@ -58,13 +58,13 @@ int HSwishCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool HSwishCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool HSwishCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSwishInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSwishOutputsNum, kernel_name_);
-  const auto *x = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *x = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  auto *y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto zero = static_cast<T>(0);
   auto three = static_cast<T>(3);

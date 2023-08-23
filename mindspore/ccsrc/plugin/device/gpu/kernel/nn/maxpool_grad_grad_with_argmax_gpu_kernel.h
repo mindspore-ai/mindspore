@@ -30,8 +30,8 @@ class MaxPoolGradGradWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
   MaxPoolGradGradWithArgmaxGpuKernelMod() = default;
   ~MaxPoolGradGradWithArgmaxGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,8 +49,8 @@ class MaxPoolGradGradWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
 
  private:
   template <typename T, typename I>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
 
   void *cuda_stream_{nullptr};
 

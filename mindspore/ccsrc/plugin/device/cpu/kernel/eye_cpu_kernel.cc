@@ -49,21 +49,22 @@ int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename S, typename T>
-bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  size_t data_size = outputs[0]->size;
-  S tmp_n = static_cast<S *>(inputs[0]->addr)[0];
-  S tmp_m = static_cast<S *>(inputs[1]->addr)[0];
+bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  size_t data_size = outputs[0]->size();
+  S tmp_n = static_cast<S *>(inputs[0]->device_ptr())[0];
+  S tmp_m = static_cast<S *>(inputs[1]->device_ptr())[0];
   num_n_ = static_cast<int64_t>(tmp_n);
   num_m_ = static_cast<int64_t>(tmp_m);
 
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
-  auto ouput_ptr = outputs[0]->addr;
+  auto ouput_ptr = outputs[0]->device_ptr();
   auto ret = memset_s(ouput_ptr, data_size, 0, data_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   T num = static_cast<T>(1);
   for (int64_t i = 0; i < num_min; i++) {
     *(output_addr + (num_m_ + 1) * i) = static_cast<T>(num);

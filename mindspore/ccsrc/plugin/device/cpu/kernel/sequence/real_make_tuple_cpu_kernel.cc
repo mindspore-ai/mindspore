@@ -59,15 +59,16 @@ int RealMakeTupleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
   size_t offset = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
-    auto input_size = inputs[i]->size;
+    auto input_size = inputs[i]->size();
     if (input_size != 0) {
       auto cp_ret = memcpy_s(output_addr + offset, input_size, input_addr, input_size);
       if (cp_ret != EOK) {

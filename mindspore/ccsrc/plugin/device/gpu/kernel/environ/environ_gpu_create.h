@@ -28,8 +28,8 @@ class EnvironCreateGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   EnvironCreateGpuKernelMod() : handle_size_(0) {}
   ~EnvironCreateGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
 
  protected:

@@ -63,8 +63,8 @@ int ResizeNearestNeighborV2CpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T>
-bool ResizeNearestNeighborV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeNearestNeighborV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   const int64_t batch_size = x_shape_[kIndex0];
   const int64_t channels = x_shape_[kIndex1];
   const int64_t in_height = x_shape_[kIndex2];
@@ -76,8 +76,8 @@ bool ResizeNearestNeighborV2CpuKernelMod::LaunchKernel(const std::vector<kernel:
   const float height_scale = Scaling(static_cast<size_t>(in_height), static_cast<size_t>(out_height), align_corners_);
   const float width_scale = Scaling(static_cast<size_t>(in_width), static_cast<size_t>(out_width), align_corners_);
 
-  auto x_4d = EigenTensor(x_shape_, inputs[kIndex0]->addr).tensor<T, kDim4>();
-  auto y_4d = EigenTensor(y_shape_, outputs[kIndex0]->addr).tensor<T, kDim4>();
+  auto x_4d = EigenTensor(x_shape_, inputs[kIndex0]->device_ptr()).tensor<T, kDim4>();
+  auto y_4d = EigenTensor(y_shape_, outputs[kIndex0]->device_ptr()).tensor<T, kDim4>();
   for (int64_t b = 0; b < batch_size; ++b) {
     for (int64_t y = 0; y < out_height; ++y) {
       int64_t in_y =

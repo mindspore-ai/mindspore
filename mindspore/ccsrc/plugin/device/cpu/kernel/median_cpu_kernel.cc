@@ -139,8 +139,9 @@ const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> &Med
 }
 
 template <typename T>
-bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool MedianCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -160,12 +161,12 @@ bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 }
 
 template <typename T>
-bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   constexpr bool dtype_support_nan = std::is_same_v<T, float> || std::is_same_v<T, double>;
-  auto *input0 = static_cast<T *>(inputs[0]->addr);
-  auto *output0 = static_cast<T *>(outputs[0]->addr);
-  auto *output1 = static_cast<T *>(outputs[1]->addr);
+  auto *input0 = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output0 = static_cast<T *>(outputs[0]->device_ptr());
+  auto *output1 = static_cast<T *>(outputs[1]->device_ptr());
   *output1 = 0;
   output_num_elements_ = 1;
   if constexpr ((!dtype_support_nan)) {
@@ -186,11 +187,12 @@ bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inpu
 }
 
 template <typename T>
-bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
-  auto *input0 = static_cast<T *>(inputs[0]->addr);
-  auto *output0 = static_cast<T *>(outputs[0]->addr);
-  auto *output1 = static_cast<int64_t *>(outputs[1]->addr);
+bool MedianCpuKernelMod::MedianCompute(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto *input0 = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output0 = static_cast<T *>(outputs[0]->device_ptr());
+  auto *output1 = static_cast<int64_t *>(outputs[1]->device_ptr());
   if (input_dim_ == 0) {
     output_num_elements_ = 1;
     *output0 = *input0;
@@ -201,8 +203,8 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
     axis_ += static_cast<int>(input_dim_);
   }
   size_t dim_data_num = static_cast<size_t>(input_shape_[axis_]);
-  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
-  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
+  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->device_ptr());
+  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->device_ptr());
   size_t group = 1;
   size_t jump = 1;
   if (axis_ != 0) {
@@ -249,12 +251,12 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
 }
 
 template <typename T>
-bool MedianCpuKernelMod::MedianComputeIgnoreNan(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
-  auto *input0 = static_cast<T *>(inputs[0]->addr);
-  auto *output0 = static_cast<T *>(outputs[0]->addr);
-  auto *output1 = static_cast<int64_t *>(outputs[1]->addr);
+bool MedianCpuKernelMod::MedianComputeIgnoreNan(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto *input0 = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output0 = static_cast<T *>(outputs[0]->device_ptr());
+  auto *output1 = static_cast<int64_t *>(outputs[1]->device_ptr());
   if (input_dim_ == 0) {
     output_num_elements_ = 1;
     *output0 = *input0;
@@ -265,8 +267,8 @@ bool MedianCpuKernelMod::MedianComputeIgnoreNan(const std::vector<AddressPtr> &i
     axis_ += static_cast<int>(input_dim_);
   }
   size_t dim_data_num = static_cast<size_t>(input_shape_[axis_]);
-  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
-  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
+  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->device_ptr());
+  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->device_ptr());
   size_t group = 1;
   size_t jump = 1;
   if (axis_ != 0) {

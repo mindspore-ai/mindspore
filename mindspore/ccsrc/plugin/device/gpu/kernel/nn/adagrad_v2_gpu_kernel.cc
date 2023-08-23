@@ -107,16 +107,16 @@ int AdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool AdagradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool AdagradV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *accumulation = GetDeviceAddress<T>(inputs, kIndex1);
   S *learning_rate = GetDeviceAddress<S>(inputs, kIndex2);
   T *gradient = GetDeviceAddress<T>(inputs, kIndex3);
   T *variable_out = GetDeviceAddress<T>(outputs, kIndex0);
   T *accumulation_out = GetDeviceAddress<T>(outputs, kIndex1);
-  auto status = ApplyAdagradV2(size_t(inputs[0]->size / sizeof(T)), epsilon_, update_slots_, variable, accumulation,
+  auto status = ApplyAdagradV2(size_t(inputs[0]->size() / sizeof(T)), epsilon_, update_slots_, variable, accumulation,
                                learning_rate, gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,

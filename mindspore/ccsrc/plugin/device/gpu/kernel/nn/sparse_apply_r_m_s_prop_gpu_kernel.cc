@@ -181,9 +181,9 @@ int SparseApplyRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseApplyRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool SparseApplyRMSPropGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   auto var = GetDeviceAddress<T>(inputs, kIndex0);
   auto ms = GetDeviceAddress<T>(inputs, kIndex1);
   auto mom = GetDeviceAddress<T>(inputs, kIndex2);

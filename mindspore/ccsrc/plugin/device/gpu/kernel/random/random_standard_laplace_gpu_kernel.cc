@@ -89,9 +89,9 @@ int StandardLaplaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool StandardLaplaceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool StandardLaplaceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *output = GetDeviceAddress<T>(outputs, 0);
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);

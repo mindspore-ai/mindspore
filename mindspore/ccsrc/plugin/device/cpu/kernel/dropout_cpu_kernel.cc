@@ -73,14 +73,15 @@ int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputsNum, kernel_name_);
 
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto mask_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   T scale = static_cast<T>(1.f / keep_prob_);
   std::uniform_real_distribution<float> uniform(0.f, 1.f);
   auto task = [input_addr, output_addr, mask_addr, scale, &uniform, this](size_t start, size_t end) {

@@ -142,15 +142,15 @@ std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   // Set Shape
   output_shape_ = {input_shape_[0]};
   if (input_num_dims_ == kInputNumDims5) {
     output_shape_.push_back(input_shape_[1]);
   }
-  auto output_size_ptr = static_cast<int32_t *>(inputs[1]->addr);
+  auto output_size_ptr = static_cast<int32_t *>(inputs[1]->device_ptr());
   const size_t kOutputSizeDims = 3;
   for (size_t i = 0; i < kOutputSizeDims; ++i) {
     const int32_t elem = output_size_ptr[i];
@@ -255,11 +255,11 @@ void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data,
 }
 
 template <typename T>
-void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) {
-  auto input_data = static_cast<T *>(inputs[0]->addr);
-  auto output_data = static_cast<T *>(outputs[0]->addr);
-  auto indices_data = static_cast<int32_t *>(outputs[1]->addr);
+void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
+  auto indices_data = static_cast<int32_t *>(outputs[1]->device_ptr());
   if (input_shape_.size() == kInputShapeDims4) {
     (void)input_shape_.insert(input_shape_.begin(), 1);
   }

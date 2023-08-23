@@ -81,10 +81,11 @@ int ResizeAreaCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs,
                                           const std::vector<ResizeAreaCachedInterpolation> &x_interps_) const {
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<float *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<float *>(outputs[0]->device_ptr());
   float scale = 1.0 / (height_scale_ * width_scale_);
   std::vector<float> y_scales;
   std::vector<const T *> y_ptrs;

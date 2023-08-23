@@ -61,21 +61,21 @@ int LinSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   int64_t num;
   if (num_dtype_ == kNumberTypeInt32) {
-    int32_t num_val = *static_cast<int32_t *>(inputs[kIndex2]->addr);
+    int32_t num_val = *static_cast<int32_t *>(inputs[kIndex2]->device_ptr());
     num = IntToLong(num_val);
   } else {
-    num = *static_cast<int64_t *>(inputs[kIndex2]->addr);
+    num = *static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
   }
   // Deal wtih num equal to 1
   if (num == 1) {
     const auto input = inputs[kIndex0];
     const auto output = outputs[kIndex0];
-    if (memcpy_s(output->addr, output->size, input->addr, input->size) != EOK) {
+    if (memcpy_s(output->device_ptr(), output->size(), input->device_ptr(), input->size()) != EOK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it launch memcpy_s failed.";
     }
     return true;
@@ -85,10 +85,10 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     return LaunchVmapKernel<T>(inputs, workspace, outputs);
   }
 
-  auto start = *reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto stop = *reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  auto start = *reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto stop = *reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
 
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   const auto step = ((stop - start) / (num - 1));
 
@@ -103,15 +103,15 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool LinSpaceCpuKernelMod::LaunchVmapKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
-  auto starts = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto stops = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+bool LinSpaceCpuKernelMod::LaunchVmapKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto starts = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto stops = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
 
-  auto steps = static_cast<T *>(workspace[kIndex0]->addr);
-  auto output = static_cast<T *>(outputs[kIndex0]->addr);
+  auto steps = static_cast<T *>(workspace[kIndex0]->device_ptr());
+  auto output = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   for (int64_t i = 0; i < batch_num_; ++i) {
     steps[i] = ((stops[i] - starts[i]) / (num - 1));

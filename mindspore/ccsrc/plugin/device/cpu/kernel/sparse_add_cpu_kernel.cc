@@ -103,8 +103,9 @@ int SparseAddCpuKernelMod::CompareTwoIndices(const T &a_indices, const T &b_indi
 }
 
 template <typename T, typename S, typename K>
-bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
@@ -114,19 +115,19 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
                       << outputs.size() << " output(s).";
   }
   // Inputs
-  const auto a_indices = static_cast<T *>(inputs[kAIndicesIdx]->addr);
-  const auto a_values = static_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto a_shape = static_cast<T *>(inputs[kAShapeIdx]->addr);
-  const auto b_indices = static_cast<T *>(inputs[kBIndicesIdx]->addr);
-  const auto b_values = static_cast<S *>(inputs[kBValuesIdx]->addr);
-  const auto thresh = static_cast<K *>(inputs[kThreshIdx]->addr);
+  const auto a_indices = static_cast<T *>(inputs[kAIndicesIdx]->device_ptr());
+  const auto a_values = static_cast<S *>(inputs[kAValuesIdx]->device_ptr());
+  const auto a_shape = static_cast<T *>(inputs[kAShapeIdx]->device_ptr());
+  const auto b_indices = static_cast<T *>(inputs[kBIndicesIdx]->device_ptr());
+  const auto b_values = static_cast<S *>(inputs[kBValuesIdx]->device_ptr());
+  const auto thresh = static_cast<K *>(inputs[kThreshIdx]->device_ptr());
   // Outputs
-  auto sum_indices = static_cast<T *>(outputs[kSumIndicesIdx]->addr);
-  auto sum_values = static_cast<S *>(outputs[kSumValuesIdx]->addr);
-  auto sum_shape = static_cast<T *>(outputs[kSumShapeIdx]->addr);
+  auto sum_indices = static_cast<T *>(outputs[kSumIndicesIdx]->device_ptr());
+  auto sum_values = static_cast<S *>(outputs[kSumValuesIdx]->device_ptr());
+  auto sum_shape = static_cast<T *>(outputs[kSumShapeIdx]->device_ptr());
 
-  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size) / SizeToLong((sizeof(T)) * indices_column_);
-  const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size) / SizeToLong((sizeof(T)) * indices_column_);
+  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size()) / SizeToLong((sizeof(T)) * indices_column_);
+  const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size()) / SizeToLong((sizeof(T)) * indices_column_);
 
   // Use double pointer to calculate the sum of two inputs
   T i = 0;

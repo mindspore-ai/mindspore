@@ -95,10 +95,10 @@ int CholeskyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
-  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
-  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
+  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->device_ptr());
+  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
   Eigen::LLT<Matrix<T, RowMajor>> llt;
   for (size_t batch = 0; batch < outer_batch_; ++batch) {
     T *input_value = batch_input_value + batch * input_row_ * input_col_;

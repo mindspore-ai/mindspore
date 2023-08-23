@@ -71,20 +71,19 @@ int MaskedScatterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool MaskedScatterCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedScatterCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedScatterOutputsNum, kernel_name_);
 
-  auto x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto mask = GetDeviceAddress<bool>(inputs, kIndex1);
-  auto updates = GetDeviceAddress<T>(inputs, kIndex2);
-  auto y = GetDeviceAddress<T>(outputs, kIndex0);
+  auto x = static_cast<T *>(inputs[0]->device_ptr());
+  auto mask = static_cast<bool *>(inputs[1]->device_ptr());
+  auto updates = static_cast<T *>(inputs[2]->device_ptr());
+  auto y = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(mask);
   MS_EXCEPTION_IF_NULL(updates);
   MS_EXCEPTION_IF_NULL(y);
-
   uint64_t j = 0;
   if (!need_broadcast_) {
     for (uint64_t i = 0; i < x_numElements_; i++) {

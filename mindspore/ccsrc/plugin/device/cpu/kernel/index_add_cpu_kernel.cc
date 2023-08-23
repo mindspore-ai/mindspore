@@ -141,13 +141,13 @@ void IndexAddCpuKernelMod::CheckParams() {
 }
 
 template <typename T>
-bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &) {
+bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *indices = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *indices = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
   CheckParams();
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;

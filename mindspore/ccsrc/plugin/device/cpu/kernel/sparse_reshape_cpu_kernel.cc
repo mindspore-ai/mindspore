@@ -83,17 +83,17 @@ int SparseReshapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename I, typename T>
-bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseReshapeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseReshapeOutputsNum, kernel_name_);
-  auto in0 = static_cast<int64_t *>(inputs[0]->addr);
-  auto in1 = static_cast<int64_t *>(inputs[1]->addr);
-  auto in2 = static_cast<int64_t *>(inputs[2]->addr);
-  auto out0 = static_cast<int64_t *>(outputs[0]->addr);
-  auto out1 = static_cast<int64_t *>(outputs[1]->addr);
-  const int64_t input_rank = SizeToLong(inputs[1]->size) / sizeof(int64_t);
-  const int64_t output_rank = SizeToLong(inputs[2]->size) / sizeof(int64_t);
+  auto in0 = static_cast<int64_t *>(inputs[0]->device_ptr());
+  auto in1 = static_cast<int64_t *>(inputs[1]->device_ptr());
+  auto in2 = static_cast<int64_t *>(inputs[2]->device_ptr());
+  auto out0 = static_cast<int64_t *>(outputs[0]->device_ptr());
+  auto out1 = static_cast<int64_t *>(outputs[1]->device_ptr());
+  const int64_t input_rank = SizeToLong(inputs[1]->size()) / sizeof(int64_t);
+  const int64_t output_rank = SizeToLong(inputs[2]->size()) / sizeof(int64_t);
   const int64_t nnz = SizeToLong(indices_shape_[0]);
 
   int64_t dense_size = 1;
@@ -138,8 +138,8 @@ bool SparseReshapeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                       << ", but got the input newshape is a tensor with " << dense_size;
   }
 
-  int64_t input_size = SizeToLong(inputs[0]->size);
-  int64_t output_size = SizeToLong(outputs[0]->size);
+  int64_t input_size = SizeToLong(inputs[0]->size());
+  int64_t output_size = SizeToLong(outputs[0]->size());
   bool same = SameConvert(input_size, output_size, input_rank, output_rank, in0, in1, out0, out1);
   if (same) {
     return true;

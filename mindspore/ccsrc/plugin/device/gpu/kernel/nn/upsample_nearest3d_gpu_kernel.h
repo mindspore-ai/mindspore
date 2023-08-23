@@ -31,8 +31,8 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
  public:
   UpsampleNearest3dGpuKernelMod() = default;
   ~UpsampleNearest3dGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,10 +49,11 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using UpsampleNearest3dFunc = std::function<bool(UpsampleNearest3dGpuKernelMod *, const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using UpsampleNearest3dFunc =
+    std::function<bool(UpsampleNearest3dGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   UpsampleNearest3dFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UpsampleNearest3dFunc>> func_list_;
 

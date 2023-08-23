@@ -30,8 +30,8 @@ class SendGpuKernelMod : public NativeGpuKernelMod {
   SendGpuKernelMod() {}
   ~SendGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventRecord(record_event_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                        "Recording cuda event failed.");
     return true;

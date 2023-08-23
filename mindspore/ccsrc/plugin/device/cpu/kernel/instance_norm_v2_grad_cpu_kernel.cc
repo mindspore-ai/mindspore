@@ -61,9 +61,9 @@ void InstanceNormV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   instance_num = CPUKernelUtils::CalcElementNum(batch_channels_2d_);
 }
 
-bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2GradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2GradOutputNum, kernel_name_);
 
@@ -83,23 +83,23 @@ bool InstanceNormV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-bool InstanceNormV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool InstanceNormV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   const int64_t batch = dy_shape_4d_[kIndex0];
   const int64_t channel = dy_shape_4d_[kIndex3];
   const int64_t image_size = dy_shape_4d_[kIndex1] * dy_shape_4d_[kIndex2];
   std::vector<int64_t> dy_shape_3d_ = {batch, image_size, channel};
-  auto dy_3d = EigenTensor(dy_shape_3d_, inputs[kIndex0]->addr).tensor<T, kDim3>();
-  auto in_x_3d = EigenTensor(dy_shape_3d_, inputs[kIndex1]->addr).tensor<T, kDim3>();
-  auto weight_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex2]->addr).matrix<float>();
-  auto running_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex3]->addr).matrix<float>();
-  auto running_var_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex4]->addr).matrix<float>();
-  auto save_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex5]->addr).matrix<float>();
-  auto save_invstd_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex6]->addr).matrix<float>();
+  auto dy_3d = EigenTensor(dy_shape_3d_, inputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
+  auto in_x_3d = EigenTensor(dy_shape_3d_, inputs[kIndex1]->device_ptr()).tensor<T, kDim3>();
+  auto weight_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex2]->device_ptr()).matrix<float>();
+  auto running_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex3]->device_ptr()).matrix<float>();
+  auto running_var_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex4]->device_ptr()).matrix<float>();
+  auto save_mean_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex5]->device_ptr()).matrix<float>();
+  auto save_invstd_matrix = EigenTensor(batch_channels_2d_, inputs[kIndex6]->device_ptr()).matrix<float>();
 
-  auto dx_3d = EigenTensor(dy_shape_3d_, outputs[kIndex0]->addr).tensor<T, kDim3>();
-  auto grad_weight_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex1]->addr).matrix<float>();
-  auto grad_bias_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex2]->addr).matrix<float>();
+  auto dx_3d = EigenTensor(dy_shape_3d_, outputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
+  auto grad_weight_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex1]->device_ptr()).matrix<float>();
+  auto grad_bias_matrix = EigenTensor(batch_channels_2d_, outputs[kIndex2]->device_ptr()).matrix<float>();
 
   auto loop_batch = [&](int64_t begin, int64_t end) {
     for (int64_t idx = begin; idx < end; ++idx) {

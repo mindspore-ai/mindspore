@@ -38,9 +38,9 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
 }  // namespace
 using KernelRunFunc = ScatterNdFunctorGPUKernelMod::KernelRunFunc;
 template <typename T, typename S>
-bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *updates = GetDeviceAddress<T>(inputs, kIndex2);
@@ -78,7 +78,7 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   CHECK_CUDA_STATUS(status, kernel_name_);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice, cuda_stream),
+    cudaMemcpyAsync(output, input, inputs[0]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
     "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync output failed")
 
   return true;

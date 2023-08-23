@@ -257,9 +257,9 @@ void DeformableOffsetsCpuKernelMod::DeformableOffsets(const T *input_addr, const
 }
 
 template <typename T>
-bool DeformableOffsetsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspaces,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool DeformableOffsetsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspaces,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto *position_grid_addr = GetDeviceAddress<int64_t>(workspaces, kIndex0);
   GenPositionGrid(position_grid_addr);
   T *x_addr = GetDeviceAddress<T>(inputs, kIndex0);

@@ -231,18 +231,18 @@ void CumProdCpuKernelMod::LaunchCumProd(const T *input, T *output, T *workspace,
 }
 
 template <typename T>
-bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumProdOutputsNum, kernel_name_);
-  const auto *input = static_cast<T *>(inputs[kIndex0]->addr);
-  auto *ws = static_cast<T *>(workspace[kIndex0]->addr);
-  auto output = static_cast<T *>(outputs[kIndex0]->addr);
+  const auto *input = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *ws = static_cast<T *>(workspace[kIndex0]->device_ptr());
+  auto output = static_cast<T *>(outputs[kIndex0]->device_ptr());
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(input, ws, output)) {
     return false;
   }
-  auto axis_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  auto axis_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
   if (axis_addr == nullptr) {
     return false;
   }
@@ -259,7 +259,7 @@ bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     return true;
   }
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
+  size_t lens = inputs[0]->size() > 0 ? static_cast<size_t>(inputs[0]->size() / sizeof(T)) : 1;
   auto task = [this, &input, &output, &ws](size_t start, size_t end) {
     LaunchCumProd<T>(input, output, ws, start, end);
   };

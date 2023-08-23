@@ -42,8 +42,8 @@ class ReluGradV2CpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -51,11 +51,12 @@ class ReluGradV2CpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  private:
-  using ReluGradV2LaunchFunc = std::function<bool(ReluGradV2CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                  const std::vector<kernel::AddressPtr> &)>;
+  using ReluGradV2LaunchFunc = std::function<bool(ReluGradV2CpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ReluGradV2LaunchFunc>> func_list_;
   ReluGradV2LaunchFunc kernel_func_;
   std::string kernel_type_{kUnknown};

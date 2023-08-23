@@ -62,8 +62,8 @@ class AkgGpuKernelMod : public GpuKernelMod {
   explicit AkgGpuKernelMod(const KernelPackPtr &kernel_pack);
   virtual ~AkgGpuKernelMod() {}
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   static AkgGpuKernelManagerPtr kernel_manager_;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
@@ -77,8 +77,8 @@ class AkgGpuKernelModDebug : public AkgGpuKernelMod {
  public:
   explicit AkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : AkgGpuKernelMod(kernel_pack) {}
   virtual ~AkgGpuKernelModDebug() {}
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto ptr = reinterpret_cast<CUstream>(stream_ptr);
     CUresult before_launch = cuStreamSynchronize(ptr);
     const char *msg = nullptr;

@@ -44,8 +44,8 @@ class SparseFillEmptyRowsGpuKernelMod : public NativeGpuKernelMod {
   SparseFillEmptyRowsGpuKernelMod() { ResetResource(); }
   ~SparseFillEmptyRowsGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -61,14 +61,15 @@ class SparseFillEmptyRowsGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &others) override;
   template <typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  using SparseFillEmptyRowsFunc = std::function<bool(SparseFillEmptyRowsGpuKernelMod *, const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  using SparseFillEmptyRowsFunc =
+    std::function<bool(SparseFillEmptyRowsGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, SparseFillEmptyRowsFunc>> func_list_;
   SparseFillEmptyRowsFunc kernel_func_;
   void *cuda_stream_{nullptr};

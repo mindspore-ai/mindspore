@@ -73,8 +73,8 @@ int NoRepeatNGramGpuKernelMode::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename StateType, typename LogProbType>
-bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   StateType *input_state = GetDeviceAddress<StateType>(inputs, kIndex0);
   LogProbType *log_probs = GetDeviceAddress<LogProbType>(inputs, kIndex1);
   LogProbType *output = GetDeviceAddress<LogProbType>(outputs, kIndex0);

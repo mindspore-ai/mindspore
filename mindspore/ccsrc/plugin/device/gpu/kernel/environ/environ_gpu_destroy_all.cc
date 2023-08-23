@@ -35,8 +35,8 @@ bool EnvironDestroyAllGpuKernelMod::Init(const CNodePtr &kernel_node) {
 
 void EnvironDestroyAllGpuKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(bool)); }
 
-bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &, void *) {
+bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, void *) {
   MS_LOG(INFO) << "Clear the global environ data.";
   // Clear the global data which are generated in the kernel running.
   EnvironMgr::GetInstance().Clear();

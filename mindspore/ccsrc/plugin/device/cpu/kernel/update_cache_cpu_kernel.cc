@@ -44,9 +44,9 @@ void UpdateCacheCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpdateCacheInputsNum, kernel_name_);
   if (indices_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
@@ -60,8 +60,8 @@ bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &) {
+void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
@@ -77,13 +77,13 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   MS_LOG(INFO) << "UpdateCache batch_size:" << batch_size_;
   update_size_ = SizeToLong(SizeOf(update_shape));
   update_length_ = LongToSize(update_shape[1]);
-  char *input_x = reinterpret_cast<char *>(inputs[0]->addr);
-  T *indices = reinterpret_cast<T *>(inputs[1]->addr);
-  char *update = reinterpret_cast<char *>(inputs[2]->addr);
-  auto max_num = *reinterpret_cast<T *>(inputs[3]->addr);
+  char *input_x = reinterpret_cast<char *>(inputs[0]->device_ptr());
+  T *indices = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  char *update = reinterpret_cast<char *>(inputs[2]->device_ptr());
+  auto max_num = *reinterpret_cast<T *>(inputs[3]->device_ptr());
 
   size_t one_length_size = input_x_dtype_size_ * update_length_;
-  auto max_size = inputs[0]->size;
+  auto max_size = inputs[0]->size();
   for (size_t i = 0; i < batch_size_; ++i) {
     if (indices[i] < 0 || indices[i] >= max_num) {
       continue;

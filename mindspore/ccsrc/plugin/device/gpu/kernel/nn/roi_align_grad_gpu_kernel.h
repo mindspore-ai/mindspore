@@ -44,8 +44,8 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -57,8 +57,8 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   using FuncList = std::vector<std::pair<KernelAttr, ROIAlignGradGpuKernelMod::KernelRunFunc>>;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   void ResetResource() noexcept {
     is_null_input_ = false;

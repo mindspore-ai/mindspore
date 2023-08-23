@@ -34,8 +34,8 @@ class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
   ApplyGradientDescentKernelMod() = default;
   ~ApplyGradientDescentKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
     launch_func_(this, inputs, outputs, stream_ptr);
     return true;
@@ -78,10 +78,10 @@ class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
   size_t input_size_{1};
 
   template <typename T>
-  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                    void *stream_ptr);
-  using LaunchFunc = std::function<void(ApplyGradientDescentKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+  void LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr);
+  using LaunchFunc = std::function<void(ApplyGradientDescentKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &, void *stream_ptr)>;
   LaunchFunc launch_func_;
 
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;

@@ -52,8 +52,9 @@ int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   auto input_start = GetDeviceAddress<T>(inputs, kIndex0);
   auto input_end = GetDeviceAddress<T>(inputs, kIndex1);
   auto input_weight = GetDeviceAddress<T>(inputs, kIndex2);

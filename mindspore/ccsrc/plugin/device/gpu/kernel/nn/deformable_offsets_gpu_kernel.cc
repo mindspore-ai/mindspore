@@ -36,9 +36,9 @@ constexpr size_t kKernelSizeAttrNum = 2;
 constexpr size_t kDilationAttrNum = 4;
 }  // namespace
 
-bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
@@ -149,9 +149,9 @@ int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <class T>
-bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   int32_t *position_addr = GetDeviceAddress<int32_t>(workspace, 0);
   const size_t num = output_h_ * output_w_;
   cudaError_t status = cudaErrorNotReady;

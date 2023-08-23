@@ -75,12 +75,12 @@ int ApplyGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-bool ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs) {
-  auto var_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto alpha_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto delta_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+bool ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  auto var_addr = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto alpha_addr = reinterpret_cast<T *>(inputs[kOne]->device_ptr());
+  auto delta_addr = reinterpret_cast<T *>(inputs[kTwo]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
   auto task = [this, &var_addr, &alpha_addr, &delta_addr, &output_addr](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {
       size_t batch_index = inner_input_size_ <= 0 ? 0 : pos / inner_input_size_;

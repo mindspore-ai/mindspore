@@ -81,10 +81,11 @@ int PaddingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool PaddingCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+bool PaddingCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto memset_errno = memset_s(output_ptr, output_element_num_ * sizeof(T), 0, output_element_num_ * sizeof(T));
   if (memset_errno != EOK) {

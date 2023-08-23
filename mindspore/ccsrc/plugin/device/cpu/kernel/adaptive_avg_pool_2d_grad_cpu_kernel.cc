@@ -111,9 +111,9 @@ CTask AdaptiveAvgPool2DGradOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   return shard_frame;
 }
 
-bool AdaptiveAvgPool2DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     (void)LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -129,9 +129,9 @@ bool AdaptiveAvgPool2DGradCpuKernelMod::Launch(const std::vector<kernel::Address
 }
 
 template <typename SCALAR_T>
-bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto orig_input_shape_ptr = static_cast<int64_t *>(inputs[1]->addr);
+bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto orig_input_shape_ptr = static_cast<int64_t *>(inputs[1]->device_ptr());
   orig_input_shape_dim_sizes = std::vector<int64_t>(orig_input_shape_ptr, orig_input_shape_ptr + orig_input_shape_dims);
   if (orig_input_shape_dims != k3D && orig_input_shape_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -163,13 +163,13 @@ bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   args.in_size_w = orig_input_shape_dim_sizes[orig_input_shape_dims + kIdxR1st];
   args.out_size_h = grad_output_dim_sizes.end()[kIdxR2nd];
   args.out_size_w = grad_output_dim_sizes.end()[kIdxR1st];
-  auto input_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->addr);
+  auto input_data_ptr_ret = static_cast<SCALAR_T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data_ptr_ret);
   int64_t output_num =
     std::accumulate(grad_input_dim_sizes.cbegin(), grad_input_dim_sizes.cend(), 1, std::multiplies<int64_t>{});
   std::unique_ptr<double[]> input_data_ptr = std::make_unique<double[]>(output_num);
   (void)std::fill_n(input_data_ptr.get(), output_num, 0.0);
-  auto output_data_ptr = static_cast<SCALAR_T *>(inputs[0]->addr);
+  auto output_data_ptr = static_cast<SCALAR_T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data_ptr);
   // resize output
   if (orig_input_shape_dims == k3D) {

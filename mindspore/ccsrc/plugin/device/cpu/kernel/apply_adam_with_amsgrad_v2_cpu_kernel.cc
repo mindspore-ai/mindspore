@@ -115,19 +115,19 @@ int ApplyAdamWithAmsgradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_opera
 }
 
 template <typename T>
-void ApplyAdamWithAmsgradV2CpuKernelMod::LaunchApplyAdamWithAmsgradV2(const std::vector<AddressPtr> &inputs,
-                                                                      const std::vector<AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  T *v = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  T *vhat = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  T *beta1_power = reinterpret_cast<T *>(inputs[kIndex4]->addr);
-  T *beta2_power = reinterpret_cast<T *>(inputs[kIndex5]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndex6]->addr);
-  T *beta1 = reinterpret_cast<T *>(inputs[kIndex7]->addr);
-  T *beta2 = reinterpret_cast<T *>(inputs[kIndex8]->addr);
-  T *epsilon = reinterpret_cast<T *>(inputs[kIndex9]->addr);
-  T *gradient = reinterpret_cast<T *>(inputs[kIndex10]->addr);
+void ApplyAdamWithAmsgradV2CpuKernelMod::LaunchApplyAdamWithAmsgradV2(const std::vector<KernelTensor *> &inputs,
+                                                                      const std::vector<KernelTensor *> &) {
+  T *var = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *m = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  T *v = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  T *vhat = reinterpret_cast<T *>(inputs[kIndex3]->device_ptr());
+  T *beta1_power = reinterpret_cast<T *>(inputs[kIndex4]->device_ptr());
+  T *beta2_power = reinterpret_cast<T *>(inputs[kIndex5]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndex6]->device_ptr());
+  T *beta1 = reinterpret_cast<T *>(inputs[kIndex7]->device_ptr());
+  T *beta2 = reinterpret_cast<T *>(inputs[kIndex8]->device_ptr());
+  T *epsilon = reinterpret_cast<T *>(inputs[kIndex9]->device_ptr());
+  T *gradient = reinterpret_cast<T *>(inputs[kIndex10]->device_ptr());
 
   T ONE = static_cast<T>(1.0);
   for (int64_t b = 0; b < batch_size_; b++) {
@@ -152,29 +152,29 @@ void ApplyAdamWithAmsgradV2CpuKernelMod::LaunchApplyAdamWithAmsgradV2(const std:
   }
 }
 
-bool ApplyAdamWithAmsgradV2CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
-  if (inputs[kIndex0]->size != inputs[kIndex1]->size) {
+bool ApplyAdamWithAmsgradV2CpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (inputs[kIndex0]->size() != inputs[kIndex1]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'm' and 'var' should be same, but got the memory size of 'm': "
-                      << inputs[kIndex1]->size << " and 'var': " << inputs[kIndex0]->size;
+                      << inputs[kIndex1]->size() << " and 'var': " << inputs[kIndex0]->size();
   }
-  if (inputs[kIndex0]->size != inputs[kIndex2]->size) {
+  if (inputs[kIndex0]->size() != inputs[kIndex2]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'v' and 'var' should be same, but got the memory size of 'v': "
-                      << inputs[kIndex2]->size << " and 'var': " << inputs[kIndex0]->size;
+                      << inputs[kIndex2]->size() << " and 'var': " << inputs[kIndex0]->size();
   }
-  if (inputs[kIndex0]->size != inputs[kIndex3]->size) {
+  if (inputs[kIndex0]->size() != inputs[kIndex3]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'vhat' and 'var' should be same, but got the size of 'vhat': "
-                      << inputs[kIndex3]->size << " and 'var': " << inputs[kIndex0]->size;
+                      << inputs[kIndex3]->size() << " and 'var': " << inputs[kIndex0]->size();
   }
-  if (inputs[kIndex0]->size != inputs[kIndex10]->size) {
+  if (inputs[kIndex0]->size() != inputs[kIndex10]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'gradient' and 'var' should be same, but got "
                          "the memory size of 'gradient': "
-                      << inputs[kIndex10]->size << " and 'var': " << inputs[kIndex0]->size;
+                      << inputs[kIndex10]->size() << " and 'var': " << inputs[kIndex0]->size();
   }
 
   if (dtype_ == kNumberTypeFloat64) {

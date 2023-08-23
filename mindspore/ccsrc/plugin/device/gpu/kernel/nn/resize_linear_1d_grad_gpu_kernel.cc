@@ -84,9 +84,9 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
   T *grad_input = GetDeviceAddress<T>(outputs, kIndex0);
@@ -96,9 +96,9 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_input, 0, outputs.at(kIndex0)->size, cuda_stream),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_input, 0, outputs.at(kIndex0)->size(), cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_input.");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_work, 0, workspace.at(kIndex0)->size, cuda_stream),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_work, 0, workspace.at(kIndex0)->size(), cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_work.");
 
   auto status = ResizeLinear1DGrad(mode_, batch_, channel_, in_width_, out_width_, grad_output, grad_input, grad_work,

@@ -30,8 +30,8 @@ class MaskedFillGpuKernelMod : public NativeGpuKernelMod {
   MaskedFillGpuKernelMod() { ResetResource(); }
   ~MaskedFillGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -49,14 +49,14 @@ class MaskedFillGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   void ResetResource() noexcept;
   bool BroadcastShape(const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
                       const std::vector<size_t> &output_shape);
   using MaskedFillFunc =
-    std::function<bool(MaskedFillGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(MaskedFillGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   MaskedFillFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, MaskedFillFunc>> func_list_;
 

@@ -83,13 +83,14 @@ int SequenceAddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
-  size_t elements_num = outputs[0]->size / sizeof(T);
-  const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
+bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
+  size_t elements_num = outputs[0]->size() / sizeof(T);
+  const auto input_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
   auto input_1 = input_0 + elements_num;
 
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task_0 = std::bind(Add<T>, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
   ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
 

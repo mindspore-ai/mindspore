@@ -80,8 +80,9 @@ int IndexFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool IndexFillCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   switch (x_type_) {
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
@@ -146,18 +147,18 @@ void IndexFillCpuKernelMod::DoFill(int32_t data_num, const T *input_x, const int
 }
 
 template <typename T>
-void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void IndexFillCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  T *input_0 = static_cast<T *>(inputs[0]->addr);
-  int32_t *input_1 = static_cast<int32_t *>(inputs[1]->addr);
-  int32_t *input_2 = static_cast<int32_t *>(inputs[2]->addr);
-  T *input_3 = static_cast<T *>(inputs[3]->addr);
-  T *output_0 = static_cast<T *>(outputs[0]->addr);
+  T *input_0 = static_cast<T *>(inputs[0]->device_ptr());
+  int32_t *input_1 = static_cast<int32_t *>(inputs[1]->device_ptr());
+  int32_t *input_2 = static_cast<int32_t *>(inputs[2]->device_ptr());
+  T *input_3 = static_cast<T *>(inputs[3]->device_ptr());
+  T *output_0 = static_cast<T *>(outputs[0]->device_ptr());
   int32_t x_dim_nums = static_cast<int32_t>(x_shape_.size());
-  int32_t data_num = static_cast<int32_t>(inputs[0]->size / sizeof(T));
-  uint32_t index_num = inputs[2]->size / sizeof(int32_t);
+  int32_t data_num = static_cast<int32_t>(inputs[0]->size() / sizeof(T));
+  uint32_t index_num = inputs[2]->size() / sizeof(int32_t);
   int32_t cur_dim = *input_1;
   if (cur_dim < 0) {
     *input_1 = *input_1 + x_dim_nums;

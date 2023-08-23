@@ -32,8 +32,8 @@ class BinaryCrossEntropyGpuKernelMod : public NativeGpuKernelMod {
   BinaryCrossEntropyGpuKernelMod() = default;
   ~BinaryCrossEntropyGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -47,8 +47,8 @@ class BinaryCrossEntropyGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   bool weight_defined_{false};  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
   size_t input_size_{1};
   ReductionMode reduction_{ReductionMode::kMean};

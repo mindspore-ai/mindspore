@@ -75,8 +75,9 @@ int LstsqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool LstsqCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_0_ == kNumberTypeFloat16) {
     LaunchKernel<float, float16>(inputs, outputs);
   } else if (dtype_0_ == kNumberTypeFloat32) {
@@ -90,10 +91,11 @@ bool LstsqCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T1, typename T2>
-void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_0_addr = reinterpret_cast<T2 *>(inputs[0]->addr);
-  auto input_1_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
+void LstsqCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto input_0_addr = reinterpret_cast<T2 *>(inputs[0]->device_ptr());
+  auto input_1_addr = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
   size_t m = static_cast<size_t>(input_0_shape_[0]);
   size_t n = static_cast<size_t>(input_0_shape_[1]);
   size_t k = 0;

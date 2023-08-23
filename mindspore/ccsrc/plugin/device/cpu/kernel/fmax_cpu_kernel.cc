@@ -105,17 +105,15 @@ void FmaxCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dty
 }
 
 template <typename T>
-bool FmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) const {
+bool FmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFmaxOutputsNum, kernel_name_);
 
-  T *input_x_ = GetDeviceAddress<T>(inputs, kIndex0);
-  T *input_y_ = GetDeviceAddress<T>(inputs, kIndex1);
-  T *output_ = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_x_);
-  MS_EXCEPTION_IF_NULL(input_y_);
-  MS_EXCEPTION_IF_NULL(output_);
+  T *input_x_ = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *input_y_ = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  T *output_ = static_cast<T *>(outputs[kIndex0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

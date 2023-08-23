@@ -63,12 +63,12 @@ int MatrixSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto matrix_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto rhs_ptr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto matrix_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto rhs_ptr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto output_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   const size_t matrix_batch_size = LongToSize(m_ * m_);
   const size_t rhs_batch_size = LongToSize(m_ * k_);

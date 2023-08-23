@@ -154,13 +154,13 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
 }
 
 template <typename T>
-void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::vector<AddressPtr> &inputs,
-                                                                   const std::vector<AddressPtr> &) {
-  auto var_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto alpha_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto l1_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto l2_addr = reinterpret_cast<T *>(inputs[3]->addr);
-  auto delta_addr = reinterpret_cast<T *>(inputs[4]->addr);
+void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::vector<KernelTensor *> &inputs,
+                                                                   const std::vector<KernelTensor *> &) {
+  auto var_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto alpha_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto l1_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto l2_addr = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto delta_addr = reinterpret_cast<T *>(inputs[4]->device_ptr());
   auto task = [this, &var_addr, &alpha_addr, &l1_addr, &l2_addr, &delta_addr](size_t start, size_t end) {
     auto cur_input_elements = end - start;
     for (size_t b = 0; b < static_cast<size_t>(batch_size_); b++) {
@@ -183,13 +183,13 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::ve
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 }
 
-void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::vector<kernel::AddressPtr> &inputs,
-                                                                   const std::vector<kernel::AddressPtr> &) {
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto alpha = reinterpret_cast<float *>(inputs[kAlphaIndex]->addr);
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
-  auto delta = reinterpret_cast<float *>(inputs[kDeltaIndex]->addr);
+void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::vector<kernel::KernelTensor *> &inputs,
+                                                                   const std::vector<kernel::KernelTensor *> &) {
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto alpha = reinterpret_cast<float *>(inputs[kAlphaIndex]->device_ptr());
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->device_ptr());
+  auto delta = reinterpret_cast<float *>(inputs[kDeltaIndex]->device_ptr());
 
   auto task = [this, &var, &alpha, &l1, &l2, &delta](size_t start, size_t end) {
     auto cur_input_elements = end - start;
@@ -205,9 +205,9 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::ve
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 }
 
-bool ApplyProximalGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyProximalGradientDescentCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyProximalGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyProximalGradientDescentOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {

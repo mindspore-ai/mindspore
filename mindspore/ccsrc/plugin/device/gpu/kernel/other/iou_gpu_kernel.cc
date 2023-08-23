@@ -79,8 +79,8 @@ int IOUGpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_opera
 }
 
 template <typename T>
-bool IOUGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                   void *stream_ptr) {
+bool IOUGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto *anchor_boxes_addr = GetDeviceAddress<T>(inputs, ANCHOR_BOXES);
   auto *gt_boxes_addr = GetDeviceAddress<T>(inputs, GT_BOXES);
   auto *iou_addr = GetDeviceAddress<T>(outputs, IOU_VALUE);

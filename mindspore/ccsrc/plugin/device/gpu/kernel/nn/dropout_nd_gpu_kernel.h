@@ -30,8 +30,8 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   DropoutNDGpuKernelMod() = default;
   ~DropoutNDGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -53,8 +53,8 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   bool CheckDropOutNdShape();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   bool is_null_input_{false};
   bool states_init_{false};

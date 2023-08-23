@@ -88,11 +88,12 @@ int ListDiffCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T, typename Tidx>
-bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = static_cast<T *>(inputs[0]->addr);
-  auto y_addr = static_cast<T *>(inputs[1]->addr);
-  auto out_addr = static_cast<T *>(outputs[0]->addr);
-  auto idx_addr = static_cast<Tidx *>(outputs[1]->addr);
+bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto x_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto out_addr = static_cast<T *>(outputs[0]->device_ptr());
+  auto idx_addr = static_cast<Tidx *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_addr);
   MS_EXCEPTION_IF_NULL(y_addr);
   MS_EXCEPTION_IF_NULL(out_addr);
@@ -124,8 +125,9 @@ bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool ListDiffCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool ListDiffCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kListDiffInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kListDiffOutputNum, kernel_name_);
   bool result = false;

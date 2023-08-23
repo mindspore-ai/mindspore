@@ -94,9 +94,9 @@ int MapTensorPutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
@@ -109,8 +109,8 @@ bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if (enable_embedding_storage_) {
     auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
     MS_ERROR_IF_NULL(embedding_storage);
-    if (!embedding_storage->Put({inputs[kIndex1]->addr, inputs[kIndex1]->size},
-                                {inputs[kIndex2]->addr, inputs[kIndex2]->size})) {
+    if (!embedding_storage->Put({inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size()},
+                                {inputs[kIndex2]->device_ptr(), inputs[kIndex2]->size()})) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', Update sparse embedding storage failed, parameter key: " << parameter_key_;
       return false;
@@ -122,9 +122,9 @@ bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<device::cpu::CPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                inputs.at(kIndex1)->size / sizeof(KeyType),
-                                static_cast<ValueType *>(inputs.at(kIndex2)->addr), nullptr);
+  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                static_cast<ValueType *>(inputs.at(kIndex2)->device_ptr()), nullptr);
 }
 
 void MapTensorPutCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {

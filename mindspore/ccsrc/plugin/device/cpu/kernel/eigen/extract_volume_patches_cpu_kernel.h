@@ -33,8 +33,8 @@ class ExtractVolumePatchesKernelMod : public NativeCpuKernelMod,
   ExtractVolumePatchesKernelMod() = default;
   ~ExtractVolumePatchesKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -51,8 +51,9 @@ class ExtractVolumePatchesKernelMod : public NativeCpuKernelMod,
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   std::vector<int64_t> kernel_size_;
   std::vector<int64_t> strides_;

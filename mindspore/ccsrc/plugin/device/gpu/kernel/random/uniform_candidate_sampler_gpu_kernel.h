@@ -36,8 +36,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
   UniformCandidateSamplerGpuKernelMod() = default;
   ~UniformCandidateSamplerGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -49,8 +49,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   template <typename T>
   int64_t Sampling(const std::set<T> &set_input, std::vector<T> *sampled_candidates) {
@@ -104,9 +104,9 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
     return -std::expm1(counter * std::log1p(-p));
   }
 
-  using UCSGpuLaunchFunc =
-    std::function<bool(UniformCandidateSamplerGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using UCSGpuLaunchFunc = std::function<bool(
+    UniformCandidateSamplerGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   UCSGpuLaunchFunc kernel_func_;

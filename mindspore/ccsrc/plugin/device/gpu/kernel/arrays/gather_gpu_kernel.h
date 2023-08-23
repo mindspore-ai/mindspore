@@ -40,8 +40,8 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
   explicit GatherFwdGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~GatherFwdGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -57,8 +57,8 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T, typename S, typename G>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   void Reshape() {
     if (axis_ < 0) {

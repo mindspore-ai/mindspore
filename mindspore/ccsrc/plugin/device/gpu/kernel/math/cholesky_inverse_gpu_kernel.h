@@ -40,8 +40,8 @@ class CholeskyInverseGpuKernelMod : public NativeGpuKernelMod {
   CholeskyInverseGpuKernelMod() { ResetResource(); }
   ~CholeskyInverseGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -68,10 +68,11 @@ class CholeskyInverseGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using CIfunc = std::function<bool(CholeskyInverseGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using CIfunc =
+    std::function<bool(CholeskyInverseGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   bool upper_{false};

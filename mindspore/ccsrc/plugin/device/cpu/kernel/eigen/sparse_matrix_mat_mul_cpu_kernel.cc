@@ -115,27 +115,27 @@ int SparseMatrixMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename indiceT, typename valueT>
-bool SparseMatrixMatMulCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseMatrixMatMulCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   CheckMatMul<indiceT>(inputs);
   using Matrix = Eigen::Matrix<valueT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   indiceT batch_size = batch_size_;
   std::vector<Matrix> results(batch_size);
   int shift = (rank_ == 2) ? 0 : 1;
 
-  indiceT row_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->addr) + shift);
-  indiceT col_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->addr) + shift + 1);
-  indiceT *batch_pointers_x1 = static_cast<indiceT *>(inputs[kIndex1]->addr);
-  indiceT *row_pointers_x1 = static_cast<indiceT *>(inputs[kIndex2]->addr);
-  indiceT *col_indices_x1 = static_cast<indiceT *>(inputs[kIndex3]->addr);
-  valueT *value_x1 = static_cast<valueT *>(inputs[kIndex4]->addr);
+  indiceT row_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->device_ptr()) + shift);
+  indiceT col_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->device_ptr()) + shift + 1);
+  indiceT *batch_pointers_x1 = static_cast<indiceT *>(inputs[kIndex1]->device_ptr());
+  indiceT *row_pointers_x1 = static_cast<indiceT *>(inputs[kIndex2]->device_ptr());
+  indiceT *col_indices_x1 = static_cast<indiceT *>(inputs[kIndex3]->device_ptr());
+  valueT *value_x1 = static_cast<valueT *>(inputs[kIndex4]->device_ptr());
 
   std::vector<size_t> shape_x2 = input_shape2_;
   const int row_dim = (rank_ == 2) ? 0 : 1;
   indiceT row_x2 = shape_x2[row_dim];
   indiceT col_x2 = shape_x2[row_dim + 1];
-  valueT *value_x2 = static_cast<valueT *>(inputs[kIndex5]->addr);
+  valueT *value_x2 = static_cast<valueT *>(inputs[kIndex5]->device_ptr());
 
   bool transpose_x1 = transpose_x1_;
   bool transpose_x2 = transpose_x2_;
@@ -179,7 +179,7 @@ bool SparseMatrixMatMulCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   row_output = results[0].rows();
   col_output = results[0].cols();
   for (int i = 0; i < batch_size; i++) {
-    valueT *output_values_data = static_cast<valueT *>(outputs[kOutputIndex0]->addr);
+    valueT *output_values_data = static_cast<valueT *>(outputs[kOutputIndex0]->device_ptr());
     std::copy(results[i].data(), results[i].data() + row_output * col_output,
               output_values_data + i * row_output * col_output);
   }
@@ -187,9 +187,9 @@ bool SparseMatrixMatMulCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
 }
 
 template <typename T>
-bool SparseMatrixMatMulCpuKernelMod::CheckMatMul(const std::vector<AddressPtr> &inputs) {
+bool SparseMatrixMatMulCpuKernelMod::CheckMatMul(const std::vector<KernelTensor *> &inputs) {
   const int row_dim = (rank_ == 2) ? 0 : 1;
-  T *shape_x1 = static_cast<T *>(inputs[kIndex0]->addr);
+  T *shape_x1 = static_cast<T *>(inputs[kIndex0]->device_ptr());
   std::vector<size_t> shape_x2 = input_shape2_;
 
   T x1_col = (transpose_x1_ || adjoint_x1_) ? shape_x1[row_dim] : shape_x1[row_dim + 1];

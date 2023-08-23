@@ -52,8 +52,8 @@ void EnvironSetCpuKernelMod::InitKernel(const CNodePtr &node) {
   output_size_list_.push_back(handle_size_);
 }
 
-bool EnvironSetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs) {
+bool EnvironSetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto input_handle = GetDeviceAddress<int64_t>(inputs, 0);
   auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
   auto input_value = GetDeviceAddress<void>(inputs, 2);

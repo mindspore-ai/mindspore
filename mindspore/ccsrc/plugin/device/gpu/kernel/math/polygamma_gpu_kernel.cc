@@ -73,9 +73,9 @@ int PolygammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T1, typename T2>
-bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T1 *a = GetDeviceAddress<T1>(inputs, 0);
   T2 *input = GetDeviceAddress<T2>(inputs, 1);
   T2 *output = GetDeviceAddress<T2>(outputs, 0);

@@ -75,12 +75,12 @@ int BesselI0CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool BesselI0CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool BesselI0CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   int block_size = 1000;
-  size_t tensor_size = inputs[0]->size / sizeof(T);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input(static_cast<T *>(inputs[0]->addr), tensor_size);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output(static_cast<T *>(outputs[0]->addr), tensor_size);
+  size_t tensor_size = inputs[0]->size() / sizeof(T);
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input(static_cast<T *>(inputs[0]->device_ptr()), tensor_size);
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output(static_cast<T *>(outputs[0]->device_ptr()), tensor_size);
 
   auto task = [this, &input, &output](size_t start, size_t end) {
     Eigen::array<Eigen::Index, 1> offsets = {static_cast<int64_t>(start)};

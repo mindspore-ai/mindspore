@@ -50,8 +50,8 @@ int ShapeMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool ShapeMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool ShapeMulCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   int64_t *input_addr = GetDeviceAddress<int64_t>(inputs, 0);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
   MS_EXCEPTION_IF_NULL(output_addr);

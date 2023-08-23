@@ -216,15 +216,15 @@ int PSROIPoolingBackV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (data_type_id_ == kNumberTypeFloat32) {
-    auto *top_diff = GetDeviceAddress<float>(inputs, kIndex0);
+    auto top_diff = static_cast<float *>(inputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto *rois = GetDeviceAddress<float>(inputs, kIndex1);
+    auto rois = static_cast<float *>(inputs[kIndex1]->device_ptr());
     MS_EXCEPTION_IF_NULL(rois);
-    auto *output_diff = GetDeviceAddress<float>(outputs, kIndex0);
+    auto output_diff = static_cast<float *>(outputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(output_diff);
     auto status =
       PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<float>(spatial_scale_),
@@ -235,11 +235,11 @@ bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &input
   }
 
   if (data_type_id_ == kNumberTypeFloat16) {
-    auto top_diff = static_cast<half *>(inputs[0]->addr);
+    auto top_diff = static_cast<half *>(inputs[0]->device_ptr());
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto rois = static_cast<half *>(inputs[1]->addr);
+    auto rois = static_cast<half *>(inputs[1]->device_ptr());
     MS_EXCEPTION_IF_NULL(rois);
-    auto output_diff = static_cast<half *>(outputs[0]->addr);
+    auto output_diff = static_cast<half *>(outputs[0]->device_ptr());
     MS_EXCEPTION_IF_NULL(output_diff);
     auto status =
       PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<half>(spatial_scale_),

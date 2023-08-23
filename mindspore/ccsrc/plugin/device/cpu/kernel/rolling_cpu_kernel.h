@@ -41,8 +41,8 @@ class RollingCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 

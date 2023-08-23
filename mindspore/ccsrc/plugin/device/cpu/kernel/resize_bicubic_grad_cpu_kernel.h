@@ -31,8 +31,8 @@ class ResizeBicubicGradCPUKernelMod : public NativeCpuKernelMod {
   ResizeBicubicGradCPUKernelMod() = default;
   ~ResizeBicubicGradCPUKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -47,9 +47,10 @@ class ResizeBicubicGradCPUKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
-  using ResizeBicubicGradFunc = std::function<bool(
-    ResizeBicubicGradCPUKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) const;
+  using ResizeBicubicGradFunc =
+    std::function<bool(ResizeBicubicGradCPUKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ResizeBicubicGradFunc>> func_list_;
   ResizeBicubicGradFunc kernel_func_;
 };

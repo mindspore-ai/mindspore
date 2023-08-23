@@ -132,19 +132,19 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename I, typename T>
-bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) const {
+bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyMomentumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyMomentumOutputsNum, kernel_name_);
 
-  auto var = static_cast<T *>(inputs[0]->addr);
-  auto accum = static_cast<T *>(inputs[1]->addr);
-  auto grad = static_cast<T *>(inputs[3]->addr);
-  auto indices = static_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = static_cast<T *>(inputs[2]->addr)[0];
-  auto momentum_scalar = static_cast<T *>(inputs[5]->addr)[0];
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->device_ptr());
+  auto accum = static_cast<T *>(inputs[1]->device_ptr());
+  auto grad = static_cast<T *>(inputs[3]->device_ptr());
+  auto indices = static_cast<I *>(inputs[4]->device_ptr());
+  auto lr_scalar = static_cast<T *>(inputs[2]->device_ptr())[0];
+  auto momentum_scalar = static_cast<T *>(inputs[5]->device_ptr())[0];
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < indices_size_; ++i) {
     I index = indices[i];

@@ -51,11 +51,11 @@ int TensorShapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool TensorShapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorShapeCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicShapeOutputNum, kernel_name_);
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
   for (size_t i = 0; i < LongToSize(output_shape_[0]); ++i) {
     output_addr[i] = input_shape_[i];
   }

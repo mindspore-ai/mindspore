@@ -121,19 +121,19 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   bool *mask = GetDeviceAddress<bool>(outputs, kIndex1);
   auto *rand_f = GetDeviceAddress<float>(workspace, kIndex0);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
   if (keep_prob_ == 0.0) {
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, outputs.at(kIndex0)->size),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, outputs.at(kIndex0)->size()),
                                       "For DropoutNDGpuKernelMod failed to cudaMemset");
     // Default zero to be false.
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(mask, 0, outputs.at(kIndex1)->size),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(mask, 0, outputs.at(kIndex1)->size()),
                                       "For DropoutNDGpuKernelMod failed to cudaMemset");
     return true;
   }

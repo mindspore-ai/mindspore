@@ -63,9 +63,9 @@ int SparseMatrixSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return 0;
 }
 
-bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -80,11 +80,11 @@ bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPt
 
 template <typename T>
 
-void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &) {
-  auto *input_logits_values = reinterpret_cast<T *>(inputs[logits_values]->addr);
-  auto *input_logits_dense_shape = reinterpret_cast<int *>(inputs[logits_dense_shape]->addr);
-  auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->addr);
+void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &) {
+  auto *input_logits_values = reinterpret_cast<T *>(inputs[logits_values]->device_ptr());
+  auto *input_logits_dense_shape = reinterpret_cast<int *>(inputs[logits_dense_shape]->device_ptr());
+  auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->device_ptr());
   T total = 0;
   T MAX = input_logits_values[0];
   int row_index = input_logits_dense_shape[0];

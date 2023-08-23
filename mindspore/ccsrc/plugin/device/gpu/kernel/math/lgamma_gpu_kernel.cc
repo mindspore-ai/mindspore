@@ -64,8 +64,9 @@ int LgammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool LgammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool LgammaGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input);
   T *output = GetDeviceAddress<T>(outputs, 0);

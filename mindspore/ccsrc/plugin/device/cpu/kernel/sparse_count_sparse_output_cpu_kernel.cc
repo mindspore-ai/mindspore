@@ -149,25 +149,25 @@ int SparseCountSparseOutputCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename I, typename T>
-bool SparseCountSparseOutputCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> & /* workspace */,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseCountSparseOutputCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseCountSparseOutputInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseCountSparseOutputOutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;
   }
 
-  const auto *indices_addr = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  const auto *values_addr = reinterpret_cast<I *>(inputs[1]->addr);
-  const auto *shape_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  const auto *weights = reinterpret_cast<T *>(inputs[3]->addr);
-  auto *output_indices = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  auto *output_values = reinterpret_cast<T *>(outputs[1]->addr);
-  auto *output_shape = reinterpret_cast<int64_t *>(outputs[2]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(int64_t);
-  bool use_weights = inputs[3]->size > 0;
+  const auto *indices_addr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
+  const auto *values_addr = reinterpret_cast<I *>(inputs[1]->device_ptr());
+  const auto *shape_ptr = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
+  const auto *weights = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto *output_indices = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
+  auto *output_values = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  auto *output_shape = reinterpret_cast<int64_t *>(outputs[2]->device_ptr());
+  const size_t indices_length = inputs[0]->size() / sizeof(int64_t);
+  bool use_weights = inputs[3]->size() > 0;
   bool is_1d = shape_shape_[0] == 1;
   size_t rank = is_1d ? 1 : indices_shape_[1];
 

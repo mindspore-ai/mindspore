@@ -182,8 +182,9 @@ void OrgqrGpuKernelMod::LaunchOrgqr(T *d_input_x, T *input_tau, T *d_output_y, i
 }
 
 template <typename T>
-bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

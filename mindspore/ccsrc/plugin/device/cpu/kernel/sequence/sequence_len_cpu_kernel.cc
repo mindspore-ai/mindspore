@@ -47,8 +47,8 @@ int SequenceLenCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceLenCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SequenceLenCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
 
   output_addr[0] = input_shape_.at(kIndex0);

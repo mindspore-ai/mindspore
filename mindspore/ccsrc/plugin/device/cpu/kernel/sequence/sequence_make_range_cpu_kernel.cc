@@ -57,14 +57,14 @@ int MakeRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto start = inputs.size() == 1 ? 0 : GetDeviceAddress<T>(inputs, 0)[0];
   auto limit = inputs.size() == 1 ? GetDeviceAddress<T>(inputs, 0)[0] : GetDeviceAddress<T>(inputs, 1)[0];
   auto delta = inputs.size() <= 2 ? T(1) : GetDeviceAddress<T>(inputs, 2)[0];
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
     for (int index = 0; index < SizeToInt(output_size); index++) {
       output_addr[index] = delta * index + start;

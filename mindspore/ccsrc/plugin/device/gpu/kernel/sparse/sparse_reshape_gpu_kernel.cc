@@ -79,9 +79,9 @@ int SparseReshapeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-bool SparseReshapeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SparseReshapeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   int64_t *indices = GetDeviceAddress<int64_t>(inputs, kIndex0);
   int64_t *shape = GetDeviceAddress<int64_t>(inputs, kIndex1);
   int64_t *new_shape = GetDeviceAddress<int64_t>(inputs, kIndex2);

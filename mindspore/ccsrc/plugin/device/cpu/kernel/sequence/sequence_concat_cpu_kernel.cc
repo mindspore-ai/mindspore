@@ -88,10 +88,11 @@ int SequenceConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) {
+bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   size_t element_index_size =
     LongToSize(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));

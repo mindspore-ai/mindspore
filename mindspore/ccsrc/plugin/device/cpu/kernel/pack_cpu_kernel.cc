@@ -72,14 +72,14 @@ int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 template <typename T>
-bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
-  auto *output = reinterpret_cast<char *>(outputs[0]->addr);
+  auto *output = reinterpret_cast<char *>(outputs[0]->device_ptr());
   std::vector<char *> inputs_host;
   for (size_t i = 0; i < inputs.size(); i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[i]->device_ptr()));
   }
 
   // multi-threading

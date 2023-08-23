@@ -77,9 +77,9 @@ int UpsampleNearest3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);

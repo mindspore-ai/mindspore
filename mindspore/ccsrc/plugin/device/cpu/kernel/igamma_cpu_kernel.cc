@@ -244,11 +244,11 @@ T IgammaSingle(const T &a, const T &x) {
 }
 
 template <typename T>
-void IgammaCpuKernelMod::BcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammaCpuKernelMod::BcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t data_num = get_element_num(z_shape_);
   auto output_shape = CPUKernelUtils::GetBroadcastShape(a_shape_, x_shape_);
   BroadcastIterator iter(a_shape_, x_shape_, output_shape);
@@ -319,11 +319,11 @@ void IgammaCpuKernelMod::SpecialCompute(int64_t type, int64_t start, int64_t end
 }
 
 template <typename T>
-void IgammaCpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto in1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto out0 = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammaCpuKernelMod::NoBcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto in1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto out0 = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int64_t in0_elements_nums = get_element_num(a_shape_);
   int64_t in1_elements_nums = get_element_num(x_shape_);
   int64_t data_num = get_element_num(z_shape_);
@@ -372,8 +372,9 @@ int IgammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return ret;
 }
 
-bool IgammaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool IgammaCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -386,8 +387,8 @@ bool IgammaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-void IgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+void IgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   for (size_t i = 0; i < kInputNum; ++i) {

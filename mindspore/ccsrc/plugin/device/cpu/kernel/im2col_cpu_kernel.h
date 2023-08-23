@@ -37,16 +37,17 @@ class Im2ColCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using Im2ColFunc = std::function<bool(Im2ColCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using Im2ColFunc = std::function<bool(Im2ColCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, Im2ColFunc>> func_list_;
   Im2ColFunc kernel_func_;
 

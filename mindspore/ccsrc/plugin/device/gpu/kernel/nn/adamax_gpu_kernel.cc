@@ -125,8 +125,9 @@ int AdamaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S, typename G>
-bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *m = GetDeviceAddress<T>(inputs, kIndex1);
   T *v = GetDeviceAddress<T>(inputs, kIndex2);
@@ -140,7 +141,7 @@ bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   T *m_out = GetDeviceAddress<T>(outputs, kIndex1);
   T *v_out = GetDeviceAddress<T>(outputs, kIndex2);
 
-  auto status = ApplyAdamax(inputs[0]->size / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient,
+  auto status = ApplyAdamax(inputs[0]->size() / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient,
                             variable, m, v, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,

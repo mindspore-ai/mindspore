@@ -38,8 +38,8 @@ class L2NormalizeCpuFunc : public CpuKernelFunc {
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
   void CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
                        std::unique_ptr<T[]> *denominator_addr);
@@ -148,12 +148,13 @@ void L2NormalizeCpuFunc<T>::CalcOutput(const T *input_addr, const ShapeVector &r
 }
 
 template <typename T>
-bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   int dims = SizeToInt(input_shape_.size());
   auto reduce_shape = input_shape_;
@@ -166,7 +167,7 @@ bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &input
 
   L2NormalizeCpuFunc<T>::CalcDenominator(input_addr, reduce_size, dims, &denominator_addr);
 
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   L2NormalizeCpuFunc<T>::CalcOutput(input_addr, reduce_shape, output_size, output_addr, denominator_addr);
 
   return true;

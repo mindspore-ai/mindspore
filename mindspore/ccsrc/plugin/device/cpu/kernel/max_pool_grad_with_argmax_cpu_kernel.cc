@@ -123,15 +123,15 @@ int MaxPoolGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool MaxPoolGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<T *>(inputs.at(kDim0)->addr);
+bool MaxPoolGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<T *>(inputs.at(kDim0)->device_ptr());
   MS_EXCEPTION_IF_NULL(input);
-  auto *grad = reinterpret_cast<T *>(inputs.at(kDim1)->addr);
+  auto *grad = reinterpret_cast<T *>(inputs.at(kDim1)->device_ptr());
   MS_EXCEPTION_IF_NULL(grad);
-  auto *index = reinterpret_cast<S *>(inputs.at(kDim2)->addr);
+  auto *index = reinterpret_cast<S *>(inputs.at(kDim2)->device_ptr());
   MS_EXCEPTION_IF_NULL(index);
-  auto *output = reinterpret_cast<T *>(outputs.at(kDim0)->addr);
+  auto *output = reinterpret_cast<T *>(outputs.at(kDim0)->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
   const int c = channel_;
   const int xCHW = c * x_height_ * x_width_;

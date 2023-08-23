@@ -125,8 +125,9 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool AdamGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdamGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *m = GetDeviceAddress<T>(inputs, kIndex1);
   T *v = GetDeviceAddress<T>(inputs, kIndex2);

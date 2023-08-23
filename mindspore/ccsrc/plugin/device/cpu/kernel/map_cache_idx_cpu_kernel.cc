@@ -103,25 +103,21 @@ int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  HashmapEntry<T> *hashmap = GetDeviceAddress<HashmapEntry<T>>(inputs, kIndex0);
-  auto input_indices = GetDeviceAddress<T>(inputs, kIndex1);
-  T *step_ = GetDeviceAddress<T>(inputs, kIndex2);
-  T *emb_max_num_ptr = GetDeviceAddress<T>(inputs, kIndex3);
-  T *offset_ptr = GetDeviceAddress<T>(inputs, kIndex4);
-  auto output_cache_idx = GetDeviceAddress<T>(outputs, kIndex0);
-  auto output_old_emb_idx = GetDeviceAddress<T>(outputs, kIndex1);
-  auto output_miss_emb_idx = GetDeviceAddress<T>(outputs, kIndex2);
-  auto output_swap_cache_idx = GetDeviceAddress<T>(outputs, kIndex3);
+bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->device_ptr());
+  auto input_indices = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *step_ = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T emb_max_num = *reinterpret_cast<T *>(inputs[3]->device_ptr());
+  T offset = *reinterpret_cast<T *>(inputs[4]->device_ptr());
+  auto output_cache_idx = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_old_emb_idx = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  auto output_miss_emb_idx = reinterpret_cast<T *>(outputs[2]->device_ptr());
+  auto output_swap_cache_idx = reinterpret_cast<T *>(outputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(hashmap);
   MS_EXCEPTION_IF_NULL(input_indices);
   MS_EXCEPTION_IF_NULL(step_);
-  MS_EXCEPTION_IF_NULL(emb_max_num_ptr);
-  MS_EXCEPTION_IF_NULL(offset_ptr);
-  T emb_max_num = *emb_max_num_ptr;
-  T offset = *offset_ptr;
   std::vector<T> miss_idx;
   miss_count_ = 0;
   float total_count = 0;

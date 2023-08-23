@@ -29,23 +29,23 @@ using KernelRunFunc = HSigmoidGradCpuKernelMod::KernelRunFunc;
 }  // namespace
 
 template <typename T>
-bool HSigmoidGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidGradOutputsNum, kernel_name_);
-  T *dy = static_cast<T *>(inputs[kIndex0]->addr);
+  T *dy = static_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  T *x = static_cast<T *>(inputs[kIndex1]->addr);
+  T *x = static_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  T *out = static_cast<T *>(outputs[kIndex0]->addr);
+  T *out = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(out, false);
 
   auto zero = static_cast<T>(0);
   auto three = static_cast<T>(3);
   auto six = static_cast<T>(6);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [&](size_t start, size_t end) {
     for (uint64_t i = start; i < end; ++i) {
       if (x[i] + three <= zero || x[i] >= three) {

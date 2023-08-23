@@ -36,8 +36,8 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -50,13 +50,13 @@ class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelM
     return true;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return true;
   }
 
   template <typename T>
-  void MatMul(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void MatMul(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
   void ComputeMatMulOutput(T *a_addr, T *b_addr, T *output_addr) const;

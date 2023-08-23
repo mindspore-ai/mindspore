@@ -54,9 +54,9 @@ int L2LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool L2LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool L2LossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *result_addr = GetDeviceAddress<T>(outputs, kIndex0);
   *result_addr = static_cast<T>(0);

@@ -40,8 +40,8 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
@@ -51,11 +51,12 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
  private:
   bool CheckParams();
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using IndexAddFunc = std::function<bool(IndexAddGpuKernelMod *, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  using IndexAddFunc =
+    std::function<bool(IndexAddGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, IndexAddFunc>> func_list_;
   IndexAddFunc kernel_func_;
 

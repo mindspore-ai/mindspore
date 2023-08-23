@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/max_pool_grad_with_argmax_v2_cpu_kernel.h"
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/grad/max_pool_grad_with_argmax_v2.h"
 
@@ -84,14 +85,14 @@ std::vector<int64_t> MaxPoolGradWithArgmaxV2CpuKernelMod::GetValidAttr(const std
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradWithArgmaxV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradWithArgmaxV2OutputsNum, kernel_name_);
-  auto input_grads = static_cast<DATA_T *>(inputs[kIndex1]->addr);
-  auto input_argmax = static_cast<INDICES_T *>(inputs[kIndex2]->addr);
-  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->addr);
+  auto input_grads = static_cast<DATA_T *>(inputs[kIndex1]->device_ptr());
+  auto input_argmax = static_cast<INDICES_T *>(inputs[kIndex2]->device_ptr());
+  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->device_ptr());
 
   const int64_t grads_channel = grads_shape_.at(kIndexChannel);
   const int64_t grads_height = grads_shape_.at(kIndexHeight);

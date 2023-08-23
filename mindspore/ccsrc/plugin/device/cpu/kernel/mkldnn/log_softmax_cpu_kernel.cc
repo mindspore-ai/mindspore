@@ -57,16 +57,16 @@ int LogSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool LogSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+bool LogSoftmaxCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
   ExecutePrimitive();
 
   // Filter positive values
-  auto output_ptr = reinterpret_cast<float *>(outputs[0]->addr);
-  size_t num = outputs[0]->size / sizeof(float);
+  auto output_ptr = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  size_t num = outputs[0]->size() / sizeof(float);
 
   auto task = [output_ptr](size_t start_index, size_t end_index) {
     for (size_t i = start_index; i < end_index; i++) {

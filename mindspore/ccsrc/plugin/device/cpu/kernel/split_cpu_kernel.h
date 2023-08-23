@@ -34,8 +34,8 @@ class SplitCpuKernelMod : public NativeCpuKernelMod {
   SplitCpuKernelMod() = default;
   ~SplitCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -66,13 +66,14 @@ class SplitCpuKernelMod : public NativeCpuKernelMod {
  private:
   void CheckParam();
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void InitIOSize();
 
-  using SplitFunc = std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using SplitFunc =
+    std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   using InitIOFunc = std::function<void(SplitCpuKernelMod *)>;
   static std::vector<std::tuple<KernelAttr, SplitFunc, InitIOFunc>> func_list_;
   SplitFunc kernel_func_;

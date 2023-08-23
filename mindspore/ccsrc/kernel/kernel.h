@@ -518,7 +518,9 @@ class BACKEND_EXPORT KernelMod {
   inline std::vector<KernelTensorPtr> &GetOutputs() { return outputs_; }
 
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
+                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    return true;
+  }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
   // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this

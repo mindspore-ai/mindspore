@@ -82,9 +82,9 @@ int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);
@@ -152,9 +152,9 @@ void MatrixInverseGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr
 }
 
 template <typename T>
-void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);
@@ -235,9 +235,9 @@ void MatrixInverseGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPt
 }
 
 template <typename T>
-bool MatrixInverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MatrixInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   int len = SizeToInt(size_);
   int kNumber32 = 32;
   if (len < kNumber32 || batch_size_ > 1) {

@@ -98,9 +98,9 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T>
-bool SparseFillEmptyRowsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool SparseFillEmptyRowsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   int64_t *reverse_index_map = GetDeviceAddress<int64_t>(inputs, 0);
   T *grad_values = GetDeviceAddress<T>(inputs, 1);
   bool *workspace_flag = GetDeviceAddress<bool>(workspace, 0);

@@ -341,9 +341,9 @@ int ShapeCalCol(bool transpose_b, bool adjoint_b, int B_row, int B_col) {
 }
 
 template <typename T>
-bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                        const std::vector<AddressPtr> &workspace,
-                                                        const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &workspace,
+                                                        const std::vector<KernelTensor *> &outputs) {
   int *x1_dense_shape = GetDeviceAddress<int>(inputs, 0);
   int *x1_batch_pointers = GetDeviceAddress<int>(inputs, 1);
   int *x1_row_pointers = GetDeviceAddress<int>(inputs, 2);

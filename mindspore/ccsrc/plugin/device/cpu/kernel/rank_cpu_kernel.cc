@@ -56,11 +56,11 @@ int RankCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool RankCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool RankCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRankInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRankOutputsNum, kernel_name_);
-  auto output_data = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_data = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
   output_data[kIndex0] = input_shape_size;
   return true;

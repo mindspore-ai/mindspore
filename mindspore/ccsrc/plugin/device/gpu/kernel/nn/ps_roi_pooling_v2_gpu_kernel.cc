@@ -151,13 +151,14 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  T *input_data = GetDeviceAddress<T>(inputs, kIndex0);
+bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto input_data = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
-  T *rois = GetDeviceAddress<T>(inputs, kIndex1);
+  auto rois = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_EXCEPTION_IF_NULL(rois);
-  T *output_data = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(rois);
+  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
 
   auto status = PSROIPoolForwardV2Launcher(input_data, static_cast<T>(spatial_scale_), output_n_, height_, width_,
@@ -167,8 +168,9 @@ bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressP
   return true;
 }
 
-bool PSROIPoolingV2GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PSROIPoolingV2GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (data_type_id_ == kNumberTypeFloat64) {
     return PSROIPoolingLauncher<double>(inputs, outputs, stream_ptr);
   }

@@ -30,15 +30,16 @@ bool DebugCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool DebugCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool DebugCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDebugInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDebugOutputsNum, kernel_name_);
-  const auto *val = reinterpret_cast<int *>(inputs[0]->addr);
+  const auto *val = reinterpret_cast<int *>(inputs[0]->device_ptr());
   MS_LOG(DEBUG) << " launch DebugCpuKernelMod";
 
-  auto output = reinterpret_cast<int *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(int);
+  auto output = reinterpret_cast<int *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(int);
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = static_cast<int>(val[i]);
   }

@@ -107,9 +107,9 @@ std::vector<int> RandomShuffleGpuKernelMod::GetShuffleIndex() {
 }
 
 template <typename T>
-bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRandomShuffleInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRandomShuffleOutputsNum, kernel_name_);
 
@@ -118,7 +118,7 @@ bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto *output_addr = GetDeviceAddress<T>(outputs, 0);
   if (input_shape_.empty() || input_shape_[batch_rank_] <= 1) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "RandomShuffle cudaMemcpy failed.");
     return true;

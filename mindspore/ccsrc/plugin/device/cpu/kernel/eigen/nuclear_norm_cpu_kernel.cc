@@ -355,7 +355,7 @@ void NuclearNormCpuKernelMod::SVD_tail_cal(const size_t dim[], T *U_, T *S_, T *
 
 template <typename T>
 void NuclearNormCpuKernelMod::svd(int *M, int *N, const T *A, const int *LDA, T *S, T *U, const int *LDU, T *VT,
-                                  const int *LDVT, const std::vector<kernel::AddressPtr> &workspace) {
+                                  const int *LDVT, const std::vector<kernel::KernelTensor *> &workspace) {
   const size_t dim[2] = {std::max(static_cast<size_t>(*N), static_cast<size_t>(*M)),
                          std::min(static_cast<size_t>(*N), static_cast<size_t>(*M))};
   T *U_ = GetDeviceAddress<T>(workspace, kIndex5);
@@ -437,7 +437,7 @@ void NuclearNormCpuKernelMod::svd_tail(const int *M, const int *N, T *S, const T
 
 template <typename T>
 T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat,
-                                                    const std::vector<kernel::AddressPtr> &workspace) {
+                                                    const std::vector<kernel::KernelTensor *> &workspace) {
   size_t n1 = dim0, n2 = dim1;
   T *M = GetDeviceAddress<T>(workspace, kIndex1);
   size_t copy_size = dim0 * dim1 * sizeof(T);
@@ -461,11 +461,11 @@ T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, co
 }
 
 template <typename T, int32_t RANK>
-bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &workspace,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   const size_t input_dimnum = input_shape.size();
-  T *input_data_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_data_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   size_t value_num_ = 1;
   for (size_t i = 0; i < input_dimnum; i++) {
     value_num_ *= static_cast<size_t>(input_shape[i]);
@@ -511,7 +511,7 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
   dim_array_last.at(DIM_INDEX2) = dimsize1;
   Eigen::Tensor<T, DIM_SIZE3, Eigen::RowMajor> permuted_tensor = shuffled_tensor.reshape(dim_array_last);
 
-  auto output_data_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_data_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t copy_size = (dimsize0 * dimsize1) * sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
@@ -529,9 +529,9 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
 }
 
 template <typename T>
-bool NuclearNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool NuclearNormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   bool res = true;
   switch (input_shape.size()) {
     case DIM_SIZE2:

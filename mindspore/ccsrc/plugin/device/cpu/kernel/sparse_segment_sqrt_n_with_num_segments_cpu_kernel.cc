@@ -59,9 +59,9 @@ int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr 
   return KRET_OK;
 }
 
-bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<kernel::AddressPtr> &,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<kernel::KernelTensor *> &,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
   switch (xdtype_) {
     case (kNumberTypeFloat16):
       if (dtype1_ == kNumberTypeInt32) {
@@ -110,8 +110,8 @@ bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Launch(const std::vector<ker
 }
 
 template <typename T1, typename T2>
-void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                                 const std::vector<kernel::AddressPtr> &outputs) {
+void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   size_t n = static_cast<size_t>(
     std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int64_t>()) / x_shape_[kIndex0]);
   size_t m = static_cast<size_t>(
@@ -119,11 +119,11 @@ void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vect
   size_t k =
     static_cast<size_t>(std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int64_t>()));
   auto x_shape_0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->device_ptr());
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->device_ptr());
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
 
   for (size_t i = 0; i < k; i++) {
     y_addr[i] = static_cast<T1>(0);

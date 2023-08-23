@@ -88,9 +88,9 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T, typename S>
-bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (has_null_input_) {
     return true;
   }
@@ -108,7 +108,7 @@ bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   // are different. Therefore, in order to adapt to the old runtime, the content of the input needs to be copied to
   // output. After removing the old runtime, the following copy logic code can be deleted.
   if (input != output) {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output, input, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                                                        reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "cudaMemcpyAsync output failed");
   }

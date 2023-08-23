@@ -39,8 +39,9 @@ bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool Expm1CpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExpm1InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExpm1OutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -62,11 +63,11 @@ bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-void Expm1CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) const {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(T);
+void Expm1CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) const {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = exp(input[i]) - T(1);
   }

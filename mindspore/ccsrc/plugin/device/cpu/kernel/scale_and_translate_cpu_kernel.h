@@ -44,7 +44,7 @@ struct Spans {
 
 template <typename T>
 struct GatherSpans {
-  uint32_t operator()(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  uint32_t operator()(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                       int64_t row_span_size, Eigen::TensorMap<Eigen::Tensor<int64_t, dim1>> row_starts,
                       Eigen::TensorMap<Eigen::Tensor<float, dim1>> row_weights, int64_t col_span_size,
                       Eigen::TensorMap<Eigen::Tensor<int64_t, dim1>> col_starts,
@@ -65,8 +65,8 @@ class ScaleAndTranslateCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -77,9 +77,11 @@ class ScaleAndTranslateCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using ScaleAndTranslateKernel = std::function<bool(
-    ScaleAndTranslateCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using ScaleAndTranslateKernel =
+    std::function<bool(ScaleAndTranslateCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   template <typename T>
   void GatherRows(int64_t span_size, const int64_t *begin, const float *weights, const T *image,
                   const int64_t in_height, const int64_t in_width, const int64_t out_height, const int64_t out_width,
@@ -123,8 +125,8 @@ class ScaleAndTranslateGradCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -133,10 +135,11 @@ class ScaleAndTranslateGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   using ScaleAndTranslateGradKernel =
-    std::function<bool(ScaleAndTranslateGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(ScaleAndTranslateGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   ScaleAndTranslateGradKernel kernel_func_;
 
   void ComputeGradSpansCore(const Spans *spans, const int64_t forward_output_size, const int64_t forward_input_size,

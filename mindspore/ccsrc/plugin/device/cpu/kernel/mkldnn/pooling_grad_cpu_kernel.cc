@@ -274,9 +274,9 @@ void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *w
   (void)stream_.wait();
 }
 
-bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &workspace,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   // From CPUKernelExecutor::LaunchKernel
   if (!Init(op_, inputs_, outputs_)) {
     MS_LOG(ERROR) << "Re-init PoolingGradCpuKernelMod while launching failed";
@@ -288,14 +288,14 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     return false;
   }
 
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
 
   // For pooling_max, get the workspace that store the max value indexes.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
-    SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[grad_index_]->addr);
+    SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[grad_index_]->device_ptr());
     CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kMaxPoolingGradWorkSpaceNum, kernel_name_);
-    ComputeMaxValueIndex(inputs[0]->addr, workspace[1]->addr, workspace[0]->addr);
-    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);
+    ComputeMaxValueIndex(inputs[0]->device_ptr(), workspace[1]->device_ptr(), workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->device_ptr());
     ExecutePrimitive();
     return true;
   }
@@ -314,13 +314,14 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   // Copy data of inputs[grad_index_] to workspace to avoid input data being changed
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kAvgPoolingGradWorkSpaceNum, kernel_name_);
-  auto dst_work_addr = workspace[0]->addr;
-  auto cpy_ret = memcpy_s(dst_work_addr, workspace[0]->size, inputs[grad_index_]->addr, inputs[grad_index_]->size);
+  auto dst_work_addr = workspace[0]->device_ptr();
+  auto cpy_ret =
+    memcpy_s(dst_work_addr, workspace[0]->size(), inputs[grad_index_]->device_ptr(), inputs[grad_index_]->size());
   if (cpy_ret != EOK) {
     MS_LOG_ERROR << "For '" << kernel_name_ << "', input memcpy to workspace error!";
     return false;

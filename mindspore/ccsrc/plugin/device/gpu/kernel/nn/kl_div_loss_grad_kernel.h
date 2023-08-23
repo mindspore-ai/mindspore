@@ -33,8 +33,8 @@ class KLDivLossGradGpuKernelMod : public NativeGpuKernelMod {
   KLDivLossGradGpuKernelMod() : input_size_(1), reduction_(ReductionMode::kMean), is_null_input_(false) {}
   ~KLDivLossGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -47,12 +47,12 @@ class KLDivLossGradGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using KLDivLossLaunchFunc =
-    std::function<bool(KLDivLossGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using KLDivLossLaunchFunc = std::function<bool(
+    KLDivLossGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   KLDivLossLaunchFunc kernel_func_;

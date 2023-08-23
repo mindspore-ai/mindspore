@@ -32,8 +32,8 @@ class CTCLossV2GradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   CTCLossV2GradCpuKernelMod() = default;
   ~CTCLossV2GradCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -57,8 +57,9 @@ class CTCLossV2GradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   bool zero_infinity_ = false;
   // Dealing with multiple types
   template <typename scalar_t, typename target_t>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

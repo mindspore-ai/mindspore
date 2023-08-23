@@ -232,10 +232,10 @@ std::vector<KernelAttr> ElementwiseOpsGpuKernel::GetOpSupport() {
   return support_list;
 }
 template <ElwiseOpType Op, typename Inp_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = GetDeviceAddress<Inp_t>(inputs, kIndex0);
-  auto output_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_ptr = reinterpret_cast<Inp_t *>(inputs.at(kIndex0)->device_ptr());
+  auto output_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);
   auto ret =
@@ -244,11 +244,11 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
   return true;
 }
 template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0_ptr = GetDeviceAddress<In0_t>(inputs, kIndex0);
-  auto in1_ptr = GetDeviceAddress<In1_t>(inputs, kIndex1);
-  auto out_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0_ptr = reinterpret_cast<In0_t *>(inputs.at(kIndex0)->device_ptr());
+  auto in1_ptr = reinterpret_cast<In1_t *>(inputs.at(kIndex1)->device_ptr());
+  auto out_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(in0_ptr);
   MS_EXCEPTION_IF_NULL(in1_ptr);
   MS_EXCEPTION_IF_NULL(out_ptr);

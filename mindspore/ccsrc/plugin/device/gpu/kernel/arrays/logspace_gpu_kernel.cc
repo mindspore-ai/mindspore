@@ -71,9 +71,9 @@ void LogSpaceGpuKernelMod::ResetResource() noexcept {
   output_size_list_.clear();
 }
 template <typename T>
-bool LogSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool LogSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (steps_ == 0) return true;
   auto start = GetDeviceAddress<T>(inputs, kIndex0);
   auto end = GetDeviceAddress<T>(inputs, kIndex1);

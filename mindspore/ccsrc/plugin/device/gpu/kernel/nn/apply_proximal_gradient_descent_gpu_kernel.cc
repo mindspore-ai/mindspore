@@ -107,15 +107,15 @@ int ApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base
 }
 
 template <typename T>
-bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &workspace,
-                                                            const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->addr);
-  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &workspace,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->device_ptr());
+  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
 
   auto status = CalApplyProximalGradientDescent(input_elements_, var, alpha, l1, l2, delta, output, device_id_,
                                                 reinterpret_cast<cudaStream_t>(cuda_stream_));

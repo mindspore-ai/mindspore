@@ -160,12 +160,13 @@ void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_
   CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, static_cast<size_t>(pixel_num));
 }
 
-bool HSVToRGBCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool HSVToRGBCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   const int64_t pixel_num =
     accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), [=](int64_t a, int64_t b) { return a * b; }) / 3;
-  void *input = inputs[0]->addr;
-  void *output = outputs[0]->addr;
+  void *input = inputs[0]->device_ptr();
+  void *output = outputs[0]->device_ptr();
   switch (input_dtype) {
     case kNumberTypeFloat16:
       ComputeHalf(input, output, pixel_num);

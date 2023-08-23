@@ -160,8 +160,8 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
   return true;
 }
 
-bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs, void *stream) {
+bool DatasetIteratorKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs, void *stream) {
   if (!is_opened_) {
     auto ret = DataQueueMgr::GetInstance().Open(queue_name_);
     if (ret != device::DataQueueStatus::SUCCESS) {

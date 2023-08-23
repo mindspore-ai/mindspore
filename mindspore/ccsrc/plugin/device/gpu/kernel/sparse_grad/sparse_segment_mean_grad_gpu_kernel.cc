@@ -89,9 +89,9 @@ int SparseSegmentMeanGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename R, typename S>
-bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs) {
   R *grad_ptr = GetDeviceAddress<R>(inputs, kIndex0);
   S *indices_ptr = GetDeviceAddress<S>(inputs, kIndex1);
   S *segment_ids_ptr = GetDeviceAddress<S>(inputs, kIndex2);
@@ -99,7 +99,7 @@ bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   size_t *segment_pos_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(grad_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr)) {
-    cudaMemset(y_ptr, 0, outputs[0]->size);
+    cudaMemset(y_ptr, 0, outputs[0]->size());
     return true;
   }
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);

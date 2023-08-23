@@ -48,15 +48,15 @@ class PyFuncCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   // Init kernel including analyse PyFunc input and output info.
   void InitKernel(const CNodePtr &kernel_node) override;
   // Construct arguments with raw memory, invoke Python function and then convert result to raw memory.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   // Analyse PyFunc input/output spec.
   void BuildFuncInfo(const CNodePtr &kernel_node);
   // Get Python function from anchor.
   py::function GetPythonFunc() const;
-  bool ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool ExecuteKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   bool init_;
   bool fake_output_;

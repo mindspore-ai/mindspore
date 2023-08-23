@@ -70,10 +70,10 @@ void TriuIndicesGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output);
   if (triu_size_ > 0) {
     auto m_first_row = offset_ > 0 ? std::max<int64_t>(col_ - offset_, 0) : col_;

@@ -97,9 +97,9 @@ int MapTensorGetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetOutputNum, kernel_name_);
@@ -112,8 +112,8 @@ bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if (enable_embedding_storage_) {
     auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
     MS_ERROR_IF_NULL(embedding_storage);
-    if (!embedding_storage->Get({inputs[kIndex1]->addr, inputs[kIndex1]->size},
-                                {outputs[kIndex0]->addr, outputs[kIndex0]->size})) {
+    if (!embedding_storage->Get({inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size()},
+                                {outputs[kIndex0]->device_ptr(), outputs[kIndex0]->size()})) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', lookup embeddings from sparse embedding storage failed, parameter key: " << parameter_key_;
       return false;
@@ -125,9 +125,9 @@ bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<device::cpu::CPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->Find(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                              inputs.at(kIndex1)->size / sizeof(KeyType), insert_default_value_,
-                              static_cast<ValueType *>(outputs.at(kIndex0)->addr), nullptr);
+  return hash_table_ptr->Find(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                              inputs.at(kIndex1)->size() / sizeof(KeyType), insert_default_value_,
+                              static_cast<ValueType *>(outputs.at(kIndex0)->device_ptr()), nullptr);
 }
 
 void MapTensorGetCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &output_shape) {

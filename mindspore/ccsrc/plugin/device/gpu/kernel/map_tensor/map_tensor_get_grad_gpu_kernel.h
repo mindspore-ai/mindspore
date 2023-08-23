@@ -43,8 +43,8 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetGradOutputNum, kernel_name_);
     return kernel_launch_func_(this, inputs, workspace, outputs, stream_ptr);
@@ -55,8 +55,8 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
 
  private:
   template <typename KeyType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &dout_shape);
 
@@ -64,8 +64,8 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
   size_t input_dout_type_size_{0};
 
   using MapTensorGetGradLaunchFunc =
-    std::function<bool(MapTensorGetGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(MapTensorGetGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, MapTensorGetGradLaunchFunc>> map_tensor_get_grad_func_list_;
   MapTensorGetGradLaunchFunc kernel_launch_func_;
   int64_t keys_size_{1};

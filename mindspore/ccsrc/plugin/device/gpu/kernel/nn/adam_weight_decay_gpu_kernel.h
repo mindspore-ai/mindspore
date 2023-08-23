@@ -38,8 +38,8 @@ class AdamWeightDecayGpuKernelMod : public NativeGpuKernelMod, public MatchKerne
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
@@ -53,8 +53,8 @@ class AdamWeightDecayGpuKernelMod : public NativeGpuKernelMod, public MatchKerne
   void InitSizeLists();
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   size_t variable_size_{0};

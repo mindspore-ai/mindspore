@@ -131,8 +131,9 @@ int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S>
-bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MatMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input1_addr = GetDeviceAddress<T>(inputs, 0);
   auto input2_addr = GetDeviceAddress<T>(inputs, 1);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);

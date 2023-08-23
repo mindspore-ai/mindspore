@@ -54,13 +54,13 @@ class GridSampler2DGradCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
@@ -92,7 +92,7 @@ class GridSampler2DGradCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
 
   template <typename T>
-  void ComputeTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void ComputeTask(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 
 // *******************VEC256***********************

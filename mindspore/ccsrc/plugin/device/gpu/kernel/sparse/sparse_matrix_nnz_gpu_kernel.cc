@@ -83,9 +83,9 @@ int SparseMatrixNNZGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SparseMatrixNNZGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixNNZGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *batch_pointers = GetDeviceAddress<T>(inputs, kIndex1);
   int32_t *output = GetDeviceAddress<int32_t>(outputs, kIndex0);
 

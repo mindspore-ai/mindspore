@@ -120,9 +120,9 @@ const ROIAlignGradGpuKernelMod::FuncList &ROIAlignGradGpuKernelMod::GetFuncList(
 }
 
 template <typename T>
-bool ROIAlignGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool ROIAlignGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   const T *dy = GetDeviceAddress<T>(inputs, 0);
   const T *rois = GetDeviceAddress<T>(inputs, 1);
   T *dx = GetDeviceAddress<T>(outputs, 0);

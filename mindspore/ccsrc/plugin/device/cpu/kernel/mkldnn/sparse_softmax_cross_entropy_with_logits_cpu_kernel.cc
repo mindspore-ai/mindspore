@@ -139,29 +139,29 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::GradPostExecute(const int 
   }
 }
 
-bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                             const std::vector<kernel::AddressPtr> &workspace,
-                                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                             const std::vector<kernel::KernelTensor *> &workspace,
+                                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
-  if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
-      inputs[1]->size != batch_float_size) {
+  if (inputs[0]->size() != workspace[0]->size() || inputs[0]->size() != batch_class_float_size ||
+      inputs[1]->size() != batch_float_size) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
-  if (is_grad_ && outputs[0]->size != batch_class_float_size) {
+  if (is_grad_ && outputs[0]->size() != batch_class_float_size) {
     MS_LOG(EXCEPTION) << "Error output data size!";
-  } else if (!is_grad_ && outputs[0]->size != sizeof(float)) {
+  } else if (!is_grad_ && outputs[0]->size() != sizeof(float)) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, workspace[0]->device_ptr());
   ExecutePrimitive();
-  const auto *labels = reinterpret_cast<int *>(inputs[1]->addr);
-  const auto *losses = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *labels = reinterpret_cast<int *>(inputs[1]->device_ptr());
+  const auto *losses = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *output = reinterpret_cast<float *>(outputs[0]->device_ptr());
   if (is_grad_) {
     GradPostExecute(labels, losses, output);
   } else {

@@ -72,13 +72,13 @@ int IdentityNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool IdentityNCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool IdentityNCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
-    auto idx_in_addr = inputs[idx]->addr;
-    size_t idx_in_size = inputs[idx]->size;
-    auto idx_out_addr = outputs[idx]->addr;
-    size_t idx_out_size = outputs[idx]->size;
+    auto idx_in_addr = inputs[idx]->device_ptr();
+    size_t idx_in_size = inputs[idx]->size();
+    auto idx_out_addr = outputs[idx]->device_ptr();
+    size_t idx_out_size = outputs[idx]->size();
     if (idx_in_addr == idx_out_addr) {
       continue;
     }

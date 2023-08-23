@@ -254,16 +254,14 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
 }
 
 template <typename T1, typename T2>
-bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   std::vector<int64_t> checked_signal_size(raw_checked_signal_size_.begin(), raw_checked_signal_size_.end());
   const int64_t choose = FFTWithSize_choose(real_, inverse_);
-  auto p_x = GetDeviceAddress<T1>(inputs, kIndex0);
-  auto p_y = GetDeviceAddress<T2>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(p_x);
-  MS_EXCEPTION_IF_NULL(p_y);
+  auto p_x = reinterpret_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto p_y = reinterpret_cast<T2 *>(outputs[kIndex0]->device_ptr());
   if constexpr (std::is_same<T1, T2>::value) {  // fft and ifft
     if (choose == kDimNum_FFT) {
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, false, false);

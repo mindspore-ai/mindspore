@@ -51,8 +51,8 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
-  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->addr);
+void GammaCpuKernelMod::InferShape(const std::vector<KernelTensor *> &inputs) {
+  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->device_ptr());
   for (int64_t i = 0; i < shape_shape_[0]; i++) {
     output_shape_.emplace_back(static_cast<int64_t>(shape_value[i]));
   }
@@ -80,9 +80,10 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
 // T: float16 float32 float64 dtype of alpha, beta and output
 template <typename T>
-void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *samples_flat = reinterpret_cast<T *>(outputs[0]->addr);
+void GammaCpuKernelMod::Generate(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *samples_flat = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   int64_t num_samples = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
   if (num_samples == 0) {
@@ -192,8 +193,8 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
   ParallelLaunchAutoSearch(DoWork, static_cast<size_t>(num_alphas * sample_shape_per_al), this, &parallel_search_info_);
 }
 
-bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
+bool GammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
   output_shape_.clear();
   if (output_shape_.empty()) {
     if (shape_dtype_ == kNumberTypeInt32) {

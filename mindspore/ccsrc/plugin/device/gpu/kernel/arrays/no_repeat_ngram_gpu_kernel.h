@@ -31,8 +31,8 @@ class NoRepeatNGramGpuKernelMode : public NativeGpuKernelMod {
  public:
   NoRepeatNGramGpuKernelMode() {}
   ~NoRepeatNGramGpuKernelMode() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, outputs);
   }
@@ -47,9 +47,10 @@ class NoRepeatNGramGpuKernelMode : public NativeGpuKernelMod {
 
  private:
   template <typename StateType, typename LogProbType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using NoRepeatNGramFunc = std::function<bool(NoRepeatNGramGpuKernelMode *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using NoRepeatNGramFunc =
+    std::function<bool(NoRepeatNGramGpuKernelMode *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   int64_t ngram_{1};

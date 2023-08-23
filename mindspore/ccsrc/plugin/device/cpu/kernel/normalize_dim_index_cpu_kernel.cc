@@ -63,8 +63,8 @@ int NormalizeDimIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool NormalizeDimIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &outputs) {
-  auto output_addr = static_cast<int64_t *>(outputs[kIndex0]->addr);
+bool NormalizeDimIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &outputs) {
+  auto output_addr = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   auto new_dim_index = ops::NormalizeDimIndex::ConstNormalizeDimIndex(data_shape.size() + expand_dims_cnt_, dim_index_,
                                                                       tuple_index_types_, 0);
@@ -72,8 +72,8 @@ bool NormalizeDimIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   return true;
 }
 
-bool NormalizeDimIndexCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool NormalizeDimIndexCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, outputs);
 }
 

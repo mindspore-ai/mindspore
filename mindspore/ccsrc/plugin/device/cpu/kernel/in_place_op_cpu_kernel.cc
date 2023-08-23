@@ -169,12 +169,12 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     ParallelLaunchAutoSearch(task, LongToSize(v_size_), this, &parallel_search_info_);
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *v = reinterpret_cast<T *>(inputs[1]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    if (memcpy_s(output, outputs[0]->size, x, inputs[0]->size) != EOK) {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *v = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+    if (memcpy_s(output, outputs[0]->size(), x, inputs[0]->size()) != EOK) {
       MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOp'.";
       return false;
     }

@@ -62,8 +62,8 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
   ~LambGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -84,7 +84,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     float *g_hat_var = GetDeviceAddress<float>(workspaces, kGHatValIndex);
 
     auto status =
-      ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
+      ApplyLambEraly(inputs[0]->size() / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
                      update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     float trust_ratio{0};
@@ -96,7 +96,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "For " + kernel_name_ + " cudaMemcpyAsync trust_ratio failed.");
 
-    status = ApplyLambLater(inputs[0]->size / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
+    status = ApplyLambLater(inputs[0]->size() / sizeof(T), variable, learning_rate, update, trust_ratio_ptr,
                             reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
@@ -276,8 +276,8 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void CalcTrustRatio(const std::vector<AddressPtr> &workspaces, float *var_float, float *grad_float, float *g_hat_var,
-                      void *stream_ptr, float *trust_ratio) {
+  void CalcTrustRatio(const std::vector<KernelTensor *> &workspaces, float *var_float, float *grad_float,
+                      float *g_hat_var, void *stream_ptr, float *trust_ratio) {
     if (var_float == nullptr || grad_float == nullptr || g_hat_var == nullptr) {
       MS_LOG(EXCEPTION) << "var_float or grad_float or g_hat_var is null";
     }

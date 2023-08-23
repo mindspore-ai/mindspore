@@ -196,12 +196,12 @@ RgbTuple hsv2rgb(const float h, const float s, const float v) {
 }
 
 template <typename T>
-bool LaunchAdjustHueKernel(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_data = static_cast<T *>(inputs[0]->addr);
-  auto output_data = static_cast<T *>(outputs[0]->addr);
-  auto delta_h = static_cast<std::float_t *>(inputs[1]->addr)[0];
-  std::int64_t num_elements = SizeToLong(inputs[0]->size / sizeof(T));
+bool LaunchAdjustHueKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
+  auto delta_h = static_cast<std::float_t *>(inputs[1]->device_ptr())[0];
+  std::int64_t num_elements = SizeToLong(inputs[0]->size() / sizeof(T));
   constexpr int64_t kChannelSize = 3;
   auto sharder_adjusthue = [input_data, delta_h, output_data, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
@@ -237,12 +237,12 @@ bool LaunchAdjustHueKernel(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_data = static_cast<T *>(inputs[0]->addr);
-  auto output_data = static_cast<T *>(outputs[0]->addr);
-  auto delta_h = static_cast<std::float_t *>(inputs[1]->addr)[0];
-  std::int64_t num_elements = SizeToLong(inputs[0]->size / sizeof(T));
+bool LaunchAdjustHueKernelHalf(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
+  auto delta_h = static_cast<std::float_t *>(inputs[1]->device_ptr())[0];
+  std::int64_t num_elements = SizeToLong(inputs[0]->size() / sizeof(T));
   constexpr int64_t kChannelSize = 3;
   auto sharder_adjusthue = [input_data, delta_h, output_data, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
@@ -289,9 +289,9 @@ bool AdjustHueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &workspace,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   switch (dtype_) {
     case kNumberTypeFloat16:
       (void)detail::LaunchAdjustHueKernelHalf<Eigen::half>(inputs, outputs);

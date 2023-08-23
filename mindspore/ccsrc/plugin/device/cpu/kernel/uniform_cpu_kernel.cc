@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/uniform_cpu_kernel.h"
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -116,12 +117,12 @@ int UniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool UniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool UniformCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformOutputsNum, kernel_name_);
 
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   for (int64_t i = 0; i < input_elements_; i++) {
     y[i] = static_cast<T>(RandFloat() * (to_ - from_) + from_);
   }

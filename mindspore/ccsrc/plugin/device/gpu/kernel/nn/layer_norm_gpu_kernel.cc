@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/layer_norm_gpu_kernel.h"
 #include <algorithm>
+#include <functional>
 #include <numeric>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_impl.cuh"
 #include "mindspore/core/ops/layer_norm.h"
@@ -87,16 +88,16 @@ int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool LayerNormGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LayerNormGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
-void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void LayerNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto x = GetDeviceAddress<T>(inputs, kLayerNormInputXIndex);
   auto gamma = GetDeviceAddress<T>(inputs, kLayerNormInputGammaIndex);
   auto beta = GetDeviceAddress<T>(inputs, kLayerNormInputBetaIndex);

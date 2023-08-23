@@ -110,12 +110,12 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto a_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto b_addr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(a_addr);
   MS_EXCEPTION_IF_NULL(b_addr);
   MS_EXCEPTION_IF_NULL(output_addr);

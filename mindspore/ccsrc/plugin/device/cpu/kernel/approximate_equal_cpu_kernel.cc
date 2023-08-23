@@ -83,13 +83,13 @@ bool ApproximateEqualCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool ApproximateEqualCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool ApproximateEqualCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   const float &tolerance = this->tolerance_;
-  size_t length = inputs.at(kIndex0)->size / sizeof(T);
-  auto *x = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto *y = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto *output = reinterpret_cast<bool *>(outputs.at(kIndex0)->addr);
+  size_t length = inputs.at(kIndex0)->size() / sizeof(T);
+  auto *x = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto *y = reinterpret_cast<T *>(inputs.at(kIndex1)->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs.at(kIndex0)->device_ptr());
   auto task = [x, y, output, &tolerance](size_t start, size_t end) {
     const T tol = static_cast<T>(tolerance);
     for (size_t i = start; i < end; i++) {

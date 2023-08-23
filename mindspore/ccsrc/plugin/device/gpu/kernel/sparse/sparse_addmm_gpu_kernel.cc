@@ -97,9 +97,9 @@ int SparseAddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   S *input_indices = GetDeviceAddress<S>(inputs, 0);
   T *input_values = GetDeviceAddress<T>(inputs, 1);
   S *input_shape = GetDeviceAddress<S>(inputs, 2);

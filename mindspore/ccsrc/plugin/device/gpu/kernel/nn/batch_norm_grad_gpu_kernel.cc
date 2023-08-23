@@ -186,9 +186,9 @@ void BatchNormGradGpuKernelMod::DestroyResource() noexcept {
 }
 
 template <typename T>
-bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
   VARIABLE_NOT_USED(stream_ptr);
   if (is_null_input_) {
@@ -220,7 +220,7 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   if (is_train_) {
     auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, kIndex5);
-    reserve_size_ = inputs[kIndex5]->size;
+    reserve_size_ = inputs[kIndex5]->size();
     void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex0);
 
     const float alpha_data_diff = 1;

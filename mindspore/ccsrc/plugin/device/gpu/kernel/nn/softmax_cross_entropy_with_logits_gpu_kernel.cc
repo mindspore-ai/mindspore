@@ -72,9 +72,10 @@ int SoftmaxCrossEntropyWithLogitsGpuKernelMod::Resize(const BaseOperatorPtr &bas
 }
 
 template <typename T, typename S>
-bool SoftmaxCrossEntropyWithLogitsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SoftmaxCrossEntropyWithLogitsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs,
+                                                             void *stream_ptr) {
   T *logits_addr = GetDeviceAddress<T>(inputs, 0);
   S *labels_addr = GetDeviceAddress<S>(inputs, 1);
   T *loss_addr = GetDeviceAddress<T>(outputs, 0);

@@ -49,8 +49,8 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
     return resize_func_(this, base_operator, inputs, outputs, inputsOnHost);
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return launch_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -75,20 +75,20 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   FFTWithSizeResizeFunc resize_func_{};
 
   template <typename T>
-  bool LaunchFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                 const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                 const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename T>
-  bool LaunchIFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchIFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename S, typename T>
-  bool LaunchRFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename S, typename T>
-  bool LaunchIRFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                   const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchIRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                   const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using FFTWithSizeLaunchFunc =
-    std::function<bool(FFTWithSizeGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(FFTWithSizeGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   FFTWithSizeLaunchFunc launch_func_{};
 
  private:

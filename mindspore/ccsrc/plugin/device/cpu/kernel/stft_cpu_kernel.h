@@ -43,8 +43,8 @@ class STFTCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<STF
   explicit STFTCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~STFTCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -61,8 +61,8 @@ class STFTCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<STF
 
  private:
   template <typename T, typename S, typename R, typename DataFT, typename DataFS, typename DataFR>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   std::string kernel_type_{"Unknown"};
   TypeId input_type_1_{kTypeUnknown};

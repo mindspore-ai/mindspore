@@ -32,8 +32,8 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
   PadFwdGpuKernelMod() = default;
   ~PadFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -64,10 +64,10 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using PadFunc = std::function<bool(PadFwdGpuKernelMod *, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using PadFunc = std::function<bool(PadFwdGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, PadFunc>> func_list_;
   PadFunc kernel_func_;
   size_t input_rank_;

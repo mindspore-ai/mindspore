@@ -88,12 +88,12 @@ int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
-  T *input1 = GetDeviceAddress<T>(inputs, kIndex0);
-  T *input2 = GetDeviceAddress<T>(inputs, kIndex1);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
+  T *input1 = GetDeviceAddress<T>(inputs, 0);
+  T *input2 = GetDeviceAddress<T>(inputs, 1);
+  T *output = GetDeviceAddress<T>(outputs, 0);
   MS_EXCEPTION_IF_NULL(input1);
   MS_EXCEPTION_IF_NULL(input2);
   MS_EXCEPTION_IF_NULL(output);

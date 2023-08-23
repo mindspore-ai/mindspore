@@ -24,13 +24,13 @@ namespace kernel {
   KernelAttr().AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkCpuKernelMod::LaunchKernel<T>
 
 template <typename T>
-bool SoftShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   /* float optimize */
   if (std::is_same_v<T, float>) {
-    float *input = reinterpret_cast<float *>(inputs.at(kIndex0)->addr);
-    float *output = reinterpret_cast<float *>(outputs.at(kIndex0)->addr);
+    float *input = reinterpret_cast<float *>(inputs.at(kIndex0)->device_ptr());
+    float *output = reinterpret_cast<float *>(outputs.at(kIndex0)->device_ptr());
 
     auto task = [input, output, this](size_t start, size_t end) {
       auto input_tmp = input + start;
@@ -42,8 +42,8 @@ bool SoftShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   }
 
   /* common soft shrink */
-  T *input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   T pos_lamdb = static_cast<T>(lambd_);
   T neg_lambd = static_cast<T>(-1 * pos_lamdb);
   auto task = [input_addr, output_addr, pos_lamdb, neg_lambd](size_t start, size_t end) {

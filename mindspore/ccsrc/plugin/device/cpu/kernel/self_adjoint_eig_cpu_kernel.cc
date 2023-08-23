@@ -58,9 +58,9 @@ int SelfAdjointEigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     (void)LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -77,18 +77,18 @@ bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool SelfAdjointEigCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output0 = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto *output1 = reinterpret_cast<T *>(outputs[kIndex1]->addr);
+bool SelfAdjointEigCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output0 = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto *output1 = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
   bool attr0_ = compute_v_;
   // The size of each dimension
   std::vector<int64_t> shape = input_shape_;
   // rank
   auto input_dims = input_shape_.size();
   // Total number of elements
-  size_t input_numelements = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t input_numelements = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   // The length of the line
   const int32_t m = shape[input_dims - 1];
   // The length of the column

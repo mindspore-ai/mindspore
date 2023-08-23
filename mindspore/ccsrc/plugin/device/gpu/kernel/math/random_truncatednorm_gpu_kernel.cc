@@ -78,9 +78,9 @@ void TruncatedNormalGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename S>
-bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   S *output = GetDeviceAddress<S>(outputs, 0);
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);

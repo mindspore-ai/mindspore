@@ -37,8 +37,8 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
              const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -49,8 +49,8 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
   void InitSizeLists();
   // Launch function
   template <typename T, typename S>
-  void LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs);
+  void LaunchFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs);
   // Run `l2_norm(x)` calculation
   template <typename T>
   void L2NormLaunch(const T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size);

@@ -47,8 +47,9 @@ int TraceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool TraceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool TraceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   switch (values_type_) {
@@ -92,11 +93,12 @@ bool TraceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-void TraceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void TraceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   size_t min_size = std::min(input_shape_[0], input_shape_[1]);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "Failed to init output memory.";
   }
   for (size_t i = 0; i < min_size; ++i) {

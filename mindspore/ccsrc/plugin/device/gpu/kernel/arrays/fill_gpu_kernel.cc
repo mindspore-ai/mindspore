@@ -32,7 +32,7 @@ namespace kernel {
   { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillGpuKernelMod::LaunchKernel<T> }
 
 template <typename T>
-T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<AddressPtr> &inputs, size_t idx,
+T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<KernelTensor *> &inputs, size_t idx,
                                            cudaStream_t cuda_stream) {
   auto value_ptr = GetDeviceAddress<T>(inputs, idx);
   T original_value;
@@ -121,8 +121,9 @@ int FillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool FillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool FillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   T value;
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   if (x_type_id_ == kNumberTypeInt8) {

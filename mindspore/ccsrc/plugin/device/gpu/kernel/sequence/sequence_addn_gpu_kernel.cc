@@ -53,9 +53,9 @@ int SequenceAddNGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto work_addr = output_addr;
   auto input_0 = GetDeviceAddress<T>(inputs, 0);
@@ -63,11 +63,12 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     work_addr = GetDeviceAddress<T>(workspace, 0);
   }
   cudaError_t status = cudaErrorNotReady;
-  size_t element_num = outputs[0]->size / sizeof(T);
+  size_t element_num = outputs[0]->size() / sizeof(T);
   status =
-    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    FillDeviceArray(outputs[0]->size() / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
-  status = FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  status =
+    FillDeviceArray(outputs[0]->size() / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   std::vector<int64_t> ele_shape = {static_cast<int64_t>(element_num)};
   for (int64_t i = 0; i < tuple_shape_[0]; i++) {
@@ -80,7 +81,7 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 
   if (work_addr != output_addr) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "Addn cudaMemcpyAsync outputs failed");
   }

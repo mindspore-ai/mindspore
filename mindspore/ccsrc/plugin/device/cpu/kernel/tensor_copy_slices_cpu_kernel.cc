@@ -94,15 +94,15 @@ int TensorCopySlicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> & /* workspace */,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorCopySlicesDynamicInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorCopySlicesOutputsNum, kernel_name_);
 
-  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
-  auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->device_ptr());
+  auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->device_ptr());
   if (!get_value_before_launch_) {
     auto begin_ptr = GetDeviceAddress<int64_t>(inputs, kIndex2);
     MS_EXCEPTION_IF_NULL(begin_ptr);
@@ -117,7 +117,7 @@ bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
     InitOffsetAndCopySize(begin, end, stride);
   }
 
-  auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);
+  auto ret = memcpy_s(output_addr, outputs[0]->size(), input_addr, inputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy input failed. Error no: " << ret;
   }

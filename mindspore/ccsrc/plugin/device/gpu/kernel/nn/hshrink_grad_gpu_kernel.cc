@@ -73,8 +73,8 @@ int HShrinkGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool HShrinkGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
+bool HShrinkGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, kIndex0);
   T *x = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);

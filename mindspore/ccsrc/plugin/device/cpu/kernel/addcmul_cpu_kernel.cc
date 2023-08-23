@@ -74,7 +74,8 @@ int AddcmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool AddcmulCpuKernelMod::AddcmulCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool AddcmulCpuKernelMod::AddcmulCheck(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (dtype_value_ == kNumberTypeFloat16) {
     return AddcmulCompute<T, float16>(inputs, outputs);
   } else if (dtype_value_ == kNumberTypeFloat32) {
@@ -99,13 +100,13 @@ bool AddcmulCpuKernelMod::AddcmulCheck(const std::vector<AddressPtr> &inputs, co
 }
 
 template <typename T1, typename T2>
-bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto *input0 = static_cast<T1 *>(inputs[kInputData]->addr);
-  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->addr);
-  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->addr);
-  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
-  auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
+bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto *input0 = static_cast<T1 *>(inputs[kInputData]->device_ptr());
+  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->device_ptr());
+  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->device_ptr());
+  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->device_ptr());
+  auto *output = static_cast<T1 *>(outputs[kOutputData]->device_ptr());
 
   if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
     output[0] = input1[0] * input2[0] * static_cast<T1>(input3[0]) + input0[0];
@@ -132,8 +133,9 @@ bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool AddcmulCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
-                                 const std::vector<AddressPtr> &outputs) {
+bool AddcmulCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> & /* workspace */,
+                                 const std::vector<KernelTensor *> &outputs) {
   // check params
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);

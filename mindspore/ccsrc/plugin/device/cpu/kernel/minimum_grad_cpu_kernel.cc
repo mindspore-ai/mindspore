@@ -199,13 +199,14 @@ void MinimumGradCpuKernelMod::MinimumGradRecTaskSerialized(
 }
 
 template <typename T>
-bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *dout_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *dx_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto *dy_addr = reinterpret_cast<T *>(outputs[1]->addr);
+bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto *x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *y_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *dout_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *dx_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto *dy_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   size_t x_tensor_len = GetTensorLen(x_shape_);
   size_t y_tensor_len = GetTensorLen(y_shape_);

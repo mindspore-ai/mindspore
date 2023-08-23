@@ -40,26 +40,27 @@ size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_
 }  // namespace
 
 template <typename T>
-void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr,
+void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr,
                                                    const half *scale_addr_half, const float *scale_addr_float,
                                                    size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
   T *output_addr = GetDeviceAddress<T>(outputs, index);
   cudaError_t status = cudaErrorNotReady;
   if (scale_addr_half != nullptr) {
-    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_half, output_addr,
+    status = ScaleGradKernel(outputs[index]->size() / sizeof(T), input_addr, *scale_addr_half, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     MS_EXCEPTION_IF_NULL(scale_addr_float);
-    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
+    status = ScaleGradKernel(outputs[index]->size() / sizeof(T), input_addr, *scale_addr_float, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
-bool ScaleGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ScaleGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   half *scale_addr_half = nullptr;
   float *scale_addr_float = nullptr;
   if (input_info_.back() == kNumberTypeFloat16) {

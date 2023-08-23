@@ -28,8 +28,8 @@ constexpr size_t kDimNum4 = 4;
 constexpr size_t kDimNum5 = 5;
 
 template <typename T>
-bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool AdaptiveMaxPool3DKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

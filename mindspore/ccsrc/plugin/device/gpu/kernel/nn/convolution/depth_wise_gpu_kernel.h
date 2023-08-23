@@ -53,11 +53,11 @@ class ConvolutionDepthWiseGpuKernel : public AbstractConvolutionGpuKernel {
 
  private:
   bool LaunchForward(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                     void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                     void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
   bool LaunchInputGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                       void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                       void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
   bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                        void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                        void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
 
   void CallTransposeToNHWC(const size_t output_size, const void *input_addr, TransposeInfo info, void *output_addr,
                            void *stream_ptr);
@@ -197,7 +197,7 @@ void ConvolutionDepthWiseGpuKernel<T>::CallTransposeToNCHW(const size_t output_s
 template <typename T>
 bool ConvolutionDepthWiseGpuKernel<T>::LaunchForward(const ConvolutionArgs &conv_args, const void *input_addr,
                                                      const void *filter_addr, void *output_addr,
-                                                     const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                     const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
   auto data_format = conv_args.data_format;
   if (data_format == kOpFormat_NCHW) {
     return CallDepthWiseKernel<ConvolutionOpType::kConv2dDepthWiseForwardNCHW>(conv_args, input_addr, filter_addr,
@@ -211,7 +211,7 @@ bool ConvolutionDepthWiseGpuKernel<T>::LaunchForward(const ConvolutionArgs &conv
 template <typename T>
 bool ConvolutionDepthWiseGpuKernel<T>::LaunchInputGrad(const ConvolutionArgs &conv_args, const void *dy_addr,
                                                        const void *filter_addr, void *dx_addr,
-                                                       const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                       const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
   auto data_format = conv_args.data_format;
   if (data_format == kOpFormat_NCHW) {
     return CallDepthWiseKernel<ConvolutionOpType::kConv2dDepthWiseInputGradNCHW>(conv_args, dy_addr, filter_addr,
@@ -225,7 +225,8 @@ bool ConvolutionDepthWiseGpuKernel<T>::LaunchInputGrad(const ConvolutionArgs &co
 template <typename T>
 bool ConvolutionDepthWiseGpuKernel<T>::LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *dy_addr,
                                                         const void *x_addr, void *dw_addr,
-                                                        const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                        const std::vector<KernelTensor *> &workspace,
+                                                        void *stream_ptr) {
   void *workspace0_addr = nullptr;
   void *workspace1_addr = nullptr;
   void *workspace2_addr = nullptr;

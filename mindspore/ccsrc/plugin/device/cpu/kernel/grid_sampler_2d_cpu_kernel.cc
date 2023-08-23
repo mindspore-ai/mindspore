@@ -84,9 +84,9 @@ int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -291,11 +291,11 @@ void GridSampler2DCpuKernelMod::BilinearHalf(float x, float y, const float16 *x_
 }
 
 template <typename T>
-void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<T *>(inputs[0]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T *>(outputs[0]->addr);
+void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<T *>(outputs[0]->device_ptr());
   size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -309,11 +309,11 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
 }
 
-void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<float16 *>(inputs[0]->addr);
-  auto grid_data_addr = static_cast<float16 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<float16 *>(outputs[0]->addr);
+void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<float16 *>(inputs[0]->device_ptr());
+  auto grid_data_addr = static_cast<float16 *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<float16 *>(outputs[0]->device_ptr());
   size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

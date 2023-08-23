@@ -104,8 +104,9 @@ void FillsGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool FillsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool FillsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto value_ptr = GetDeviceAddress<float>(inputs, kIndex1);
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   float value = 0;

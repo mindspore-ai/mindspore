@@ -59,10 +59,10 @@ int LuUnpackGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto L_grad_output_data = reinterpret_cast<T *>(outputs[0]->addr);
-  auto U_grad_output_data = reinterpret_cast<T *>(outputs[1]->addr);
+bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto L_grad_output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto U_grad_output_data = reinterpret_cast<T *>(outputs[1]->device_ptr());
   auto LU_data_dims = LU_data_shape_.size();
   int64_t LU_data_elem_num = std::accumulate(LU_data_shape_.begin(), LU_data_shape_.end(), 1, std::multiplies<int>());
   int64_t LU_data_height = LU_data_shape_[LU_data_dims - 2];
@@ -88,10 +88,13 @@ bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 
   for (int64_t a = 0; a < matrix_num; a++) {
-    MatrixMap input_L(reinterpret_cast<T *>(inputs[0]->addr) + a * matrix_L_size, matrix_L_width, matrix_L_height);
-    MatrixMap input_U(reinterpret_cast<T *>(inputs[1]->addr) + a * matrix_U_size, matrix_U_width, matrix_U_height);
+    MatrixMap input_L(reinterpret_cast<T *>(inputs[0]->device_ptr()) + a * matrix_L_size, matrix_L_width,
+                      matrix_L_height);
+    MatrixMap input_U(reinterpret_cast<T *>(inputs[1]->device_ptr()) + a * matrix_U_size, matrix_U_width,
+                      matrix_U_height);
     if (LU_data_width > LU_data_height) {
-      MatrixMap output_L(reinterpret_cast<T *>(outputs[0]->addr) + a * output_stride, LU_data_height, LU_data_width);
+      MatrixMap output_L(reinterpret_cast<T *>(outputs[0]->device_ptr()) + a * output_stride, LU_data_height,
+                         LU_data_width);
       T *MiddlePtr = new T[matrix_L_size];
       MatrixMap MiddleData(MiddlePtr, matrix_L_width, matrix_L_height);
       MiddleData = input_L.template triangularView<Eigen::StrictlyLower>();
@@ -102,13 +105,15 @@ bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
       delete[] MiddlePtr;
     } else {
-      MatrixMap output_L(reinterpret_cast<T *>(outputs[0]->addr) + a * output_stride, LU_data_height, LU_data_width);
+      MatrixMap output_L(reinterpret_cast<T *>(outputs[0]->device_ptr()) + a * output_stride, LU_data_height,
+                         LU_data_width);
       output_L = input_L.template triangularView<Eigen::StrictlyLower>();
     }
 
     // triu
     if (LU_data_height > LU_data_width) {
-      MatrixMap output_U(reinterpret_cast<T *>(outputs[1]->addr) + a * output_stride, LU_data_height, LU_data_width);
+      MatrixMap output_U(reinterpret_cast<T *>(outputs[1]->device_ptr()) + a * output_stride, LU_data_height,
+                         LU_data_width);
       T *MiddlePtr = new T[matrix_U_size];
       MatrixMap MiddleData(MiddlePtr, matrix_U_width, matrix_U_height);
       MiddleData = input_U.template triangularView<Eigen::Upper>();
@@ -119,7 +124,8 @@ bool LuUnpackGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
       delete[] MiddlePtr;
     } else {
-      MatrixMap output_U(reinterpret_cast<T *>(outputs[1]->addr) + a * output_stride, LU_data_height, LU_data_width);
+      MatrixMap output_U(reinterpret_cast<T *>(outputs[1]->device_ptr()) + a * output_stride, LU_data_height,
+                         LU_data_width);
       output_U = input_U.template triangularView<Eigen::Upper>();
     }
   }

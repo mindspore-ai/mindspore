@@ -73,16 +73,16 @@ inline T ScalarBetainc(T a, T b, T x) {
 }
 
 template <typename T>
-bool BetaincCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool BetaincCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBetaincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBetaincOutputsNum, kernel_name_);
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[2]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto total = inputs[0]->size / sizeof(T);
+  T *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *input2 = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto total = inputs[0]->size() / sizeof(T);
   auto task = [&input0, &input1, &input2, &output](std::int64_t begin, std::int64_t end) {
     for (std::int64_t i = begin; i < end; i++) {
       output[i] = ScalarBetainc(input0[i], input1[i], input2[i]);

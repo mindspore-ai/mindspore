@@ -33,8 +33,8 @@ class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
   TensorShapeGpuKernelMod() { ResetResource(); }
   ~TensorShapeGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_ || prev_node_output_shape_.empty()) {
       return true;
     }

@@ -66,14 +66,14 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool CustomJULIACpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
   std::vector<void *> params;
   for (size_t i = 0; i < inputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
+    params.push_back(reinterpret_cast<void *>(inputs[i]->device_ptr()));
   }
   for (size_t i = 0; i < outputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
+    params.push_back(reinterpret_cast<void *>(outputs[i]->device_ptr()));
   }
   size_t nparam = params.size();
   JuliaAPI *julia = JuliaAPI::GetInstance();

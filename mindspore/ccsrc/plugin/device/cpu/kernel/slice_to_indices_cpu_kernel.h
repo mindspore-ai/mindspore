@@ -33,10 +33,11 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   int Resize(
     const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
@@ -50,8 +51,9 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
     }
   }
 
-  using SliceToIndicesFunc = std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &)>;
+  using SliceToIndicesFunc =
+    std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, SliceToIndicesFunc>> func_list_;
   SliceToIndicesFunc kernel_func_;

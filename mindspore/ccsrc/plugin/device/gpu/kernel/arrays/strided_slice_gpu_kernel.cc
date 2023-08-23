@@ -27,9 +27,10 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S = int64_t>
-bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (IsEmptyInput(inputs[0]->size)) {
+bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  if (IsEmptyInput(inputs[0]->size())) {
     return true;
   }
   T *input = GetDeviceAddress<T>(inputs, 0);

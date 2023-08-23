@@ -76,9 +76,9 @@ int ExtractGlimpseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   if (input_dtype_ == kNumberTypeFloat16) {
     ret = LaunchKernel<float16>(inputs, outputs);
@@ -133,16 +133,16 @@ std::pair<float, float> ExtractGlimpseCpuKernelMod::GetLocation(const float *ptr
 }
 
 template <typename T>
-bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   const size_t kInputIndex3 = 2;
   const size_t kInputIndex4 = 3;
   const size_t kNumber8 = 8;
   const size_t kNumber1024 = 1024;
-  float *x_data = static_cast<float *>(inputs[0]->addr);
-  int32_t *ss_data = static_cast<int32_t *>(inputs[1]->addr);
-  float *offsets_data = static_cast<float *>(inputs[kInputIndex3]->addr);
-  float *y_data = static_cast<float *>(outputs[0]->addr);
+  float *x_data = static_cast<float *>(inputs[0]->device_ptr());
+  int32_t *ss_data = static_cast<int32_t *>(inputs[1]->device_ptr());
+  float *offsets_data = static_cast<float *>(inputs[kInputIndex3]->device_ptr());
+  float *y_data = static_cast<float *>(outputs[0]->device_ptr());
   uint64_t batch_cnt = static_cast<uint64_t>(input_shape_[0]);
   uint64_t image_height = static_cast<uint64_t>(input_shape_[1]);
   uint64_t image_width = static_cast<uint64_t>(input_shape_[kInputIndex3]);

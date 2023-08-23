@@ -61,9 +61,9 @@ int SparseSegmentMeanWithNumSegmentsGpuKernelMod::Resize(const BaseOperatorPtr &
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                const std::vector<AddressPtr> &workspace,
-                                                                const std::vector<AddressPtr> &outputs,
+bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                                const std::vector<KernelTensor *> &workspace,
+                                                                const std::vector<KernelTensor *> &outputs,
                                                                 void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
@@ -76,7 +76,7 @@ bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vecto
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr)) {
-    cudaMemset(y_ptr, 0, outputs[0]->size);
+    cudaMemset(y_ptr, 0, outputs[0]->size());
     return true;
   }
   int ret_flag_host = 0;

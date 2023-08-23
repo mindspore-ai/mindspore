@@ -33,8 +33,8 @@ void EnvironCreateCpuKernelMod::InitKernel(const CNodePtr &node) {
   output_size_list_.push_back(handle_size_);
 }
 
-bool EnvironCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs) {
+bool EnvironCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs) {
   // Generate an unique handle.
   int64_t env_handle = EnvironMgr::GetInstance().Create();
 

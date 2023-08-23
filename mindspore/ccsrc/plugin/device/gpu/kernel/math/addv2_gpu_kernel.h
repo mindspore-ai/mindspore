@@ -42,8 +42,8 @@ class AddV2GpuKernelMod : public NativeGpuKernelMod {
  public:
   AddV2GpuKernelMod() = default;
   ~AddV2GpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -63,10 +63,10 @@ class AddV2GpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using AddV2Func = std::function<bool(AddV2GpuKernelMod *, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using AddV2Func = std::function<bool(AddV2GpuKernelMod *, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
  private:
   size_t unit_size_{1};

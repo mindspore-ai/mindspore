@@ -342,8 +342,8 @@ int ResizeBicubicCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T1, typename T2>
-bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+bool ResizeBicubicCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto out = GetDeviceAddress<T2>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(out);
   auto input = GetDeviceAddress<T1>(inputs, kIndex0);

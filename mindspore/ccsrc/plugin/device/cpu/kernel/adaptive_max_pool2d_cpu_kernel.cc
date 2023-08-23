@@ -134,8 +134,9 @@ void ComputeLocalMax(size_t *max_indice, T *max_val, const LocalWindow &lw, size
 }  // namespace
 
 template <typename T>
-bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   int64_t *indices_addr = GetDeviceAddress<int64_t>(outputs, kIndex1);

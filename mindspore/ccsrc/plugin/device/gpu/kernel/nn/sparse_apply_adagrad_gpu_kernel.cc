@@ -124,15 +124,15 @@ int SparseApplyAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseApplyAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto accum_out = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
+bool SparseApplyAdagradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
+  auto accum_out = reinterpret_cast<T *>(outputs[kAccIndex]->device_ptr());
 
   auto status = CalSparseApplyAdagrad(input_elements_, sizeof(S) / sizeof(int), lr_, update_slots_, grad, indices, var,
                                       accum, var_out, accum_out, reinterpret_cast<cudaStream_t>(cuda_stream_));

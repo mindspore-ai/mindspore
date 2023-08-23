@@ -35,8 +35,8 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
   ResizeNearestNeighborGpuKernelMod() = default;
   ~ResizeNearestNeighborGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -44,7 +44,7 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(input);
     T *output = GetDeviceAddress<T>(outputs, 0);
     MS_EXCEPTION_IF_NULL(output);
-    auto output_size = outputs[kIndex0]->size;
+    auto output_size = outputs[kIndex0]->size();
     int size = SizeToInt(output_size / sizeof(T));
     float h_scale = Scaling(input_shape_[2], output_shape_[2], align_corners_);
     float w_scale = Scaling(input_shape_[3], output_shape_[3], align_corners_);

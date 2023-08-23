@@ -31,8 +31,8 @@ class BACKEND_EXPORT FusedSparseFtrlCpuKernelMod : public SparseOptimizerCpuKern
   FusedSparseFtrlCpuKernelMod() = default;
   ~FusedSparseFtrlCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -59,8 +59,9 @@ class BACKEND_EXPORT FusedSparseFtrlCpuKernelMod : public SparseOptimizerCpuKern
   void InitWorkspaceSize();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &) const;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &) const;
 };
 
 class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod,
@@ -69,8 +70,8 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
   SparseApplyFtrlCpuKernelMod() = default;
   ~SparseApplyFtrlCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -99,8 +100,9 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
   size_t grad_inner_size_{0};
   size_t var_inner_size_{0};
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &) const;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

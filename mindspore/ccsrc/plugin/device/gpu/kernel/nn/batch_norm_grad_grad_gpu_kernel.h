@@ -35,8 +35,8 @@ class BatchNormGradGradGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs);
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  protected:
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -45,10 +45,11 @@ class BatchNormGradGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using ExecuteFunc = std::function<bool(BatchNormGradGradGpuKernelMod *, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  bool Execute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using ExecuteFunc =
+    std::function<bool(BatchNormGradGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   float epsilon_{0.00005};
   bool is_training_{false};
   ShapeInfo shape_info_{0, 0, 0, 0};

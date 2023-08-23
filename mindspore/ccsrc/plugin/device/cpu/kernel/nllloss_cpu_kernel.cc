@@ -75,17 +75,17 @@ int NLLLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(kNLLLossInputsNum, inputs.size(), kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(kNLLLossOutputsNum, outputs.size(), kernel_name_);
 
-  const auto *logits = static_cast<float *>(inputs[kIndex0]->addr);
-  const auto *labels = static_cast<T *>(inputs[kIndex1]->addr);
-  const auto *weight = static_cast<float *>(inputs[kIndex2]->addr);
-  auto *loss = static_cast<float *>(outputs[kIndex0]->addr);
-  auto *total_weight = static_cast<float *>(outputs[kIndex1]->addr);
+  const auto *logits = static_cast<float *>(inputs[kIndex0]->device_ptr());
+  const auto *labels = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto *weight = static_cast<float *>(inputs[kIndex2]->device_ptr());
+  auto *loss = static_cast<float *>(outputs[kIndex0]->device_ptr());
+  auto *total_weight = static_cast<float *>(outputs[kIndex1]->device_ptr());
   if (logits == nullptr || labels == nullptr || weight == nullptr) {
     MS_LOG(EXCEPTION) << "Nllloss does not support null input";
   }

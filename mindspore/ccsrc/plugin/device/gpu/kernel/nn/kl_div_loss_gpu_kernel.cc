@@ -26,9 +26,9 @@ namespace kernel {
 constexpr size_t kKLDivLossInputsNum = 2;
 
 template <typename T>
-bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   T *input_y = GetDeviceAddress<T>(inputs, 1);
   T *loss = GetDeviceAddress<T>(outputs, 0);

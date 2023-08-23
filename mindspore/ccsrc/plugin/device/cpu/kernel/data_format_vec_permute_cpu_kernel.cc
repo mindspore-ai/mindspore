@@ -62,12 +62,12 @@ int DataFormatVecPermuteCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-bool DataFormatVecPermuteCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool DataFormatVecPermuteCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDataFormatVecPermuteInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDataFormatVecPermuteOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t dim1 = 1;
   size_t dim2 = 2;
   if (dim_ == dim1) {

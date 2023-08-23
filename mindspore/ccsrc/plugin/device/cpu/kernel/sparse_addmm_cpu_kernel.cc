@@ -86,27 +86,27 @@ int SparseAddmmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename I, typename T>
-bool SparseAddmmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseAddmmCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseAddmmInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseAddmmOutputsNum, kernel_name_);
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
-  auto *a_indices = static_cast<I *>(inputs[kIndex0]->addr);
-  auto *a_values = static_cast<T *>(inputs[kIndex1]->addr);
-  auto *x1_shape = static_cast<I *>(inputs[kIndex2]->addr);
-  auto *b = static_cast<T *>(inputs[kIndex3]->addr);
-  auto *c = static_cast<T *>(inputs[kIndex4]->addr);
-  auto *alpha = static_cast<T *>(inputs[kIndex5]->addr);
-  auto *beta = static_cast<T *>(inputs[kIndex6]->addr);
-  auto *out = static_cast<T *>(outputs[kIndex0]->addr);
+  auto *a_indices = static_cast<I *>(inputs[kIndex0]->device_ptr());
+  auto *a_values = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *x1_shape = static_cast<I *>(inputs[kIndex2]->device_ptr());
+  auto *b = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto *c = static_cast<T *>(inputs[kIndex4]->device_ptr());
+  auto *alpha = static_cast<T *>(inputs[kIndex5]->device_ptr());
+  auto *beta = static_cast<T *>(inputs[kIndex6]->device_ptr());
+  auto *out = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
-  const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
-  const size_t values_length = inputs[kIndex1]->size / sizeof(T);
-  const size_t b_length = inputs[kIndex3]->size / sizeof(T);
+  const size_t indices_length = inputs[kIndex0]->size() / sizeof(I);
+  const size_t values_length = inputs[kIndex1]->size() / sizeof(T);
+  const size_t b_length = inputs[kIndex3]->size() / sizeof(T);
 
   const size_t dim_num = 2;
   const size_t out_dim_0 = output_shape_[0];

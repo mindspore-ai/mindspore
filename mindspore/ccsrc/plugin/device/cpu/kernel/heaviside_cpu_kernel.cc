@@ -72,12 +72,12 @@ int HeavisideCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   BroadcastIterator base_iter(input0_shape, input1_shape, output_shape);
-  const T *input0 = static_cast<const T *>(inputs[0]->addr);
-  const T *input1 = static_cast<const T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+  const T *input0 = static_cast<const T *>(inputs[0]->device_ptr());
+  const T *input1 = static_cast<const T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   auto task = [this, &input0, &input1, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);

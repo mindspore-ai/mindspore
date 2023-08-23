@@ -78,8 +78,8 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
 }
 
-bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -122,16 +122,17 @@ T max(T num1, T num2) {
 }
 
 template <typename T>
-void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
+void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     // Multithreading

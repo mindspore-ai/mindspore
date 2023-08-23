@@ -65,9 +65,9 @@ int CumulativeLogsumexpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return KRET_OK;
 }
 
-bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumulativeLogsumexpInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumulativeLogsumexpOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat64) {
@@ -150,12 +150,12 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *
 }
 
 template <typename T>
-void CumulativeLogsumexpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) {
-  auto *input_data = static_cast<T *>(inputs[kIndex0]->addr);
-  auto axis_ = static_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto *output_data = static_cast<T *>(outputs[kIndex0]->addr);
-  size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(T)) : 1;
+void CumulativeLogsumexpCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  auto *input_data = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto axis_ = static_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto *output_data = static_cast<T *>(outputs[kIndex0]->device_ptr());
+  size_t lens = inputs[kIndex0]->size() > 0 ? static_cast<size_t>(inputs[kIndex0]->size() / sizeof(T)) : 1;
   auto task = [this, input_data, axis_, output_data](const size_t start, const size_t end) {
     int32_t x_rank = SizeToInt(shape_.size());
     if (axis_[0] >= x_rank || axis_[0] < -x_rank) {

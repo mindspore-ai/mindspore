@@ -45,8 +45,8 @@ class Conv2dFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
@@ -54,8 +54,8 @@ class Conv2dFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   void InitResource() override;
   void ResetResource() noexcept;
 

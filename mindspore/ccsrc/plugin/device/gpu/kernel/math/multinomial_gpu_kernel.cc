@@ -69,9 +69,9 @@ int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return ret;
 }
 
-bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
 
@@ -80,8 +80,8 @@ bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T, typename S>
-void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   T *probs_addr = GetDeviceAddress<T>(inputs, 0);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
   int64_t *num_sample_addr = GetDeviceAddress<int64_t>(inputs, 1);

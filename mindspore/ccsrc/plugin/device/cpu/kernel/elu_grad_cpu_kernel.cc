@@ -53,8 +53,9 @@ int EluGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool EluGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEleGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEleGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
@@ -69,12 +70,13 @@ bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void EluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+void EluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const auto *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [input0, input1, output](const size_t start, const size_t end) {
     const T alpha = T(1);
     for (size_t i = start; i < end; i++) {

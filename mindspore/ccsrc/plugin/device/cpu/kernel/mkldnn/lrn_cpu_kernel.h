@@ -31,8 +31,8 @@ class LrnCpuKernelMod : public MKLCpuKernelMod {
   LrnCpuKernelMod() = default;
   ~LrnCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -46,9 +46,10 @@ class LrnCpuKernelMod : public MKLCpuKernelMod {
 
  private:
   bool GetLrnAttr(const BaseOperatorPtr &base_operator);
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LrnFunc = std::function<bool(LrnCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using LrnFunc = std::function<bool(LrnCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &)>;
 
   int64_t depth_radius_{1};
   float bias_{0.0};

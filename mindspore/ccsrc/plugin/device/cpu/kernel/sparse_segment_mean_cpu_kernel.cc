@@ -61,12 +61,12 @@ int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSegmentMeanCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_ptr = reinterpret_cast<DataType *>(inputs[kIndex0]->addr);
-  auto indices_ptr = reinterpret_cast<IndexType *>(inputs[kIndex1]->addr);
-  auto segment_ids_ptr = reinterpret_cast<IndexType *>(inputs[kIndex2]->addr);
-  auto y_ptr = reinterpret_cast<DataType *>(outputs[kIndex0]->addr);
+bool SparseSegmentMeanCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_ptr = reinterpret_cast<DataType *>(inputs[kIndex0]->device_ptr());
+  auto indices_ptr = reinterpret_cast<IndexType *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_ptr = reinterpret_cast<IndexType *>(inputs[kIndex2]->device_ptr());
+  auto y_ptr = reinterpret_cast<DataType *>(outputs[kIndex0]->device_ptr());
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(x_ptr, indices_ptr, segment_ids_ptr, y_ptr)) {
     return false;

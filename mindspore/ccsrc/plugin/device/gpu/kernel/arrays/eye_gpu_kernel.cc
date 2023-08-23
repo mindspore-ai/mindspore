@@ -58,10 +58,12 @@ int EyeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool EyeGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool EyeGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   T *ouput_ptr = GetDeviceAddress<T>(outputs, kIndex0);
-  auto status = CudaEye(outputs[kIndex0]->size, num_n_, num_m_, ouput_ptr, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    CudaEye(outputs[kIndex0]->size(), num_n_, num_m_, ouput_ptr, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

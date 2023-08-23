@@ -61,8 +61,9 @@ int KLDivLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool KLDivLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool KLDivLossGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *dloss = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_x = GetDeviceAddress<T>(inputs, kIndex1);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex2);

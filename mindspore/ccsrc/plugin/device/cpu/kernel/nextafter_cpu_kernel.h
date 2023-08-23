@@ -30,8 +30,8 @@ class NextAfterCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   NextAfterCpuKernelMod() = default;
   ~NextAfterCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -45,8 +45,8 @@ class NextAfterCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

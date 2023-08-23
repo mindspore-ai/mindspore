@@ -29,8 +29,8 @@ class EnvironSetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   EnvironSetCpuKernelMod() : value_type_attr_(kObjectTypeTensorType), handle_size_(0), key_size_(0), value_size_(0) {}
   ~EnvironSetCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   void InitKernel(const CNodePtr &node) override;
 
   std::vector<KernelAttr> GetOpSupport() override {

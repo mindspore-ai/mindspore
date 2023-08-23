@@ -54,8 +54,9 @@ int UniformGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool UniformGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool UniformGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(outputs, kIndex0);
   auto status = CalUniform(x, y, from_, to_, seed_, seed_offset_, input_size_, device_id_,

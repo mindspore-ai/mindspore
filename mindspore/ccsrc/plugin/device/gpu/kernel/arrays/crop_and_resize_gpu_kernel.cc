@@ -117,9 +117,9 @@ int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_image = GetDeviceAddress<T>(inputs, 0);
   float *input_boxes = GetDeviceAddress<float>(inputs, 1);
   int *input_box_index = GetDeviceAddress<int>(inputs, 2);

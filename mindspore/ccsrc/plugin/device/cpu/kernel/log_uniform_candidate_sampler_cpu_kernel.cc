@@ -116,14 +116,14 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
   }
   return ret;
 }
-bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
-  int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->addr);
+bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->device_ptr());
   auto true_classes_size = input_size_list_.at(0);
-  int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->addr);
-  float *true_expected_count = static_cast<float *>(outputs.at(1)->addr);
-  float *sampled_expected_count = static_cast<float *>(outputs.at(2)->addr);
+  int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->device_ptr());
+  float *true_expected_count = static_cast<float *>(outputs.at(1)->device_ptr());
+  float *sampled_expected_count = static_cast<float *>(outputs.at(2)->device_ptr());
 
   auto gen = generator_.ReserveSamples32(reserveSamplesNr_);
 

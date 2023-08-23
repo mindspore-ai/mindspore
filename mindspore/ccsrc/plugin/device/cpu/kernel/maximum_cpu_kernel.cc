@@ -99,13 +99,14 @@ void MaximumCpuKernelMod::InitInputTensors() {
 }
 
 template <typename T>
-bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
-  T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output_ = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_x_ = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input_y_ = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output_ = reinterpret_cast<T *>(outputs[0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

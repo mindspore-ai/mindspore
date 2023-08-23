@@ -61,9 +61,9 @@ int SparseSegmentMeanGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSegmentMeanGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSegmentMeanGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   auto x_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);

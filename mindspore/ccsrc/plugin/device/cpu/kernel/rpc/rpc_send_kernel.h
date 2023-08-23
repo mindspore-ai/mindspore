@@ -30,8 +30,8 @@ class RpcSendKernelMod : public RpcKernelMod {
   RpcSendKernelMod() = default;
   ~RpcSendKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override {
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override {
     return true;
   }
 

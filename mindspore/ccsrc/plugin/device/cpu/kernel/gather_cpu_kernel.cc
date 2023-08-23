@@ -86,13 +86,13 @@ int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S>
-bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherOutputsNum, kernel_name_);
-  const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  S axis_temp = static_cast<S *>(inputs[kIndex2]->addr)[0];
+  const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->device_ptr());
+  const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
+  auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
+  S axis_temp = static_cast<S *>(inputs[kIndex2]->device_ptr())[0];
   axis_ = static_cast<int64_t>(axis_temp);
 
   int dims = SizeToInt(input_shape_.size());

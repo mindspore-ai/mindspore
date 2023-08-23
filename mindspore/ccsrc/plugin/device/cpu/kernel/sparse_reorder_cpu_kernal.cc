@@ -71,37 +71,37 @@ int SparseReorderCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename I, typename T>
-bool SparseReorderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> & /* workspace */,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseReorderCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseReorderInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseReorderOutputsNum, kernel_name_);
 
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', indices memory size must be greater than 0, but got 0.";
     return true;
   }
-  if (outputs[1]->size == 0) {
+  if (outputs[1]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', values memory size must be greater than 0, but got 0.";
     return true;
   }
-  auto ret_indices = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret_indices = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret_indices != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset y_indices failed. Error no: " << ret_indices;
   }
-  auto ret_values = memset_s(outputs[1]->addr, outputs[1]->size, 0, outputs[1]->size);
+  auto ret_values = memset_s(outputs[1]->device_ptr(), outputs[1]->size(), 0, outputs[1]->size());
   if (ret_values != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset y_values failed. Error no: " << ret_values;
   }
 
   SparseGradient<I, T> sparse_tensor_;
-  const auto *indices_addr = static_cast<I *>(inputs[0]->addr);
-  const auto *values_addr = static_cast<T *>(inputs[1]->addr);
-  const auto *shape_addr = static_cast<I *>(inputs[2]->addr);
-  auto *y_indices_addr = static_cast<I *>(outputs[0]->addr);
-  auto *y_values_addr = static_cast<T *>(outputs[1]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(I);
-  const size_t values_length = inputs[1]->size / sizeof(T);
+  const auto *indices_addr = static_cast<I *>(inputs[0]->device_ptr());
+  const auto *values_addr = static_cast<T *>(inputs[1]->device_ptr());
+  const auto *shape_addr = static_cast<I *>(inputs[2]->device_ptr());
+  auto *y_indices_addr = static_cast<I *>(outputs[0]->device_ptr());
+  auto *y_values_addr = static_cast<T *>(outputs[1]->device_ptr());
+  const size_t indices_length = inputs[0]->size() / sizeof(I);
+  const size_t values_length = inputs[1]->size() / sizeof(T);
   size_t rank = indices_shape_[1];
   for (size_t i = 0; i < indices_shape_[0]; ++i) {
     if (i >= values_length) {

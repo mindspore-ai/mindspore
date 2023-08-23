@@ -32,10 +32,16 @@ class MatrixDiagV3GpuKernelMod : public NativeGpuKernelMod {
   MatrixDiagV3GpuKernelMod() = default;
   ~MatrixDiagV3GpuKernelMod() override = default;
 
+<<<<<<< HEAD
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
+=======
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+>>>>>>> common edit for kernelmod
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -49,11 +55,20 @@ class MatrixDiagV3GpuKernelMod : public NativeGpuKernelMod {
  private:
   void ResetResource() noexcept;
   template <typename DataType>
+<<<<<<< HEAD
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
   using MatrixDiagV3LaunchFunc = std::function<bool(MatrixDiagV3GpuKernelMod *, const std::vector<AddressPtr> &,
                                                     const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+=======
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+
+  using MatrixDiagV3LaunchFunc =
+    std::function<bool(MatrixDiagV3GpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
+>>>>>>> common edit for kernelmod
   static std::vector<std::pair<KernelAttr, MatrixDiagV3LaunchFunc>> func_list_;
   MatrixDiagV3LaunchFunc kernel_func_;
   int64_t x_size_;

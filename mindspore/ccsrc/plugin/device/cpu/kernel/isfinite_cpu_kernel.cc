@@ -38,9 +38,9 @@ bool IsFiniteCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-bool IsFiniteCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool IsFiniteCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsFiniteInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsFiniteOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -55,12 +55,12 @@ bool IsFiniteCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void IsFiniteCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) const {
-  const auto *input = reinterpret_cast<float16 *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsFiniteCpuKernelMod::LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) const {
+  const auto *input = reinterpret_cast<float16 *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
 
-  size_t elem_num = inputs[0]->size / sizeof(float16);
+  size_t elem_num = inputs[0]->size() / sizeof(float16);
 
   for (size_t i = 0; i < elem_num; i++) {
     float temp_num = static_cast<float>(input[i]);
@@ -69,23 +69,23 @@ void IsFiniteCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &in
 }
 
 template <typename T>
-void IsFiniteCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) const {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsFiniteCpuKernelMod::LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) const {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
 
-  size_t elem_num = inputs[0]->size / sizeof(T);
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = !std::isinf(input[i]) && !std::isnan(input[i]);
   }
 }
 
-void IsFiniteCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) const {
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsFiniteCpuKernelMod::LaunchKernelOther(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) const {
+  bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
   auto type_iter = dtype_map_.find(input_dtype_);
-  size_t elem_num = inputs[0]->size / (type_iter->second);
+  size_t elem_num = inputs[0]->size() / (type_iter->second);
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = true;
   }

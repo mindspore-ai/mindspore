@@ -74,8 +74,9 @@ int PDistGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool PDistGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool PDistGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto status = CalPDist(x_size_, y_size_, input, output, p_, matrix_row_, matrix_col_, device_id_,

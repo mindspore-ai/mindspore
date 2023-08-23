@@ -104,13 +104,13 @@ int PadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool PadCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
-  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  if (memset_s(outputs_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  if (memset_s(outputs_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 

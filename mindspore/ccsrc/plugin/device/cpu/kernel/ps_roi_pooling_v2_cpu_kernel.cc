@@ -228,28 +228,28 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool PSROIPoolingCpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs, const int output_size) {
-  T *input_data = GetDeviceAddress<T>(inputs, kIndex0);
+bool PSROIPoolingCpuKernelMod::PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs, const int output_size) {
+  auto input_data = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
-  T *rois = GetDeviceAddress<T>(inputs, kIndex1);
+  auto rois = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_EXCEPTION_IF_NULL(rois);
-  T *output_data = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
 
   constexpr size_t unit_size = sizeof(T);
   auto memset_task = [&](size_t start, size_t end) {
     (void)memset_s(output_data + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
   };
-  ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 
   auto task = [&](size_t start, size_t end) { return PSROIPoolForward<T>(start, end, input_data, rois, output_data); };
   ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 
-bool PSROIPoolingCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool PSROIPoolingCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto output_size = output_channels_ * pooled_height_ * pooled_width_ * output_n_;
 
   if (data_type_id_ == kNumberTypeFloat64) {

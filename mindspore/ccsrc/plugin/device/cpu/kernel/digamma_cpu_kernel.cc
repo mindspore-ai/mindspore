@@ -59,8 +59,9 @@ int DigammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return 0;
 }
 
-bool DigammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool DigammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     return LaunchKernel<Eigen::half>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -71,15 +72,13 @@ bool DigammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 template <typename T>
-bool DigammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool DigammaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto input_x = GetDeviceAddress<T>(inputs, 0);
-  MS_EXCEPTION_IF_NULL(input_x);
-  auto output_y = GetDeviceAddress<T>(outputs, 0);
-  MS_EXCEPTION_IF_NULL(output_y);
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   for (int64_t i = 0; i < input_tensor_size_; i++) {
     *(output_y + i) = CalcDigamma<T>(*(input_x + i));

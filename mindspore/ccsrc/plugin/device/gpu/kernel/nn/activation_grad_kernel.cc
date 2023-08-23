@@ -142,8 +142,8 @@ std::vector<KernelAttr> ActivationGradGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);

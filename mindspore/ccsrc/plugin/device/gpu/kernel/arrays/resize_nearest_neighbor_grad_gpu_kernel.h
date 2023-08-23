@@ -34,8 +34,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
   ResizeNearestNeighborGradGpuKernelMod() {}
   ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     MS_EXCEPTION_IF_NULL(input);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -44,11 +44,11 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     if (is_fp16) {
       MS_EXCEPTION_IF_NULL(work);
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemsetAsync(work, 0, workspace[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        cudaMemsetAsync(work, 0, workspace[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
         "For ResizeNearestNeighborGrad, wrok cudaMemsetAsync failed.");
     } else {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemsetAsync(output, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        cudaMemsetAsync(output, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
         "For ResizeNearestNeighborGrad, output cudaMemsetAsync failed.");
     }
     float h_scale = Scaling(output_shape_[kIndex2], input_shape_[kIndex2], align_corners_);

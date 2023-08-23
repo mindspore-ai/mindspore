@@ -39,6 +39,7 @@
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
+using mindspore::kernel::KernelTensor;
 using CTask = std::function<void(size_t, size_t)>;
 namespace mindspore {
 namespace kernel {
@@ -146,7 +147,13 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     return Launch(inputs, workspace, outputs);
   }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs) = 0;
+                      const std::vector<AddressPtr> &outputs) {
+    return true;
+  }
+  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
 
   // Must be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
@@ -210,6 +217,20 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
 
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
+  template <typename T>
+  inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
+    if (index >= addr_list.size()) {
+      MS_LOG(EXCEPTION) << "Address index must be in range(" << addr_list.size() << "), but got " << index << ".";
+    }
+
+    if ((addr_list[index] == nullptr) || (addr_list[index]->device_ptr() == nullptr) ||
+        (addr_list[index]->size() == 0)) {
+      MS_LOG(EXCEPTION) << "The device address is empty. Address index is " << index
+                        << ", and the length of 'addr_list' is " << addr_list.size();
+    }
+
+    return reinterpret_cast<T *>(addr_list[index]->device_ptr());
+  }
 
  private:
   std::vector<TypeId> GetInputDtypes(const CNodePtr &kernel_node) const;
@@ -221,7 +242,13 @@ class DeprecatedCpuKernelFunc {
   DeprecatedCpuKernelFunc() = default;
   virtual ~DeprecatedCpuKernelFunc() = default;
   virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs) = 0;
+                       const std::vector<AddressPtr> &outputs) {
+    return true;
+  }
+  virtual bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                       const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
   virtual void InitFunc(const CNodePtr &kernel_node) {}
   virtual void InitInputOutputSize(const CNodePtr &kernel_node, std::vector<size_t> *input_size_list,
                                    std::vector<size_t> *output_size_list, std::vector<size_t> *workspace_size_list) {}
@@ -241,7 +268,13 @@ class CpuKernelFunc {
     return KRET_OK;
   }
   virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs) = 0;
+                       const std::vector<AddressPtr> &outputs) {
+    return true;
+  }
+  virtual bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                       const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
   ParallelSearchInfo parallel_search_info_;
 };
 

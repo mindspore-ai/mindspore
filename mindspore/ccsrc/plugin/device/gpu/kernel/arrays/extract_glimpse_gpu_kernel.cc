@@ -103,9 +103,9 @@ int ExtractGlimpseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   int *size = GetDeviceAddress<int>(inputs, kIndex1);
   T *offsets = GetDeviceAddress<T>(inputs, kIndex2);

@@ -50,11 +50,11 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithLogicCpuTypeFunc() = default;
   ~ArithLogicCpuTypeFunc() override = default;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
     compute_func_(this, input1, input2, output);
     return true;
   }
@@ -146,11 +146,11 @@ class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithComplexLogicCpuTypeFunc() = default;
   ~ArithComplexLogicCpuTypeFunc() override = default;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
     compute_func_(this, input1, input2, output);
     return true;
   }

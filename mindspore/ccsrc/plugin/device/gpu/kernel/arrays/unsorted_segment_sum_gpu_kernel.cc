@@ -115,9 +115,9 @@ int UnsortedSegmentSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool UnsortedSegmentSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool UnsortedSegmentSumGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *ids_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);

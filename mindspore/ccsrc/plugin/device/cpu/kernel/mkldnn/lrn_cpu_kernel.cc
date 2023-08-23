@@ -99,18 +99,14 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   return KRET_OK;
 }
 
-bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kInputsNum = 1;
   constexpr size_t kOutputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto *input0_ptr = GetDeviceAddress<float>(inputs, kIndex0);
-  auto *output0_ptr = GetDeviceAddress<float>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input0_ptr);
-  MS_EXCEPTION_IF_NULL(output0_ptr);
-  SetArgumentHandle(DNNL_ARG_SRC, input0_ptr);
-  SetArgumentHandle(DNNL_ARG_DST, output0_ptr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs.at(kIndex0)->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, outputs.at(kIndex0)->device_ptr());
   ExecutePrimitive();
   return true;
 }

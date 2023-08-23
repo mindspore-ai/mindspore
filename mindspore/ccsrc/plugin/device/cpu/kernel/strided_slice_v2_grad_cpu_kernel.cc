@@ -469,7 +469,7 @@ void StridedSliceV2GradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
 
 // init for dynamic shape
 template <typename T>
-void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
+void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::KernelTensor *> &inputs) {
   if (begin_shape_.size() != 1 || end_shape_.size() != 1 || stride_shape_.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimensions of 'begin', 'end', 'strides' must be 1, "
@@ -477,10 +477,10 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Addres
                       << begin_shape_.size() << ", the dimension of 'end': " << end_shape_.size()
                       << ", and the dimension of 'strides': " << stride_shape_.size();
   }
-  auto begin_ptr = static_cast<T *>(inputs[1]->addr);
+  auto begin_ptr = static_cast<T *>(inputs[1]->device_ptr());
   std::vector<T> begin{begin_ptr, begin_ptr + begin_shape_[0]};
-  auto end_ptr = static_cast<T *>(inputs[kIndex2]->addr);
-  auto strides_ptr = static_cast<T *>(inputs[kIndex3]->addr);
+  auto end_ptr = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto strides_ptr = static_cast<T *>(inputs[kIndex3]->device_ptr());
 
   std::vector<T> end{end_ptr, end_ptr + end_shape_[0]};
   std::vector<T> strides{strides_ptr, strides_ptr + stride_shape_[0]};
@@ -503,9 +503,9 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Addres
   FormatArgs(true);
 }
 
-bool StridedSliceV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceV2GradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   if (dtype_ == kNumberTypeInt32) {
     ret = LaunchKernel<int32_t>(inputs, outputs);
@@ -545,10 +545,10 @@ bool StridedSliceV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-bool StridedSliceV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_addr = static_cast<T *>(inputs[kIndex4]->addr);
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
+bool StridedSliceV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_addr = static_cast<T *>(inputs[kIndex4]->device_ptr());
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
   if (inputs.size() == kStridedSliceV2GradDynamicInputsNum) {
     if (dtype_grad_attr == kNumberTypeInt32) {
       InitParams<int32_t>(inputs);

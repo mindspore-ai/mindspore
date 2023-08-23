@@ -125,21 +125,21 @@ int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool EuclideanNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool EuclideanNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   size_t *device_input_shape = nullptr;
   size_t *device_axes_output = nullptr;
   size_t *device_output_stride = nullptr;
-  if (workspace[kIndex0]->size != 0) {
+  if (workspace[kIndex0]->size() != 0) {
     device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
   }
-  if (workspace[kIndex1]->size != 0) {
+  if (workspace[kIndex1]->size() != 0) {
     device_axes_output = GetDeviceAddress<size_t>(workspace, kIndex1);
   }
-  if (workspace[kIndex2]->size != 0) {
+  if (workspace[kIndex2]->size() != 0) {
     device_output_stride = GetDeviceAddress<size_t>(workspace, kIndex2);
   }
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

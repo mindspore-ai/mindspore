@@ -39,19 +39,20 @@ bool CauchyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool CauchyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool CauchyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   (void)LaunchKernel<float>(outputs);
   return true;
 }
 
 template <typename T>
-bool CauchyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &outputs) const {
-  T *y_data = static_cast<T *>(outputs[0]->addr);
+bool CauchyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &outputs) const {
+  T *y_data = static_cast<T *>(outputs[0]->device_ptr());
   std::random_device rd;
   std::default_random_engine generator(rd());
   std::cauchy_distribution<float> cauchy_d(median_, sigma_);
-  auto end = outputs[0]->size / sizeof(T);
+  auto end = outputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < end; ++i) {
     float data = cauchy_d(generator);

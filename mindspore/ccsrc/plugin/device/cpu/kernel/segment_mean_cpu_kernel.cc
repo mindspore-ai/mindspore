@@ -104,9 +104,9 @@ std::vector<KernelAttr> SegmentMeanCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SegmentMeanCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool SegmentMeanCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   switch (segment_ids_dtype_) {
     case kNumberTypeInt32: {
@@ -156,11 +156,11 @@ bool SegmentMeanCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T1, typename T2>
-bool SegmentMeanCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
+bool SegmentMeanCPUKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->device_ptr());
   std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);

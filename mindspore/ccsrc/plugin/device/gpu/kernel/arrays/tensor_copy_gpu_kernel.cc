@@ -53,8 +53,9 @@ int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool TensorCopyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorCopyGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 

@@ -113,7 +113,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
 }  // namespace
 
 template <typename T>
-void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const std::vector<size_t> &input_strides,
+void GetGroupSet(const kernel::KernelTensor *input, const size_t last_dim, const std::vector<size_t> &input_strides,
                  const std::vector<size_t> &group_indices, std::set<T> *result) {
   if (group_indices.size() != input_strides.size() - 1) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "
@@ -121,7 +121,7 @@ void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const st
                       << "but got " << group_indices.size() << " and " << input_strides.size() << ".";
   }
   result->clear();
-  auto data_ptr = static_cast<T *>(input->addr);
+  auto data_ptr = static_cast<T *>(input->device_ptr());
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0UL);
   const auto end = start + last_dim;
   for (size_t i = start; i < end; ++i) {
@@ -197,13 +197,13 @@ void DenseToDenseSetOperationCpuKernelMod::SetCompute(const std::set<T> &set1, c
 }
 
 template <typename T>
-bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs,
+bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::KernelTensor *> &,
+                                                          const std::vector<kernel::KernelTensor *> &outputs,
                                                           const ShapeVector &output_shape, const size_t num_values,
                                                           const std::map<std::vector<size_t>, std::set<T>> *sets) {
-  auto out_indices_ptr = static_cast<int64_t *>(outputs[kOutput1]->addr);
-  auto out_values_ptr = static_cast<T *>(outputs[kOutput2]->addr);
-  auto out_shape_ptr = static_cast<int64_t *>(outputs[kOutput3]->addr);
+  auto out_indices_ptr = static_cast<int64_t *>(outputs[kOutput1]->device_ptr());
+  auto out_values_ptr = static_cast<T *>(outputs[kOutput2]->device_ptr());
+  auto out_shape_ptr = static_cast<int64_t *>(outputs[kOutput3]->device_ptr());
   size_t output_shape_size = output_shape.size();
   auto num_values_signed = SizeToLong(num_values);
   auto output_shape_size_signed = SizeToLong(output_shape_size);
@@ -239,8 +239,8 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
 }
 
 template <typename T>
-bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                        const std::vector<kernel::KernelTensor *> &outputs) {
   ShapeVector group_shape;
   GetCommonShape(x1_shape_, x2_shape_, &group_shape);
   const auto x1_strides = GetStrides(x1_shape_);

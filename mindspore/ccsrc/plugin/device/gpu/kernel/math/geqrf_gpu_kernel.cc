@@ -187,8 +187,9 @@ void GeqrfGpuKernelMod::LaunchGeqrf(T *d_input_x, T *d_output_y, T *output_tau, 
 }
 
 template <typename T>
-bool GeqrfGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool GeqrfGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

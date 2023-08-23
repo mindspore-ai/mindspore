@@ -47,9 +47,9 @@ void ResizeLinear1DGradCpuKernelMod::ComputeInterpolationCaches(const size_t out
 }
 
 template <typename T>
-bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   auto grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
   auto grad_input = GetDeviceAddress<T>(outputs, kIndex0);
@@ -61,11 +61,11 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
         grad_input[i] = grad_output[i];
       }
     };
-    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_, pool_);
+    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size() / sizeof(T), this, &parallel_search_info_, pool_);
     return true;
   }
 
-  if (memset_s(grad_input, outputs[kIndex0]->size, 0, outputs[kIndex0]->size) != EOK) {
+  if (memset_s(grad_input, outputs[kIndex0]->size(), 0, outputs[kIndex0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 

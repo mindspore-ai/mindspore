@@ -129,8 +129,9 @@ int AddV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool AddV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool AddV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input_addr1 = GetDeviceAddress<T>(inputs, 0);
   T *input_addr2 = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);

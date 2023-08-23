@@ -83,9 +83,9 @@ int SparseMatrixSoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename DataType, typename IndexType>
-bool SparseMatrixSoftmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixSoftmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   IndexType *x_dense_shape = GetDeviceAddress<IndexType>(inputs, kIndex0);

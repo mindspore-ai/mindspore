@@ -76,8 +76,8 @@ int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return ret;
 }
 
-bool PrintCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &) {
+bool PrintCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     TypeId dtype = data_types_[i];
     auto iter = func_map_.find(dtype);
@@ -96,11 +96,11 @@ bool PrintCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 }
 
 template <typename T>
-void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::AddressPtr> &inputs) {
+void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::KernelTensor *> &inputs) {
   if (input_sizes_[index] == 0) {
-    auto num = reinterpret_cast<T *>(inputs[index]->addr);
+    auto num = reinterpret_cast<T *>(inputs[index]->device_ptr());
     if constexpr (std::is_same<T, char>::value) {
-      size_t str_len = inputs[index]->size;
+      size_t str_len = inputs[index]->size();
       // Avoid memory reuse with dirty data.
       num[str_len - 1] = '\0';
       std::cout << num << std::endl;
@@ -109,7 +109,8 @@ void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::Add
     }
   } else {
     TypeId type_id = std::get<1>(input_info_[index]);
-    Tensor tensor(data_types_[index], input_shapes_[index], inputs[index]->addr, input_sizes_[index] * sizeof(T));
+    Tensor tensor(data_types_[index], input_shapes_[index], inputs[index]->device_ptr(),
+                  input_sizes_[index] * sizeof(T));
     if (value_type_.count(index) > 0) {
       // not a tensor
       auto out = tensor.data().ToString(type_id, input_shapes_[index], true);

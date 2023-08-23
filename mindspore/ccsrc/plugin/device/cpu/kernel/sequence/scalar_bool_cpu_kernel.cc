@@ -54,8 +54,9 @@ bool ScalarBoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x = GetDeviceAddress<T>(inputs, 0);

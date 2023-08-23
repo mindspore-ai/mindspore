@@ -32,8 +32,8 @@ class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   CastAllFwdGpuKernelMod() : max_(0), input_size_(0), output_size_(0), num_input_(0), is_null_input_(false) {}
   ~CastAllFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }

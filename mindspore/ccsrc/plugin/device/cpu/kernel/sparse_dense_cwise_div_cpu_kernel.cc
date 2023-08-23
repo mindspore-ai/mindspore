@@ -54,10 +54,10 @@ int SparseDenseCwiseDivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename T>
-void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
-  auto indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
+void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto indices_data = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
   int64_t index_num = indices_shape_[kIndex0];
   int64_t dimension = indices_shape_[kIndex1];
   int64_t dense_dims = static_cast<int64_t>(dense_shape_.size());
@@ -108,13 +108,13 @@ void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<AddressPtr> &
 }
 
 template <typename T>
-void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivNoBcastCompute(const std::vector<AddressPtr> &inputs,
-                                                                        const std::vector<AddressPtr> &outputs) {
-  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->addr);
-  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
-  auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
+void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivNoBcastCompute(const std::vector<KernelTensor *> &inputs,
+                                                                        const std::vector<KernelTensor *> &outputs) {
+  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto dense_data = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[kIndex0]->device_ptr());
   int64_t value_nums = indices_shape_[kIndex0];
   int64_t dimension = indices_shape_[kIndex1];
   int64_t data_num = values_shape_[kIndex0];
@@ -154,13 +154,13 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivNoBcastCompute(const st
 }
 
 template <typename T>
-void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std::vector<AddressPtr> &inputs,
-                                                                      const std::vector<AddressPtr> &outputs) {
-  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->addr);
-  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
-  auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
+void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std::vector<KernelTensor *> &inputs,
+                                                                      const std::vector<KernelTensor *> &outputs) {
+  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto dense_data = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[kIndex0]->device_ptr());
   int64_t value_nums = indices_shape_[kIndex0];
   int64_t dimension = indices_shape_[kIndex1];
   int64_t data_num = values_shape_[kIndex0];
@@ -209,9 +209,9 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std:
   }
 }
 
-bool SparseDenseCwiseDivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SparseDenseCwiseDivCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (data_type_ == kNumberTypeInt8) {
     ComputeDiv<int8_t>(inputs, outputs);
   } else if (data_type_ == kNumberTypeInt16) {

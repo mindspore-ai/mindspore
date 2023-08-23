@@ -81,7 +81,8 @@ int PaddingGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool PaddingGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PaddingGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

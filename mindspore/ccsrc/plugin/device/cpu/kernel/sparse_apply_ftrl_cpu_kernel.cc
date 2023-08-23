@@ -245,18 +245,18 @@ const std::vector<std::pair<KernelAttr, FusedKernelRunFunc>> &FusedSparseFtrlCpu
 }
 
 template <typename T>
-bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *linear = reinterpret_cast<float *>(inputs[2]->addr);
-  auto *grad = reinterpret_cast<float *>(inputs[3]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[4]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
+bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *accum = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *linear = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto *grad = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[4]->device_ptr());
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->device_ptr());
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->device_ptr());
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
@@ -443,14 +443,14 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyFtrlCpuKerne
 }
 
 template <typename T, typename S>
-bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *linear = reinterpret_cast<T *>(inputs[kLinearIndex]->addr);
-  auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
+bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *linear = reinterpret_cast<T *>(inputs[kLinearIndex]->device_ptr());
+  auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
 
   for (int64_t index = 0; index < batch_size_; index++) {
     SparseGradient<S> input_sparse_grad({grad, indices, indices_size_});

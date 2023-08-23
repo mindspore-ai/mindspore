@@ -125,19 +125,19 @@ void SparseSliceCpuKernelMod::SyncOutputShape() {
 }
 
 template <typename T>
-bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSliceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSliceOutputsNum, kernel_name_);
-  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto input_values = static_cast<T *>(inputs[kIndex1]->addr);
-  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->addr);
-  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_values = static_cast<T *>(outputs[kIndex1]->addr);
-  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto input_values = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->device_ptr());
+  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_values = static_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
 
   SliceCompute<T>(input_indices, input_values, input_shape, input_start, input_size, output_indices, output_values,
                   output_shape);

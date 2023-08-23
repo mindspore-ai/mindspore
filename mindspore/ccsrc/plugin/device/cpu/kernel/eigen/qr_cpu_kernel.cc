@@ -68,12 +68,12 @@ int QrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
 }
 
 template <typename T>
-bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto output_q = GetDeviceAddress<T>(outputs, kIndex0);
-  auto output_r = GetDeviceAddress<T>(outputs, kIndex1);
+bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_q = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_r = reinterpret_cast<T *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(output_q);
   MS_EXCEPTION_IF_NULL(output_r);
@@ -84,7 +84,7 @@ bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   size_t size_mp = m * p;
   size_t size_pn = p * n;
   if (size_mn > 0) {
-    size_t input_num = static_cast<size_t>(inputs[0]->size / sizeof(T));
+    size_t input_num = static_cast<size_t>(inputs[0]->size() / sizeof(T));
     size_t matrix_num = input_num / size_mn;
     size_t data_size = input_num * sizeof(T);
     if (data_size <= kParallelDataNums) {

@@ -88,8 +88,9 @@ void GerGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool GerGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool GerGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   T *col_input = GetDeviceAddress<T>(inputs, 0);
   T *row_input = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);

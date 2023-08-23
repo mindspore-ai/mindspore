@@ -15,8 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/convert_to_dynamic_cpu_kernel.h"
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <memory>
 
 namespace mindspore {
 namespace kernel {
@@ -67,23 +68,23 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return static_cast<int>(ret);
 }
 
-bool ConvertToDynamicCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvertToDynamicCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the inputs can not be empty.";
   }
   const size_t kOutputsNum = 1;
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the size of 'input_x': {" << inputs[0]->size
-                      << "} is not equal to the size of the first output: {" << outputs[0]->size << "}";
+  if (inputs[0]->size() != outputs[0]->size()) {
+    MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the size of 'input_x': {" << inputs[0]->size()
+                      << "} is not equal to the size of the first output: {" << outputs[0]->size() << "}";
   }
-  if (inputs[0]->addr == outputs[0]->addr) {
+  if (inputs[0]->device_ptr() == outputs[0]->device_ptr()) {
     return true;
   }
-  size_t copy_size = outputs[0]->size;
-  auto ret = memcpy_s(outputs[0]->addr, copy_size, inputs[0]->addr, copy_size);
+  size_t copy_size = outputs[0]->size();
+  auto ret = memcpy_s(outputs[0]->device_ptr(), copy_size, inputs[0]->device_ptr(), copy_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', memcpy_s error. Error no: " << ret;
   }

@@ -34,8 +34,8 @@ class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
   SparseFtrlGpuKernelMod() { ResetResource(); }
   ~SparseFtrlGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *linear = GetDeviceAddress<T>(inputs, 2);

@@ -28,8 +28,8 @@ constexpr size_t kIndex1 = 1;
 }  // namespace
 
 template <typename T>
-void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel::AddressPtr> &inputs) {
-  T split_num = static_cast<T *>(inputs[kIndex1]->addr)[0];
+void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel::KernelTensor *> &inputs) {
+  T split_num = static_cast<T *>(inputs[kIndex1]->device_ptr())[0];
   split_num_ = LongToSize(static_cast<int64_t>(split_num));
   if (split_num <= 0 || split_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
@@ -56,9 +56,9 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   }
 }
 
-bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupCommGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupCommGradOutputsNum, kernel_name_);
 #if defined(_WIN32) || defined(_WIN64)
@@ -67,15 +67,15 @@ bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::Addre
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
   if (split_type_ == kNumberTypeInt32) {
     InitSplitNum<int32_t>(inputs);
   } else {
     InitSplitNum<int64_t>(inputs);
   }
-  size_t input_size = inputs[0]->size;
-  size_t output_size = outputs[0]->size;
+  size_t input_size = inputs[0]->size();
+  size_t output_size = outputs[0]->size();
   MS_LOG(DEBUG) << "input addr: " << input_addr << "input size: " << input_size;
   MS_LOG(DEBUG) << "output addr: " << output_addr << "output size: " << output_size;
   auto ret = memset_s(output_addr, output_size, 0, output_size);

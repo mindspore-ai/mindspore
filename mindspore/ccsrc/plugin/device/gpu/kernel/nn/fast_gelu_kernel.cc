@@ -28,8 +28,8 @@ constexpr const size_t kFastGeluInputsNum = 1;
 constexpr const size_t kFastGeluOutputsNum = 1;
 
 template <typename T>
-bool FastGeLUGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool FastGeLUGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluOutputsNum, kernel_name_);
   T *input_addr = GetDeviceAddress<T>(inputs, 0);

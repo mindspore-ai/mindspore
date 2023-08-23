@@ -185,14 +185,14 @@ void MaxPool3DWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t p_wi
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPool3DWithArgmaxInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPool3DWithArgmaxOutputsNum, kernel_name_);
-  auto input_x = static_cast<DATA_T *>(inputs[kZero]->addr);
-  auto output_y = static_cast<DATA_T *>(outputs[kZero]->addr);
-  auto output_argmax = static_cast<INDICES_T *>(outputs[kOne]->addr);
+  auto input_x = static_cast<DATA_T *>(inputs[kZero]->device_ptr());
+  auto output_y = static_cast<DATA_T *>(outputs[kZero]->device_ptr());
+  auto output_argmax = static_cast<INDICES_T *>(outputs[kOne]->device_ptr());
   auto input_shape_vec = x_shape_;
   auto output_shape_vec = y_shape_;
   const int64_t in_width = input_shape_vec[kFour];

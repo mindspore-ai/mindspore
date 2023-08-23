@@ -37,8 +37,8 @@ class PadV3CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Pa
   PadV3CpuKernelMod() = default;
   ~PadV3CpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -55,12 +55,12 @@ class PadV3CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Pa
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   template <typename S>
-  bool GetPaddings(const std::vector<AddressPtr> &inputs);
+  bool GetPaddings(const std::vector<KernelTensor *> &inputs);
 
   template <typename T>
   void ConstantModeCompute(T *input_ptr, T *output_ptr, T constant_values);

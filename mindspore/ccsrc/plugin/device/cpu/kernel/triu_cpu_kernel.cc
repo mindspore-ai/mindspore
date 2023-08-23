@@ -57,15 +57,15 @@ int TriuCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool TriuCpuKernelMod::TriuCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool TriuCpuKernelMod::TriuCompute(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTriuInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTriuOutputsNum, kernel_name_);
 
-  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
-
+  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   size_t input_size = 1;
   for (size_t i = 0; i < input_dims_; ++i) {
     input_size *= input_shape_[i];
@@ -99,8 +99,9 @@ bool TriuCpuKernelMod::TriuCompute(const std::vector<AddressPtr> &inputs, const 
   return true;
 }
 
-bool TriuCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool TriuCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   switch (input_dtype_) {
     case kNumberTypeUInt8:
       return TriuCompute<uint8_t>(inputs, outputs);

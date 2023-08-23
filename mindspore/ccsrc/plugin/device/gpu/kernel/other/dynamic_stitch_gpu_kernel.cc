@@ -82,8 +82,9 @@ void DynamicStitchKernelMod::ResetResource() noexcept {
 
 void DynamicStitchKernelMod::InitSizeLists() { return; }
 
-bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream) {
+bool DynamicStitchKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   stream_ptr_ = stream;
   auto max_index_dev = GetDeviceAddress<int>(workspace, 0);

@@ -30,9 +30,9 @@ using Complex = mindspore::utils::Complex<T>;
 constexpr int MAX_DIMS = 8;
 
 template <typename T>
-bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   bool *mask_addr = GetDeviceAddress<bool>(inputs, kIndex1);
   T *value = GetDeviceAddress<T>(inputs, kIndex2);

@@ -64,9 +64,9 @@ int LinSpaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool LinSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool LinSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

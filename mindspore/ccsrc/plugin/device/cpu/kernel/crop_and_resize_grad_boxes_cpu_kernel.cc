@@ -95,8 +95,8 @@ int CropAndResizeGradBoxesCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   return KRET_OK;
 }
 
-void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::AddressPtr> &outputs) {
-  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
+void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->device_ptr());
   const int nums_boxes = LongToInt(grads_shape_[0]);
   int num = nums_boxes * SizeToInt(kCoordinateLen);
   float zero_num = static_cast<float>(0);
@@ -106,13 +106,13 @@ void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel:
 }
 
 template <typename T>
-bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto *grads = reinterpret_cast<float *>(inputs[kGrads]->addr);
-  auto *image = reinterpret_cast<T *>(inputs[kImages]->addr);
-  auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->addr);
-  auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndex]->addr);
-  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
+bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *grads = reinterpret_cast<float *>(inputs[kGrads]->device_ptr());
+  auto *image = reinterpret_cast<T *>(inputs[kImages]->device_ptr());
+  auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->device_ptr());
+  auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndex]->device_ptr());
+  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->device_ptr());
   const int image_batch = LongToInt(image_shape_[kBatch]);
   const int image_height = LongToInt(image_shape_[kHeight]);
   const int image_width = LongToInt(image_shape_[kWidth]);

@@ -93,9 +93,9 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return static_cast<int>(KRET_OK);
 }
 
-bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) const {
+bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) const {
   auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
   auto input_addr = GetDeviceAddress<float16>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
@@ -103,17 +103,17 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 
   float *float_input_addr = nullptr;
   float *float_output_addr = nullptr;
-  size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t input_mem_size = inputs[0]->size() / sizeof(float16) * sizeof(float);
   float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_input_addr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  for (size_t i = 0; i < ((inputs[0]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[0]->size()) / sizeof(float16)); ++i) {
     float_input_addr[i] = static_cast<float>(input_addr[i]);
   }
 
-  size_t output_mem_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t output_mem_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
   if (float_output_addr == nullptr) {
     free(float_input_addr);
@@ -174,8 +174,9 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 }
 
 template <typename T>
-bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) const {
+bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) const {
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   auto float_input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   auto float_output_addr = GetDeviceAddress<T>(outputs, kIndex0);

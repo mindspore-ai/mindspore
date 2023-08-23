@@ -70,9 +70,9 @@ const std::vector<std::pair<KernelAttr, FractionalMaxPoolGradPtrCreatorFunc>> ke
    CreateFractionalMaxPoolGradKernelPtr<int64_t>}};
 }  // namespace
 
-bool FractionalMaxPoolGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FractionalMaxPoolGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);

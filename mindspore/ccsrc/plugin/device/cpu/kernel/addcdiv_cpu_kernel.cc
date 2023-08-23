@@ -76,8 +76,9 @@ int AddcdivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool AddcdivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
-                                 const std::vector<AddressPtr> &outputs) {
+bool AddcdivCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> & /* workspace */,
+                                 const std::vector<KernelTensor *> &outputs) {
   // check params
   if (dtype_ == kNumberTypeFloat32) {
     return AddcdivCheck<float>(inputs, outputs);
@@ -95,7 +96,8 @@ bool AddcdivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 template <typename T>
-bool AddcdivCpuKernelMod::AddcdivCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool AddcdivCpuKernelMod::AddcdivCheck(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (dtype_value == kNumberTypeFloat16) {
     return AddcdivCompute<T, float16>(inputs, outputs);
   } else if (dtype_value == kNumberTypeFloat32) {
@@ -120,13 +122,13 @@ T abs(T num) {
 }
 
 template <typename T1, typename T2>
-bool AddcdivCpuKernelMod::AddcdivCompute(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto *input0 = static_cast<T1 *>(inputs[kInputData]->addr);
-  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->addr);
-  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->addr);
-  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
-  auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
+bool AddcdivCpuKernelMod::AddcdivCompute(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto *input0 = static_cast<T1 *>(inputs[kInputData]->device_ptr());
+  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->device_ptr());
+  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->device_ptr());
+  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->device_ptr());
+  auto *output = static_cast<T1 *>(outputs[kOutputData]->device_ptr());
 
   if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
     auto eps_if_zero = static_cast<T1>(1e-6);

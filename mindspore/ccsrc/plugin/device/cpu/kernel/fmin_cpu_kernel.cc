@@ -102,14 +102,15 @@ void FminCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dty
 }
 
 template <typename T>
-bool FminCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) const {
+bool FminCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFminInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFminOutputsNum, kernel_name_);
 
-  T *input_x_ = static_cast<T *>(inputs[0]->addr);
-  T *input_y_ = static_cast<T *>(inputs[1]->addr);
-  T *output_ = static_cast<T *>(outputs[0]->addr);
+  T *input_x_ = static_cast<T *>(inputs[0]->device_ptr());
+  T *input_y_ = static_cast<T *>(inputs[1]->device_ptr());
+  T *output_ = static_cast<T *>(outputs[0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

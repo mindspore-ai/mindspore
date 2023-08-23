@@ -66,9 +66,10 @@ int RGBToHSVCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool RGBToHSVCpuKernelMod::ComputeFloat(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  T *input_data = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_data = reinterpret_cast<T *>(outputs[0]->addr);
+bool RGBToHSVCpuKernelMod::ComputeFloat(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  T *input_data = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
   for (size_t i = 0; i < input0_elements_nums_; i = i + kNumberOfRGB) {
     auto t_red = *(input_data + i);
     auto t_green = *(input_data + i + 1);
@@ -93,9 +94,10 @@ bool RGBToHSVCpuKernelMod::ComputeFloat(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool RGBToHSVCpuKernelMod::ComputeHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  float16 *input_data = reinterpret_cast<float16 *>(inputs[0]->addr);
-  float16 *output_data = reinterpret_cast<float16 *>(outputs[0]->addr);
+bool RGBToHSVCpuKernelMod::ComputeHalf(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  float16 *input_data = reinterpret_cast<float16 *>(inputs[0]->device_ptr());
+  float16 *output_data = reinterpret_cast<float16 *>(outputs[0]->device_ptr());
   for (size_t i = 0; i < input0_elements_nums_; i = i + kNumberOfRGB) {
     auto t_red = *(input_data + i);
     auto t_green = *(input_data + i + 1);
@@ -122,8 +124,8 @@ bool RGBToHSVCpuKernelMod::ComputeHalf(const std::vector<AddressPtr> &inputs, co
 }
 
 template <typename T>
-bool RGBToHSVCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool RGBToHSVCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   TypeId dtype_{kTypeUnknown};
   dtype_ = input_dtype;
 

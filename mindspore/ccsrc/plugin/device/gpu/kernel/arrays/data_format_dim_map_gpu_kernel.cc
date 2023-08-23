@@ -30,9 +30,9 @@ const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
 const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
 
 template <typename T>
-bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &workspace,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDataFormatDimMapInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDataFormatDimMapOutputsNum, kernel_name_);
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);

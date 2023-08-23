@@ -110,18 +110,18 @@ int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   auto mask = GetDeviceAddress<bool>(outputs, kIndex1);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
   if (std::equal_to<float>()(keep_prob_, 0)) {
-    auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
+    auto ret = memset_s(output, outputs.at(kIndex0)->size(), 0, outputs.at(kIndex0)->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }
-    ret = memset_s(mask, outputs.at(kIndex1)->size, 0, outputs.at(kIndex1)->size);
+    ret = memset_s(mask, outputs.at(kIndex1)->size(), 0, outputs.at(kIndex1)->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }

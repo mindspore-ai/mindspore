@@ -93,10 +93,10 @@ std::vector<KernelAttr> MatrixLogarithmCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<AddressPtr> &inputs,
-                                                        const std::vector<AddressPtr> &outputs) {
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   size_t shape_size = shape_x_.size();
   auto m = IntToSize(shape_x_[shape_size - 1]);

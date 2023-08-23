@@ -99,9 +99,9 @@ int PDistGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool PDistGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool PDistGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *y_grad = GetDeviceAddress<T>(inputs, kZeroindex);
   T *x = GetDeviceAddress<T>(inputs, kOneindex);
   T *y = GetDeviceAddress<T>(inputs, kTwoindex);

@@ -82,9 +82,9 @@ int MapTensorEraseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename KeyType>
-bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorEraseInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorEraseOutputNum, kernel_name_);
@@ -104,8 +104,8 @@ bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
       MS_LOG(EXCEPTION) << "Failed to get gpu hash table pointer with value type:" << value_type;
     }
 
-    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                 inputs.at(kIndex1)->size / sizeof(KeyType), stream_ptr);
+    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                 inputs.at(kIndex1)->size() / sizeof(KeyType), stream_ptr);
   } else {
     MS_LOG(EXCEPTION) << "GPU hash table does not support value type:" << value_type;
   }

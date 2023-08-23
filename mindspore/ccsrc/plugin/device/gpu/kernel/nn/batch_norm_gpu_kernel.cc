@@ -33,9 +33,9 @@ constexpr size_t kBatchNormInputShapeMinSize = 2;
 float kExpAvgFactorDefault = 0.1;
 }  // namespace
 template <typename T>
-bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   VARIABLE_NOT_USED(workspace);
   if (is_null_input_) {
     return true;

@@ -23,10 +23,9 @@ namespace kernel {
 namespace {
 size_t kNumInputWithWeight = 3;
 }
-bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                                            const std::vector<AddressPtr> &workspace,
-                                                                            const std::vector<AddressPtr> &outputs,
-                                                                            void *stream_ptr) {
+bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<half>(inputs, workspace, outputs, stream_ptr);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -39,9 +38,9 @@ bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(cons
 }
 
 template <typename T>
-void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *weight = nullptr;

@@ -148,23 +148,23 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename I, typename T>
-bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &,
-                                                    const std::vector<kernel::AddressPtr> &outputs) const {
+bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradDAOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto ga = reinterpret_cast<T *>(inputs[1]->addr);
-  auto da = reinterpret_cast<T *>(inputs[2]->addr);
-  auto g = reinterpret_cast<T *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto l1_scalar = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto l2_scalar = reinterpret_cast<T *>(inputs[7]->addr)[0];
-  int64_t global_step_scalar_int64 = reinterpret_cast<int64_t *>(inputs[8]->addr)[0];
+  auto var = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto ga = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto da = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto g = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto indices = reinterpret_cast<I *>(inputs[4]->device_ptr());
+  auto lr_scalar = reinterpret_cast<T *>(inputs[5]->device_ptr())[0];
+  auto l1_scalar = reinterpret_cast<T *>(inputs[6]->device_ptr())[0];
+  auto l2_scalar = reinterpret_cast<T *>(inputs[7]->device_ptr())[0];
+  int64_t global_step_scalar_int64 = reinterpret_cast<int64_t *>(inputs[8]->device_ptr())[0];
   T global_step_scalar = static_cast<T>(global_step_scalar_int64);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto gs_lr = global_step_scalar * lr_scalar;
   for (size_t i = 0; i < indices_size_; ++i) {

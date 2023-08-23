@@ -279,9 +279,9 @@ int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base
   return KRET_OK;
 }
 
-bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> & /* workspace */,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool SampleDistortedBoundingBoxV2CPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
@@ -318,14 +318,14 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::CheckSDBBExt2(T *inputs0, float *
 }
 
 template <typename T>
-void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<AddressPtr> &inputs,
-                                                              const std::vector<AddressPtr> &outputs) {
-  auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto bounding_boxes = reinterpret_cast<float *>(inputs[kIndex1]->addr);
-  auto min_object_covered = reinterpret_cast<float *>(inputs[kIndex2]->addr);
-  auto begin = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto size = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->addr);
+void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
+  auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto bounding_boxes = reinterpret_cast<float *>(inputs[kIndex1]->device_ptr());
+  auto min_object_covered = reinterpret_cast<float *>(inputs[kIndex2]->device_ptr());
+  auto begin = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto size = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->device_ptr());
   CheckSDBBExt2(image_size, bounding_boxes, min_object_covered, begin, size, bboxes);
 
   const int32_t height = static_cast<int32_t>(image_size[kIndex0]);
@@ -343,7 +343,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
   }
 
   std::vector<Region> boxes;
-  size_t size_bounding_boxes = inputs[kIndex1]->size / sizeof(float);
+  size_t size_bounding_boxes = inputs[kIndex1]->size() / sizeof(float);
   for (size_t b = 0; b < size_bounding_boxes / kShapeSize4; ++b) {
     for (size_t i = 0; i < kShapeSize4; ++i) {
       if (bounding_boxes[b * kShapeSize4 + i] < 0.0 || bounding_boxes[b * kShapeSize4 + i] > 1.0) {

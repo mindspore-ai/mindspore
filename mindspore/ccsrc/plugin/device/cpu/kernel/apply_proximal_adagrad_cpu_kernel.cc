@@ -140,16 +140,16 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return ret;
 }
 
-bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &) {
+bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyProximalAdagradInputsNum, kernel_name_);
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr);
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr());
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->device_ptr());
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
 
   auto task = [this, &var, &accum, &lr, &l1, &l2, &grad](size_t start, size_t end) {
     auto cur_input_elements = end - start;

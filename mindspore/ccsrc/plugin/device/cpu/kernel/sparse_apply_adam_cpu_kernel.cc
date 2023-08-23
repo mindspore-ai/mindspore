@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_apply_adam_cpu_kernel.h"
+#include <limits>
 #include <memory>
 #include <map>
 #include <utility>
@@ -255,29 +256,29 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdamCpuKerne
 }
 
 template <typename T>
-bool SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &) const {
-  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *m = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *v = reinterpret_cast<float *>(inputs[2]->addr);
-  auto beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
+bool SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &) const {
+  auto *var = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *m = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *v = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto beta1_power = reinterpret_cast<float *>(inputs[3]->device_ptr())[0];
   if (std::fabs(beta1_power - 1.0f) <= std::numeric_limits<float>::epsilon()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'beta1_power' can not be 1.";
     return false;
   }
-  auto beta2_power = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  auto lr = reinterpret_cast<float *>(inputs[5]->addr)[0];
-  auto beta1 = reinterpret_cast<float *>(inputs[6]->addr)[0];
-  auto beta2 = reinterpret_cast<float *>(inputs[7]->addr)[0];
-  auto epsilon = reinterpret_cast<float *>(inputs[8]->addr)[0];
-  auto *grad = reinterpret_cast<float *>(inputs[9]->addr);
-  auto *indices = reinterpret_cast<T *>(inputs[10]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
-  auto *m_t = reinterpret_cast<float *>(workspace[4]->addr);
+  auto beta2_power = reinterpret_cast<float *>(inputs[4]->device_ptr())[0];
+  auto lr = reinterpret_cast<float *>(inputs[5]->device_ptr())[0];
+  auto beta1 = reinterpret_cast<float *>(inputs[6]->device_ptr())[0];
+  auto beta2 = reinterpret_cast<float *>(inputs[7]->device_ptr())[0];
+  auto epsilon = reinterpret_cast<float *>(inputs[8]->device_ptr())[0];
+  auto *grad = reinterpret_cast<float *>(inputs[9]->device_ptr());
+  auto *indices = reinterpret_cast<T *>(inputs[10]->device_ptr());
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->device_ptr());
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->device_ptr());
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->device_ptr());
+  auto *m_t = reinterpret_cast<float *>(workspace[4]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});

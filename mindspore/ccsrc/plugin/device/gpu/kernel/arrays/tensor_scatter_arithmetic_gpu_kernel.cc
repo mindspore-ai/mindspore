@@ -122,9 +122,9 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
-bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *update = GetDeviceAddress<T>(inputs, kIndex2);

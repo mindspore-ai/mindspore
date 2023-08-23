@@ -32,8 +32,8 @@ class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   DetTriangleGpuKernelMod() : input_size_(sizeof(T)), output_size_(sizeof(T)) {}
   ~DetTriangleGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -42,7 +42,7 @@ class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     bool host_error_res = false;
-    auto status = CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size / sizeof(T),
+    auto status = CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size() / sizeof(T),
                                 reinterpret_cast<cudaStream_t>(stream_ptr), &host_error_res);
     CHECK_CUDA_STATUS(status, kernel_name_);
     if (!host_error_res) {
@@ -50,7 +50,7 @@ class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                     << "', the elements in the upper half of the matrix should be all 0, fill mode is: " << fill_mode_;
       return false;
     }
-    DetTriangle(input_addr, output_addr, matrix_n_, outputs[0]->size / sizeof(T),
+    DetTriangle(input_addr, output_addr, matrix_n_, outputs[0]->size() / sizeof(T),
                 reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;

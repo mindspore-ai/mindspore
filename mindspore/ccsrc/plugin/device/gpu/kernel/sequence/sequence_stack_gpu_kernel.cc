@@ -84,13 +84,13 @@ int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceStackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SequenceStackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
-  size_t element_num = outputs[0]->size / sizeof(T) / input_num_;
+  size_t element_num = outputs[0]->size() / sizeof(T) / input_num_;
   for (int i = 0; i < input_num_; i++) {
     T *tmp_addr = input_addr + i * element_num;
     inputs_host_[i] = tmp_addr;

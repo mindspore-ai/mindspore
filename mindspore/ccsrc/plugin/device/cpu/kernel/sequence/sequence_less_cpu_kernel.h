@@ -26,8 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SequenceLessCpuKernelMod : public NativeCpuKernelMod,
-                                 public MatchKernelHelper<SequenceLessCpuKernelMod, AddressPtr> {
+class SequenceLessCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SequenceLessCpuKernelMod> {
  public:
   SequenceLessCpuKernelMod() = default;
   ~SequenceLessCpuKernelMod() override = default;
@@ -41,8 +40,8 @@ class SequenceLessCpuKernelMod : public NativeCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -51,8 +50,8 @@ class SequenceLessCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   size_t x_size_ = 0;

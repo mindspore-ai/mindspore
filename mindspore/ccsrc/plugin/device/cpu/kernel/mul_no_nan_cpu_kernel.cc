@@ -94,14 +94,14 @@ const std::vector<std::pair<KernelAttr, MulNoNanCPUKernelMod::KernelRunFunc>> &M
 }
 
 template <typename T>
-void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
-  T *input_addr_0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_addr_1 = static_cast<T *>(inputs[1]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t in0_elements_nums = inputs[0]->size / sizeof(T);
-  size_t in1_elements_nums = inputs[1]->size / sizeof(T);
-  size_t out_size = outputs[0]->size / sizeof(T);
+void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  T *input_addr_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input_addr_1 = static_cast<T *>(inputs[1]->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t in0_elements_nums = inputs[0]->size() / sizeof(T);
+  size_t in1_elements_nums = inputs[1]->size() / sizeof(T);
+  size_t out_size = outputs[0]->size() / sizeof(T);
   size_t type = in0_elements_nums == in1_elements_nums ? 0 : (in0_elements_nums == 1 ? 1 : kNumber2);
 
   auto task = [output_addr, input_addr_0, input_addr_1, type](size_t start, size_t end) {
@@ -143,11 +143,12 @@ void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-void MulNoNanCPUKernelMod::BcastCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  T *input_addr_0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_addr_1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t out_size = outputs[0]->size / sizeof(T);
+void MulNoNanCPUKernelMod::BcastCompute(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  T *input_addr_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input_addr_1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t out_size = outputs[0]->size() / sizeof(T);
   BroadcastIterator base_iter(input0_shape_, input1_shape_, output_shape_);
   auto task = [&base_iter, output_addr, input_addr_0, input_addr_1](size_t start, size_t end) {
     auto iter = base_iter;
@@ -165,10 +166,10 @@ void MulNoNanCPUKernelMod::BcastCompute(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
-  size_t input0_elements_nums = inputs[0]->size / sizeof(T);
-  size_t input1_elements_nums = inputs[1]->size / sizeof(T);
+bool MulNoNanCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
+  size_t input0_elements_nums = inputs[0]->size() / sizeof(T);
+  size_t input1_elements_nums = inputs[1]->size() / sizeof(T);
   bool no_bcast = (input0_shape_ == input1_shape_) || (input0_elements_nums == 1) || (input1_elements_nums == 1);
   if (no_bcast) {
     NoBcastCompute<T>(inputs, outputs);

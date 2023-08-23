@@ -35,8 +35,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &AdaptiveAvgPool2DKernel
 }
 
 template <typename T>
-bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -50,8 +51,9 @@ bool AdaptiveAvgPool2DKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-bool AdaptiveAvgPool2DKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdaptiveAvgPool2DKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   stream_ptr_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }

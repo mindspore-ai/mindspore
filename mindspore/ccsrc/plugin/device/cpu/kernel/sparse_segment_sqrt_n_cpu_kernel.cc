@@ -60,9 +60,9 @@ int SparseSegmentSqrtNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     if (dtype1_ == kNumberTypeInt32) {
       if (dtype2_ == kNumberTypeInt32) {
@@ -113,12 +113,12 @@ bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T1, typename T2, typename T3>
-void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<T3 *>(inputs[kIndex2]->addr);
-  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
+void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<T3 *>(inputs[kIndex2]->device_ptr());
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
 
   if (memset_s(y_addr, y_num_ * sizeof(T1), 0, y_num_ * sizeof(T1)) != EOK) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', failed to memset_s y_addr.";

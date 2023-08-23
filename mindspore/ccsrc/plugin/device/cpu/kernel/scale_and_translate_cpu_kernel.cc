@@ -374,15 +374,15 @@ bool ScaleAndTranslateGradCpuKernelMod::ComputeGradSpans(const KernelType kernel
 }
 
 template <typename T>
-bool ScaleAndTranslateCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool ScaleAndTranslateCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScaleAndTranslateInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScaleAndTranslateOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto input_size = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto input_scale = reinterpret_cast<float *>(inputs[2]->addr);
-  auto input_translation = reinterpret_cast<float *>(inputs[3]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto input_size = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
+  auto input_scale = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto input_translation = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
   KernelType sampling_kernel_type = KernelTypeFromString(kernel_type_);
   const int64_t output_height = IntToLong(input_size[0]);
   const int64_t output_width = IntToLong(input_size[1]);
@@ -436,14 +436,14 @@ bool ScaleAndTranslateCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
 }
 
 template <typename T>
-bool ScaleAndTranslateGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ScaleAndTranslateGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScaleAndTranslateGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScaleAndTranslateGradOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<float *>(inputs[0]->addr);
-  auto input_scale = reinterpret_cast<float *>(inputs[2]->addr);
-  auto input_translation = reinterpret_cast<float *>(inputs[3]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto input_scale = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  auto input_translation = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
   KernelType sampling_kernel_type = KernelTypeFromString(kernel_type_);
 
   const int64_t batch_size = input0_shape_[0];

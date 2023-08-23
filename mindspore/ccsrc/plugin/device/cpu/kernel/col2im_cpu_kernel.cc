@@ -64,14 +64,14 @@ int Col2ImCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCol2ImInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCol2ImOutputsNum, kernel_name_);
 
-  auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   (void)std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), static_cast<T>(0));
 
   const int64_t output_height = static_cast<int64_t>(output_size_ptr[kIndex0]);

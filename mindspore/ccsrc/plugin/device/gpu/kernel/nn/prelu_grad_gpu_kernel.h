@@ -34,8 +34,8 @@ class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
   PReLUGradGpuKernelMod() = default;
   ~PReLUGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -49,12 +49,12 @@ class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using PReLUGradLaunchFunc =
-    std::function<bool(PReLUGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using PReLUGradLaunchFunc = std::function<bool(PReLUGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   PReLUGradLaunchFunc kernel_func_;

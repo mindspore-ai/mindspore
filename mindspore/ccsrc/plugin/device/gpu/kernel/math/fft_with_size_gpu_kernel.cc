@@ -384,8 +384,9 @@ int FFTWithSizeGpuKernelMod::ResizeIRFFT(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool FFTWithSizeGpuKernelMod::LaunchFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FFTWithSizeGpuKernelMod::LaunchFFT(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (!IsValidShape(x_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', "
                   << "the shape of output is invalid, since all the inputs are not ready.";
@@ -407,9 +408,9 @@ bool FFTWithSizeGpuKernelMod::LaunchFFT(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool FFTWithSizeGpuKernelMod::LaunchIFFT(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FFTWithSizeGpuKernelMod::LaunchIFFT(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (!IsValidShape(x_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', "
                   << "the shape of output is invalid, since all the inputs are not ready.";
@@ -431,9 +432,9 @@ bool FFTWithSizeGpuKernelMod::LaunchIFFT(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename S, typename T>
-bool FFTWithSizeGpuKernelMod::LaunchRFFT(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FFTWithSizeGpuKernelMod::LaunchRFFT(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (!IsValidShape(x_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', "
                   << "the shape of output is invalid, since all the inputs are not ready.";
@@ -462,9 +463,9 @@ bool FFTWithSizeGpuKernelMod::LaunchRFFT(const std::vector<AddressPtr> &inputs,
   return true;
 }
 template <typename S, typename T>
-bool FFTWithSizeGpuKernelMod::LaunchIRFFT(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FFTWithSizeGpuKernelMod::LaunchIRFFT(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (!IsValidShape(x_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', "
                   << "the shape of output is invalid, since all the inputs are not ready.";

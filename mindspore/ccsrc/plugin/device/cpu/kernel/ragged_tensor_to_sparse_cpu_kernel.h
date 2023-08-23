@@ -33,8 +33,8 @@ class RaggedTensorToSparseCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
@@ -51,17 +51,18 @@ class RaggedTensorToSparseCpuKernelMod : public NativeCpuKernelMod {
   void ValidateInputs(const std::vector<std::vector<T1>> &input1) const;
 
   template <typename T1, typename T2>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T1>
   void Update(const std::vector<std::vector<T1>> &input1, int64_t *output1_ptr,
               const std::vector<std::vector<int64_t>> &index_suffixes, std::vector<int64_t> index_prefix);
 
   template <typename T2>
-  void OutPutSparseValues(const std::vector<kernel::AddressPtr> &inputs,
-                          const std::vector<kernel::AddressPtr> &workspace,
-                          const std::vector<kernel::AddressPtr> &outputs) const;
+  void OutPutSparseValues(const std::vector<kernel::KernelTensor *> &inputs,
+                          const std::vector<kernel::KernelTensor *> &workspace,
+                          const std::vector<kernel::KernelTensor *> &outputs) const;
 
   template <typename T1>
   void OutPutSparseDenseShape(const std::vector<std::vector<T1>> &input1, int64_t *output3_ptr);

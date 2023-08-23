@@ -75,9 +75,9 @@ int NLLLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool NLLLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool NLLLossGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_device = GetDeviceAddress<T>(inputs, 0);
   T *dloss_device = GetDeviceAddress<T>(inputs, 1);
   int32_t *target_device = GetDeviceAddress<int32_t>(inputs, 2);  // nll_loss_grad only supports int32 target

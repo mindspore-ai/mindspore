@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/layer_norm_grad_gpu_kernel.h"
 #include <algorithm>
+#include <functional>
 #include <numeric>
 #include "mindspore/core/ops/grad/layer_norm_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_grad_impl.cuh"
@@ -92,16 +93,16 @@ int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool LayerNormGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LayerNormGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
-void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto x = GetDeviceAddress<T>(inputs, kLayerNormGradInputXIndex);
   auto dy = GetDeviceAddress<T>(inputs, kLayerNormGradInputDyIndex);
   auto var = GetDeviceAddress<float>(inputs, kLayerNormGradInputVarIndex);

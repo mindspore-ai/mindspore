@@ -119,8 +119,8 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     ParseKernelParam(inputs, stream);
 
@@ -149,8 +149,8 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
 
     // Fill y_dense_shape and y_batch_pointer.
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(y_dense_shape, inputs[InputList::X1_DENSE_SHAPE]->addr, inputs[InputList::X1_DENSE_SHAPE]->size,
-                      cudaMemcpyDeviceToDevice, stream),
+      cudaMemcpyAsync(y_dense_shape, inputs[InputList::X1_DENSE_SHAPE]->device_ptr(),
+                      inputs[InputList::X1_DENSE_SHAPE]->size(), cudaMemcpyDeviceToDevice, stream),
       "cudaMemcpy failed.");
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -176,33 +176,33 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   }
 
  private:
-  void ParseKernelParam(const std::vector<AddressPtr> &inputs, cudaStream_t stream) {
+  void ParseKernelParam(const std::vector<KernelTensor *> &inputs, cudaStream_t stream) {
     // Due to the design of primitive, dense_shape, batch_pointer, alpha, beta are on the device memory, while cusparse
     // requires it on the host. Additional memory copy between host and device will lead to significant performance
     // degradation. However, such an interface can only be compromised.
     auto x1_dense_shape = GetDeviceAddress<int>(inputs, InputList::X1_DENSE_SHAPE);
-    x1_dense_shape_host_.resize(inputs[InputList::X1_DENSE_SHAPE]->size / sizeof(int));
+    x1_dense_shape_host_.resize(inputs[InputList::X1_DENSE_SHAPE]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x1_dense_shape_host_.data(), x1_dense_shape, x1_dense_shape_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x1_batch_pointer = GetDeviceAddress<int>(inputs, InputList::X1_BATCH_POINTER);
-    x1_batch_pointer_host_.resize(inputs[InputList::X1_BATCH_POINTER]->size / sizeof(int));
+    x1_batch_pointer_host_.resize(inputs[InputList::X1_BATCH_POINTER]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x1_batch_pointer_host_.data(), x1_batch_pointer, x1_batch_pointer_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x2_dense_shape = GetDeviceAddress<int>(inputs, InputList::X2_DENSE_SHAPE);
-    x2_dense_shape_host_.resize(inputs[InputList::X2_DENSE_SHAPE]->size / sizeof(int));
+    x2_dense_shape_host_.resize(inputs[InputList::X2_DENSE_SHAPE]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x2_dense_shape_host_.data(), x2_dense_shape, x2_dense_shape_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x2_batch_pointer = GetDeviceAddress<int>(inputs, InputList::X2_BATCH_POINTER);
-    x2_batch_pointer_host_.resize(inputs[InputList::X2_BATCH_POINTER]->size / sizeof(int));
+    x2_batch_pointer_host_.resize(inputs[InputList::X2_BATCH_POINTER]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x2_batch_pointer_host_.data(), x2_batch_pointer, x2_batch_pointer_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),

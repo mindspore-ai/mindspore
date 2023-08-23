@@ -89,9 +89,9 @@ void CompareAndBitpackGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool CompareAndBitpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool CompareAndBitpackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *threshold = GetDeviceAddress<T>(inputs, kIndex1);
   uint8_t *y = GetDeviceAddress<uint8_t>(outputs, kIndex0);

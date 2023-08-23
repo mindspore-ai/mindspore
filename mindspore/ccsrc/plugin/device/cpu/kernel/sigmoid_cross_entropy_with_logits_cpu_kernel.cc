@@ -45,9 +45,9 @@ int SigmoidCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   return KRET_OK;
 }
 
-bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
@@ -60,13 +60,13 @@ bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel:
 }
 
 template <typename T>
-void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) const {
+void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsOutputsNum, kernel_name_);
-  auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *logits_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *labels_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto zero = static_cast<T>(0.0);
   auto one = static_cast<T>(1.0);
   auto two = static_cast<T>(2.0);

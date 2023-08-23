@@ -52,8 +52,8 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   ~ReduceCpuKernelFunc() override = default;
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
@@ -365,15 +365,15 @@ void ReduceCpuKernelFunc<T>::CalAxesAndStride(std::vector<size_t> *axes, size_t 
 }
 
 template <typename T>
-bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
-  size_t input_size = inputs[0]->size / sizeof(T);
-  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t input_size = inputs[0]->size() / sizeof(T);
+  auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (need_skip_execute_) {
-    auto ret = memcpy_s(output_addr, outputs[0]->size, input_addr, inputs[0]->size);
+    auto ret = memcpy_s(output_addr, outputs[0]->size(), input_addr, inputs[0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
     }
@@ -397,7 +397,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
     std::vector<size_t> axes(input_shape_.size());
     CalAxesAndStride(&axes, &stride);
 
-    size_t output_size = outputs[0]->size / sizeof(T);
+    size_t output_size = outputs[0]->size() / sizeof(T);
     if constexpr (std::is_same<T, float>::value) {
       if (simple_execute_) {
         if (axis_[0] == 1) {

@@ -220,12 +220,12 @@ std::vector<int> generate_intervals(float16 random_sample, int input_size, int o
 }
 
 template <typename scalar_t, typename random_sample_t, typename argmax_t>
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                    const std::vector<AddressPtr> &outputs) {
-  auto input_data = reinterpret_cast<scalar_t *>(inputs[0]->addr);
-  auto random_samples_data = reinterpret_cast<random_sample_t *>(inputs[1]->addr);
-  auto output_data = reinterpret_cast<scalar_t *>(outputs[0]->addr);
-  auto argmax_data = reinterpret_cast<argmax_t *>(outputs[1]->addr);
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
+  auto input_data = reinterpret_cast<scalar_t *>(inputs[0]->device_ptr());
+  auto random_samples_data = reinterpret_cast<random_sample_t *>(inputs[1]->device_ptr());
+  auto output_data = reinterpret_cast<scalar_t *>(outputs[0]->device_ptr());
+  auto argmax_data = reinterpret_cast<argmax_t *>(outputs[1]->device_ptr());
 
   if (input_shape_.size() == kDimSize4) {
     auto shard_fractional_max_pool3d_with_fixed_ksize = [&](size_t start, size_t end) {
@@ -314,8 +314,8 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixed
 }
 
 template <typename scalar_t, typename random_sample_t>
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs,
-                                                                            const std::vector<AddressPtr> &outputs,
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<KernelTensor *> &inputs,
+                                                                            const std::vector<KernelTensor *> &outputs,
                                                                             TypeId argmax_type) {
   switch (argmax_type) {
     case kNumberTypeInt32:
@@ -331,7 +331,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(cons
 
 template <typename scalar_t>
 bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(
-  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, TypeId random_samples_type) {
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs, TypeId random_samples_type) {
   switch (random_samples_type) {
     case kNumberTypeFloat16:
       return DoComputeWithArgmaxType<scalar_t, float16>(inputs, outputs, argmax_type_);
@@ -346,9 +346,9 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesTy
   }
 }
 
-bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   switch (input_type_) {

@@ -83,22 +83,22 @@ int BoundingBoxEncodeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool BoundingBoxEncodeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BoundingBoxEncodeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *anchor_addr = GetDeviceAddress<T>(inputs, 0);
   T *groundtruth_addr = GetDeviceAddress<T>(inputs, 1);
   T *deltas_addr = GetDeviceAddress<T>(outputs, 0);
 
-  if (inputs[0]->size != inputs[1]->size) {
+  if (inputs[0]->size() != inputs[1]->size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', anchor box size must equal with groundtruth box size: " << inputs[1]->size << ", but got "
-                  << inputs[0]->size;
+                  << "', anchor box size must equal with groundtruth box size: " << inputs[1]->size() << ", but got "
+                  << inputs[0]->size();
     return false;
   }
 
   const size_t coordinate = 4;
-  const size_t block_size = inputs[0]->size / sizeof(T);
+  const size_t block_size = inputs[0]->size() / sizeof(T);
   if ((block_size % coordinate) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
     return false;

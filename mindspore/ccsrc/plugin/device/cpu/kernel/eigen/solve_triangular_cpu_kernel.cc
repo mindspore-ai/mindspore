@@ -106,14 +106,15 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool SolveTriangularCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SolveTriangularCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 
-  auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   size_t a_batch_size = m_ * m_;
   size_t b_batch_size = m_ * n_;

@@ -48,11 +48,42 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  if (functor_ == nullptr) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape func pointer is nullptr";
+    return false;
+  }
+  if (inputs.size() != inputs_size_.size() || inputs.size() != inputs_type_.size()) {
+    MS_LOG(ERROR)
+      << "For '" << kernel_name_
+      << "', inputs address list size must be equal to inputs shape list size and inputs dtype list size, but got "
+      << inputs.size() << " vs " << inputs_size_.size() << " vs " << inputs_type_.size();
+    return false;
+  }
+
+  ShapeArray args;
+  args.reserve(inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (inputs_type_.at(i) == kNumberTypeInt32) {
+      auto input_addr = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
+      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
+    } else {
+      auto input_addr = reinterpret_cast<int64_t *>(inputs[i]->device_ptr());
+      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
+    }
+  }
+  outs_shape_ = functor_->Calc(args);
+  if (outputs.size() != outs_shape_.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', outputs address list size must be equal to the number of outputs of shape func, but got "
+                  << outputs.size() << " vs " << outs_shape_.size();
+    return false;
+  }
+
   for (size_t i = 0; i < outputs.size(); ++i) {
-    auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->addr);
+    auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->device_ptr());
     for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
       output_addr[j] = outs_shape_[i][j];
     }

@@ -30,8 +30,8 @@ void EnvironDestroyAllCpuKernelMod::InitKernel(const CNodePtr &node) {
   output_size_list_.push_back(sizeof(bool));
 }
 
-bool EnvironDestroyAllCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &) {
+bool EnvironDestroyAllCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &) {
   MS_LOG(INFO) << "Clear the global environ data.";
   // Clear the global data which are generated in the kernel running.
   EnvironMgr::GetInstance().Clear();

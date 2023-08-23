@@ -84,9 +84,9 @@ int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs) {
   auto dy = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(dy);
   auto dx = GetDeviceAddress<T>(outputs, kIndex0);

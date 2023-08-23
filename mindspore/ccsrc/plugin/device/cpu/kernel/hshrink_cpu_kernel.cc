@@ -67,13 +67,13 @@ int HShrinkCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return static_cast<int>(KRET_OK);
 }
 
-bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs) {
+bool HShrinkCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  auto *input = reinterpret_cast<float *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto *output = reinterpret_cast<float *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   auto task = [input, output, this](size_t start, size_t end) {

@@ -40,8 +40,8 @@ class ScatterNdCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -55,9 +55,10 @@ class ScatterNdCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using ScatterNdFunc = std::function<bool(ScatterNdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using ScatterNdFunc = std::function<bool(ScatterNdCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ScatterNdFunc>> func_list_;
   ScatterNdFunc kernel_func_;
 

@@ -66,11 +66,11 @@ int ResizeNearestNeighborCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+bool ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   if (out_height_ == in_height_ && out_width_ == in_width_) {
     for (size_t i = 0; i < output_size_; ++i) {

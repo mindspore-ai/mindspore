@@ -20,9 +20,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

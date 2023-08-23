@@ -100,9 +100,9 @@ int PadV3GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename S>
-bool PadV3GradCpuKernelMod::GetPaddings(const std::vector<AddressPtr> &inputs) {
+bool PadV3GradCpuKernelMod::GetPaddings(const std::vector<KernelTensor *> &inputs) {
   // get paddings
-  auto paddings_arg = static_cast<S *>(inputs[1]->addr);
+  auto paddings_arg = static_cast<S *>(inputs[1]->device_ptr());
   if (paddings_num_ == 1) {
     paddings_num_ = k2Num * (input_dim_ - k2Num);
     for (int64_t i = 0; i < paddings_num_; ++i) {
@@ -214,8 +214,8 @@ int64_t PadV3GradCpuKernelMod::IndexCalculate(int64_t pad_value, int64_t pad_end
 }
 
 template <typename T, typename S>
-bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (!GetPaddings<S>(inputs)) {
     MS_LOG(EXCEPTION) << "get paddings failed";
   }
@@ -245,8 +245,8 @@ bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
     output_num_ *= output_shape_[i];
   }
 
-  auto input = static_cast<T *>(inputs[0]->addr);
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   if (dtype_ == kNumberTypeComplex64 || dtype_ == kNumberTypeComplex128) {
     for (size_t i = 0; i < LongToSize(output_num_); ++i) {

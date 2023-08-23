@@ -64,9 +64,9 @@ int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   auto indices_ptr = GetDeviceAddress<IndexType>(inputs, kIndex0);
@@ -80,7 +80,7 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto sum_count_ptr = GetDeviceAddress<int64_t>(workspace, kIndex0);
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kIndex0)->size, cuda_stream),
+    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kIndex0)->size(), cuda_stream),
     "For SparseSlice, failed to cudaMemset.");
 
   bool is_nullptr = (indices_ptr == nullptr) || (values_ptr == nullptr) || (x_ptr == nullptr) ||

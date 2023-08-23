@@ -140,12 +140,12 @@ int MirrorPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T1, typename T2>
-bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &workspace,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->device_ptr());
 
   const int64_t padd_dim = num_paddings_;
   const int64_t mode = mode_;

@@ -95,9 +95,9 @@ void FakeQuantPerChannelGradGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // max in channel
 }
 
-bool FakeQuantPerChannelGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeQuantPerChannelGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

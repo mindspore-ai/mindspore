@@ -36,20 +36,19 @@ bool NextAfterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kNextAfterInputsNum || outputs.size() != kNextAfterOutputsNum) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
-  T *x1 = GetDeviceAddress<T>(inputs, kIndex0);
-  T *x2 = GetDeviceAddress<T>(inputs, kIndex1);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  T *x1 = static_cast<T *>(inputs[0]->device_ptr());
+  T *x2 = static_cast<T *>(inputs[1]->device_ptr());
+  T *output = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(output);
-
-  size_t elem_num = inputs[0]->size / sizeof(T);
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = nextafter(x1[i], x2[i]);

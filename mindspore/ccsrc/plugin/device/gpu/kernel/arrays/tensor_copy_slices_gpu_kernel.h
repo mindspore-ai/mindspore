@@ -41,8 +41,8 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   TensorCopySlicesGpuKernelMod() : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false) {}
   ~TensorCopySlicesGpuKernelMod() {}
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -51,7 +51,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "TensorCopySlices cudaMemcpyAsync outputs failed");
     auto status = CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,

@@ -37,8 +37,8 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
   SparseApplyProximalAdagradKernelMod() = default;
   ~SparseApplyProximalAdagradKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *learning_rate = GetDeviceAddress<T>(inputs, 2);
@@ -50,7 +50,7 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
 
     auto status = CalSparseApplyProximalAdagrad(
-      inputs[0]->size / sizeof(T), indices_size_, learning_rate, l1_regularization, l2_regularization, gradient,
+      inputs[0]->size() / sizeof(T), indices_size_, learning_rate, l1_regularization, l2_regularization, gradient,
       indices, variable, accumulation, variable_out, accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;

@@ -34,8 +34,8 @@ constexpr int kIndexRevrseH = -2;
 constexpr int kIndexRevrseD = -3;
 
 template <typename T, typename S>
-bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
+bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

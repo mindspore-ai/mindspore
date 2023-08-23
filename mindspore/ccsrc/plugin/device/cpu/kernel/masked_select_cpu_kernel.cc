@@ -70,13 +70,13 @@ int MaskedSelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectOutputsNum, kernel_name_);
-  auto x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto mask = GetDeviceAddress<bool>(inputs, kIndex1);
-  auto y = GetDeviceAddress<T>(outputs, kIndex0);
+  auto x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto mask = reinterpret_cast<bool *>(inputs[1]->device_ptr());
+  auto y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(mask);
   MS_EXCEPTION_IF_NULL(y);

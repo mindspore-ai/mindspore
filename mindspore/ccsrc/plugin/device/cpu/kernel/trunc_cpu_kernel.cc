@@ -60,9 +60,9 @@ int TruncCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool TruncCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool TruncCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &workspace,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncOutputsNum, kernel_name_);
@@ -84,9 +84,10 @@ bool TruncCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-bool TruncCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  T *output_0_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+bool TruncCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  T *output_0_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
   auto task = std::bind(Trunc<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
   if (input_size_ <= kSizeGapMin) {
     Trunc(input_0_addr, output_0_addr, 0, input_size_ * kTruncInputsNum);

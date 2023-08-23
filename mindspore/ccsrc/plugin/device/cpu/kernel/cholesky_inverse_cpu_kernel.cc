@@ -47,11 +47,11 @@ int CholeskyInverseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   using MatrixXd = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   Eigen::Map<MatrixXd> A(input_x0, input_dim_0_, input_dim_0_);
   MatrixXd result;

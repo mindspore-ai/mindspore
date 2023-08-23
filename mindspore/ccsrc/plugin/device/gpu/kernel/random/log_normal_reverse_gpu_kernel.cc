@@ -23,9 +23,9 @@ const uint32_t kNumInput = 1;
 const uint32_t kNumOutput = 1;
 }  // namespace
 
-bool LogNormalReverseGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool LogNormalReverseGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                          const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNumInput, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNumOutput, kernel_name_);
   stream_ptr_ = stream_ptr;
@@ -123,20 +123,20 @@ void LogNormalReverseGpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-bool LogNormalReverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool LogNormalReverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr_);
 
   if (output_dtype_ == kNumberTypeFloat32) {
     float *output = GetDeviceAddress<float>(outputs, kIndex0);
-    size_t elem_num = inputs[0]->size / sizeof(float);
+    size_t elem_num = inputs[0]->size() / sizeof(float);
 
     CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateLogNormal(mask_generator_, output, elem_num, input_mean_, input_std_),
                                  "Failed to generate lognormal");
   } else if (output_dtype_ == kNumberTypeFloat64) {
     double *output = GetDeviceAddress<double>(outputs, kIndex0);
-    size_t elem_num = inputs[0]->size / sizeof(double);
+    size_t elem_num = inputs[0]->size() / sizeof(double);
 
     CHECK_CURAND_RET_WITH_EXCEPT(
       curandGenerateLogNormalDouble(mask_generator_, output, elem_num, input_mean_, input_std_),
@@ -145,7 +145,7 @@ bool LogNormalReverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     half *input = GetDeviceAddress<half>(inputs, kIndex0);
     half *output = GetDeviceAddress<half>(outputs, kIndex0);
     float *mask_h = GetDeviceAddress<float>(workspace, kDim0);
-    size_t elem_num = inputs[0]->size / sizeof(half);
+    size_t elem_num = inputs[0]->size() / sizeof(half);
 
     CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateLogNormal(mask_generator_, mask_h, elem_num, input_mean_, input_std_),
                                  "Failed to generate lognormal");

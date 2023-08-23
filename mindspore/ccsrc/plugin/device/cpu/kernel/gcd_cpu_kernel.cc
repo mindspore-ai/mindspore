@@ -60,13 +60,13 @@ int GcdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  const T *x1 = GetDeviceAddress<T>(inputs, kIndex0);
+bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  const T *x1 = static_cast<const T *>(inputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x1);
-  const T *x2 = GetDeviceAddress<T>(inputs, kIndex1);
+  const T *x2 = static_cast<const T *>(inputs[kIndex1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x2);
-  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+  T *y = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(y);
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);

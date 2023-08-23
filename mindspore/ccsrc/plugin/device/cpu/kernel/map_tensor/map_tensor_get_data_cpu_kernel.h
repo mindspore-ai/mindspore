@@ -44,15 +44,15 @@ class MapTensorGetDataCpuKernelMod : public MapTensorCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_launch_func_(this, inputs, workspace, outputs);
   }
 
  private:
   template <typename KeyType, typename ValueType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape);
 
@@ -60,8 +60,8 @@ class MapTensorGetDataCpuKernelMod : public MapTensorCpuKernelMod {
   size_t output_value_type_size_{0};
 
   using MapTensorGetDataLaunchFunc =
-    std::function<bool(MapTensorGetDataCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &)>;
+    std::function<bool(MapTensorGetDataCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MapTensorGetDataLaunchFunc>> map_tensor_get_data_func_list_;
   MapTensorGetDataLaunchFunc kernel_launch_func_;
 };

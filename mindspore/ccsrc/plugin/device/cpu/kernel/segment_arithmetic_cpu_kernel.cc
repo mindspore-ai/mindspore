@@ -193,9 +193,9 @@ std::vector<KernelAttr> SegmentArithmeticCPUKernelMod::GetOpSupport() {
 }
 
 template <typename T1, typename T2>
-bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   if (kernel_name_ == prim::kPrimSegmentMax->name() || kernel_name_ == prim::kPrimSegmentMin->name()) {
     if constexpr (std::is_same_v<T1, std::complex<float>>) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', input_x types can not be complex64.";
@@ -207,9 +207,9 @@ bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
     return ret;
   }
   T1 init_value = GetInitValue<T1>();
-  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->device_ptr());
   std::vector<int64_t> segments = CPUKernelUtils::CalcSegmentIds(segment_ids_data_addr, segment_ids_num_);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = init_value;

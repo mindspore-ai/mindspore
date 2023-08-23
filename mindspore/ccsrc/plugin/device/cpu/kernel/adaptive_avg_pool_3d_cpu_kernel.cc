@@ -149,8 +149,8 @@ CTask AdaptiveAvgPool3DOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
 }
 
 template <typename SCALAR_T>
-bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto input_size_iter = input_dim_sizes_.rbegin();
@@ -163,10 +163,10 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
   }
 
   size_t input_dims = input_dim_sizes_.size();
-  auto input_x = static_cast<SCALAR_T *>(inputs[0]->addr);
+  auto input_x = static_cast<SCALAR_T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_x);
 
-  auto output_y = static_cast<SCALAR_T *>(outputs[0]->addr);
+  auto output_y = static_cast<SCALAR_T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
 
   AdaptiveCalcArgs<SCALAR_T> args;

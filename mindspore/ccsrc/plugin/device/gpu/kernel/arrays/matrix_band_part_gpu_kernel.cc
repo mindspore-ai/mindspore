@@ -180,13 +180,13 @@ bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
 }
 
 template <typename T, typename LU>
-bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  const auto x_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto x_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
   // Both the lower and upper have done the type check in C++ primitive.
-  const auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->addr);
-  const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  const auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->device_ptr());
+  const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->device_ptr());
+  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   if (need_broadcast_) {
     auto status = MatrixBandPartBroadcast(
       output_element_num_, broadcast_x_shape_, broadcast_lower_shape_, broadcast_upper_shape_, broadcast_output_shape_,

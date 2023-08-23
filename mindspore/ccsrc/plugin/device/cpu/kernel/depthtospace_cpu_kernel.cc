@@ -60,8 +60,8 @@ int DepthToSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDepthToSpaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDepthToSpaceOutputsNum, kernel_name_);
   auto input_rank = input_shape_.size();
@@ -69,9 +69,9 @@ bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input should have a rank of 4, but got input of rank "
                       << input_rank;
   }
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t size = inputs[0]->size / sizeof(T);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t size = inputs[0]->size() / sizeof(T);
   auto input_shape = input_shape_;
   auto output_shape = output_shape_;
   size_t block_size = block_size_;

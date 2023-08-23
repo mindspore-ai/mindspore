@@ -40,18 +40,19 @@ class DiagGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_launch_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
  private:
   template <typename DataType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using DiagLaunchFunc = std::function<bool(DiagGpuKernelMod *, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  using DiagLaunchFunc =
+    std::function<bool(DiagGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, DiagLaunchFunc>> diag_func_list_;
   DiagLaunchFunc kernel_launch_func_;
 

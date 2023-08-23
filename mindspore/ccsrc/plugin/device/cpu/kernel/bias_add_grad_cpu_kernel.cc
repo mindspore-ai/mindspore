@@ -57,18 +57,20 @@ int BiasAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return ret;
 }
 
-bool BiasAddGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool BiasAddGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddGradOutputsNum, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
-bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   if (data_format_ == "NHWC") {
     int64_t input_shape_size = SizeToLong(input_shape_.size());

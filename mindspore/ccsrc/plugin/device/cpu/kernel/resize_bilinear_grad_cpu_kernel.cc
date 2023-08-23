@@ -284,36 +284,36 @@ int ResizeBilinearGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
   auto input_addr_T = GetDeviceAddress<float16>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input_addr_T);
 
-  size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t input_mem_size = inputs[0]->size() / sizeof(float16) * sizeof(float);
   float *float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_dloss_addr == NULL) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  for (size_t i = 0; i < ((inputs[0]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[0]->size()) / sizeof(float16)); ++i) {
     float_dloss_addr[i] = static_cast<float>(input_addr_T[i]);
   }
 
-  size_t output_mem_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t output_mem_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   float *float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
   if (float_output_addr == NULL) {
     free(float_dloss_addr);
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  size_t memset_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t memset_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   if (memset_s(float_output_addr, memset_size, 0, memset_size) != EOK) {
     free(float_dloss_addr);
     free(float_output_addr);
@@ -334,12 +334,12 @@ bool ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel(const std::vector<kerne
 }
 
 template <typename T>
-bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   auto float_dloss_addr = GetDeviceAddress<T>(inputs, kIndex0);

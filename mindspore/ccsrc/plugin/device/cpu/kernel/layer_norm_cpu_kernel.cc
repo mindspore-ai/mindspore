@@ -95,9 +95,9 @@ int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormOutputsNum, kernel_name_);
   kernel_func_(this, inputs, outputs);
@@ -105,22 +105,22 @@ bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 template <typename T>
-void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void LayerNormCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   size_t f_size = sizeof(T);
-  if (inputs[kLayerNormInputGammaIndex]->size != f_size * param_num_ ||
-      inputs[kLayerNormInputBetaIndex]->size != f_size * param_num_) {
+  if (inputs[kLayerNormInputGammaIndex]->size() != f_size * param_num_ ||
+      inputs[kLayerNormInputBetaIndex]->size() != f_size * param_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << param_num_;
   }
-  if (outputs[kLayerNormOutputMeanIndex]->size != outputs[kLayerNormOutputVarIndex]->size) {
+  if (outputs[kLayerNormOutputMeanIndex]->size() != outputs[kLayerNormOutputVarIndex]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of mean and var's shape must be " << block_num_;
   }
-  auto x = GetDeviceAddress<T>(inputs, kLayerNormInputXIndex);
-  auto gamma = GetDeviceAddress<T>(inputs, kLayerNormInputGammaIndex);
-  auto beta = GetDeviceAddress<T>(inputs, kLayerNormInputBetaIndex);
-  auto y = GetDeviceAddress<T>(outputs, kLayerNormOutputYIndex);
-  auto mean = GetDeviceAddress<float>(outputs, kLayerNormOutputMeanIndex);
-  auto var = GetDeviceAddress<float>(outputs, kLayerNormOutputVarIndex);
+  auto x = reinterpret_cast<T *>(inputs[kLayerNormInputXIndex]->device_ptr());
+  auto gamma = reinterpret_cast<T *>(inputs[kLayerNormInputGammaIndex]->device_ptr());
+  auto beta = reinterpret_cast<T *>(inputs[kLayerNormInputBetaIndex]->device_ptr());
+  auto y = reinterpret_cast<T *>(outputs[kLayerNormOutputYIndex]->device_ptr());
+  auto mean = reinterpret_cast<float *>(outputs[kLayerNormOutputMeanIndex]->device_ptr());
+  auto var = reinterpret_cast<float *>(outputs[kLayerNormOutputVarIndex]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(gamma);
   MS_EXCEPTION_IF_NULL(beta);

@@ -133,19 +133,19 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived> &A, const 
 }
 
 template <typename T>
-bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &workspace,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixExpInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixExpOutputsNum, kernel_name_);
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int64_t m = SizeToLong(*(input_shape_.end() - 1));
   int64_t size_mm = m * m;
   MatrixXd<T> I(m, m);
   Eigen::Map<MatrixXd<T>> map_I(I.data(), m, m);
   (void)I.setIdentity();
-  int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
+  int64_t total = SizeToLong(inputs[0]->size() / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, &map_I, m](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

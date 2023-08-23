@@ -80,8 +80,8 @@ class BroadcastOptGpuKernelMod : public NativeGpuKernelMod {
   explicit BroadcastOptGpuKernelMod(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   ~BroadcastOptGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -99,10 +99,10 @@ class BroadcastOptGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <BinaryOpType op, typename In0, typename In1, typename OUT>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
-  using BroadCastFunc = std::function<bool(BroadcastOptGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
+  using BroadCastFunc = std::function<bool(BroadcastOptGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &)>;
 
   BinaryOpType op_type_;
   bool is_broadcast_;

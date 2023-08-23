@@ -63,7 +63,7 @@ class AbstractConvolutionGpuKernel {
   }
   template <typename T>
   bool LaunchKernel(const ConvolutionArgs &conv_args, const T *input0_addr, const T *input1_addr, T *output_addr,
-                    const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                    const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
     switch (conv_type_) {
       case ConvType::kForward:
         return LaunchForward(conv_args, input0_addr, input1_addr, output_addr, workspace, stream_ptr);
@@ -94,11 +94,11 @@ class AbstractConvolutionGpuKernel {
                                 std::vector<size_t> *workspace_size_list) = 0;
 
   virtual bool LaunchForward(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                             void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                             void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   virtual bool LaunchInputGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                               void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                               void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   virtual bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                                void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                                void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   ConvType conv_type_;
   std::string kernel_name_;
 };

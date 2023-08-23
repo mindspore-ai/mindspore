@@ -42,8 +42,8 @@ class MatrixDiagPartV3GpuKernelMod : public NativeGpuKernelMod, public MatchKern
 
   using IndexType = int32_t;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -60,8 +60,8 @@ class MatrixDiagPartV3GpuKernelMod : public NativeGpuKernelMod, public MatchKern
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   int64_t k_size_{0};
   int64_t num_cols_{0};

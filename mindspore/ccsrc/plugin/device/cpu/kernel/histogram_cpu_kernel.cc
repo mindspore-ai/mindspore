@@ -53,8 +53,8 @@ bool HistogramCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool HistogramCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
   // Benchmarking framework only support float32 and float64
   // To meet precision requirements, cast float16 or int32 to float32
   switch (x_type_) {
@@ -79,14 +79,14 @@ bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 }
 
 template <typename T, typename InterType>
-void HistogramCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  if (inputs[kIndex0]->size == 0) {
+void HistogramCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (inputs[kIndex0]->size() == 0) {
     return;
   }
-  auto x_data = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto y_data = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
-  size_t x_num = inputs[kIndex0]->size / sizeof(T);
+  auto x_data = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto y_data = reinterpret_cast<int32_t *>(outputs[kIndex0]->device_ptr());
+  size_t x_num = inputs[kIndex0]->size() / sizeof(T);
   const int32_t y_num = LongToInt(bins_);
   // initial y as all zero
   std::fill(y_data, y_data + y_num, 0);

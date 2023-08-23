@@ -29,8 +29,8 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
   XlogyCpuKernelMod() { ResetResource(); }
   ~XlogyCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -53,8 +53,9 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   std::vector<size_t> index_listx_{};
   std::vector<size_t> index_listy_{};
   bool is_need_broadcast_{false};

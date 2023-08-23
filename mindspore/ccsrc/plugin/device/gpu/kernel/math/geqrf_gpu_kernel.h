@@ -43,8 +43,8 @@ class GeqrfGpuKernelMod : public NativeGpuKernelMod {
   GeqrfGpuKernelMod() { ResetResource(); }
   ~GeqrfGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -71,8 +71,8 @@ class GeqrfGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void RunGeqrf(const size_t m, const size_t n, T *d_a, int *dev_info, T *d_output_y, T *output_tau);
   template <typename T>
@@ -80,8 +80,8 @@ class GeqrfGpuKernelMod : public NativeGpuKernelMod {
   void CheckResult(int *dev_info);
 
   using LaunchKernelFunc =
-    std::function<bool(GeqrfGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(GeqrfGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   using InitSizeListsFunc = std::function<void(GeqrfGpuKernelMod *)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
   InitSizeListsFunc init_lists_func_{nullptr};

@@ -43,8 +43,8 @@ size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_
 }  // namespace
 
 template <typename T>
-void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs,
+void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs,
                                                    const float16 *scale_addr_half, const float *scale_addr_float,
                                                    size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
@@ -57,7 +57,7 @@ void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
     x1 = static_cast<T>(*scale_addr_float);
   }
 
-  size_t lens = outputs[index]->size > 0 ? static_cast<size_t>(outputs[index]->size / sizeof(T)) : 1;
+  size_t lens = outputs[index]->size() > 0 ? static_cast<size_t>(outputs[index]->size() / sizeof(T)) : 1;
   auto task = [input_addr, x1, output_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       output_addr[i] = input_addr[i] * x1;
@@ -66,8 +66,9 @@ void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr>
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
-bool ScaleGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool ScaleGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   float16 *scale_addr_half = nullptr;
   float *scale_addr_float = nullptr;
   if (input_info_.back() == kNumberTypeFloat16) {

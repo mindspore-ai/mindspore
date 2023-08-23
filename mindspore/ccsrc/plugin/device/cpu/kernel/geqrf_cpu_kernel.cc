@@ -140,14 +140,14 @@ void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
 }
 
 template <typename T>
-bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex1]);
-  T *x = static_cast<T *>(inputs[kInputIndex0]->addr);
-  T *y = static_cast<T *>(outputs[kOutputIndex0]->addr);
-  T *tau = static_cast<T *>(outputs[kOutputIndex1]->addr);
+  T *x = static_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *y = static_cast<T *>(outputs[kOutputIndex0]->device_ptr());
+  T *tau = static_cast<T *>(outputs[kOutputIndex1]->device_ptr());
   std::copy(x, x + elem_num, y);
   Geqrf<T>(num_m, num_n, y, tau);
   return true;

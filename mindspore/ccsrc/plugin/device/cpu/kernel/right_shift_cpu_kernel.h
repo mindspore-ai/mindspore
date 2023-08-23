@@ -36,8 +36,8 @@ class RightShiftCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -48,9 +48,9 @@ class RightShiftCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector input_shape_2_;
   ShapeVector output_shape_;
   template <typename T>
-  bool IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool IntCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  bool UIntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool UIntCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

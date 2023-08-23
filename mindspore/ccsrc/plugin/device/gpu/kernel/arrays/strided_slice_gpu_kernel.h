@@ -31,8 +31,8 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
   StridedSliceGpuKernelMod() = default;
   ~StridedSliceGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (null_output_) {
       return true;
     }
@@ -52,12 +52,12 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
 
  protected:
   template <typename T, typename S = int64_t>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using StridedSliceFunc =
-    std::function<bool(StridedSliceGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using StridedSliceFunc = std::function<bool(StridedSliceGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, StridedSliceFunc>> func_list_;
   StridedSliceFunc kernel_func_;
 

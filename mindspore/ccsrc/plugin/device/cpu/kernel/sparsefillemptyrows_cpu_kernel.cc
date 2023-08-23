@@ -108,23 +108,23 @@ void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, kernel_name_);
-  auto indices_ptr = reinterpret_cast<int64_t *>(inputs[0]->addr);
+  auto indices_ptr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
   Eigen::DSizes<Eigen::DenseIndex, kIndex2> indices_size(EIGEN_SHAPE_CAST0(kInput_indices),
                                                          EIGEN_SHAPE_CAST1(kInput_indices));
   Eigen::TensorMap<Eigen::Tensor<int64_t, kIndex2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> a_indices(
     indices_ptr, indices_size);
-  auto values_ptr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  const auto *default_value = reinterpret_cast<T *>(inputs[3]->addr);
+  auto values_ptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
+  const auto *default_value = reinterpret_cast<T *>(inputs[3]->device_ptr());
   const int64_t N = AnfAlgo::GetInputDeviceShape(node_ptr, kInput_indices)[0];
   const int64_t dense_rows = dense_shape_ptr[0];
   int64_t rank = AnfAlgo::GetInputDeviceShape(node_ptr, kInput_indices)[1];
-  auto output_empty_row_indicator_ptr = reinterpret_cast<bool *>(outputs[kOutput_empty_row_indicator]->addr);
-  auto output_reverse_index_map_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_reverse_index_map]->addr);
+  auto output_empty_row_indicator_ptr = reinterpret_cast<bool *>(outputs[kOutput_empty_row_indicator]->device_ptr());
+  auto output_reverse_index_map_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_reverse_index_map]->device_ptr());
   ShapeVector out_indcie_shape;
   ShapeVector out_values_shape;
   ShapeVector out_empty_row_indicator_shape;
@@ -169,7 +169,7 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   out_indcie_shape.push_back(scratch[dense_rows - 1]);
   out_indcie_shape.push_back(rank);
   out_values_shape.push_back(scratch[dense_rows - 1]);
-  auto output_y_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_y_indices]->addr);
+  auto output_y_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_y_indices]->device_ptr());
   auto ret1 = memset_s(output_y_indices_ptr, scratch[dense_rows - 1] * rank * sizeof(int64_t), 0,
                        scratch[dense_rows - 1] * rank * sizeof(int64_t));
   if (ret1 != EOK) {
@@ -179,7 +179,7 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     static_cast<Eigen::DenseIndex>(scratch[dense_rows - 1]), static_cast<Eigen::DenseIndex>(rank));
   Eigen::TensorMap<Eigen::Tensor<int64_t, kIndex2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned>
     a_output_y_indices(output_y_indices_ptr, output_y_indices_size);
-  auto output_y_values_ptr = reinterpret_cast<T *>(outputs[kOutput_y_values]->addr);
+  auto output_y_values_ptr = reinterpret_cast<T *>(outputs[kOutput_y_values]->device_ptr());
   for (int64_t i = 0; i < scratch[dense_rows - 1]; ++i) {
     output_y_values_ptr[i] = (*default_value);
   }
@@ -230,9 +230,9 @@ std::vector<KernelAttr> SparseFillEmptyRowsCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SparseFillEmptyRowsCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SparseFillEmptyRowsCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   bool ret = false;
   auto data_type = AnfAlgo::GetInputDeviceDataType(node_ptr, kInput_values);
   switch (data_type) {

@@ -50,9 +50,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &Conv2dFilterGradGpuKern
   return func_list;
 }
 
-bool Conv2dFilterGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool Conv2dFilterGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   stream_ptr_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }
@@ -101,9 +101,9 @@ int Conv2dFilterGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool Conv2dFilterGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool Conv2dFilterGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *x = GetDeviceAddress<T>(inputs, 1);
   T *dw = GetDeviceAddress<T>(outputs, 0);

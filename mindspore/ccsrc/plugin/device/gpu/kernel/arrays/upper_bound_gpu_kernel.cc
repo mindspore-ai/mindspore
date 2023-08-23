@@ -94,9 +94,9 @@ int UpperBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool UpperBoundGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool UpperBoundGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *sorted_x = GetDeviceAddress<T>(inputs, 0);
   T *values = GetDeviceAddress<T>(inputs, 1);
   S *output = GetDeviceAddress<S>(outputs, 0);

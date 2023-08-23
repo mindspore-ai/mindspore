@@ -70,9 +70,9 @@ void TrilIndicesGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool TrilIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool TrilIndicesGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output);
   if (tril_size_ > 0) {

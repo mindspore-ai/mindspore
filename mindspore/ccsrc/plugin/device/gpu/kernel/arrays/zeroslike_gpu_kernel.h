@@ -32,8 +32,8 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
   ZerosLikeGpuKernelMod() = default;
   ~ZerosLikeGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -45,11 +45,11 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using ZerosLikeLaunchFunc =
-    std::function<bool(ZerosLikeGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using ZerosLikeLaunchFunc = std::function<bool(ZerosLikeGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &, void *)>;
   ZerosLikeLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ZerosLikeLaunchFunc>> func_list_;
 };

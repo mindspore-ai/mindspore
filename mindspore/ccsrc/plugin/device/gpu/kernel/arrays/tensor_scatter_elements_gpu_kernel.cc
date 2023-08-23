@@ -195,9 +195,9 @@ int TensorScatterElementsGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool TensorScatterElementsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorScatterElementsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);

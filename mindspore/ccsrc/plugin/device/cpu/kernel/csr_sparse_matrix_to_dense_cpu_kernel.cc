@@ -56,9 +56,9 @@ int CSRSparseMatrixToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   return KRET_OK;
 }
 
-bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToDenseOutputsNum, kernel_name_);
   switch (indices_type) {
@@ -118,16 +118,16 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::Addres
 void CSRSparseMatrixToDenseCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
 
 template <typename indiceT, typename valueT>
-void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
+void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   const size_t shift = (rank_ == kDefaultRank) ? kZero : kOne;
-  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift));
-  num_cols_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift + kOne));
-  indiceT *batch_ptrs = static_cast<indiceT *>(inputs[kInputIndex1]->addr);
-  indiceT *row_ptrs = static_cast<indiceT *>(inputs[kInputIndex2]->addr);
-  indiceT *col_ind = static_cast<indiceT *>(inputs[kInputIndex3]->addr);
-  valueT *values = static_cast<valueT *>(inputs[kInputIndex4]->addr);
-  valueT *y_data = static_cast<valueT *>(outputs[kOutputIndex]->addr);
+  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->device_ptr()) + shift));
+  num_cols_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->device_ptr()) + shift + kOne));
+  indiceT *batch_ptrs = static_cast<indiceT *>(inputs[kInputIndex1]->device_ptr());
+  indiceT *row_ptrs = static_cast<indiceT *>(inputs[kInputIndex2]->device_ptr());
+  indiceT *col_ind = static_cast<indiceT *>(inputs[kInputIndex3]->device_ptr());
+  valueT *values = static_cast<valueT *>(inputs[kInputIndex4]->device_ptr());
+  valueT *y_data = static_cast<valueT *>(outputs[kOutputIndex]->device_ptr());
   for (size_t batch_idx = kZero; batch_idx < batch_size_; batch_idx++) {
     const size_t dense_offset = batch_idx * num_rows_ * num_cols_;
     for (size_t i = kZero; i < num_rows_ * num_cols_; ++i) {

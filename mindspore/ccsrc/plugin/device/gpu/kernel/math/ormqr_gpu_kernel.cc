@@ -107,9 +107,10 @@ void OrmqrGpuKernelMod::RunOrmqr(T *d_x, T *tau, T *d_other, int *info) {
 }
 
 template <typename T>
-bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
-  if (outputs[0]->size == 0) {
+bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (outputs[0]->size() == 0) {
     return true;
   }
   CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),

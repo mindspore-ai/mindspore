@@ -73,8 +73,8 @@ void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool ShiftCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size()
                       << " input(s).";
@@ -83,21 +83,21 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << " output(s).";
   }
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto fill_value = reinterpret_cast<T *>(inputs[1]->addr)[0];
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto fill_value = reinterpret_cast<T *>(inputs[1]->device_ptr())[0];
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  if (outputs[0]->size != inputs[0]->size) {
+  if (outputs[0]->size() != inputs[0]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the memory size of output must be equal to the memory size "
                          "of the first input, but got the memory size of output: "
-                      << outputs[0]->size << " and the memory size of the first input: " << inputs[0]->size;
+                      << outputs[0]->size() << " and the memory size of the first input: " << inputs[0]->size();
   }
 
   // if periods_ is 0, do nothing
   if (periods_ == 0) {
     // directly copy input to output
-    auto ret = memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
+    auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed";
     }
@@ -114,7 +114,7 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     return true;
   }
 
-  if (inputs[0]->size != LongToSize(outer_size * axis_size * inner_size) * sizeof(T)) {
+  if (inputs[0]->size() != LongToSize(outer_size * axis_size * inner_size) * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory size of inputs error.";
   }
 
@@ -122,7 +122,7 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   if ((inner_size == 1) && (outer_size == 1)) {
     // treat it as a simple 1D array
     size_t copy_size = copy_size_ * sizeof(T);
-    size_t dst_max_size = outputs[0]->size - copy_dst_begin_;
+    size_t dst_max_size = outputs[0]->size() - copy_dst_begin_;
     auto ret = memcpy_s(output + copy_dst_begin_, dst_max_size, input + copy_src_begin_, copy_size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed";
@@ -138,7 +138,7 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
       size_t input_offset = offset + LongToSize(copy_src_begin_ * inner_size);
       size_t output_offset = offset + LongToSize(copy_dst_begin_ * inner_size);
       size_t copy_size = copy_size_ * inner_size * sizeof(T);
-      size_t dst_max_size = outputs[0]->size - output_offset;
+      size_t dst_max_size = outputs[0]->size() - output_offset;
       auto ret = memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed, ret=" << ret;

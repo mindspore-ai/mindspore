@@ -48,15 +48,15 @@ int Sgn(const T &x) {
 }  // namespace
 
 template <typename T>
-void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  T *logbase = reinterpret_cast<T *>(inputs[kIndexLogBase]->addr);
-  T *sign_decay = reinterpret_cast<T *>(inputs[kIndexSignDecay]->addr);
-  T *beta = reinterpret_cast<T *>(inputs[kIndexBeta]->addr);
-  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &) {
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = reinterpret_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->device_ptr());
+  T *logbase = reinterpret_cast<T *>(inputs[kIndexLogBase]->device_ptr());
+  T *sign_decay = reinterpret_cast<T *>(inputs[kIndexSignDecay]->device_ptr());
+  T *beta = reinterpret_cast<T *>(inputs[kIndexBeta]->device_ptr());
+  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     // multithreading
@@ -89,9 +89,9 @@ bool ApplyPowerSignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-bool ApplyPowerSignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyPowerSignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPowerSignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPowerSignOutputsNum, kernel_name_);
 

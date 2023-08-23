@@ -83,14 +83,14 @@ std::vector<int64_t> MaxPoolWithArgmaxV2CpuKernelMod::GetValidAttr(const std::ve
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolWithArgmaxV2InputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolWithArgmaxV2OutputsNum, kernel_name_);
-  auto input_x = static_cast<DATA_T *>(inputs[kIndex0]->addr);
-  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->addr);
-  auto output_argmax = static_cast<INDICES_T *>(outputs[kIndex1]->addr);
+  auto input_x = static_cast<DATA_T *>(inputs[kIndex0]->device_ptr());
+  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->device_ptr());
+  auto output_argmax = static_cast<INDICES_T *>(outputs[kIndex1]->device_ptr());
   const int64_t in_width = x_shape_[kIndexWidth];
   const int64_t in_height = x_shape_[kIndexHeight];
   const int64_t in_channel = x_shape_[kIndexChannel];

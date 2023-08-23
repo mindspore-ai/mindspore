@@ -126,8 +126,9 @@ int LuSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
   T *b = GetDeviceAddress<T>(inputs, kIndex0);
   T *a = GetDeviceAddress<T>(inputs, kIndex1);
   int *piv_array = GetDeviceAddress<int>(inputs, kIndex2);

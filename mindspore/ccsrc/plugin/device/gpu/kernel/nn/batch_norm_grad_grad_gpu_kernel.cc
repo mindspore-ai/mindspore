@@ -45,16 +45,16 @@ bool BatchNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-bool BatchNormGradGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BatchNormGradGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   return execute_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
 template <typename T>
-bool BatchNormGradGradGpuKernelMod::Execute(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BatchNormGradGradGpuKernelMod::Execute(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradGradOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(

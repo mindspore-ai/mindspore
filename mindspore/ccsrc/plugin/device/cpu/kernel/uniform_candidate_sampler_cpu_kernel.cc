@@ -231,9 +231,9 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspaces,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspaces,
+                                                       const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     MS_LOG(WARNING) << "For 'UniformCandidateSampler', the input 'true_classes' was empty.";
     return true;

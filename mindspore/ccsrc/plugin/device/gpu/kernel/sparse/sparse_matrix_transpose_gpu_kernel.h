@@ -39,8 +39,8 @@ class SparseMatrixTransposeGpuKernelMod : public NativeGpuKernelMod {
   }
   ~SparseMatrixTransposeGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
@@ -60,12 +60,12 @@ class SparseMatrixTransposeGpuKernelMod : public NativeGpuKernelMod {
   size_t GetBufferSize(size_t num_batches, int rows, int cols, const std::vector<S> &host_batch_pointers, S *x_row_ptrs,
                        S *x_col_inds, S *y_row_ptrs, S *y_col_inds);
   template <typename S, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   using SparseMatrixTransposeLaunchFunc =
-    std::function<bool(SparseMatrixTransposeGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(SparseMatrixTransposeGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, SparseMatrixTransposeLaunchFunc>> func_list_;
   SparseMatrixTransposeLaunchFunc kernel_func_;
 

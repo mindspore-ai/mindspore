@@ -88,8 +88,8 @@ int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   auto input_grad = GetDeviceAddress<T>(inputs, kIndex0);
   auto input_argmax = GetDeviceAddress<S>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -112,7 +112,7 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
       start += real_mem_size;
     }
   };
-  ParallelLaunchAutoSearch(init_task, outputs[kIndex0]->size, this, &search_info_);
+  ParallelLaunchAutoSearch(init_task, outputs[kIndex0]->size(), this, &search_info_);
   if (memset_ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << memset_ret;
   }

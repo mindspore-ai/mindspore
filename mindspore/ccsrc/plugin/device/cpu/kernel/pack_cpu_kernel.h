@@ -37,8 +37,8 @@ class PackFwdCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -47,9 +47,10 @@ class PackFwdCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using PackFunc = std::function<bool(PackFwdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using PackFunc = std::function<bool(PackFwdCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, PackFunc>> func_list_;
   PackFunc kernel_func_;
   int axis_{0};

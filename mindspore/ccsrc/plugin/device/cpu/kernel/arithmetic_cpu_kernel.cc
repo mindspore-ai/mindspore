@@ -166,11 +166,11 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void DivComplex(const T *input1, const T *input2, T *out);
   void PowComplex(const T *input1, const T *input2, T *out);
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
     if (output_size_ == 0) {
       MS_LOG(WARNING) << kernel_name_ << " output shape contain 0, output_shape: " << output_shape_;
       return true;

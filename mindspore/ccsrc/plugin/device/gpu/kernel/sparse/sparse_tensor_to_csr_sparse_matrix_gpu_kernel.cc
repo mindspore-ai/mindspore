@@ -91,9 +91,9 @@ int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &bas
 }
 
 template <typename IndiceType, typename DataType>
-bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs) {
+bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs) {
   IndiceType *x_indices_ptr = GetDeviceAddress<IndiceType>(inputs, kIndex0);
   DataType *x_value_ptr = GetDeviceAddress<DataType>(inputs, kIndex1);
   IndiceType *x_dense_shape_ptr = GetDeviceAddress<IndiceType>(inputs, kIndex2);
@@ -107,7 +107,7 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
   std::vector<IndiceType> y_batch_pointers_ptr_test(bapt);
   std::vector<IndiceType> x_dense_shape_ptr_test(elements[kTwo]);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size, stream_),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(y_batch_pointers_ptr, 0, outputs[kIndex1]->size(), stream_),
                                      "For 'SparseTensorToCSRSparseMatrix', cudaMemsetAsync y_batch_pointers failed");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),

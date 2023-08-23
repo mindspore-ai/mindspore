@@ -107,9 +107,9 @@ void ResizeNearestNeighborV2GradCpuKernelMod::RealCompute(T *const input, S *con
 }
 
 template <typename T>
-bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);

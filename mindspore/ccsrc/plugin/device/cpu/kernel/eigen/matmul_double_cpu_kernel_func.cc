@@ -75,21 +75,21 @@ void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *out
 }
 
 template <typename T>
-void MatmulDoubleCpuKernelFunc::MatMul(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+void MatmulDoubleCpuKernelFunc::MatMul(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   if (batch_ > 1) {
     for (size_t index = 0; index < batch_; ++index) {
-      const auto a_addr = reinterpret_cast<T *>(inputs[0]->addr) + index * a_row_ * a_col_;
-      const auto b_addr = reinterpret_cast<T *>(inputs[1]->addr) + index * b_row_ * b_col_;
-      auto output_addr = reinterpret_cast<T *>(outputs[0]->addr) + index * out_row_ * out_col_;
+      const auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr()) + index * a_row_ * a_col_;
+      const auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr()) + index * b_row_ * b_col_;
+      auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr()) + index * out_row_ * out_col_;
       ComputeMatMulOutput(a_addr, b_addr, output_addr);
     }
   } else {
-    const auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
-    auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+    const auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
     ComputeMatMulOutput(a_addr, b_addr, output_addr);
   }
 }
@@ -143,9 +143,9 @@ int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &, const std::vector
   return KRET_OK;
 }
 
-bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeInt8) {
     MatMul<int8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt16) {

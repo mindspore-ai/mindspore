@@ -92,8 +92,9 @@ int AssignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-bool AssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool AssignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   switch (input_x_dtype_) {
     case (kNumberTypeBool): {
@@ -160,8 +161,9 @@ bool AssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool AssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto max_size = inputs[0]->size;
+bool AssignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto max_size = inputs[0]->size();
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -169,9 +171,9 @@ bool AssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                       << ", and max size: " << max_size;
   }
 
-  auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  auto input1_addr = reinterpret_cast<int8_t *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
+  auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->device_ptr());
+  auto input1_addr = reinterpret_cast<int8_t *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
   auto task = [&](size_t start, size_t end) {
     int8_t *input0 = input0_addr + start;
     int8_t *input1 = input1_addr + start;

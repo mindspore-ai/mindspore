@@ -38,8 +38,8 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
              const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -60,8 +60,8 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
   // Determine data shape, type and format for `inputA_descriptor` and `outputC_descriptor`
   void DetermineDeviceDataInfoForCudnn(const KernelTensorPtr &x_tensor);
   // Launch `ClipByNorm` calculation
-  bool DoLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool DoLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   // Define cudnn variables for running `cudnnReduceTensor`
   cudnnHandle_t cudnn_handle_{nullptr};

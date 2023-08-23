@@ -44,8 +44,8 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
 
   ~UniformCandidateSamplerCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspaces, outputs);
   }
 
@@ -70,8 +70,8 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   void ExpectedLanuch(const int64_t counter, S *true_expected_count, S *sampled_expected_count);
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+                    const std::vector<KernelTensor *> &outputs);
 
   int64_t batch_rank_{0};
   int64_t batch_size_{1};

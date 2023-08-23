@@ -43,8 +43,8 @@ class GeLUGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -56,11 +56,12 @@ class GeLUGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  private:
-  using GeLULaunchFunc = std::function<bool(GeLUGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &)>;
+  using GeLULaunchFunc = std::function<bool(GeLUGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, GeLULaunchFunc>> func_list_;
   GeLULaunchFunc kernel_func_;
   std::string kernel_type_{kUnknown};

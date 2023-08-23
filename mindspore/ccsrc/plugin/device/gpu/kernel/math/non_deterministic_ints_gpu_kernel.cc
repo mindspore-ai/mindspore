@@ -50,17 +50,17 @@ bool NonDeterministicIntsGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-bool NonDeterministicIntsGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool NonDeterministicIntsGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   kernel_func_(this, inputs, workspace, outputs, cuda_stream);
   return true;
 }
 
 template <typename T>
-bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *cuda_stream) {
+bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *cuda_stream) {
   T *output = GetDeviceAddress<T>(outputs, 0);
   curandStatePhilox4_32_10_t *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);

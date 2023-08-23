@@ -38,8 +38,8 @@ bool EnvironCreateGpuKernelMod::Init(const CNodePtr &kernel_node) {
 
 void EnvironCreateGpuKernelMod::InitSizeLists() { output_size_list_.push_back(handle_size_); }
 
-bool EnvironCreateGpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool EnvironCreateGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto output = GetDeviceAddress<int64_t>(outputs, 0);
 
   // Generate an unique handle.

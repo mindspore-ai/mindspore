@@ -36,8 +36,8 @@ class BatchNormGpuKernelMod : public NativeGpuKernelMod {
   explicit BatchNormGpuKernelMod(const std::string kernel_name) : kernel_name_(kernel_name) { ResetResource(); }
   ~BatchNormGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -58,10 +58,10 @@ class BatchNormGpuKernelMod : public NativeGpuKernelMod {
   void SetTensorDescriptor(const Format &format, const ShapeVector &shape);
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using BatchNormFunc = std::function<bool(BatchNormGpuKernelMod *, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using BatchNormFunc = std::function<bool(BatchNormGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   BatchNormFunc kernel_func_{};
   static std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::BatchNormFunc>>>
     kernel_attr_map_;

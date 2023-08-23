@@ -107,8 +107,8 @@ int BiasDropoutAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool BiasDropoutAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool BiasDropoutAddGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kInputXIndex);
   T *bias = GetDeviceAddress<T>(inputs, kInputBiasIndex);
   T *residual = GetDeviceAddress<T>(inputs, kInputResidualIndex);

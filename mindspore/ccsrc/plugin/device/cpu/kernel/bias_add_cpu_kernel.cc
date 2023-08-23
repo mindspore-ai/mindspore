@@ -97,8 +97,9 @@ int BiasAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return ret;
 }
 
-bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool BiasAddCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddOutputsNum, kernel_name_);
   (void)kernel_func_(this, inputs, workspace, outputs);
@@ -145,11 +146,11 @@ bool BiasAddCpuKernelMod::ComputeNCHW(const T *src_addr, const T *bias_addr, T *
 }
 
 template <typename T>
-bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs) {
-  const auto *src_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *bias_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const auto *src_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *bias_addr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   size_t num_value = 1;
   size_t num_bias = bias_shape_[0];
   for (size_t i = 0; i < input_shape_.size(); ++i) {

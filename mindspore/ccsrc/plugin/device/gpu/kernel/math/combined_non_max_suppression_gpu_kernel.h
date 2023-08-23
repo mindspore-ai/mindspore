@@ -31,8 +31,8 @@ class CombinedNonMaxSuppressionGpuKernelMod : public NativeGpuKernelMod {
  public:
   CombinedNonMaxSuppressionGpuKernelMod() { ResetResource(); }
   ~CombinedNonMaxSuppressionGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -47,11 +47,11 @@ class CombinedNonMaxSuppressionGpuKernelMod : public NativeGpuKernelMod {
  private:
   void ResetResource() noexcept;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using CombinedNonMaxSuppressionLaunchFunc =
-    std::function<bool(CombinedNonMaxSuppressionGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(CombinedNonMaxSuppressionGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, CombinedNonMaxSuppressionLaunchFunc>> func_list_;
   CombinedNonMaxSuppressionLaunchFunc kernel_func_;
   cudaStream_t cuda_stream_;

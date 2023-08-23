@@ -37,8 +37,8 @@ class MatrixLogarithmCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     kernel_func_(this, inputs, outputs);
     return true;
   }
@@ -47,13 +47,13 @@ class MatrixLogarithmCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  using MatrixLogarithmLaunchFunc = std::function<void(MatrixLogarithmCpuKernelMod *, const std::vector<AddressPtr> &,
-                                                       const std::vector<AddressPtr> &)>;
+  using MatrixLogarithmLaunchFunc = std::function<void(
+    MatrixLogarithmCpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MatrixLogarithmLaunchFunc>> func_list_;
   MatrixLogarithmLaunchFunc kernel_func_;
 
   template <typename T>
-  void LaunchMatrixLogarithm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchMatrixLogarithm(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   ShapeVector shape_x_;
 };

@@ -99,9 +99,9 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   if (has_null_input_) {
     return true;
   }
@@ -116,10 +116,10 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   };
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *indices = static_cast<S *>(inputs[1]->addr);
-  auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *indices = static_cast<S *>(inputs[1]->device_ptr());
+  auto *updates = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
   if (func_iter == scatter_arithmetic_func_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
@@ -145,7 +145,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     if (enable_embedding_storage_) {
       auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
       MS_ERROR_IF_NULL(embedding_storage);
-      if (!embedding_storage->Put({indices, inputs[1]->size}, {updates, inputs[2]->size})) {
+      if (!embedding_storage->Put({indices, inputs[kIndex1]->size()}, {updates, inputs[kIndex2]->size()})) {
         MS_LOG(ERROR) << "For '" << kernel_name_
                       << "', Update embedding storage failed, parameter key: " << parameter_key_;
         return false;
@@ -172,8 +172,11 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   // are different. Therefore, in order to adapt to the old runtime, the content of the input needs to be copied to
   // output. After removing the old runtime, the following copy logic code can be deleted.
   if (input != output) {
-    auto bufferSize = outputs[0]->size;
-    UpdateOutputData<T>(output, bufferSize, input, input_size_ * sizeof(T), kernel_name_);
+    auto bufferSize = outputs[0]->size();
+    auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+    }
   }
   return true;
 }

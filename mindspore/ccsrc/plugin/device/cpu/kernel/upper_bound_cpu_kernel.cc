@@ -67,12 +67,12 @@ int UpperBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename I, typename O>
-bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->addr);
-  auto values_data_addr = static_cast<I *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<O *>(outputs[0]->addr);
+bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->device_ptr());
+  auto values_data_addr = static_cast<I *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<O *>(outputs[0]->device_ptr());
   size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
   size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,

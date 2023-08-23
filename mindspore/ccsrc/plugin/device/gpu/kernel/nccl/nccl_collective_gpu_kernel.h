@@ -44,8 +44,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
   NcclCollectiveGpuKernel() { ResetResource(); }
   ~NcclCollectiveGpuKernel() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -146,7 +146,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
   void InitSizeLists() override { return; }
 
  private:
-  void LaunchAllReduce(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchAllReduce(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                        void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -154,7 +154,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
                     reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
-  void LaunchAllGather(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchAllGather(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                        void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -162,7 +162,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
                     reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
-  void LaunchReduceScatter(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchReduceScatter(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                            void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -170,7 +170,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
                         reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
-  void LaunchBroadcast(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchBroadcast(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                        void *stream_ptr) {
     T *input_addr = nullptr;
     T *output_addr = nullptr;

@@ -235,14 +235,14 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
 
-template <typename Derived, typename AddressType = AddressPtr>
+template <typename Derived>
 class MatchKernelHelper {
  public:
   MatchKernelHelper() = default;
   virtual ~MatchKernelHelper() = default;
 
-  using KernelRunFunc = std::function<bool(Derived *, const std::vector<AddressType> &,
-                                           const std::vector<AddressType> &, const std::vector<AddressPtr> &)>;
+  using KernelRunFunc = std::function<bool(Derived *, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   virtual const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const = 0;
 
  protected:

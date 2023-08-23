@@ -78,8 +78,9 @@ int PolarGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T, typename S>
-bool PolarGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool PolarGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *abs = GetDeviceAddress<T>(inputs, 0);
   T *angle = GetDeviceAddress<T>(inputs, 1);
   S *output = GetDeviceAddress<S>(outputs, 0);

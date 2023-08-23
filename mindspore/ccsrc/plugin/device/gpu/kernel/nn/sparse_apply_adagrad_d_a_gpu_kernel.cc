@@ -273,9 +273,9 @@ void SparseApplyAdagradDAGpuKernelMod::CheckParam(const std::vector<KernelTensor
   CheckDType(inputs, outputs);
 }
 
-bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   stream_ptr_ = stream_ptr;
   if (is_null_input_) {
@@ -285,26 +285,26 @@ bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inp
 }
 
 template <typename T, typename S, typename S1>
-bool SparseApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  const auto *global_step = reinterpret_cast<S1 *>(inputs[kGlobalStepIndex]->addr);
+bool SparseApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  const auto *global_step = reinterpret_cast<S1 *>(inputs[kGlobalStepIndex]->device_ptr());
 
-  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
+  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
 
-  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->addr);
-  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->addr);
-  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->addr);
-  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->addr);
-  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->addr);
+  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->device_ptr());
+  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->device_ptr());
+  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->device_ptr());
+  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->device_ptr());
+  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->device_ptr());
 
   auto status =
     CalSparseApplyAdagradDA(batch_size_, indices_size_, input_elements_, var, accum, squared_accum, grad, indices, lr,

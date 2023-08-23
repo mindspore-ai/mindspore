@@ -112,10 +112,10 @@ const LSAP_FUNC_VECTOR &LinearSumAssignmentCpuKernelMod::GetFuncList() const {
 }
 
 template <typename T>
-bool LinearSumAssignmentCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  int64_t dimension_limit = *reinterpret_cast<int64_t *>(inputs[1]->addr);
+bool LinearSumAssignmentCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  int64_t dimension_limit = *reinterpret_cast<int64_t *>(inputs[1]->device_ptr());
   int64_t nr = cost_matrix_shape_[0];
   int64_t nc = cost_matrix_shape_[1];
   if (dimension_limit == INT64_MAX) {
@@ -129,10 +129,10 @@ bool LinearSumAssignmentCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     return false;
   }
 
-  auto cost_matrix = reinterpret_cast<T *>(inputs[0]->addr);
-  auto maximize = reinterpret_cast<bool *>(inputs[2]->addr);
-  auto row_ind = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  auto col_ind = reinterpret_cast<int64_t *>(outputs[1]->addr);
+  auto cost_matrix = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto maximize = reinterpret_cast<bool *>(inputs[2]->device_ptr());
+  auto row_ind = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
+  auto col_ind = reinterpret_cast<int64_t *>(outputs[1]->device_ptr());
   if (!Solve(nr, dimension_limit, nc, cost_matrix, *maximize, row_ind, col_ind)) {
     MS_LOG(ERROR) << "Solve linear sum assignment problem failed.";
     return false;

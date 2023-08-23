@@ -134,17 +134,17 @@ int ApplyAdadeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool ApplyAdadeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &) {
+bool ApplyAdadeltaCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdadeltaInputsNum, kernel_name_);
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccumIndex]->addr);
-  auto accum_update = reinterpret_cast<float *>(inputs[kAccumUpdateIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr);
-  auto rho = reinterpret_cast<float *>(inputs[kRhoIndex]->addr);
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsilonIndex]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccumIndex]->device_ptr());
+  auto accum_update = reinterpret_cast<float *>(inputs[kAccumUpdateIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr());
+  auto rho = reinterpret_cast<float *>(inputs[kRhoIndex]->device_ptr());
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsilonIndex]->device_ptr());
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     auto task = [&](size_t start, size_t end) {

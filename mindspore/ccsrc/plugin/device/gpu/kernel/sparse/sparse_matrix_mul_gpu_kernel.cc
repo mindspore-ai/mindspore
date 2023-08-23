@@ -63,8 +63,9 @@ int SparseMatrixMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseMatrixMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *a_shape_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *a_batch_pointers_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *a_indptr_addr = GetDeviceAddress<T>(inputs, kIndex2);

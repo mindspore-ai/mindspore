@@ -99,9 +99,9 @@ int L2NormalizeGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *x_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *y_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *dy_addr = GetDeviceAddress<T>(inputs, kIndex2);

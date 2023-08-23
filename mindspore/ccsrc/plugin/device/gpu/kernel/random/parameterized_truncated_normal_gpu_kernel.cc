@@ -115,9 +115,9 @@ int ParameterizedTruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base
 }
 
 template <typename T>
-bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &workspace,
-                                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &workspace,
+                                                            const std::vector<kernel::KernelTensor *> &outputs) {
   T *mean = GetDeviceAddress<T>(inputs, kIndex1);
   T *stdevs = GetDeviceAddress<T>(inputs, kIndex2);
   T *min = GetDeviceAddress<T>(inputs, kIndex3);

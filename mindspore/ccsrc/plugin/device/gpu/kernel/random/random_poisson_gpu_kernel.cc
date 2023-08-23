@@ -74,9 +74,9 @@ int RandomPoissonGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename R, typename T>
-bool RandomPoissonGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomPoissonGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   R *rate_addr = GetDeviceAddress<R>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);

@@ -117,8 +117,8 @@ int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S, typename G = int>
-bool OneHotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool OneHotGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   const size_t on_value_idx = 2;
   const size_t off_value_idx = 3;
   const S *indices = GetDeviceAddress<S>(inputs, 0);

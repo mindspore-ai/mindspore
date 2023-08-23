@@ -32,8 +32,8 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
   ScatterNdFunctorGPUKernelMod() = default;
   ~ScatterNdFunctorGPUKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -53,8 +53,8 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   ScatterNdFunctorType scatter_nd_functor_type_;
 

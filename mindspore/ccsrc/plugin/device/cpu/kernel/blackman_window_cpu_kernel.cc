@@ -49,11 +49,11 @@ bool BlackmanWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T1, typename T2>
-bool BlackmanWindowCpuKernelMod::BlackmanWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs) const {
-  auto input = static_cast<T1 *>(inputs[0]->addr);
-  auto output = static_cast<T2 *>(outputs[0]->addr);
+bool BlackmanWindowCpuKernelMod::BlackmanWindowKernelFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) const {
+  auto input = static_cast<T1 *>(inputs[0]->device_ptr());
+  auto output = static_cast<T2 *>(outputs[0]->device_ptr());
 
   if (*input < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input window_length should be >= 0, but got " << *input;

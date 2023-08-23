@@ -103,9 +103,9 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormGradOutputsNum, kernel_name_);
   kernel_func_(this, inputs, outputs);
@@ -113,16 +113,16 @@ bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto *x = reinterpret_cast<T *>(inputs[kLayerNormGradInputXIndex]->addr);
-  auto *dy = reinterpret_cast<T *>(inputs[kLayerNormGradInputDyIndex]->addr);
-  auto *var = reinterpret_cast<float *>(inputs[kLayerNormGradInputVarIndex]->addr);
-  auto *mean = reinterpret_cast<float *>(inputs[kLayerNormGradInputMeanIndex]->addr);
-  auto *gamma = reinterpret_cast<T *>(inputs[kLayerNormGradInputGammaIndex]->addr);
-  auto *dx = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDxIndex]->addr);
-  auto *dg = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDgIndex]->addr);
-  auto *db = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDbIndex]->addr);
+void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto *x = reinterpret_cast<T *>(inputs[kLayerNormGradInputXIndex]->device_ptr());
+  auto *dy = reinterpret_cast<T *>(inputs[kLayerNormGradInputDyIndex]->device_ptr());
+  auto *var = reinterpret_cast<float *>(inputs[kLayerNormGradInputVarIndex]->device_ptr());
+  auto *mean = reinterpret_cast<float *>(inputs[kLayerNormGradInputMeanIndex]->device_ptr());
+  auto *gamma = reinterpret_cast<T *>(inputs[kLayerNormGradInputGammaIndex]->device_ptr());
+  auto *dx = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDxIndex]->device_ptr());
+  auto *dg = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDgIndex]->device_ptr());
+  auto *db = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDbIndex]->device_ptr());
   size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   auto thread_num1 = param_num_ < thread_num ? param_num_ : thread_num;
   std::vector<common::Task> tasks1;

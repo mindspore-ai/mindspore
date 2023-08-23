@@ -26,20 +26,21 @@ constexpr const size_t kHSigmoidInputsNum = 1;
 constexpr const size_t kHSigmoidOutputsNum = 1;
 
 template <typename T>
-bool HSigmoidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidOutputsNum, kernel_name_);
-  T *x = static_cast<T *>(inputs[kIndex0]->addr);
+  T *x = static_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  T *y = static_cast<T *>(outputs[kIndex0]->addr);
+  T *y = static_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto zero = static_cast<T>(0);
   auto one = static_cast<T>(1);
   auto three = static_cast<T>(3);
   auto six = static_cast<T>(6);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [&](size_t start, size_t end) {
     for (uint64_t i = start; i < end; ++i) {
       if (x[i] + three <= zero) {

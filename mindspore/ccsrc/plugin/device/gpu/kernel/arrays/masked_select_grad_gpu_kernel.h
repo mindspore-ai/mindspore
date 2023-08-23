@@ -33,8 +33,8 @@ class MaskedSelectGradGpuKernelMod : public NativeGpuKernelMod {
   MaskedSelectGradGpuKernelMod() = default;
   ~MaskedSelectGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -50,12 +50,12 @@ class MaskedSelectGradGpuKernelMod : public NativeGpuKernelMod {
  private:
   void ResetResource() noexcept;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   using MaskedSelectGradFunc =
-    std::function<bool(MaskedSelectGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(MaskedSelectGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, MaskedSelectGradFunc>> func_list_;
   MaskedSelectGradFunc kernel_func_;
   cudaStream_t cuda_stream_;

@@ -347,11 +347,11 @@ void PoolingCpuKernelNnaclMod::LaunchPoolingChannelLastFp32(float *input_addr, f
 }
 
 template <typename T>
-bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   CTask task =
     pool_mode_ == MEAN_POOLING ? KernelAvgPool<T>(input_addr, output_addr) : KernelMaxPool<T>(input_addr, output_addr);
   ParallelLaunch(task, output_num_, 1.0);
@@ -364,15 +364,15 @@ bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::AddressPtr
     break;                                               \
   }
 
-bool PoolingCpuKernelNnaclMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspaces,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool PoolingCpuKernelNnaclMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspaces,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
 
   if (use_channel_last_) {
-    float *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-    float *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+    float *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+    float *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
     float *transpose_out = GetDeviceAddress<float>(workspaces, 0);
     float *pooling_out = GetDeviceAddress<float>(workspaces, 1);
     LaunchPoolingChannelLastFp32(input_addr, transpose_out, pooling_out, output_addr);

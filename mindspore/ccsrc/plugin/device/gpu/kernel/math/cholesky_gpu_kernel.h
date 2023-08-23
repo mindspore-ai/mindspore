@@ -100,8 +100,8 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "Cholesky bind cusolverDnSetStream failed");
     return NoSplitLaunch(inputs, workspace, outputs, stream_ptr);
@@ -147,8 +147,8 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.push_back(output_size);
   }
 
-  bool NoSplitLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool NoSplitLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     // Here all addresses are malloc by cuda, so deal with them as device's address.
     auto input1_addr = GetDeviceAddress<T>(inputs, kDim0);
     auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
@@ -184,7 +184,7 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
-    size_t output_elements = outputs.at(kDim0)->size / unit_size_;
+    size_t output_elements = outputs.at(kDim0)->size() / unit_size_;
     // copy results from original input's matrix to output's matrix by up or lower flag.
     auto status = TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
                                      reinterpret_cast<cudaStream_t>(stream_ptr));

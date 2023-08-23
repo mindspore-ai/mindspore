@@ -48,9 +48,9 @@ void Col2ImFwdGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T, typename S>
-bool Col2ImFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool Col2ImFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   Col2Im<T, S>(input_addr, batch_size_, channels_, out_height_, out_width_, in_height_, in_width_, kernel_height_,

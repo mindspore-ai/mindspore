@@ -36,8 +36,8 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
  public:
   SearchSortedGpuKernelMod() { ResetResource(); }
   ~SearchSortedGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -67,13 +67,13 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename S, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using SearchSortedFunc =
-    std::function<bool(SearchSortedGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using SearchSortedFunc = std::function<bool(SearchSortedGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &, void *)>;
   template <typename S, typename T>
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void CheckParam(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  private:
   bool right{false};

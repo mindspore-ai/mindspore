@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ListAppendCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<ListAppendCpuKernelMod, AddressPtr> {
+class ListAppendCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<ListAppendCpuKernelMod> {
  public:
   ListAppendCpuKernelMod() = default;
   ~ListAppendCpuKernelMod() override = default;
@@ -37,8 +37,8 @@ class ListAppendCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelp
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,8 +49,8 @@ class ListAppendCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelp
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   std::vector<int64_t> list_shape_;
   std::vector<int64_t> element_shape_;
 };

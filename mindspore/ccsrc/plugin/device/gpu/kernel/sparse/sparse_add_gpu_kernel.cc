@@ -140,9 +140,9 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S, typename K>
-bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   if (a_indices_size_ == 0 || a_values_size_ == 0 || dense_shape_size_ == 0 || b_indices_size_ == 0 ||
       b_values_size_ == 0) {
@@ -185,37 +185,37 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   // workspace/output mem reset
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(a_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex0)->size, cuda_stream_),
+    cudaMemsetAsync(a_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex0)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(b_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex1)->size, cuda_stream_),
+    cudaMemsetAsync(b_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex1)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(is_from_a_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex2)->size, cuda_stream_),
+    cudaMemsetAsync(is_from_a_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex2)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(whole_values_ptr, 0, workspace.at(kSparseAddIndex3)->size, cuda_stream_),
+    cudaMemsetAsync(whole_values_ptr, 0, workspace.at(kSparseAddIndex3)->size(), cuda_stream_),
+    "For SparseAdd, failed to cudaMemset.");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(place_holder_index_ptr, static_cast<size_t>(0),
+                                                    workspace.at(kSparseAddIndex4)->size(), cuda_stream_),
+                                    "For SparseAdd, failed to cudaMemset.");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemsetAsync(indices_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex5)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(place_holder_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex4)->size, cuda_stream_),
+    cudaMemsetAsync(threshold_valid_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex6)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(indices_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex5)->size, cuda_stream_),
+    cudaMemsetAsync(res_store_mem_ptr, 0, workspace.at(kSparseAddIndex7)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(threshold_valid_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex6)->size, cuda_stream_),
+    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex8)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(res_store_mem_ptr, 0, workspace.at(kSparseAddIndex7)->size, cuda_stream_),
+    cudaMemsetAsync(sum_indices_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex0)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex8)->size, cuda_stream_),
-    "For SparseAdd, failed to cudaMemset.");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_indices_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex0)->size, cuda_stream_),
-    "For SparseAdd, failed to cudaMemset.");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_values_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex1)->size, cuda_stream_),
+    cudaMemsetAsync(sum_values_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex1)->size(), cuda_stream_),
     "For SparseAdd, failed to cudaMemset.");
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),

@@ -27,8 +27,8 @@ class HShrinkGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   HShrinkGradGpuKernelMod() {}
   ~HShrinkGradGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, outputs);
   }
@@ -43,9 +43,9 @@ class HShrinkGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using HShrinkGradFunc = std::function<bool(HShrinkGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using HShrinkGradFunc = std::function<bool(HShrinkGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &)>;
 
   size_t unit_size_{1};
   size_t input_elements_{};

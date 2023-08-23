@@ -82,17 +82,17 @@ void MaxUnpool3DGradCpuKernelMod::OutPutInitKernel(DATA_T *raw_output, size_t le
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxUnpool3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxUnpool3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxUnpool3DGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxUnpool3DGradOutputsNum, kernel_name_);
-  if (outputs[kInputIndex0]->size == 0) {
+  if (outputs[kInputIndex0]->size() == 0) {
     MS_LOG(WARNING) << "MaxUnpool3DGrad output memory size should be greater than 0, but got 0.";
     return false;
   }
-  auto *raw_grads = static_cast<DATA_T *>(inputs[kInputIndex1]->addr);
-  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex2]->addr);
-  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
+  auto *raw_grads = static_cast<DATA_T *>(inputs[kInputIndex1]->device_ptr());
+  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex2]->device_ptr());
+  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->device_ptr());
   auto num_batch = LongToSize(grads_shape_[kInputIndex0]);
   if (data_format_ == "NDHWC") {
     size_t odepth = LongToSize(grads_shape_[kInputIndex1]);

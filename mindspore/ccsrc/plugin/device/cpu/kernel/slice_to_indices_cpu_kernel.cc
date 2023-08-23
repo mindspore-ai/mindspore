@@ -95,17 +95,17 @@ static std::vector<int64_t> GetSlicedIndices(int64_t start, int64_t stop, int64_
   return indices;
 }
 
-bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
-  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->addr);
-  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto indices_attr = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto value_shape_attr = static_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex2]->addr);
-  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex3]->addr);
-  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex4]->addr);
-  auto output_empty_attr = static_cast<int64_t *>(outputs[kIndex5]->addr);
+bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto indices_attr = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto value_shape_attr = static_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
+  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex3]->device_ptr());
+  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex4]->device_ptr());
+  auto output_empty_attr = static_cast<int64_t *>(outputs[kIndex5]->device_ptr());
 
   int64_t dim_size = data_shape_[0];
   if (!tuple_index_types_.empty()) {
@@ -170,8 +170,8 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-bool SliceToIndicesCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool SliceToIndicesCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, outputs);
 }
 

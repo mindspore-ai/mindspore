@@ -101,15 +101,15 @@ int MatrixDiagPartV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixDiagPartV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixDiagPartV3OutputsNum, kernel_name_);
   // k
   int64_t lower_diag_index = 0;
   upper_diag_index_ = 0;
-  size_t k_len = static_cast<size_t>(inputs[1]->size / sizeof(int32_t));
-  auto k_Data = static_cast<int32_t *>(inputs[1]->addr);
+  size_t k_len = static_cast<size_t>(inputs[1]->size() / sizeof(int32_t));
+  auto k_Data = static_cast<int32_t *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(k_Data);
   const size_t k_len_max = 2;
   if (k_len == 0 || k_len > k_len_max) {
@@ -134,7 +134,7 @@ bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   num_cols_ = x_shape_[input_dims - 1];
   const size_t toCalRow = 2;
   num_rows_ = x_shape_[input_dims - toCalRow];
-  size_t input_numelements = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t input_numelements = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   num_array_ = (SizeToLong(input_numelements)) / (num_rows_ * num_cols_);
 
   if (align_ == "LEFT_LEFT" || align_ == "LEFT_RIGHT") {
@@ -155,20 +155,20 @@ bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
 }
 
 template <typename T>
-bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   // padding_value
-  size_t padding_value_num = static_cast<size_t>(inputs[kIndex2]->size / sizeof(T));
+  size_t padding_value_num = static_cast<size_t>(inputs[kIndex2]->size() / sizeof(T));
   if (!(padding_value_num == 1)) {
     MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, padding_value must have only one element, received "
                       << padding_value_num << " elements. ";
   }
-  auto *padding_value_data = static_cast<T *>(inputs[kIndex2]->addr);
+  auto *padding_value_data = static_cast<T *>(inputs[kIndex2]->device_ptr());
   MS_EXCEPTION_IF_NULL(padding_value_data);
   T padding_value = padding_value_data[0];
-  auto output_data = static_cast<T *>(outputs[0]->addr);
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
-  auto input_data = static_cast<T *>(inputs[0]->addr);
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
   size_t Num_array = LongToSize(num_array_);
 

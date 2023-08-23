@@ -35,8 +35,8 @@ class CastGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
@@ -52,10 +52,11 @@ class CastGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename S, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using CastFunc = std::function<bool(CastGpuKernelMod *, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using CastFunc =
+    std::function<bool(CastGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, CastFunc>> func_list_;
   CastFunc kernel_func_;
   int64_t input_size_;

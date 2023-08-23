@@ -62,19 +62,19 @@ int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   return KRET_OK;
 }
 
-bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   Eigen::TensorMap<Eigen::Tensor<float, kOverlapsRank, Eigen::RowMajor>> overlaps_map(
-    reinterpret_cast<float *>(inputs[0]->addr), num_boxes_, num_boxes_);
+    reinterpret_cast<float *>(inputs[0]->device_ptr()), num_boxes_, num_boxes_);
   std::vector<float> scores_data(num_boxes_);
-  (void)std::copy_n(reinterpret_cast<float *>(inputs[1]->addr), num_boxes_, scores_data.begin());
-  auto max_output_size = *reinterpret_cast<int32_t *>(inputs[2]->addr);
+  (void)std::copy_n(reinterpret_cast<float *>(inputs[1]->device_ptr()), num_boxes_, scores_data.begin());
+  auto max_output_size = *reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
   if (max_output_size < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input max_output_size must be non-negative.";
   }
-  auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->addr);
-  auto score_threshold = *reinterpret_cast<float *>(inputs[4]->addr);
+  auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto score_threshold = *reinterpret_cast<float *>(inputs[4]->device_ptr());
   std::unique_ptr<int32_t[]> indices_data = std::make_unique<int32_t[]>(static_cast<size_t>(max_output_size));
   if (indices_data == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', new indices_data failed.";
@@ -115,7 +115,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
       cnt += 1;
     }
   }
-  auto value = reinterpret_cast<int32_t *>(outputs[0]->addr);
+  auto value = reinterpret_cast<int32_t *>(outputs[0]->device_ptr());
   real_output_size_ = std::min(cnt, max_output_size);
   for (int32_t j = 0; j < real_output_size_; ++j) {
     *(value + j) = indices_data[IntToSize(j)];

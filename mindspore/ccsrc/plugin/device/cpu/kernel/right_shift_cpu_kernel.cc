@@ -51,9 +51,9 @@ int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> & /* workspace */,
-                                    const std::vector<AddressPtr> &outputs) {
+bool RightShiftCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> & /* workspace */,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (input_type_1_ == kNumberTypeInt8) {
     return IntCompute<int8_t>(inputs, outputs);
   } else if (input_type_1_ == kNumberTypeInt16) {
@@ -79,10 +79,11 @@ bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool RightShiftCpuKernelMod::IntCompute(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
@@ -110,11 +111,11 @@ bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool RightShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool RightShiftCpuKernelMod::UIntCompute(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }

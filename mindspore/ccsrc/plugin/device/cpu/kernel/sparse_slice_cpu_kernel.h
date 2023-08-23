@@ -33,8 +33,8 @@ class SparseSliceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
  public:
   SparseSliceCpuKernelMod() = default;
   ~SparseSliceCpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -51,8 +51,9 @@ class SparseSliceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
   void SliceCompute(int64_t *input_indices, T *input_values, int64_t *input_shape, int64_t *start, int64_t *size,
                     int64_t *output_indices, T *output_values, int64_t *output_shape);

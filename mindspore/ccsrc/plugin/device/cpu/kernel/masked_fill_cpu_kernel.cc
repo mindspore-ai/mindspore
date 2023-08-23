@@ -99,15 +99,15 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool MaskedFillCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedFillCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedFillInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedFillOutputsNum, kernel_name_);
 
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
-  auto value = reinterpret_cast<T *>(inputs[2]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto mask = reinterpret_cast<bool *>(inputs[1]->device_ptr());
+  auto value = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   if (need_broadcast_) {
     auto task = [this, input, mask, output, value](size_t start, size_t end) {

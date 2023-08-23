@@ -49,14 +49,14 @@ bool ReduceScatterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceScatterOutputsNum, kernel_name_);
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  auto output_data_num = outputs[0]->size / sizeof(float);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto output_data_num = outputs[0]->size() / sizeof(float);
   return MPIReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
 }
 

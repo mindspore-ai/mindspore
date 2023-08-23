@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ScalarCastCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<ScalarCastCpuKernelMod, AddressPtr> {
+class ScalarCastCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<ScalarCastCpuKernelMod> {
  public:
   ScalarCastCpuKernelMod() = default;
   ~ScalarCastCpuKernelMod() override = default;
@@ -37,16 +37,16 @@ class ScalarCastCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelp
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }

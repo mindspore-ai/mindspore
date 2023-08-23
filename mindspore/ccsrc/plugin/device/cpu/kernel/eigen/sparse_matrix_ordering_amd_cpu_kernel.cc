@@ -89,13 +89,13 @@ int SparseMatrixOrderingAMDCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   return KRET_OK;
 }
 
-bool SparseMatrixOrderingAMDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto x_batch_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto x_row_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto x_col_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto y_ptr = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
+bool SparseMatrixOrderingAMDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto x_batch_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto x_row_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex2]->device_ptr());
+  auto x_col_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex3]->device_ptr());
+  auto y_ptr = reinterpret_cast<int32_t *>(outputs[kIndex0]->device_ptr());
 
   const int64_t rank = x_dense_shape_shape_[0];
   const int64_t num_rows = x_dense_shape_ptr[(rank == 2) ? 0 : 1];

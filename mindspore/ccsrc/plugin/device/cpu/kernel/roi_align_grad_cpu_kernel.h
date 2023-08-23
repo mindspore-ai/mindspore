@@ -40,8 +40,8 @@ class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHe
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -53,8 +53,9 @@ class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHe
   using FuncList = std::vector<std::pair<KernelAttr, ROIAlignGradCpuKernelMod::KernelRunFunc>>;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   void ResetResource() noexcept {
     input_size_list_.clear();

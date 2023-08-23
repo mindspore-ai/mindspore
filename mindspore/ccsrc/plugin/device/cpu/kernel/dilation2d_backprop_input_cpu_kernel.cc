@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/dilation2d_backprop_input_cpu_kernel.h"
+#include <limits>
 
 namespace mindspore {
 namespace kernel {
@@ -50,9 +51,9 @@ bool Dilation2DBackpropInputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-bool Dilation2DBackpropInputCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool Dilation2DBackpropInputCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
@@ -73,15 +74,15 @@ int Dilation2DBackpropInputCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T>
-bool Dilation2DBackpropInputCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool Dilation2DBackpropInputCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  T *input = static_cast<T *>(inputs[kInputIndexi]->addr);
-  T *filter = static_cast<T *>(inputs[kFilterIndexi]->addr);
-  T *out_backprop = static_cast<T *>(inputs[kBackpropIndexi]->addr);
-  T *output = static_cast<T *>(outputs[kOutputIndexi]->addr);
+  T *input = static_cast<T *>(inputs[kInputIndexi]->device_ptr());
+  T *filter = static_cast<T *>(inputs[kFilterIndexi]->device_ptr());
+  T *out_backprop = static_cast<T *>(inputs[kBackpropIndexi]->device_ptr());
+  T *output = static_cast<T *>(outputs[kOutputIndexi]->device_ptr());
 
   size_t num_batch = LongToSize(i_input_shape_[kFormatNCHWIndexN]);
   size_t input_height = LongToSize(i_input_shape_[kFormatNCHWIndexH]);

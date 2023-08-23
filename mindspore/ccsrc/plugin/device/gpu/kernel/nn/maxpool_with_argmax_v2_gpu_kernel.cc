@@ -33,8 +33,8 @@ constexpr int64_t kIndexHeight = 2;
 constexpr int64_t kIndexWidth = 3;
 
 template <typename T, typename S>
-bool MaxPoolWithArgmaxV2FwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxPoolWithArgmaxV2FwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   S *index_addr = GetDeviceAddress<S>(outputs, kIndex1);

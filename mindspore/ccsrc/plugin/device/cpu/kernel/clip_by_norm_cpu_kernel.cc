@@ -33,14 +33,14 @@ static std::vector<KernelAttr> clip_by_norm_io_attr_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32)}};
 
-size_t GetDeviceSize(const std::vector<AddressPtr> &addr_list, size_t index) {
+size_t GetDeviceSize(const std::vector<KernelTensor *> &addr_list, size_t index) {
   if (index >= addr_list.size()) {
     MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
   }
-  if (addr_list[index] == nullptr || addr_list[index]->size == 0) {
+  if (addr_list[index] == nullptr || addr_list[index]->size() == 0) {
     MS_LOG(EXCEPTION) << "index(" << index << ") address is `nullptr` or its size is zero.";
   }
-  return addr_list[index]->size;
+  return addr_list[index]->size();
 }
 }  // namespace
 
@@ -78,8 +78,9 @@ int ClipByNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool ClipByNormCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool ClipByNormCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num_expected = 2;
   constexpr size_t workspace_num_expected = 2;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == input_num_expected, "The input addr number of ClipByNorm should be 2.");
@@ -265,8 +266,9 @@ void ClipByNormCpuKernelMod::InitSizeLists() {
 }
 
 template <typename T, typename S>
-void ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+void ClipByNormCpuKernelMod::LaunchFunc(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Launch `l2_norm(x)` calculate function
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
   float *l2_norm_output_addr = GetDeviceAddress<float>(workspace, 0);

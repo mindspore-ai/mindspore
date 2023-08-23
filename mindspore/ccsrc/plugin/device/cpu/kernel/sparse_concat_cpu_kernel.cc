@@ -60,8 +60,9 @@ bool SparseConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-bool SparseConcatCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool SparseConcatCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   switch (values_dtype_) {
     case kNumberTypeInt8:
       return LaunchFunc<int8_t>(inputs, workspace, outputs);
@@ -99,9 +100,9 @@ bool SparseConcatCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
 }
 
 template <typename S>
-bool SparseConcatCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool SparseConcatCpuKernelMod::LaunchFunc(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   switch (shapes_dtype_) {
     case kNumberTypeInt32:
       return LaunchKernel<S, int32_t>(inputs, workspace, outputs);
@@ -121,15 +122,15 @@ struct VmpByValue {
 };
 
 template <typename S, typename T>
-bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size,
+bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs, const size_t shape_size,
                                             const int size) {
-  auto output_indices = static_cast<int64_t *>(outputs[kOutputIndicesStart]->addr);
-  auto output_values = static_cast<S *>(outputs[kOutputValuesStart]->addr);
-  auto output_shape = static_cast<int64_t *>(outputs[kOutputShapesStart]->addr);
+  auto output_indices = static_cast<int64_t *>(outputs[kOutputIndicesStart]->device_ptr());
+  auto output_values = static_cast<S *>(outputs[kOutputValuesStart]->device_ptr());
+  auto output_shape = static_cast<int64_t *>(outputs[kOutputShapesStart]->device_ptr());
   auto input_coo_num = input_num_ / kCOOTensorNum;
-  const auto &first_shape_ptr = reinterpret_cast<T *>(inputs[kSpInputShapesStart * input_coo_num]->addr);
+  const auto &first_shape_ptr = reinterpret_cast<T *>(inputs[kSpInputShapesStart * input_coo_num]->device_ptr());
   std::map<size_t, int64_t> dim_position_map = {};
   int shape_cnt = 0;
   std::vector<int64_t> in_indices = {};
@@ -140,18 +141,18 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
   }
 
   for (unsigned int i = 0; i < input_coo_num; i++) {
-    const auto &indices_ptr = static_cast<int64_t *>(inputs[kSpInputIndicesStart * input_coo_num + i]->addr);
-    const auto &values_ptr = static_cast<S *>(inputs[kSpInputValuesStart * input_coo_num + i]->addr);
-    const auto &shape_ptr = static_cast<T *>(inputs[kOutputShapesStart * input_coo_num + i]->addr);
+    const auto &indices_ptr = static_cast<int64_t *>(inputs[kSpInputIndicesStart * input_coo_num + i]->device_ptr());
+    const auto &values_ptr = static_cast<S *>(inputs[kSpInputValuesStart * input_coo_num + i]->device_ptr());
+    const auto &shape_ptr = static_cast<T *>(inputs[kOutputShapesStart * input_coo_num + i]->device_ptr());
     auto cur_axis_shape = *(shape_ptr + concat_dim_);
-    for (unsigned int j = 0; j < inputs[kSpInputIndicesStart * input_coo_num + i]->size / sizeof(int64_t); j++) {
+    for (unsigned int j = 0; j < inputs[kSpInputIndicesStart * input_coo_num + i]->size() / sizeof(int64_t); j++) {
       if (static_cast<int>(j % shape_size) == concat_dim_) {
         in_indices.push_back(*(indices_ptr + j) + shape_cnt);
       } else {
         in_indices.push_back(*(indices_ptr + j));
       }
     }
-    for (unsigned int j = 0; j < inputs[kSpInputValuesStart * input_coo_num + i]->size / sizeof(S); j++) {
+    for (unsigned int j = 0; j < inputs[kSpInputValuesStart * input_coo_num + i]->size() / sizeof(S); j++) {
       in_values.push_back(*(values_ptr + j));
     }
     shape_cnt += cur_axis_shape;
@@ -193,12 +194,12 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
 }
 
 template <typename S, typename T>
-bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   size_t size = input_num_ / 3;
-  const auto &shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size]->addr);
-  size_t shape_size = inputs[kSpInputShapesStart * size]->size / sizeof(T);
+  const auto &shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size]->device_ptr());
+  size_t shape_size = inputs[kSpInputShapesStart * size]->size() / sizeof(T);
   if ((concat_dim_ < (static_cast<int64_t>(shape_size) * (-1))) || (concat_dim_ >= static_cast<int64_t>(shape_size))) {
     MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "Input concat_dim is error, concat_dim is " << concat_dim_
                       << " but COO tensor shape dim size is " << shape_size << " concat_dim value must be in range -"
@@ -206,10 +207,10 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   concat_dim_ = (concat_dim_ < 0) ? (concat_dim_ + shape_size) : concat_dim_;
   for (unsigned int i = 0; i < size; i++) {
-    const auto &temp_shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size + i]->addr);
-    if (shape_size != inputs[kSpInputShapesStart * size + i]->size / sizeof(T)) {
+    const auto &temp_shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size + i]->device_ptr());
+    if (shape_size != inputs[kSpInputShapesStart * size + i]->size() / sizeof(T)) {
       MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "The input COO sparse tensor shape dims is "
-                        << inputs[kSpInputShapesStart * size + i]->size / sizeof(T)
+                        << inputs[kSpInputShapesStart * size + i]->size() / sizeof(T)
                         << " is not equal with the first COO sparse tensor dims: " << shape_size << ".";
     }
     for (unsigned int j = 0; j < shape_size; j++) {

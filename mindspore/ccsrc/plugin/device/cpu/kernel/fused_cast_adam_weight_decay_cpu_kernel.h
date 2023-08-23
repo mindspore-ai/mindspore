@@ -28,8 +28,8 @@ class FusedCastAdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod
   FusedCastAdamWeightDecayCpuKernelMod() = default;
   ~FusedCastAdamWeightDecayCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {KernelAttr()
@@ -93,9 +93,11 @@ class FusedCastAdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod
   }
 
  private:
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
-  void LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
-  void LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  void CheckParam(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) const;
+  void LaunchFusedCastAdamFp32(const std::vector<KernelTensor *> &inputs,
+                               const std::vector<KernelTensor *> &outputs) const;
+  void LaunchFusedCastAdamFp16(const std::vector<KernelTensor *> &inputs,
+                               const std::vector<KernelTensor *> &outputs) const;
 
   size_t elem_num_{0};
   TypeId var_dtype_{kTypeUnknown};

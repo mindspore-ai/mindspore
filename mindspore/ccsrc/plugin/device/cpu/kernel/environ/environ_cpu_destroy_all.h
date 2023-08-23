@@ -27,8 +27,8 @@ class EnvironDestroyAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   EnvironDestroyAllCpuKernelMod() = default;
   ~EnvironDestroyAllCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   void InitKernel(const CNodePtr &node);
 
   std::vector<KernelAttr> GetOpSupport() override {

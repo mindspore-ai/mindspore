@@ -138,18 +138,18 @@ void ComputeGrad(const scalar_t *log_probs, const NdTensorIterator<kDim3> &log_p
   }
 }
 template <typename scalar_t, typename target_t>
-bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) const {
-  auto grad_out = static_cast<scalar_t *>(inputs[kIndex0]->addr);
-  auto log_probs = static_cast<scalar_t *>(inputs[kIndex1]->addr);
-  auto targets = static_cast<target_t *>(inputs[kIndex2]->addr);
-  auto input_lengths = static_cast<target_t *>(inputs[kIndex3]->addr);
-  auto target_lengths = static_cast<target_t *>(inputs[kIndex4]->addr);
-  auto neg_log_likelihood = static_cast<scalar_t *>(inputs[kIndex5]->addr);
-  auto log_alpha = static_cast<scalar_t *>(inputs[kIndex6]->addr);
-  auto log_beta = static_cast<scalar_t *>(workspace[kIndex0]->addr);
-  auto grad = static_cast<scalar_t *>(outputs[kIndex0]->addr);
+bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) const {
+  auto grad_out = static_cast<scalar_t *>(inputs[kIndex0]->device_ptr());
+  auto log_probs = static_cast<scalar_t *>(inputs[kIndex1]->device_ptr());
+  auto targets = static_cast<target_t *>(inputs[kIndex2]->device_ptr());
+  auto input_lengths = static_cast<target_t *>(inputs[kIndex3]->device_ptr());
+  auto target_lengths = static_cast<target_t *>(inputs[kIndex4]->device_ptr());
+  auto neg_log_likelihood = static_cast<scalar_t *>(inputs[kIndex5]->device_ptr());
+  auto log_alpha = static_cast<scalar_t *>(inputs[kIndex6]->device_ptr());
+  auto log_beta = static_cast<scalar_t *>(workspace[kIndex0]->device_ptr());
+  auto grad = static_cast<scalar_t *>(outputs[kIndex0]->device_ptr());
 
   constexpr scalar_t neginf = -std::numeric_limits<scalar_t>::infinity();
   std::fill(grad, grad + (T_ * batch_size_ * num_labels_), neginf);

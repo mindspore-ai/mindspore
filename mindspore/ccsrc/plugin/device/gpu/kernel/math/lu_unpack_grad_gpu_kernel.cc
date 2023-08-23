@@ -98,9 +98,9 @@ void LuUnpackGradGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool LuUnpackGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool LuUnpackGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   T *l_grad_input = GetDeviceAddress<T>(inputs, kIndex0);
   T *u_grad_input = GetDeviceAddress<T>(inputs, kIndex1);
   T *l_grad_output = GetDeviceAddress<T>(outputs, kIndex0);

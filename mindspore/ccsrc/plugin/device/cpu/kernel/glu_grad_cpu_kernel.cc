@@ -60,8 +60,9 @@ void GluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool GluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool GluGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGluGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGluGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -78,13 +79,14 @@ bool GluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void GluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *input0 = static_cast<T *>(inputs[0]->addr);
-  const auto *input1 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+void GluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const auto *input0 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input1 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   std::vector<int64_t> shape = x_shape_;
   int64_t dim = axis_;
-  size_t lens = outputs[0]->size > 0 ? outputs[0]->size / sizeof(T) : 1;
+  size_t lens = outputs[0]->size() > 0 ? outputs[0]->size() / sizeof(T) : 1;
   auto task = [&input0, &input1, &output, &shape, &dim](const size_t start, const size_t end) {
     int64_t input_num = std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
     int num = input_num;

@@ -64,9 +64,9 @@ int AdaptiveAvgPool2DGradKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
   float *wk_addr = GetDeviceAddress<float>(workspace, 0);

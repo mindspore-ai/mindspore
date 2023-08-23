@@ -117,15 +117,15 @@ int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool CumMinMaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool CumMinMaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   auto element_size = (outer_size_ * inner_size_) * axis_size_;
   if (element_size == 0) {
     return true;
   }
-  auto input_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto value_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto index_ptr = reinterpret_cast<S *>(outputs[kIndex1]->addr);
+  auto input_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto value_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto index_ptr = reinterpret_cast<S *>(outputs[kIndex1]->device_ptr());
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(input_ptr, value_ptr, index_ptr)) {
     return false;

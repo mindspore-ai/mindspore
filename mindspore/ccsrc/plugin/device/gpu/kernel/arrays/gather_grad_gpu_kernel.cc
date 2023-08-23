@@ -41,15 +41,16 @@ constexpr size_t kDynamicIndexIdx = 2;
 constexpr size_t kDynamicGradIdx = 3;
 }  // namespace
 
-bool GatherGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool GatherGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs, cuda_stream_);
 }
 
 template <typename T, typename S>
-bool GatherGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                          void *stream_ptr) {
+bool GatherGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *index_addr = GetDeviceAddress<T>(inputs, index_idx_);
   S *grad_addr = GetDeviceAddress<S>(inputs, grad_idx_);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);

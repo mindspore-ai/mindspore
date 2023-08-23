@@ -125,16 +125,16 @@ int ConvGradFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-bool ConvGradFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvGradFilterCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() < kConvGradFilterInputsMinNum) {
     MS_LOG(EXCEPTION) << "Input numbers can not less " << kConvGradFilterInputsMinNum << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvGradFilterOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[src_index_]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[src_index_]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

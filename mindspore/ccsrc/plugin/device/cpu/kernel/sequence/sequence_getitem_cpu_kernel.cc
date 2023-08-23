@@ -54,8 +54,9 @@ int SequenceGetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input_addr);
   auto index = *(GetDeviceAddress<int64_t>(inputs, 1));

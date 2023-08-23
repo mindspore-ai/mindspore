@@ -124,15 +124,16 @@ int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool QuantileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool QuantileGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *q = GetDeviceAddress<T>(inputs, kIndex1);
   T *out = GetDeviceAddress<T>(outputs, kIndex0);
   T *sort = GetDeviceAddress<T>(workspace, kIndex0);
   int *ret_flag_device = GetDeviceAddress<int>(workspace, kIndex1);
   int *nan_flags = GetDeviceAddress<int>(workspace, kIndex2);
-  total_ = inputs[0]->size / sizeof(T);
+  total_ = inputs[0]->size() / sizeof(T);
   if (total_ <= 0) {
     MS_LOG(ERROR) << "For Quantile, input tensor must be non-empty";
   }

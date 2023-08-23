@@ -112,8 +112,9 @@ void CheckInputValid(const T *input, const size_t &size, const std::string &name
 }
 
 template <typename T, typename S>
-bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
@@ -122,28 +123,28 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputNum << ", but got "
                       << outputs.size() << " output(s).";
   }
-  const auto a_batch_size = inputs[kABatchPtrIdx]->size / sizeof(T);
-  const auto a_dense_shape = reinterpret_cast<T *>(inputs[kADenseShapeIdx]->addr);
-  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->addr);
-  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->addr);
-  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto b_indptr = reinterpret_cast<T *>(inputs[kBIndptrIdx]->addr);
-  const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->addr);
-  const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->addr);
-  const auto alpha = reinterpret_cast<S *>(inputs[kAlphaIdx]->addr);
-  const auto beta = reinterpret_cast<S *>(inputs[kBetaIdx]->addr);
-  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptr]->addr);
-  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndices]->addr);
-  auto c_values = reinterpret_cast<S *>(outputs[kOutValue]->addr);
-  auto c_dense_shape = reinterpret_cast<T *>(outputs[kOutDenseShape]->addr);
-  auto c_batch = reinterpret_cast<T *>(outputs[kOutBatch]->addr);
+  const auto a_batch_size = inputs[kABatchPtrIdx]->size() / sizeof(T);
+  const auto a_dense_shape = reinterpret_cast<T *>(inputs[kADenseShapeIdx]->device_ptr());
+  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->device_ptr());
+  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->device_ptr());
+  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->device_ptr());
+  const auto b_indptr = reinterpret_cast<T *>(inputs[kBIndptrIdx]->device_ptr());
+  const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->device_ptr());
+  const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->device_ptr());
+  const auto alpha = reinterpret_cast<S *>(inputs[kAlphaIdx]->device_ptr());
+  const auto beta = reinterpret_cast<S *>(inputs[kBetaIdx]->device_ptr());
+  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptr]->device_ptr());
+  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndices]->device_ptr());
+  auto c_values = reinterpret_cast<S *>(outputs[kOutValue]->device_ptr());
+  auto c_dense_shape = reinterpret_cast<T *>(outputs[kOutDenseShape]->device_ptr());
+  auto c_batch = reinterpret_cast<T *>(outputs[kOutBatch]->device_ptr());
   // Consider the dense shape of input and output are the same.
-  auto ret = memcpy_s(c_dense_shape, outputs[kOutDenseShape]->size, a_dense_shape, inputs[kADenseShapeIdx]->size);
+  auto ret = memcpy_s(c_dense_shape, outputs[kOutDenseShape]->size(), a_dense_shape, inputs[kADenseShapeIdx]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
-  CheckInputValid(a_indptr, inputs[kAIndptrIdx]->size / sizeof(T), "a indptr");
-  CheckInputValid(b_indptr, inputs[kBIndptrIdx]->size / sizeof(T), "b indptr");
+  CheckInputValid(a_indptr, inputs[kAIndptrIdx]->size() / sizeof(T), "a indptr");
+  CheckInputValid(b_indptr, inputs[kBIndptrIdx]->size() / sizeof(T), "b indptr");
   auto batch_size = static_cast<size_t>(a_batch_size > 1 ? (a_batch_size - 1) : 1);
   c_batch[0] = 0;
   // Do the compute: C = alpha * A + beta * B.

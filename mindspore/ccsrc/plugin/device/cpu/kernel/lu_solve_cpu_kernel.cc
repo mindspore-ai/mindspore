@@ -62,10 +62,10 @@ int LuSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T1, typename T2>
-void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr, T1 *lu_working_ptr,
-                                  int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
-  auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
+void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &outputs, T1 *b_working_ptr,
+                                  T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
+  auto output_y = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
   size_t lu_dims = input_1_shape_.size();
   size_t lu_maxtrix_sizes = LongToSize(input_1_shape_[lu_dims - 2]);
   size_t b_dim = input_0_shape_.size();
@@ -89,11 +89,11 @@ void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T1, typename T2>
-bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->addr);
-  auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
+bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->device_ptr());
+  auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
   auto input0_element_num = SizeOf(input_0_shape_);
   auto input1_element_num = SizeOf(input_1_shape_);
   auto output_element_num = SizeOf(output_shape_);

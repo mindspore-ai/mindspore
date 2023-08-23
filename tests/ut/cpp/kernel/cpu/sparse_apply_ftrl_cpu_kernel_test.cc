@@ -43,9 +43,9 @@ class FusedSparseFtrlCpuKernelTest : public UT::Common {
     outputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
+  KernelTensor *CreateKernelAddress(void *addr) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
     return kernel_addr;
   }
 
@@ -99,9 +99,9 @@ class FusedSparseFtrlCpuKernelTest : public UT::Common {
   std::vector<float> accum_;
   std::vector<float> linear_;
   std::vector<float> grad_;
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
   std::vector<KernelTensorPtr> kernel_tensor_inputs_;
   std::vector<KernelTensorPtr> kernel_tensor_outputs_;
   std::shared_ptr<FusedSparseFtrlCpuKernelMod> sparse_ftrl_;

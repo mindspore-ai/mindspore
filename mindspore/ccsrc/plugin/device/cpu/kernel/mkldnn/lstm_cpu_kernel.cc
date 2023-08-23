@@ -176,22 +176,23 @@ int LstmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool LstmCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   size_t offset = 0;
-  SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->addr);
+  SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->device_ptr());
   offset += weight_size_;
-  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
+  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->device_ptr()) + offset);
   offset += weight_h_size_;
   Reorder(&user_weights_memory_, &weights_memory_);
   Reorder(&user_weights_h_memory_, &weights_h_memory_);
   if (proj_size_ > 0) {
-    SetDataHandle(user_weights_r_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
+    SetDataHandle(user_weights_r_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->device_ptr()) + offset);
     Reorder(&user_weights_r_memory_, &weights_r_memory_);
     offset += weight_r_size_;
   }
   if (has_bias_) {
-    SetDataHandle(bias_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + offset);
+    SetDataHandle(bias_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->device_ptr()) + offset);
   } else {
     auto size = GetSize(bias_desc_);
     if (memset_s(GetDataHandle(bias_memory_), size, 0, size) != EOK) {
@@ -199,18 +200,18 @@ bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
     }
   }
   // set handle
-  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC_ITER_C, inputs[kInputCIndex]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC_ITER_C, inputs[kInputCIndex]->device_ptr());
   SetArgumentHandle(DNNL_ARG_WEIGHTS_LAYER, GetDataHandle(weights_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_ITER, GetDataHandle(weights_h_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_PROJECTION, GetDataHandle(weights_r_memory_));
   SetArgumentHandle(DNNL_ARG_BIAS, GetDataHandle(bias_memory_));
-  SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DST_ITER_C, outputs[2]->addr);
+  SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST_ITER_C, outputs[2]->device_ptr());
   if (is_training_) {
-    SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[kOutputWorkSpaceIndex]->addr);
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[kOutputWorkSpaceIndex]->device_ptr());
   }
   ExecutePrimitive();
   return true;

@@ -67,13 +67,13 @@ int TensorCopyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return 0;
 }
 
-bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /* workspace */,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 
-  auto ret = memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
+  auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
   if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << "Copy input:" << input
                   << " size=" << inputs[0]->size << " ,To output:" << output << " size=" << outputs[0]->size;

@@ -237,22 +237,23 @@ int ResizeV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   MS_ERROR_IF_NULL_W_RET_VAL(input_addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_addr, false);
 
   auto sizes = inputs[kIndex3];
   if (sizes_dtype_ == kNumberTypeInt64) {
-    int64_t *sizes_data = static_cast<int64_t *>(sizes->addr);
+    int64_t *sizes_data = static_cast<int64_t *>(sizes->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     out_height_ = LongToSize(sizes_data[kIndex2]);
     out_width_ = LongToSize(sizes_data[kIndex3]);
   } else {
-    int32_t *sizes_data = static_cast<int32_t *>(sizes->addr);
+    int32_t *sizes_data = static_cast<int32_t *>(sizes->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     std::vector<int64_t> sizes_v;
     sizes_v.push_back(static_cast<int64_t>(sizes_data[kIndex2]));
@@ -293,10 +294,10 @@ bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -330,10 +331,10 @@ bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::Addre
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -370,10 +371,10 @@ bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::Addres
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolationCubic> ys(out_height_ + 1);
   std::vector<CachedInterpolationCubic> xs(out_width_ + 1);

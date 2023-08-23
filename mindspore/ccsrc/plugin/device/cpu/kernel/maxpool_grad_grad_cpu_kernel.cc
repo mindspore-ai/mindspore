@@ -168,13 +168,13 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return static_cast<int>(KRET_OK);
 }
 
-bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradGradOutputsNum, kernel_name_);
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *grad_addr = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
-  auto *dx_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *grad_addr = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
+  auto *dx_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   auto task = [input_addr, grad_addr, dx_addr, this](size_t start, size_t end) {
     auto ret = static_cast<int>(NNACL_OK);

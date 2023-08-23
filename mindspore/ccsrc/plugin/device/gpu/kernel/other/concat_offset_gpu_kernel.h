@@ -32,8 +32,8 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
   ConcatOffsetGpuKernelMod() {}
   ~ConcatOffsetGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t out_size = out_offset_.size() * sizeof(S);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

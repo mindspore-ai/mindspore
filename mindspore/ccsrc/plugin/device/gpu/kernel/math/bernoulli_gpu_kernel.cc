@@ -135,9 +135,9 @@ void BernoulliGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T, typename S>
-bool BernoulliGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool BernoulliGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *p = GetDeviceAddress<T>(inputs, kIndex1);
   S *y = GetDeviceAddress<S>(outputs, kIndex0);
   uint64_t seed;

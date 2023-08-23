@@ -69,11 +69,11 @@ int OrgqrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool OrgqrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = GetDeviceAddress<T>(inputs, kIndex0);
-  T *tau = GetDeviceAddress<T>(inputs, kIndex1);
-  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+bool OrgqrCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  T *x = reinterpret_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *tau = reinterpret_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  T *y = reinterpret_cast<T *>(outputs[kOutputIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(tau);
   MS_EXCEPTION_IF_NULL(y);
@@ -96,11 +96,11 @@ bool OrgqrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-bool OrgqrCpuKernelMod::LaunchComplexKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = GetDeviceAddress<T>(inputs, kIndex0);
-  T *tau = GetDeviceAddress<T>(inputs, kIndex1);
-  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+bool OrgqrCpuKernelMod::LaunchComplexKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *x = reinterpret_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *tau = reinterpret_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  T *y = reinterpret_cast<T *>(outputs[kOutputIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(tau);
   MS_EXCEPTION_IF_NULL(y);

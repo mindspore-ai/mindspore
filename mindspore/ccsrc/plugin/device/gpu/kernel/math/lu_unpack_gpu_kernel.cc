@@ -29,8 +29,9 @@ void LuUnpackGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T, typename S>
-bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *lu_data_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(lu_data_ptr);
   S *lu_pivots_ptr = GetDeviceAddress<S>(inputs, kIndex1);
@@ -127,8 +128,9 @@ int LuUnpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-bool LuUnpackGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LuUnpackGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }

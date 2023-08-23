@@ -48,13 +48,14 @@ int TileSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                        const std::vector<AddressPtr> &) const {
-  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto output_size = outputs[kIndex0]->size;
+bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs,
+                                        const std::vector<KernelTensor *> &) const {
+  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto output_size = outputs[kIndex0]->size();
 
   std::vector<T> out(*ndim_addr, 1);
   auto shape_size = SizeOf(inputs_[kIndex0]->GetShapeVector());
@@ -74,8 +75,9 @@ bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool TileSizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool TileSizeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, outputs, workspace);
 }
 

@@ -108,34 +108,35 @@ int GatherDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T, typename I>
-bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDOutputsNum, kernel_name_);
   auto input_size = LongToSize(get_element_num(input_shape_)) * sizeof(T);
   auto index_size = LongToSize(get_element_num(index_shape_)) * sizeof(I);
   size_t dim_size = sizeof(int);
   auto output_size = LongToSize(get_element_num(output_shape_)) * sizeof(T);
-  if (inputs[0]->size != input_size) {
+  if (inputs[0]->size() != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' must be " << input_size << ", but got "
-                      << inputs[0]->size << ".";
+                      << inputs[0]->size() << ".";
   }
-  if (inputs[1]->size != dim_size) {
+  if (inputs[1]->size() != dim_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' must be " << dim_size << ", but got "
-                      << inputs[1]->size << ".";
+                      << inputs[1]->size() << ".";
   }
-  if (inputs[2]->size != index_size) {
+  if (inputs[2]->size() != index_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'index' must be " << index_size
-                      << ", but got " << inputs[2]->size << ".";
+                      << ", but got " << inputs[2]->size() << ".";
   }
-  if (outputs[0]->size != output_size) {
+  if (outputs[0]->size() != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output must be " << output_size
-                      << ", but got " << outputs[0]->size << ".";
+                      << ", but got " << outputs[0]->size() << ".";
   }
-  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *dim = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto *index = reinterpret_cast<I *>(inputs[2]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *dim = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
+  auto *index = reinterpret_cast<I *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int32_t input_rank = SizeToInt(input_shape_.size());
   if (dim[0] >= input_rank || dim[0] < -input_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -input_rank << ", "

@@ -35,8 +35,9 @@ bool AngleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool AngleCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   switch (input_dtype_) {
     case (kNumberTypeComplex64): {
@@ -56,11 +57,11 @@ bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T, typename T2>
-bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<T2 *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T2);
+bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<T2 *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T2);
   auto task = [output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       T2 a = input_addr[i].real();

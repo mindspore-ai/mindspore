@@ -50,18 +50,18 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     std::vector<void *> params;
 
     for (size_t i = 0; i < inputs.size(); i++) {
-      params.push_back(static_cast<void *>(inputs[i]->addr));
+      params.push_back(static_cast<void *>(inputs[i]->device_ptr()));
     }
     for (size_t i = 0; i < outputs.size(); i++) {
-      params.push_back(static_cast<void *>(outputs[i]->addr));
+      params.push_back(static_cast<void *>(outputs[i]->device_ptr()));
     }
     for (size_t i = 0; i < workspace.size(); i++) {
-      params.push_back(static_cast<void *>(workspace[i]->addr));
+      params.push_back(static_cast<void *>(workspace[i]->device_ptr()));
     }
     if (!handle_) {
 #ifdef _MSC_VER

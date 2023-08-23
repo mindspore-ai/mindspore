@@ -104,9 +104,9 @@ int CTCGreedyDecoderCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
@@ -115,13 +115,13 @@ bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputNum << ", but got "
                       << outputs.size() << " output(s).";
   }
-  auto inputs_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto sequence_length = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
+  auto inputs_x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto sequence_length = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
 
-  auto decoded_indices = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto decoded_values = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto decoded_shape = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
-  auto log_probability = reinterpret_cast<T *>(outputs[kIndex3]->addr);
+  auto decoded_indices = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto decoded_values = reinterpret_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto decoded_shape = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
+  auto log_probability = reinterpret_cast<T *>(outputs[kIndex3]->device_ptr());
 
   int ret = memset_s(log_probability, sizeof(T) * batch_size_, 0, sizeof(T) * batch_size_);
   if (ret != EOK) {

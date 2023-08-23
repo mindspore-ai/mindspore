@@ -33,8 +33,8 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-bool PrintGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PrintGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -133,7 +133,8 @@ int PrintGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return ret;
 }
 
-void PrintGpuKernelMod::InitDeviceData(const std::vector<AddressPtr> &inputs, std::vector<void *> *input_device_data) {
+void PrintGpuKernelMod::InitDeviceData(const std::vector<KernelTensor *> &inputs,
+                                       std::vector<void *> *input_device_data) {
   MS_EXCEPTION_IF_NULL(input_device_data);
   for (size_t i = 0; i < inputs.size(); i++) {
     TypeId type_id = std::get<1>(input_info_[i]);

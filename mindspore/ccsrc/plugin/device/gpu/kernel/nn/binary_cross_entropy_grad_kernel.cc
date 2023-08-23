@@ -20,9 +20,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<half>(inputs, outputs, stream_ptr);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -35,8 +35,8 @@ bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<AddressPtr> &i
 }
 
 template <typename T>
-void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *dloss = GetDeviceAddress<T>(inputs, kIndex2);

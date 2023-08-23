@@ -90,9 +90,9 @@ int GridSampler3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
-bool GridSampler3DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler3DGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -251,13 +251,13 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
 }
 
 template <typename T>
-void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
-  auto grad_data_addr = static_cast<T *>(inputs[kZero]->addr);
-  auto x_data_addr = static_cast<T *>(inputs[kOne]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->addr);
-  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
+void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto grad_data_addr = static_cast<T *>(inputs[kZero]->device_ptr());
+  auto x_data_addr = static_cast<T *>(inputs[kOne]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->device_ptr());
   size_t loop_count = LongToSize(x_shape_[kZero]);
   for (size_t i = kZero; i < dx_size_; i++) {
     dx_data_addr[i] = static_cast<T>(kZero);

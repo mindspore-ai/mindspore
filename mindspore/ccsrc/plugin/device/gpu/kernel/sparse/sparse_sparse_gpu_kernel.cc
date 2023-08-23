@@ -103,9 +103,9 @@ int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T, typename S>
-bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto a_indices_ptr = GetDeviceAddress<T>(inputs, kSparseSparseIndex0);
   MS_EXCEPTION_IF_NULL(a_indices_ptr);
@@ -132,10 +132,10 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   auto ab_status_ptr2 = GetDeviceAddress<int64_t>(workspace, kSparseSparseIndex3);
   MS_EXCEPTION_IF_NULL(ab_status_ptr2);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_ptr, static_cast<int64_t>(1), workspace.at(kSparseSparseIndex1)->size, cuda_stream_),
+    cudaMemsetAsync(sum_ptr, static_cast<int64_t>(1), workspace.at(kSparseSparseIndex1)->size(), cuda_stream_),
     "For SparseSparseOperators, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(ab_status_ptr1, static_cast<int64_t>(kSparseSparseIndex3),
-                                                    workspace.at(kSparseSparseIndex2)->size, cuda_stream_),
+                                                    workspace.at(kSparseSparseIndex2)->size(), cuda_stream_),
                                     "For SparseSparseOperators, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseSparseOperators, cudaStreamSynchronize failed.");

@@ -64,8 +64,8 @@ int ExpandCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-bool ExpandCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool ExpandCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExpandInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExpandOutputsNum, kernel_name_);
   switch (input_x_dtype_) {
@@ -95,12 +95,13 @@ size_t ExpandCpuKernelMod::get_element_num(const std::vector<size_t> &shape) con
 }
 
 template <typename T>
-bool ExpandCpuKernelMod::ExpandCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool ExpandCpuKernelMod::ExpandCompute(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   size_t rank = static_cast<size_t>(output_y_shape_.size());
   switch (rank) {
     case kRank0: {
-      T v0 = *(reinterpret_cast<const T *>(inputs[0]->addr));
-      T *value_out = reinterpret_cast<T *>(outputs[0]->addr);
+      T v0 = *(reinterpret_cast<const T *>(inputs[0]->device_ptr()));
+      T *value_out = reinterpret_cast<T *>(outputs[0]->device_ptr());
       *(value_out) = v0;
       return true;
     }
@@ -128,8 +129,8 @@ bool ExpandCpuKernelMod::ExpandCompute(const std::vector<AddressPtr> &inputs, co
 }
 
 template <size_t RANK, typename T>
-bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   size_t input_x_element_num = get_element_num(input_x_shape_);
   size_t output_y_element_num = get_element_num(output_y_shape_);
 
@@ -150,8 +151,9 @@ bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
     }
   }
 
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input_x(static_cast<T *>(inputs[0]->addr), input_x_element_num);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output_y(static_cast<T *>(outputs[0]->addr),
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input_x(static_cast<T *>(inputs[0]->device_ptr()),
+                                                                input_x_element_num);
+  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output_y(static_cast<T *>(outputs[0]->device_ptr()),
                                                                  output_y_element_num);
 
   Eigen::DSizes<Eigen::DenseIndex, RANK> input_reshape;

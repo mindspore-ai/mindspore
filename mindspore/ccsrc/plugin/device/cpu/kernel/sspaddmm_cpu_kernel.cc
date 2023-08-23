@@ -80,8 +80,8 @@ int SspaddmmCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &outputs) {
+bool SspaddmmCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                  const std::vector<KernelTensor *> &outputs) {
   switch (output_values_dtype_) {
     case kNumberTypeUInt8: {
       LaunchKernel<uint8_t>(inputs, outputs);
@@ -119,16 +119,17 @@ bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
 }
 
 template <typename T>
-void SspaddmmCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_indices_addr = inputs[0]->addr;
+void SspaddmmCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto input_indices_addr = inputs[0]->device_ptr();
   auto input_values_addr = GetDeviceAddress<T>(inputs, 1);
-  auto input_shape_addr = inputs[kInputShapeIndex]->addr;
-  auto mat1_indices_addr = inputs[kMat1IndiceIndex]->addr;
+  auto input_shape_addr = inputs[kInputShapeIndex]->device_ptr();
+  auto mat1_indices_addr = inputs[kMat1IndiceIndex]->device_ptr();
   auto mat1_values_addr = GetDeviceAddress<T>(inputs, kMat1ValueIndex);
-  auto mat1_shape_addr = inputs[kMat1ShapeIndex]->addr;
+  auto mat1_shape_addr = inputs[kMat1ShapeIndex]->device_ptr();
   auto mat2_addr = GetDeviceAddress<T>(inputs, kMat2Index);
-  auto alpha_val_addr = inputs[kAlphaIndex]->addr;
-  auto beta_val_addr = inputs[kBetaIndex]->addr;
+  auto alpha_val_addr = inputs[kAlphaIndex]->device_ptr();
+  auto beta_val_addr = inputs[kBetaIndex]->device_ptr();
   auto y_indices_addr = GetDeviceAddress<int64_t>(outputs, 0);
   auto y_values_addr = GetDeviceAddress<T>(outputs, 1);
   auto y_shape_addr = GetDeviceAddress<int64_t>(outputs, kOutputShapeIndex);

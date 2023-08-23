@@ -79,14 +79,14 @@ void NonZeroCpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_size_ == 0) {
     return true;
   }
 
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<int64_t *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
   real_output_size_ = NonZeroCompute(input_addr, output_addr, input_size_);
   return true;
 }

@@ -59,8 +59,9 @@ int FillV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename DataType>
-bool FillV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FillV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (output_size_ == 0) {
     return true;
   }

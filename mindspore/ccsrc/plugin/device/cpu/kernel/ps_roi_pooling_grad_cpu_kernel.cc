@@ -303,26 +303,27 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   auto output_size = output_channels_ * pooled_height_ * pooled_width_ * output_n_;
   constexpr size_t kInputsNum = 2;
   constexpr size_t kOutputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (data_type_id_ == kNumberTypeFloat32) {
-    auto *top_diff = GetDeviceAddress<float>(inputs, kIndex0);
+    auto top_diff = static_cast<float *>(inputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto *rois = GetDeviceAddress<float>(inputs, kIndex1);
+    auto rois = static_cast<float *>(inputs[kIndex1]->device_ptr());
     MS_EXCEPTION_IF_NULL(rois);
-    auto *output_diff = GetDeviceAddress<float>(outputs, kIndex0);
+    auto output_diff = static_cast<float *>(outputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(output_diff);
 
     constexpr size_t unit_size = sizeof(float);
     auto memset_task = [&](size_t start, size_t end) {
       (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
     };
-    ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 
     auto task = [&](size_t start, size_t end) {
       return PSROIPoolBackward<float>(start, end, top_diff, output_diff, rois);
@@ -332,18 +333,18 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   }
 
   if (data_type_id_ == kNumberTypeFloat16) {
-    auto *top_diff = GetDeviceAddress<float16>(inputs, kIndex0);
+    auto top_diff = static_cast<float16 *>(inputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto *rois = GetDeviceAddress<float16>(inputs, kIndex1);
+    auto rois = static_cast<float16 *>(inputs[kIndex1]->device_ptr());
     MS_EXCEPTION_IF_NULL(rois);
-    auto *output_diff = GetDeviceAddress<float16>(outputs, kIndex0);
+    auto output_diff = static_cast<float16 *>(outputs[kIndex0]->device_ptr());
     MS_EXCEPTION_IF_NULL(output_diff);
 
     constexpr size_t unit_size = sizeof(float16);
     auto memset_task = [&](size_t start, size_t end) {
       (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
     };
-    ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 
     auto task = [&](size_t start, size_t end) {
       return PSROIPoolBackward<float16>(start, end, top_diff, output_diff, rois);

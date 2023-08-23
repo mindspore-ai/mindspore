@@ -72,17 +72,18 @@ int InTopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S>
-bool InTopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool InTopKCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInTopKInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInTopKOutputsNum, kernel_name_);
 
-  auto predictions = reinterpret_cast<T *>(inputs[0]->addr);
-  auto targets = reinterpret_cast<S *>(inputs[1]->addr);
-  auto output = reinterpret_cast<bool *>(outputs[0]->addr);
+  auto predictions = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto targets = reinterpret_cast<S *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
 
   if (k_ < 1) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'k' must be greater than 0, but got " << k_;
-    auto ret = memset_s(output, outputs[0]->size, 0, outputs[0]->size);
+    auto ret = memset_s(output, outputs[0]->size(), 0, outputs[0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
     }

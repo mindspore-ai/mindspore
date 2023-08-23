@@ -168,15 +168,15 @@ std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t outpu
 }
 
 template <typename T>
-bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_ptr);
-  int64_t *row_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[1]->addr);
+  int64_t *row_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(row_pooling_sequence_ptr);
-  int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->addr);
+  int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(col_pooling_sequence_ptr);
   for (size_t i = 0; i < tensor_in_and_out_dims; i++) {
     output_shape_[i] = static_cast<int>(std::floor(input_shape_[i] / pooling_ratio_[i]));

@@ -160,9 +160,9 @@ std::vector<KernelAttr> DenseToCSRSparseMatrixKernelMod::GetOpSupport() {
 }
 
 template <typename T, typename S>
-bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   S *dev_row_indices_ = GetDeviceAddress<S>(workspace, kIndex0);
@@ -203,7 +203,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
   size_t num_batches = (is_batch_csr_) ? input_shapes_[kIndex0] : 1;
   // row pointers need to be set to zero to avoid any blank rows.
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(row_pointers_addr, 0, outputs[kIndex2]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(row_pointers_addr, 0, outputs[kIndex2]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
   cudaError_t status = cudaErrorNotReady;
@@ -225,7 +225,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
   } else {
     S *dev_batch_indices_ = GetDeviceAddress<S>(workspace, kIndex1);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(batch_pointers_addr, 0, outputs[kIndex1]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      cudaMemsetAsync(batch_pointers_addr, 0, outputs[kIndex1]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
     status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,

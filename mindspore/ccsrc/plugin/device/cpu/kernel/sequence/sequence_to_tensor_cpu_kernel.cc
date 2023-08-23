@@ -77,12 +77,13 @@ int SeqToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto output_addr = GetDeviceAddress<S>(outputs, 0);
-  auto input_size = inputs[0]->size / sizeof(T);
-  auto output_size = outputs[0]->size / sizeof(S);
+  auto input_size = inputs[0]->size() / sizeof(T);
+  auto output_size = outputs[0]->size() / sizeof(S);
   if (input_size != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << input_size
                       << "} is not equal to the size of output: {" << output_size << "}";

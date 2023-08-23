@@ -51,8 +51,9 @@ int ReluGradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool ReluGradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ReluGradV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto dy = GetDeviceAddress<T>(inputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
   auto mask = GetDeviceAddress<uint32_t>(inputs, 1);

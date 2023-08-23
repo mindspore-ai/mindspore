@@ -113,9 +113,9 @@ int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool InstanceNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool InstanceNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto x_addr = GetDeviceAddress<T>(inputs, kIndex0);
   auto gamma_addr = GetDeviceAddress<float>(inputs, kIndex1);
   auto beta_addr = GetDeviceAddress<float>(inputs, kIndex2);

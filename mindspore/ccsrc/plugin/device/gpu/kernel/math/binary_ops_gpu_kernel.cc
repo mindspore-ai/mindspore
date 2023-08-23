@@ -82,8 +82,8 @@ int BroadcastOptGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <BinaryOpType op, typename In0_t, typename In1_t, typename Out_t>
-bool BroadcastOptGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+bool BroadcastOptGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto lhs = GetDeviceAddress<In0_t>(inputs, kIndex0);
   auto rhs = GetDeviceAddress<In1_t>(inputs, kIndex1);
   auto out = GetDeviceAddress<Out_t>(outputs, kIndex0);

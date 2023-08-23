@@ -60,8 +60,8 @@ void EnvironSetGpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(handle_size_);
 }
 
-bool EnvironSetGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool EnvironSetGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input_handle = GetDeviceAddress<int64_t>(inputs, 0);
   auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
   auto input_value = GetDeviceAddress<void>(inputs, 2);

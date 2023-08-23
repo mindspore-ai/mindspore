@@ -167,22 +167,22 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_o
 }
 
 template <typename T, typename S>
-bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &workspace,
-                                                          const std::vector<AddressPtr> &outputs) {
+bool SparseApplyCenteredRMSPropGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &workspace,
+                                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyCenteredRMSPropOutputsNum, kernel_name_);
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto mg = reinterpret_cast<T *>(inputs[kMgIndex]->addr);
-  auto ms = reinterpret_cast<T *>(inputs[kMsIndex]->addr);
-  auto mom = reinterpret_cast<T *>(inputs[kMomIndex]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[kLrIndex]->addr);
-  auto rho = reinterpret_cast<T *>(inputs[kRhoIndex]->addr);
-  auto momentum = reinterpret_cast<T *>(inputs[kMomentumIndex]->addr);
-  auto epsilon = reinterpret_cast<T *>(inputs[kEpsilonIndex]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto mg = reinterpret_cast<T *>(inputs[kMgIndex]->device_ptr());
+  auto ms = reinterpret_cast<T *>(inputs[kMsIndex]->device_ptr());
+  auto mom = reinterpret_cast<T *>(inputs[kMomIndex]->device_ptr());
+  auto lr = reinterpret_cast<T *>(inputs[kLrIndex]->device_ptr());
+  auto rho = reinterpret_cast<T *>(inputs[kRhoIndex]->device_ptr());
+  auto momentum = reinterpret_cast<T *>(inputs[kMomentumIndex]->device_ptr());
+  auto epsilon = reinterpret_cast<T *>(inputs[kEpsilonIndex]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
 
   auto status = CalSparseApplyCenteredRMSProp(input_elements_, sizeof(S) / sizeof(int), use_locking_, lr, rho, epsilon,
                                               momentum, grad, indices, var, mg, ms, mom, var_out,

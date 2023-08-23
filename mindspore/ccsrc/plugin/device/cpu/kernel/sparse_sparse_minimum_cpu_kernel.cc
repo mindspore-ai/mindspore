@@ -25,9 +25,9 @@ constexpr int64_t kSparseSparseMinimumInputsNum = 6;
 constexpr int64_t kSparseSparseMinimumOutputsNum = 2;
 }  // namespace
 
-bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeUInt8) {
     LaunchKernel<uint8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt16) {
@@ -95,16 +95,16 @@ int SparseSparseMinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename T>
-void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto x1_indices_addr = static_cast<int64_t *>(inputs[0]->addr);
-  auto x1_values_addr = static_cast<T *>(inputs[1]->addr);
-  auto x1_shape_addr = static_cast<int64_t *>(inputs[2]->addr);
-  auto x2_indices_addr = static_cast<int64_t *>(inputs[3]->addr);
-  auto x2_values_addr = static_cast<T *>(inputs[4]->addr);
-  auto x2_shape_addr = static_cast<int64_t *>(inputs[5]->addr);
-  auto y_indices_addr = static_cast<int64_t *>(outputs[0]->addr);
-  auto y_values_addr = static_cast<T *>(outputs[1]->addr);
+void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x1_indices_addr = static_cast<int64_t *>(inputs[0]->device_ptr());
+  auto x1_values_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto x1_shape_addr = static_cast<int64_t *>(inputs[2]->device_ptr());
+  auto x2_indices_addr = static_cast<int64_t *>(inputs[3]->device_ptr());
+  auto x2_values_addr = static_cast<T *>(inputs[4]->device_ptr());
+  auto x2_shape_addr = static_cast<int64_t *>(inputs[5]->device_ptr());
+  auto y_indices_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
+  auto y_values_addr = static_cast<T *>(outputs[1]->device_ptr());
 
   for (size_t n = 0; n < static_cast<size_t>(num_dims_); n++) {
     if (x1_shape_addr[n] != x2_shape_addr[n]) {

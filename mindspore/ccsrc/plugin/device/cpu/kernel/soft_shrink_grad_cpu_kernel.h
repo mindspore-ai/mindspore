@@ -32,8 +32,8 @@ class SoftShrinkGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   SoftShrinkGradCpuKernelMod() = default;
   ~SoftShrinkGradCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -50,8 +50,9 @@ class SoftShrinkGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   size_t size_ = 1;
   float lambd_ = 0;
 };

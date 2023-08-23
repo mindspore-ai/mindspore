@@ -43,8 +43,8 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -107,7 +107,7 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void TileMultipleCompute(void);
 
   ShapeVector x_shape_;
@@ -119,8 +119,8 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   TypeId multiple_dtype_{kTypeUnknown};
 
-  using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<AddressPtr> &inputs,
-                                        const std::vector<AddressPtr> &outputs)>;
+  using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs)>;
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
   TileStruct tile_struct_;

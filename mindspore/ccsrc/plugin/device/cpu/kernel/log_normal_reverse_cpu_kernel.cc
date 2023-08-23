@@ -60,9 +60,9 @@ int LogNormalReverseCpuKernel::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-bool LogNormalReverseCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool LogNormalReverseCpuKernel::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNumInput, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNumOutput, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -78,11 +78,11 @@ bool LogNormalReverseCpuKernel::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void LogNormalReverseCpuKernel::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+void LogNormalReverseCpuKernel::LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  size_t elem_num = inputs[0]->size / sizeof(T);
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   static std::default_random_engine random_engine(time(0));
   static std::normal_distribution<float> normal_value(input_mean_, input_std_);

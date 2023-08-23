@@ -71,14 +71,14 @@ void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool QRCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *a_value = reinterpret_cast<T *>(inputs[0]->addr);
+bool QRCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  T *a_value = reinterpret_cast<T *>(inputs[0]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_a(a_value, a_row_, a_col_);
-  T *q_value = reinterpret_cast<T *>(outputs[0]->addr);
+  T *q_value = reinterpret_cast<T *>(outputs[0]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_q(q_value, q_row_, q_col_);
-  T *r_value = reinterpret_cast<T *>(outputs[1]->addr);
+  T *r_value = reinterpret_cast<T *>(outputs[1]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_r(r_value, r_row_, r_col_);
 
   auto householder_qr = input_a.householderQr();

@@ -164,23 +164,23 @@ int SparseSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename I, typename T>
-bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxOutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
-  auto *values_addr = static_cast<T *>(inputs[kIndex1]->addr);
-  auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
-  const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
-  const size_t values_length = inputs[kIndex1]->size / sizeof(T);
+  auto *indices_addr = static_cast<I *>(inputs[kIndex0]->device_ptr());
+  auto *values_addr = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
+  const size_t indices_length = inputs[kIndex0]->size() / sizeof(I);
+  const size_t values_length = inputs[kIndex1]->size() / sizeof(T);
   std::vector<T> exp_values;
   std::vector<size_t> index_values;
   std::vector<size_t> visited;

@@ -145,22 +145,22 @@ int ApplyProximalAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return ret;
 }
 
-bool ApplyProximalAdagradGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs, void *cuda_stream) {
+bool ApplyProximalAdagradGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs, void *cuda_stream) {
   kernel_func_(this, inputs, outputs, cuda_stream);
   return true;
 }
 
 template <typename T>
-bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &, void *cuda_stream) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
+bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &, void *cuda_stream) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
 
   auto status = CalApplyProximalAdagrad(input_elements_, batch_size_, lr, l1, l2, grad, var, accum, device_id_,
                                         reinterpret_cast<cudaStream_t>(cuda_stream));

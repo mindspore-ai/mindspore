@@ -104,14 +104,14 @@ int Conv3DTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool Conv3DTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool Conv3DTransposeCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConv3DTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConv3DTransposeOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

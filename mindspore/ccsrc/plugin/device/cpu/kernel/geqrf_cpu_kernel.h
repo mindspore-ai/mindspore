@@ -35,8 +35,8 @@ class GeqrfCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   };
 
@@ -48,10 +48,10 @@ class GeqrfCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
-  using GeqrfLaunchFunc = std::function<bool(GeqrfCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &)>;
+  using GeqrfLaunchFunc = std::function<bool(GeqrfCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, GeqrfLaunchFunc>> func_list_;
   GeqrfLaunchFunc kernel_func_;

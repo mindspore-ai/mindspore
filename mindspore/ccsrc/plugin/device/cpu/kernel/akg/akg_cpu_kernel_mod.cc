@@ -124,8 +124,8 @@ AkgCpuKernelMod::AkgCpuKernelMod(const KernelPackPtr &kp) {
   launch_func_ = kernel_manager_->GetFunction(kernel_name_);
 }
 
-bool AkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs, void *) {
+bool AkgCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                             const std::vector<KernelTensor *> &outputs, void *) {
   if (launch_func_ == nullptr) {
     MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;
@@ -135,9 +135,9 @@ bool AkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
   runtimeargs.reserve(inputs.size() + outputs.size() + 1);
   (void)runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) { return input->addr; });
+                       [](const KernelTensor *input) { return input->device_ptr(); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) { return output->addr; });
+                       [](const KernelTensor *output) { return output->device_ptr(); });
   using AkgCpuKernelFunction = void (*)(void *);
   reinterpret_cast<AkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
   return true;

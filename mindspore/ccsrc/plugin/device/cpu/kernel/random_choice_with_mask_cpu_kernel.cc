@@ -135,28 +135,21 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_dim = GetDeviceAddress<int>(workspace, kIndex0);
-  auto *tmp_output = GetDeviceAddress<int>(workspace, kIndex1);
-  auto *mask_dim = GetDeviceAddress<int>(workspace, kIndex2);
-  auto *output = GetDeviceAddress<int>(workspace, kIndex3);
-
-  auto *input_ptr = GetDeviceAddress<bool>(inputs, kIndex0);
-  auto *output_coordinate_ptr = GetDeviceAddress<int32_t>(outputs, kIndex0);
-  auto *output_ptr = GetDeviceAddress<bool>(outputs, kIndex1);
+bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_dim = reinterpret_cast<int *>(workspace[0]->device_ptr());
+  auto *tmp_output = reinterpret_cast<int *>(workspace[1]->device_ptr());
+  auto *mask_dim = reinterpret_cast<int *>(workspace[2]->device_ptr());
+  auto *output = reinterpret_cast<int *>(workspace[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_dim);
   MS_EXCEPTION_IF_NULL(tmp_output);
   MS_EXCEPTION_IF_NULL(mask_dim);
   MS_EXCEPTION_IF_NULL(output);
-  MS_EXCEPTION_IF_NULL(input_ptr);
-  MS_EXCEPTION_IF_NULL(output_coordinate_ptr);
-  MS_EXCEPTION_IF_NULL(output_ptr);
   for (size_t b = 0; b < batch_size_; b++) {
-    auto *input = input_ptr + b * input_total_count_;
-    auto *output_coordinate = output_coordinate_ptr + b * count_ * input_dim_size_;
-    auto *mask = output_ptr + b * count_;
+    auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr()) + b * input_total_count_;
+    auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->device_ptr()) + b * count_ * input_dim_size_;
+    auto *mask = reinterpret_cast<bool *>(outputs[1]->device_ptr()) + b * count_;
 
     int32_t non_zero_num = 0;
     for (int32_t i = 0; i < input_total_count_; i++) {
@@ -212,7 +205,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     }
 
     size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
-    auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
+    auto ret = memcpy_s(output_coordinate, outputs[0]->size(), output, copy_output_bytes);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
     }

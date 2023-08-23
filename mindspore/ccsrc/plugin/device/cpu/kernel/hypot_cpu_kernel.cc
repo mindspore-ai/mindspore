@@ -63,11 +63,11 @@ int HypotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool HypotCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  const T *x1 = reinterpret_cast<const T *>(inputs[0]->addr);
-  const T *x2 = reinterpret_cast<const T *>(inputs[1]->addr);
-  T *y = reinterpret_cast<T *>(outputs[0]->addr);
+bool HypotCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  const T *x1 = reinterpret_cast<const T *>(inputs[0]->device_ptr());
+  const T *x2 = reinterpret_cast<const T *>(inputs[1]->device_ptr());
+  T *y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
   }

@@ -48,8 +48,8 @@ class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~PyExecuteCpuKernelMod() = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
   bool need_user_data() const override { return true; }
   // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
   void set_input_user_data(UserData *const user_data, size_t input_index) override {

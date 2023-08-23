@@ -83,9 +83,9 @@ int GridSampler3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -196,11 +196,11 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
 }
 
 template <typename T>
-void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<T *>(inputs[kZero]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[kOne]->addr);
-  auto output_data_addr = static_cast<T *>(outputs[kZero]->addr);
+void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<T *>(inputs[kZero]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[kOne]->device_ptr());
+  auto output_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
   size_t loop_count =
     LongToSize(output_shape_[kZero] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {

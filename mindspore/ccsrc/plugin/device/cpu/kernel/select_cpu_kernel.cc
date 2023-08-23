@@ -54,14 +54,14 @@ int SelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool SelectCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool SelectCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSelectOutputsNum, kernel_name_);
-  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *input_x = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *input_y = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task = [&input_x, &input_y, &output, &input_cond](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       output[i] = input_cond[i] ? input_x[i] : input_y[i];

@@ -137,12 +137,12 @@ T MvlgammaGradCpuKernelMod::MvlgammaGradSingle(const T &y_grad, const T &x, cons
 }
 
 template <typename T>
-bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_y_grad = static_cast<T *>(inputs[0]->addr);
-  auto input_x = static_cast<T *>(inputs[1]->addr);
-  auto output_x_grad = static_cast<T *>(outputs[0]->addr);
+bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_y_grad = static_cast<T *>(inputs[0]->device_ptr());
+  auto input_x = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_x_grad = static_cast<T *>(outputs[0]->device_ptr());
 
   for (int64_t i = 0; i < input_tensor_size_; i++) {
     *(output_x_grad + i) = MvlgammaGradSingle<T>(*(input_y_grad + i), *(input_x + i), attr_p_);

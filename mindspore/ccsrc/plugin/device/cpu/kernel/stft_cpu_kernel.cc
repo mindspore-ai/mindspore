@@ -232,15 +232,15 @@ int STFTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T, typename S, typename R, typename DataFT, typename DataFS, typename DataFR>
-bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSTFTInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSTFTOutputsNum, kernel_name_);
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *window = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto *window_paded = reinterpret_cast<S *>(workspace[kIndex0]->addr);
-  auto *output = reinterpret_cast<R *>(outputs[kIndex0]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *window = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto *window_paded = reinterpret_cast<S *>(workspace[kIndex0]->device_ptr());
+  auto *output = reinterpret_cast<R *>(outputs[kIndex0]->device_ptr());
 
   for (int64_t vmap_b = 0; vmap_b < vmap_batches_; vmap_b++) {
     // padding

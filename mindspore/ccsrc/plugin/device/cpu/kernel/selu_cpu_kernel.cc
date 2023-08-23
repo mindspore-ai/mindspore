@@ -51,13 +51,14 @@ int SeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   // The below alpha value and scale value is predefined, according to https://arxiv.org/abs/1706.02515
   T scale = static_cast<T>(1.05070098);
   T scale_dot_alpha = static_cast<T>(1.67326324 * 1.05070098);
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   auto task = [&input, &output, &scale_dot_alpha, &scale](size_t start, size_t end) {
     T template_zero = static_cast<T>(0);
     for (size_t i = start; i < end; i++) {

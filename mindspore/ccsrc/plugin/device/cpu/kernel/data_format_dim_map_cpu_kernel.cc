@@ -31,17 +31,17 @@ const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
 const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
 
 template <typename T>
-bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDataFormatDimMapInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDataFormatDimMapOutputsNum, kernel_name_);
-  T *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   T number_four = static_cast<T>(kNumberFour);
   auto task = [this, &input, &output, number_four](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

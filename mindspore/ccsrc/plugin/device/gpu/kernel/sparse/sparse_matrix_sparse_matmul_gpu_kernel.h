@@ -40,8 +40,8 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
   }
   ~SparseMatrixSparseMatMulGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     stream = reinterpret_cast<cudaStream_t>(cuda_stream);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -71,14 +71,14 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void MatrixTranspose(int m, int n, int nnz, void *csrVal, const int *csrRowPtr, const int *csrColInd, void *csrVal_t,
                        int *csrRowPtr_t, int *csrColInd_t);
   using SparseMatrixSparseMatMulFunc =
-    std::function<bool(SparseMatrixSparseMatMulGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SparseMatrixSparseMatMulGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   void Compute(cusparseHandle_t handle, cusparseMatDescr_t desc, csrgemm2Info_t info, const int m, const int n,
                const int k, float *A_val, const int *const A_colind, const int *const A_rowptr, const int A_nnz,
                float *B_val, const int *const B_colind, const int *const B_rowptr, const int B_nnz, float **C_val,

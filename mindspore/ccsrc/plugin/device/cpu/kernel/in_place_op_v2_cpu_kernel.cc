@@ -119,20 +119,20 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     ParallelLaunchAutoSearch(task, LongToSize(v_size_), this, &parallel_search_info_);
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *v = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    if (memcpy_s(output, outputs[0]->size, x, inputs[0]->size) != EOK) {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *v = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+    if (memcpy_s(output, outputs[0]->size(), x, inputs[0]->size()) != EOK) {
       MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOpV2'.";
       return false;
     }
 
     std::vector<int64_t> indices;
-    const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+    const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
     MS_EXCEPTION_IF_NULL(indice_ptr);
-    for (size_t i = 0; i < inputs[kIndex1]->size / sizeof(S); ++i) {
+    for (size_t i = 0; i < inputs[kIndex1]->size() / sizeof(S); ++i) {
       int64_t indice = IntToLong(indice_ptr[i]);
       if (indice >= row_size_ || indice + row_size_ < 0) {
         MS_LOG(EXCEPTION) << "For 'InplaceUpdate', the value of 'indices' must be between " << -row_size_ << " and "

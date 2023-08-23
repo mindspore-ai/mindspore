@@ -38,8 +38,8 @@ class MulNoNanCPUKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -48,8 +48,8 @@ class MulNoNanCPUKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   std::vector<int64_t> input0_shape_;
@@ -59,10 +59,10 @@ class MulNoNanCPUKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   TypeId output_dtype_{kTypeUnknown};
 
   template <typename T>
-  void NoBcastCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void NoBcastCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void BcastCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void BcastCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

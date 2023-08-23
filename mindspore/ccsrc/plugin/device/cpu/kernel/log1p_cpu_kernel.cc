@@ -44,8 +44,9 @@ bool Log1pCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool Log1pCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
@@ -65,11 +66,11 @@ bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-void Log1pCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *in = static_cast<T *>(inputs[0]->addr);
-  auto *out = static_cast<T *>(outputs[0]->addr);
-  size_t size = inputs[0]->size / sizeof(T);
+void Log1pCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *in = static_cast<T *>(inputs[0]->device_ptr());
+  auto *out = static_cast<T *>(outputs[0]->device_ptr());
+  size_t size = inputs[0]->size() / sizeof(T);
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(log(in[i] + T(1)));

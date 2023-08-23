@@ -70,9 +70,9 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
 }
 
 template <typename T, typename S>
-bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   S *indices = GetDeviceAddress<S>(inputs, 0);
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);

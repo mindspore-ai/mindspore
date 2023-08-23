@@ -35,9 +35,9 @@ void DynamicAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
 }
 
-bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDynamicAssignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicAssignOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
@@ -57,8 +57,8 @@ bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &) {
+void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &) {
   auto node = node_wpt_.lock();
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
@@ -87,9 +87,9 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                         << input_x_shape << ", and the shape of 'input_y': " << input_y_shape;
     }
   }
-  auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
-  auto max_size = inputs[0]->size;
+  auto *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *input_y = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto max_size = inputs[0]->size();
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

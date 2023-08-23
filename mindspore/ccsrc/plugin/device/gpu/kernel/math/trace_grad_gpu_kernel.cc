@@ -55,9 +55,9 @@ int TraceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool TraceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool TraceGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *y_grad = GetDeviceAddress<T>(inputs, 0);
   S *input_shape = GetDeviceAddress<S>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);

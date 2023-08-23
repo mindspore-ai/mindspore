@@ -59,21 +59,21 @@ int FractionalAvgPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::vector<AddressPtr> &inputs,
-                                                                    const std::vector<AddressPtr> &outputs) {
+bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenMatrixMap;
   typedef Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> EigenDoubleMatrixMap;
-  int64_t *orig_input_tensor_shape = reinterpret_cast<int64_t *>(inputs[0]->addr);
+  int64_t *orig_input_tensor_shape = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(orig_input_tensor_shape);
-  T *out_backprop = reinterpret_cast<T *>(inputs[1]->addr);
+  T *out_backprop = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(out_backprop);
-  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[2]->addr);
+  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(row_seq);
-  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[3]->addr);
+  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(col_seq);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
-  size_t orig_input_shape_num = inputs[0]->size / sizeof(int64_t);
+  size_t orig_input_shape_num = inputs[0]->size() / sizeof(int64_t);
   if (orig_input_shape_.size() != 1 || orig_input_shape_num != tensor_in_and_out_dims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the input 'orig_input_tensor_shape' must be 1-dimensional and 4 elements.";
@@ -82,8 +82,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   const int64_t out_rows = out_backprop_shape_[kShapeIndexH];
   const int64_t out_cols = out_backprop_shape_[kShapeIndexW];
   const int64_t out_depth = out_backprop_shape_[kShapeIndexC];
-  int64_t row_seq_nums = SizeToLong(inputs[2]->size / sizeof(int64_t));
-  int64_t col_seq_nums = SizeToLong(inputs[3]->size / sizeof(int64_t));
+  int64_t row_seq_nums = SizeToLong(inputs[2]->size() / sizeof(int64_t));
+  int64_t col_seq_nums = SizeToLong(inputs[3]->size() / sizeof(int64_t));
   if (row_seq_nums <= out_rows) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', given 'out_backprop' shape [" << out_batch << ","
                              << out_rows << "," << out_cols << "," << out_depth

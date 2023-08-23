@@ -112,9 +112,9 @@ const std::vector<std::pair<KernelAttr, Dilation2DBackpropInputPtrCreatorFunc>> 
    CreateDilation2DBackpropInputKernelPtr<int16_t>}};
 }  // namespace
 
-bool Dilation2DBackpropInputGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool Dilation2DBackpropInputGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);

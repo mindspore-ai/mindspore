@@ -98,9 +98,9 @@ void MultinomialCpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T_in, typename T_out>
-bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kWorkspaceNum, kernel_name_);
@@ -110,10 +110,10 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   MS_EXCEPTION_IF_NULL(workspace[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
 
-  auto *input_tensor = reinterpret_cast<T_in *>(inputs[0]->addr);
-  int num_sample = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  auto *output = reinterpret_cast<T_out *>(outputs[0]->addr);
-  auto *cumulative_value = reinterpret_cast<T_in *>(workspace[0]->addr);
+  auto *input_tensor = reinterpret_cast<T_in *>(inputs[0]->device_ptr());
+  int num_sample = reinterpret_cast<int *>(inputs[1]->device_ptr())[0];
+  auto *output = reinterpret_cast<T_out *>(outputs[0]->device_ptr());
+  auto *cumulative_value = reinterpret_cast<T_in *>(workspace[0]->device_ptr());
 
   // check num_samples nonnegative
   if (num_sample < 0.0) {

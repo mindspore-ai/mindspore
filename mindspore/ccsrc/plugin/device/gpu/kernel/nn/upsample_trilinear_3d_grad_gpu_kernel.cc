@@ -88,9 +88,9 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs) {
   auto grad = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(grad);
   auto dinput = GetDeviceAddress<T>(outputs, kIndex0);

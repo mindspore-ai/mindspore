@@ -73,8 +73,9 @@ void CheckSize(const std::string &kernel_name, const std::string &dim_name, size
 }
 }  // namespace
 
-bool DeformableOffsetsGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   return kernel_func_(this, inputs, outputs);
 }
@@ -188,8 +189,8 @@ int DeformableOffsetsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool DeformableOffsetsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool DeformableOffsetsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   T *grad_addr = GetDeviceAddress<T>(inputs, kGradIndex);
   T *x_addr = GetDeviceAddress<T>(inputs, kXIndex);
   T *offset_addr = GetDeviceAddress<T>(inputs, kOffsetIndex);

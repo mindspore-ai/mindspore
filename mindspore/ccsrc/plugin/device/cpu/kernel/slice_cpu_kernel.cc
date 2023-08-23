@@ -172,8 +172,9 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceStruct *par
   }
 }
 
-bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kSliceInputsNum
                       << ", but got " << inputs.size() << " input(s).";
@@ -229,8 +230,8 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     InitSliceParam(input_shape, begin, size);
   }
 
-  auto input_addr = inputs[0]->addr;
-  auto output_addr = outputs[0]->addr;
+  auto input_addr = inputs[0]->device_ptr();
+  auto output_addr = outputs[0]->device_ptr();
   if (origin_dim_size_ == kSliceTwoDims) {
     auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
       auto src = static_cast<int8_t *>(input_addr) +

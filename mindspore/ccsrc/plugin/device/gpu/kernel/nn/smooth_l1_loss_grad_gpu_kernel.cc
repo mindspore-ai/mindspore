@@ -91,15 +91,15 @@ int SmoothL1LossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SmoothL1LossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SmoothL1LossGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossGradOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto status = SmoothL1LossGrad(reduction_, tensor_size_, beta_, predict_addr, target_addr, dloss_addr, result_addr,
                                  device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));

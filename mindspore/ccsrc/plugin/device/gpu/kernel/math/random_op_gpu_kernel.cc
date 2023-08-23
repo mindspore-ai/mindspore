@@ -80,9 +80,9 @@ int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   curandStatePhilox4_32_10_t *devStates = nullptr;
   // Operator CudnnUniformReal does not need workspace memory.
   if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
@@ -107,10 +107,10 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                      "Failed to set stream for generator");
         // curandGen only support float or double for mask.
         CHECK_CURAND_RET_WITH_EXCEPT(
-          curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
+          curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size() / sizeof(float), 0.0, 1.0),
           "Failed to generate normal");
       } else {
-        auto status = StandardNormal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
+        auto status = StandardNormal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size() / sizeof(T),
                                      reinterpret_cast<cudaStream_t>(cuda_stream_));
         CHECK_CUDA_STATUS(status, kernel_name_);
         seed_offset_ += 1;
@@ -121,8 +121,8 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
       T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
       bool ret = false;
-      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
-                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size() / sizeof(T), input_addr_2,
+                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size() / sizeof(T),
                                reinterpret_cast<cudaStream_t>(cuda_stream_), &ret);
       CHECK_CUDA_STATUS(status, kernel_name_);
       if (!ret) {
@@ -133,7 +133,7 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       break;
     }
     case RANDOM_OP_UNIFORM_REAL: {
-      auto status = UniformReal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
+      auto status = UniformReal(seed_, seed_offset_, devStates, output_addr, outputs[0]->size() / sizeof(T),
                                 reinterpret_cast<cudaStream_t>(cuda_stream_));
       CHECK_CUDA_STATUS(status, kernel_name_);
       seed_offset_ += 1;
@@ -152,7 +152,7 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                    "Failed to set stream for generator");
       // curandGen only support float or double for mask.
-      CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, outputs[0]->size / sizeof(float)),
+      CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, outputs[0]->size() / sizeof(float)),
                                    "Failed to generate uniform");
       break;
     }

@@ -232,12 +232,12 @@ const ROIAlignGradCpuKernelMod::FuncList &ROIAlignGradCpuKernelMod::GetFuncList(
 }
 
 template <typename T>
-bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
-  const T *dy = static_cast<T *>(inputs[0]->addr);
-  const T *rois = static_cast<T *>(inputs[1]->addr);
-  T *dx = static_cast<T *>(outputs[0]->addr);
+bool ROIAlignGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
+  const T *dy = static_cast<T *>(inputs[0]->device_ptr());
+  const T *rois = static_cast<T *>(inputs[1]->device_ptr());
+  T *dx = static_cast<T *>(outputs[0]->device_ptr());
 
   int size_init = batch_ * channels_ * height_ * width_;
   auto task1 = [this, &dx](size_t start, size_t end) {

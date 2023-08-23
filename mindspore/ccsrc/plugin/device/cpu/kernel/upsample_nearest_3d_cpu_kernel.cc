@@ -91,9 +91,9 @@ int UpsampleNearest3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(x_ptr);
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -111,7 +111,7 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t output_slice_size = output_depth * output_height * output_width;
 
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
-    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
+    auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size(), x_ptr, outputs[kIndex0]->size());
     if (cpy_ret != EOK) {
       MS_EXCEPTION(MemoryError) << "For " << kernel_name_ << ", memcpy_s to output failed.";
     }

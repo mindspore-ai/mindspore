@@ -70,8 +70,8 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
   Conv3dGradFilterGpuKernelMod() { ResetResource(); }
   ~Conv3dGradFilterGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *x = GetDeviceAddress<T>(inputs, 0);
     T *dy = GetDeviceAddress<T>(inputs, 1);
     T *work_space = GetPossiblyNullDeviceAddress<T>(workspace, 0);

@@ -69,9 +69,9 @@ int SparseMatrixNNZCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SparseMatrixNNZCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseMatrixNNZCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   switch (value_type_) {
     case kNumberTypeInt32:
       DoLaunch<int32_t>(inputs, outputs);
@@ -88,10 +88,10 @@ bool SparseMatrixNNZCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-void SparseMatrixNNZCpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto batch_pointers_x = static_cast<T *>(inputs[kInputIndex1]->addr);
-  auto output_addr = static_cast<int32_t *>(outputs[kOutputIndex0]->addr);
+void SparseMatrixNNZCpuKernelMod::DoLaunch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto batch_pointers_x = static_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  auto output_addr = static_cast<int32_t *>(outputs[kOutputIndex0]->device_ptr());
 
   int64_t curr = 0;
   for (size_t i = 1; i < batch_size_ + 1; i++) {

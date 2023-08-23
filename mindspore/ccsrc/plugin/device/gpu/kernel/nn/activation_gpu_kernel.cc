@@ -150,8 +150,8 @@ std::vector<KernelAttr> ActivationFwdGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 

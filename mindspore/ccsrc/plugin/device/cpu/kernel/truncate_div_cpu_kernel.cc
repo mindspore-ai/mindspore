@@ -63,15 +63,15 @@ int TruncateDivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncateDivInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncateDivOutputsNum, kernel_name_);
-  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto *input_addr_a = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto *input_addr_b = reinterpret_cast<T *>(inputs[kOne]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
 
   if (input_shape_1_ == input_shape_2_) {
     auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {

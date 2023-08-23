@@ -111,8 +111,8 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
-bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
   if (Py_IsInitialized() == 0) {
     MS_LOG(ERROR) << "Py_IsInitialized failed.";

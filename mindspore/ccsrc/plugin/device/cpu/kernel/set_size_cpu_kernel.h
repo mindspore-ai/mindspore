@@ -33,8 +33,8 @@ class SetSizeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   SetSizeCpuKernelMod() = default;
   ~SetSizeCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -51,11 +51,11 @@ class SetSizeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
-  bool IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) const;
+  bool IndicesValid(int64_t n, const std::vector<kernel::KernelTensor *> &inputs) const;
 
   ShapeVector output_shape_;
   ShapeVector shape_;

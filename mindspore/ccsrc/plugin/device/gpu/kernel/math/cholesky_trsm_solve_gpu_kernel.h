@@ -48,8 +48,8 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         blas_handle_(nullptr) {}
   ~CholeskyTrsmGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -129,8 +129,8 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  void LaunchNonSplitMatrix(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchNonSplitMatrix(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
     auto d_array_addr = GetDeviceAddress<T *>(workspace, 0);
@@ -164,8 +164,8 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cublas trsm batched Fail");
   }
 
-  void LaunchSplitMatrix(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchSplitMatrix(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
     auto d_array_addr = GetDeviceAddress<T *>(workspace, 0);

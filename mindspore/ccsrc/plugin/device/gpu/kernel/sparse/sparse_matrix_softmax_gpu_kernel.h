@@ -44,8 +44,8 @@ class SparseMatrixSoftmaxGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -70,12 +70,12 @@ class SparseMatrixSoftmaxGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename DataType, typename IndexType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   using SparseMatrixSoftmaxLaunchFunc =
-    std::function<bool(SparseMatrixSoftmaxGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SparseMatrixSoftmaxGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, SparseMatrixSoftmaxLaunchFunc>> func_list_;
   SparseMatrixSoftmaxLaunchFunc kernel_func_;
 

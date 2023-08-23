@@ -35,8 +35,8 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
       : axis_(0), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr), kernel_name_("Pack") {}
   ~PackFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *output = GetDeviceAddress<T>(outputs, 0);
     T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
     for (size_t i = 0; i < inputs.size(); i++) {

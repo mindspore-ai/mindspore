@@ -129,9 +129,9 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 template <typename T, typename S>
-bool MaxPoolWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MaxPoolWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   S *index_addr = GetDeviceAddress<S>(outputs, 1);
@@ -141,9 +141,9 @@ bool MaxPoolWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
-bool MaxPoolWithArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MaxPoolWithArgmaxGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

@@ -84,9 +84,9 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T, typename S>
-bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspaces,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool RandomChoiceWithMaskGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspaces,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *output_index = GetDeviceAddress<S>(outputs, 0);
   T *output_mask = GetDeviceAddress<T>(outputs, 1);

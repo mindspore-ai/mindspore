@@ -135,8 +135,9 @@ int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool TileCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kTileInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input must be " << kTileInputsNum << ", but got "
                       << inputs.size();
@@ -147,9 +148,10 @@ bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename T>
-void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void TileCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   multiples_.clear();
   auto multiple_nums = std::accumulate(multiple_shape_.begin(), multiple_shape_.end(), 1, std::multiplies<int64_t>());
   if (multiple_dtype_ == kNumberTypeInt32) {

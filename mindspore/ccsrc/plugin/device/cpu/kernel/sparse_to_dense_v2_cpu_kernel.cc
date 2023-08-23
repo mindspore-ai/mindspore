@@ -90,19 +90,20 @@ int SparseToDenseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 template <typename I, typename T>
-void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs, const bool dim_flag) {
+void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs,
+                                                const bool dim_flag) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSize4, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSize1, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->device_ptr());
+  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->device_ptr());
   bool valid = true;
   bool different = false;
   bool increasing = true;
@@ -147,22 +148,22 @@ void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::Addres
   }
 }
 template <typename I, typename T>
-bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2TwoDims) {
     (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, outputs, true);
   } else if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2OneDim) {
     (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, outputs, false);
   }
-  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
-  const auto *values_addr = static_cast<T *>(inputs[kIndex2]->addr);
-  const auto *default_value_addr = static_cast<T *>(inputs[kIndex3]->addr);
-  auto *output_addr = static_cast<T *>(outputs[0]->addr);
-  const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
-  const size_t output_length = outputs[0]->size / sizeof(T);
-  const size_t values_length = inputs[kIndex2]->size / sizeof(T);
+  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->device_ptr());
+  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->device_ptr());
+  const auto *values_addr = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  const auto *default_value_addr = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto *output_addr = static_cast<T *>(outputs[0]->device_ptr());
+  const size_t indices_length = inputs[kIndex0]->size() / sizeof(I);
+  const size_t output_length = outputs[0]->size() / sizeof(T);
+  const size_t values_length = inputs[kIndex2]->size() / sizeof(T);
   size_t rank = output_shape_[0];
   for (size_t p = 0; p < output_length; ++p) {
     output_addr[p] = default_value_addr[0];

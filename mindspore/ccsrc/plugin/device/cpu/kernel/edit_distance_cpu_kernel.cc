@@ -59,9 +59,9 @@ int EditDistanceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T1, typename T2>
-bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
 
@@ -71,15 +71,15 @@ bool EditDistanceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_EXCEPTION(RuntimeError) << "For '" << kernel_name_ << "', output's shape size must be greater than 0.";
   }
 
-  const auto *hypothesis_indices_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  const auto *hypothesis_values_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  const auto *truth_indices_addr = reinterpret_cast<T1 *>(inputs[3]->addr);
-  const auto *truth_values_addr = reinterpret_cast<T2 *>(inputs[4]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *hypothesis_indices_addr = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  const auto *hypothesis_values_addr = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  const auto *truth_indices_addr = reinterpret_cast<T1 *>(inputs[3]->device_ptr());
+  const auto *truth_values_addr = reinterpret_cast<T2 *>(inputs[4]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
-  const size_t hypothesis_values_length = inputs[1]->size / sizeof(T2);
-  const size_t truth_values_length = inputs[4]->size / sizeof(T2);
-  const size_t output_length = outputs[0]->size / sizeof(float);
+  const size_t hypothesis_values_length = inputs[1]->size() / sizeof(T2);
+  const size_t truth_values_length = inputs[4]->size() / sizeof(T2);
+  const size_t output_length = outputs[0]->size() / sizeof(float);
 
   std::vector<size_t> output_strides(rank);
   output_strides[rank - 1] = 1;

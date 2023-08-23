@@ -31,8 +31,8 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
  public:
   UpsampleTrilinear3DGpuKernelMod() = default;
   ~UpsampleTrilinear3DGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,10 +49,11 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using UpsampleTrilinear3DFunc = std::function<bool(UpsampleTrilinear3DGpuKernelMod *, const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using UpsampleTrilinear3DFunc =
+    std::function<bool(UpsampleTrilinear3DGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   UpsampleTrilinear3DFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UpsampleTrilinear3DFunc>> func_list_;
   void *cuda_stream_{nullptr};

@@ -53,16 +53,17 @@ int ListInsertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
   MS_EXCEPTION_IF_NULL(index_addr);
   const auto target_addr = GetDeviceAddress<T>(inputs, kTargetIndex);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len_list = list_shape_[0];
-  auto output_size = outputs[0]->size;
-  auto target_size = inputs[kTargetIndex]->size;
+  auto output_size = outputs[0]->size();
+  auto target_size = inputs[kTargetIndex]->size();
   int64_t index = *index_addr;
 
   if (index < -len_list) {

@@ -158,9 +158,9 @@ int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &b
   return ret;
 }
 
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   switch (input_type_) {
@@ -181,9 +181,9 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<Addre
 }
 
 template <typename scalar_t>
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(const std::vector<AddressPtr> &inputs,
-                                                                                 const std::vector<AddressPtr> &outputs,
-                                                                                 TypeId random_samples_type_) const {
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+  TypeId random_samples_type_) const {
   switch (random_samples_type_) {
     case kNumberTypeFloat16:
       return ComputeTemplate<scalar_t, float16>(inputs, outputs);
@@ -198,12 +198,12 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType
 }
 
 template <typename scalar_t, typename random_sample_t>
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &outputs) const {
-  scalar_t *input_ptr = static_cast<scalar_t *>(inputs[0]->addr);
-  random_sample_t *random_samples_ptr = static_cast<random_sample_t *>(inputs[1]->addr);
-  scalar_t *output_ptr = static_cast<scalar_t *>(outputs[0]->addr);
-  int64_t *argmax_ptr = static_cast<int64_t *>(outputs[1]->addr);
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &outputs) const {
+  scalar_t *input_ptr = static_cast<scalar_t *>(inputs[0]->device_ptr());
+  random_sample_t *random_samples_ptr = static_cast<random_sample_t *>(inputs[1]->device_ptr());
+  scalar_t *output_ptr = static_cast<scalar_t *>(outputs[0]->device_ptr());
+  int64_t *argmax_ptr = static_cast<int64_t *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(random_samples_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);

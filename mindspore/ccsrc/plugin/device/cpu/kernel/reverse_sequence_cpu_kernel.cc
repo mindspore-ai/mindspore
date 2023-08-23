@@ -83,10 +83,10 @@ void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr
 }
 
 template <typename T, typename S>
-void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input0 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto input1 = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
 
   // check sequence length
   int64_t max_seq_length = input0_shape_[seq_dim_];
@@ -98,7 +98,7 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     }
   }
 
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   auto ret = memcpy_s(output, IntToSize(total_data_size_), input0, IntToSize(total_data_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
@@ -161,9 +161,9 @@ int ReverseSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
 

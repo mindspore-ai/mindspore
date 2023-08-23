@@ -77,9 +77,9 @@ int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename DataType>
-bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (x_size_ == 0 || y_size_ == 0) {
     return true;
   }

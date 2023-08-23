@@ -31,8 +31,8 @@ class BACKEND_EXPORT SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpu
   SparseApplyLazyAdamCpuKernelMod() { ResetResource(); }
   ~SparseApplyLazyAdamCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -56,8 +56,9 @@ class BACKEND_EXPORT SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpu
   void InitWorkspaceSize();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &) const;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

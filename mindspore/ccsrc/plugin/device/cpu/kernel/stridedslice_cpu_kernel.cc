@@ -230,24 +230,24 @@ void StridedSliceCpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t *o
 }
 
 template <typename T, typename S>
-bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> & /* workspace */,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kStridedSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kStridedSliceInputsNum
                       << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->device_ptr());
 
   // for begin, end, stride are tensors
   std::vector<int64_t> begin;
   std::vector<int64_t> end;
   std::vector<int64_t> stride;
-  auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->addr);
-  auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->addr);
+  auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->device_ptr());
+  auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->device_ptr());
   for (int64_t i = 0; i < begin_shape_[0]; i++) {
     begin.push_back(static_cast<int64_t>(begin_ptr[i]));
   }

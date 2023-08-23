@@ -74,14 +74,14 @@ int SpaceToDepthCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   return KRET_OK;
 }
 template <typename T>
-bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSpaceToDepthInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSpaceToDepthOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t size = inputs[0]->size / sizeof(T);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t size = inputs[0]->size() / sizeof(T);
 
   auto input_shape = input_shape_;
   auto output_shape = output_shape_;

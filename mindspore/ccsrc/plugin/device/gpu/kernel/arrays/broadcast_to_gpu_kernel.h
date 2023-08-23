@@ -35,8 +35,8 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
   BroadcastToGpuKernelMod() : kernel_name_("BroadcastTo") {}
   ~BroadcastToGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -49,11 +49,11 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using BroadcastToLaunchFunc =
-    std::function<bool(BroadcastToGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using BroadcastToLaunchFunc = std::function<bool(
+    BroadcastToGpuKernelMod *, const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   std::string kernel_name_{};

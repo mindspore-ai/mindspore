@@ -68,18 +68,18 @@ std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }
   std::size_t data_size = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    data_size += inputs[i]->size;
+    data_size += inputs[i]->size();
   }
-  bool ret = MsCollectiveCommLib::GetInstance().AllReduce(inputs[0]->addr, outputs[0]->addr, data_size,
+  bool ret = MsCollectiveCommLib::GetInstance().AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), data_size,
                                                           kNumberTypeFloat32, Reduce_Sum, kMCCLGlobalGroupName);
   if (!ret) {
     MS_LOG(ERROR) << "AllReduceCPUKernelMod launch failed.";

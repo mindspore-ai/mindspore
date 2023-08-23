@@ -95,19 +95,19 @@ int SmoothL1LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SmoothL1LossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SmoothL1LossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (this->reduction_ != SmoothL1LossReductionMode::NONE) {
-    double *tmp_result_addr = reinterpret_cast<double *>(workspace[0]->addr);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(workspace[0]->addr, false, workspace[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemsetAsync failed in SmoothL1LossGpuKernelMod::Launch.");
+    double *tmp_result_addr = reinterpret_cast<double *>(workspace[0]->device_ptr());
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(workspace[0]->device_ptr(), false, workspace[0]->size(),
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cudaMemsetAsync failed in SmoothL1LossGpuKernelMod::Launch.");
     auto status = SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, tmp_result_addr,
                                device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);

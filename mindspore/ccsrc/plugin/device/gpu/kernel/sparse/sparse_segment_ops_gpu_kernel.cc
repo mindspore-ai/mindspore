@@ -104,9 +104,9 @@ int SparseSegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename R, typename S>
-bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool SparseSegmentOpsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   R *x_ptr = GetDeviceAddress<R>(inputs, kIndex0);
   S *indices_ptr = GetDeviceAddress<S>(inputs, kIndex1);
   S *segment_ids_ptr = GetDeviceAddress<S>(inputs, kIndex2);

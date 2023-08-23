@@ -200,8 +200,9 @@ void BroadcastToCpuKernelMod::CheckArgs() {
 }
 
 template <typename T>
-bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
   CheckArgs();
 
@@ -210,8 +211,8 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     return true;
   }
 
-  const void *input_addr = inputs[0]->addr;
-  void *output_addr = outputs[0]->addr;
+  const void *input_addr = inputs[0]->device_ptr();
+  void *output_addr = outputs[0]->device_ptr();
   int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
     status = BroadcastToSize8(input_addr, &shape_info_, output_addr);

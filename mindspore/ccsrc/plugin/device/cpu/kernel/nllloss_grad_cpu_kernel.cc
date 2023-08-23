@@ -75,24 +75,24 @@ int NLLLossGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(kNLLLossGradInputsNum, inputs.size(), kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(kNLLLossGradOutputsNum, outputs.size(), kernel_name_);
 
-  const auto *logits = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto *loss_grad = reinterpret_cast<float *>(inputs[1]->addr);
-  const auto *labels = static_cast<T *>(inputs[2]->addr);
-  const auto *weight = reinterpret_cast<float *>(inputs[3]->addr);
-  const auto *total_weight = reinterpret_cast<float *>(inputs[4]->addr);
-  auto *logits_grad = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *logits = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  const auto *loss_grad = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  const auto *labels = static_cast<T *>(inputs[2]->device_ptr());
+  const auto *weight = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  const auto *total_weight = reinterpret_cast<float *>(inputs[4]->device_ptr());
+  auto *logits_grad = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   if (logits == nullptr || loss_grad == nullptr || labels == nullptr || weight == nullptr || total_weight == nullptr) {
     MS_LOG(ERROR) << "For NLLLossGrad, it does not support NULL input";
   }
   auto ret =
-    memset_s(logits_grad, outputs[0]->size, 0, nllloss_param_.batch_ * nllloss_param_.class_num_ * sizeof(float));
+    memset_s(logits_grad, outputs[0]->size(), 0, nllloss_param_.batch_ * nllloss_param_.class_num_ * sizeof(float));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }

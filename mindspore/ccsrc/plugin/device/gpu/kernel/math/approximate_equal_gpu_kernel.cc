@@ -72,9 +72,9 @@ void ApproximateEqualGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool ApproximateEqualGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool ApproximateEqualGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   T *input_x1 = GetDeviceAddress<T>(inputs, 0);
   T *input_x2 = GetDeviceAddress<T>(inputs, 1);
   bool *output = GetDeviceAddress<bool>(outputs, 0);

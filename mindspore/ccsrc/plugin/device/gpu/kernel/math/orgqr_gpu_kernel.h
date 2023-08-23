@@ -43,8 +43,8 @@ class OrgqrGpuKernelMod : public NativeGpuKernelMod {
   OrgqrGpuKernelMod() { ResetResource(); }
   ~OrgqrGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -71,8 +71,8 @@ class OrgqrGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void RunOrgqr(const size_t m, const size_t n, const size_t k, T *d_a, T *tau, int *dev_info, T *d_output_y);
   template <typename T>
@@ -80,8 +80,8 @@ class OrgqrGpuKernelMod : public NativeGpuKernelMod {
   void CheckResult(int *dev_info);
 
   using LaunchKernelFunc =
-    std::function<bool(OrgqrGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(OrgqrGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   using InitSizeListsFunc = std::function<void(OrgqrGpuKernelMod *)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
   InitSizeListsFunc init_lists_func_{nullptr};

@@ -43,8 +43,8 @@ class OrmqrGpuKernelMod : public NativeGpuKernelMod {
   OrmqrGpuKernelMod() = default;
   ~OrmqrGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return launch_kernel_func_(this, inputs, workspace, outputs);
   }
@@ -56,14 +56,14 @@ class OrmqrGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void RunOrmqr(T *d_input_x, T *input_tau, T *d_input_other, int *dev_info);
 
   using LaunchKernelFunc =
-    std::function<bool(OrmqrGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(OrmqrGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   LaunchKernelFunc launch_kernel_func_{nullptr};
   static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> func_list_;
 

@@ -39,8 +39,8 @@ class ApplyProximalGradientDescentCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -65,8 +65,8 @@ class ApplyProximalGradientDescentCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernelDefault(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchKernelOptFp32(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelDefault(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchKernelOptFp32(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   TypeId dtype_{kTypeUnknown};
   int64_t batch_rank_;
   int64_t batch_size_;

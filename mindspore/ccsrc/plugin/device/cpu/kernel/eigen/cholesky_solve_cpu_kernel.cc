@@ -65,11 +65,12 @@ int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
-  T *rhsptr = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  T *lhsptr = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
-  T *outptr = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
+  T *rhsptr = reinterpret_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *lhsptr = reinterpret_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  T *outptr = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> RHS(dim, rhs_dim);
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> LHS(dim, dim);
   for (size_t k = 0; k < batch_size; k++) {

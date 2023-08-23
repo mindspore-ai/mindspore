@@ -75,9 +75,9 @@ int VmapAssignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool VmapAssignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool VmapAssignGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *stacked_param = GetDeviceAddress<T>(inputs, kIndex0);
   T **partition_array = GetDeviceAddress<T *>(workspace, kIndex0);
   auto partition_host = std::make_unique<T *[]>(stack_num_);

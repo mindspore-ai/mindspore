@@ -41,13 +41,13 @@ inline T ScalarZeta(T a, T b) {
 }
 
 template <typename T>
-bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  std::size_t total = inputs[0]->size / sizeof(T);
+bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  std::size_t total = inputs[0]->size() / sizeof(T);
   auto task = [input0, input1, output](std::size_t begin, std::size_t end) {
     std::transform(input0 + begin, input0 + end, input1 + begin, output + begin, ScalarZeta<T>);
   };

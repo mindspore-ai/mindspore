@@ -133,9 +133,9 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   T *matrix = GetDeviceAddress<T>(inputs, kIndex0);
   T *rhs = GetDeviceAddress<T>(inputs, kIndex1);
 
@@ -160,7 +160,7 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     CHECK_CUDA_STATUS(status, kernel_name_);
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
+      cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size(), cudaMemcpyDeviceToDevice, cuda_stream_),
       "cudaMemcpyAsync dst failed");
   }
   status = MatrixTranspose(rhs, LongToSize(batch_num_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), rhs_col_major,

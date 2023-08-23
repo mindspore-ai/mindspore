@@ -38,8 +38,8 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   AddNFwdGpuKernelMod() = default;
   ~AddNFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (empty_tensor_input_) {
       return true;
     }
@@ -60,8 +60,8 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   size_t num_input_{0};

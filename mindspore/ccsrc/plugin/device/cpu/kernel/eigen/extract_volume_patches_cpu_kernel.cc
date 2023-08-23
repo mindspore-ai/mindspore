@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/extract_volume_patches_cpu_kernel.h"
+#include <functional>
 #include <memory>
 #include <string>
 #include "mindapi/base/type_id.h"
@@ -84,9 +85,9 @@ int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool ExtractVolumePatchesKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &workspace,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool ExtractVolumePatchesKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &workspace,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t dims = 5;
   constexpr size_t x_dim_num = 5;
   constexpr size_t out_dim_num = 5;
@@ -116,11 +117,11 @@ bool ExtractVolumePatchesKernelMod::LaunchKernel(const std::vector<kernel::Addre
   }
 
   Eigen::TensorMap<Eigen::Tensor<T, dims, storage_option, Eigen::DenseIndex>, alignment_type> eigen_inputs(
-    static_cast<T *>(inputs[0]->addr), input_shape_[xn], input_shape_[xc], input_shape_[xd], input_shape_[xh],
+    static_cast<T *>(inputs[0]->device_ptr()), input_shape_[xn], input_shape_[xc], input_shape_[xd], input_shape_[xh],
     input_shape_[xw]);
   Eigen::TensorMap<Eigen::Tensor<T, dims, storage_option, Eigen::DenseIndex>, alignment_type> eigen_outputs(
-    static_cast<T *>(outputs[0]->addr), output_shape_[on], output_shape_[oc], output_shape_[od], output_shape_[oh],
-    output_shape_[ow]);
+    static_cast<T *>(outputs[0]->device_ptr()), output_shape_[on], output_shape_[oc], output_shape_[od],
+    output_shape_[oh], output_shape_[ow]);
   Eigen::Tensor<T, extract_dims, storage_option, Eigen::DenseIndex> extract_tensor =
     eigen_inputs.shuffle(Eigen::array<int, dims>{xn, xd, xh, xw, xc})
       .extract_volume_patches(kernel_size_[kw], kernel_size_[kh], kernel_size_[kd], strides_[sw], strides_[sh],

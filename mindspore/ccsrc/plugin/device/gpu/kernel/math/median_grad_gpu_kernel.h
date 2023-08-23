@@ -35,8 +35,8 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
   MedianGradGpuKernelMod() : global_median_(false), keep_dims_(false), axis_(0) {}
   ~MedianGradGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *y_grad = GetDeviceAddress<T>(inputs, kIndex0);
     T *x = GetDeviceAddress<T>(inputs, kIndex1);
     T *y = GetDeviceAddress<T>(inputs, kIndex2);
@@ -51,7 +51,7 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     int *repeat_val = GetDeviceAddress<int>(workspace, kIndex2);
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(output0_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      cudaMemsetAsync(output0_addr, 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemSet Failed");
 
     if (!global_median_) {

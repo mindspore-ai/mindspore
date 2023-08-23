@@ -204,13 +204,13 @@ void MatrixSolveLsCpuKernelMod::ComplexQrSingleCompute(std::complex<T> *aptr, st
 }
 
 template <typename T>
-bool MatrixSolveLsCpuKernelMod::ComplexCholesky(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSolveLsCpuKernelMod::ComplexCholesky(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   auto dims = matrix_shape_.size();
-  auto l2 = GetDeviceAddress<double>(inputs, kIndex2);
-  auto aptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex0);
-  auto bptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex1);
-  auto xptr = GetDeviceAddress<std::complex<T>>(outputs, kIndex0);
+  auto l2 = reinterpret_cast<double *>(inputs[2]->device_ptr());
+  auto aptr = reinterpret_cast<std::complex<T> *>(inputs[0]->device_ptr());
+  auto bptr = reinterpret_cast<std::complex<T> *>(inputs[1]->device_ptr());
+  auto xptr = reinterpret_cast<std::complex<T> *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(l2);
   MS_EXCEPTION_IF_NULL(aptr);
   MS_EXCEPTION_IF_NULL(bptr);
@@ -244,12 +244,12 @@ bool MatrixSolveLsCpuKernelMod::ComplexCholesky(const std::vector<kernel::Addres
 }
 
 template <typename T>
-bool MatrixSolveLsCpuKernelMod::RealQr(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSolveLsCpuKernelMod::RealQr(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   auto dims = matrix_shape_.size();
-  auto aptr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto bptr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto xptr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto aptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto bptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto xptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(aptr);
   MS_EXCEPTION_IF_NULL(bptr);
   MS_EXCEPTION_IF_NULL(xptr);
@@ -282,8 +282,8 @@ bool MatrixSolveLsCpuKernelMod::RealQr(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-bool MatrixSolveLsCpuKernelMod::ComplexQr(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSolveLsCpuKernelMod::ComplexQr(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   auto dims = matrix_shape_.size();
   int64_t m = matrix_shape_[dims - kNum2];
   int64_t k = matrix_shape_[dims - 1];
@@ -298,9 +298,9 @@ bool MatrixSolveLsCpuKernelMod::ComplexQr(const std::vector<kernel::AddressPtr> 
   const int64_t res_size = n * k;
   const int64_t batch = data_num / mat_size;
   const int64_t kParallelDataNum = 16 * mat_size;
-  auto aptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex0);
-  auto bptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex1);
-  auto xptr = GetDeviceAddress<std::complex<T>>(outputs, kIndex0);
+  auto aptr = reinterpret_cast<std::complex<T> *>(inputs[0]->device_ptr());
+  auto bptr = reinterpret_cast<std::complex<T> *>(inputs[1]->device_ptr());
+  auto xptr = reinterpret_cast<std::complex<T> *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(aptr);
   MS_EXCEPTION_IF_NULL(bptr);
   MS_EXCEPTION_IF_NULL(xptr);
@@ -320,13 +320,13 @@ bool MatrixSolveLsCpuKernelMod::ComplexQr(const std::vector<kernel::AddressPtr> 
 }
 
 template <typename T>
-bool MatrixSolveLsCpuKernelMod::RealCholesky(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSolveLsCpuKernelMod::RealCholesky(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   auto dims = matrix_shape_.size();
-  auto l2 = GetDeviceAddress<double>(inputs, kIndex2);
-  auto aptr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto bptr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto xptr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto aptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto bptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto xptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto l2 = reinterpret_cast<double *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(l2);
   MS_EXCEPTION_IF_NULL(aptr);
   MS_EXCEPTION_IF_NULL(bptr);
@@ -439,8 +439,9 @@ bool MatrixSolveLsCpuKernelMod::LaunchKernelAcessCheck(void) {
 }
 
 template <typename T>
-bool MatrixSolveLsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool MatrixSolveLsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (LaunchKernelAcessCheck() != true) {
     return kMatrixSolveLsComputeFailed;
   }

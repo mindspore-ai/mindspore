@@ -69,16 +69,16 @@ int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const BaseOperator
 }
 
 template <typename data_type, typename label_type>
-bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::LaunchKernel(
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsV2InputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsV2OutputNum, kernel_name_);
-  auto *features = static_cast<data_type *>(inputs[kIndex0]->addr);
-  auto *labels = static_cast<label_type *>(inputs[kIndex1]->addr);
-  auto *loss = static_cast<data_type *>(outputs[kIndex0]->addr);
-  auto *backprop = static_cast<data_type *>(outputs[kIndex1]->addr);
-  const size_t features_length = inputs[kIndex0]->size / sizeof(data_type);
-  const size_t labels_length = inputs[kIndex1]->size / sizeof(label_type);
+  auto *features = static_cast<data_type *>(inputs[kIndex0]->device_ptr());
+  auto *labels = static_cast<label_type *>(inputs[kIndex1]->device_ptr());
+  auto *loss = static_cast<data_type *>(outputs[kIndex0]->device_ptr());
+  auto *backprop = static_cast<data_type *>(outputs[kIndex1]->device_ptr());
+  const size_t features_length = inputs[kIndex0]->size() / sizeof(data_type);
+  const size_t labels_length = inputs[kIndex1]->size() / sizeof(label_type);
   const size_t batch_size = labels_length;
   const size_t classes_num = features_length / labels_length;
   for (size_t index = 0; index < labels_length; index++) {

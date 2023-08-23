@@ -38,9 +38,9 @@ constexpr size_t kChannelPaddingCoeff = 2;
 }  // namespace
 
 template <typename T>
-bool MirrorPadGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MirrorPadGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   int64_t *paddings = GetDeviceAddress<int64_t>(inputs, 1);
   T *interim = GetDeviceAddress<T>(workspace, 0);

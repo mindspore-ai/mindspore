@@ -36,8 +36,8 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
   NcclP2PGpuKernel() { ResetResource(); }
   ~NcclP2PGpuKernel() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     switch (nccl_kernel_type_) {
       case NCCL_ALLTOALLV: {
         LaunchAllToAllv(inputs, outputs, stream_ptr);
@@ -139,7 +139,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
   void InitSizeLists() override { return; }
 
  private:
-  void LaunchAllToAllv(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void LaunchAllToAllv(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                        void *stream_ptr) {
     T *input_addr = nullptr;
     I *output_addr = nullptr;

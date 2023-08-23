@@ -58,15 +58,15 @@ int HSwishGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool HSwishGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool HSwishGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSwishGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSwishGradOutputsNum, kernel_name_);
-  const auto *dy = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *dy = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  const auto *x = reinterpret_cast<T *>(inputs[1]->addr);
+  const auto *x = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *out = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(out, false);
 
   auto zero = static_cast<T>(0);

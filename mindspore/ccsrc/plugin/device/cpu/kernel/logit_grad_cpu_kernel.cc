@@ -60,9 +60,9 @@ int LogitGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return KRET_OK;
 }
 
-bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     (void)LaunchKernelHalf(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
@@ -77,12 +77,12 @@ bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   return true;
 }
 
-bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) const {
-  float16 *grad = static_cast<float16 *>(inputs[0]->addr);
-  float16 *input = static_cast<float16 *>(inputs[1]->addr);
-  float16 *output = static_cast<float16 *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size;
+bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) const {
+  float16 *grad = static_cast<float16 *>(inputs[0]->device_ptr());
+  float16 *input = static_cast<float16 *>(inputs[1]->device_ptr());
+  float16 *output = static_cast<float16 *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size();
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
@@ -106,12 +106,12 @@ bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inpu
 }
 
 template <typename T>
-bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) const {
-  T *grad = static_cast<T *>(inputs[0]->addr);
-  T *input = static_cast<T *>(inputs[1]->addr);
-  T *output = static_cast<T *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size;
+bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) const {
+  T *grad = static_cast<T *>(inputs[0]->device_ptr());
+  T *input = static_cast<T *>(inputs[1]->device_ptr());
+  T *output = static_cast<T *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size();
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }

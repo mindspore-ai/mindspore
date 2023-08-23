@@ -35,8 +35,8 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
   GammaCpuKernelMod() = default;
   ~GammaCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -50,9 +50,12 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void Generate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void InferShape(const std::vector<AddressPtr> &inputs);
+  void InferShape(const std::vector<KernelTensor *> &inputs);
+  int64_t seed_{0};
+  int64_t seed2_{0};
+
   ShapeVector output_shape_;
   ShapeVector shape_shape_;
   ShapeVector alpha_shape_;

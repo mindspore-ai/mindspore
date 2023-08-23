@@ -101,9 +101,9 @@ int DataFormatVecPermuteGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-bool DataFormatVecPermuteGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
+bool DataFormatVecPermuteGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto *index = GetDeviceAddress<int32_t>(workspace, kIndex0);

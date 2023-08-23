@@ -43,8 +43,8 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     stream_ptr_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -58,8 +58,8 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   void UpdateSize();
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using SupportList = std::vector<std::pair<KernelAttr, TensorScatterArithmeticGpuKernelMod::KernelRunFunc>>;
 
   size_t input_size_{1};

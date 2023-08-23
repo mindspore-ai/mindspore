@@ -27,8 +27,8 @@ constexpr const size_t kHSigmoidGradInputsNum = 2;
 constexpr const size_t kHSigmoidGradOutputsNum = 1;
 
 template <typename T>
-bool HSigmoidGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidGradOutputsNum, kernel_name_);
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);

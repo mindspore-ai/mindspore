@@ -71,9 +71,9 @@ void FakeLearnedScaleQuantPerChannelGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(input_size_);                // input_quant
 }
 
-bool FakeLearnedScaleQuantPerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeLearnedScaleQuantPerChannelGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   float *input = GetDeviceAddress<float>(inputs, kIndex0);
   float *input_alpha = GetDeviceAddress<float>(inputs, kIndex1);
   float *input_quant_max = GetDeviceAddress<float>(inputs, kIndex2);

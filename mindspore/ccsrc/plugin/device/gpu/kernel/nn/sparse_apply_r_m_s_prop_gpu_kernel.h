@@ -46,8 +46,8 @@ class SparseApplyRMSPropGpuKernelMod : public NativeGpuKernelMod,
   bool ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
   bool ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     MS_EXCEPTION_IF_NULL(cuda_stream);
     MS_EXCEPTION_IF_NULL(kernel_func_);
     if (is_null_input_) {
@@ -64,8 +64,8 @@ class SparseApplyRMSPropGpuKernelMod : public NativeGpuKernelMod,
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   void *cuda_stream_{nullptr};
   float rho_;
   float momentum_;

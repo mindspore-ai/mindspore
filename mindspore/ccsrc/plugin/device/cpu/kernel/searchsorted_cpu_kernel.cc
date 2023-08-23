@@ -76,13 +76,13 @@ const S *SearchSortedCpuKernelMod::CustomizedLowerBound(const S *seq_start, cons
 }
 
 template <typename S, typename T>
-bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CheckParam<S, T>(inputs, outputs);
-  auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
-  auto values = reinterpret_cast<S *>(inputs[1]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[1]->size / sizeof(S);
+  auto sequence = reinterpret_cast<S *>(inputs[0]->device_ptr());
+  auto values = reinterpret_cast<S *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[1]->size() / sizeof(S);
   size_t seq_dim = sequence_shape_.size();
   size_t search_repeat = static_cast<size_t>(values_shape_.back());
 
@@ -99,15 +99,15 @@ bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 }
 
 template <typename S, typename T>
-void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) const {
+void SearchSortedCpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
 
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
-                      << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
+                      << inputs[1]->size() << " and the dimension of output " << outputs[0]->size();
   }
 }
 

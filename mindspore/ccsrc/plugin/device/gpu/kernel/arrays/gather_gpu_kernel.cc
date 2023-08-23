@@ -88,16 +88,16 @@ std::vector<KernelAttr> GatherFwdGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T, typename S, typename G>
-bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *>&outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
   VARIABLE_NOT_USED(workspace);
-  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
-  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  T *input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  S *indices_addr = reinterpret_cast<S *>(inputs.at(kIndex2)->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   auto input_dim1 = input_shapes_[IntToSize(axis_)];
   auto status = Gather(input_addr, indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
                        dims_[kIndex3], LongToSize(input_dim1), reinterpret_cast<cudaStream_t>(stream_ptr));

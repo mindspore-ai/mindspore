@@ -58,8 +58,8 @@ bool SvdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-bool SvdCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs) {
+bool SvdCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                             const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(kernel_func_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
@@ -89,12 +89,13 @@ int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
-  auto *input_a = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output_s = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto *output_u = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto *output_v = reinterpret_cast<T *>(outputs[kIndex2]->addr);
+bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *input_a = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output_s = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto *output_u = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto *output_v = reinterpret_cast<T *>(outputs[kIndex2]->device_ptr());
 
   std::map<bool, std::pair<int, int>> optionMap{{true, {Eigen::ComputeFullU, Eigen::ComputeFullV}},
                                                 {false, {Eigen::ComputeThinU, Eigen::ComputeThinV}}};
@@ -148,13 +149,13 @@ bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
-  auto *input_a = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output_s = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto *output_u = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto *output_v = reinterpret_cast<T *>(outputs[kIndex2]->addr);
+bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto *input_a = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output_s = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  auto *output_u = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto *output_v = reinterpret_cast<T *>(outputs[kIndex2]->device_ptr());
 
   std::map<bool, std::pair<int, int>> optionMap{{true, {Eigen::ComputeFullU, Eigen::ComputeFullV}},
                                                 {false, {Eigen::ComputeThinU, Eigen::ComputeThinV}}};

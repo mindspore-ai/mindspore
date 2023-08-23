@@ -46,10 +46,11 @@ int SequenceZerosLikeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   for (size_t i = 0; i < output_size; i++) {
     output_addr[i] = T(0);
   }

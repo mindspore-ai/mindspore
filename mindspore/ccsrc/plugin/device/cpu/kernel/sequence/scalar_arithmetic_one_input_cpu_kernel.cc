@@ -85,8 +85,9 @@ int ScalarOneInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T, typename S>
-bool ScalarOneInputCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) {
+bool ScalarOneInputCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) {
   using MathImplFunc = std::function<void(const T *x, S *out)>;
   std::unordered_map<std::string, MathImplFunc> func_map = {
     {kScalarUadd, UaddImpl<T, S>}, {kScalarUsub, UsubImpl<T, S>}, {kScalarLog, LogImpl<T, S>}};

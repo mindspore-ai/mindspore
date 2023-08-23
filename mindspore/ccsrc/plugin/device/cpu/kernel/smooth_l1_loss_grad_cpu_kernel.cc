@@ -151,15 +151,15 @@ bool SmoothL1LossGradCpuKernelMod::CalSum(const T *predict_addr, const T *target
 }
 
 template <typename T>
-bool SmoothL1LossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool SmoothL1LossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossGradOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   switch (reduction_) {
     case ReductionType::NONE:
       return CalNoReduce(predict_addr, target_addr, dloss_addr, result_addr);

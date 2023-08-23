@@ -172,10 +172,10 @@ int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename S, typename T>
-bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   auto target = GetDeviceAddress<T>(outputs, 0);
-  auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
+  auto target_init = memset_s(target, outputs[0]->size(), 0, outputs[0]->size());
   if (target_init != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << target_init;
   }
@@ -183,7 +183,7 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   params.target_ = target;
   params.indices_ = GetDeviceAddress<S>(inputs, 0);
   params.updates_ = GetDeviceAddress<T>(inputs, 1);
-  params.target_mem_size_ = outputs[0]->size;
+  params.target_mem_size_ = outputs[0]->size();
   params.unit_size_ = unit_size_;
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;

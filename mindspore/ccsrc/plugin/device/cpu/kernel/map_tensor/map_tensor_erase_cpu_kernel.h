@@ -42,23 +42,23 @@ class MapTensorEraseCpuKernelMod : public MapTensorCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_launch_func_(this, inputs, workspace, outputs);
   }
 
  private:
   template <typename KeyType>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   void InitSizeLists(const ShapeVector &keys_shape);
 
   size_t input_key_type_size_{0};
 
   using MapTensorEraseLaunchFunc =
-    std::function<bool(MapTensorEraseCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &)>;
+    std::function<bool(MapTensorEraseCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MapTensorEraseLaunchFunc>> map_tensor_erase_func_list_;
   MapTensorEraseLaunchFunc kernel_launch_func_;
 };

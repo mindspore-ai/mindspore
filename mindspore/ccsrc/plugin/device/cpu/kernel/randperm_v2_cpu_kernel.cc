@@ -75,8 +75,9 @@ int RandpermV2CPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool RandpermV2CPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool RandpermV2CPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
@@ -108,24 +109,24 @@ bool RandpermV2CPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
 }
 
 template <typename T1>
-bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto output = reinterpret_cast<T1 *>(outputs[kIndex0]->addr);
+bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto output = reinterpret_cast<T1 *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(n_tensor);
   MS_EXCEPTION_IF_NULL(seed_tensor);
   MS_EXCEPTION_IF_NULL(offset_tensor);
   MS_EXCEPTION_IF_NULL(output);
 
-  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr)[0];
+  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr())[0];
   seed_ = static_cast<int64_t *>(seed_tensor)[0];
   offset_ = static_cast<int64_t *>(offset_tensor)[0];
 
   std::vector<T1> temp;
   std::random_device rd;
-  size_t output_elem_num = outputs[kIndex0]->size / sizeof(T1);
+  size_t output_elem_num = outputs[kIndex0]->size() / sizeof(T1);
   int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   std::mt19937 gen(final_seed);
 
@@ -139,24 +140,24 @@ bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto output = reinterpret_cast<Eigen::half *>(outputs[kIndex0]->addr);
+bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto output = reinterpret_cast<Eigen::half *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(n_tensor);
   MS_EXCEPTION_IF_NULL(seed_tensor);
   MS_EXCEPTION_IF_NULL(offset_tensor);
   MS_EXCEPTION_IF_NULL(output);
 
-  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr)[0];
+  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr())[0];
   seed_ = static_cast<int64_t *>(seed_tensor)[0];
   offset_ = static_cast<int64_t *>(offset_tensor)[0];
 
   std::vector<float> temp;
   std::random_device rd;
-  size_t output_elem_num = outputs[kIndex0]->size / sizeof(float16);
+  size_t output_elem_num = outputs[kIndex0]->size() / sizeof(float16);
   int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   std::mt19937 gen(final_seed);
 

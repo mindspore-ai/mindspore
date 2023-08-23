@@ -31,8 +31,8 @@ class L2LossGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<L
  public:
   L2LossGpuKernelMod() : input_size_(1), is_null_input_(false) {}
   ~L2LossGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,8 +49,8 @@ class L2LossGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<L
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   void *cuda_stream_{nullptr};
   size_t input_size_;
   bool is_null_input_;

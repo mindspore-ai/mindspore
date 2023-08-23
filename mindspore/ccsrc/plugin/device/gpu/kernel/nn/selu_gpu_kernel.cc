@@ -58,7 +58,8 @@ int SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool SeluGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool SeluGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   // The below alpha value and scale value is predefined, according to https://arxiv.org/abs/1706.02515
   float alpha = 1.67326324;
   float scale = 1.05070098;

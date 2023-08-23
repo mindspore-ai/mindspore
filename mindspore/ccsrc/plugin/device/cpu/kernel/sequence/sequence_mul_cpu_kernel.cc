@@ -52,15 +52,16 @@ int SequenceMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool SequenceMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SequenceMulCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x_addr = GetDeviceAddress<T>(inputs, 0);
   S *input_y_addr = GetDeviceAddress<S>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  auto input_x_size = inputs[0]->size;
+  auto input_x_size = inputs[0]->size();
   if (input_x_size != 0) {
     size_t offset = 0;
     for (auto i = 0; i < input_y_addr[0]; ++i) {

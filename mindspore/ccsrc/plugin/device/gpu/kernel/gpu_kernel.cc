@@ -160,10 +160,10 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
 
 mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::support_map_{};
 
-std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
+std::vector<void *> ConvertPtrs(const std::vector<KernelTensor *> &input_ptrs) {
   std::vector<void *> out_ptrs;
   std::transform(input_ptrs.begin(), input_ptrs.end(), std::back_inserter(out_ptrs),
-                 [](const auto &cur_addr) { return cur_addr->addr; });
+                 [](const auto &cur_addr) { return cur_addr->device_ptr(); });
   return out_ptrs;
 }
 

@@ -128,8 +128,8 @@ int GatherDGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-int64_t GatherDGradCpuKernelMod::GetGatherDGradV2DimValue(const std::vector<kernel::AddressPtr> &inputs) {
-  auto dim_ptr = inputs[dim_idx_]->addr;
+int64_t GatherDGradCpuKernelMod::GetGatherDGradV2DimValue(const std::vector<kernel::KernelTensor *> &inputs) {
+  auto dim_ptr = inputs[dim_idx_]->device_ptr();
   if (dim_type_ == kNumberTypeInt32) {
     return static_cast<int64_t>(*static_cast<int32_t *>(dim_ptr));
   } else if (dim_type_ == kNumberTypeInt64) {
@@ -139,28 +139,28 @@ int64_t GatherDGradCpuKernelMod::GetGatherDGradV2DimValue(const std::vector<kern
   return 0;
 }
 template <typename I, typename T>
-bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   size_t index_size = get_element_num(index_shape_) * sizeof(I);
   size_t grad_size = get_element_num(grad_shape_) * sizeof(T);
   size_t output_size = get_element_num(output_shape_) * sizeof(T);
-  if (inputs[index_idx_]->size != index_size) {
+  if (inputs[index_idx_]->size() != index_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'index' must be " << index_size
-                      << ", but got " << inputs[index_idx_]->size << ".";
+                      << ", but got " << inputs[index_idx_]->size() << ".";
   }
-  if (inputs[grad_idx_]->size != grad_size) {
+  if (inputs[grad_idx_]->size() != grad_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'grad' must be " << grad_size
-                      << ", but got " << inputs[grad_idx_]->size << ".";
+                      << ", but got " << inputs[grad_idx_]->size() << ".";
   }
-  if (outputs[0]->size != output_size) {
+  if (outputs[0]->size() != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output must be " << output_size
-                      << ", but got " << outputs[0]->size << ".";
+                      << ", but got " << outputs[0]->size() << ".";
   }
 
-  auto *index = reinterpret_cast<I *>(inputs[index_idx_]->addr);
-  auto *grad = reinterpret_cast<T *>(inputs[grad_idx_]->addr);
-  auto out = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *index = reinterpret_cast<I *>(inputs[index_idx_]->device_ptr());
+  auto *grad = reinterpret_cast<T *>(inputs[grad_idx_]->device_ptr());
+  auto out = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int output_rank = SizeToInt(output_shape_.size());
   if (is_v2_) {
     axis_ = GetGatherDGradV2DimValue(inputs);
@@ -186,7 +186,7 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   }
   // memset_s does not support data that more than 2GB.
-  auto output_addr = reinterpret_cast<char *>(outputs[0]->addr);
+  auto output_addr = reinterpret_cast<char *>(outputs[0]->device_ptr());
   while (output_size > 0) {
     auto copy_size = std::min(output_size, static_cast<size_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);

@@ -232,20 +232,20 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyProximalAdag
 }
 
 template <typename T>
-bool SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &workspace,
-                                                          const std::vector<kernel::AddressPtr> &) const {
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr)[0];
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr)[0];
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<T *>(inputs[kIndicesIndex]->addr);
-  auto new_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex0]->addr);
-  auto new_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex1]->addr);
-  auto workspace_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex2]->addr);
-  auto workspace_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex3]->addr);
+bool SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                                          const std::vector<kernel::KernelTensor *> &) const {
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr())[0];
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->device_ptr())[0];
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->device_ptr())[0];
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<T *>(inputs[kIndicesIndex]->device_ptr());
+  auto new_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex0]->device_ptr());
+  auto new_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex1]->device_ptr());
+  auto workspace_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex2]->device_ptr());
+  auto workspace_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex3]->device_ptr());
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});

@@ -140,9 +140,9 @@ int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T, typename S>
-bool DenseGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto x_addr = GetDeviceAddress<T>(inputs, 0);
   auto w_addr = GetDeviceAddress<T>(inputs, 1);
   auto dout_addr = GetDeviceAddress<T>(inputs, 2);

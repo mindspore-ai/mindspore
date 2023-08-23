@@ -148,9 +148,9 @@ std::pair<bool, ScatterNdArithmeticCpuKernelMod::ComputeFunc<T>> ScatterNdArithm
 }
 
 template <typename T, typename S>
-bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &,
-                                                   const std::vector<kernel::AddressPtr> &) {
+bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &,
+                                                   const std::vector<kernel::KernelTensor *> &) {
   if (has_null_input_) {
     return true;
   }

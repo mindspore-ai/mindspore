@@ -43,12 +43,12 @@ bool DiagCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool DiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs) {
-  auto aptr = static_cast<T *>(inputs[0]->addr);
-  auto xptr = static_cast<T *>(outputs[0]->addr);
+bool DiagCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto aptr = static_cast<T *>(inputs[0]->device_ptr());
+  auto xptr = static_cast<T *>(outputs[0]->device_ptr());
 
-  int64_t data_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  int64_t data_num = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
 
   auto task = [&xptr, &aptr, &data_num](int64_t start, int64_t end) {
     std::fill(xptr + data_num * start, xptr + data_num * end, T());

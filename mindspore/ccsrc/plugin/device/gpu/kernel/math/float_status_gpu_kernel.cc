@@ -80,15 +80,15 @@ int FloatStatusGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool FloatStatusGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FloatStatusGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs);
 }
 
 template <typename T>
-bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
+bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -99,7 +99,7 @@ bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     case OP_STATUS: {
       float *output = GetDeviceAddress<float>(outputs, 0);
       status =
-        FillDeviceArray(outputs[0]->size / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
+        FillDeviceArray(outputs[0]->size() / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
       CHECK_CUDA_STATUS(status, kernel_name_);
       status = CalFloatStatus(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;

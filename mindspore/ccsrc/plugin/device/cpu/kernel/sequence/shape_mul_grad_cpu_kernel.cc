@@ -57,8 +57,9 @@ int ShapeMulGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool ShapeMulGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool ShapeMulGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   int64_t *input_addr = GetDeviceAddress<int64_t>(inputs, 0);
   int64_t *dout_addr = GetDeviceAddress<int64_t>(inputs, 1);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);

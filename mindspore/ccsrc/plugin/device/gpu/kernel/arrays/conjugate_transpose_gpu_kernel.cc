@@ -136,9 +136,9 @@ void ConjugateTransposeGpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T, typename S>
-bool ConjugateTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool ConjugateTransposeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(outputs, kIndex0);
   S *input_axis = GetDeviceAddress<S>(inputs, kIndex1);
@@ -159,7 +159,7 @@ bool ConjugateTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
                                        << "output_stride_ "
                                        << "cudaMemcpy input 'size' to host failed.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(y, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemsetAsync(y, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "ConjugateTransposeGpuKernelMod cudaMemSet Failed");
   auto status = CalConjugateTranspose(size, x, input_stride_, output_stride_, input_axis, shape_size_, y, device_id_,
                                       reinterpret_cast<cudaStream_t>(cuda_stream_));
@@ -168,9 +168,9 @@ bool ConjugateTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 }
 
 template <typename T, typename S>
-bool ConjugateTransposeGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs) {
+bool ConjugateTransposeGpuKernelMod::LaunchComplexKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(outputs, kIndex0);
   S *input_axis = GetDeviceAddress<S>(inputs, kIndex1);
@@ -191,7 +191,7 @@ bool ConjugateTransposeGpuKernelMod::LaunchComplexKernel(const std::vector<Addre
                                        << "output_stride_ "
                                        << "cudaMemcpy input 'size' to host failed.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(y, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemsetAsync(y, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "ConjugateTransposeGpuKernelMod cudaMemSet Failed");
   auto status = CalConjugateTransposeComplex(size, x, input_stride_, output_stride_, input_axis, shape_size_, y,
                                              device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));

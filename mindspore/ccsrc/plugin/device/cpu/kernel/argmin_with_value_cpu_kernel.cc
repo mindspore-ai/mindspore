@@ -37,7 +37,8 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 
 template <typename T>
 bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
-                      const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
+                      const std::vector<kernel::KernelTensor *> &inputs,
+                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMinWithValueInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kArgMinWithValueOutputsNum, kKernelName);
   size_t data_size = sizeof(T);
@@ -45,33 +46,33 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t output_num = num_before_axis * num_after_axis;
   size_t out0_size = output_num * sizeof(int);
   size_t out1_size = output_num * data_size;
-  if (inputs[0]->size != input_size) {
+  if (inputs[0]->size() != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'x' must be " << input_size
-                      << ", but got the memory size is " << inputs[0]->size;
+                      << ", but got the memory size is " << inputs[0]->size();
   }
-  if (outputs[0]->size != out0_size) {
+  if (outputs[0]->size() != out0_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 1st output must be " << out0_size
-                      << ", but got the memory size is " << outputs[0]->size;
+                      << ", but got the memory size is " << outputs[0]->size();
   }
-  if (outputs[1]->size != out1_size) {
+  if (outputs[1]->size() != out1_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 2nd output must be " << out1_size
-                      << ", but got the memory size is " << outputs[1]->size;
+                      << ", but got the memory size is " << outputs[1]->size();
   }
   return true;
 }
 }  // namespace
 
 template <typename T>
-bool ArgMinWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool ArgMinWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;
   }
 
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  auto *output1 = reinterpret_cast<T *>(outputs[1]->addr);
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output0 = reinterpret_cast<int32_t *>(outputs[0]->device_ptr());
+  auto *output1 = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   auto task = [&](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {

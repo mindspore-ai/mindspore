@@ -31,8 +31,8 @@ class MaxPoolGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   MaxPoolGradWithArgmaxCpuKernelMod() {}
   ~MaxPoolGradWithArgmaxCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -46,11 +46,12 @@ class MaxPoolGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   using MaxPoolGradWithArgmaxFunc =
-    std::function<bool(MaxPoolGradWithArgmaxCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(MaxPoolGradWithArgmaxCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, MaxPoolGradWithArgmaxFunc>> func_list_;
   MaxPoolGradWithArgmaxFunc kernel_func_;

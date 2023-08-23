@@ -101,9 +101,9 @@ void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr>
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &workspace,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
   // From CPUKernelExecutor::LaunchKernel
@@ -116,35 +116,36 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     MS_LOG(ERROR) << "Resize BatchNormCpuKernelMod while launching failed: " << resize_ret;
     return false;
   }
-  auto wksp = reinterpret_cast<float *>(workspace[0]->addr);
-  auto scale_ret = memcpy_s(wksp, workspace[0]->size, inputs[1]->addr, inputs[1]->size);
-  auto max_size = workspace[0]->size - inputs[1]->size;
-  auto bias_ret = memcpy_s(wksp + (inputs[1]->size / sizeof(float)), max_size, inputs[2]->addr, inputs[2]->size);
+  auto wksp = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto scale_ret = memcpy_s(wksp, workspace[0]->size(), inputs[1]->device_ptr(), inputs[1]->size());
+  auto max_size = workspace[0]->size() - inputs[1]->size();
+  auto bias_ret =
+    memcpy_s(wksp + (inputs[1]->size() / sizeof(float)), max_size, inputs[2]->device_ptr(), inputs[2]->size());
   if (scale_ret != EOK || bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
   }
   if (is_train_) {
-    SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-    SetArgumentHandle(DNNL_ARG_MEAN, outputs[3]->addr);
-    SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[4]->addr);
-    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->addr);
-    SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+    SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_MEAN, outputs[3]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[4]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();
 
-    auto moving_mean = reinterpret_cast<float *>(inputs[3]->addr);
-    auto moving_variance = reinterpret_cast<float *>(inputs[4]->addr);
-    auto mean = reinterpret_cast<float *>(outputs[3]->addr);
-    auto variance = reinterpret_cast<float *>(outputs[4]->addr);
-    for (size_t i = 0; i < inputs[3]->size / sizeof(float); ++i) {
+    auto moving_mean = reinterpret_cast<float *>(inputs[3]->device_ptr());
+    auto moving_variance = reinterpret_cast<float *>(inputs[4]->device_ptr());
+    auto mean = reinterpret_cast<float *>(outputs[3]->device_ptr());
+    auto variance = reinterpret_cast<float *>(outputs[4]->device_ptr());
+    for (size_t i = 0; i < inputs[3]->size() / sizeof(float); ++i) {
       moving_mean[i] = moving_mean[i] * (1 - momentum_) + mean[i] * momentum_;
       moving_variance[i] = moving_variance[i] * (1 - momentum_) + variance[i] * momentum_;
     }
   } else {
-    SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-    SetArgumentHandle(DNNL_ARG_MEAN, inputs[3]->addr);
-    SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[4]->addr);
-    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->addr);
-    SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+    SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_MEAN, inputs[3]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[4]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();
   }
   return true;

@@ -170,8 +170,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     return ret;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -200,8 +200,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   template <typename DataType, typename IndexType>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t batch_size_{1};

@@ -160,17 +160,17 @@ int BCERun(void *c_data, int task_id, float, float) {
 }
 }  // namespace
 
-bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
-  logits_ = inputs.at(kIndex0)->addr;
-  label_ = inputs.at(kIndex1)->addr;
-  weight_ = inputs.at(kIndex2)->addr;
-  post_weight_ = inputs.at(kIndex3)->addr;
+bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  logits_ = inputs.at(kIndex0)->device_ptr();
+  label_ = inputs.at(kIndex1)->device_ptr();
+  weight_ = inputs.at(kIndex2)->device_ptr();
+  post_weight_ = inputs.at(kIndex3)->device_ptr();
   if (is_reduction_) {
-    reduction_output_ = workspace.at(kIndex0)->addr;
+    reduction_output_ = workspace.at(kIndex0)->device_ptr();
   }
-  output_ = outputs.at(kIndex0)->addr;
+  output_ = outputs.at(kIndex0)->device_ptr();
   if (pool_->ParallelLaunch(BCERun, this, SizeToInt(thread_num_)) != THREAD_OK) {
     return false;
   }

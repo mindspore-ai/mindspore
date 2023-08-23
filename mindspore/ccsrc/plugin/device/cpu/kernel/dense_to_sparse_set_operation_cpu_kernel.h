@@ -36,8 +36,8 @@ class DenseToSparseSetOperationCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
@@ -49,11 +49,12 @@ class DenseToSparseSetOperationCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
-  bool OutputSparseTensor(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                          ShapeVector *output_shape, const int64_t num_values,
-                          const std::map<ShapeVector, std::set<T>> &sets);
+  bool OutputSparseTensor(const std::vector<kernel::KernelTensor *> &inputs,
+                          const std::vector<kernel::KernelTensor *> &outputs, ShapeVector *output_shape,
+                          const int64_t num_values, const std::map<ShapeVector, std::set<T>> &sets);
   template <typename T>
   void ApplySetOperation(const std::set<T> &set1, const std::set<T> &set2, std::set<T> *result);
 

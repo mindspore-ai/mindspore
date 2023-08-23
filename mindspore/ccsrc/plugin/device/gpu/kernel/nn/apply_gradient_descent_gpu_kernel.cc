@@ -20,8 +20,8 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void ApplyGradientDescentKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+void ApplyGradientDescentKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   T *var = GetDeviceAddress<T>(inputs, kIndex0);
   T *alpha = GetDeviceAddress<T>(inputs, kIndex1);
   T *delta = GetDeviceAddress<T>(inputs, kIndex2);

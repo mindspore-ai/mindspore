@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/eigen/random_poisson_cpu_kernel.h"
+#include <limits>
+#include <random>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -166,21 +168,28 @@ bool RandomPoissonCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename Tin, typename T>
-bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
-  auto *rate_flat = reinterpret_cast<Tin *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *rate_flat = reinterpret_cast<Tin *>(inputs[1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(rate_flat);
   MS_EXCEPTION_IF_NULL(output);
 
-  size_t num_of_rate = inputs[1]->size / sizeof(Tin);
-  size_t num_of_output = outputs[0]->size / sizeof(T);
+  size_t num_of_rate = inputs[1]->size() / sizeof(Tin);
+  size_t num_of_output = outputs[0]->size() / sizeof(T);
 
-  if (AddrAlignedCheck(outputs[0]->addr)) {
+  auto attr_seed = LongToUlong(seed_);
+  uint64_t final_seed = attr_seed;
+  if (final_seed == 0) {
+    auto attr_seed2 = seed2_;
+    final_seed = LongToUlong(attr_seed2);
+  }
+
+  if (AddrAlignedCheck(outputs[0]->device_ptr())) {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> eigen_output(static_cast<T *>(output), num_of_output);
     PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]));
     for (size_t i = 0; i < num_of_rate; i++) {

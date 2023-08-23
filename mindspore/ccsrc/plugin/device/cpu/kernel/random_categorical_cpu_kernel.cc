@@ -131,9 +131,9 @@ void RandomCategoricalFunc(const size_t num_samples, const T1 *dev_rand, const T
 }
 
 template <typename T1, typename T2>
-bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kSizeThree) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << "input(s).";
@@ -142,10 +142,14 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << "output(s).";
   }
-  T1 *input_tensor = GetDeviceAddress<T1>(inputs, kIndex0);
-  int *num_sample_ptr = GetDeviceAddress<int>(inputs, kIndex1);
-  int *input_seed_ptr = GetDeviceAddress<int>(inputs, kIndex2);
-  T2 *output = GetDeviceAddress<T2>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+
+  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->device_ptr())[0];
+  int seed = reinterpret_cast<int *>(inputs[kIndex2]->device_ptr())[0];
+  T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->device_ptr());
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);

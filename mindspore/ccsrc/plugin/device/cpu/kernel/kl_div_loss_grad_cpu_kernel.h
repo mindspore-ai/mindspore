@@ -36,8 +36,8 @@ class KLDivLossGradCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &onHost) override;
@@ -46,13 +46,14 @@ class KLDivLossGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
 
   bool CheckParams() const;
 
-  using KLDivLossGradFunc = std::function<bool(KLDivLossGradCpuKernelMod *, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  using KLDivLossGradFunc =
+    std::function<bool(KLDivLossGradCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, KLDivLossGradFunc>> func_list_;
   KLDivLossGradFunc kernel_func_;

@@ -65,18 +65,18 @@ void XDivySameShapeTask(float16 *x_addr, float16 *y_addr, float16 *output_addr, 
 }
 
 template <typename T>
-bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   if (has_null_input_) {
     return true;
   }
-  auto x_addr = static_cast<T *>(inputs[0]->addr);
-  auto y_addr = static_cast<T *>(inputs[1]->addr);
-  auto output_addr = static_cast<T *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto x_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = static_cast<T *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
   auto sameShapeTask = [&x_addr, &y_addr, &output_addr](size_t start, size_t end) {
     XDivySameShapeTask(x_addr, y_addr, output_addr, start, end);
   };
@@ -106,8 +106,8 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   return true;
 }
 
-bool XdivyCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
+bool XdivyCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

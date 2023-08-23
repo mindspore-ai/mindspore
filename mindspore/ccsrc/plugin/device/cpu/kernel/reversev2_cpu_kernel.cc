@@ -90,13 +90,13 @@ int ReverseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReverseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReverseV2OutputsNum, kernel_name_);
 
-  auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_data = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int64_t num_element = 1;
   for (int64_t i = 0; i < input_dims_; ++i) {
     num_element *= input_shape_[i];

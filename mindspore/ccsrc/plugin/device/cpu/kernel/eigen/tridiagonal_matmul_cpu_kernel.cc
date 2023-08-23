@@ -123,9 +123,9 @@ int TridiagonalMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> & /* workspace */,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -145,17 +145,17 @@ bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &outputs) {
-  T *superdiag_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  T *superdiag_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(superdiag_ptr);
-  T *maindiag_ptr = reinterpret_cast<T *>(inputs[1]->addr);
+  T *maindiag_ptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(maindiag_ptr);
-  T *subdiag_ptr = reinterpret_cast<T *>(inputs[2]->addr);
+  T *subdiag_ptr = reinterpret_cast<T *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(subdiag_ptr);
-  T *rhs_ptr = reinterpret_cast<T *>(inputs[3]->addr);
+  T *rhs_ptr = reinterpret_cast<T *>(inputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(rhs_ptr);
-  T *y_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *y_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(y_ptr);
   size_t m = static_cast<size_t>(rhs_shape_[rhs_shape_.size() - row]);
   size_t n = static_cast<size_t>(rhs_shape_[rhs_shape_.size() - col]);

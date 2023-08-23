@@ -80,8 +80,9 @@ int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool CrossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool CrossCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   switch (input1_dtype_) {
     case kNumberTypeInt8:
       return LaunchKernel<int8_t>(inputs, outputs);
@@ -115,16 +116,16 @@ bool CrossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input1_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
+bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input1_data_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   int64_t tmp = 1;
   for (size_t i = 0; i < input1_shape_.size(); i++) {
     tmp = tmp * input1_shape_[i];
   }
   size_t input1_data_num = LongToSize(tmp);
-  auto input2_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input2_data_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_data_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t total = input1_data_num / kNumber3;
   const size_t n = input1_shape_.size();
   std::vector<size_t> a_stride(n);

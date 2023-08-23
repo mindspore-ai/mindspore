@@ -88,9 +88,9 @@ int MapTensorPutGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
@@ -104,9 +104,9 @@ bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                inputs.at(kIndex1)->size / sizeof(KeyType),
-                                static_cast<ValueType *>(inputs.at(kIndex2)->addr), stream_ptr);
+  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                static_cast<ValueType *>(inputs.at(kIndex2)->device_ptr()), stream_ptr);
 }
 
 void MapTensorPutGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {

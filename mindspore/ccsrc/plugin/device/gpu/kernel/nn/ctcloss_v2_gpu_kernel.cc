@@ -99,9 +99,9 @@ int CTCLossV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename S, typename T>
-bool CTCLossV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool CTCLossV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto log_probs_p = GetDeviceAddress<S>(inputs, kIndex0);
   auto target_p = GetDeviceAddress<T>(inputs, kIndex1);
   auto input_len_p = GetDeviceAddress<T>(inputs, kIndex2);

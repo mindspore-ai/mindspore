@@ -33,8 +33,8 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   StridedSliceCpuKernelMod() = default;
   ~StridedSliceCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -48,8 +48,8 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T, typename S = int64_t>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
   void InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                       std::vector<int64_t> *stride);
@@ -59,8 +59,9 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   common::Status RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   common::Status RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
 
-  using StridedSliceFunc = std::function<bool(StridedSliceCpuKernelMod *, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  using StridedSliceFunc =
+    std::function<bool(StridedSliceCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, StridedSliceFunc>> func_list_;
   StridedSliceFunc kernel_func_;
 

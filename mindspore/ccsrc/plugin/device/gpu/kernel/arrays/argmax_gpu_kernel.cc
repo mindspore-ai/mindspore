@@ -19,8 +19,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-bool ArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ArgmaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   S bound = static_cast<S>(bound_);
   T *input_ptr = GetDeviceAddress<T>(inputs, 0);
   S *output_ptr = GetDeviceAddress<S>(outputs, 0);

@@ -53,11 +53,11 @@ bool HammingWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T, typename S>
-bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> & /* workspace */,
-                                             const std::vector<AddressPtr> &outputs) const {
-  auto *length_addr = static_cast<T *>(inputs[0]->addr);
-  auto *output = static_cast<S *>(outputs[0]->addr);
+bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> & /* workspace */,
+                                             const std::vector<KernelTensor *> &outputs) const {
+  auto *length_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto *output = static_cast<S *>(outputs[0]->device_ptr());
   int64_t window_length_ = static_cast<int64_t>(*length_addr);
   if (window_length_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of input 'length' cannot be negative, but got "

@@ -32,8 +32,8 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
   TileGpuKernelMod() = default;
   ~TileGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   };
 
@@ -49,14 +49,14 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   bool is_null_input_;
-  using TileLaunchFunc =
-    std::function<bool(TileGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using TileLaunchFunc = std::function<bool(TileGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, TileLaunchFunc>> func_list_;
   TileLaunchFunc kernel_func_;
 };

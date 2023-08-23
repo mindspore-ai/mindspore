@@ -44,9 +44,9 @@ bool MatrixInverseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /* workspace */,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchMatrixInverse<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -81,11 +81,11 @@ int MatrixInverseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_ptr);
 
   auto last_dimsize = LongToSize(input_shape_[input_shape_.size() - 1]);

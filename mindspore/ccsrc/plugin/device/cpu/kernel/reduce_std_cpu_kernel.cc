@@ -73,15 +73,15 @@ int ReduceStdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  size_t input_size = inputs[0]->size / sizeof(T);
+void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  size_t input_size = inputs[0]->size() / sizeof(T);
   if (input_size > kReduceSmallVectorSize) {
     MS_LOG(EXCEPTION) << "For reduce std, the input size should be < " << kReduceSmallVectorSize;
   }
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   float mean = 0.0;
   for (size_t i = 0; i < input_size; ++i) {
     mean += static_cast<float>(input_addr[i]);
@@ -98,11 +98,11 @@ void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
+void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_std_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   size_t dimension = input_shape_.size();
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
@@ -121,7 +121,7 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
     axes[k] = LongToSize(it);
     ++k;
   }
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   std::vector<int64_t> transpose_shape(input_shape_.size());
   for (size_t i = 0; i < dimension; ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
@@ -150,9 +150,9 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
   ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
 }
 
-bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceStdInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceStdOutputsNum, kernel_name_);
 

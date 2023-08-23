@@ -95,16 +95,16 @@ int SparseSliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SparseSliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSliceGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSliceGradOutputsNum, kernel_name_);
-  auto backprop_val_grad = static_cast<T *>(inputs[kIndex0]->addr);
-  auto indices = static_cast<int64_t *>(inputs[kIndex1]->addr);
-  auto start = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto new_indices = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto y_grad = static_cast<T *>(outputs[kIndex0]->addr);
+  auto backprop_val_grad = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto indices = static_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  auto start = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto new_indices = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto y_grad = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   SliceGradCompute<T>(backprop_val_grad, indices, start, new_indices, y_grad);
 

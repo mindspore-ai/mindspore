@@ -120,9 +120,9 @@ int ScatterAddWithAxisCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   // check param
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
@@ -152,20 +152,20 @@ bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &input
 }
 
 template <typename T, typename TI>
-void ScatterAddWithAxisCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
-  T *input_x1 = static_cast<T *>(inputs[0]->addr);
-  TI *input_x2 = static_cast<TI *>(inputs[1]->addr);
-  T *input_x3 = static_cast<T *>(inputs[2]->addr);
-  T *output_y = static_cast<T *>(outputs[0]->addr);
+void ScatterAddWithAxisCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  T *input_x1 = static_cast<T *>(inputs[0]->device_ptr());
+  TI *input_x2 = static_cast<TI *>(inputs[1]->device_ptr());
+  T *input_x3 = static_cast<T *>(inputs[2]->device_ptr());
+  T *output_y = static_cast<T *>(outputs[0]->device_ptr());
   int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());
   axis_ = axis_ < 0 ? axis_ + value_dim_num_x1 : axis_;
   int64_t axis_dim_value = static_cast<int64_t>(x_shape_[axis_]);
-  int64_t total_value_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
-  int64_t update_value_num = static_cast<int64_t>(inputs[2]->size / sizeof(T));
+  int64_t total_value_num = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
+  int64_t update_value_num = static_cast<int64_t>(inputs[2]->size() / sizeof(T));
 
   // using input to initial output
-  auto ret = memcpy_s(output_y, outputs[0]->size, input_x1, inputs[0]->size);
+  auto ret = memcpy_s(output_y, outputs[0]->size(), input_x1, inputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }

@@ -41,19 +41,19 @@ constexpr float kAdamBlock = 1000;
 }  // namespace
 
 template <typename T>
-void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
-  T *var = static_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = static_cast<T *>(inputs[kIndexM]->addr);
-  T *v = static_cast<T *>(inputs[kIndexV]->addr);
-  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
-  T beta1 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(static_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
-  T *gradient = static_cast<T *>(inputs[kIndexGrad]->addr);
+  T *var = static_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = static_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *v = static_cast<T *>(inputs[kIndexV]->device_ptr());
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->device_ptr());
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->device_ptr());
+  float *lr = static_cast<float *>(inputs[kIndexLr]->device_ptr());
+  T beta1 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta1]->device_ptr())[kScalarIndex]);
+  T beta2 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta2]->device_ptr())[kScalarIndex]);
+  T epsilon = static_cast<T>(static_cast<float *>(inputs[kIndexEpsilon]->device_ptr())[kScalarIndex]);
+  T *gradient = static_cast<T *>(inputs[kIndexGrad]->device_ptr());
   constexpr float ONE = 1.0;
 
   for (int64_t b = 0; b < batch_size_; b++) {
@@ -80,19 +80,19 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
   }
 }
 
-void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
-  float *var = static_cast<float *>(inputs[kIndexVar]->addr);
-  float *m = static_cast<float *>(inputs[kIndexM]->addr);
-  float *v = static_cast<float *>(inputs[kIndexV]->addr);
-  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
-  float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex];
-  float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex];
-  float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex];
-  float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->addr);
+  float *var = static_cast<float *>(inputs[kIndexVar]->device_ptr());
+  float *m = static_cast<float *>(inputs[kIndexM]->device_ptr());
+  float *v = static_cast<float *>(inputs[kIndexV]->device_ptr());
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->device_ptr());
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->device_ptr());
+  float *lr = static_cast<float *>(inputs[kIndexLr]->device_ptr());
+  float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->device_ptr())[kScalarIndex];
+  float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->device_ptr())[kScalarIndex];
+  float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->device_ptr())[kScalarIndex];
+  float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->device_ptr());
   constexpr float ONE = 1.0;
   for (int64_t b = 0; b < batch_size_; b++) {
     float new_lr = lr[b] * std::sqrt(ONE - beta2_power[b]) / (ONE - beta1_power[b]);
@@ -199,9 +199,9 @@ int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool AdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamNnacl(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {

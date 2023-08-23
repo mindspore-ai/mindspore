@@ -77,15 +77,15 @@ int DropoutGradBwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool DropoutGradBwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool DropoutGradBwdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutGradOutputsNum, kernel_name_);
 
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  const T *mask = reinterpret_cast<T *>(inputs[1]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const T *mask = reinterpret_cast<T *>(inputs[1]->device_ptr());
   const T scale = static_cast<T>(1.f / keep_prob_);
 
   auto task = [&](size_t start, size_t end) {

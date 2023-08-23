@@ -159,8 +159,9 @@ bool shard_param_prop(size_t start_idx, size_t end_idx, size_t g_num, DATA_T *su
   return true;
 }
 
-bool LayerNormGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool LayerNormGradGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -175,30 +176,30 @@ bool LayerNormGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
 }
 
 template <typename DATA_T>
-void LayerNormGradGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
+void LayerNormGradGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   // enter LayerNormGradGradCompute
-  auto input_x = static_cast<DATA_T *>(inputs[0]->addr);
+  auto input_x = static_cast<DATA_T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_x);
-  auto input_dy = static_cast<DATA_T *>(inputs[1]->addr);
+  auto input_dy = static_cast<DATA_T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_dy);
-  auto input_var = static_cast<DATA_T *>(inputs[2]->addr);
+  auto input_var = static_cast<DATA_T *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_var);
-  auto input_mean = static_cast<DATA_T *>(inputs[3]->addr);
+  auto input_mean = static_cast<DATA_T *>(inputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_mean);
-  auto input_gamma = static_cast<DATA_T *>(inputs[4]->addr);
+  auto input_gamma = static_cast<DATA_T *>(inputs[4]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_gamma);
-  auto input_d_dx = static_cast<DATA_T *>(inputs[5]->addr);
+  auto input_d_dx = static_cast<DATA_T *>(inputs[5]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_d_dx);
-  auto input_d_dg = static_cast<DATA_T *>(inputs[6]->addr);
+  auto input_d_dg = static_cast<DATA_T *>(inputs[6]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_d_dg);
-  auto input_d_db = static_cast<DATA_T *>(inputs[7]->addr);
+  auto input_d_db = static_cast<DATA_T *>(inputs[7]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_d_db);
-  auto output_sopd_x = static_cast<DATA_T *>(outputs[0]->addr);
+  auto output_sopd_x = static_cast<DATA_T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_sopd_x);
-  auto output_sopd_dy = static_cast<DATA_T *>(outputs[1]->addr);
+  auto output_sopd_dy = static_cast<DATA_T *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_sopd_dy);
-  auto output_sopd_g = static_cast<DATA_T *>(outputs[2]->addr);
+  auto output_sopd_g = static_cast<DATA_T *>(outputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_sopd_g);
   size_t num =
     static_cast<size_t>(std::accumulate(input_shape_.cbegin(), input_shape_.cend(), 1, std::multiplies<int64_t>{}));

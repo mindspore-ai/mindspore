@@ -142,15 +142,16 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *accum = reinterpret_cast<T *>(inputs[kIndexAcc]->addr);
-  T *linear = reinterpret_cast<T *>(inputs[kIndexLinear]->addr);
-  T *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndexLR]->addr);
-  T *l1 = reinterpret_cast<T *>(inputs[kIndexL1]->addr);
-  T *l2 = reinterpret_cast<T *>(inputs[kIndexL2]->addr);
-  T *lr_power = reinterpret_cast<T *>(inputs[kIndexLRPower]->addr);
+void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &) {
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *accum = reinterpret_cast<T *>(inputs[kIndexAcc]->device_ptr());
+  T *linear = reinterpret_cast<T *>(inputs[kIndexLinear]->device_ptr());
+  T *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLR]->device_ptr());
+  T *l1 = reinterpret_cast<T *>(inputs[kIndexL1]->device_ptr());
+  T *l2 = reinterpret_cast<T *>(inputs[kIndexL2]->device_ptr());
+  T *lr_power = reinterpret_cast<T *>(inputs[kIndexLRPower]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     auto task = [this, &var, &accum, &linear, &grad, &lr, &l1, &l2, &lr_power](size_t start, size_t end) {
@@ -179,24 +180,24 @@ void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<AddressPtr> &input
   }
 }
 
-bool ApplyFtrlCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs[kIndexVar]->size != inputs[kIndexAcc]->size) {
+bool ApplyFtrlCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexAcc]->size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape and dtype of 'acc' and 'var' should be same, but got the memory size of 'acc': "
-                  << inputs[kIndexAcc]->size << " and 'var': " << inputs[kIndexVar]->size;
+                  << inputs[kIndexAcc]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexLinear]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexLinear]->size()) {
     MS_LOG(ERROR)
       << "For '" << kernel_name_
       << "', the shape and dtype of 'linear' and 'var' should be same, but got the memory size of 'linear': "
-      << inputs[kIndexLinear]->size << " and 'var': " << inputs[kIndexVar]->size;
+      << inputs[kIndexLinear]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
-  if (inputs[kIndexVar]->size != inputs[kIndexGrad]->size) {
+  if (inputs[kIndexVar]->size() != inputs[kIndexGrad]->size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape and dtype of 'grad' and 'var' should be same, but got the memory size of 'grad': "
-                  << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
+                  << inputs[kIndexGrad]->size() << " and 'var': " << inputs[kIndexVar]->size();
   }
 
   if (dtype_ == kNumberTypeFloat32) {

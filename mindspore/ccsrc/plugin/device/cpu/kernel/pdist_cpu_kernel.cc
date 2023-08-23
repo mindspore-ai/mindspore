@@ -86,11 +86,12 @@ int PdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename F, typename T>
-bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PdistCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (h_ == 1) {
     return true;
   }
-  auto output_size = outputs[0]->size / sizeof(T);
+  auto output_size = outputs[0]->size() / sizeof(T);
   const auto *input = GetDeviceAddress<T>(inputs, kIndex0);
   auto *output = GetDeviceAddress<T>(outputs, kIndex0);
   int64_t combs = h_ * (h_ - 1) / 2;
@@ -135,7 +136,8 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 }
 
 template <typename T>
-void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void PdistCpuKernelMod::Apply_pdist(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (std::isinf(p_)) {
     LaunchKernel<idist_calc, T>(inputs, outputs);
   } else if (std::abs(p_ - P_ZERO) <= EPS * p_) {
@@ -149,8 +151,8 @@ void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const
   }
 }
 
-bool PdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool PdistCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPdistInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPdistOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat64) {

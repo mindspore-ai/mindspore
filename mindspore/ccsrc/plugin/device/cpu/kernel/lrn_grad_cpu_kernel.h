@@ -29,8 +29,8 @@ class LrnGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   LrnGradCpuKernelMod() = default;
   ~LrnGradCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -38,9 +38,10 @@ class LrnGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LrnGradFunc = std::function<bool(LrnGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using LrnGradFunc = std::function<bool(LrnGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &)>;
   void GetLrnAttr(const CNodePtr &kernel_node);
   int64_t depth_radius_{1};
   float bias_{0.0};

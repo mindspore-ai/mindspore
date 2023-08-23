@@ -31,8 +31,8 @@ class SeluCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Sel
   SeluCpuKernelMod() = default;
   ~SeluCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -48,8 +48,8 @@ class SeluCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Sel
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   size_t output_size_{1};
   std::vector<size_t> output_shape_;

@@ -38,8 +38,8 @@ class AddcdivCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -59,9 +59,9 @@ class AddcdivCpuKernelMod : public NativeCpuKernelMod {
   ArithmeticParameter mul_para_{};
 
   template <typename T>
-  bool AddcdivCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool AddcdivCheck(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T1, typename T2>
-  bool AddcdivCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool AddcdivCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

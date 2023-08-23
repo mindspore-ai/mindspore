@@ -61,12 +61,13 @@ int AngleGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T, typename S>
-bool AngleGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AngleGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   S *output_ptr = GetDeviceAddress<S>(outputs, kIndex0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  output_size = outputs[0]->size / sizeof(S);
+  output_size = outputs[0]->size() / sizeof(S);
   auto status = CalAngle(output_size, input_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

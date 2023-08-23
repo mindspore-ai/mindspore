@@ -180,8 +180,8 @@ int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T1, typename T2>
-void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &outputs) {
+void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
   // Get the input and output
   const T1 *input_x = GetDeviceAddress<T1>(inputs, kIndex0);
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
@@ -243,8 +243,8 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<Addr
 }
 
 template <typename T1, typename T2>
-void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &outputs) {
+void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   // Get the inuput and output
   T1 *input_x = GetDeviceAddress<T1>(inputs, kIndex0);
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
@@ -317,8 +317,9 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<Addre
 }
 
 template <typename T1, typename T2>
-bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniqueConsecutiveInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueConsecutiveOutputsNum, kernel_name_);
   output_shape_.clear();

@@ -72,9 +72,9 @@ int NMSWithMaskFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool NMSWithMaskFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool NMSWithMaskFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *data_buff = GetDeviceAddress<T>(workspace, kIndex0);
   int *index_buff = GetDeviceAddress<int>(workspace, kIndex1);

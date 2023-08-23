@@ -89,8 +89,9 @@ const ROIAlignGpuKernelMod::FuncList &ROIAlignGpuKernelMod::GetFuncList() const 
 }
 
 template <typename T>
-bool ROIAlignGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool ROIAlignGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   const T *x = GetDeviceAddress<T>(inputs, kIndex0);
   const T *rois = GetDeviceAddress<T>(inputs, kIndex1);
   T *out_data = GetDeviceAddress<T>(outputs, kIndex0);

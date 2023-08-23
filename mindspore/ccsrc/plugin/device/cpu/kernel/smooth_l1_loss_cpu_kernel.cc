@@ -53,20 +53,20 @@ void SmoothL1LossCpuKernelMod::CalElements(const T *predict_addr, const T *targe
 }
 
 template <typename T>
-bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (reduction_ == ReductionType::NONE) {
     CalElements(predict_addr, target_addr, result_addr);
     return true;
   }
 
-  T *workspace_addr = reinterpret_cast<T *>(workspace[0]->addr);
+  T *workspace_addr = reinterpret_cast<T *>(workspace[0]->device_ptr());
   CalElements(predict_addr, target_addr, workspace_addr);
 
   double tmp_sum{0};

@@ -82,17 +82,17 @@ int ParameterizedTruncatedNormalCpuKernelMod::Resize(const BaseOperatorPtr &base
 }
 
 template <typename T>
-T ParameterizedTruncatedNormalCpuKernelMod::GetBatchSizeCheckDims(const std::vector<AddressPtr> &inputs) {
-  auto output_shape = reinterpret_cast<T *>(inputs[0]->addr);
+T ParameterizedTruncatedNormalCpuKernelMod::GetBatchSizeCheckDims(const std::vector<KernelTensor *> &inputs) {
+  auto output_shape = reinterpret_cast<T *>(inputs[0]->device_ptr());
   return output_shape[0];
 }
 
 template <typename T_shape, typename T>
-bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &,
-                                                            const std::vector<AddressPtr> &outputs) {
-  auto output_shape = reinterpret_cast<T_shape *>(inputs[0]->addr);
-  size_t input_shape_num = inputs[0]->size / sizeof(T_shape);
+bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  auto output_shape = reinterpret_cast<T_shape *>(inputs[0]->device_ptr());
+  size_t input_shape_num = inputs[0]->size() / sizeof(T_shape);
   // check shape
   auto batch_size = output_shape[0];
   int sample_size = 1;
@@ -100,11 +100,11 @@ bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<Ad
     sample_size *= output_shape[i];
   }
 
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
-  auto means = reinterpret_cast<T *>(inputs[kInput1]->addr);
-  auto stdevs = reinterpret_cast<T *>(inputs[kInput2]->addr);
-  auto minvals = reinterpret_cast<T *>(inputs[kInput3]->addr);
-  auto maxvals = reinterpret_cast<T *>(inputs[kInput4]->addr);
+  auto output_data = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto means = reinterpret_cast<T *>(inputs[kInput1]->device_ptr());
+  auto stdevs = reinterpret_cast<T *>(inputs[kInput2]->device_ptr());
+  auto minvals = reinterpret_cast<T *>(inputs[kInput3]->device_ptr());
+  auto maxvals = reinterpret_cast<T *>(inputs[kInput4]->device_ptr());
 
   std::vector<T *> params = {means, stdevs, minvals, maxvals};
 

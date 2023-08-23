@@ -28,9 +28,9 @@ constexpr size_t kDimSize2 = 2;
 }  // namespace
 
 template <typename T>
-bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumProdOutputsNum, kernel_name_);
   auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -45,7 +45,7 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   }
   int64_t axis_tmp;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost, cuda_stream_),
+    cudaMemcpyAsync(&axis_tmp, axis_addr, inputs[kIndex1]->size(), cudaMemcpyDeviceToHost, cuda_stream_),
     "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
   if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");

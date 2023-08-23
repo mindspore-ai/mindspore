@@ -216,9 +216,10 @@ const std::vector<std::pair<KernelAttr, FractionalMaxPool3DWithFixedKsizePtrCrea
    CreateFractionalMaxPool3DWithFixedKsizeKernelPtr<int64_t, double, int32_t>}};
 }  // namespace
 
-bool FractionalMaxPool3DWithFixedKsizeGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FractionalMaxPool3DWithFixedKsizeGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<KernelTensor *> &outputs,
+                                                           void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);

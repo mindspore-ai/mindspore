@@ -71,9 +71,9 @@ int GridSampler2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
-bool GridSampler2DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler2DGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -87,17 +87,17 @@ bool GridSampler2DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &outputs) {
+void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   GridSamplerInterpolation interp = GridSamplerInterpolation::Bilinear;
   GridSamplerPadding padding;
   bool align_corners = align_corners_;
 
-  auto grad_data_addr = static_cast<T *>(inputs[kZero]->addr);
-  auto x_data_addr = static_cast<T *>(inputs[kOne]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->addr);
-  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
+  auto grad_data_addr = static_cast<T *>(inputs[kZero]->device_ptr());
+  auto x_data_addr = static_cast<T *>(inputs[kOne]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->device_ptr());
   if (interpolation_mode_ == "bilinear") {
     interp = GridSamplerInterpolation::Bilinear;
   } else if (interpolation_mode_ == "nearest") {
@@ -167,10 +167,10 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
 }
 
 template <typename T>
-void GridSampler2DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
-  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
+void GridSampler2DGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->device_ptr());
   for (size_t i = kZero; i < dx_size_; i++) {
     dx_data_addr[i] = static_cast<T>(kZero);
   }

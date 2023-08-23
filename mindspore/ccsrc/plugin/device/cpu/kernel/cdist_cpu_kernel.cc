@@ -133,11 +133,11 @@ int CdistRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return 0;
 }
 
-bool CdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
-  in_data0_ = inputs[0]->addr;
-  in_data1_ = inputs[1]->addr;
-  out_data_ = outputs[0]->addr;
+bool CdistCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
+  in_data0_ = inputs[0]->device_ptr();
+  in_data1_ = inputs[1]->device_ptr();
+  out_data_ = outputs[0]->device_ptr();
   int ret = pool_->ParallelLaunch(CdistRun, this, thread_num_);
   if (ret != 0) {
     MS_LOG(ERROR) << "CdistCpuKernelMod ParallelLaunch failed, error_code[" << ret << "]";

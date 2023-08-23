@@ -81,8 +81,8 @@ int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename DataType, typename IndexType>
-bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto element_size = (outer_size_ * inner_size_) * axis_size_;
   if (element_size == 0) {
     return true;

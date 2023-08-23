@@ -45,8 +45,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
   // inputs: 0, data0; 1, data1;...k,datak; k+1, dout
   // workspace: 0, mid_res0; 1,mid_res1; ... k-1,mid_resk-1; k,work0; k + 1,work1; k+2, shape0;k+3; shape1,k+4; shape2,
   // outputs: 0 dinput0; 1dinput1; ... k, dinputk
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     std::vector<void *> workspace_ptr_list(workspace.size());
     for (size_t idx = 0; idx < workspace.size(); ++idx) {
       workspace_ptr_list[idx] = GetDeviceAddress<void>(workspace, idx);
@@ -190,22 +190,22 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.emplace_back(shape_size_ * sizeof(size_t));
   }
 
-  void LaunchForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchForward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     SingleOpForward(inputs, workspace, outputs, stream_ptr);
     ResOpForward(inputs, workspace, outputs, stream_ptr);
   }
   // inputs: 0, data0; 1, data1;...k,datak; k+1, dout
   // workspace: 0, mid_res0; 1,mid_res1; ... k-1,mid_resk-1; k,work0; k + 1,work1; k+2, shape0;k+3; shape1,k+4; shape2,
   // outputs: 0 dinput0; 1dinput1; ... k, dinputk
-  void LaunchBackward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void LaunchBackward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     ResOpBackward(inputs, workspace, outputs, stream_ptr);
     SingleOpBackward(inputs, workspace, outputs, stream_ptr);
   }
 
-  void ResOpBackward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void ResOpBackward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     size_t max_x_idx = inputs.size() - DIM_TWO;
     T *dout = GetDeviceAddress<T>(inputs, max_x_idx + 1);
     int idx_op = res_op_.size() - 1;
@@ -280,8 +280,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void SingleOpBackward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void SingleOpBackward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     size_t max_x_idx = inputs.size() - DIM_TWO;
     T *work0 = GetDeviceAddress<T>(workspace, max_x_idx);
     for (int idx_op = single_op_.size() - 1; idx_op >= 0; --idx_op) {
@@ -308,8 +308,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void SingleOpForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void SingleOpForward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     // 正向
     size_t work_idx = inputs.size() - DIM_TWO;
     T *work0 = GetDeviceAddress<T>(workspace, work_idx);
@@ -343,8 +343,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void ResOpForward(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  void ResOpForward(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     T *single_fir_ptr = GetDeviceAddress<T>(outputs, 0);
     T *middle_res_ptr = GetDeviceAddress<T>(workspace, 0);
     T *src_ptr = single_fir_ptr;

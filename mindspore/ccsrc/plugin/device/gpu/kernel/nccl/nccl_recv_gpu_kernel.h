@@ -30,8 +30,8 @@ class NcclRecvGpuKernel : public NcclGpuKernelMod {
   NcclRecvGpuKernel() : src_rank_(-1) {}
   ~NcclRecvGpuKernel() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }

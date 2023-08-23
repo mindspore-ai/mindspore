@@ -228,9 +228,9 @@ int MatrixTriangularSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   T *a = GetDeviceAddress<T>(inputs, kIndex0);
   T *b = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -252,7 +252,7 @@ bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::A
 
   if (!is_bcast_required_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output, b, inputs[kIndex1]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
+      cudaMemcpyAsync(output, b, inputs[kIndex1]->size(), cudaMemcpyDeviceToDevice, cuda_stream_),
       "For 'MatrixTriangularSolveGpuKernelMod', copy 'rhs' from device to device failed.");
   } else {
     for (int64_t i = 0; i < batch_num; i++) {

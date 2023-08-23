@@ -390,16 +390,16 @@ bool DeformableOffsetsGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-bool DeformableOffsetsGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool DeformableOffsetsGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &workspace,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
-bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   const size_t num_kernels =
     dims_.x_n * dims_.offset_h * dims_.offset_w * dims_.kernel_h * dims_.kernel_w * dims_.deformable_group;
   const T *input_grad = GetDeviceAddress<T>(inputs, kGradXIndex);
@@ -408,8 +408,8 @@ bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   T *output_grad_x = GetDeviceAddress<T>(outputs, kGradXIndex);
   T *output_grad_offset = GetDeviceAddress<T>(outputs, kGradOffsetIndex);
 
-  auto grad_x_size = outputs[kGradXIndex]->size;
-  auto grad_offset_size = outputs[kGradOffsetIndex]->size;
+  auto grad_x_size = outputs[kGradXIndex]->size();
+  auto grad_offset_size = outputs[kGradOffsetIndex]->size();
   // Reset output initial value to 0.
   auto ret = memset_s(output_grad_x, grad_x_size, 0, grad_x_size);
   if (ret != EOK) {

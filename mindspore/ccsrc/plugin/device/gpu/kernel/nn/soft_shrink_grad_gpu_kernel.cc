@@ -24,9 +24,9 @@ namespace kernel {
   KernelAttr().AddInputAttr(DT).AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradGpuKernelMod::LaunchKernel<T>
 
 template <typename T>
-bool SoftShrinkGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftShrinkGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   T *dy_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *x_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);

@@ -113,13 +113,13 @@ void RenormCpuKernelMod::CheckAndInitParams() {
 }
 
 template <typename T>
-bool RenormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool RenormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRenormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRenormOutputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   CheckAndInitParams();
 
   auto axis_size = axis_size_;      // maximum parallel number

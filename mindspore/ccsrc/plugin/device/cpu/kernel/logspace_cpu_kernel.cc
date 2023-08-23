@@ -77,14 +77,14 @@ int LogSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T, typename S>
-bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_start_addr = static_cast<T *>(inputs[0]->addr);
-  auto *input_end_addr = static_cast<T *>(inputs[1]->addr);
+bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_start_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto *input_end_addr = static_cast<T *>(inputs[1]->device_ptr());
   auto input_start = static_cast<double>(input_start_addr[0]);
   auto input_end = static_cast<double>(input_end_addr[0]);
-  auto *output_addr = static_cast<S *>(outputs[0]->addr);
+  auto *output_addr = static_cast<S *>(outputs[0]->device_ptr());
   if (steps_ > 0) {
     double w = (input_end - input_start) / (steps_ - 1);
     double q = pow(base_, w);

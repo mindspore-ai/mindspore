@@ -48,9 +48,9 @@ void ResizeLinear1DCpuKernelMod::ComputeInterpolationCaches(const size_t out_siz
 }
 
 template <typename T>
-bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -62,7 +62,7 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         output[i] = input[i];
       }
     };
-    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_, pool_);
+    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size() / sizeof(T), this, &parallel_search_info_, pool_);
     return true;
   }
 

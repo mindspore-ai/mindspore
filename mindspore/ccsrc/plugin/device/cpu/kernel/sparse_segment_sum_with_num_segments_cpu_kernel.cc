@@ -68,28 +68,28 @@ int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &b
   return KRET_OK;
 }
 
-bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<kernel::KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   MS_ERROR_IF_NULL(kernel_func_);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T1, typename T2>
-void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                               const std::vector<kernel::AddressPtr> &outputs) {
+void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                               const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kMultiply = 1;
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) /
              static_cast<size_t>(x_shape_[kIndex0]);
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
   auto x_shape0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->device_ptr());
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->device_ptr());
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input segment_ids should be sorted.";

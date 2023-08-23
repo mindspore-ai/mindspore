@@ -34,8 +34,8 @@ class MirrorPadCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
  public:
   MirrorPadCpuKernelMod() = default;
   ~MirrorPadCpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -50,8 +50,9 @@ class MirrorPadCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
   template <typename T1, typename T2>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  private:
   int64_t mode_{0};

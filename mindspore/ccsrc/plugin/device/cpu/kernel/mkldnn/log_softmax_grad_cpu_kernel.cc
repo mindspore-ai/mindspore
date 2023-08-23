@@ -72,14 +72,14 @@ int LogSoftmaxGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return ret;
 }
 
-bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_DST, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DST, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

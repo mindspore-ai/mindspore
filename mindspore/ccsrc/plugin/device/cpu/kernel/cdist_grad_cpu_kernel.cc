@@ -131,14 +131,15 @@ int CdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
 std::vector<KernelAttr> CdistGradCpuKernelMod::GetOpSupport() { return kernel_attr; }
 
-bool CdistGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
-  float *grad_start = reinterpret_cast<float *>(inputs[0]->addr);
-  float *dist_start = reinterpret_cast<float *>(inputs[3]->addr);
-  float *t1_start = reinterpret_cast<float *>(inputs[1]->addr);
-  float *t2_start = reinterpret_cast<float *>(inputs[2]->addr);
-  float *res_start = reinterpret_cast<float *>(outputs[0]->addr);
-  auto ret = memset_s(res_start, outputs[0]->size, 0, outputs[0]->size);
+bool CdistGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
+  float *grad_start = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  float *dist_start = reinterpret_cast<float *>(inputs[3]->device_ptr());
+  float *t1_start = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  float *t2_start = reinterpret_cast<float *>(inputs[2]->device_ptr());
+  float *res_start = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto ret = memset_s(res_start, outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }

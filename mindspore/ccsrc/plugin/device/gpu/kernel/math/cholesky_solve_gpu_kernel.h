@@ -82,8 +82,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -92,8 +92,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs) {
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs) {
     using pointer = T *;
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                 "cholesky solve cublasSetStream failed");
@@ -192,8 +192,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   using CholeskySolveFunc =
-    std::function<bool(CholeskySolveGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(CholeskySolveGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   size_t nrhs_{0};
   size_t batch_num_{0};
   size_t m_{0};

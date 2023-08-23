@@ -149,34 +149,34 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-bool ApplyAdamWithAmsgradGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool ApplyAdamWithAmsgradGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   kernel_func_(this, inputs, outputs, stream_ptr);
   return true;
 }
 
 template <typename T>
-bool ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  auto *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  auto *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  auto *vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->addr);
-  auto *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
-  auto *beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->addr);
-  auto *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  auto *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+bool ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  auto *m = reinterpret_cast<T *>(inputs[kIndexM]->device_ptr());
+  auto *v = reinterpret_cast<T *>(inputs[kIndexV]->device_ptr());
+  auto *vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->device_ptr());
+  auto *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->device_ptr());
+  auto *beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->device_ptr());
+  auto *lr = reinterpret_cast<T *>(inputs[kIndexLr]->device_ptr());
+  auto *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
 
   T beta1 = static_cast<T>(beta1_);
   T beta2 = static_cast<T>(beta2_);
   T epsilon = static_cast<T>(epsilon_);
 
-  auto *output_var = reinterpret_cast<T *>(outputs[kIndexVar]->addr);
-  auto *output_m = reinterpret_cast<T *>(outputs[kIndexM]->addr);
-  auto *output_v = reinterpret_cast<T *>(outputs[kIndexV]->addr);
-  auto *output_vhat = reinterpret_cast<T *>(outputs[kIndexVhat]->addr);
+  auto *output_var = reinterpret_cast<T *>(outputs[kIndexVar]->device_ptr());
+  auto *output_m = reinterpret_cast<T *>(outputs[kIndexM]->device_ptr());
+  auto *output_v = reinterpret_cast<T *>(outputs[kIndexV]->device_ptr());
+  auto *output_vhat = reinterpret_cast<T *>(outputs[kIndexVhat]->device_ptr());
 
   auto status = CalApplyAdamWithAmsgrad(input_elements_, batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr,
                                         grad, beta1, beta2, epsilon, output_var, output_m, output_v, output_vhat,

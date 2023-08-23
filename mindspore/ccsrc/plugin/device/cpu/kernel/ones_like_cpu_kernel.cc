@@ -43,14 +43,14 @@ bool OnesLikeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool OnesLikeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool OnesLikeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOnesLikeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOnesLikeOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
   auto task = [this, output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       output_addr[i] = T(1);

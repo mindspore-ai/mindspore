@@ -32,8 +32,8 @@ class GcdCpuKernelMod : public NativeCpuKernelMod {
   GcdCpuKernelMod() = default;
   ~GcdCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     (void)workspace;
     return kernel_func_(this, inputs, outputs);
   }
@@ -48,10 +48,11 @@ class GcdCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
-  using GcdLaunchFunc = std::function<bool(GcdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
+  using GcdLaunchFunc = std::function<bool(GcdCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, GcdLaunchFunc>> func_list_;
   GcdLaunchFunc kernel_func_;

@@ -45,18 +45,18 @@ bool RangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
-  auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
-  auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
-  auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];
+bool RangeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto start = reinterpret_cast<T *>(inputs[0]->device_ptr())[0];
+  auto limit = reinterpret_cast<T *>(inputs[1]->device_ptr())[0];
+  auto delta = reinterpret_cast<T *>(inputs[2]->device_ptr())[0];
   if (delta == static_cast<T>(0)) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the delta can not be 0.";
     return false;
   }
 
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t output_size = outputs[0]->size() / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
     for (int index = 0; index < SizeToInt(output_size); index++) {
       output[index] = delta * index + start;

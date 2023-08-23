@@ -77,9 +77,9 @@ int AccumulateNV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool AccumulateNV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool AccumulateNV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
   std::unique_ptr<T *[]> inputs_host = std::make_unique<T *[]>(n_);

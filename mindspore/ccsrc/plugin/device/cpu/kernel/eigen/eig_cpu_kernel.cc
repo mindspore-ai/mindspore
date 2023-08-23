@@ -85,11 +85,11 @@ int EigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T, typename C>
-bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_w_addr = reinterpret_cast<C *>(outputs[0]->addr);
-  auto output_v_addr = compute_v_ ? reinterpret_cast<C *>(outputs[1]->addr) : nullptr;
+bool EigCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_w_addr = reinterpret_cast<C *>(outputs[0]->device_ptr());
+  auto output_v_addr = compute_v_ ? reinterpret_cast<C *>(outputs[1]->device_ptr()) : nullptr;
 
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     T *a_addr = input_addr + batch * row_size_ * col_size_;

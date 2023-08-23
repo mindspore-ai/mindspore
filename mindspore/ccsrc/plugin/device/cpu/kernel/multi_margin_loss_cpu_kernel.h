@@ -41,8 +41,8 @@ class MultiMarginLossCPUKernelMod : public NativeCpuKernelMod, public MatchKerne
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -50,14 +50,14 @@ class MultiMarginLossCPUKernelMod : public NativeCpuKernelMod, public MatchKerne
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   template <typename T>
-  void LaunchKernelFP32AndFP64(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelFP32AndFP64(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void LaunchKernelFP16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelFP16(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   void CheckParam(const CNodePtr &kernel_node);
   size_t batch_size = 2;

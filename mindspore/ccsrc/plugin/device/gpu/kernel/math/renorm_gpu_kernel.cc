@@ -46,11 +46,12 @@ bool RenormGpuKernelMod::GetRenormAttr(const BaseOperatorPtr &base_operator) {
 }
 
 template <typename T>
-bool RenormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto norm_value = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
+bool RenormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
+  auto norm_value = reinterpret_cast<float *>(workspace.at(kIndex0)->device_ptr());
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(norm_value, 0, input_shape_[dim_] * sizeof(float), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'Renorm', it's cudaMemsetAsync failed.");

@@ -36,8 +36,8 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       : element_num_(1), combine_num_(0), input_num_(0), is_null_input_(false), kernel_name_("CombineMomentum") {}
   ~CombineMomentumGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }

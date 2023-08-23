@@ -150,8 +150,8 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
     return fast_sort_kernel_->Init(base_operator, inputs, outputs);
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -199,8 +199,8 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
   constexpr static int64_t sort_dim_thres_ = 4096;
   bool old_kernel_support_{false};
 
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   cudaStream_t cuda_stream_;
 };

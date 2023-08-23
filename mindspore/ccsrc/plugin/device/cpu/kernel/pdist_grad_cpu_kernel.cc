@@ -128,14 +128,14 @@ int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  T *grad = static_cast<T *>(inputs[0]->addr);
-  T *x = static_cast<T *>(inputs[1]->addr);
-  T *dist = static_cast<T *>(inputs[2]->addr);
-  T *y = static_cast<T *>(outputs[0]->addr);
-  auto output_addr = reinterpret_cast<char *>(outputs[0]->addr);
-  auto output_size = outputs[0]->size;
+bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  T *grad = static_cast<T *>(inputs[0]->device_ptr());
+  T *x = static_cast<T *>(inputs[1]->device_ptr());
+  T *dist = static_cast<T *>(inputs[2]->device_ptr());
+  T *y = static_cast<T *>(outputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<char *>(outputs[0]->device_ptr());
+  auto output_size = outputs[0]->size();
   while (output_size > 0) {
     auto copy_size = std::min(output_size, static_cast<size_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);

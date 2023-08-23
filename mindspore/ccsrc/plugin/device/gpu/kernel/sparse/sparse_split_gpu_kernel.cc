@@ -93,9 +93,9 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   auto split_dim_ptr = GetDeviceAddress<IndexType>(inputs, kIndex0);
@@ -179,7 +179,7 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   auto sum_count_ptr = GetDeviceAddress<int>(workspace, kIndex3);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(sum_count_ptr, 0, workspace[kIndex3]->size, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(sum_count_ptr, 0, workspace[kIndex3]->size(), cuda_stream),
                                      "For SparseSplit, cudaMemsetAsync failed.");
 
   SparseSplit<DataType, IndexType>(split_dim_ptr, indices_ptr, values_ptr, shape_ptr, num_split, d_y_indices_vec,

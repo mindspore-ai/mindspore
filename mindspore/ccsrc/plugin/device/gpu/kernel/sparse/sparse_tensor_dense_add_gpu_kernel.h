@@ -38,8 +38,8 @@ class SparseTensorDenseAddGpuKernelMod : public NativeGpuKernelMod {
   SparseTensorDenseAddGpuKernelMod() { ResetResource(); }
   ~SparseTensorDenseAddGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -71,12 +71,13 @@ class SparseTensorDenseAddGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename I>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   using SparseTensorDenseAddLaunchFunc =
-    std::function<bool(SparseTensorDenseAddGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SparseTensorDenseAddGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, SparseTensorDenseAddLaunchFunc>> func_list_;
   SparseTensorDenseAddLaunchFunc kernel_func_;
   void *cuda_stream_{nullptr};

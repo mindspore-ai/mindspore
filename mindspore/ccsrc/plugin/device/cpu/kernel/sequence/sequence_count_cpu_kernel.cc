@@ -52,15 +52,15 @@ int SequenceCountCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SequenceCountCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *seq_addr = GetDeviceAddress<T>(inputs, 0);
   T *target_addr = GetDeviceAddress<T>(inputs, 1);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
-  MS_EXCEPTION_IF_NULL(output_addr);
-  auto seq_size = inputs[0]->size;
+  auto seq_size = inputs[0]->size();
 
   int64_t count = 0;
   size_t elem_num = seq_size / sizeof(T);

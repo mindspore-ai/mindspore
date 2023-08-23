@@ -30,8 +30,8 @@ class LuGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<LuGpu
   LuGpuKernelMod() { ResetResource(); }
   ~LuGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -53,16 +53,16 @@ class LuGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<LuGpu
  private:
   void ResetResource() noexcept;
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   template <typename T, typename S>
-  void LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                            const std::vector<AddressPtr> &outputs);
+  void LaunchKernel_CuSolve(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                            const std::vector<KernelTensor *> &outputs);
 
   template <typename T, typename S>
-  void LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs);
+  void LaunchKernel_Cublas(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                           const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
   void BufferSize(T *batch_output_addr, int *lwork);

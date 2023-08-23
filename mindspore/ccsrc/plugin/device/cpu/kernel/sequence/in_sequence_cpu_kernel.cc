@@ -54,8 +54,9 @@ int InSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   const auto ele_addr = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(ele_addr);
   const auto input_addr = GetDeviceAddress<S>(inputs, 1);

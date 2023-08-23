@@ -80,9 +80,9 @@ int RaggedTensorToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   switch (shape_dtype_) {
     case kNumberTypeInt32: {
       switch (values_dtype_) {
@@ -128,8 +128,8 @@ bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressP
 }
 
 template <typename TYPE1, typename TYPE2>
-void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
   TYPE1 first_dimension;
   GetFirstDimension<TYPE1>(inputs, &first_dimension);
   std::vector<TYPE1> output_size;
@@ -165,15 +165,15 @@ void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       // get row partition tensor
       std::vector<TYPE1_flat> row_partition_tensor;
       if (row_partition_types_[0] == "FIRST_DIM_SIZE") {
-        kernel::AddressPtr row_partition = inputs[i + kFirstPartitionInputIndex];
-        auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->addr);
+        kernel::KernelTensor *row_partition = inputs[i + kFirstPartitionInputIndex];
+        auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->device_ptr());
         auto row_partition_shape = row_partition_shape_list_[i];
         Eigen::DSizes<Eigen::DenseIndex, 1> row_partition_dsize(row_partition_shape[0]);
         TYPE1_flat rowET(row_partition_ptr, row_partition_dsize);
         row_partition_tensor.push_back(rowET);
       } else {
-        kernel::AddressPtr row_partition = inputs[i - 1 + kFirstPartitionInputIndex];
-        auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->addr);
+        kernel::KernelTensor *row_partition = inputs[i - 1 + kFirstPartitionInputIndex];
+        auto row_partition_ptr = reinterpret_cast<TYPE1 *>(row_partition->device_ptr());
         auto row_partition_shape = row_partition_shape_list_[i - 1];
         Eigen::DSizes<Eigen::DenseIndex, 1> row_partition_dsize(row_partition_shape[0]);
         TYPE1_flat rowET(row_partition_ptr, row_partition_dsize);
@@ -216,7 +216,7 @@ int RaggedTensorToTensorCpuKernelMod::GetRaggedRank(std::vector<std::string> typ
 }
 
 template <typename TYPE1>
-void RaggedTensorToTensorCpuKernelMod::GetFirstDimension(const std::vector<kernel::AddressPtr> &inputs,
+void RaggedTensorToTensorCpuKernelMod::GetFirstDimension(const std::vector<kernel::KernelTensor *> &inputs,
                                                          TYPE1 *first_dim) {
   auto first_partition_tensor = inputs[kFirstPartitionInputIndex];
   auto firstPartitionShape = row_partition_shape_list_[0];
@@ -224,7 +224,7 @@ void RaggedTensorToTensorCpuKernelMod::GetFirstDimension(const std::vector<kerne
   if (first_partition_type == "VALUE_ROWIDS") {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cannot handle 'VALUE_ROWIDS' in first dimension.";
   } else if (first_partition_type == "FIRST_DIM_SIZE") {
-    TYPE1 *first_dim_pt = reinterpret_cast<TYPE1 *>(first_partition_tensor->addr);
+    TYPE1 *first_dim_pt = reinterpret_cast<TYPE1 *>(first_partition_tensor->device_ptr());
     *first_dim = first_dim_pt[0];
   } else if (first_partition_type == "ROW_SPLITS") {
     *first_dim = firstPartitionShape[0] - 1;
@@ -320,15 +320,15 @@ bool RaggedTensorToTensorCpuKernelMod::CalculateOutputIndexRowSplit(const std::v
 }
 
 template <typename TYPE1, typename TYPE2>
-bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs,
+bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs,
                                                  const vector<TYPE1> &output_index) {
-  auto output_tensor_ptr = reinterpret_cast<TYPE2 *>(outputs[0]->addr);
+  auto output_tensor_ptr = reinterpret_cast<TYPE2 *>(outputs[0]->device_ptr());
   size_t output_element_sum = SizeToLong(SizeOf(output_shape_));
   auto default_value_tensor = inputs[kDefaultValueInputIndex];
-  TYPE2 *default_value_pt = reinterpret_cast<TYPE2 *>(default_value_tensor->addr);
+  TYPE2 *default_value_pt = reinterpret_cast<TYPE2 *>(default_value_tensor->device_ptr());
   auto values_tensor = inputs[kValueInputIndex];
-  auto values_tensor_ptr = reinterpret_cast<TYPE2 *>(values_tensor->addr);
+  auto values_tensor_ptr = reinterpret_cast<TYPE2 *>(values_tensor->device_ptr());
   if (values_shape_.size() == 1) {
     Eigen::DSizes<Eigen::DenseIndex, 1> output_tensor_dsize(output_element_sum);
     TYPE2_flat outputET(output_tensor_ptr, output_tensor_dsize);
@@ -357,8 +357,8 @@ bool RaggedTensorToTensorCpuKernelMod::SetOutput(const std::vector<kernel::Addre
                         << default_values_shape_ << " to tensor of shape " << output_shape_;
     }
     BroadcastIterator iter(default_values_shape_, output_shape_, broadcast_shape);
-    TYPE2 *default_value_addr = reinterpret_cast<TYPE2 *>(inputs[kDefaultValueInputIndex]->addr);
-    TYPE2 *output_addr = reinterpret_cast<TYPE2 *>(outputs[0]->addr);
+    TYPE2 *default_value_addr = reinterpret_cast<TYPE2 *>(inputs[kDefaultValueInputIndex]->device_ptr());
+    TYPE2 *output_addr = reinterpret_cast<TYPE2 *>(outputs[0]->device_ptr());
 
     iter.SetPos(0);
     for (size_t i = 0; i < output_element_sum; ++i) {

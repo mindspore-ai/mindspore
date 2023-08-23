@@ -71,12 +71,12 @@ bool SoftmaxGradFusionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SoftmaxGradFusionCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 [[maybe_unused]] const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *x0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *x1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[0]->addr);
+bool SoftmaxGradFusionCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 [[maybe_unused]] const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *x0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *x1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *y = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto task = [this, &x0, &x1, &y](size_t a, size_t b) {
     for (auto tid = a; tid < b; tid++) {
