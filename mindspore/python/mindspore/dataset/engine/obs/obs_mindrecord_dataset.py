@@ -117,7 +117,7 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num):
         f.write('ok')
 
     if os.path.exists(sync_file):
-        os.chmod(sync_file, stat.S_IRUSER | stat.S_IWUSER)
+        os.chmod(sync_file, stat.S_IRUSR | stat.S_IWUSR)
 
     while True:
         if os.path.exists(sync_dir) and not os.listdir(sync_dir):
