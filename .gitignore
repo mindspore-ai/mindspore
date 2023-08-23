@@ -8,6 +8,13 @@ kernel_meta/
 somas_meta/
 trace_code_graph_*
 
+# mindspore gen ops
+mindspore/core/ops/gen_lite_ops.h
+mindspore/core/ops/gen_ops_def.cc
+mindspore/core/ops/gen_ops_name.h
+mindspore/python/mindspore/gen_ops_def.py
+
+
 # mindspore lite java
 mindspore/lite/java/.gradle/
 mindspore/lite/java/gradle
