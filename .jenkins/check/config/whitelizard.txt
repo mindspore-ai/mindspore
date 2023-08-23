@@ -409,3 +409,6 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/fractional_max_pool_3d_with_fixed_ksize_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sspaddmm.cc:ge::CUST_IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/fractional_max_pool_3d_grad_with_fixed_ksize_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
+mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/conv2d.cc:mindspore::kernel::UseWinograd4x4To6x6
+mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/fullconnection.cc:mindspore::kernel::FullConnectionOpenCLKernel::CheckSpecs
+

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ int MatMulOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_weight_);
+  FreeStoredData(&stored_weight_);
   return InitBias();
 }
 
@@ -309,7 +309,7 @@ int MatMulOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 #else
@@ -342,7 +342,7 @@ int MatMulOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 #endif

@@ -467,7 +467,7 @@ int Conv2DOpenCLKernel::InitFilter() {
     }
   }
 
-  FreeStoredData(stored_filter_);
+  FreeStoredData(&stored_filter_);
   return RET_OK;
 }
 
@@ -523,7 +523,7 @@ int Conv2DOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 
