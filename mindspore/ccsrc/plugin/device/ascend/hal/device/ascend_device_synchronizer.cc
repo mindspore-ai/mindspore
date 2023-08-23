@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

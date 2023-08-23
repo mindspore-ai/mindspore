@@ -21,11 +21,11 @@
 
 namespace mindspore {
 void InferDeviceAddress::ClearDeviceMemory() {
-  if (ptr_ == nullptr) {
+  if (GetDevicePtr() == nullptr) {
     return;
   }
-  free(ptr_);
-  ptr_ = nullptr;
+  free(GetDevicePtr());
+  SetDevicePtr(nullptr);
 }
 
 bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId type, void *host_ptr) const {
@@ -34,12 +34,12 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The pointer ptr_ is null!";
+  if (GetDevicePtr() == nullptr) {
+    MS_LOG(ERROR) << "The pointer device ptr is null!";
     return false;
   }
-  if (host_ptr == ptr_) {
-    MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
+  if (host_ptr == GetDevicePtr()) {
+    MS_LOG(DEBUG) << "host_ptr is equal to device ptr, request ignored.";
     return true;
   }
 
@@ -48,7 +48,7 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
       MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
       return true;
     }
-    errno_t ret_code = memcpy_s(host_ptr, size, ptr_, size);
+    errno_t ret_code = memcpy_s(host_ptr, size, GetDevicePtr(), size);
     // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
@@ -67,12 +67,12 @@ bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, Type
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The pointer ptr_ is null!";
+  if (GetDevicePtr() == nullptr) {
+    MS_LOG(ERROR) << "The pointer device ptr() is null!";
     return false;
   }
-  if (host_ptr == ptr_) {
-    MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
+  if (host_ptr == GetDevicePtr()) {
+    MS_LOG(DEBUG) << "host_ptr is equal to device ptr request ignored.";
     return true;
   }
 
@@ -87,11 +87,11 @@ bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, Type
 #ifndef __APPLE__
     const size_t kCopySize = 16;
     if (size <= kCopySize) {
-      return ((memcpy_s(ptr_, size, host_ptr, size) != EOK) ? false : true);
+      return ((memcpy_s(GetDevicePtr(), size, host_ptr, size) != EOK) ? false : true);
     }
 #endif
 
-    ptr_ = const_cast<void *>(host_ptr);
+    SetDevicePtr(const_cast<void *>(host_ptr));
     original_ref_count_ = SIZE_MAX;
     ref_count_ = SIZE_MAX;
   }

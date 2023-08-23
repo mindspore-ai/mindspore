@@ -35,8 +35,8 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) const {
       }
       auto address = AnfAlgo::GetOutputAddr(kernel_with_index.first, kernel_with_index.second, true);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        total_mem_size += address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        total_mem_size += address->GetSize();
       }
     }
 
@@ -44,8 +44,8 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) const {
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        total_mem_size += address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        total_mem_size += address->GetSize();
       }
     }
 
@@ -54,8 +54,8 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) const {
     for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
       auto address = AnfAlgo::GetWorkspaceAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        total_mem_size += address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        total_mem_size += address->GetSize();
       }
     }
   }
@@ -79,9 +79,9 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
       }
       auto address = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, true);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        address->ptr_ = mem_ptr;
-        mem_ptr = mem_ptr + address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        address->SetDevicePtr(mem_ptr);
+        mem_ptr = mem_ptr + address->GetSize();
       }
     }
 
@@ -89,9 +89,9 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetMutableOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        address->ptr_ = mem_ptr;
-        mem_ptr = mem_ptr + address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        address->SetDevicePtr(mem_ptr);
+        mem_ptr = mem_ptr + address->GetSize();
       }
     }
 
@@ -100,9 +100,9 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
     for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
       auto address = AnfAlgo::GetWorkspaceAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      if (address->ptr_ == nullptr) {
-        address->ptr_ = mem_ptr;
-        mem_ptr = mem_ptr + address->size_;
+      if (address->GetDevicePtr() == nullptr) {
+        address->SetDevicePtr(mem_ptr);
+        mem_ptr = mem_ptr + address->GetSize();
       }
     }
   }

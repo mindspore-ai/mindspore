@@ -103,8 +103,8 @@ void TaskGenerator::LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, Addre
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(input);
       MS_EXCEPTION_IF_NULL(device_address);
-      input->addr = device_address->ptr_;
-      input->size = device_address->size_;
+      input->addr = device_address->GetDevicePtr();
+      input->size = device_address->GetSize();
       kernel_inputs->push_back(input);
     }
     MS_LOG(DEBUG) << "AtomicAddClean clean output size: " << clean_output_indexs.size();
@@ -132,8 +132,8 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
         kernel::AddressPtr input = std::make_shared<kernel::Address>();
         MS_EXCEPTION_IF_NULL(input);
         MS_EXCEPTION_IF_NULL(device_address);
-        input->addr = device_address->ptr_;
-        input->size = device_address->size_;
+        input->addr = device_address->GetDevicePtr();
+        input->size = device_address->GetSize();
         kernel_inputs->push_back(input);
       }
       MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
@@ -147,9 +147,9 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
         kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
         MS_EXCEPTION_IF_NULL(workspace);
         MS_EXCEPTION_IF_NULL(device_address);
-        workspace->addr = device_address->ptr_;
+        workspace->addr = device_address->GetDevicePtr();
         MS_EXCEPTION_IF_NULL(workspace->addr);
-        workspace->size = device_address->size_;
+        workspace->size = device_address->GetSize();
         kernel_inputs->push_back(workspace);
       }
       MS_LOG(DEBUG) << "AtomicAddClean clean workspace size:" << clean_workspace_indexs.size();
@@ -180,8 +180,8 @@ AddressPtrList TaskGenerator::GetTaskInput(const CNodePtr &node) {
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, input_index_in_graph);
     AddressPtr input = std::make_shared<Address>();
     MS_EXCEPTION_IF_NULL(input);
-    input->addr = device_address->ptr_;
-    input->size = device_address->size_;
+    input->addr = device_address->GetDevicePtr();
+    input->size = device_address->GetSize();
 
     auto prenode_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_index_in_graph);
     MS_EXCEPTION_IF_NULL(prenode_with_index.first);
@@ -192,10 +192,10 @@ AddressPtrList TaskGenerator::GetTaskInput(const CNodePtr &node) {
         // offset is split's output index * split's output size
         auto split_input0_device_address = AnfAlgo::GetPrevNodeOutputAddr(prenode_with_index.first, 0);
         MS_EXCEPTION_IF_NULL(split_input0_device_address);
-        input->addr =
-          static_cast<uint8_t *>(split_input0_device_address->ptr_) + (prenode_with_index.second * input->size);
+        input->addr = static_cast<uint8_t *>(split_input0_device_address->GetDevicePtr()) +
+                      (prenode_with_index.second * input->size);
         MS_LOG(INFO) << "Change " << node->fullname_with_scope() << "'s input " << i << " address to "
-                     << split_input0_device_address->ptr_ << " + " << prenode_with_index.second * input->size;
+                     << split_input0_device_address->GetDevicePtr() << " + " << prenode_with_index.second * input->size;
       }
     }
     kernel_inputs.push_back(input);
@@ -211,8 +211,8 @@ AddressPtrList TaskGenerator::GetTaskOutput(const CNodePtr &node) {
     for (size_t i = 0; i < output_num; ++i) {
       auto it = AnfAlgo::GetOutputAddr(node, i, false);
       AddressPtr output = std::make_shared<Address>();
-      output->addr = it->ptr_;
-      output->size = it->size_;
+      output->addr = it->GetDevicePtr();
+      output->size = it->GetSize();
       kernel_outputs.push_back(output);
     }
   }
@@ -227,8 +227,8 @@ AddressPtrList TaskGenerator::GetTaskWorkspace(const CNodePtr &node) {
     auto device_address = AnfAlgo::GetWorkspaceAddr(node, i);
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
-    workspace->addr = device_address->ptr_;
-    workspace->size = device_address->size_;
+    workspace->addr = device_address->GetDevicePtr();
+    workspace->size = device_address->GetSize();
     kernel_workspaces.push_back(workspace);
   }
   return kernel_workspaces;

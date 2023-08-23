@@ -26,6 +26,118 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
+void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  shape_ = shape;
+  if (type_id_ == kObjectTypeTensorType) {
+    shape_vector_ = shape_->GetShapeVector();
+  } else if (type_id_ == kObjectTypeTuple || type_id_ == kObjectTypeList) {
+    const auto &tuple_shape = shape_->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    shape_vector_.clear();
+    shape_vector_.push_back(tuple_shape->size());
+    const auto &shapes = tuple_shape->shape();
+    if (shapes.empty()) {
+      return;
+    }
+    const auto &element_shape = shapes[0];
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (element_shape->isa<abstract::TensorShape>()) {
+      const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
+      shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
+    }
+  }
+}
+
+void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
+  if (type_id_ != kObjectTypeTensorType) {
+    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently.";
+  }
+  shape_vector_ = shape_vector;
+  shape_->SetShapeVector(shape_vector_);
+}
+
+void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
+  if (type_id_ != kObjectTypeTensorType) {
+    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently.";
+  }
+  shape_vector_ = std::move(shape_vector);
+  shape_->SetShapeVector(shape_vector_);
+}
+
+void KernelTensor::SetType(const TypePtr &type) {
+  type_ = type;
+  type_id_ = type_->object_type();
+
+  switch (type_id_) {
+    case kObjectTypeTensorType: {
+      auto tensor_type_ptr = type_->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_type_ptr);
+      auto element_type = tensor_type_ptr->element();
+      if (element_type) {
+        dtype_ = element_type;
+        dtype_id_ = dtype_->type_id();
+      }
+    } break;
+
+    case kObjectTypeTuple: {
+      auto tuple_type = type_->cast<TuplePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_type);
+      const TypePtrList &element_types = tuple_type->elements();
+      SetSequenceDType(element_types);
+    } break;
+
+    case kObjectTypeList: {
+      auto tuple_type = type_->cast<ListPtr>();
+      MS_EXCEPTION_IF_NULL(tuple_type);
+      const TypePtrList &element_types = tuple_type->elements();
+      SetSequenceDType(element_types);
+    } break;
+
+    case kObjectTypeNumber: {
+      dtype_ = type;
+      dtype_id_ = dtype_->type_id();
+    } break;
+
+    default:
+      MS_LOG(EXCEPTION) << "Can not set object type for: " << type->ToString();
+  }
+}
+
+void KernelTensor::SetSequenceDType(const TypePtrList &element_types) {
+  if (element_types.empty()) {
+    return;
+  }
+
+  const TypePtr &element_type = element_types[0];
+  MS_EXCEPTION_IF_NULL(element_type);
+  if (element_type->object_type() == kObjectTypeTensorType) {
+    // Tensor type element.
+    auto tensor_type_ptr = element_type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type_ptr);
+    auto tensor_element_type = tensor_type_ptr->element();
+    if (tensor_element_type) {
+      dtype_ = tensor_element_type;
+      dtype_id_ = dtype_->type_id();
+    }
+  } else if (element_type->object_type() == kObjectTypeNumber) {
+    // Scalar type element.
+    dtype_ = element_type;
+    dtype_id_ = dtype_->type_id();
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported element type[" << element_type->ToString()
+                      << "] to set element data type for KernelTensor.";
+  }
+}
+
+std::string KernelTensor::GetStringFormat() const { return GetFormatFromEnumToStr(format_); }
+
+void KernelTensor::SetStringFormat(const std::string &format) { format_ = GetFormatFromStrToEnum(format); }
+
+std::string KernelTensor::GetPaddingType() const { return padding_type_; }
+
+void KernelTensor::SetPaddingType(const std::string &format) { padding_type_ = GetFormatFromStrToEnum(format); }
+
 string KernelTensor::GetAbstractName() const {
   const TensorInfo &info = std::get<TensorInfo>(meta_);
   if (info.base_ == nullptr) {
@@ -162,27 +274,6 @@ ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
   return flatten_shp;
 }
 
-ShapeVector KernelTensor::GetShapeVector() const {
-  if (meta_type_ == kObjectTypeTensorType) {
-    // Tensor
-    auto base_shape_ptr = GetBaseShape();
-    if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
-      return {};
-    }
-    auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
-    return shape;
-  } else if (meta_type_ == kObjectTypeTuple) {
-    const TupleInfo &tuple_info = std::get<TupleInfo>(meta_);
-    return GetSequenceFlattenShape(tuple_info.base_);
-  } else if (meta_type_ == kObjectTypeList) {
-    const ListInfo &list_info = std::get<ListInfo>(meta_);
-    return GetSequenceFlattenShape(list_info.base_);
-  } else {
-    // Scalar
-    return {};
-  }
-}
-
 ShapeVector KernelTensor::GetMaxShape() const {
   if (meta_type_ != kObjectTypeTensorType) {
     return {};
@@ -255,17 +346,6 @@ void KernelTensor::SetDtype(const TypePtr &dtype) {
     return;
   }
   info.base_->set_type(dtype);
-}
-
-void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) const {
-  auto base_shape_ptr = GetBaseShape();
-  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
-    return;
-  }
-  auto shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
-  if (shape_ptr) {
-    shape_ptr->set_shape(shape);
-  }
 }
 
 abstract::BaseShapePtr KernelTensor::GetBaseShape() const {

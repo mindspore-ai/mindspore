@@ -24,6 +24,7 @@
 #include <sstream>
 #include <typeindex>
 #include <memory>
+#include <utility>
 #include <algorithm>
 
 #include "utils/hashing.h"
@@ -93,6 +94,13 @@ class MS_CORE_API BaseShape : public Base {
   /// \return Shape dimensions.
   virtual const ShapeVector &GetShapeVector() const {
     MS_LOG(EXCEPTION) << "The method 'GetShapeVector()' doesn't implement";
+  }
+
+  /// \brief Set shape dimensions of BaseShape object.
+  ///
+  /// \param[in] shape Dimensions of shape.
+  virtual void SetShapeVector(const ShapeVector &shape) {
+    MS_LOG(EXCEPTION) << "The method 'SetShapeVector()' doesn't implement";
   }
 };
 
@@ -199,6 +207,11 @@ class MS_CORE_API TensorShape final : public BaseShape {
   ///
   /// \return Shape dimensions.
   const ShapeVector &GetShapeVector() const override { return shape_; }
+
+  /// \brief Set shape dimensions of TensorShape object.
+  ///
+  /// \param[in] shape Dimensions of shape.
+  void SetShapeVector(const ShapeVector &shape) override { shape_ = shape; }
 
   bool IsDynamic() const override;
 

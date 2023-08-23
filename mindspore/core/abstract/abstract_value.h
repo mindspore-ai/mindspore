@@ -241,12 +241,13 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the Value.
   virtual ValuePtr RealBuildValue() const;
 
- private:
   ValuePtr value_;
   TypePtr type_;
   BaseShapePtr shape_;
-  std::string value_desc_;                     // Store initial value description for error report.
-  std::string name_;                           // Store for mindir input and output names.
+  std::string value_desc_;  // Store initial value description for error report.
+  std::string name_;        // Store for mindir input and output names.
+
+ private:
   AbstractBasePtr inplace_abstract_{nullptr};  // Cover *this abstract for inplace primitive.
 };
 

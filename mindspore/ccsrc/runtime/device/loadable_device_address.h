@@ -90,12 +90,14 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   }
 
   virtual void set_swappable(bool swappable) { swappable_ = swappable; }
-  virtual bool swappable() { return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr); }
+  virtual bool swappable() {
+    return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && GetDevicePtr() == nullptr);
+  }
 
  protected:
   DeviceContext *GetDeviceContext() const {
     DeviceContext *device_context = nullptr;
-    device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name(), device_id()});
     return device_context;
   }
 

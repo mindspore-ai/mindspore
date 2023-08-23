@@ -29,7 +29,6 @@
 #include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
-using device::UserDataPtr;
 using tensor::TensorPtr;
 namespace runtime {
 // Whether device address of anf node is valid and device address type

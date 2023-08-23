@@ -56,7 +56,7 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
   bool need_sync_stream = false;
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    auto old_addr = addr_list[i]->ptr_;
+    auto old_addr = addr_list[i]->GetDevicePtr();
     auto new_addr = device_ptr_list[i];
     MS_EXCEPTION_IF_NULL(new_addr);
     if (old_addr != nullptr) {
@@ -66,8 +66,8 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
         "Failed to copyHostMemToDeviceAsync.");
       FreeMemFromMemPool(old_addr);
     }
-    addr_list[i]->ptr_ = new_addr;
-    addr_list[i]->size_ = size_list[i];
+    addr_list[i]->SetDevicePtr(new_addr);
+    addr_list[i]->SetSize(size_list[i]);
     addr_list[i]->from_mem_pool_ = true;
   }
   if (need_sync_stream) {

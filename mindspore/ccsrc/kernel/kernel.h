@@ -141,53 +141,118 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   ~KernelTensor() = default;
 
   // Constructor of KernelTensor by shape, type, value.
-  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const TypePtr &dtype,
-               const ValuePtr &value = nullptr, bool dynamic_len = false)
-      : shape_(shape), value_(value), dynamic_len_(dynamic_len) {
+  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
+    if (shape) {
+      SetShape(shape);
+    }
     if (type) {
-      type_ = type;
-      type_id_ = type_->type_id();
+      SetType(type);
     }
-    if (dtype) {
-      dtype_ = dtype;
-      dtype_id_ = dtype_->type_id();
+    if (value) {
+      SetValue(value);
     }
+  }
+
+  // Constructor of KernelTensor by AbstractBase and device info.
+  KernelTensor(const abstract::AbstractBasePtr abs, mindspore::Format format, void *device_ptr, size_t size,
+               const string &device_name, uint32_t device_id) {
+    if (abs) {
+      KernelTensor(abs->GetShape(), abs->GetType(), abs->GetValue(), format, device_ptr, size, device_name, device_id);
+    } else {
+      format_ = format;
+      device_ptr_ = device_ptr;
+      size_ = size;
+      device_name_ = device_name;
+      device_id_ = device_id;
+    }
+  }
+
+  // Constructor of KernelTensor by shape, type, value and device info.
+  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
+               mindspore::Format format, void *device_ptr, size_t size, const string &device_name, uint32_t device_id)
+      : format_(format), device_ptr_(device_ptr), size_(size), device_name_(device_name), device_id_(device_id) {
+    if (shape) {
+      SetShape(shape);
+    }
+    if (type) {
+      SetType(type);
+    }
+    if (value) {
+      SetValue(value);
+    }
+  }
+
+  // Move constructor.
+  KernelTensor(KernelTensor &&other) {
+    shape_ = other.shape_;
+    shape_vector_ = std::move(other.shape_vector_);
+
+    type_ = other.type_;
+    type_id_ = other.type_id_;
+    dtype_ = other.dtype_;
+    dtype_id_ = other.dtype_id_;
+
+    value_ = other.value_;
+
+    format_ = other.format_;
+    device_ptr_ = other.device_ptr_;
+    size_ = other.size_;
+    device_name_ = std::move(other.device_name_);
+    device_id_ = other.device_id_;
+  }
+
+  // Move assignment operator.
+  KernelTensor &operator=(KernelTensor &&other) {
+    shape_ = other.shape_;
+    shape_vector_ = std::move(other.shape_vector_);
+
+    type_ = other.type_;
+    type_id_ = other.type_id_;
+    dtype_ = other.dtype_;
+    dtype_id_ = other.dtype_id_;
+
+    value_ = other.value_;
+
+    format_ = other.format_;
+    device_ptr_ = other.device_ptr_;
+    size_ = other.size_;
+    device_name_ = std::move(other.device_name_);
+    device_id_ = other.device_id_;
+
+    return *this;
   }
 
   MS_DECLARE_PARENT(KernelTensor, AbstractBase);
 
-  // Get the shape vector for Tensor/Sequence/Scalar.
-  const ShapeVector &shape_vector() const { return shape_vector_; }
-
-  // Set the shape vector for Tensor/Sequence/Scalar.
-  void set_shape_vector(const ShapeVector &shape_vector) { shape_vector_ = shape_vector; }
-
-  // Set the shape vector for Tensor/Sequence/Scalar with rvalue.
-  void set_shape_vector(ShapeVector &&shape_vector) { shape_vector_ = std::move(shape_vector); }
-
-  // Get the shape for Tensor/Sequence/Scalar.
+  // Get the base shape for Tensor/Sequence/Scalar.
   abstract::BaseShapePtr GetShape() const override { return shape_; }
 
+  // Set the base shape for Tensor/Sequence/Scalar.
+  void SetShape(const abstract::BaseShapePtr &shape);
+
+  // Get the shape vector for Tensor/Sequence/Scalar.
+  const ShapeVector &GetShapeVector() const { return shape_vector_; }
+
+  // Set the shape vector for Tensor/Sequence/Scalar.
+  void SetShapeVector(const ShapeVector &shape_vector);
+
+  // Set the shape vector for Tensor/Sequence/Scalar with rvalue.
+  void SetShapeVector(ShapeVector &&shape_vector);
+
+  // Get the device shape vector for Tensor/Sequence/Scalar.
+  const ShapeVector &GetDeviceShapeVector() const { return shape_vector_; }
+
   // Get the object type of the KernelTensor.
-  TypePtr type() const { return type_; }
+  TypePtr GetType() const override { return type_; }
 
   // Set the type for the KernelTensor.
-  void set_type(const TypePtr &type) { type_ = type; }
+  void SetType(const TypePtr &type);
 
   // Get the object enum type id of the KernelTensor.
   TypeId type_id() const { return type_id_; }
 
-  // Set the object enum type id of the KernelTensor.
-  void set_type_id(TypeId type_id) { type_id_ = type_id; }
-
-  // Get the object type of the KernelTensor.
-  TypePtr GetType() const override { return type(); }
-
   // Get the data type of the KernelTensor.
   TypePtr dtype() const { return dtype_; }
-
-  // Set the data type for the KernelTensor.
-  void set_dtype(const TypePtr &dtype) { dtype_ = dtype; }
 
   // Get the data enum type id of the KernelTensor.
   TypeId dtype_id() const { return dtype_id_; }
@@ -196,13 +261,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void set_dtype_id(TypeId dtype_id) { dtype_id_ = dtype_id; }
 
   // Get the value of the KernelTensor.
-  ValuePtr value() const { return value_; }
+  ValuePtr GetValue() const override { return value_; }
 
   // Set the value for the KernelTensor.
-  void set_value(const ValuePtr &value) { value_ = value; }
-
-  // Get the value of the KernelTensor.
-  ValuePtr GetValue() const override { return value(); }
+  void SetValue(const ValuePtr &value) { value_ = value; }
 
   // Get the scalar value store in KernelTensor if exists.
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
@@ -289,8 +351,17 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set the data format.
   void set_format(mindspore::Format format) { format_ = format; }
 
-  // Get whether the KernelTensor represents a dynamic length sequence.
-  bool dynamic_len() const { return dynamic_len_; }
+  // Get the data format of string type.
+  std::string GetStringFormat() const;
+
+  // Set the data format of string type.
+  void SetStringFormat(const std::string &format);
+
+  // Get the padding_type of string type.
+  std::string GetPaddingType() const;
+
+  // Set the padding_type of string type.
+  void SetPaddingType(const std::string &padding_type);
 
   // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
   void *device_ptr() const { return device_ptr_; }
@@ -303,6 +374,24 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Set the memory size in byte of the KernelTensor.
   void set_size(size_t size) { size_ = size; }
+
+  // Get device target name, such "GPU","Ascend".
+  const std::string &device_name() const { return device_name_; }
+
+  // Set device target name, such "GPU","Ascend".
+  void set_device_name(const std::string &device_name) { device_name_ = device_name; }
+
+  // Get deviec id.
+  uint32_t device_id() const { return device_id_; }
+
+  // Set deviec id.
+  void set_device_id(uint32_t device_id) { device_id_ = device_id; }
+
+  // Get user data maintained by the KernelTensor.
+  const UserDataPtr &user_data() const { return user_data_; }
+
+  // Set user data to the KernelTensor.
+  void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
 
   // The following member methods are required by the old KernelTensor.
   KernelTensor(const KernelTensor &copy_tensor) {
@@ -341,8 +430,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> GetMeta() const { return meta_; }
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
   std::vector<TypeId> GetListOrTupleDtype() const;
-  // If real type is not a single shape vector, it will return empty.
-  ShapeVector GetShapeVector() const;
+
   // If real type is not a list or tuple shape vector, it will return empty.
   std::vector<ShapeVector> GetListOrTupleShapeVector() const;
   void SetData(const AddressPtr &data) { data_ = data; }
@@ -353,7 +441,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     info.format = format;
   }
   void SetMetaType(const TypeId meta_type) { meta_type_ = meta_type; }
-  void SetShapeVector(const ShapeVector &shape) const;
 
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
@@ -386,8 +473,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
-  // BaseShape info of KernelTensor.
-  abstract::BaseShapePtr shape_{nullptr};
+  // Set the element data type to KernelTensor for Sequence type(Tuple or List).
+  void SetSequenceDType(const TypePtrList &element_types);
 
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
   // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
@@ -395,12 +482,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
   // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
   // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements number
-  // in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this Tuple
-  // is {2}.
+  // in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this
+  // Tuple is {2}.
   ShapeVector shape_vector_;
 
-  // The object type of the KernelTensor.
-  TypePtr type_{kTypeNone};
   // The object enum type id of the KernelTensor.
   TypeId type_id_{kTypeUnknown};
 
@@ -409,14 +494,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The data enum type id of the KernelTensor.
   TypeId dtype_id_{kTypeUnknown};
 
-  // Record the value in host.
-  ValuePtr value_{nullptr};
-
   // The data format of the KernelTensor.
   mindspore::Format format_{Format::DEFAULT_FORMAT};
 
-  // Used to record whether the KernelTensor represents a dynamic length sequence.
-  bool dynamic_len_{false};
+  // The padding type of kernel tensor.
+  // TODO(shiliang): need to change type from string to enum.
+  std::string padding_type_;
 
   // The buffer used to store the content which is copied from device side.
   std::vector<uint8_t> host_value_;
@@ -426,6 +509,15 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // The memory size in byte of the KernelTensor.
   size_t size_{0};
+
+  // The device target name, such "GPU","Ascend".
+  std::string device_name_;
+
+  // Represents the device card id associated with the KernelTensor.
+  uint32_t device_id_;
+
+  // User data is the extra data required by the kernel or framework.
+  UserDataPtr user_data_{nullptr};
 
   // The following member variables are required by the old KernelTensor.
   TypeId meta_type_{kObjectTypeTensorType};

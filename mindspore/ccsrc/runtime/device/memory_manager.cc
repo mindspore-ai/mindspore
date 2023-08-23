@@ -73,7 +73,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
-    address->ptr_ = ptr;
+    address->SetDevicePtr(ptr);
     return ptr;
   }
 
@@ -86,7 +86,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
     ptr = somas_allocator_ptr_->GetNodeOutputPtr(node, index);
   }
-  address->ptr_ = ptr;
+  address->SetDevicePtr(ptr);
   return ptr;
 }
 
@@ -109,7 +109,7 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   }
-  address->ptr_ = ptr;
+  address->SetDevicePtr(ptr);
   return ptr;
 }
 
@@ -125,8 +125,8 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t
     return false;
   }
   MS_EXCEPTION_IF_NULL(address);
-  address->ptr_ = device_ptr;
-  address->size_ = size;
+  address->SetDevicePtr(device_ptr);
+  address->SetSize(size);
   address->from_mem_pool_ = true;
   return true;
 }
@@ -151,8 +151,8 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &a
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    addr_list[i]->ptr_ = device_ptr_list[i];
-    addr_list[i]->size_ = size_list[i];
+    addr_list[i]->SetDevicePtr(device_ptr_list[i]);
+    addr_list[i]->SetSize(size_list[i]);
     addr_list[i]->from_mem_pool_ = true;
   }
   return true;
@@ -160,9 +160,9 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &a
 
 void MemoryManager::FreeMemFromMemPool(const DeviceAddressPtr address) {
   MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  FreeMemFromMemPool(address->ptr_);
-  address->ptr_ = nullptr;
+  MS_EXCEPTION_IF_NULL(address->GetDevicePtr());
+  FreeMemFromMemPool(address->GetDevicePtr());
+  address->SetDevicePtr(nullptr);
 }
 
 void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
