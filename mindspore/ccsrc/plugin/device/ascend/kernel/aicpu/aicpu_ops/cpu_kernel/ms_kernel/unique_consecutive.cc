@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "unique_consecutive.h"
+#include "cpu_kernel/ms_kernel/unique_consecutive.h"
 
 #include <algorithm>
 #include <iostream>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #define NoneN 1000
@@ -96,10 +96,10 @@ std::vector<T> ConstructStride(std::vector<T> t_shape) {
 
 template <typename T>
 T MulSum(std::vector<T> v1, std::vector<T> v2) {
-  T output = 0;
   if (v1.size() != v2.size()) {
     return static_cast<T>(false);
   } else {
+    T output = 0;
     for (unsigned int i = 0; i < v1.size(); i++) {
       output += v1[i] * v2[i];
     }
@@ -133,7 +133,6 @@ namespace aicpu {
 void UniqueConsecutiveCpuKernel::DefaultSet(const CpuKernelContext &ctx) {
   // Get the inuput and output
   Tensor *output_y = ctx.Output(0);
-  auto x_shape = ctx.Input(0)->GetTensorShape();
   auto y_shape = ctx.Output(0)->GetTensorShape();
   // Set output y shape
   std::vector<int64_t> shape = {0};

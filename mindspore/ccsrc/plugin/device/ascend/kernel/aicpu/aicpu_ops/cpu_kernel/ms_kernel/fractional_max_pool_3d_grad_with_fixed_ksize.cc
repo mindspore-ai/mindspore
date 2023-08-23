@@ -44,7 +44,6 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKer
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
                       "FractionalMaxPool3DGradWithFixedKsize check params failed.");
   AttrValue *data_format = ctx.GetAttr("data_format");
-  std::string format = data_format->GetString();
   KERNEL_CHECK_NULLPTR(data_format, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:data_format failed.",
                        kFractionalMaxPool3DGradWithFixedKsize);
   input_shape = origin_input->GetTensorShape()->GetDimSizes();

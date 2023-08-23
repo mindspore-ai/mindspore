@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "sparse_tensor.h"
-#include "cpu_types.h"
+#include "cpu_kernel/utils/sparse_tensor.h"
+#include <vector>
+#include "cpu_kernel/inc/cpu_types.h"
 
 namespace aicpu {
 uint32_t SparseTensor::CreateSparseTensor(Tensor *ix, Tensor *tensorvals, std::vector<int64_t> shape,

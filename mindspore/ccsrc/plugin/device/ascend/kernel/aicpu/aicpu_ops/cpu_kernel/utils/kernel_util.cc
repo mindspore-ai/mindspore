@@ -66,7 +66,7 @@ const std::map<Format, std::string> kFormatToStringMap = {
   {FORMAT_RESERVED, "FORMAT_RESERVED"},
   {FORMAT_ALL, "ALL"},
   {FORMAT_NULL, "NULL"}};
-}
+}  // namespace
 
 std::string FormatToSerialString(Format format) {
   auto it = kFormatToStringMap.find(static_cast<Format>(GetPrimaryFormat(static_cast<int32_t>(format))));

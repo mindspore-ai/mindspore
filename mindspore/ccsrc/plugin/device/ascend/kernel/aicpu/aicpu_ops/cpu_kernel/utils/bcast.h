@@ -49,7 +49,7 @@ struct BCalcInfo {
 
 class Bcast {
  public:
-  Bcast() : valid_(true){};
+  Bcast() : valid_(true) {}
   Bcast(std::vector<int64_t> &x_shape, std::vector<int64_t> &y_shape);
   ~Bcast() = default;
 

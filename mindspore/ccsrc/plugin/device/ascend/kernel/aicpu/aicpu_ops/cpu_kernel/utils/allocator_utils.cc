@@ -113,10 +113,8 @@ uint32_t CpuKernelAllocatorUtils::UpdateOutputDataTensor(const std::vector<int64
 
 int64_t CpuKernelAllocatorUtils::GetInputDataSize(const std::vector<int64_t> &dims, DataType type) {
   int64_t num_elements = 1;
-  int64_t dim_size = 0;
   for (size_t i = 0; i < dims.size(); i++) {
-    dim_size = dims[i];
-    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dim_size, num_elements, KERNEL_STATUS_PARAM_INVALID);
+    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dims[i], num_elements, KERNEL_STATUS_PARAM_INVALID);
   }
 
   int64_t data_size = 0;
@@ -162,20 +160,14 @@ uint32_t CpuKernelAllocatorUtils::AllocateOutputTensorDataMemory(const std::vect
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t num_elements = 1;
-  int64_t dim_size = 0;
   for (size_t i = 0; i < shape.size(); i++) {
-    dim_size = shape[i];
-    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, dim_size, num_elements, KERNEL_STATUS_PARAM_INVALID);
+    KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, static_cast<int64_t>(shape[i]), num_elements,
+                                  KERNEL_STATUS_PARAM_INVALID);
   }
 
   uint64_t data_size = 0;
   int32_t element_size = GetSizeByDataType(type);
   KERNEL_CHECK_ASSIGN_64S_MULTI(num_elements, element_size, data_size, KERNEL_STATUS_PARAM_INVALID);
-  if (data_size < 0) {
-    KERNEL_LOG_ERROR("AllocateOutputTensorDataMemory data_size[%u].", data_size);
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-
   uint64_t shape_buffer_size = 0;
   KERNEL_CHECK_ASSIGN_64S_MULTI(shape.size(), sizeof(int64_t), shape_buffer_size, KERNEL_STATUS_PARAM_INVALID);
 

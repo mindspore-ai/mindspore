@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "sampling_kernels.h"
+#include "cpu_kernel/utils/sampling_kernels.h"
 #include <algorithm>
-#include "kernel_log.h"
-#include "status.h"
-using namespace std;
+#include <string>
+#include "common/kernel_log.h"
+#include "common/status.h"
 
 namespace aicpu {
-SamplingKernelType SamplingKernelTypeFromString(std::string str) {
+SamplingKernelType SamplingKernelTypeFromString(const std::string &str) {
   if (str == "lanczos1") return Lanczos1Kernel;
   if (str == "lanczos3") return Lanczos3Kernel;
   if (str == "lanczos5") return Lanczos5Kernel;
