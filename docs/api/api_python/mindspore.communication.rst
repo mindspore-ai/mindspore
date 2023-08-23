@@ -13,12 +13,12 @@ mindspore.communication
 
     GlobalComm 是一个储存通信信息的全局类。成员包含： ``BACKEND`` 、 ``WORLD_COMM_GROUP`` 。
 
-    - ``BACKEND`` ：使用的通信库，HCCL或者NCCL。
+    - ``BACKEND`` ：使用的通信库，HCCL、NCCL或者MCCL。
     - ``WORLD_COMM_GROUP`` ：全局通信域。
 
 .. py:function:: mindspore.communication.init(backend_name=None)
 
-    初始化通信服务需要的分布式后端，例如 `HCCL` 或 `NCCL` 服务。通常在分布式并行场景下使用，并在使用通信服务前设置。
+    初始化通信服务需要的分布式后端，例如 `HCCL` 、 `NCCL` 或 `MCCL` 服务。通常在分布式并行场景下使用，并在使用通信服务前设置。
 
     .. note::
         - HCCL的全称是华为集合通信库（Huawei Collective Communication Library）。
@@ -26,7 +26,7 @@ mindspore.communication
         - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
 
     参数：
-        - **backend_name** (str) - 分布式后端的名称，可选 ``"HCCL"`` 或 ``"NCCL"`` 。在Ascend硬件平台下，应使用 ``"HCCL"`` ，在GPU硬件平台下，应使用 ``"NCCL"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
+        - **backend_name** (str) - 分布式后端的名称，可选 ``"HCCL"`` 、 ``"NCCL"`` 或者 ``"MCCL"`` 。在Ascend硬件平台下，应使用 ``"HCCL"`` ，在GPU硬件平台下，应使用 ``"NCCL"`` ，在CPU硬件平台下，应使用 ``"MCCL"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
 
     异常：
         - **TypeError** - 参数 `backend_name` 不是字符串。
