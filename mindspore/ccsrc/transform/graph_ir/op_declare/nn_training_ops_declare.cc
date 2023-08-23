@@ -282,7 +282,7 @@ INPUT_MAP(SparseApplyAdagradV2) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(accu
                                    {4, INPUT_DESC(epsilon)}, {5, INPUT_DESC(grad)},  {6, INPUT_DESC(indices)}};
 ATTR_INPUT_MAP(SparseApplyAdagradV2) = {{"lr", "lr"}, {"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyAdagradV2) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
-                                  {"update_slots", ATTR_DESC(update_slots, AnyTraits<float>())}};
+                                  {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagradV2) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyAdagradV2, kNameSparseApplyAdagradV2, ADPT_DESC(SparseApplyAdagradV2))
 
