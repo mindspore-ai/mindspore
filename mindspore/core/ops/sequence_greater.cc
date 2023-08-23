@@ -50,8 +50,8 @@ AbstractBasePtr SequenceIsGreater(const AbstractBasePtrList &seqx_elements, cons
     if (x_element->BuildValue() == kValueAny || y_element->BuildValue() == kValueAny) {
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
-    auto x = GetScalarValue<double>(prim_name, x_element->BuildValue());
-    auto y = GetScalarValue<double>(prim_name, y_element->BuildValue());
+    auto x = GetScalarCastValue<double>(prim_name, x_element->BuildValue());
+    auto y = GetScalarCastValue<double>(prim_name, y_element->BuildValue());
     if (x > y) {
       return std::make_shared<abstract::AbstractScalar>(true);
     } else if (x < y) {

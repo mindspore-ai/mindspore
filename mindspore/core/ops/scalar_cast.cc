@@ -87,7 +87,7 @@ T GetRealValue(const ValuePtr &x_value, const std::string &op_name, const bool &
   if (is_tensor) {
     res = GetTensorValue<T>(op_name, x_value->cast<tensor::TensorPtr>());
   } else {
-    res = GetScalarValue<T>(op_name, x_value);
+    res = GetScalarCastValue<T>(op_name, x_value);
   }
   return res;
 }

@@ -56,8 +56,8 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
 
-    auto x = GetScalarValue<double>(prim_name, x_value);
-    auto y = GetScalarValue<double>(prim_name, y_value);
+    auto x = GetScalarCastValue<double>(prim_name, x_value);
+    auto y = GetScalarCastValue<double>(prim_name, y_value);
     if (x > y) {
       return std::make_shared<abstract::AbstractScalar>(false);
     } else if (x < y) {
