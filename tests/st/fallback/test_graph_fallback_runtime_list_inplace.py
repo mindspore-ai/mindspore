@@ -984,3 +984,123 @@ def test_list_in_joined_str_5():
         foo(Tensor([1]))
     assert "[Tensor(shape=[1], dtype=Int64, value= [1]), Tensor(shape=[1], dtype=Int64, value= [2])]" \
            in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return x
+
+    x = [1, 2, 3, 4]
+    ret = foo(x)
+    assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input_2():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return x
+
+    x = ([1, 2, 3, 4], 2, 3)
+    ret = foo(x)
+    assert id(x[0]) == id(ret[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input_3():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        x.reverse()
+        return x
+
+    x = mutable([1, 2, 3, 4])
+    ret = foo(x)
+    assert id(x) != id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input_4():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        x.reverse()
+        return x
+
+    x = [1, 2, 3, 4]
+    ret = foo(x)
+    assert id(ret) == id(x)
+    assert x == [4, 3, 2, 1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input_5():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        x.reverse()
+
+    x = [1, 2, 3, 4]
+    foo(x)
+    assert x == [4, 3, 2, 1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_graph_input_6():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        y = x[0]
+        y.reverse()
+        return y
+
+    x = ([1, 2, 3, 4], 2, 3)
+    ret = foo(x)
+    assert id(x[0]) == id(ret)
+    assert x == ([4, 3, 2, 1], 2, 3)
