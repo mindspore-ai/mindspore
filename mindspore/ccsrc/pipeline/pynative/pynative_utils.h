@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
 
@@ -41,6 +42,9 @@ struct Common {
   static AbstractBasePtr SetAbstractValueToAnyValue(const AbstractBasePtr &abs);
   static AnfNodePtr ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, const FuncGraphPtr &func_graph);
   static std::string GetIdByValue(const ValuePtr &v);
+  static std::string GetCellId(const std::string &obj_id, const std::vector<std::string> &input_arg_id_vec,
+                               const std::vector<ValuePtr> &input_arg_value_vec);
+  static void SplitString(const std::string &str, std::vector<std::string> *id_vec);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
@@ -74,6 +78,7 @@ struct Common {
 // Parser python
 struct PyParser {
   static std::string GetIdByPyObj(const py::object &obj);
+  static std::pair<std::vector<std::string>, std::vector<ValuePtr>> GetArgsIdAndValue(const py::args &args);
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
                                       bool stub = false);

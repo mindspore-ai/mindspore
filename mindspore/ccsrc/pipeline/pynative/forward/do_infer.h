@@ -39,6 +39,7 @@ class InferOperation {
   inline void ClearNodeAbsCache() { node_abs_cache_.clear(); }
   void SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info);
   void SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs);
+  void UpdateNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs);
   AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   // Manage primitive output abstract cache.
   inline void ClearPrimAbsList() { prim_abs_list_.clear(); }

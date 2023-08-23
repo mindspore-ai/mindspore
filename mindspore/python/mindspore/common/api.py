@@ -475,7 +475,7 @@ class _MindsporeFunctionExecutor:
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
         # Case: If the shape of input args is dynamic, get dynamic shape tensor from context and use it to compile.
-        compile_args = args_list
+        compile_args = _pynative_executor.get_dynamic_input(args_list)
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
         if self.fn.__name__ == 'construct' and isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
@@ -504,7 +504,7 @@ class _MindsporeFunctionExecutor:
                                    f"be 'sens' and added it to compile args.")
                     self.input_signature.append(args_list[-1])
                 compile_args = tuple(self.input_signature)
-                _pynative_executor.set_dynamic_input(self.obj)
+                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
             else:
                 if not verify_inputs_signature(self.input_signature, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
@@ -1283,17 +1283,30 @@ class _PyNativeExecutor:
         """
         self._executor.set_jit_compile_status(status, phase)
 
-    def set_dynamic_input(self, obj):
+    def set_dynamic_input(self, obj, *args):
         """
         Set dynamic shape tensor of input arguments.
 
         Args:
             obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell dynamic input arguments.
 
         Return:
             None.
         """
-        self._executor.set_dynamic_input(obj)
+        self._executor.set_dynamic_input(obj, *args)
+
+    def get_dynamic_input(self, *actual_args):
+        """
+        Get dynamic shape arguments according to actual input arguments.
+
+        Args:
+            actual_args(tuple): Actual input arguments of Function or Cell.
+
+        Return:
+            dynamic_shape_args(tuple): Dynamic shape arguments of Function or Cell.
+        """
+        return self._executor.get_dynamic_input(*actual_args)
 
     def is_first_cell(self):
         """

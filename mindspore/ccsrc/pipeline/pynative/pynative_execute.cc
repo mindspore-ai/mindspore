@@ -218,7 +218,7 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
-  forward_executor()->ProcessBeforeNewGraph(obj);
+  forward_executor()->ProcessBeforeNewGraph(obj, args);
 
   if (!grad_executor()->RequiresGrad()) {
     MS_LOG(DEBUG) << "Grad flag is false";
@@ -269,9 +269,19 @@ void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string 
   grad_executor()->jit()->set_graph_phase(phase);
 }
 
-void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
-  grad_executor()->SaveDynamicInputsCells(cell);
-  MS_LOG(INFO) << "Set dynamic shape by set inputs";
+void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &args) const {
+  grad_executor()->SaveDynamicInputsCells(obj, args);
+  if (grad_executor()->dynamic_shape()->enable_unknown_shape()) {
+    grad_executor()->dynamic_shape()->SetDynamicInput(obj, args);
+  }
+}
+
+py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) const {
+  MS_LOG(DEBUG) << "Get dynamic shape for jit";
+  if (grad_executor()->dynamic_shape()->enable_unknown_shape()) {
+    return grad_executor()->dynamic_shape()->GetDynamicInput(actual_input);
+  }
+  return actual_input;
 }
 
 void PyNativeExecutor::WaitBeforeFork() {
@@ -314,6 +324,7 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_enable_grad", &PyNativeExecutor::set_enable_grad, py::arg("enable_grad") = py::bool_(true),
          "pynative set enable grad")
     .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
+    .def("get_dynamic_input", &PyNativeExecutor::GetDynamicInput, "get dynamic input")
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,

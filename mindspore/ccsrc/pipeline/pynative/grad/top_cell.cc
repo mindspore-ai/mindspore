@@ -22,48 +22,6 @@
 
 namespace mindspore {
 namespace pynative {
-namespace {
-void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
-  constexpr char colon_delim = ':';
-  constexpr char angle_bracket_left_delim = '<';
-  constexpr char angle_bracket_right_delim = '>';
-  auto paren_pos = str.find_first_of(angle_bracket_left_delim);
-  if (paren_pos == std::string::npos) {
-    MS_LOG(EXCEPTION) << "Get wrong str " << str;
-  }
-  size_t str_size = str.size();
-  const auto &sub_str = str.substr(paren_pos + 1, str_size - paren_pos - 2);
-  MS_LOG(DEBUG) << "Ori str " << str << ", get sub str " << sub_str;
-  size_t begin = 0;
-  size_t angle_bracket_left = 0;
-  size_t angle_bracket_right = 0;
-  size_t sub_str_size = sub_str.size();
-  for (size_t i = 0; i < sub_str_size; ++i) {
-    switch (sub_str[i]) {
-      case colon_delim:
-        if (i != 0 && angle_bracket_left == angle_bracket_right) {
-          (void)id_vec->emplace_back(sub_str.substr(begin, i - begin));
-          begin = i + 1;
-          angle_bracket_left = 0;
-          angle_bracket_right = 0;
-        }
-        break;
-      case angle_bracket_left_delim:
-        ++angle_bracket_left;
-        break;
-      case angle_bracket_right_delim:
-        ++angle_bracket_right;
-        break;
-      default: {
-      }
-    }
-  }
-  if (angle_bracket_left == angle_bracket_right) {
-    (void)id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
-  }
-}
-}  // namespace
-
 void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op) {
   MS_EXCEPTION_IF_NULL(hook_op);
   (void)cell_backward_hook_op_[cell_order].emplace_back(hook_op);
@@ -192,7 +150,7 @@ void TopCellInfo::SetMultipleOutputToGraphInfoMap(const string &id, const AnfNod
     return;
   }
   std::vector<std::string> id_vec;
-  SplitString(id, &id_vec);
+  PyNativeAlgo::Common::SplitString(id, &id_vec);
   auto tuple_size = static_cast<int64_t>(id_vec.size());
   for (int64_t i = 0; i < tuple_size; ++i) {
     // Set id of (A,B) = {CNode, 0}; Set id of C = {CNode, 1}
@@ -208,7 +166,7 @@ void TopCellInfo::SetNestedMultipleOutputToGraphInfoMap(const string &id, const 
   }
   MS_EXCEPTION_IF_NULL(node);
   std::vector<std::string> id_vec;
-  SplitString(id, &id_vec);
+  PyNativeAlgo::Common::SplitString(id, &id_vec);
   auto tuple_size = static_cast<int64_t>(id_vec.size());
   for (int64_t i = 0; i < tuple_size; ++i) {
     std::vector<int64_t> tmp = index_sequence;
@@ -233,6 +191,19 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
 void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "Save top cell forward output tensor info";
   SaveForwardOutputTensorInfo(func_graph, !use_dynamic_shape_process_, &replace_info_);
+}
+
+void TopCellInfo::ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape) {
+  input_args_info_->input_arg_base_shape_vec = args_new_shape;
+  // Update cell id
+  const auto &new_cell_id = PyNativeAlgo::Common::GetCellId(
+    input_args_info_->obj_id, input_args_info_->input_arg_id_vec, input_args_info_->input_arg_value_vec);
+  MS_LOG(DEBUG) << "Change top cell " << this->cell_id() << " to be unknown shape " << new_cell_id;
+  cell_id_ = new_cell_id;
+  input_args_info_->cell_id = new_cell_id;
+  already_run_cell_id_ = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->GetAlreadyRunCellId(new_cell_id);
+  input_args_info_->already_run_cell_id = already_run_cell_id_;
+  is_unknown_shape_ = true;
 }
 }  // namespace pynative
 }  // namespace mindspore
