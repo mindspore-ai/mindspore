@@ -28,4 +28,10 @@ OpDefPtr GetOpDef(const std::string &op_name) {
 #endif
   return nullptr;
 }
+
+void AddOpDef(const std::string &op_name, const OpDefPtr op_def) {
+#ifdef ENABLE_GEN_CODE
+  (void)gOpDefTable.emplace(op_name, op_def);
+#endif
+}
 }  // namespace mindspore::ops
