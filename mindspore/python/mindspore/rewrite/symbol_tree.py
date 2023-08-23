@@ -722,16 +722,12 @@ class SymbolTree(Observer, Observable, NodeManager):
             raise RuntimeError("Old node is not belong to current SymbolTree:", old_node)
         # insert new_nodes into node_manager
         node_manager = real_old_node.get_node_manager()
-        if node_manager is self:
-            # insert new_nodes into NodeManager
-            base_node = old_node
-            for node in new_nodes:
-                self.insert_node(node, base_node, False, self, True)
-                base_node = node
-            self.erase_node(old_node)
-        else:
-            node_manager.replace(old_node, new_nodes)
-
+        # insert new_nodes into NodeManager
+        base_node = old_node
+        for node in new_nodes:
+            self.insert_node(node, base_node, False, node_manager, True)
+            base_node = node
+        self.erase_node(old_node)
         return new_nodes[-1]
 
     def set_node_arg(self, node: Union[Node, str], index: int, arg: Union[ScopedValue, str]):
