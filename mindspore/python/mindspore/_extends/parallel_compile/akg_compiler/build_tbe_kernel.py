@@ -410,7 +410,7 @@ def update_json(json_dict, inputs_name, outputs_name, inplace_names, kernel_meta
             pass
         # generate new .json
         try:
-            with os.fdopen(os.open(json_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fi:
+            with os.fdopen(os.open(json_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fi:
                 json.dump(json_dict, fi, sort_keys=True, indent=4, separators=(',', ':'))
         except OSError:
             pass
