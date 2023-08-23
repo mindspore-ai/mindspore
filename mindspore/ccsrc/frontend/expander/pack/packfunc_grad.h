@@ -32,7 +32,7 @@ struct GraphGradInfo {
   FuncGraphPtr graph_set_forward;
   std::vector<std::pair<ValueNodePtr, size_t>> forward_vnodes;
   std::vector<size_t> forward_node_output_index;
-  std::vector<size_t> forward_node_unused_index;
+  std::vector<size_t> forward_node_output_unused;
   FuncGraphPtr graph;
   size_t added_output_size{0};
   int64_t graph_id{0};
@@ -47,6 +47,8 @@ const GraphGradInfoPtr &GetGraphGradInfo(int64_t graph_id);
 void ClearGraphGradInfoCache();
 
 const mindspore::HashSet<size_t> GetUnusedInputs(const FuncGraphPtr &func_graph);
+
+ValuePtrList GetForwardNodesValue(const ValuePtr &out_value, const expander::GraphGradInfoPtr &graph_grad_info);
 }  // namespace expander
 }  // namespace mindspore
 

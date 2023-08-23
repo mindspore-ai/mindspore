@@ -40,7 +40,7 @@ bool PackExpand::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &
     for (size_t i = 1; i < cnode->size(); i++) {
       (void)args_abs.emplace_back(cnode->input(i)->abstract());
     }
-    auto fg = expander::ExpandPackFunc(prim, args_abs);
+    auto fg = expander::ExpandPackFuncGraph(prim, args_abs);
     auto node_input = cnode->inputs();
     node_input[0] = NewValueNode(fg);
     (void)manager->Replace(node, node->func_graph()->NewCNodeInOrder(node_input));

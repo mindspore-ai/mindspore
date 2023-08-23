@@ -34,9 +34,13 @@
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/expander/pack/packfunc_grad.h"
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore {
 namespace expander {
+using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
+                                        abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+
 bool IsPackGraph(const FuncGraphPtr &fg) { return fg->ToString().find("pack_wrap") != std::string::npos; }
 
 PrimitivePyPtr GetPackFuncPrimitive(const FuncGraphPtr &fg) {
@@ -253,16 +257,108 @@ void SetOutputNum(const PrimitivePyPtr &prim_py, const AnfNodePtr &out_node) {
 }
 
 void SetGradAttachNum(const PrimitivePyPtr &prim_py, size_t grad_attach_num) {
-  if (prim_py->HasAttr("grad_attach_num")) {
+  constexpr auto kGradAttachNum = "grad_attach_num";
+  if (auto attr = prim_py->GetAttr(kGradAttachNum); attr != nullptr) {
+    auto attr_value = GetValue<int64_t>(attr);
+    if (LongToSize(attr_value) != grad_attach_num) {
+      MS_LOG_EXCEPTION << "The grad_attach_num should be the same, but changed from " << attr_value << " to "
+                       << grad_attach_num;
+    }
     return;
   }
   py::object add_prim_attr_func = prim_py->GetPyObj().attr("add_prim_attr");
-  add_prim_attr_func("grad_attach_num", grad_attach_num);
+  add_prim_attr_func(kGradAttachNum, grad_attach_num);
+}
+
+bool NeedEliminate(const CNodePtr &cast_cnode) {
+  auto inputs = cast_cnode->inputs();
+  constexpr size_t kInputNum = 2;
+  if (inputs.size() < kInputNum) {
+    MS_LOG_EXCEPTION << "input num of cast cnode should be greater than " << kInputNum << " but got " << inputs.size();
+  }
+  // srt type check
+  auto src = inputs[1];
+  auto src_type = src->Type();
+  if (src_type == nullptr || !src_type->isa<TensorType>()) {
+    return false;
+  }
+  src_type = src_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(src_type);
+  // dst type check
+  auto dst_type = cast_cnode->Type();
+  if (dst_type == nullptr || !dst_type->isa<TensorType>()) {
+    return false;
+  }
+  dst_type = dst_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(dst_type);
+  if (src_type->type_id() == dst_type->type_id()) {
+    return true;
+  }
+  return false;
+}
+
+void CastEliminate(const FuncGraphPtr &graph) {
+  const auto &node_list = TopoSort(graph->output());
+  std::vector<CNodePtr> eliminate_cast_nodes;
+  for (const auto &node : node_list) {
+    if (node == nullptr || !node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (IsPrimitiveCNode(cnode, prim::kPrimCast) && NeedEliminate(cnode)) {
+      eliminate_cast_nodes.push_back(cnode);
+    }
+  }
+  if (eliminate_cast_nodes.empty()) {
+    return;
+  }
+  auto mng = graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(graph, false);
+    graph->set_manager(mng);
+  }
+  for (auto &node : eliminate_cast_nodes) {
+    if (!mng->Replace(node, node->input(1))) {
+      MS_LOG_EXCEPTION << "CastEliminate fail for" << node->fullname_with_scope();
+    }
+    graph->DropNode(node);
+  }
+}
+
+inline void DynamicShapeCheck(const abstract::AbstractBasePtrList &abs_list) {
+  if (IsAbstractDynamicShape(abs_list)) {
+    MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
+                       "dump-ir to confirm its correctness.";
+  }
+}
+
+inline FuncGraphPtr PackFuncConstructGraph(const PrimitivePyPtr &prim_py,
+                                           const abstract::AbstractBasePtrList &abs_list) {
+  auto expander = expander::PackExpander::Instance();
+  py::object cell_obj = prim_py->GetPyObj().attr("cell_obj");
+  py::object expand_func = prim_py->GetPyObj().attr("__expand__");
+  py::object inputs = expander->BeginGraph(cell_obj, abs_list);
+  py::object output = expand_func(inputs);
+  auto graph = expander->EndGraph(cell_obj, output);
+  return graph;
+}
+
+inline void CacheResGraph(PackGraphMap *graph_map, const abstract::AbstractBasePtrList &abs_list,
+                          const FuncGraphPtr &graph, bool pynative_grad) {
+  if (pynative_grad) {
+    // During the grad processing, there will be a `abs->set_value` operation that will change abs,
+    // so abs needs to be cloned.
+    abstract::AbstractBasePtrList abs_list_clone;
+    std::transform(abs_list.begin(), abs_list.end(), std::back_inserter(abs_list_clone),
+                   [](const abstract::AbstractBasePtr &abs) { return abs->Clone(); });
+    MS_EXCEPTION_IF_NULL(graph);
+    (*graph_map)[abs_list_clone] = graph;
+  } else {
+    (*graph_map)[abs_list] = graph;
+  }
 }
 }  // namespace
-
-using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
-                                        abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
 // GraphMode needs to clear the PackCache after compilation, but PyNativeMode needs to keep the PackCache.
 static std::unordered_map<std::string, PackGraphMap> pynative_pack_cache;
@@ -276,15 +372,10 @@ void ClearAllCache() {
   ClearGraphGradInfoCache();
 }
 
-FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
-                            bool pynative_grad) {
-  if (IsAbstractDynamicShape(abs_list)) {
-    MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
-                       "dump-ir to confirm its correctness.";
-  }
+FuncGraphPtr ExpandPackFuncGraph(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list) {
+  DynamicShapeCheck(abs_list);
+  auto &pack_graph_cache = graph_pack_cache;
   auto key = GetValue<std::string>(prim->GetAttr("unique_key"));
-  PackExpander::is_pynative_mode = GetValue<bool>(prim->GetAttr("is_pynative_mode"));
-  auto &pack_graph_cache = PackExpander::is_pynative_mode ? pynative_pack_cache : graph_pack_cache;
   auto &graph_map = pack_graph_cache[key];
   auto it = graph_map.find(abs_list);
   if (it != graph_map.end()) {
@@ -292,7 +383,6 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
   }
   auto prim_py = prim->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
-  auto expander = expander::PackExpander::Instance();
   bool reuse = prim->HasAttr("reuse");
   abstract::AbstractBasePtrList new_abs_list;
   for (auto &i : abs_list) {
@@ -302,57 +392,74 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
     new_abs_list.push_back(i);
   }
   FuncGraphPtr graph;
+  PackExpander::is_pynative_mode = false;
   {
     py::gil_scoped_acquire acquire;
-    py::object cell_obj = prim_py->GetPyObj().attr("cell_obj");
-    py::object expand_func = prim_py->GetPyObj().attr("__expand__");
-    py::object inputs = expander->BeginGraph(cell_obj, new_abs_list);
-    py::object output = expand_func(inputs);
-    graph = expander->EndGraph(cell_obj, output);
+    graph = PackFuncConstructGraph(prim_py, new_abs_list);
     if (reuse) {
       graph = PostProcessForReuseGraph(graph, prim_py);
     }
     MS_EXCEPTION_IF_NULL(graph);
   }
   static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
-  if (PackExpander::is_pynative_mode) {
-    const auto abs = graph->output()->abstract();
-    if (!IsAbstractOutputTensor(abs)) {
-      MS_EXCEPTION(ValueError) << "The output of trace captured graph should be one or more flattened Tensor, bug get "
-                               << abs->BuildType()->ToString() << ".";
-    }
-    size_t grad_attach_num = 0;
-    if (pynative_grad) {
-      if (dump_result) {
-        DumpIR("pack_func_" + key + "_before.ir", graph, true);
-      }
-      const auto &graph_grad_info = GenGraphGradInfo(graph);
-      graph = graph_grad_info->graph;
-      if (graph->modify_output()) {
-        auto ori_output_num = GetSizeByAbstract(abs);
-        grad_attach_num = GetSizeByAbstract(graph->output()->abstract()) - ori_output_num;
-      }
-    }
-    py::gil_scoped_acquire acquire;
-    // In order to be able to get the specific output type in PredictOutputType.
-    SetOutputNum(prim_py, graph->output());
-
-    SetGradAttachNum(prim_py, grad_attach_num);
-  }
-  if (pynative_grad) {
-    // During the grad processing, there will be a `abs->set_value` operation that will change abs,
-    // so abs needs to be cloned.
-    abstract::AbstractBasePtrList abs_list_clone;
-    std::transform(abs_list.begin(), abs_list.end(), std::back_inserter(abs_list_clone),
-                   [](const abstract::AbstractBasePtr &abs) { return abs->Clone(); });
-    MS_EXCEPTION_IF_NULL(graph);
-    graph_map[abs_list_clone] = graph;
-  } else {
-    graph_map[abs_list] = graph;
-  }
+  graph_map[abs_list] = graph;
   if (dump_result) {
     DumpIR("pack_func_" + key + ".ir", graph, true);
   }
+  return graph;
+}
+
+FuncGraphPtr ExpandPackFuncPynative(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
+                                    bool pynative_grad) {
+  DynamicShapeCheck(abs_list);
+  auto &pack_graph_cache = pynative_pack_cache;
+  auto key = GetValue<std::string>(prim->GetAttr("unique_key"));
+  auto &graph_map = pack_graph_cache[key];
+  auto it = graph_map.find(abs_list);
+  if (it != graph_map.end()) {
+    return it->second;
+  }
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  FuncGraphPtr graph;
+  PackExpander::is_pynative_mode = true;
+  {
+    py::gil_scoped_acquire acquire;
+    graph = PackFuncConstructGraph(prim_py, abs_list);
+    MS_EXCEPTION_IF_NULL(graph);
+  }
+  static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
+  const auto abs = graph->output()->abstract();
+  if (!IsAbstractOutputTensor(abs)) {
+    MS_EXCEPTION(ValueError) << "The output of trace captured graph should be one or more flattened Tensor, bug get "
+                             << abs->BuildType()->ToString() << ".";
+  }
+  if (dump_result) {
+    DumpIR("pack_func_" + key + "_ori.ir", graph, true);
+  }
+  // The graph constructed by pack may generate redundant casts, but in the pynative mode,
+  // there is no optimization pass to eliminate the cast.
+  CastEliminate(graph);
+  if (dump_result) {
+    DumpIR("pack_func_" + key + "_cast_eliminate.ir", graph, true);
+  }
+  size_t grad_attach_num = 0;
+  if (pynative_grad) {
+    const auto &graph_grad_info = GenGraphGradInfo(graph);
+    graph = graph_grad_info->graph;
+    if (graph->modify_output()) {
+      auto ori_output_num = GetSizeByAbstract(abs);
+      grad_attach_num = GetSizeByAbstract(graph->output()->abstract()) - ori_output_num;
+    }
+  }
+  CacheResGraph(&graph_map, abs_list, graph, pynative_grad);
+  if (dump_result) {
+    DumpIR("pack_func_" + key + ".ir", graph, true);
+  }
+  py::gil_scoped_acquire acquire;
+  // SetOutputNum: In order to be able to get the specific output type in PredictOutputType.
+  SetOutputNum(prim_py, graph->output());
+  SetGradAttachNum(prim_py, grad_attach_num);
   return graph;
 }
 
@@ -375,7 +482,7 @@ class PackFuncInfer : public abstract::OpInferBase {
     if (GetValue<bool>(primitive->GetAttr("is_pynative_mode"))) {
       return nullptr;
     }
-    auto graph = ExpandPackFunc(primitive, input_args);
+    auto graph = ExpandPackFuncGraph(primitive, input_args);
     return graph->output()->abstract();
   }
 };

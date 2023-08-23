@@ -170,7 +170,7 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   if (op_run_info->base_op_run_info.abstract == nullptr) {
     if (prim->name() == kPackFuncOpName) {
       const auto &func_graph =
-        expander::ExpandPackFunc(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
+        expander::ExpandPackFuncPynative(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
       MS_EXCEPTION_IF_NULL(func_graph);
       op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
       prim->set_attr("recent_graph", func_graph);
