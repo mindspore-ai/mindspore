@@ -207,7 +207,6 @@
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
 #include "plugin/device/ascend/optimizer/ge/ge_tensor_array.h"
-#include "plugin/device/ascend/optimizer/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
@@ -866,13 +865,9 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   MS_EXCEPTION_IF_NULL(ms_context);
   bool enable_ge = ms_context->backend_policy() == "ge";
   if (enable_ge) {
-    bool enable_training = device::ascend::GetPhasePrefix() == "train";
-    if (enable_training) {
-      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
-      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
-    } else {
-      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
-    }
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
