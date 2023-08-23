@@ -285,8 +285,11 @@ void RecoveryContext::ObtainLocalLatestCkptInfo() {
 
 void RecoveryContext::ParseLatestCkptInfo(const std::vector<int> &recv_buffer) {
   std::vector<std::pair<int, int>> ckpts_epoch_step;
-  for (std::size_t i = 0; i < recv_buffer.size(); i += kSendBufferLen) {
+  for (std::size_t i = 0; i + 1 < recv_buffer.size(); i += kSendBufferLen) {
     (void)ckpts_epoch_step.emplace_back(recv_buffer[i], recv_buffer[i + 1]);
+  }
+  if (ckpts_epoch_step.empty()) {
+    MS_LOG(EXCEPTION) << "Ckpts received is empty.";
   }
   sort(ckpts_epoch_step.begin(), ckpts_epoch_step.end(),
        [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
