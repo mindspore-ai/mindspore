@@ -1229,7 +1229,7 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
 
   std::vector<schema::QuantParamT> x_q_param_origin;
-  if (!input_quant_param.empty()) {
+  if (!input_quant_param.empty() && input_quant_param.size() >= input_index) {
     x_q_param_origin = input_quant_param.at(input_index - kPrimOffset);
   } else {
     x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);

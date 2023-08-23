@@ -39,7 +39,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
-#include "tools/optimizer/graph/redundant_op_remove_pass.h"
+#include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/smooth_quant.h"
 
@@ -448,29 +448,12 @@ int PreProcess(const FuncGraphPtr &func_graph) {
     return RET_ERROR;
   }
 
-  // Remove Load Node
-  auto manager = func_graph->manager();
-  CHECK_NULL_RETURN(manager);
-  auto node_list = TopoSort(func_graph->get_return());
-  auto redundant_op_pass = std::make_shared<opt::RemoveRedundantOpPass>(false);
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    if (opt::CheckPrimitiveType(node, prim::kPrimLoad)) {
-      auto status = redundant_op_pass->ReplaceOp(node, manager);
-      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "remove load node is failed.";
-        return RET_ERROR;
-      }
-    }
-  }
-
   // Matmul Add Fusion
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::LitePassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
+  convert_pm->AddPass(std::make_shared<opt::RemoveLoadPass>());
   convert_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(func_graph) == nullptr) {
