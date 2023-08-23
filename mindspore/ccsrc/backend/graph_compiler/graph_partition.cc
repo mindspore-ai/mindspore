@@ -33,6 +33,9 @@
 namespace mindspore {
 namespace compile {
 namespace {
+constexpr const char kOnlySupport2DiffTarget[] = "Only support two different target";
+const size_t kMaxDiffTargetNum = 2;
+
 std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -48,6 +51,28 @@ std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
     }
   }
   return "";
+}
+
+void CheckDiffTargetNum(const std::vector<AnfNodePtr> &nodes) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::set<std::string> target_set;
+  (void)target_set.emplace(default_target);
+  for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    std::string cur_target = GetCNodeTarget(node);
+    if (target_set.find(cur_target) != target_set.end()) {
+      (void)target_set.emplace(cur_target);
+    }
+  }
+
+  if (target_set.size() > kMaxDiffTargetNum) {
+    MS_LOG(EXCEPTION) << kOnlySupport2DiffTarget;
+  }
 }
 
 void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref) {
@@ -208,7 +233,7 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
         next_to_visit.push(input);
         next_target = input_target;
       } else {
-        MS_LOG(EXCEPTION) << "Only support two different target";
+        MS_LOG(EXCEPTION) << kOnlySupport2DiffTarget;
       }
     }
   }
@@ -761,6 +786,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     nodes = ReorderVirtualNode(nodes, prim::kPrimTupleGetItem);
     nodes = ReorderVirtualNode(nodes, prim::kPrimDepend);
   }
+  CheckDiffTargetNum(nodes);
   std::vector<GraphSegmentPtr> segments;
   std::vector<AnfNodePtr> segment_nodes;
   std::map<AnfNodePtr, GraphSegmentPtr> node_to_segment;
