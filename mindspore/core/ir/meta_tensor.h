@@ -43,11 +43,15 @@ namespace tensor {
 // Includes the format, data type and host format of a tensor.
 struct DeviceInfo {
   explicit DeviceInfo(std::string format = "DefaultFormat", TypePtr data_type = nullptr,
-                      std::string host_format = "DefaultFormat")
-      : format_(std::move(format)), data_type_(std::move(data_type)), host_format_(std::move(host_format)) {}
+                      std::string host_format = "DefaultFormat", int32_t device_id = 0)
+      : format_(std::move(format)),
+        data_type_(std::move(data_type)),
+        host_format_(std::move(host_format)),
+        device_id_(device_id) {}
   std::string format_ = "DefaultFormat";
   TypePtr data_type_ = nullptr;
   std::string host_format_ = "DefaultFormat";
+  int32_t device_id_ = 0;
 };
 
 // brief Metadata of Tensor

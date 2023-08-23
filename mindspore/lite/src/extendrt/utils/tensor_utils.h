@@ -33,7 +33,9 @@
 #include "kernel/kernel.h"
 #include "src/tensor.h"
 #include "infer/tensor.h"
-
+#ifdef ENABLE_CLOUD_INFERENCE
+#include "src/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
+#endif
 namespace mindspore {
 class TensorRefData : public tensor::TensorData {
  public:
@@ -91,6 +93,26 @@ class TensorTensorImpl : public MutableTensorImpl {
     return std::shared_ptr<const void>(tensor_->data_c(), [](const void *) {});
   }
 
+  void SetDeviceId(int device_id) override {
+    MS_EXCEPTION_IF_NULL(tensor_);
+    device_id_ = device_id;
+  }
+
+  void SetDevice(const std::string &device) override {
+    MS_EXCEPTION_IF_NULL(tensor_);
+    device_ = device;
+  }
+
+  int GetDeviceId() const override {
+    MS_EXCEPTION_IF_NULL(tensor_);
+    return device_id_;
+  }
+
+  std::string GetDevice() const override {
+    MS_EXCEPTION_IF_NULL(tensor_);
+    return device_;
+  }
+
   void *MutableData() override {
     MS_EXCEPTION_IF_NULL(tensor_);
     return tensor_->data_c();
@@ -98,9 +120,17 @@ class TensorTensorImpl : public MutableTensorImpl {
 
   void SetDeviceData(void *data) override {
     MS_EXCEPTION_IF_NULL(tensor_);
+    auto old_device_data = GetDeviceData();
+    MS_LOG(ERROR) << "set device data in tensor utils.";
+#ifdef ENABLE_CLOUD_INFERENCE
+    if (old_device_data != nullptr && device_own_data_) {
+      kernel::AscendAllocatorPlugin::GetInstance().Free(old_device_data);
+    }
+#endif
     auto data_size = DataSize();
     auto device_address = std::make_shared<LiteDeviceAddress>(data, data_size);
     tensor_->set_device_address(device_address);
+    device_own_data_ = false;
   }
   void *GetDeviceData() override {
     MS_EXCEPTION_IF_NULL(tensor_);
@@ -168,6 +198,9 @@ class TensorTensorImpl : public MutableTensorImpl {
 
  private:
   std::shared_ptr<tensor::Tensor> tensor_ = nullptr;
+  std::string device_ = "";
+  int device_id_ = -1;
+  bool device_own_data_ = true;
 };
 
 class TensorUtils {

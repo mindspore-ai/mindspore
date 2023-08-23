@@ -21,12 +21,14 @@
 #include "include/api/status.h"
 #include "include/api/dual_abi_helper.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
+#include "src/litert/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
 #ifdef ENABLE_CLOUD_INFERENCE
 #include <fstream>
 #include "utils/file_utils.h"
 #include "ir/dtype.h"
 #include "utils/convert_utils_base.h"
+#include "extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
 #endif
 
 namespace mindspore {
@@ -109,7 +111,56 @@ bool MSTensor::operator==(const MSTensor &tensor) const {
 bool MSTensor::operator!=(const MSTensor &tensor) const { return !operator==(tensor); }
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                                 const void *data, size_t data_len) noexcept {
+                                 const void *data, size_t data_len, const std::vector<char> &device,
+                                 int device_id) noexcept {
+  MS_LOG(INFO) << "device id: " << device_id << ", device type: " << device;
+  auto device_type = CharToString(device);
+  if (!device_type.empty() && device_type == "ascend") {
+#ifdef ENABLE_CLOUD_INFERENCE
+    kernel::AscendAllocatorPlugin::GetInstance().Register();
+    // check device id
+    device_id = device_id == -1 ? kernel::AscendAllocatorPlugin::GetInstance().GetCurrentDeviceId() : device_id;
+    // check device data size
+    size_t element_size = CalTensorDataSize(shape, type);
+    MS_CHECK_FALSE_MSG(data_len != 0 && element_size != data_len, nullptr, "data len not equal element size.");
+    // malloc device data
+    void *device_data = kernel::AscendAllocatorPlugin::GetInstance().Malloc(element_size, device_id);
+    MS_CHECK_TRUE_MSG(device_data != nullptr, nullptr, "malloc device data failed.");
+    // create tensor
+    auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, nullptr, 0);
+    if (impl == nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+      MS_LOG(ERROR) << "Allocate tensor impl failed.";
+      return nullptr;
+    }
+    if (data != nullptr) {
+      // init device data by host data buf
+      auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(const_cast<void *>(data),
+                                                                                      device_data, element_size);
+      if (status != kSuccess) {
+        kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+        MS_LOG(ERROR) << "copy host data to device data failed.";
+        return nullptr;
+      }
+    }
+
+    // init impl
+    impl->SetDeviceData(device_data);
+    impl->SetDeviceId(device_id);
+    impl->SetDevice(device_type);
+
+    auto ms_tensor = new (std::nothrow) MSTensor(impl);
+    if (ms_tensor == nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+      MS_LOG(ERROR) << "Allocate MSTensor failed.";
+      return nullptr;
+    }
+    impl->set_own_data(true);
+    return ms_tensor;
+#endif
+    MS_LOG(ERROR) << "Unsupported Feature.";
+    return nullptr;
+  }
   if (data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "data_len is error.";
     return nullptr;
@@ -135,22 +186,85 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
   auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
-    if (new_data != nullptr) {
-      free(new_data);
-    }
+    free(new_data);
     return nullptr;
   }
 
   auto ms_tensor = new (std::nothrow) MSTensor(impl);
   if (ms_tensor == nullptr) {
     MS_LOG(ERROR) << "Allocate MSTensor failed.";
-    if (new_data != nullptr) {
-      free(new_data);
-    }
+    free(new_data);
     return nullptr;
   }
   impl->set_own_data(true);
   return ms_tensor;
+}
+
+MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &tensor, const std::vector<char> &device,
+                                 int device_id) noexcept {
+#ifdef ENABLE_CLOUD_INFERENCE
+  kernel::AscendAllocatorPlugin::GetInstance().Register();
+  auto dst_device_type = CharToString(device);
+  if (!dst_device_type.empty() && dst_device_type != "ascend") {
+    MS_LOG(ERROR) << "only support create ascend device tensor.";
+    return nullptr;
+  }
+
+  auto src_device_type = tensor.GetDevice();
+  if (!src_device_type.empty() && src_device_type != "ascend") {
+    MS_LOG(ERROR) << "only tensor tensor is ascend device tensor.";
+    return nullptr;
+  }
+  if (src_device_type.empty() && static_cast<MSTensor>(tensor).GetDeviceData() != nullptr) {
+    MS_LOG(ERROR) << "tensor tensor is device tensor, but device data is nullptr.";
+    return nullptr;
+  }
+
+  if (src_device_type.empty() && dst_device_type.empty()) {
+    MS_LOG(INFO) << "copy host tensor to host tensor.";
+    if (tensor.Data() != nullptr) {
+      return CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), static_cast<MSTensor>(tensor).MutableData(),
+                          tensor.DataSize());
+    } else {
+      return CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), nullptr, 0);
+    }
+  } else if (src_device_type == "ascend" && dst_device_type == "ascend") {
+    MS_LOG(INFO) << "copy device tensor to device tensor.";
+    auto new_tensor =
+      CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), nullptr, tensor.DataSize(), "ascend", device_id);
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
+      static_cast<MSTensor>(tensor).GetDeviceData(), new_tensor->GetDeviceData(), tensor.DataSize(),
+      tensor.GetDeviceId(), new_tensor->GetDeviceId());
+    if (status != kSuccess) {
+      return nullptr;
+    }
+    return new_tensor;
+  } else if (src_device_type.empty() && dst_device_type == "ascend") {
+    MS_LOG(INFO) << "copy host tensor to device tensor.";
+    return CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), static_cast<MSTensor>(tensor).MutableData(),
+                        tensor.DataSize(), dst_device_type, device_id);
+  } else if (src_device_type == "ascend" && dst_device_type.empty()) {
+    MS_LOG(INFO) << "copy device tensor to host tensor.";
+    auto host_form_device = malloc(tensor.DataSize());
+    MS_CHECK_FALSE_MSG(host_form_device == nullptr, nullptr, "malloc host buf failed.");
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(
+      static_cast<MSTensor>(tensor).GetDeviceData(), host_form_device, tensor.DataSize());
+    if (status != kSuccess) {
+      free(host_form_device);
+      return nullptr;
+    }
+    auto new_tensor =
+      CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), host_form_device, tensor.DataSize());
+    free(host_form_device);
+    host_form_device = nullptr;
+    return new_tensor;
+  } else {
+    MS_LOG(ERROR) << "device type is wrong.";
+    return nullptr;
+  }
+#endif
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
 }
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
@@ -440,6 +554,22 @@ size_t MSTensor::DataSize() const {
     return 0;
   }
   return impl_->DataSize();
+}
+
+std::string MSTensor::GetDevice() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return "";
+  }
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetDevice();
+}
+
+int MSTensor::GetDeviceId() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return -1;
+  }
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetDeviceId();
 }
 
 bool MSTensor::IsDevice() const {

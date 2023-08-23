@@ -19,6 +19,15 @@
 #include "src/tensor.h"
 
 namespace mindspore {
+size_t MS_API CalTensorDataSize(const std::vector<int64_t> &shape, enum DataType type) {
+  size_t element_size = lite::DataTypeSize(static_cast<enum TypeId>(type));
+  for (size_t i = 0; i < shape.size(); i++) {
+    auto dim = shape[i];
+    element_size *= static_cast<size_t>(dim);
+  }
+  return element_size;
+}
+
 std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
                                    bool verify_size) {
   std::vector<int32_t> empty;

@@ -32,7 +32,8 @@ int SoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (input->shape_size_ > 5) {
+  // there is a model with an 8-dim input, which runs on ascend910.
+  if (input->shape_size_ > DIMENSION_8D) {
     return NNACL_ERR;
   }
 

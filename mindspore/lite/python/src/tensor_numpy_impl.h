@@ -28,18 +28,24 @@
 #include "common/mutable_tensor_impl.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
+#ifdef ENABLE_CLOUD_INFERENCE
+#include "extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
+#endif
 
 namespace py = pybind11;
 namespace mindspore {
 class TensorNumpyImpl : public MutableTensorImpl {
  public:
-  TensorNumpyImpl(const std::string &name, py::buffer_info &&buffer, const std::vector<int64_t> &ms_shape,
-                  mindspore::DataType data_type)
-      : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape), data_type_(data_type) {}
+  TensorNumpyImpl(const std::string &name, py::buffer_info &&buffer, const std::vector<int64_t> &ms_shape)
+      : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape) {}
   ~TensorNumpyImpl() {
     {
       py::gil_scoped_acquire acquire;
       { buffer_ = py::buffer_info(); }
+    }
+    if (device_data_ != nullptr) {
+      MS_LOG(INFO) << "free device data in tensor numpy impl.";
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
     }
   }
   const std::vector<int64_t> &Shape() const override { return ms_shape_; }
@@ -47,7 +53,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
     MS_LOG(ERROR) << "Cannot call SetShape for numpy tensor";
   }
 
-  enum DataType DataType() const override { return data_type_; }
+  enum DataType DataType() const override { return GetDataType(buffer_); }
   void SetDataType(mindspore::DataType data_type) override {
     MS_LOG(ERROR) << "Cannot call SetDataType for numpy tensor";
   }
@@ -71,8 +77,19 @@ class TensorNumpyImpl : public MutableTensorImpl {
   int64_t ElementNum() const override { return buffer_.size; }
   size_t DataSize() const override { return buffer_.size * buffer_.itemsize; }
 
-  void SetDeviceData(void *data) override { MS_LOG(ERROR) << "Cannot call SetDeviceData for numpy tensor"; }
-  void *GetDeviceData() override { return nullptr; }
+  void SetDeviceData(void *data) override {
+#ifdef ENABLE_CLOUD_INFERENCE
+    if (device_data_ != nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+    }
+    device_data_ = data;
+    return;
+#endif
+    MS_LOG(ERROR) << "not support.";
+  }
+
+  void *GetDeviceData() override { return device_data_; }
+
   bool IsConst() const override { return false; }
   void SetIsConst(bool is_const) { MS_LOG(ERROR) << "Cannot call SetIsConst for numpy tensor"; }
 
@@ -84,6 +101,14 @@ class TensorNumpyImpl : public MutableTensorImpl {
   }
 
   void SetData(void *data, bool own_data) override { MS_LOG(ERROR) << "Cannot call SetData for numpy tensor"; }
+
+  int GetDeviceId() const override { return device_id_; }
+
+  void SetDeviceId(int device_id) override { device_id_ = device_id; }
+
+  std::string GetDevice() const override { return device_; }
+
+  void SetDevice(const std::string &device) override { device_ = device; }
 
   void *MutableData() override { return buffer_.ptr; }
 
@@ -143,9 +168,9 @@ class TensorNumpyImpl : public MutableTensorImpl {
 
   py::buffer_info buffer_;
   std::vector<int64_t> ms_shape_;
-
- private:
-  mindspore::DataType data_type_;
+  void *device_data_ = nullptr;
+  std::string device_ = "";
+  int device_id_ = -1;
 };
 }  // namespace mindspore
 

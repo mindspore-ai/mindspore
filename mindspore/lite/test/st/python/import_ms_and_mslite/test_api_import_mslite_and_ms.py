@@ -560,10 +560,8 @@ def test_model_parallel_runner_predict_02():
 
 # ============================ Tensor ============================
 def test_tensor_type_error():
-    with pytest.raises(TypeError) as raise_info:
-        tensor1 = mslite.Tensor()
-        tensor2 = mslite.Tensor(tensor=tensor1)
-    assert "tensor must be MindSpore Lite's Tensor._tensor" in str(raise_info.value)
+    tensor1 = mslite.Tensor()
+    tensor2 = mslite.Tensor(tensor=tensor1)
 
 
 def test_tensor():

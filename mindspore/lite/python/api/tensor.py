@@ -21,8 +21,35 @@ from enum import Enum
 import numpy
 
 from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite._checkparam import check_tensor_input_param, check_isinstance
 
-__all__ = ['DataType', 'Format', 'Tensor']
+__all__ = ['TensorMeta', 'DataType', 'Format', 'Tensor']
+
+
+class TensorMeta:
+    """
+    The `TensorMeta` class defines a TensorInfo in MindSpore Lite.
+
+    Args:
+        tensor(): The info to be stored in a new TensorMeta.
+    """
+
+    def __init__(self):
+        self.name = ""
+        self.dtype = DataType.UNKNOWN
+        self.shape = []
+        self.format = Format.DEFAULT
+        self.element_num = 0
+        self.data_size = 0
+
+    def __str__(self):
+        res = f"name: {self.name},\n" \
+              f"dtype: {self.dtype},\n" \
+              f"shape: {self.shape},\n" \
+              f"format: {self.format},\n" \
+              f"element_num: {self.element_num},\n" \
+              f"data_size: {self.data_size}."
+        return res
 
 
 class DataType(Enum):
@@ -190,6 +217,21 @@ numpy_data_type_map = {
     numpy.float64: DataType.FLOAT64,
 }
 
+ms_to_numpy_data_type_map = {
+    DataType.BOOL: numpy.bool_,
+    DataType.INT8: numpy.int8,
+    DataType.INT16: numpy.int16,
+    DataType.INT32: numpy.int32,
+    DataType.INT64: numpy.int64,
+    DataType.UINT8: numpy.uint8,
+    DataType.UINT16: numpy.uint16,
+    DataType.UINT32: numpy.uint32,
+    DataType.UINT64: numpy.uint64,
+    DataType.FLOAT16: numpy.float16,
+    DataType.FLOAT32: numpy.float32,
+    DataType.FLOAT64: numpy.float64,
+}
+
 format_py_cxx_map = {
     Format.DEFAULT: _c_lite_wrapper.Format.DEFAULT_FORMAT,
     Format.NCHW: _c_lite_wrapper.Format.NCHW,
@@ -244,7 +286,12 @@ class Tensor:
     Args:
         tensor(Tensor, optional): The data to be stored in a new Tensor. It can be from another Tensor.
             Default: ``None``.
-
+        shape(list, optional): The shape of the Tensor.
+            Default: ``None``.
+        dtype(DataType, optional): The dtype of the Tensor.
+            Default: ``None``.
+        device(str, optional): The device type of the Tensor.
+            Default: ``None``.
     Raises:
         TypeError: `tensor` is neither a Tensor nor ``None``.
 
@@ -276,23 +323,58 @@ class Tensor:
         data_size: 48.
     """
 
-    def __init__(self, tensor=None):
+    def __init__(self, tensor=None, shape=None, dtype=None, device=None):
+        # check shape, dtype and device
+        check_tensor_input_param(shape, device)
+        device_type = ""
+        device_id = -1
+        if device is not None:
+            device_type = device.split(":")[0]
+            if len(device.split(":")) == 2:
+                device_id = int(device.split(":")[1])
+        check_isinstance("dtype", dtype, DataType, True)
         if tensor is not None:
+            # use tensor to init tensor
             if isinstance(tensor, _c_lite_wrapper.TensorBind):
                 self._tensor = tensor
+            elif isinstance(tensor, Tensor):
+                tensor_shape = tensor.shape
+                if shape is not None and list(shape) != list(tensor_shape):
+                    raise TypeError(
+                        f"user set shape is not equal numpy shape, user's shape: {shape}, "
+                        f"tensor shape is: {tensor_shape}.")
+                tensor_dtype = tensor.dtype
+                if dtype is not None and tensor_dtype != dtype:
+                    raise TypeError(
+                        f"user set dtype is not equal tensor dtype, user's dtype: {dtype}, "
+                        f"tensor dtype is: {tensor_dtype}.")
+                numpy_data = tensor.get_data_to_numpy()
+                self._tensor = _c_lite_wrapper.create_tensor_by_numpy(numpy_data, device_type, device_id)
+            # use numpy to init tensor
             elif isinstance(tensor, numpy.ndarray):
-                shape = tensor.shape
-                dtype = tensor.dtype
-                if dtype.type not in numpy_data_type_map:
-                    raise TypeError(f"Unsupported numpy dtype value {dtype}")
-                dtype = numpy_data_type_map.get(dtype.type)
-                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(dtype), shape)
-                self.set_data_from_numpy(tensor)
+                numpy_shape = tensor.shape
+                numpy_dtype = tensor.dtype
+                if numpy_dtype.type not in numpy_data_type_map:
+                    raise TypeError(f"Unsupported numpy dtype value {numpy_dtype}")
+                ms_dtype = numpy_data_type_map.get(numpy_dtype.type)
+                if shape is not None and list(shape) != list(numpy_shape):
+                    raise TypeError(
+                        f"user set shape is not equal numpy shape, user shape: {shape}, "
+                        f"numpy shape is: {numpy_shape}.")
+                if dtype is not None and ms_dtype != dtype:
+                    raise TypeError(
+                        f"user set dtype is not equal numpy dtype, user dtype: {dtype}, "
+                        f"numpy dtype is: {numpy_dtype}.")
+                self._tensor = _c_lite_wrapper.create_tensor_by_numpy(tensor, device_type, device_id)
             else:
                 raise TypeError(
                     f"tensor must be MindSpore Lite's Tensor._tensor or numpy ndarray, but got {type(tensor)}.")
         else:
-            self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(DataType.FLOAT32), ())
+            if dtype is not None and shape is not None:
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(dtype), shape, device_type,
+                                                             device_id)
+            else:
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(DataType.FLOAT32), (), "", -1)
 
     def __str__(self):
         res = f"name: {self.name},\n" \
@@ -300,7 +382,8 @@ class Tensor:
               f"shape: {self.shape},\n" \
               f"format: {self.format},\n" \
               f"element_num: {self.element_num},\n" \
-              f"data_size: {self.data_size}."
+              f"data_size: {self.data_size}.\n" \
+              f"device: {self.device}."
         return res
 
     @property
@@ -514,3 +597,13 @@ class Tensor:
             raise RuntimeError(
                 f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.data_size}")
         self._tensor.set_data_from_numpy(numpy_obj)
+
+    @property
+    def device(self):
+        """
+        Get the device type of the Tensor.
+
+        Returns:
+            str, the device type of the Tensor.
+        """
+        return self._tensor.get_tensor_device_type()
