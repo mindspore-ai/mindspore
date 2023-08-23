@@ -18,6 +18,13 @@
 
 #include <sys/stat.h>
 
+#if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
+#define F_OK 0
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -29,13 +36,6 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
-#ifndef BUILD_LITE
-#include "mindspore/core/utils/file_utils.h"
-namespace platform = mindspore;
-#else
-#include "mindspore/lite/src/common/file_utils.h"
-namespace platform = mindspore::lite;
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -342,7 +342,19 @@ class DATASET_API DataHelper {
       return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
     }
     ofs.close();
-    platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
+
+    // Change the file mode
+    if (access(in_file.c_str(), F_OK) == -1) {
+      return Status(kMDUnexpectedError, "Couldn't access the file " + in_file);
+    }
+    try {
+      if (chmod(in_file.c_str(), S_IRUSR | S_IWUSR) != 0) {
+        return Status(kMDUnexpectedError, "Change file " + in_file + " mode fail.");
+      }
+    } catch (std::exception &e) {
+      return Status(kMDUnexpectedError, "File " + in_file + " change mode failed! May be not exist.");
+    }
+
     return Status::OK();
   }
 
@@ -367,7 +379,19 @@ class DATASET_API DataHelper {
       return Status(kMDUnexpectedError, "Failed to write file: " + in_file);
     }
     ofs.close();
-    platform::ChangeFileMode(in_file, S_IRUSR | S_IWUSR);
+
+    // Change the file mode
+    if (access(in_file.c_str(), F_OK) == -1) {
+      return Status(kMDUnexpectedError, "Couldn't access the file " + in_file);
+    }
+    try {
+      if (chmod(in_file.c_str(), S_IRUSR | S_IWUSR) != 0) {
+        return Status(kMDUnexpectedError, "Change file " + in_file + " mode fail.");
+      }
+    } catch (std::exception &e) {
+      return Status(kMDUnexpectedError, "File " + in_file + " change mode failed! May be not exist.");
+    }
+
     return Status::OK();
   }
 
