@@ -278,7 +278,6 @@ class AutoGradCellImpl {
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
   bool need_do_manager_replace_{false};
-  std::string device_target_;
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 

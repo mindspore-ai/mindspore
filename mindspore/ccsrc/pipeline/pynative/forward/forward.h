@@ -95,9 +95,9 @@ class ForwardExecutor {
   bool IsVmOp(const std::string &op_name) const;
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
+  void ReInit();
 
  private:
-  void ReInit();
   GradExecutorPtr grad() const;
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
