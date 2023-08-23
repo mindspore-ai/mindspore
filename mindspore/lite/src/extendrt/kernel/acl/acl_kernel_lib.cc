@@ -39,7 +39,7 @@ std::shared_ptr<KernelMod> AclKernelLib::CreateKernelMod(const PrimitiveType &op
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
 
   if (kernel_mod == nullptr) {
-    MS_LOG(INFO) << "Create kernel mod failed. kernel: " << op_type.PBType();
+    MS_LOG(INFO) << "Create kernel mod failed. kernel: " << op_type.TypeName();
     return nullptr;
   }
   // acl custom inputs and outputs number is not fixed, so do not checkout kernel attr here
@@ -51,11 +51,11 @@ bool AclKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &attr,
   return AclKernelLib::CreateKernelMod(op_type, attr, format, backend) != nullptr;
 }
 
-LiteKernel *AclKernelLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+BaseKernel *AclKernelLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                        const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
   auto kernel_mod = AclKernelLib::CreateKernelMod(spec.op_type, spec.attr, spec.format, spec.backend);
   if (kernel_mod == nullptr) {
-    MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type.PBType();
+    MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type.TypeName();
     return nullptr;
   }
   return new (std::nothrow) AclLiteKernel(kernel_mod, spec.primitive, inputs, outputs, ctx);

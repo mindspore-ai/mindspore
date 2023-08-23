@@ -255,7 +255,7 @@ int MindrtExecutor::TransferGraphOutput() {
     }
     dst_tensor->set_shape(src_tensor->shape());
     /* dst tensor free in FreeOutputTensor */
-    if (src_tensor->data_type() == kNumberTypeFloat16) {
+    if (src_tensor->data_type() == kNumberTypeFloat16 && dst_tensor->data_type() == kNumberTypeFloat32) {
       auto ret = dst_tensor->MallocData();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "MallocData failed";

@@ -27,7 +27,7 @@ namespace mindspore::kernel {
 AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
                              std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
                              const lite::InnerContext *ctx)
-    : LiteKernel(nullptr, std::move(in_tensors), std::move(out_tensors), ctx),
+    : BaseKernel({base_operator, nullptr}, std::move(in_tensors), std::move(out_tensors), ctx),
       kernel_mod_(std::move(kernel_mod)),
       base_operator_(std::move(base_operator)) {
   inputs_ = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(in_tensors_);
@@ -35,10 +35,6 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-
   bool ret = kernel_mod_->Init_(this->base_operator_, inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
@@ -69,10 +65,7 @@ int AclLiteKernel::InferShape() {
     auto old_input = inputs_.at(i);
 
     auto new_shape = new_input->shape();
-    auto is_dynamic = std::any_of(new_shape.begin(), new_shape.end(), [i](auto dim) {
-      MS_LOG(ERROR) << "infer shape input " << i << " dim " << dim;
-      return dim < 0;
-    });
+    auto is_dynamic = std::any_of(new_shape.begin(), new_shape.end(), [i](auto dim) { return dim < 0; });
     if (is_dynamic) {
       MS_LOG(ERROR) << "New shape of input " << i << " cannot be dynamic, new shape: " << new_shape;
       return lite::RET_NOT_SUPPORT;
@@ -82,6 +75,12 @@ int AclLiteKernel::InferShape() {
     }
   }
   if (!shape_changed) {
+    for (size_t i = 0; i < outputs_.size(); i++) {
+      auto new_output = out_tensors_.at(i);
+      auto old_output = outputs_.at(i);
+      new_output->set_shape64(old_output->GetShapeVector());
+      new_output->set_data_type(old_output->GetDtype());
+    }
     return lite::RET_OK;
   }
 
@@ -99,7 +98,7 @@ int AclLiteKernel::Run() {
   AddressPtrList workspace;
   auto workspace_size = kernel_mod_->GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_size.size(); i++) {
-    auto buffer = ms_context_->allocator->Malloc(workspace_size.at(i));
+    auto buffer = context_->allocator->Malloc(workspace_size.at(i));
     std::shared_ptr<Address> address = std::make_shared<Address>(buffer, workspace_size.at(i));
     workspace.push_back(address);
   }
@@ -164,7 +163,7 @@ int AclLiteKernel::Run() {
   auto ret = kernel_mod_->Launch(kernel_inputs, workspace, outputs, nullptr);
 
   for (auto address : workspace) {
-    ms_context_->allocator->Free(address->addr);
+    context_->allocator->Free(address->addr);
   }
   return ret ? RET_OK : RET_ERROR;
 }
