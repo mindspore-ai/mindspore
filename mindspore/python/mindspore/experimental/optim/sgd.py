@@ -28,8 +28,7 @@ _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
     success = True
-    if weight.requires_grad:
-        success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
+    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
     return success
 
 

@@ -624,7 +624,6 @@ class ConstantLR(LRScheduler):
     """Decays the learning rate of each parameter group by a small constant factor until the
     number of epoch reaches a pre-defined milestone: total_iters. Notice that such decay can
     happen simultaneously with other changes to the learning rate from outside this scheduler.
-    When last_epoch=-1, sets initial lr as lr.
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.

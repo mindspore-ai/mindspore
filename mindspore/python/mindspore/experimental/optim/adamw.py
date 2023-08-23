@@ -31,8 +31,6 @@ def _run_adamw_opt(weight_decay, lr, amsgrad, eps, state_step, beta1, beta2, par
                    exp_avg, exp_avg_sq, max_exp_avg_sq):
     """Apply adamw optimizer to the weight parameter."""
     success = True
-    if not param.requires_grad:
-        return success
 
     op_mul = P.Mul()
     op_pow = P.Pow()
