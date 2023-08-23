@@ -568,8 +568,6 @@ debugger::DataType GetDebuggerNumberDataType(const TypePtr &type) {
       return debugger::DT_BASE_UINT;
     case kNumberTypeFloat:
       return debugger::DT_BASE_FLOAT;
-    case kNumberTypeBFloat:
-      return debugger::DT_BASE_BFLOAT;
     default:
       MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
   }

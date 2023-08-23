@@ -75,7 +75,6 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kNumberTypeFloat, kFloat32},
                                                                 {kNumberTypeFloat32, kFloat32},
                                                                 {kNumberTypeFloat64, kFloat64},
-                                                                {kNumberTypeBFloat, kBFloat},
                                                                 {kNumberTypeBFloat16, kBFloat16},
                                                                 {kNumberTypeComplex64, kComplex64},
                                                                 {kNumberTypeInt8, kInt8},

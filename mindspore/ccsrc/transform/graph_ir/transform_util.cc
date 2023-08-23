@@ -103,6 +103,7 @@ static std::map<MeDataType, GeDataType> datatype_trans_map = {
   {MeDataType::kNumberTypeFloat16, GeDataType::DT_FLOAT16},
   {MeDataType::kNumberTypeFloat32, GeDataType::DT_FLOAT},
   {MeDataType::kNumberTypeFloat64, GeDataType::DT_DOUBLE},
+  {MeDataType::kNumberTypeBFloat16, GeDataType::DT_BF16},
   {MeDataType::kNumberTypeInt8, GeDataType::DT_INT8},
   {MeDataType::kNumberTypeInt16, GeDataType::DT_INT16},
   {MeDataType::kNumberTypeInt32, GeDataType::DT_INT32},
@@ -387,6 +388,8 @@ MeDataType TransformUtil::ConvertGeDataType(const GeDataType &type) {
   switch (type) {
     case GeDataType::DT_FLOAT16:
       return MeDataType::kNumberTypeFloat16;
+    case GeDataType::DT_BF16:
+      return MeDataType::kNumberTypeBFloat16;
     case GeDataType::DT_FLOAT:
       return MeDataType::kNumberTypeFloat32;
     case GeDataType::DT_DOUBLE:

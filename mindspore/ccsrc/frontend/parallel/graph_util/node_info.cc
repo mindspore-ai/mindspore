@@ -142,8 +142,6 @@ size_t GetLengthOfDataType(const TypePtr &type) {
       return sizeof(unsigned);
     case kNumberTypeFloat:
       return sizeof(float);
-    case kNumberTypeBFloat:
-      return sizeof(float) / 2;
     case kNumberTypeBFloat16:
       return sizeof(float) / 2;
     default:

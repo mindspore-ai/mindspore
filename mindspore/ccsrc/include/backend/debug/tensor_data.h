@@ -95,9 +95,8 @@ typedef enum DbgDataType : unsigned int {
   DT_REF = 42,         // type ref
 
   // bfloat type
-  DT_BASE_BFLOAT = 46,  // type generate bfloat
-  DT_BFLOAT16 = 47,     // bfloat16
-  DT_BFLOATS16 = 48     // list of bfloat16
+  DT_BFLOAT16 = 46,  // bfloat16
+  DT_BFLOATS16 = 47  // list of bfloat16
 } DbgDataType;
 
 class TensorData {
@@ -309,10 +308,6 @@ class TensorData {
       case TypeId::kNumberTypeFloat:
         this->data_type_ = DbgDataType::DT_BASE_FLOAT;
         this->data_type_size_ = sizeof(uint);
-        break;
-      case TypeId::kNumberTypeBFloat:
-        this->data_type_ = DbgDataType::DT_BASE_BFLOAT;
-        this->data_type_size_ = sizeof(bfloat16);
         break;
       case TypeId::kNumberTypeBFloat16:
         this->data_type_ = DbgDataType::DT_BFLOAT16;

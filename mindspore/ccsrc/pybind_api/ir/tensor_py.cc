@@ -481,7 +481,7 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
     return data_numpy->py_array(owner);
   }
   // Since bfloat16 is not supported in numpy, we copy tensor to a new tensor of type float32 here.
-  if (tensor.data_type() == TypeId::kNumberTypeBFloat || tensor.data_type() == TypeId::kNumberTypeBFloat16) {
+  if (tensor.data_type() == TypeId::kNumberTypeBFloat16) {
     Tensor tensor_f32 = Tensor(tensor, TypeId::kNumberTypeFloat32);
     auto info_f32 = GetPyBufferInfo(tensor_f32);
     py::object owner_f32 = py::cast(tensor_f32.data_ptr());
