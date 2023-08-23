@@ -7,4 +7,4 @@ rsqrt_grad:
       dtype: tensor
   returns:
     output:
-      dtype: output
+      dtype: tensor

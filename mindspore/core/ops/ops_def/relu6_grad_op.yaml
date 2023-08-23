@@ -7,6 +7,6 @@ relu6_grad:
       dtype: tensor
   returns:
     output:
-      dtype: output
+      dtype: tensor
   class:
     name: ReLU6Grad
