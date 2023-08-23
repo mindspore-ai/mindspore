@@ -276,7 +276,15 @@ class MatMul(OpInfer):
     """MatMul op."""
 
     def supported_format(self):
-        return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
+        input_num = len(self.input_desc)
+        if input_num == 2:
+            return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
+        if input_num == 3:
+            bias_shape = self.input_desc[2]["shape"]
+            if len(bias_shape) == 1 and (bias_shape[-1] == 1 or bias_shape[-1] % BLOCK == 0):
+                return ["FRACTAL_NZ,FRACTAL_NZ,ND,FRACTAL_NZ"]
+            return ["ND,ND,ND,ND"]
+        raise ValueError("MatMul only supports 2 or 3 input tensors, but got {} input tensors".format(input_num))
 
     def nd_infer(self, sh0, sh1, trans_a, trans_b):
         """infer shape with nd format"""
