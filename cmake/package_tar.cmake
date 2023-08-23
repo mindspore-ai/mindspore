@@ -80,6 +80,14 @@ if(ENABLE_MINDDATA)
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
     )
+    file(GLOB_RECURSE JEMALLOC_LIB_LIST
+            ${jemalloc_LIBPATH}/libjemalloc*
+            )
+    install(
+            FILES ${JEMALLOC_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
     file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
     install(
             FILES ${TINYXML2_LIB_LIST}

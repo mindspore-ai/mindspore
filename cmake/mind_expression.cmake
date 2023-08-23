@@ -71,6 +71,7 @@ if(ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/tinyxml2.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cppjieba.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/sentencepiece.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jemalloc.cmake)
 endif()
 
 if(ENABLE_MINDDATA)
