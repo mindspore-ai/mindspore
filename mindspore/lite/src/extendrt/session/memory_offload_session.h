@@ -36,8 +36,8 @@ class MemoryOffloadInferSession : public SingleOpInferSession {
                       uint32_t *graph_id = nullptr) override;
 
  private:
-  Status BuildCustomAscendKernel(const CNodePtr &cnode, lite::CompileNode *compile_node);
-  kernel::KernelModKernel *BuildCustomAscendKernelImpl(const CNodePtr &cnode, lite::CompileNode *compile_node);
+  Status BuildCustomAscendKernel(const CNodePtr &cnode, lite::CompileNodePtr compile_node);
+  kernel::KernelModKernel *BuildCustomAscendKernelImpl(const CNodePtr &cnode, const lite::CompileNodePtr &compile_node);
 
   lite::CompileResultPtr compile_result_;
   std::vector<kernel::KernelModKernel *> kernels_;

@@ -48,11 +48,7 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
                     << input->fullname_with_scope();
       return ret;
     }
-    auto arg_node = new (std::nothrow) CompileNode(input->fullname_with_scope(), kernel::PrimitiveType());
-    if (arg_node == nullptr) {
-      MS_LOG(ERROR) << "New argument node failed, input : " << input->fullname_with_scope();
-      return kLiteMemoryFailed;
-    }
+    auto arg_node = std::make_shared<CompileNode>(input->fullname_with_scope(), kernel::PrimitiveType());
     ret = graph_->AppendArgNode(arg_node);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Append input lite-node to graph failed, input : " << input->fullname_with_scope();
@@ -264,7 +260,7 @@ CompileResultPtr CompileResultBuilder::Build(const GraphSegmentPtr &graph_segmen
   return graph_;
 }
 
-StatusCode CompileResultBuilder::AppendInputCNodeToInputs(const CNodePtr &cnode, const CompileNode *compile_node) {
+StatusCode CompileResultBuilder::AppendInputCNodeToInputs(const CNodePtr &cnode, const CompileNodePtr &compile_node) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "Input cnode is nullptr.";
     return kLiteInputParamInvalid;
@@ -292,7 +288,7 @@ StatusCode CompileResultBuilder::AppendInputCNodeToInputs(const CNodePtr &cnode,
 }
 
 StatusCode CompileResultBuilder::AppendInputParameterToInputs(const ParameterPtr &param_node,
-                                                              const CompileNode *compile_node) {
+                                                              const CompileNodePtr &compile_node) {
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "Input param_node is nullptr.";
     return kLiteInputParamInvalid;
@@ -332,7 +328,7 @@ StatusCode CompileResultBuilder::AppendInputParameterToInputs(const ParameterPtr
 }
 
 StatusCode CompileResultBuilder::AppendInputValueNodeToInputs(const ValueNodePtr &value_node,
-                                                              const CompileNode *compile_node) {
+                                                              const CompileNodePtr &compile_node) {
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "Input value_node is nullptr.";
     return kLiteInputParamInvalid;
@@ -442,7 +438,7 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
   return kLiteNotSupport;
 }
 
-StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNode *compile_node) {
+StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNodePtr &compile_node) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "Input cnode is nullptr.";
     return kLiteInputParamInvalid;

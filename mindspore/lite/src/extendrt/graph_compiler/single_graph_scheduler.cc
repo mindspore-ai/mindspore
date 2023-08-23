@@ -33,7 +33,7 @@ namespace lite {
 InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   DrawDot(node_list.get(), "start_schedule");
   // infer shape
-  auto infer_ret = FallBackInferShape(node_list, compile_option_->graph_format, context_.get());
+  auto infer_ret = GraphFallBackInferShape(node_list, compile_option_->graph_format, context_.get());
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape CompileResult node failed.";
     return nullptr;

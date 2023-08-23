@@ -223,7 +223,7 @@ int SyncInferRetToCNode(const CompileNode &node, const int &infer_ret) {
   return ret;
 }
 
-int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format format, InferContext *context) {
+int InferShapeByNNACL(const CompileNodePtr &node, OpParameter *op_parameter, Format format, InferContext *context) {
   if (format != NHWC && format != NCHW) {
     MS_LOG(ERROR) << "NNACL infershape only support NCHW or NHWC format, got " << FormatEnumToString(format);
     return RET_ERROR;
@@ -260,25 +260,14 @@ int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format forma
   return infer_ret;
 }
 
-int InferShapeByOps(CompileNode *node, Format format) {
+int InferShapeByOps(const CompileNodePtr &node, Format format) {
   auto node_infer_shape = std::make_shared<opt::NodeInferShape>();
   if (node_infer_shape == nullptr) {
     MS_LOG(ERROR) << "create NodeInferShape manager failed.";
     return false;
   }
   auto cnode = node->GetCNode();
-  if (cnode == nullptr) {
-    MS_LOG(ERROR) << "cnode is nullptr";
-    return RET_ERROR;
-  }
-  auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
-  if (anf_prim == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_ERROR;
-  }
-  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(format)));
-  //  return {-1} when infer-invalid currently. But we should support {-2} and {-1, -1, -1} in NNACL in future.
-  auto infer_ret = node_infer_shape->InferShapeByOps(cnode, true);
+  auto infer_ret = NodeFallBackInferShape(cnode, format);
   if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     return infer_ret;
   }
@@ -294,7 +283,7 @@ int InferShapeByOps(CompileNode *node, Format format) {
 inline void DumpInferResult(const CompileNode &node, int infer_ret) {
 #ifdef Debug
   std::ostringstream oss;
-  oss << "FallBackInferShape(" << node.GetName() << ") InferShape ret: " << infer_ret << ", shape:";
+  oss << "GraphFallBackInferShape(" << node.GetName() << ") InferShape ret: " << infer_ret << ", shape:";
   bool first_output = true;
   for (auto &output : node.GetOutputs()) {
     if (first_output) {
@@ -309,49 +298,78 @@ inline void DumpInferResult(const CompileNode &node, int infer_ret) {
 }
 }  // namespace
 
-int FallBackInferShape(const FuncGraphPtr &graph, Format format, InferContext *context) { return RET_ERROR; }
+int GraphFallBackInferShape(const FuncGraphPtr &graph, Format format, InferContext *context) { return RET_ERROR; }
 
-int FallBackInferShape(const CompileResultPtr &node_list, Format format, InferContext *context) {
-  for (const auto &node : node_list->GetNodes()) {
-    MSLITE_CHECK_PTR_RETURN(node, false);
-    auto base_operator = node->GetBaseOperator();
-    MSLITE_CHECK_PTR_RETURN(base_operator, false);
-    auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
-    auto iter = FormatAwareOp.find(node->GetType().TypeName());
-    int infer_ret;
-    // Format-not-aware op should infer in format indicated by format attr of mindir.
-    if (iter != FormatAwareOp.end()) {
-      if (op_parameter != nullptr) {
-        infer_ret = InferShapeByNNACL(node, op_parameter, format, context);
-        free(op_parameter);
-        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return infer_ret;
-        }
-      } else {
-        infer_ret = InferShapeByOps(node, format);
-        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return infer_ret;
-        }
-      }
-    } else {  // non-format-aware op not care about format, could infershape by NNACL or OPS
-      if (op_parameter != nullptr) {
-        infer_ret = InferShapeByNNACL(node, op_parameter, NHWC, context);
-        free(op_parameter);
-        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return infer_ret;
-        }
-      } else {
-        infer_ret = InferShapeByOps(node, NCHW);
-        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return infer_ret;
-        }
-      }
+int NodeFallBackInferShape(const CNodePtr &cnode, Format format) {
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cnode is nullptr";
+    return RET_ERROR;
+  }
+  auto node_infer_shape = std::make_shared<opt::NodeInferShape>();
+  if (node_infer_shape == nullptr) {
+    MS_LOG(ERROR) << "create NodeInferShape manager failed.";
+    return false;
+  }
+  auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
+  if (anf_prim == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr";
+    return RET_ERROR;
+  }
+  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(format)));
+  //  return {-1} when infer-invalid currently. But we should support {-2} and {-1, -1, -1} in NNACL in future.
+  auto infer_ret = node_infer_shape->InferShapeByOps(cnode, true);
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+    return infer_ret;
+  }
+  return infer_ret;
+}
+
+namespace {
+int OpsOrNNACLInferShape(const CompileNodePtr &node, OpParameter *op_parameter, InferContext *context,
+                         Format infer_format = Format::DEFAULT_FORMAT) {
+  if (op_parameter != nullptr) {
+    infer_format = (infer_format == Format::DEFAULT_FORMAT) ? NHWC : infer_format;
+    auto infer_ret = InferShapeByNNACL(node, op_parameter, infer_format, context);
+    free(op_parameter);
+    if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+      MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
     }
-    DumpInferResult(*node, infer_ret);
+    return infer_ret;
+  } else {
+    infer_format = (infer_format == Format::DEFAULT_FORMAT) ? NCHW : infer_format;
+    auto infer_ret = InferShapeByOps(node, infer_format);
+    if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+      MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
+    }
+    return infer_ret;
+  }
+}
+}  // namespace
+
+int NodeFallBackInferShape(const CompileNodePtr &node, Format format, InferContext *context) {
+  MSLITE_CHECK_PTR_RETURN(node, RET_PARAM_INVALID);
+  auto base_operator = node->GetBaseOperator();
+  MSLITE_CHECK_PTR_RETURN(base_operator, RET_NULL_PTR);
+  auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
+  auto iter = FormatAwareOp.find(node->GetType().TypeName());
+  int infer_ret;
+  // Format-not-aware op should infer in format indicated by format attr of mindir.
+  if (iter != FormatAwareOp.end()) {
+    infer_ret = OpsOrNNACLInferShape(node, op_parameter, context, format);
+  } else {  // non-format-aware op not care about format, could infershape by NNACL or OPS
+    infer_ret = OpsOrNNACLInferShape(node, op_parameter, context);
+  }
+  DumpInferResult(*node, infer_ret);
+  return infer_ret;
+}
+
+int GraphFallBackInferShape(const CompileResultPtr &node_list, Format format, InferContext *context) {
+  for (const auto &node : node_list->GetNodes()) {
+    auto infer_ret = NodeFallBackInferShape(node, format, context);
+    if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+      MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
+      return infer_ret;
+    }
   }
   return RET_OK;
 }

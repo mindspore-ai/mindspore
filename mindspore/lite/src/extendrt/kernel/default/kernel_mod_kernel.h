@@ -30,13 +30,10 @@ class KernelModKernel : public BaseKernel {
   KernelModKernel(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
                   CNodePtr cnode, const std::vector<InferTensor *> &in_tensors,
                   const std::vector<InferTensor *> &out_tensors, const InferContext *ctx)
-      : BaseKernel({base_operator, cnode}, ctx),
+      : BaseKernel({base_operator, cnode}, in_tensors, out_tensors, ctx),
         kernel_mod_(std::move(kernel_mod)),
         base_operator_(std::move(base_operator)),
-        cnode_(std::move(cnode)) {
-    this->set_in_tensors(in_tensors);
-    this->set_out_tensors(out_tensors);
-  }
+        cnode_(std::move(cnode)) {}
   ~KernelModKernel() override = default;
 
   int Prepare() override;

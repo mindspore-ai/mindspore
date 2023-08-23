@@ -27,6 +27,7 @@
 #include "src/infer/tensor.h"
 #include "src/infer/context.h"
 #include "src/infer/primitive_type.h"
+#include "src/extendrt/graph_compiler/infershape_helper.h"
 
 namespace mindspore::kernel {
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
@@ -60,7 +61,7 @@ class BaseKernel : public IKernel<ops::BaseOperator> {
 
   int Prepare() override { return kLiteError; }
 
-  int InferShape() override { return kLiteError; }
+  int InferShape() override { return lite::NodeFallBackInferShape(primitive_.cnode, NCHW); }
 
   int Execute() override {
     auto ret = PreProcess();
