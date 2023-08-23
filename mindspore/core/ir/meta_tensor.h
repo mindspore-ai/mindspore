@@ -184,7 +184,7 @@ class MS_CORE_API MetaTensor : public Value {
   }
   bool operator==(const Value &other) const override {
     if (other.isa<MetaTensor>()) {
-      auto other_ = static_cast<const MetaTensor &>(other);
+      auto &other_ = static_cast<const MetaTensor &>(other);
       return *this == other_;
     } else {
       return false;

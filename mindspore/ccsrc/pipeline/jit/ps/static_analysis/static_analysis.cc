@@ -457,6 +457,44 @@ AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Ana
   return root_context_;
 }
 
+EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
+  auto result = cache_mgr.GetValue(conf);
+  if (result != nullptr) {
+    MS_EXCEPTION_IF_NULL(result->abstract());
+    MS_LOG(DEBUG) << "Evaluate cache found for NodeConfig: " << conf->ToString()
+                  << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
+    return result;
+  }
+  return nullptr;
+}
+
+EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  auto result = ObtainEvalResultFromCache(conf);
+  if (result != nullptr) {
+    return result;
+  }
+  MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
+  result = ObtainEvalResultWithoutCache(conf);
+  return result;
+}
+
+EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  EvalResultPtr result = nullptr;
+  result = Eval(conf);
+  if (result == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
+  }
+  MS_EXCEPTION_IF_NULL(result->abstract());
+  MS_LOG(DEBUG) << "Always Evaluate node for NodeConfig: " << conf->ToString()
+                << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
+  SaveEvalResultInCache(conf, result);
+  return result;
+}
+
 void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(result);
@@ -530,44 +568,6 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
   }
 }
 
-EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(conf);
-  static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
-  auto result = cache_mgr.GetValue(conf);
-  if (result != nullptr) {
-    MS_EXCEPTION_IF_NULL(result->abstract());
-    MS_LOG(DEBUG) << "Evaluate cache found for NodeConfig: " << conf->ToString()
-                  << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
-    return result;
-  }
-  return nullptr;
-}
-
-EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(conf);
-  auto result = ObtainEvalResultFromCache(conf);
-  if (result != nullptr) {
-    return result;
-  }
-  MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
-  result = ObtainEvalResultWithoutCache(conf);
-  return result;
-}
-
-EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(conf);
-  EvalResultPtr result = nullptr;
-  result = Eval(conf);
-  if (result == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
-  }
-  MS_EXCEPTION_IF_NULL(result->abstract());
-  MS_LOG(DEBUG) << "Always Evaluate node for NodeConfig: " << conf->ToString()
-                << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
-  SaveEvalResultInCache(conf, result);
-  return result;
-}
-
 EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   AnfNodePtr node = conf->node();
@@ -593,7 +593,9 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   } else if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     trace::TraceEvalCNodeEnter(conf);
+    MS_LOG(DEBUG) << "Begin Eval CNode: " << cnode->DebugString();
     eval_result = EvalCNode(cnode, conf);
+    MS_LOG(DEBUG) << "End Eval CNode: " << cnode->DebugString();
     trace::TraceEvalCNodeLeave();
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "Illegal AnfNode for evaluating, node: " << node->DebugString()
@@ -881,6 +883,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
     return std::make_shared<PyExecuteEvaluator>();
   }
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (enable_pre_lift && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
+    return std::make_shared<SwitchEvaluator>();
+  }
 
   // Find prim infer function in the prim function map return a standard evaluator
   auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
@@ -946,9 +952,15 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
   }
   auto prim_without_tracking_id = std::make_shared<PrimitiveAbstractClosure>(primitive, 0);
   EvaluatorPtr prim_evaluator = _GetEvaluatorFor(prim_without_tracking_id);
-  auto tracked_evaluator = std::make_shared<TrackedEvaluator>(prim_evaluator);
-  auto result = evaluators_.emplace(func, std::move(tracked_evaluator));
-  return result.first->second;
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (enable_pre_lift && IsPrimitiveEquals(primitive, prim::kPrimSwitch)) {
+    auto result = evaluators_.emplace(func, prim_evaluator);
+    return result.first->second;
+  } else {
+    auto tracked_evaluator = std::make_shared<TrackedEvaluator>(prim_evaluator);
+    auto result = evaluators_.emplace(func, std::move(tracked_evaluator));
+    return result.first->second;
+  }
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func) {

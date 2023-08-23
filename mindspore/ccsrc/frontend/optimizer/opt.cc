@@ -270,8 +270,8 @@ void SubstitutionList::DisplayStatusOfSubstitution(const mindspore::HashMap<std:
   constexpr int pad_width = 4;
   std::stringstream ss;
   ss << std::endl
-     << "Pass: " << optimizer->name() << "(" << optimizer->CurPass_.counter << ")_" << optimizer->CurPass_.name
-     << std::endl;
+     << "Pass: " << optimizer->name() << "(" << optimizer->current_pass_.counter << ")_"
+     << optimizer->current_pass_.name << std::endl;
   for (size_t i = 0; i < list_.size(); i++) {
     auto name = list_[i]->name_;
     ss << std::left << std::setw(SizeToInt(space) + pad_width) << name << "\t";
@@ -307,8 +307,8 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       auto context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context);
       if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
-        auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->CurPass_.counter) + "_" +
-                       optimizer->CurPass_.name + "_" + substitution->name_;
+        auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->current_pass_.counter) + "_" +
+                       optimizer->current_pass_.name + "_" + substitution->name_;
         static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
         if (switch_order) {
           ExportIR(fg_name + ".ir", func_graph);
@@ -352,12 +352,12 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {
-    MS_LOG(DEBUG) << "IR >> SUB, " << optimizer->name() << "(r" << optimizer->CurPass_.counter << ")_"
-                  << optimizer->CurPass_.name;
+    MS_LOG(DEBUG) << "IR >> SUB, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                  << optimizer->current_pass_.name;
     changes = ApplyIRToSubstitutions(optimizer, func_graph);
   } else {
-    MS_LOG(DEBUG) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->CurPass_.counter << ")_"
-                  << optimizer->CurPass_.name;
+    MS_LOG(DEBUG) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                  << optimizer->current_pass_.name;
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
   }
   return changes;

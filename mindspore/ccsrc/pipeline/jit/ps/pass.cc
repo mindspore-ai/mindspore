@@ -430,6 +430,15 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig cell_reuse_handle_not_recompute_node_pass =
     opt::OptPassConfig({irpass.remove_not_recompute_node_}, false, true);
 
+  opt::OptPassConfig c_1 = opt::OptPassConfig({
+    irpass.switch_call_monad_eliminater_,
+    irpass.partial_eliminate_,
+  });
+  // Disable c_1 if Pre-Lift is not enabled.
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (!enable_pre_lift) {
+    c_1.set_disabled(true);
+  }
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"expand_dump_flag", opt::OptPassConfig(opt::irpass::ExpandDumpFlag())},
                          {"switch_simplify", opt::OptPassConfig({irpass.switch_simplify_})},
@@ -438,6 +447,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"updatestate_depend_eliminate", updatestate_depend_eliminate},
                          {"updatestate_assign_eliminate", updatestate_assign_eliminate},
                          {"updatestate_loads_eliminate", updatestate_loads_eliminate},
+                         {"c_1", c_1},
                          {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"a_2", a_2},
                          {"accelerated_algorithm", accelerated_algorithm},
@@ -465,7 +475,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  constexpr auto a1_a2_len = 9;
+  constexpr auto a1_a2_len = 10;
   OptPassGroupMap a1_a2(opt_a.begin(), opt_a.begin() + a1_a2_len);
   return a1_a2;
 }
@@ -586,6 +596,13 @@ OptPassGroupMap GetMetaUnpackPreparePhases() {
   auto meta_unpack_prepare = opt::OptPassConfig({irpass.meta_unpack_prepare_});
   opt::OptPassGroupMap prepare_map({{"meta_unpack_prepare", meta_unpack_prepare}});
   return prepare_map;
+}
+
+OptPassGroupMap GetGradPartialTransformPhases() {
+  opt::irpass::GradPartialPassLib irpass;
+  auto grad_partial_transform = opt::OptPassConfig({irpass.grad_partial_transform_});
+  opt::OptPassGroupMap grad_partial_transform_map({{"grad_partial_transform", grad_partial_transform}});
+  return grad_partial_transform_map;
 }
 
 OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
@@ -859,6 +876,17 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   auto prepare_map = GetMetaUnpackPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
+  return true;
+}
+
+bool GradPartialTransformPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto grad_partial_transform_map = GetGradPartialTransformPhases();
+  auto grad_partial_transform =
+    opt::Optimizer::MakeOptimizer("grad_partial_transform", resource, grad_partial_transform_map);
+  (void)grad_partial_transform->step(func_graph, false);
   return true;
 }
 

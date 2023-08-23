@@ -60,6 +60,9 @@ class OptPassConfig {
 
   const bool global_sensitive() const { return global_sensitive_; }
 
+  const bool disabled() const { return disabled_; }
+  void set_disabled(bool disabled) { disabled_ = disabled; }
+
  private:
   OptPassConfig() : is_renormalize_(true) {}
 
@@ -68,6 +71,7 @@ class OptPassConfig {
   bool is_renormalize_{false};
   bool is_once_{false};
   bool global_sensitive_{false};
+  bool disabled_{false};
 };
 
 class OptPass {
@@ -110,10 +114,14 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     is_on_debug_ = IS_OUTPUT_ON(mindspore::kDebug);
 
     for (auto &iter : passes) {
+      const OptPassConfig &config = iter.second;
+      if (config.disabled()) {
+        continue;
+      }
+
       const std::string &name = iter.first;
       pass_names_.push_back(name);
 
-      const OptPassConfig &config = iter.second;
       if (config.is_renormalize()) {
         passes_.push_back(OptPass::Renormalize());
         continue;
@@ -188,7 +196,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       auto run_runc = [&counter, &func_graph, &changes, &changes_since_last_renorm, use_profile, this]() {
         for (size_t i = 0; i < passes_.size(); ++i) {
           const OptPass &opt = passes_[i];
-          CurPass_ = {counter, pass_names_[i]};
+          current_pass_ = {counter, pass_names_[i]};
           auto opt_func = [&func_graph, &changes, &opt, &changes_since_last_renorm, this]() {
             if (opt.is_renormalize()) {
               if (!changes_since_last_renorm) {
@@ -267,7 +275,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   struct {
     int64_t counter = 0;
     std::string name;
-  } CurPass_;
+  } current_pass_;
 
   bool is_on_debug_{false};
 

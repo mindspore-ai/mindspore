@@ -22,7 +22,7 @@ bool Number::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_number = static_cast<const Number &>(other);
+  auto &other_number = static_cast<const Number &>(other);
   return ((number_type_ == other_number.number_type_) && (nbits_ == other_number.nbits_));
 }
 

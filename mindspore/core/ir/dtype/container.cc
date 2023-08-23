@@ -181,7 +181,7 @@ bool Tuple::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_tuple = static_cast<const Tuple &>(other);
+  auto &other_tuple = static_cast<const Tuple &>(other);
   if (dynamic_len_ || other_tuple.dynamic_len()) {
     if (dynamic_len_ != other_tuple.dynamic_len()) {
       return false;

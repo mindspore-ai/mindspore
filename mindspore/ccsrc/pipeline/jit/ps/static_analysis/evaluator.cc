@@ -376,7 +376,9 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<ValueNode>() || node->isa<Parameter>()) {
+    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    if (node->isa<ValueNode>() || node->isa<Parameter>() ||
+        (enable_pre_lift && IsPrimitiveCNode(node, prim::kPrimPartial))) {
       return EXCLUDE;
     }
     return FOLLOW;
@@ -386,7 +388,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     MS_EXCEPTION_IF_NULL(node);
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context, fg);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
-                  << ", node_conf: " << node_conf->ToString();
+                  << ", node: " << node->DebugString() << ", node_conf: " << node_conf->ToString();
     EvalResultPtr node_eval_result = nullptr;
     if (always_eval_flag()) {
       MS_LOG(DEBUG) << "Always eval node";
@@ -680,7 +682,9 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
       MS_LOG(INTERNAL_EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
-                  << "] set cache. result: " << eval_result->abstract()->ToString();
+                  << "] set cache. result: " << eval_result->abstract()->ToString()
+                  << ", args_abs_list hash: " << AbstractBasePtrListHash(args_abs_list)
+                  << ", args_abs_list: " << args_abs_list;
     evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
   } else {
     eval_result = iter->second;

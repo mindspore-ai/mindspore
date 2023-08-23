@@ -130,7 +130,7 @@ AnfNodePtr MetaFgVarPrepare::operator()(const OptimizerPtr &, const AnfNodePtr &
 
   const bool is_unpack = unpack_op_->Match(inputs_y[0]);
 
-  // For general meta_fg_opration, ‘sens_param’ is not involved, and that of GradOperation obtained specifically.
+  // For general meta_fg_opration, 'sens_param' is not involved, and that of GradOperation obtained specifically.
   bool sens_param = false;
   if (grad_op_->Match(inputs_x[0])) {
     auto value = GetValueWithoutDoSignature(inputs_x[0]);

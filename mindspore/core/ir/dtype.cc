@@ -87,7 +87,7 @@ bool Slice::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_slice = static_cast<const Slice &>(other);
+  auto &other_slice = static_cast<const Slice &>(other);
   return common::IsEqual(start_, other_slice.start_) && common::IsEqual(stop_, other_slice.stop_) &&
          common::IsEqual(step_, other_slice.step_);
 }

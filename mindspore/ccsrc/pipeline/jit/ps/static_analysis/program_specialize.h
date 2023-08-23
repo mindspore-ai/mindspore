@@ -51,7 +51,7 @@ class ProgramSpecializer {
   using DeferSpecializeNodesMap =
     mindspore::HashMap<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>>;
   explicit ProgramSpecializer(const std::shared_ptr<AnalysisEngine> &engine) : engine_(engine), top_context_(nullptr) {
-    mng_ = engine_->func_graph_manager();
+    manager_ = engine_->func_graph_manager();
   }
   ~ProgramSpecializer() = default;
   // Run the program specializer on the topmost graph in the given context.
@@ -66,6 +66,7 @@ class ProgramSpecializer {
                                                                 const FuncGraphPtr &fg);
 
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
+  FuncGraphManagerPtr manager() { return manager_; }
 
   const AnalysisContextPtr &top_context() const { return top_context_; }
   void PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractFunctionPtr &old_abs_func,
@@ -114,7 +115,7 @@ class ProgramSpecializer {
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
-  FuncGraphManagerPtr mng_;
+  FuncGraphManagerPtr manager_;
   mindspore::HashMap<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>> specializations_;
   // If caller's input0 is a poly func, and the func's parent has not been specialized, then the caller specialization
   // need to be deferred after parent specialized.
@@ -160,13 +161,15 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   mindspore::HashSet<AnfNodePtr> marked_;
   mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> eval_cache_;
   std::vector<CNodePtr> second_pass_todo_;
-  size_t second_pass_todo_inedx_{0};
+  size_t second_pass_todo_index_{0};
   bool done_{false};
 
   void FirstPass();
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
   bool ProcessCNode(const CNodePtr &cnode);
+  void ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodePtrList &new_inputs);
+  bool ProcessSwitchAppCNode(const CNodePtr &cnode);
   bool ParentNotSpecialized(const AnalysisContextPtr &context) const;
 
   void EliminateUnusedSequenceItem(const CNodePtr &cnode) const;
@@ -192,7 +195,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   AnfNodePtr ReplicateDisconnectedNode(const AnfNodePtr &node);
 
   // Build a value node from parameter if the function graph has special flag to hint it can be done.
-  AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &cnode);
+  AnfNodePtr BuildSpecializedPartialAppCNode(const CNodePtr &cnode);
   // Build a value node if ival is a function.
   AnfNodePtr BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                                const AttrValueMapPtr &attrs, const AnfNodePtr &cnode,

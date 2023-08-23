@@ -576,6 +576,15 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   return true;
 }
 
+bool PreCConvAction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  FuncGraphPtr func_graph = resource->func_graph();
+  FuncGraphPtr new_fg = LiftingClone(func_graph, false);
+  resource->set_func_graph(new_fg);
+  return GradPartialTransformPass(resource);
+}
+
 bool SymbolResolveAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -1488,13 +1497,17 @@ static std::vector<ActionItem> CommonPipeline() {
   }
 
   // Make the reusable cell to be the reusable function graph
-  static bool enable_graph_reusing =
+  static const bool enable_graph_reusing =
     (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
   if (enable_graph_reusing) {
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
 
   (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (enable_pre_lift) {
+    (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
+  }
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
   // PackFunc Expand.

@@ -342,13 +342,17 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
   /// \brief Constructor of AbstractClass.
   ///
   /// \param[in] value A class value.
-  explicit AbstractClass(const ValuePtr &value) : AbstractBase(value, kClassType) {}
+  explicit AbstractClass(const ValuePtr &value)
+      : AbstractBase(value, kClassType),
+        hash_(hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()})) {}
 
   /// \brief Destructor of AbstractClass.
   ~AbstractClass() override = default;
   MS_DECLARE_PARENT(AbstractClass, AbstractBase)
 
   std::string ToString() const override;
+
+  std::size_t hash() const override { return hash_; }
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -357,6 +361,9 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
   AbstractBasePtr Clone() const override;
 
   AbstractBasePtr Broaden() const override { return Clone(); }
+
+ private:
+  std::size_t hash_;
 };
 using AbstractClassPtr = std::shared_ptr<AbstractClass>;
 
@@ -1734,11 +1741,47 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
 };
 using AbstractMapTensorPtr = std::shared_ptr<AbstractMapTensor>;
 
-MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
+// Define attribute value map
+using AttrValueMap = mindspore::HashMap<std::string, ValuePtr>;
+using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 
+// The class to save evaluated result: abstract value and modified attribute
+class EvalResult : public Base {
+ public:
+  EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr)
+      : abstract_(abs), attribute_(attr), has_side_effect_node_(false) {}
+  ~EvalResult() override = default;
+  MS_DECLARE_PARENT(EvalResult, Base);
+  const AbstractBasePtr &abstract() const { return abstract_; }
+  const AttrValueMapPtr &attribute() const { return attribute_; }
+  bool has_side_effect_node() const { return has_side_effect_node_; }
+  void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
+
+ private:
+  AbstractBasePtr abstract_;
+  // Attribute related to PrimEvaluator;
+  AttrValueMapPtr attribute_;
+
+  bool has_side_effect_node_;
+};
+using EvalResultPtr = std::shared_ptr<EvalResult>;
+
+// Superclass for AnfNodeConfig and VirtualConfig.
+class Config : public Base {
+ public:
+  Config() = default;
+  ~Config() override = default;
+  MS_DECLARE_PARENT(Config, Base);
+  virtual EvalResultPtr ObtainEvalResult() = 0;
+};
+
+// Config will be stored in AnalysisCache
+using ConfigPtr = std::shared_ptr<Config>;
+using ConfigPtrList = std::vector<ConfigPtr>;
+
+MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
 MS_CORE_API void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
                                                                 const AbstractSequencePtr &rhs_sequence);
-
 MS_CORE_API ValuePtr GetRefKeyValue(const AbstractBasePtr &abs);
 }  // namespace abstract
 }  // namespace mindspore

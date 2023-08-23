@@ -77,7 +77,7 @@ bool TensorShape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  TensorShape other_shape = static_cast<const TensorShape &>(other);
+  const TensorShape &other_shape = static_cast<const TensorShape &>(other);
   if (shape_ != other_shape.shape_) {
     return false;
   }

@@ -114,8 +114,32 @@ class PyObjectWrapper : public Named {
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() const { return *obj_; }
 
+  std::size_t hash() const override { return tid(); }
+
+  virtual bool operator==(const PyObjectWrapper &other) const {
+    if (obj().get_type() != other.obj().get_type()) {
+      return false;
+    }
+    try {
+      return obj().equal(other.obj());
+    } catch (const std::exception &e) {
+      // Return false if the comparison is ambiguous. Such as numpy.array.
+      MS_LOG(INFO) << e.what() << "\n"
+                   << "This: {" << py::str(obj()) << ", " << py::str(obj().get_type()) << "}, Other: {"
+                   << py::str(other.obj()) << ", " << py::str(other.obj().get_type()) << "}";
+      return false;
+    }
+  }
+  bool operator==(const Named &other) const override {
+    if (other.isa<PyObjectWrapper>()) {
+      auto &other_py_obj = static_cast<const PyObjectWrapper &>(other);
+      return *this == other_py_obj;
+    }
+    return false;
+  }
+
  private:
-  // the object that needs to be resolved
+  // The object that needs to be resolved
   std::unique_ptr<py::object> obj_;
 };
 using PyObjectWrapperPtr = std::shared_ptr<PyObjectWrapper>;

@@ -26,7 +26,7 @@ bool QuantizationParam::operator==(const QuantizationParam &other) const {
 
 bool QuantizationParam::operator==(const mindspore::Value &other) const {
   if (other.isa<QuantizationParam>()) {
-    auto other_prim = static_cast<const QuantizationParam &>(other);
+    auto &other_prim = static_cast<const QuantizationParam &>(other);
     return *this == other_prim;
   } else {
     return false;
