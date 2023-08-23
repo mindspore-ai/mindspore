@@ -1078,8 +1078,7 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
-  static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
-  if (!is_enable_ge && (exist_while || ExistSwitchRef(func_graph, all_nodes))) {
+  if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
     if (!pynative_mode) {
       MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";
       set_ctx(true, false, false);
