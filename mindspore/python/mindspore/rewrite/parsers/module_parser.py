@@ -113,12 +113,14 @@ class ModuleParser(Parser):
             raise RuntimeError(f"For MindSpore Rewrite, in module parser, get import nodes error: {err}")
         if import_nodes:
             for import_node in import_nodes:
-                if isinstance(import_node, ast.ImportFrom) and import_node.module:
+                if isinstance(import_node, ast.ImportFrom):
                     if import_node.level > 1:
                         # For ImportFrom with dots(e.g. from ..file import abc), dot will be removed.
                         # The corresponding path will be saved into sys.path according to `import_node.level`.
                         ModuleParser.save_file_path_to_sys(stree, import_node.level, file_path)
                     import_node.level = 0
+                    if import_node.module is None:
+                        import_node = ast.Import(names=import_node.names)
                 stree.get_import_asts().append(import_node)
 
     def target(self):
