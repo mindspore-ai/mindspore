@@ -678,46 +678,46 @@ class SideEffectFinder {
   EffectInfo TraceGetItemEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
     MS_EXCEPTION_IF_NULL(cnode);
     MS_EXCEPTION_IF_NULL(indexes);
-    constexpr size_t tuple_or_dict_input = 1;
+    constexpr size_t tuple_or_list_or_dict_input = 1;
     constexpr size_t index_input = 2;
     constexpr size_t cnode_size = 3;
     if (cnode->size() != cnode_size) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid tuple_getitem: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid getitem: " << cnode->DebugString();
     }
     // Get item index.
     auto &index_node = cnode->inputs().at(index_input);
     auto index_value = dyn_cast<ValueNode>(index_node);
     if (index_value == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "tuple_getitem with non-const index, cnode: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "getitem with non-const index, cnode: " << cnode->DebugString();
     }
 
-    // Get tuple or dict value.
-    const auto &tuple_or_dict_node = cnode->inputs().at(tuple_or_dict_input);
-    // Push tuple or dict index.
+    // Get tuple, list or dict value.
+    const auto &tuple_or_list_or_dict_node = cnode->inputs().at(tuple_or_list_or_dict_input);
+    // Push tuple, list or dict index.
     indexes->push(index_value->value());
-    return TraceTupleOrDictEffectInfo(tuple_or_dict_node, indexes);
+    return TraceTupleListOrDictEffectInfo(tuple_or_list_or_dict_node, indexes);
   }
 
-  EffectInfo TraceTupleOrDictEffectInfo(const AnfNodePtr &tuple_node, std::stack<ValuePtr> *tuple_indexes) {
-    MS_EXCEPTION_IF_NULL(tuple_indexes);
-    auto para = dyn_cast<Parameter>(tuple_node);
+  EffectInfo TraceTupleListOrDictEffectInfo(const AnfNodePtr &node, std::stack<ValuePtr> *indexes) {
+    MS_EXCEPTION_IF_NULL(indexes);
+    auto para = dyn_cast<Parameter>(node);
     if (para != nullptr) {
-      return TraceTupleParaEffectInfo(para, *tuple_indexes);
+      return TraceTupleListParaEffectInfo(para, *indexes);
     }
-    auto tuple_cnode = dyn_cast<CNode>(tuple_node);
-    if (tuple_cnode != nullptr) {
-      return TraceTupleCNodeEffectInfo(tuple_cnode, tuple_indexes);
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode != nullptr) {
+      return TraceTupleListCNodeEffectInfo(cnode, indexes);
     }
     // Should not reach here.
-    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: tuple_cnode is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr.";
   }
 
-  EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &tuple_indexes) {
+  EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {
     EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-    ForEachRealArguments(para, [this, &info, tuple_indexes](const AnfNodePtr &arg) {
+    ForEachRealArguments(para, [this, &info, indexes](const AnfNodePtr &arg) {
       // Merge real argument effect info.
-      auto tuple_indexes_copy = tuple_indexes;
-      auto arg_info = TraceTupleOrDictEffectInfo(arg, &tuple_indexes_copy);
+      auto indexes_copy = indexes;
+      auto arg_info = TraceTupleListOrDictEffectInfo(arg, &indexes_copy);
       info.Merge(arg_info);
     });
     return info;
@@ -747,32 +747,32 @@ class SideEffectFinder {
     return input_index;
   }
 
-  EffectInfo TraceMakeTupleEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+  EffectInfo TraceMakeTupleListEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
     constexpr int recursive_level = 2;
-    if (tuple_indexes->empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(recursive_level);
+    if (indexes->empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple or make_list: " << cnode->DebugString(recursive_level);
     }
     // Pop out tuple index.
-    auto top_index_value = tuple_indexes->top();
-    tuple_indexes->pop();
+    auto top_index_value = indexes->top();
+    indexes->pop();
     auto input_index = GetInputIndex(top_index_value, cnode, cnode->size());
-    if (tuple_indexes->empty()) {
+    if (indexes->empty()) {
       // Trace non-tuple.
       return TraceEffectInfo(cnode->inputs().at(input_index));
     }
     // This is the tuple of tuple case.
-    return TraceTupleOrDictEffectInfo(cnode->inputs().at(input_index), tuple_indexes);
+    return TraceTupleListOrDictEffectInfo(cnode->inputs().at(input_index), indexes);
   }
 
-  EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+  EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
     constexpr int recursive_level = 2;
-    if (tuple_indexes->empty()) {
+    if (indexes->empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_dict: " << cnode->DebugString(recursive_level);
     }
-    // Pop out tuple index.
-    auto top_key_value = tuple_indexes->top();
+    // Pop out dict index.
+    auto top_key_value = indexes->top();
     MS_EXCEPTION_IF_NULL(top_key_value);
-    tuple_indexes->pop();
+    indexes->pop();
     constexpr size_t keys_node_index = 1;
     constexpr size_t values_node_index = 2;
     auto keys_node = cnode->input(keys_node_index);
@@ -785,29 +785,29 @@ class SideEffectFinder {
     for (size_t i = 0; i < keys->size(); ++i) {
       MS_EXCEPTION_IF_NULL(keys->value()[i]);
       if (*(keys->value()[i]) == *top_key_value) {
-        // The values_node is a make_tuple.
-        tuple_indexes->push(MakeValue(SizeToLong(i)));
-        return TraceTupleOrDictEffectInfo(cnode->inputs().at(values_node_index), tuple_indexes);
+        // The values_node is a make_dict.
+        indexes->push(MakeValue(SizeToLong(i)));
+        return TraceTupleListOrDictEffectInfo(cnode->inputs().at(values_node_index), indexes);
       }
     }
     MS_LOG(WARNING) << "make_dict untraceable from: " << cnode->DebugString(recursive_level);
     return {EffectInfo::kDetected, false, false, false};
   }
 
-  EffectInfo TraceDictItemsEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+  EffectInfo TraceDictItemsEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
     constexpr int recursive_level = 2;
-    // Pop list_getitem index.
-    if (tuple_indexes->empty()) {
+    // Pop dict_getitem index.
+    if (indexes->empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
     }
-    auto list_getitem_index_value = tuple_indexes->top();
-    tuple_indexes->pop();
-    // Pop tuple_getitem index.
-    if (tuple_indexes->empty()) {
+    auto list_getitem_index_value = indexes->top();
+    indexes->pop();
+    // Pop dict_getitem index.
+    if (indexes->empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
     }
-    auto tuple_getitem_index_value = tuple_indexes->top();
-    tuple_indexes->pop();
+    auto tuple_getitem_index_value = indexes->top();
+    indexes->pop();
     constexpr size_t key_and_value_tuple_size = 2;
     auto tuple_getitem_index = GetInputIndex(tuple_getitem_index_value, cnode, key_and_value_tuple_size + 1);
     // If the item is a value_node, skip.
@@ -823,49 +823,49 @@ class SideEffectFinder {
     // Trace the make_tuple.
     auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
     constexpr size_t values_node_index = 2;
-    tuple_indexes->push(list_getitem_index_value);
-    return TraceTupleOrDictEffectInfo(make_dict_cnode->input(values_node_index), tuple_indexes);
+    indexes->push(list_getitem_index_value);
+    return TraceTupleListOrDictEffectInfo(make_dict_cnode->input(values_node_index), indexes);
   }
 
-  EffectInfo TraceTupleCNodeEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
-    MS_EXCEPTION_IF_NULL(tuple_indexes);
+  EffectInfo TraceTupleListCNodeEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
+    MS_EXCEPTION_IF_NULL(indexes);
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     constexpr int recursive_level = 2;
-    // Trace MakeTuple.
-    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
-      return TraceMakeTupleEffectInfo(cnode, tuple_indexes);
+    // Trace MakeTuple or MakeList.
+    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+      return TraceMakeTupleListEffectInfo(cnode, indexes);
     }
     // Trace MakeDict.
     if (IsPrimitiveEquals(prim, prim::kPrimMakeDict)) {
-      return TraceMakeDictEffectInfo(cnode, tuple_indexes);
+      return TraceMakeDictEffectInfo(cnode, indexes);
     }
     // Trace the case of tuple, list or dict nested.
     if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimListGetItem) ||
         IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
-      return TraceGetItemEffectInfo(cnode, tuple_indexes);
+      return TraceGetItemEffectInfo(cnode, indexes);
     }
     if (IsPrimitiveEquals(prim, prim::kPrimDictGetValues) && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeDict)) {
       auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
       constexpr size_t values_node_index = 2;
-      return TraceTupleOrDictEffectInfo(make_dict_cnode->input(values_node_index), tuple_indexes);
+      return TraceTupleListOrDictEffectInfo(make_dict_cnode->input(values_node_index), indexes);
     }
     if (IsPrimitiveEquals(prim, prim::kPrimDictItems)) {
-      return TraceDictItemsEffectInfo(cnode, tuple_indexes);
+      return TraceDictItemsEffectInfo(cnode, indexes);
     }
     // Trace primitive propagating side effect from its input, such as Depend, etc.
     int input_index = GetSideEffectPropagate(prim);
     if (input_index > 0 && input_index < static_cast<int>(cnode->size())) {
-      return TraceTupleOrDictEffectInfo(cnode->input(static_cast<size_t>(input_index)), tuple_indexes);
+      return TraceTupleListOrDictEffectInfo(cnode->input(static_cast<size_t>(input_index)), indexes);
     }
     // Tuple returned from func graph call.
     auto func_graph = GetFuncGraph(cnode);
     if (func_graph != nullptr) {
-      return TraceTupleOrDictEffectInfo(func_graph->output(), tuple_indexes);
+      return TraceTupleListOrDictEffectInfo(func_graph->output(), indexes);
     }
     // Tuple returned from a Switch call.
     if (cnode->size() == 1 && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
-      return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *tuple_indexes);
+      return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *indexes);
     }
     // Tuple is returned from J().
     //   %1 = J(primal)
@@ -892,7 +892,7 @@ class SideEffectFinder {
     for (auto &branch : branches) {
       MS_EXCEPTION_IF_NULL(branch);
       auto tuple_indexes_copy = tuple_indexes;
-      EffectInfo branch_info = TraceTupleOrDictEffectInfo(branch->output(), &tuple_indexes_copy);
+      EffectInfo branch_info = TraceTupleListOrDictEffectInfo(branch->output(), &tuple_indexes_copy);
       info.Merge(branch_info);
     }
     return info;
@@ -941,14 +941,15 @@ class SideEffectFinder {
       return TraceSwitchLayerEffectInfo(cnode);
     }
 
-    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
-      // Trace tuple_getitem or dict_getitem.
+    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimListGetItem) ||
+        IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
+      // Trace tuple_getitem or list_getitem or dict_getitem.
       std::stack<ValuePtr> indexes;
       return TraceGetItemEffectInfo(cnode, &indexes);
     }
 
-    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
-      // Trace make_tuple.
+    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+      // Trace make_tuple or make_list.
       const auto &inputs = cnode->inputs();
       EffectInfo info{EffectInfo::kDetected, false, false, false, false};
       for (size_t i = 1; i < inputs.size(); ++i) {
@@ -958,7 +959,7 @@ class SideEffectFinder {
       return info;
     }
 
-    // For high-order pritimive such as Partial,
+    // For high-order primitive such as Partial,
     // we trace effect info from its argument.
     int index_prim = GetSideEffectPropagate(prim);
     if (index_prim > 0 && index_prim < static_cast<int>(cnode->size())) {
