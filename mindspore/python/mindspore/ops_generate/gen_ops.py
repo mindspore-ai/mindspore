@@ -119,6 +119,19 @@ def generate_py_op_signature(args_signature):
     return signature_code
 
 
+def generate_py_op_label(labels):
+    """
+    generate label init python code
+    """
+    if labels is None:
+        return ''
+    label_code = ""
+    for lable_name, lable_value in labels.items():
+        label_code += f"""        self.add_prim_attr("{lable_name}", {lable_value})
+"""
+    return label_code
+
+
 def generate_py_op_func(yaml_data, doc_data):
     """
     generate python operator function
@@ -239,7 +252,13 @@ def process_args(args):
 
         arg_handler = arg_info.get('arg_handler')
         if arg_handler is not None:
-            assign_str = f'arg_handle({assign_str}, ArgHandleKind.{arg_handler})'
+            if arg_handler == "str_to_enum":
+                assign_str = f'enum_def.get_{arg_name}({assign_str})'
+            elif arg_handler == "dtype_to_enum":
+                pass
+            else:
+                arg_handler = arg_handler.replace("arg_handler.py::", "")
+                assign_str = f'arg_handler.{arg_handler}({assign_str})'
 
         assign_str = f"""        self.{arg_name} = """ + assign_str
         args_assign.append(assign_str)
@@ -253,6 +272,7 @@ def generate_py_primitive(yaml_data):
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
         signature_code = generate_py_op_signature(operator_data.get('args_signature'))
+        label_code = generate_py_op_label(operator_data.get('labels'))
 
         args = operator_data.get('args')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
@@ -270,7 +290,7 @@ class {class_name}(Primitive):
     @prim_attr_register
     def __init__(self, {', '.join(init_args_with_default) if init_args_with_default else ''}):
 {args_assign if args_assign else '        pass'}
-
+{label_code}
     def __call__(self, *args):
         return super().__call__(*args, {', '.join([f'self.{arg}' for arg in init_args])})
 """
@@ -500,12 +520,12 @@ def merge_files_to_one_file(file_names, one_file_name):
 
 if __name__ == "__main__":
     current_path = os.path.dirname(os.path.abspath(__file__))
-    work_path = os.path.join(current_path, '../../../')
+    work_path = os.path.join(current_path, '../../../../')
     if len(sys.argv) > 1:
         work_path = sys.argv[1]
 
-    yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops.yaml')
-    doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
+    yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
+    doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops_doc.yaml')
     yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
 
     if len(sys.argv) < 3:
@@ -524,7 +544,7 @@ if __name__ == "__main__":
         yaml_path = os.path.join(work_path, f'{yaml_path_root}/{op_name}_op.yaml')
         doc_yaml_path = os.path.join(work_path, f'{yaml_path_root}/{op_name}_doc.yaml')
 
-    op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/gen_ops_def.py')
+    op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/gen_ops_def.py')
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
     op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
@@ -564,8 +584,11 @@ from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import signature as sig
+from mindspore import dtype as mstype
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.arg_dtype_cast import TypeCastKind, type_it
+from mindspore.ops_generate.arg_dtype_cast import TypeCastKind, type_it
+from mindspore.ops_generate import arg_handler as arg_handler
+from mindspore.ops_generate import gen_enum_def as enum_def
 """
     cc_license_str = f"""/**
  * Copyright 2023 Huawei Technologies Co., Ltd

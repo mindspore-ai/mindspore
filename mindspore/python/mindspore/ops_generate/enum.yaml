@@ -1,0 +1,4 @@
+# enum format
+format:
+  NCHW: 0
+  NHWC: 1
