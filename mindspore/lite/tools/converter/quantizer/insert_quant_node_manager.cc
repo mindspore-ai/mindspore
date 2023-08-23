@@ -1123,7 +1123,11 @@ CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, cons
   prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
   std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
   auto cnode = func_graph->NewCNode(op_inputs);
-  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Mul");
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cnode is nullptr.";
+    return nullptr;
+  }
+  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-" + input_2->fullname_with_scope() + "-Mul");
   cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
 }
@@ -1137,7 +1141,11 @@ CNodePtr InsertQuantNodeManager::NewAddNode(const FuncGraphPtr &func_graph, cons
   prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
   std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
   auto cnode = func_graph->NewCNode(op_inputs);
-  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Add");
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cnode is nullptr.";
+    return nullptr;
+  }
+  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-" + input_2->fullname_with_scope() + "-Add");
   cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
 }
@@ -1216,13 +1224,15 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
                                                   size_t input_index) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
-  MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
-  auto x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
-  if (x_q_param_origin.empty()) {
-    auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
-    CHECK_NULL_RETURN(curr_quant_param_holder);
-    auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
+  auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(curr_quant_param_holder);
+  auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
+
+  std::vector<schema::QuantParamT> x_q_param_origin;
+  if (!input_quant_param.empty()) {
     x_q_param_origin = input_quant_param.at(input_index - kPrimOffset);
+  } else {
+    x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
   }
   if (x_q_param_origin.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param_origin.size() << " != 1";
@@ -1271,22 +1281,28 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
   auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(curr_quant_param_holder);
   auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
-  auto x_q_param = quant::GetInputNodeQuantParam(cnode, Index0 + kPrimOffset);
-  if (x_q_param.empty()) {
+  std::vector<schema::QuantParamT> x_q_param;
+  if (!input_quant_param.empty()) {
     x_q_param = input_quant_param.at(Index0);
+  } else {
+    x_q_param = quant::GetInputNodeQuantParam(cnode, Index0 + kPrimOffset);
   }
   if (x_q_param.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param.size() << " != 1";
     return RET_ERROR;
   }
-  auto w_q_params = quant::GetInputNodeQuantParam(cnode, Index1 + kPrimOffset);
-  if (w_q_params.empty()) {
+  std::vector<schema::QuantParamT> w_q_params;
+  if (input_quant_param.size() >= 2) {
     w_q_params = input_quant_param.at(Index1);
+  } else {
+    w_q_params = quant::GetInputNodeQuantParam(cnode, Index1 + kPrimOffset);
   }
   if (w_q_params.empty()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " w quant param is empty.";
     return RET_ERROR;
   }
+  MS_LOG(INFO) << cnode->fullname_with_scope() << " x scale:" << x_q_param.at(0).scale
+               << " w scale size:" << w_q_params.size();
   std::vector<uint64_t> deq_scales(w_q_params.size());
   for (size_t i = 0; i < w_q_params.size(); ++i) {
     float float32_deq_scale = static_cast<float>(x_q_param.at(0).scale * w_q_params.at(i).scale);

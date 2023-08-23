@@ -120,6 +120,10 @@ int RemoveInputNodeQuantParam(const CNodePtr &cnode, size_t index);
 
 std::vector<schema::QuantParamT> CloneQuantParam(const std::vector<schema::QuantParamT> &src);
 
+int CalBiasQuantParams(const std::vector<schema::QuantParamT> &active_params,
+                       const std::vector<schema::QuantParamT> &weight_params,
+                       std::vector<schema::QuantParamT> *bias_params);
+
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
                 std::vector<T> *dequant_data) {

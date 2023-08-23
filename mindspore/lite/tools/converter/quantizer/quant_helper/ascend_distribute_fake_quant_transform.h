@@ -27,12 +27,10 @@
 namespace mindspore::lite::quant {
 class AscendDistributeFakeQuantTransform {
  public:
-  explicit AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
-  explicit AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph,
-                                              const std::shared_ptr<ConverterPara> &param)
+  AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param)
       : func_graph_(func_graph), param_(param) {}
 
-  ~AscendDistributeFakeQuantTransform();
+  ~AscendDistributeFakeQuantTransform() = default;
 
   int Transform();
 
@@ -43,10 +41,10 @@ class AscendDistributeFakeQuantTransform {
 
   int SetWeightQuantParam(const FuncGraphPtr &func_graph);
 
-  std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &depend_node);
+  std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &depend_node, bool symmetric = false);
 
-  std::vector<schema::QuantParamT> CalQuantParam(const tensor::TensorPtr &min_value,
-                                                 const tensor::TensorPtr &max_value);
+  std::vector<schema::QuantParamT> CalQuantParam(const tensor::TensorPtr &min_value, const tensor::TensorPtr &max_value,
+                                                 bool symmetric = false);
 
   int InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph);
 
@@ -55,6 +53,8 @@ class AscendDistributeFakeQuantTransform {
   int RemoveWeightRedundantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
   int NeedAscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph);
+
+  int FetchWeightQuantParamFromFakeQuant(const FuncGraphPtr &func_graph);
 
  private:
   FuncGraphPtr func_graph_{nullptr};

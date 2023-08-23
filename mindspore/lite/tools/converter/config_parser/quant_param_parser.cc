@@ -199,6 +199,11 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
     MS_LOG(ERROR) << "INPUT ILLEGAL: per_channel should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!full_quant_string.smooth_alpha.empty() &&
+      !ConvertDoubleNum(full_quant_string.smooth_alpha, &full_quant->smooth_alpha)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: smooth_alpha should be a valid number.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 
