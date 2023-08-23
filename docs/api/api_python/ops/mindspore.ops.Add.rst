@@ -11,6 +11,7 @@ mindspore.ops.Add
         - 两个输入中至少有一个Tensor，当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
         - 两个输入不能同时为bool类型。[True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)]等都为bool类型。
         - 两个输入遵循隐式类型转换规则，使数据类型保持一致。
+        - 当输入为Tensor的时候，维度应大于或等于1。
 
     输入：
         - **x** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。

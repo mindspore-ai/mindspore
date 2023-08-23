@@ -285,6 +285,7 @@ def add(input, other):
           [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
+        - When input is Tensor, it's dimension should be greater than or equal to 1.
 
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or

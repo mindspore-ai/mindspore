@@ -11,7 +11,7 @@
     返回 :math:`\min(\max(0,x), 6)` 元素的值。
 
     参数：
-        - **x** (Tensor) - 输入Tensor，其数据类型为float16或float32。
+        - **x** (Tensor) - 输入Tensor。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16、float32。
 
     返回：
         Tensor，数据类型和shape与 `x` 相同。

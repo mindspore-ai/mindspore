@@ -3,7 +3,7 @@ mindspore.ops.expand_dims
 
 .. py:function:: mindspore.ops.expand_dims(input_x, axis)
 
-    对输入 `input_x` 在给定的轴上添加额外维度。
+    对输入 `input_x` 在给定的轴上添加额外维度， `input_x` 的维度应该大于等于1。
 
     扩展后的Tensor中位置对应 `axis` 的维度为插入的新维度。
 

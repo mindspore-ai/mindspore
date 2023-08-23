@@ -216,7 +216,8 @@ class Expand(Primitive):
 
 class ExpandDims(PrimitiveWithCheck):
     """
-    Adds an additional dimension to `input_x` at the given axis.
+    Adds an additional dimension to `input_x` at the given axis, the dimension of
+    `input_x` should be greater than or equal to 1.
 
     Refer to :func:`mindspore.ops.expand_dims` for more details.
 
