@@ -40,6 +40,8 @@ constexpr auto kTransformQuantParam = "transform_quant_param";
 constexpr auto kAscendQuantParam = "ascend_quant_param";
 constexpr auto kDynamicQuantParam = "dynamic_quant_param";
 constexpr auto kGraphKernelParam = "graph_kernel_param";
+constexpr int kNumSize3 = 3;
+constexpr int kNumSize2 = 2;
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -269,6 +271,36 @@ int ConfigFileParser::CheckVariableParm(const std::vector<int64_t> &variable_ind
   return RET_OK;
 }
 
+STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param,
+                                            std::string custom_pattern_str) {
+  std::vector<std::string> custom_pattern_strs = mindspore::lite::SplitStringToVector(custom_pattern_str, ";");
+  for (auto custom_pattern : custom_pattern_strs) {
+    std::vector<std::string> item = mindspore::lite::SplitStringToVector(custom_pattern, ":");
+    if (item.size() != kNumSize3) {
+      return RET_ERROR;
+    }
+    std::string op_type = item[0];
+    auto names_list = mindspore::lite::SplitStringToVector(item[1], ",");
+    std::string status = item[kNumSize2];
+    if (status == "enable") {
+      if (param->aclModelOptionCfgParam.enable_custom_fusion_pattern.find(op_type) !=
+          param->aclModelOptionCfgParam.enable_custom_fusion_pattern.end()) {
+        return RET_ERROR;
+      }
+      param->aclModelOptionCfgParam.enable_custom_fusion_pattern[op_type] = names_list;
+    } else if (status == "disable") {
+      if (param->aclModelOptionCfgParam.disable_custom_fusion_pattern.find(op_type) !=
+          param->aclModelOptionCfgParam.disable_custom_fusion_pattern.end()) {
+        return RET_ERROR;
+      }
+      param->aclModelOptionCfgParam.disable_custom_fusion_pattern[op_type] = names_list;
+    } else {
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             const std::map<std::string, std::string> &ascend_map) {
   std::string ascend_string = "";
@@ -294,7 +326,22 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
   }
-
+  // parse for ascend custom fusion op
+  auto acl_plugin_custom_ops_string = FindInAscendMap(kPluginCustomOps, ascend_map);
+  if (!acl_plugin_custom_ops_string.empty()) {
+    param->aclModelOptionCfgParam.plugin_custom_ops = acl_plugin_custom_ops_string;
+  }
+  auto custom_fusion_pattern_str = FindInAscendMap("custom_fusion_pattern", ascend_map);
+  if (!custom_fusion_pattern_str.empty()) {
+    auto status = ParseCustomPattern(param, custom_fusion_pattern_str);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "custom fusion pattern wrong, eg:\n"
+                       "custom_fusion_pattern=Fusion_op_type:node_name_1,node_name_2:enable\n"
+                       "or: "
+                       "custom_fusion_pattern=Fusion_op_type:node_name_1,node_name_2:disable";
+      return false;
+    }
+  }
   auto it = ascend_map.find("input_shape");
   if (it != ascend_map.end()) {
     param->aclModelOptionCfgParam.input_shape = RemoveInputShapeBrackets(it->second);

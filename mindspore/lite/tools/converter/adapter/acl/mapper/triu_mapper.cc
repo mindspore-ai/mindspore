@@ -26,6 +26,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 const size_t kNumInputSize = 3;
+const size_t kNumInputIndex2 = 2;
 const size_t kNumCnodeInputIndex = 1;
 }  // namespace
 STATUS TriuMapper::Mapper(const CNodePtr &cnode) {
@@ -48,6 +49,28 @@ STATUS TriuMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value_node or src_prim is nullptr.";
     return RET_ERROR;
   }
+
+  auto diagonal_node = cnode->input(kNumInputIndex2)->cast<ParameterPtr>()->default_param();
+  if (diagonal_node == nullptr) {
+    MS_LOG(ERROR) << "diagonal_node is nullptr.";
+    return RET_ERROR;
+  }
+  auto diagonal_value = std::dynamic_pointer_cast<tensor::Tensor>(diagonal_node);
+  if (diagonal_value == nullptr) {
+    MS_LOG(ERROR) << "diagonal_value is nullptr.";
+    return RET_ERROR;
+  }
+  auto diagonal_data = reinterpret_cast<int32_t *>(diagonal_value->data_c());
+  if (diagonal_data == nullptr) {
+    MS_LOG(ERROR) << "diagonal_data is nullptr.";
+    return RET_ERROR;
+  }
+  if (diagonal_value->ElementsNum() != 1) {
+    MS_LOG(ERROR) << "diagonal_value elements num is " << diagonal_value->ElementsNum();
+    return RET_ERROR;
+  }
+  auto diagonal = diagonal_data[0];
+  MS_LOG(INFO) << "diagonal: " << diagonal;
   cnode->set_inputs({cnode->input(0), cnode->input(1)});
   auto dst_prim = std::make_shared<acl::Triu>();
   if (dst_prim == nullptr) {
@@ -55,6 +78,7 @@ STATUS TriuMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   dst_prim->SetAttrs(src_prim->attrs());
+  dst_prim->AddAttr("diagonal", MakeValue(static_cast<int64_t>(diagonal)));
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }

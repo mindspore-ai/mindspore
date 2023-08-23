@@ -48,6 +48,9 @@ struct AclModelOptionCfg {
   std::string dump_path;
   std::string dump_model_name;
   std::string custom_opp_path;
+  std::string plugin_custom_ops;
+  std::map<std::string, std::vector<std::string>> enable_custom_fusion_pattern;
+  std::map<std::string, std::vector<std::string>> disable_custom_fusion_pattern;
   std::map<std::string, std::string> init_options_map;
   std::map<std::string, std::string> build_options_map;
   std::map<std::string, std::string> aoe_global_options_map;

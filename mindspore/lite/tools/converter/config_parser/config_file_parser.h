@@ -170,6 +170,7 @@ class ConfigFileParser {
                          const std::map<std::string, std::string> &ascend_map);
   int ProcessVariableParam(const std::vector<std::string> &variable_param, std::vector<int64_t> &variable_index);
   int CheckVariableParm(const std::vector<int64_t> &variable_index);
+  STATUS ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param, std::string custom_pattern_str);
 
  private:
   DataPreProcessString data_pre_process_string_;
