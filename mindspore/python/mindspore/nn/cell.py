@@ -191,6 +191,23 @@ class Cell(Cell_):
     def param_prefix(self):
         """
         Param prefix is the prefix of current cell's direct child parameter.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.dense = nn.Dense(2, 2)
+            ...
+            ...     def construct(self, x):
+            ...         x = self.dense(x)
+            ...         return x
+            >>> net = Net()
+            >>> net.update_cell_prefix()
+            >>> print(net.dense.param_prefix)
+            dense
         """
         return self._param_prefix
 
@@ -888,14 +905,14 @@ class Cell(Cell_):
             >>> import mindspore as ms
             >>> from mindspore import nn, Tensor
             >>>
-            >>> class reluNet(nn.Cell):
+            >>> class ReluNet(nn.Cell):
             ...     def __init__(self):
-            ...         super(reluNet, self).__init__()
+            ...         super(ReluNet, self).__init__()
             ...         self.relu = nn.ReLU()
             ...     def construct(self, x):
             ...         return self.relu(x)
             >>>
-            >>> net = reluNet()
+            >>> net = ReluNet()
             >>> input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
             >>> net.set_inputs(input_dyn)
             >>> input1 = Tensor(np.random.random([3, 10]), dtype=ms.float32)
@@ -918,6 +935,26 @@ class Cell(Cell_):
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import nn, Tensor
+            >>>
+            >>> class ReluNet(nn.Cell):
+            ...     def __init__(self):
+            ...         super(ReluNet, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...     def construct(self, x):
+            ...         return self.relu(x)
+            >>>
+            >>> net = ReluNet()
+            >>> input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+            >>> net.set_inputs(input_dyn)
+            >>> get_inputs = net.get_inputs()
+            >>> print(get_inputs)
+            (Tensor(shape=[3, -1], dtype=Float32, value= ),)
+
         """
 
         return self._dynamic_shape_inputs
@@ -992,6 +1029,23 @@ class Cell(Cell_):
         Raises:
             KeyError: If the name of parameter is null or contains dot.
             TypeError: If the type of parameter is not Parameter.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn, Parameter
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, x):
+            ...         x = self.relu(x)
+            ...         return x
+            >>> net = Net()
+            >>> net.insert_param_to_cell("bias", Parameter(Tensor([1, 2, 3])))
+            >>> print(net.bias)
+            Parameter(name=bias, shape=(3,), dtype=Int64, requires_grad=True)
         """
         if not param_name:
             raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not be None.")
@@ -1046,6 +1100,18 @@ class Cell(Cell_):
             KeyError: Child Cell's name is incorrect or duplicated with the other child name.
             TypeError: If type of `child_name` is not str.
             TypeError: Child Cell's type is incorrect.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> net1 = nn.ReLU()
+            >>> net2 = nn.Dense(2, 2)
+            >>> net1.insert_child_to_cell("child", net2)
+            >>> print(net1)
+            ReLU<
+              (child): Dense<input_channels=2, output_channels=2, has_bias=True>
+              >
         """
         if not isinstance(child_name, str):
             raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
@@ -1116,6 +1182,25 @@ class Cell(Cell_):
 
         Returns:
             Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.dense = nn.Dense(2, 2)
+            ...
+            ...     def construct(self, x):
+            ...         x = self.dense(x)
+            ...         return x
+            >>> net = Net()
+            >>> print(net.init_parameters_data())
+            {Parameter (name=dense.weight, shape=(2,2), dtype=Float32, requires_grad=True):
+             Parameter (name=dense.weight, shape=(2,2), dtype=Float32, requires_grad=True),
+             Parameter (name=dense.bias, shape=(2,), dtype=Float32, requires_grad=True):
+             Parameter (name=dense.bias, shape=(2,), dtype=Float32, requires_grad=True)}
         """
         replace = dict()
 
@@ -1161,6 +1246,24 @@ class Cell(Cell_):
 
         Returns:
             OrderedDict, return parameters dictionary.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn, Parameter
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.dense = nn.Dense(2, 2)
+            ...
+            ...     def construct(self, x):
+            ...         x = self.dense(x)
+            ...         return x
+            >>> net = Net()
+            >>> print(net.parameters_dict())
+            OrderedDict([('dense.weight', Parameter(name=dense.weight, shape=(2, 2), dtype=Float32,
+            requires_grad=True)), ('dense.bias', Parameter(name=dense.bias, shape=(2,), dtype=Float32,
+            requires_grad=True))])
         """
         param_dict = OrderedDict()
         for param in self.get_parameters(expand=recurse):
@@ -1281,6 +1384,9 @@ class Cell(Cell_):
 
     # pylint: disable=missing-docstring
     def check_names_and_refresh_name(self):
+        """
+        Check the names of cell parameters and update parameters' name.
+        """
         if not hasattr(self, "_params"):
             return
         all_name = [i.name for i in dict(self.parameters_and_names()).values()]
@@ -1392,6 +1498,22 @@ class Cell(Cell_):
 
         Returns:
             Iteration, the immediate cells in the cell.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.dense = nn.Dense(2, 2)
+            ...
+            ...     def construct(self, x):
+            ...         x = self.dense(x)
+            ...         return x
+            >>> net = Net()
+            >>> print(net.cells())
+            odict_values([Dense<input_channels=2, output_channels=2, has_bias=True>])
         """
         return self.name_cells().values()
 
@@ -1437,6 +1559,22 @@ class Cell(Cell_):
 
         Returns:
             Dict, all the child cells and corresponding names in the cell.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.dense = nn.Dense(2, 2)
+            ...
+            ...     def construct(self, x):
+            ...         x = self.dense(x)
+            ...         return x
+            >>> net = Net()
+            >>> print(net.name_cells())
+            OrderedDict([('dense', Dense<input_channels=2, output_channels=2, has_bias=True>)])
         """
         value_set = set()
         cells = OrderedDict()
@@ -1501,6 +1639,23 @@ class Cell(Cell_):
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
                 dataset. Users can also customize network attributes by this parameter.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, x):
+            ...         x = self.relu(x)
+            ...         return x
+            >>> net = Net()
+            >>> net.add_flags(sink_mode=True)
+            >>> print(net.sink_mode)
+            True
         """
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
@@ -1516,6 +1671,23 @@ class Cell(Cell_):
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
                 dataset. Users can also customize network attributes by this parameter.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, x):
+            ...         x = self.relu(x)
+            ...         return x
+            >>> net = Net()
+            >>> net.add_flags_recursive(sink_mode=True)
+            >>> print(net.sink_mode)
+            True
         """
         self.add_flags(**flags)
         self._add_mixed_precision_flag_recursive(**flags)
@@ -1530,6 +1702,23 @@ class Cell(Cell_):
     def get_flags(self):
         """
         Get the self_defined attributes of the cell, which can be added by `add_flags` method.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, x):
+            ...         x = self.relu(x)
+            ...         return x
+            >>> net = Net()
+            >>> net.add_flags(sink_mode=True)
+            >>> print(net.get_flags())
+            {'sink_mode':False}
         """
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
@@ -1683,6 +1872,22 @@ class Cell(Cell_):
 
         Args:
             jit_config (JitConfig): Jit config for compile. For details, please refer to :class:`mindspore.JitConfig`.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, nn
+            ...
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, x):
+            ...         x = self.relu(x)
+            ...         return x
+            >>> net = Net()
+            >>> jitconfig = ms.JitConfig()
+            >>> net.set_jit_config(jitconfig)
         """
         if self._jit_config_dict:
             logger.warning("For Cell, jit config can only be set once, ignore this setting.")
