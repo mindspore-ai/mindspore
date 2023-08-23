@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ACTIVATION_FP16_CODER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ACTIVATION_FP16_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_DYNAMIC_FP32_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_DYNAMIC_FP32_CODER_H_
 
 #include <vector>
-#include "coder/opcoders/nnacl/fp32/activation_fp32_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ActivationFP16Coder final : public ActivationFP32Coder {
+class GatherDynamicFP32Coder final : public OperatorCoder {
  public:
-  ActivationFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                      const LiteGraph::Node *node, size_t node_index, Target target)
-      : ActivationFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+  GatherDynamicFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                         const LiteGraph::Node *node, size_t node_index, Target target)
+      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~ActivationFP16Coder() override = default;
+  ~GatherDynamicFP32Coder() override = default;
 
   int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
+
+ private:
+  int axis_{0};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ACTIVATION_FP16_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_DYNAMIC_FP32_CODER_H_

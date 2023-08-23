@@ -121,7 +121,7 @@ std::vector<std::string> ShapeInfoContainer::GetTemplateShape(const Tensor *tens
 }
 
 std::vector<int> ShapeInfoContainer::GetRealNums(const std::string &shape_var) const {
-  if (IsUnsignedNumber(shape_var)) {
+  if (IsNumber(shape_var)) {
     return {std::stoi(shape_var.c_str())};
   }
   if (shape_to_nums_.find(shape_var) == shape_to_nums_.end()) {

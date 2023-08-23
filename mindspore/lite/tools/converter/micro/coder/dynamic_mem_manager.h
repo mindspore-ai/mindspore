@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 #include "src/tensor.h"
-#include "coder/shape_info_container.h"
+#include "tools/converter/micro/coder/shape_info_container.h"
 
 namespace mindspore::lite::micro {
 class DynamicMemManager {

@@ -22,6 +22,7 @@
 #include "tools/converter/micro/coder/log.h"
 #include "tools/converter/micro/coder/utils/type_cast.h"
 #include "tools/converter/micro/coder/allocator/allocator.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore::lite::micro {
 bool CheckConstantTensor(const Tensor *const tensor) {
@@ -144,5 +145,25 @@ std::vector<std::string> SplitString(std::string str, const std::string &pattern
     str = str.substr(pos + 1, size);
   }
   return results;
+}
+
+std::string AccumulateShape(const std::vector<std::string> &shape_template) {
+  int64_t const_part = 1;
+  std::string non_const_part;
+  for (const auto &item : shape_template) {
+    if (IsNumber(item)) {
+      const_part *= std::stoi(item);
+    } else {
+      if (!non_const_part.empty()) {
+        non_const_part += " * ";
+      }
+      non_const_part += item;
+    }
+  }
+  std::string accumulate_shape = std::to_string(const_part);
+  if (!non_const_part.empty()) {
+    accumulate_shape += " * " + non_const_part;
+  }
+  return accumulate_shape;
 }
 }  // namespace mindspore::lite::micro

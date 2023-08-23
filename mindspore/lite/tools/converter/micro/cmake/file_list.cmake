@@ -68,6 +68,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/base/stack_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/unstack_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/strided_slice_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/reshape_dynamic_base_coder.cc
         #### cmsis int8 coder
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/add_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/conv2d_base_coder.cc
@@ -104,6 +105,10 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/softmax_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/slice_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/scale_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/activation_dynamic_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/matmul_dynamic_fp16_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/matmul_dynamic_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/transpose_dynamic_fp16_coder.cc
         #### nnacl fp32 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/activation_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/addn_fp32_coder.cc
@@ -145,6 +150,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/ones_like_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/fill_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/slice_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_dynamic_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_dynamic_fp32_coder.cc
         #### nnacl fp32_grad coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/activation_grad_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/adam_coder.cc

@@ -41,5 +41,7 @@ std::string ArrayToString(std::vector<T> array) {
   std::for_each(array.begin(), array.end(), [&result](const T &t) { result += std::to_string(t) + ", "; });
   return "{" + result + "}";
 }
+
+std::string AccumulateShape(const std::vector<std::string> &shape_template);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_CODER_UTILS_H_

@@ -41,8 +41,9 @@ int LstmFP16Coder::InitInputWeightBias(CoderContext *const context) {
                                        context->weight_size_name(), weight_i_size);
   w_buf_size += weight_i_size;
   auto packed_weight_i_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_i_ptr_));
-  init_code.CodeFunction("PackLstmWeightFp16", packed_weight_i_str, weight_i, weight_batch_, lstm_param_->input_size_,
-                         lstm_param_->hidden_size_, lstm_param_->input_col_align_);
+  auto weight_i_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(weight_i);
+  init_code.CodeFunction("PackLstmWeightFp16", packed_weight_i_str, weight_i_str, weight_batch_,
+                         lstm_param_->input_size_, lstm_param_->hidden_size_, lstm_param_->input_col_align_);
 
   Tensor *bias_i = input_tensors_.at(FOURTH_INPUT);
   MS_CHECK_PTR(bias_i);
@@ -53,8 +54,9 @@ int LstmFP16Coder::InitInputWeightBias(CoderContext *const context) {
   init_code.CodeBufferOffsetExpression(input_bias_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), bias_i_size);
   auto input_bias_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(input_bias_));
+  auto bias_i_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_i);
   init_code.CodeFunction("memset", input_bias_str, 0, bias_i_size);
-  init_code.CodeFunction("PackLstmBiasFp16", input_bias_str, bias_i, weight_batch_, lstm_param_->hidden_size_,
+  init_code.CodeFunction("PackLstmBiasFp16", input_bias_str, bias_i_str, weight_batch_, lstm_param_->hidden_size_,
                          lstm_param_->input_col_align_, lstm_param_->bidirectional_);
 
   context->AppendInitWeightSizeCode(w_buf_size);
@@ -75,13 +77,13 @@ int LstmFP16Coder::InitStateWeightBias(CoderContext *const context) {
   init_code.CodeBufferOffsetExpression(weight_h_ptr_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), weight_h_size);
   w_buf_size += weight_h_size;
-  auto weight_h_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_h_ptr_));
-
+  auto pack_weight_h_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_h_ptr_));
+  auto weight_h_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(weight_h);
   if (!is_vec_) {
-    init_code.CodeFunction("PackLstmWeightFp16", weight_h_str, weight_h, weight_batch_, lstm_param_->output_size_,
-                           lstm_param_->hidden_size_, lstm_param_->state_col_align_);
+    init_code.CodeFunction("PackLstmWeightFp16", pack_weight_h_str, weight_h_str, weight_batch_,
+                           lstm_param_->project_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
   } else {
-    init_code.CodeFunction("memcpy", weight_h_str, weight_h, weight_h->Size());
+    init_code.CodeFunction("memcpy", pack_weight_h_str, weight_h_str, weight_h->Size());
   }
 
   size_t state_bias_size = weight_batch_ * lstm_param_->state_col_align_ * DataTypeSize(data_type_);
@@ -121,12 +123,14 @@ int LstmFP16Coder::InitProjectWeight(CoderContext *const context) {
   init_code.CodeBufferOffsetExpression(weight_pro_ptr_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), weight_pro_size);
   w_buf_size += weight_pro_size;
-  auto weight_pro_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_pro_ptr_));
+  auto pack_weight_pro_str =
+    MemoryAllocator::GetInstance()->GetRuntimeAddr(reinterpret_cast<float16 *>(weight_pro_ptr_));
+  auto weight_pro_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(weight_pro);
   if (!is_vec_) {
-    init_code.CodeFunction("PackLstmWeightFp16", weight_pro_str, weight_pro, batch, lstm_param_->hidden_size_,
-                           lstm_param_->output_size_, col_align);
+    init_code.CodeFunction("PackLstmWeightFp16", pack_weight_pro_str, weight_pro_str, batch, lstm_param_->hidden_size_,
+                           lstm_param_->project_size_, col_align);
   } else {
-    init_code.CodeFunction("memcpy", weight_pro_str, weight_pro, weight_pro->Size());
+    init_code.CodeFunction("memcpy", pack_weight_pro_str, weight_pro_str, weight_pro->Size());
   }
 
   size_t bias_pro_size = UP_ROUND(lstm_param_->output_size_, col_tile_) * DataTypeSize(data_type_);
