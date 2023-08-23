@@ -296,13 +296,34 @@ REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
   return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}})};
 });
 
+DEF_PURE_SHAPE_CALC(g_dense_shapecalc0)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto &b_shape = inputs.at(kIndex0);
+    ShapeVector ret_shape;
+    if (b_shape.size() > 0) {
+      ret_shape.push_back(0);
+    }
+    return {ret_shape};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    return {IsDynamicRank(inputs[0]) ? -1LL : static_cast<int64_t>(inputs[0].size())};
+  });
+
 REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
+  auto b = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   NodePtr dx, dw, db;
-  ShapeVector dout_2d_shape = {-1, dout->shape().back()};
-  ShapeVector x_shape = dout->shape();
+  auto dout_shp = dout->shape();
+  if (dout_shp.size() == 0) {
+    dw = ib->Mul(dout, x);
+    dx = ib->Mul(dout, w);
+    db = dout;
+    return {dx, dw, db};
+  }
+  ShapeVector dout_2d_shape = {-1, dout_shp.back()};
+  ShapeVector x_shape = dout_shp;
   if (w->shape().back() == -2) {
     x_shape.back() = -1;
   } else {
@@ -320,7 +341,8 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     x = ib->Reshape(x, x_2d_shape);
   }
   dw = ib->MatMul(dout, x, true, false);
-  db = ib->ReduceSum(dout, ShapeVector{0});
+  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
+  db = ib->ReduceSum(dout, ret_shape[kIndex0]);
   return {dx, dw, db};
 });
 

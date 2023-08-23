@@ -11350,20 +11350,24 @@ class Dense(Primitive):
     Applies dense connected operator for the input. The implement of the operation is as:
 
     .. math::
-        output = x * w + b,
+        output = x @ w ^ T + b,
 
     where :math:`x` is the input tensor, :math:`w` is a weight matrix with the same data type as the :math:`x` ,
     and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `b` is not ``None``).
 
     Inputs:
-        - **x** (Tensor) - The shape must meet the following requirement: :math:`len(x.shape)>1` .
-        - **w** (Tensor) - The shape must meet the following requirements: :math:`len(w.shape)=2` .
-          :math:`w.shape[0]=x.shape[-2]` , :math:`w.shape[1]=x.shape[-1]` .
-        - **b** (Union[Tensor, None]) - If `b` is not ``None``, the shape must meet the following
-          requirements: :math:`len(b.shape)=1` , :math:`b.shape[0]=x.shape[-2]` .
+        - **x** (Tensor) - The shape must meet the following requirement: :math:`len(x.shape)>0`.
+        - **w** (Tensor) - The shape must meet the following requirements:
+          If :math:`len(x.shape)>1`, :math:`len(w.shape)=2`. If :math:`len(x.shape)=1`, :math:`len(w.shape)=1`.
+          :math:`w.shape[-1]=x.shape[-1]`.
+        - **b** (Union[Tensor, None]) - If `b` is not ``None``, the shape must meet the following requirements:
+          If :math:`len(x.shape)>1`, :math:`len(b.shape)=0` or :math:`len(b.shape)=1` .
+          If :math:`len(b.shape)=1`, :math:`b.shape[0]=w.shape[0]`.
+          If :math:`len(x.shape)=1`, :math:`len(b.shape)=0`.
 
     Outputs:
-        Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
+        If :math:`len(x.shape)>1`, Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
+        If :math:`len(x.shape)=1`, Tensor of shape :math:`()`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
