@@ -113,10 +113,10 @@ def generate_py_op_func(yaml_data, doc_data):
 
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        class_def = operator_data.get('function')
+        class_def = operator_data.get('class')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         if class_def:
-            item = func_def.get("name")
+            item = class_def.get("name")
             if item:
                 class_name = item
         func_args = []
@@ -337,7 +337,12 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         returns = operator_data.get('returns')
+        class_def = operator_data.get('class')
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+        if class_def:
+            item = class_def.get("name")
+            if item:
+                class_name = item
         opdef_map_str += f"""
     {{"{class_name}", &g{class_name}}},"""
         gen_include += f"""
