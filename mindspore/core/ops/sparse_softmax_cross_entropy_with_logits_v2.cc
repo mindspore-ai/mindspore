@@ -44,6 +44,7 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr SparseSoftmaxCrossEntropyWithLogitsV2InferShape(
   const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
@@ -69,6 +70,7 @@ abstract::TupleShapePtr SparseSoftmaxCrossEntropyWithLogitsV2InferShape(
 
 TuplePtr SparseSoftmaxCrossEntropyWithLogitsV2InferType(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto features_type = input_args[kInputIndex0]->BuildType();
   auto labels_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_features_types = {kFloat16, kFloat32};
