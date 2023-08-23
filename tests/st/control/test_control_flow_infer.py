@@ -70,3 +70,20 @@ def test_can_not_be_operator_err():
     grad_net = F.grad(net, grad_position=(0, 1))
     fgrad = grad_net(Tensor(x), Tensor(y))
     print('ms backward: ', fgrad)
+
+@case_register.level0
+@case_register.target_gpu
+def test_analysis_fail_ir():
+    """
+    Feature: Control flow analysis fail ir.
+    Description: Analysis fail ir
+    Expectation: Catch exception.
+    """
+    x = np.array([5, 5], np.float32)
+    y = np.array([3], np.float32)
+    net = Net()
+    try:
+        out = net(Tensor(x), Tensor(y))
+        print(out)
+    except ValueError as inst:
+        print("\nexception:\n", str(inst))

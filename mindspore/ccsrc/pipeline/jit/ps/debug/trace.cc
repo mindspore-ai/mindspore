@@ -36,6 +36,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "abstract/abstract_value.h"
 #include "utils/file_utils.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
 // namespace to support debug trace information
@@ -314,10 +315,18 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-  ofs << "# 1.This file shows the parsed IR info when graph evaluating failed to help find the problem.\n";
-  ofs << "# 2.You can search the last `------------------------>` to the node which is inferred failed.\n";
-  ofs << "# 3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n";
-  ofs << "# ===============================================================================\n\n";
+
+  ofs << "# This is the analyze fail log to save the last message.\n"
+      << "# ===============================================================================\n"
+      << "Catch the exception:\n"
+      << StaticAnalysisException::Instance().msg();
+
+  ofs << "# ===============================================================================\n"
+      << "# 1.The rest shows the parsed IR info when graph evaluating failed to help find the problem.\n"
+      << "# 2.You can search the last `------------------------>` to the node which is inferred failed.\n"
+      << "# 3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n"
+      << "# ===============================================================================\n\n"
+      << "The entry function: " << node_config_stack.front()->func_graph()->ToString() << "\n\n";
 
   if (engine_ == nullptr) {
     engine_ = node_config_stack.front()->engine();
@@ -357,6 +366,20 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     ofs << printed_func_graphs.size() << "/" << node_config_stack.size() << " (Ignored " << ignored_num
         << " internal frames).\n";
   }
+
+  ofs << "\n\n#===============================================================================\n";
+  ofs << "# The rest functions are the following.\n\n";
+  auto top_func = node_config_stack.front()->func_graph();
+  current_context_ = nullptr;
+  TaggedNodeMap empty_map;
+  for (const auto &fg : top_func->func_graphs_used_total()) {
+    if (!printed_func_graphs.emplace(fg).second) {
+      continue;
+    }
+    std::ostringstream buffer;
+    ExportOneFuncGraph(fg, empty_map, buffer);
+    ofs << buffer.str() << "\n\n";
+  }
   ofs.close();
   ChangeFileMode(real_filepath.value(), S_IRUSR);
   return true;
@@ -386,18 +409,8 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
-  oss << "\nThe function call stack";
-#ifndef ENABLE_SECURITY
-  std::string file_name = GetEvalFailDatPath();
-  auto ret = OutputAnalyzedGraphWithType(file_name);
-  if (ret) {
-    oss << " (See file '" << file_name
-        << "' for more details. Get instructions about `analyze_fail.ir` at "
-           "https://www.mindspore.cn/search?inputValue=analyze_fail.ir)";
-  }
-#endif
-  oss << ":\n";
 
+  oss << "\nThe function call stack:\n";
   int index = 0;
   std::string last_location_info = "";
   for (size_t i = 0; i < stack.size(); ++i) {
@@ -419,6 +432,21 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     oss << "# " << index++ << " " << this_location_info;
   }
 
+#ifndef ENABLE_SECURITY
+  std::string msg =
+    "\n----------------------------------------------------\n"
+    "- The Traceback of Net Construct Code:\n"
+    "----------------------------------------------------" +
+    oss.str() + "\n";
+  StaticAnalysisException::Instance().AppendMsg(msg);
+  std::string file_name = GetEvalFailDatPath();
+  auto ret = OutputAnalyzedGraphWithType(file_name);
+  if (ret) {
+    oss << " (See file '" << file_name
+        << "' for more details. Get instructions about `analyze_fail.ir` at "
+           "https://www.mindspore.cn/search?inputValue=analyze_fail.ir)";
+  }
+#endif
   stack.clear();
   MS_LOG(INFO) << "Get graph analysis information *end*";
 }
@@ -490,6 +518,7 @@ void PrintMessage(std::ostringstream &oss, const std::string &content, bool add_
 void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
   TraceGraphEval();
   std::ostringstream trace_info;
+  StaticAnalysisException::Instance().AppendMsg(oss.str());
   GetEvalStackInfo(trace_info);
   if (trace_info.str().empty()) {
     DebugInfoPtr debug_info = TraceManager::record_debug_info();

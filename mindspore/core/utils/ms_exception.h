@@ -19,6 +19,7 @@
 #include <exception>
 #include <set>
 #include <mutex>
+#include <string>
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "mindapi/base/macros.h"
@@ -67,6 +68,7 @@ class MS_CORE_API StaticAnalysisException {
 
   void ClearException() {
     std::lock_guard<std::mutex> lock(lock_);
+    msg_ = "";
     exception_ptr_ = nullptr;
   }
 
@@ -81,6 +83,14 @@ class MS_CORE_API StaticAnalysisException {
       return;
     }
     exception_ptr_ = std::current_exception();
+  }
+  void AppendMsg(const std::string &msg) {
+    std::lock_guard<std::mutex> lock(lock_);
+    msg_ += msg;
+  }
+  std::string msg() {
+    std::lock_guard<std::mutex> lock(lock_);
+    return msg_;
   }
 
   void SetAndRethrowException() {
@@ -103,6 +113,7 @@ class MS_CORE_API StaticAnalysisException {
   DISABLE_COPY_AND_ASSIGN(StaticAnalysisException)
 
   std::exception_ptr exception_ptr_{nullptr};
+  std::string msg_;
   std::mutex lock_;
 };
 }  // namespace mindspore

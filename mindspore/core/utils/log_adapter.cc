@@ -374,7 +374,7 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   ParseExceptionMessage(msg.str(), oss, &dmsg, &umsg);
   DisplayUserExceptionMessage(oss, umsg);
-
+  DisplayDevExceptionMessage(oss, dmsg, location_);
   thread_local bool running = false;
   if (!running) {
     running = true;
@@ -387,8 +387,6 @@ void LogWriter::operator^(const LogStream &stream) const {
     }
     running = false;
   }
-
-  DisplayDevExceptionMessage(oss, dmsg, location_);
 
   const auto &exception_handler = GetExceptionHandler();
   if (exception_handler != nullptr) {
