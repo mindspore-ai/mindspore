@@ -904,9 +904,6 @@ class Cell(Cell_):
         if self.grad_ops_label:
             logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is '
                            f'generated.')
-        for ele in inputs:
-            if isinstance(ele, str):
-                raise TypeError(f"For element in 'set_inputs', the type must not be str.")
         self._dynamic_shape_inputs = inputs
         self._check_construct_args(*inputs)
         if context._get_mode() == context.PYNATIVE_MODE:
