@@ -18,7 +18,6 @@
 #include <memory.h>
 #include <map>
 #include <thread>
-#include "ops/flatten.h"
 #include "./kernel_log.h"
 #include "./kernel_errcode.h"
 #include "proto/node_def.pb.h"
