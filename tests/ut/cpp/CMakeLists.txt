@@ -253,6 +253,9 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/parallel_strategy_profiling.cc")
 
+if(ENABLE_GEN_CODE)
+    list(APPEND MINDSPORE_SRC_LIST $<TARGET_OBJECTS:c_gen_ops>)
+endif()
 add_library(_ut_mindspore_obj STATIC ${MINDSPORE_SRC_LIST} $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
         $<TARGET_OBJECTS:common_shared_lib_obj> $<TARGET_OBJECTS:_mindspore_utils_obj>
         $<TARGET_OBJECTS:_mindspore_common_obj> $<TARGET_OBJECTS:mindspore_c_api_obj> ${dataengine_submodules}
@@ -262,7 +265,6 @@ add_dependencies(_ut_mindspore_obj proto_input_ut)
 foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
 endforeach()
-
 include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
 file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/proto/*.proto")
@@ -307,6 +309,9 @@ add_dependencies(_ut_obj engine-cache-server)
 foreach(comp ${ALL_UT_COMPS})
     add_library(_ut_${comp}_obj OBJECT ${UT_${comp}_SRCS})
     add_dependencies(_ut_${comp}_obj engine-cache-server)
+    if(ENABLE_GEN_CODE)
+        add_dependencies(_ut_${comp}_obj c_gen_ops)
+    endif()
     set(ut_${comp}_objects $<TARGET_OBJECTS:_ut_${comp}_obj> $<TARGET_OBJECTS:_ut_obj> ${CORE_OBJECT_LIST})
     add_executable(ut_${comp}_tests ${ut_${comp}_objects})
     # ci envs have no enough memory, so make link target sequentially

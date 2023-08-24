@@ -445,7 +445,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         opdef_map_str += f"""
     {{"{class_name}", &g{class_name}}},"""
         gen_include += f"""
-#include "{func_impl_dir}/{operator_name}.h\""""
+#include "ops/{func_impl_dir}/{operator_name}.h\""""
 
         opdef_cc = f"""
 {class_name}{func_suffix_str} g{class_name}{func_suffix_str};"""
@@ -523,7 +523,8 @@ if __name__ == "__main__":
     work_path = os.path.join(current_path, '../../../../')
     if len(sys.argv) > 1:
         work_path = sys.argv[1]
-
+    if not os.path.exists(os.path.join(work_path, 'build/mindspore')):
+        sys.exit(0)
     yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops_doc.yaml')
     yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
@@ -545,8 +546,8 @@ if __name__ == "__main__":
         doc_yaml_path = os.path.join(work_path, f'{yaml_path_root}/{op_name}_doc.yaml')
 
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/gen_ops_def.py')
-    op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
     op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
+    op_cc_path = os.path.join(work_path, 'build/mindspore/gen_ops_def.cc')
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
     lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/gen_lite_ops.h')
 
@@ -607,7 +608,7 @@ from mindspore.ops_generate import gen_enum_def as enum_def
  */"""
 
     ccheader = f"""
-#include "op_def.h"
+#include "ops/op_def.h"
 {cc_include}
 namespace mindspore::ops {{
 """

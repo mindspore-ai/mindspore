@@ -112,3 +112,10 @@ mindspore/lite/test/do_test/
 
 # lite opencl compile file
 *.cl.inc
+
+# auto gen code files
+mindspore/core/ops/gen_lite_ops.h
+mindspore/core/ops/gen_ops_name.h
+mindspore/core/ops/gen_ops_primitive.h
+mindspore/python/mindspore/gen_ops_def.py
+MindSpore/python/mindspore/ops_generate/gen_ops_def.py
