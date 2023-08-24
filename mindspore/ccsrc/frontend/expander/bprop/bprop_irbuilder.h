@@ -44,15 +44,15 @@ class BpropIRBuilder : public Emitter {
       : Emitter(func_graph, infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
 
   /// \brief Run irbuilder to generate a graph
-  NodePtrList Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
-                  const std::string &instance_name);
+  NodePtrList Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
+                  const BpropHandle &handle, const std::string &instance_name);
 
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
   S GetAttr(const std::string &attr) const {
     return GetValue<S>(GetAttr(attr));
   }
-  const DAttr &GetAttrs() const { return *attrs_ptr_; }
+  const mindspore::HashMap<std::string, ValuePtr> &GetAttrs() const { return *attrs_ptr_; }
   NodePtr GetInput(size_t i) const;
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
@@ -96,7 +96,7 @@ class BpropIRBuilder : public Emitter {
   std::string name_;
   std::string instance_name_;
   const NodePtrList *inputs_ptr_{nullptr};
-  const DAttr *attrs_ptr_{nullptr};
+  const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
 };
 
 class BpropIRBuilderFactory {

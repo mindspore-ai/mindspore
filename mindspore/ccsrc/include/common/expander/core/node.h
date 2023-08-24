@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "include/common/visible.h"
@@ -26,7 +27,7 @@
 namespace mindspore {
 namespace expander {
 class Emitter;
-using DAttr = mindspore::HashMap<std::string, ValuePtr>;
+using DAttr = std::vector<std::pair<std::string, ValuePtr>>;
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
