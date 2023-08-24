@@ -1840,6 +1840,48 @@ AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &va
   return nullptr;
 }
 
+std::vector<AnfNodePtr> Parser::GetGetAttrVectotFromMap(const std::string &obj_name, const std::string &attr_name) {
+  std::vector<AnfNodePtr> getattr_nodes;
+  auto iter = getattr_nodes_map_.find(obj_name);
+  if (iter != getattr_nodes_map_.end()) {
+    auto attr_iter = iter->second.find(attr_name);
+    if (attr_iter != iter->second.end()) {
+      getattr_nodes = attr_iter->second;
+    }
+  }
+  return getattr_nodes;
+}
+
+AnfNodePtr Parser::GetSetAttrFromMap(const std::string &obj_name, const std::string &attr_name) {
+  auto iter = setattr_nodes_map_.find(obj_name);
+  if (iter != setattr_nodes_map_.end()) {
+    auto attr_iter = iter->second.find(attr_name);
+    if (attr_iter != iter->second.end()) {
+      return attr_iter->second;
+    }
+  }
+  return nullptr;
+}
+
+AnfNodePtr Parser::MakeGetAttrWithInterpret(const std::string &obj_name, const std::string &attr_name,
+                                            const py::object &getattr_obj, const FuncGraphPtr &cur_fg) {
+  AnfNodePtr setattr_node = GetSetAttrFromMap(obj_name, attr_name);
+  AnfNodePtr op_node = NewValueNode(prim::kPrimGetAttr);
+  AnfNodePtr attr_node = NewValueNode(attr_name);
+  if (setattr_node != nullptr) {
+    const auto &interpreted_obj = std::make_shared<InterpretedObject>(getattr_obj);
+    AnfNodePtr value_node = NewValueNode(interpreted_obj);
+    auto prev_setattr_fg = setattr_node->func_graph();
+    MS_EXCEPTION_IF_NULL(prev_setattr_fg);
+    if (prev_setattr_fg != cur_fg) {
+      return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+    }
+    // Only add to new setattr node input if two nodes is in the same graph.
+    return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
+  }
+  return nullptr;
+}
+
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
@@ -1858,26 +1900,19 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // Process the attr body
   py::object value_body = python_adapter::GetPyObjAttr(node, "value");
   MS_LOG(DEBUG) << "node: " << node << ", attr: " << attr_str << ", value: " << value_body;
-  // Process class value 'self', eg: self.xx
-  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast()->IsClassMemberOfSelf(node)) {
-    AnfNodePtr setattr_node = nullptr;
-    auto iter = setattr_nodes_map_.find("self");
-    if (iter != setattr_nodes_map_.end()) {
-      auto attr_iter = iter->second.find(attr_str);
-      if (attr_iter != iter->second.end()) {
-        setattr_node = attr_iter->second;
-      }
-    }
-    if (setattr_node != nullptr) {  // If setattr before, should make the getattr call into PyExecute also.
-      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj());
-      AnfNodePtr value_node = NewValueNode(interpreted_obj);
-      auto prev_setattr_fg = setattr_node->func_graph();
-      MS_EXCEPTION_IF_NULL(prev_setattr_fg);
-      if (prev_setattr_fg != cur_fg) {
-        return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
-      }
-      // Only add to new setattr node input if two nodes is in the same graph.
-      return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
+
+  // if getting class value 'self', eg: self.xx, use self object.
+  std::string obj_name;
+  py::object getattr_obj;
+  const bool &is_self = ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast()->IsClassMemberOfSelf(node);
+  if (is_self) {
+    obj_name = "self";
+    getattr_obj = ast()->obj();
+    AnfNodePtr getattr_node = MakeGetAttrWithInterpret(obj_name, attr_str, getattr_obj, cur_fg);
+    // If setattr before, should make the getattr call into PyExecute also.
+    if (getattr_node != nullptr) {
+      return getattr_node;
+      // if processing class value 'self', but did not find setattr before getattr, convert getattr later
     } else {
       auto ret_node = ProcessAttributeWithClassMember(block, node);
       (void)getattr_nodes_map_["self"][attr_str].emplace_back(ret_node);
@@ -1935,6 +1970,27 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(attr_cnode->cast<CNodePtr>(), "getattr");
       MS_LOG(DEBUG) << "pyexecute_node:" << pyexecute_node->DebugString();
       return pyexecute_node;
+    }
+  }
+  // if getting other object, eg: obj.xx, find object from namespace by name
+  obj_name = GetLocation(value_body)->expr_src();
+  try {
+    py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, obj_name);
+    constexpr size_t value_index = 2;
+    getattr_obj = namespace_info[value_index];
+  } catch (const std::exception &e) {
+    MS_LOG(DEBUG) << obj_name << " is not supported in JIT Fallback. Original steps are processing instead.";
+    getattr_obj = py::none();
+  }
+  const bool got_obj = !py::isinstance<py::none>(getattr_obj);
+  if (got_obj) {
+    AnfNodePtr getattr_node = MakeGetAttrWithInterpret(obj_name, attr_str, getattr_obj, cur_fg);
+    // If setattr before, should make the getattr call into PyExecute also.
+    if (getattr_node != nullptr) {
+      return getattr_node;
+    } else {
+      // if getting attr from other obj, but did not find setattr before getattr, convert getattr later
+      (void)getattr_nodes_map_[GetLocation(value_body)->expr_src()][attr_str].emplace_back(attr_cnode);
     }
   }
   return attr_cnode;
@@ -3661,7 +3717,22 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
       const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj());
       target_node = NewValueNode(interpreted_obj);
     } else {
-      target_node = ParseExprNode(block, target_obj);
+      py::object setattr_obj;
+      try {
+        py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, target_id_str);
+        constexpr size_t value_index = 2;
+        setattr_obj = namespace_info[value_index];
+      } catch (const std::exception &e) {
+        MS_LOG(DEBUG) << target_id_str << " is not supported in JIT Fallback. Original steps are processing instead.";
+        setattr_obj = py::none();
+      }
+      // convert target node in setattr to convert getattr after it later.
+      if (!py::isinstance<py::none>(setattr_obj)) {
+        const auto &interpreted_obj = std::make_shared<InterpretedObject>(setattr_obj);
+        target_node = NewValueNode(interpreted_obj);
+      } else {
+        target_node = ParseExprNode(block, target_obj);
+      }
     }
   }
   if (target_node == nullptr) {

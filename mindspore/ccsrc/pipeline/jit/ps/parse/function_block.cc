@@ -301,14 +301,14 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   MS_EXCEPTION_IF_NULL(ast);
   const py::tuple &info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, var_name);
 
-  constexpr size_t closure_info_size = 2;
+  constexpr size_t closure_info_size = 3;
   constexpr size_t global_info_size = 4;
   constexpr size_t namespace_index = 0;
   constexpr size_t symbol_index = 1;
   constexpr size_t value_index = 2;
   constexpr size_t flag_index = 3;
   if (info.size() != closure_info_size && info.size() != global_info_size) {
-    MS_INTERNAL_EXCEPTION(NameError) << "The namespace info size should be 2 or 4, but got " << info.size();
+    MS_INTERNAL_EXCEPTION(NameError) << "The namespace info size should be 3 or 4, but got " << info.size();
   }
   // If namespace is None, the symbol is an undefined name.
   if (info[namespace_index].is_none()) {

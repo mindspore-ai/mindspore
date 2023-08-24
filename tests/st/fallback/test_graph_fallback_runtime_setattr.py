@@ -19,7 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
-from mindspore import Tensor, Parameter
+from mindspore import Tensor, Parameter, jit, jit_class
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -571,3 +571,187 @@ def test_setattr_for_parameter():
     with pytest.raises(ValueError) as ex:
         net()
     assert "Do not support to set attribute for a parameter" in str(ex.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_getattr_after_setattr_1():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs inside setattr into interpret node
+    Expectation: No exception.
+    """
+    @jit_class
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        obj.x = obj.x + 1
+
+    obj = Inner()
+    assert obj.x == 1
+    foo()
+    assert obj.x == 2
+    foo()
+    assert obj.x == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_getattr_after_setattr_2():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs inside setattr into interpret node
+    Expectation: No exception.
+    """
+    class Inner1:
+        def __init__(self):
+            self.x = 1
+
+    class Inner2:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        obj2.x = obj1.x + obj2.x
+        obj1.x = obj1.x + obj2.x
+
+    obj1 = Inner1()
+    obj2 = Inner2()
+    assert obj1.x == 1
+    assert obj2.x == 1
+    foo()
+    assert obj1.x == 3
+    assert obj2.x == 2
+    foo()
+    assert obj1.x == 8
+    assert obj2.x == 5
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_getattr_after_setattr_3():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs after setattr into interpret node
+    Expectation: No exception.
+    """
+    @jit_class
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        obj.x = obj.x + 1
+        y = obj.x
+        return y
+
+    obj = Inner()
+    assert obj.x == 1
+    res = foo()
+    assert res == 2
+    assert obj.x == 2
+    res = foo()
+    assert res == 3
+    assert obj.x == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_getattr_before_setattr():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs before setattr into interpret node
+    Expectation: No exception.
+    """
+    @jit_class
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        y = obj.x
+        obj.x = obj.x + 1
+        return y
+
+    obj = Inner()
+    assert obj.x == 1
+    res = foo()
+    assert res == 1
+    assert obj.x == 2
+    res = foo()
+    assert res == 2
+    assert obj.x == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_setattr_in_control_flow():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.x = 5
+
+    @jit
+    def foo():
+        while obj.x > 0:
+            obj.x = obj.x -2
+        return obj.x
+
+    obj = SetattrNet()
+    ret = foo()
+    assert ret == -1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_setattr_in_control_flow_2():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.x = 4
+
+    @jit
+    def foo():
+        count = 0
+        while obj.x:
+            count += 1
+            obj.x -= 1
+        obj.x = count
+        return obj.x
+    obj = SetattrNet()
+    ret = foo()
+    assert ret == 4
