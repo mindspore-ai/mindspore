@@ -67,7 +67,17 @@ STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
     // Add input input_size
     auto inputs = cnode->inputs();
     inputs.insert(inputs.begin() + 1, value_param);
-    cnode->set_inputs(inputs);
+
+    auto f_graph = cnode->func_graph();
+    MS_CHECK_TRUE_MSG(f_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
+
+    auto manager = Manage(f_graph, true);
+    MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
+
+    manager->AddEdge(cnode, value_param);
+    for (size_t i = 0; i < inputs.size(); i++) {
+      manager->SetEdge(cnode, i, inputs[i]);
+    }
   }
   auto status = AttrAdjust(dst_prim, ops::kDilation);
   if (status != lite::RET_OK) {
