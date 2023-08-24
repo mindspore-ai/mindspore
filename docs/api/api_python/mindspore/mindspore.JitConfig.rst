@@ -22,10 +22,12 @@ mindspore.JitConfig
           - "sink": 计算图下沉策略。
           - "no_sink": 非计算图下沉策略。
 
-        - **jit_syntax_level** (str, 可选) - 设置JIT语法支持级别，支持["STRICT", "LAX"]。
-          默认是空字符串，表示忽略该选项。默认值： ``""`` 。
+        - **jit_syntax_level** (str, 可选) - 设置JIT语法支持级别，其值必须为 ``"STRICT"``, ``"LAX"`` 或 ``""`` 。
+          默认是空字符串，表示忽略该项JitConfig配置，将使用ms.context的jit_syntax_level，ms.context请参考
+          `set_context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_context.html>`_ 。
+          默认值： ``""`` 。
 		  
-          - "STRICT": 仅支持基础语法，且执行性能最佳。
-          - "LAX": 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。
+          - "STRICT": 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。
+          - "LAX": 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。
 
         - **kwargs** (dict) - 关键字参数字典。
