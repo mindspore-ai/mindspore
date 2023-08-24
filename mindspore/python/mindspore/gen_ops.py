@@ -126,14 +126,22 @@ def generate_py_op_func(yaml_data, doc_data):
         for arg_name, arg_info in args.items():
             dtype = arg_info.get('dtype')
             init_value = arg_info.get('init')
+
             if init_value is None:
                 func_args.append(arg_name)
                 input_args.append(arg_name)
             else:
-                if dtype == 'str':
-                    init_value = '"' + init_value + '"'
-                func_args.append(f"""{arg_name}={init_value}""")
-                init_args.append(arg_name)
+                if init_value == 'NO_VALUE':
+                    func_args.append(f"""{arg_name}""")
+                    init_args.append(arg_name)
+                elif init_value == 'None':
+                    func_args.append(f"""{arg_name}={init_value}""")
+                    init_args.append(arg_name)
+                else:
+                    if dtype == 'str':
+                        init_value = '"' + init_value + '"'
+                    func_args.append(f"""{arg_name}={init_value}""")
+                    init_args.append(arg_name)
 
         function_code = f"""
 def {func_name}({', '.join(arg for arg in func_args)}):
