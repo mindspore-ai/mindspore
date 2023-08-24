@@ -38,6 +38,12 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 6,
 };
 
+enum AscendSocVersion {
+  k910AAscendVersion = 0,
+  k910BAscendVersion = 1,
+  kNotAscend = 2,
+};
+
 enum DumpLevel : int {
   kIntroductory = 1,
   kAdvanced,
@@ -197,6 +203,8 @@ class MS_CORE_API MsContext {
   bool CanDump(const DumpLevel &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
+  std::string ascend_soc_version() const;
+  bool set_ascend_soc_version(const std::string &soc_version);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend
   // plugin failed on ascend environment, loading above libraries will crush the process.
   bool IsAscendPluginLoaded() const;
@@ -266,6 +274,7 @@ class MS_CORE_API MsContext {
 
   mutable std::vector<bool> params_read_status_;
   MsBackendPolicy backend_policy_;
+  AscendSocVersion ascend_soc_version_;
   bool default_device_target_ = true;
 
   EnvFunc set_env_ = nullptr;
