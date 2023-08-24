@@ -16,6 +16,8 @@
 
 #include "ops/ops_func_impl/avg_pool.h"
 #include <algorithm>
+#include <memory>
+#include <utility>
 #include "abstract/dshape.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
@@ -30,7 +32,7 @@ namespace ops {
 // Note: should check whether kernel_size and strides contain unknown values.
 inline int64_t ComputeValid(int64_t in_value, const ArrayValue<int64_t> &kernel_size_array,
                             const ArrayValue<int64_t> &strides_array, size_t index) {
-  int64_t out_value = abstract::Shape::kShapeDimAny;
+  ShapeValueDType out_value;
   if (in_value == abstract::Shape::kShapeDimAny) {
     out_value = abstract::Shape::kShapeDimAny;
   } else if (kernel_size_array.IsValueUnknown(index) || strides_array.IsValueUnknown(index)) {
@@ -46,7 +48,7 @@ inline int64_t ComputeValid(int64_t in_value, const ArrayValue<int64_t> &kernel_
 // Compute out h and w for SAME pad mode.
 // Note: should check whether strides contain unknown values.
 inline int64_t ComputeSame(int64_t in_value, const ArrayValue<int64_t> &strides_array, size_t index) {
-  int64_t out_value = abstract::Shape::kShapeDimAny;
+  ShapeValueDType out_value;
   if (in_value == abstract::Shape::kShapeDimAny) {
     out_value = abstract::Shape::kShapeDimAny;
   } else if (strides_array.IsValueUnknown(index)) {
@@ -57,61 +59,25 @@ inline int64_t ComputeSame(int64_t in_value, const ArrayValue<int64_t> &strides_
   return out_value;
 }
 
-// Check kernel_size and strides length and value.
-inline void CheckKernelSizeAndStrides(const PrimitivePtr &primitive, const ArrayValue<int64_t> &kernel_size_array,
-                                      const ArrayValue<int64_t> &strides_array) {
-  const size_t attr_size = 4;
-  MS_CHECK_VALUE(kernel_size_array.size() == attr_size,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("kernel", SizeToLong(kernel_size_array.size()), kEqual,
-                                                             SizeToLong(attr_size), primitive));
-  MS_CHECK_VALUE(strides_array.size() == attr_size,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("strides", SizeToLong(strides_array.size()), kEqual,
-                                                             SizeToLong(attr_size), primitive));
-
-  if (kernel_size_array.HasUnknownValue() || strides_array.HasUnknownValue()) {
-    return;
-  }
-
-  auto op_name = primitive->name();
-  for (size_t i = 0; i < kernel_size_array.size(); i++) {
-    if (kernel_size_array[i] <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', kernel size must be positive, but it's "
-                        << kernel_size_array.ToString() << ".";
-    }
-  }
-  for (size_t i = 0; i < strides_array.size(); i++) {
-    if (strides_array[i] <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', kernel size must be positive, but it's "
-                        << strides_array.ToString() << ".";
-    }
-  }
-}
-
 BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-
   // Step1. Get input tensor shape.
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   BaseShapePtr base_shape = input_args[kInputIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(base_shape);
   // Could use GetShapeVector to get shape for Tensor type only.
   const auto &in_shape = base_shape->GetShapeVector();
 
-  if (IsDynamicRank(in_shape)) {
+  if (MS_UNLIKELY(IsDynamicRank(in_shape))) {
     ShapeVector dyn_output{abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(std::move(dyn_output));
   }
-  const size_t x_rank = 4;
+
+  constexpr auto x_rank = 4;
   MS_CHECK_VALUE(in_shape.size() == x_rank,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("x_rank", SizeToLong(in_shape.size()), kEqual,
                                                              SizeToLong(x_rank), primitive));
 
-  // Step2. Get and check input format value.
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex4]);
+  // Step2. Get input format value.
   auto format_value = input_args[kInputIndex4]->GetValue();
-  MS_EXCEPTION_IF_NULL(format_value);
   auto format_opt = GetScalarValue<int64_t>(format_value);
   // If the value of format is ValueAny, return a dynamic shape and only the Batch dimension can be inferred.
   if (!format_opt.has_value()) {
@@ -120,16 +86,11 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::move(dyn_output));
   }
 
-  mindspore::Format format = static_cast<mindspore::Format>(format_opt.value());
-  if (format != NCHW && format != NHWC) {
-    MS_LOG(EXCEPTION) << "The data format value " << FormatEnumToString(format) << " is invalid, " << op_name
-                      << " only support NCHW and NHWC";
-  }
-
   ShapeValueDType batch = in_shape[kInputIndex0];
   ShapeValueDType channel;
   ShapeValueDType in_h;
   ShapeValueDType in_w;
+  mindspore::Format format = static_cast<mindspore::Format>(format_opt.value());
   if (format == NCHW) {
     channel = in_shape[kInputIndex1];
     in_h = in_shape[kInputIndex2];
@@ -141,15 +102,9 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   // Step3. Get and check kernel_size, strides and pad_mode value.
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex3]);
   auto kernel_size_value = input_args[kInputIndex1]->GetValue();
   auto strides_value = input_args[kInputIndex2]->GetValue();
   auto pad_mode_value = input_args[kInputIndex3]->GetValue();
-  MS_EXCEPTION_IF_NULL(kernel_size_value);
-  MS_EXCEPTION_IF_NULL(strides_value);
-  MS_EXCEPTION_IF_NULL(pad_mode_value);
 
   auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size_value);
   auto strides_array_opt = GetArrayValue<int64_t>(strides_value);
@@ -163,13 +118,12 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
       return std::make_shared<abstract::Shape>(std::move(dyn_output));
     }
     ShapeVector dyn_output{batch, channel, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
-    return std::make_shared<abstract::Shape>(std::move(dyn_output));
+    return std::make_shared<abstract::TensorShape>(std::move(dyn_output));
   }
 
   mindspore::PadMode pad_mode = static_cast<mindspore::PadMode>(pad_mode_opt.value());
   const auto &kernel_size_array = kernel_size_array_opt.value();
   const auto &strides_array = strides_array_opt.value();
-  CheckKernelSizeAndStrides(primitive, kernel_size_array, strides_array);
 
   // Step4. Compute output shape.
   ShapeValueDType out_h = abstract::Shape::kShapeDimAny;
@@ -202,6 +156,69 @@ TypePtr AvgPoolFuncImpl::InferType(const PrimitivePtr &primitive,
 
   // TensorType
   return input_type;
+}
+
+// Check kernel_size and strides length and value.
+inline void CheckKernelSizeAndStrides(const PrimitivePtr &primitive, const ArrayValue<int64_t> &kernel_size_array,
+                                      const ArrayValue<int64_t> &strides_array) {
+  const size_t attr_size = 4;
+  MS_CHECK_VALUE(kernel_size_array.size() == attr_size,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("kernel", SizeToLong(kernel_size_array.size()), kEqual,
+                                                             SizeToLong(attr_size), primitive));
+  MS_CHECK_VALUE(strides_array.size() == attr_size,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("strides", SizeToLong(strides_array.size()), kEqual,
+                                                             SizeToLong(attr_size), primitive));
+
+  auto op_name = primitive->name();
+  for (size_t i = 0; i < kernel_size_array.size(); i++) {
+    if (MS_UNLIKELY(kernel_size_array[i] <= 0)) {
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', kernel size must be positive, but it's "
+                        << kernel_size_array.ToString() << ".";
+    }
+  }
+  for (size_t i = 0; i < strides_array.size(); i++) {
+    if (MS_UNLIKELY(strides_array[i] <= 0)) {
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', kernel size must be positive, but it's "
+                        << strides_array.ToString() << ".";
+    }
+  }
+}
+
+int32_t AvgPoolFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
+  int32_t check_status = OP_CHECK_SUCCESS;
+
+  // Step1: Check format valid.
+  auto format_value = input_args[kInputIndex4]->GetValue();
+  auto format_opt = GetScalarValue<int64_t>(format_value);
+  // If the value of format is ValueAny, return a dynamic shape and only the Batch dimension can be inferred.
+  if (MS_UNLIKELY(!format_opt.has_value())) {
+    check_status = OP_CHECK_RETRY;
+  } else {
+    mindspore::Format format = static_cast<mindspore::Format>(format_opt.value());
+    if (MS_UNLIKELY(format != NCHW && format != NHWC)) {
+      MS_LOG(EXCEPTION) << "The data format value " << FormatEnumToString(format) << " is invalid, "
+                        << primitive->name() << " only support NCHW and NHWC";
+    }
+  }
+
+  // Step2: Check kernel_size and strides valid.
+  auto kernel_size_value = input_args[kInputIndex1]->GetValue();
+  auto strides_value = input_args[kInputIndex2]->GetValue();
+  auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size_value);
+  auto strides_array_opt = GetArrayValue<int64_t>(strides_value);
+  if (MS_UNLIKELY(!kernel_size_array_opt.has_value() || !strides_array_opt.has_value())) {
+    check_status = OP_CHECK_RETRY;
+  } else {
+    const auto &kernel_size_array = kernel_size_array_opt.value();
+    const auto &strides_array = strides_array_opt.value();
+    if (MS_UNLIKELY(kernel_size_array.HasUnknownValue() || strides_array.HasUnknownValue())) {
+      check_status = OP_CHECK_RETRY;
+    } else {
+      CheckKernelSizeAndStrides(primitive, kernel_size_array, strides_array);
+    }
+  }
+  return check_status;
 }
 }  // namespace ops
 }  // namespace mindspore

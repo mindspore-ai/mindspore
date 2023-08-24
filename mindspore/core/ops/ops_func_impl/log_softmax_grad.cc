@@ -24,15 +24,6 @@ BaseShapePtr LogSoftmaxGradFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) const {
   auto grad_shape = input_args[kIndex1]->GetShape();
   auto grad_shape_vec = grad_shape->GetShapeVector();
-  int64_t grad_rank = SizeToLong(grad_shape_vec.size());
-  auto axis = input_args[kIndex2]->GetValue();
-  auto axis_opt = GetScalarValue<int64_t>(axis);
-  if (MS_LIKELY(axis_opt.has_value() && !IsDynamicRank(grad_shape_vec))) {
-    auto axis_value = axis_opt.value();
-    MS_CHECK_VALUE(axis_value >= -grad_rank && axis_value < grad_rank,
-                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft,
-                                                               {-grad_rank, grad_rank}, primitive));
-  }
 
   auto out_shape = input_args[kIndex0]->GetShape();
   const auto out_shape_vec = out_shape->GetShapeVector();
@@ -47,6 +38,26 @@ BaseShapePtr LogSoftmaxGradFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr LogSoftmaxGradFuncImpl::InferType(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[kIndex1]->GetType()->Clone();
+}
+
+int32_t LogSoftmaxGradFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) const {
+  int32_t check_status = OP_CHECK_SUCCESS;
+  auto grad_shape = input_args[kIndex1]->GetShape();
+  auto grad_shape_vec = grad_shape->GetShapeVector();
+
+  auto axis = input_args[kIndex2]->GetValue();
+  auto axis_opt = GetScalarValue<int64_t>(axis);
+  if (MS_UNLIKELY(!axis_opt.has_value() || IsDynamicRank(grad_shape_vec))) {
+    check_status = OP_CHECK_RETRY;
+  } else {
+    auto axis_value = axis_opt.value();
+    int64_t grad_rank = SizeToLong(grad_shape_vec.size());
+    MS_CHECK_VALUE(axis_value >= -grad_rank && axis_value < grad_rank,
+                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft,
+                                                               {-grad_rank, grad_rank}, primitive));
+  }
+  return check_status;
 }
 }  // namespace ops
 }  // namespace mindspore

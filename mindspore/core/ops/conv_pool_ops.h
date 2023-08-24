@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
+#include "ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {
@@ -88,7 +89,6 @@ GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2D, std::make_shared<Primitive>(kMaxUnpool2
 GVAR_DEF(PrimitivePtr, kPrimMaxUnpool2DGrad, std::make_shared<Primitive>(kMaxUnpool2DGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3D, std::make_shared<Primitive>(kMaxUnpool3DOpName));
 GVAR_DEF(PrimitivePtr, kPrimMaxUnpool3DGrad, std::make_shared<Primitive>(kMaxUnpool3DGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimAvgPool, std::make_shared<Primitive>("AvgPool"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool3D, std::make_shared<Primitive>("AvgPool3D"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool3DD, std::make_shared<Primitive>("AvgPool3DD"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolGrad, std::make_shared<Primitive>("AvgPoolGrad"));

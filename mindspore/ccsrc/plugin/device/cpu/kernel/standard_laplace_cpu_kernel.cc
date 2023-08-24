@@ -43,13 +43,12 @@ bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor 
                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kStandardLaplaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardLaplaceOutputsNum, kernel_name_);
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]->addr);
 
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[kIndex0]->size / sizeof(float);
+  size_t num_sample = outputs[kIndex0]->size() / sizeof(float);
 
   // Uniform variates sampled from the open-interval (-1,1) rather than [-1, 1].
   float lo = std::nextafter(-1.f, 0.f);

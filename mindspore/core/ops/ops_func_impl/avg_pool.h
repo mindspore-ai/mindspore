@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_AVG_POOL_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_AVG_POOL_H_
 
+#include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
@@ -27,6 +28,8 @@ class MIND_API AvgPoolFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

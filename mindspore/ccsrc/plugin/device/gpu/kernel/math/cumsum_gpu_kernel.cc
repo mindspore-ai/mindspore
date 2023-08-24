@@ -84,7 +84,7 @@ void CumSumGpuKernelMod::Reshape() {
   stride2_ = dims_[kIndex2];
 }
 
-=======
+template <typename T>
 bool CumSumGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &workspace,
                                       const std::vector<KernelTensor *> &outputs) {
@@ -100,10 +100,10 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   }
   const auto &axis_addr = inputs.at(kIndex1);
   MS_EXCEPTION_IF_NULL(axis_addr);
-  if (axis_addr->size == sizeof(int)) {
+  if (axis_addr->size() == sizeof(int)) {
     int axis_tmp;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
+      cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
       "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
     if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
@@ -112,7 +112,7 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   } else if (inputs.at(kIndex1)->size() == sizeof(int64_t)) {
     int64_t axis_tmp;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
+      cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
       "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
     if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");

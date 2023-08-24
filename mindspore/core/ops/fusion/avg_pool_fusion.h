@@ -18,19 +18,19 @@
 #define MINDSPORE_CORE_OPS_AVG_POOL_FUSION_H_
 #include <memory>
 #include <vector>
-
+#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/avg_pool.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolFusion = "AvgPoolFusion";
 /// \brief AvgPoolFusion defined AvgPool operator prototype of lite.
-class MIND_API AvgPoolFusion : public AvgPool {
+class MIND_API AvgPoolFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AvgPoolFusion);
   /// \brief Constructor.
-  AvgPoolFusion() : AvgPool(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
+  AvgPoolFusion() : BaseOperator(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///

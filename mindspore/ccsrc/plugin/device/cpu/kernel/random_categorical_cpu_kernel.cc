@@ -148,7 +148,7 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::KernelTe
 
   T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->device_ptr());
   int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->device_ptr())[0];
-  int seed = reinterpret_cast<int *>(inputs[kIndex2]->device_ptr())[0];
+  int input_seed = reinterpret_cast<int *>(inputs[kIndex2]->device_ptr())[0];
   T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->device_ptr());
 
   MS_EXCEPTION_IF_NULL(input_tensor);

@@ -23,28 +23,32 @@ namespace ops {
 BaseShapePtr LogSoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) const {
   auto x_shape = input_args[kIndex0]->GetShape();
-  auto x_shape_vec = x_shape->GetShapeVector();
-  if (MS_UNLIKELY(IsDynamicRank(x_shape_vec))) {
-    return x_shape->Clone();
-  }
-
-  int64_t x_rank = SizeToLong(x_shape_vec.size());
-  MS_CHECK_VALUE(x_rank >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg("dimension of 'logit'", x_rank, kGreaterEqual,
-                                                                          1, primitive));
-  auto axis = input_args[kIndex1]->GetValue();
-  auto axis_opt = GetScalarValue<int64_t>(axis);
-  if (MS_LIKELY(axis_opt.has_value())) {
-    auto axis_value = axis_opt.value();
-    MS_CHECK_VALUE(
-      axis_value >= -x_rank && axis_value < x_rank,
-      CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft, {-x_rank, x_rank}, primitive));
-  }
   return x_shape->Clone();
 }
 
 TypePtr LogSoftmaxFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[kIndex0]->GetType()->Clone();
+}
+
+int32_t LogSoftmaxFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) const {
+  // Check axis_value
+  auto check_status = OP_CHECK_SUCCESS;
+  auto axis = input_args[kIndex1]->GetValue();
+  auto axis_opt = GetScalarValue<int64_t>(axis);
+  auto x_shape = input_args[kIndex0]->GetShape();
+  auto x_shape_vec = x_shape->GetShapeVector();
+  if (MS_UNLIKELY(!axis_opt.has_value() || IsDynamicRank(x_shape_vec))) {
+    check_status = OP_CHECK_RETRY;
+  } else {
+    auto axis_value = axis_opt.value();
+    int64_t x_rank = SizeToLong(x_shape_vec.size());
+    MS_CHECK_VALUE(
+      axis_value >= -x_rank && axis_value < x_rank,
+      CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft, {-x_rank, x_rank}, primitive));
+  }
+  return check_status;
 }
 }  // namespace ops
 }  // namespace mindspore

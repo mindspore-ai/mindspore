@@ -27,12 +27,6 @@ namespace ops {
 void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
                          const PadMode &pad_mode, const Format &format, const std::vector<int64_t> &pad,
                          const RoundMode &round_mode, const bool global, const ActivationType activation_type) {
-  this->set_pad_mode(pad_mode);
-  this->set_kernel_size(kernel_size);
-  this->set_strides(stride);
-  this->set_format(format);
-  this->set_pad(pad);
-  this->set_round_mode(round_mode);
   this->set_global(global);
   this->set_activation_type(activation_type);
 }
@@ -56,7 +50,7 @@ ActivationType AvgPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_OPERATOR_IMPL(AvgPoolFusion, AvgPool);
+// MIND_API_OPERATOR_IMPL(AvgPoolFusion, AvgPool);
 REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

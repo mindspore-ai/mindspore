@@ -88,15 +88,9 @@ void CumulativeLogsumexpGpuKernelMod::Reshape() {
 }
 
 template <typename T>
-<<<<<<< HEAD
-bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
-=======
 bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &workspace,
-                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
->>>>>>> common edit for kernelmod
+                                                   const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -112,44 +106,29 @@ bool CumulativeLogsumexpGpuKernelMod::LaunchKernel(const std::vector<KernelTenso
     if (axis_addr->size() == sizeof(int)) {
       int axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-<<<<<<< HEAD
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
       }
-=======
-        cudaMemcpy(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
->>>>>>> common edit for kernelmod
       axis_ = axis_tmp;
     } else if (inputs.at(kIndex1)->size() == sizeof(int64_t)) {
       int64_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-<<<<<<< HEAD
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
       }
-=======
-        cudaMemcpy(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
->>>>>>> common edit for kernelmod
       axis_ = static_cast<int>(axis_tmp);
     } else if (inputs.at(kIndex1)->size() == sizeof(int16_t)) {
       int16_t axis_tmp;
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-<<<<<<< HEAD
-        cudaMemcpyAsync(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost, cuda_stream_),
+        cudaMemcpyAsync(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost, cuda_stream_),
         "For '" << kernel_name_ << "', cudaMemcpyAsync input 'axis' device to host failed.");
       if (cudaStreamQuery(cuda_stream_) != cudaSuccess) {
         CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cuda Stream Sync Failed");
       }
-=======
-        cudaMemcpy(&axis_tmp, axis_addr->device_ptr(), axis_addr->size(), cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
->>>>>>> common edit for kernelmod
       axis_ = static_cast<int>(axis_tmp);
     } else {
       MS_LOG(ERROR) << "The dtype of 'axis' should be int16, int32 or int64";

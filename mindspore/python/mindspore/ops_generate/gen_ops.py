@@ -257,7 +257,6 @@ def process_args(args):
             elif arg_handler == "dtype_to_enum":
                 pass
             else:
-                arg_handler = arg_handler.replace("arg_handler.py::", "")
                 assign_str = f'arg_handler.{arg_handler}({assign_str})'
 
         assign_str = f"""        self.{arg_name} = """ + assign_str

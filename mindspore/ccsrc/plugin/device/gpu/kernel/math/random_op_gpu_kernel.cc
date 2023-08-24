@@ -121,8 +121,8 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
       T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
       T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
       bool ret = false;
-      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size() / sizeof(T), input_addr_2,
-                               inputs[2]->size / sizeof(T), output_addr, outputs[0]->size() / sizeof(T),
+      auto status = UniformInt(seed_, seed_offset_, devStates, input_addr_1, inputs[1]->size() / sizeof(T),
+                               input_addr_2, inputs[2]->size() / sizeof(T), output_addr, outputs[0]->size() / sizeof(T),
                                reinterpret_cast<cudaStream_t>(cuda_stream_), &ret);
       CHECK_CUDA_STATUS(status, kernel_name_);
       if (!ret) {

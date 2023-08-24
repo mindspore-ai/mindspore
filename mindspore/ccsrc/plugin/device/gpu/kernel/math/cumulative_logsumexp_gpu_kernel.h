@@ -35,16 +35,10 @@ class CumulativeLogsumexpGpuKernelMod : public NativeGpuKernelMod {
   CumulativeLogsumexpGpuKernelMod() = default;
   ~CumulativeLogsumexpGpuKernelMod() override = default;
 
-<<<<<<< HEAD
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
-    return kernel_func_(this, inputs, workspace, outputs);
-=======
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
-    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
->>>>>>> common edit for kernelmod
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -60,21 +54,12 @@ class CumulativeLogsumexpGpuKernelMod : public NativeGpuKernelMod {
   void Reshape();
   void ResetResource() noexcept;
   template <typename T>
-<<<<<<< HEAD
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-
-  using CumulativeLogsumexpLaunchFunc =
-    std::function<bool(CumulativeLogsumexpGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-=======
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+                    const std::vector<KernelTensor *> &outputs);
 
   using CumulativeLogsumexpLaunchFunc =
     std::function<bool(CumulativeLogsumexpGpuKernelMod *, const std::vector<KernelTensor *> &,
-                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
->>>>>>> common edit for kernelmod
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, CumulativeLogsumexpLaunchFunc>> func_list_;
   CumulativeLogsumexpLaunchFunc kernel_func_;
   int axis_{0};

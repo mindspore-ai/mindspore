@@ -54,7 +54,7 @@ class CumSumGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept;
   template <typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+                    const std::vector<KernelTensor *> &outputs);
 
   using CumSumLaunchFunc =
     std::function<bool(CumSumGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,

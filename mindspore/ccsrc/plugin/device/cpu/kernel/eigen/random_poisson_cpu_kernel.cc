@@ -182,13 +182,6 @@ bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
   size_t num_of_rate = inputs[1]->size() / sizeof(Tin);
   size_t num_of_output = outputs[0]->size() / sizeof(T);
 
-  auto attr_seed = LongToUlong(seed_);
-  uint64_t final_seed = attr_seed;
-  if (final_seed == 0) {
-    auto attr_seed2 = seed2_;
-    final_seed = LongToUlong(attr_seed2);
-  }
-
   if (AddrAlignedCheck(outputs[0]->device_ptr())) {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> eigen_output(static_cast<T *>(output), num_of_output);
     PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]));
