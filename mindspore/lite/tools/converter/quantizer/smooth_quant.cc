@@ -137,6 +137,48 @@ int InsertScaleForActivation(const FuncGraphPtr &func_graph, const CNodePtr &cno
   return RET_OK;
 }
 
+int UpdateQuantParam(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const tensor::TensorPtr &tensor_info,
+                     const std::vector<schema::QuantParamT> &matrix_a_quants, const std::vector<float> &smooth_scales) {
+  auto cnode_name = cnode->fullname_with_scope();
+  auto holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(holder);
+  float act_min = FLT_MAX;
+  float act_max = FLT_MIN;
+  for (size_t i = 0; i < smooth_scales.size(); ++i) {
+    auto quant = matrix_a_quants.at(i);
+    float adjust_min = static_cast<float>(quant.min) / smooth_scales.at(i);
+    float adjust_max = static_cast<float>(quant.max) / smooth_scales.at(i);
+    act_min = std::min(act_min, adjust_min);
+    act_min = std::min(act_min, adjust_max);
+    act_max = std::max(act_max, adjust_min);
+    act_max = std::max(act_max, adjust_max);
+  }
+  schema::QuantParamT act_quant_param;
+  auto ret = CalQuantizationParams(&act_quant_param, act_min, act_max, k8Bit, false);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << cnode_name << " calculate quantization param failed.";
+    return ret;
+  }
+  holder->set_input_quant_param(0, {act_quant_param});
+  // update weight quant info
+  auto weight_tensor_data = static_cast<float *>(tensor_info->data_c());
+  std::vector<schema::QuantParamT> weight_quant_params;
+  GetPerAxisQuantParams(weight_tensor_data, tensor_info->DataSize(), ConvertShapeVectorToInt32(tensor_info->shape_c()),
+                        CHANNEL_OUT_AXIS, &weight_quant_params);
+  holder->set_input_quant_param(kWeightIndex, weight_quant_params);
+  // Bias dont need adjust. Y = (1 / Scale)X * (Scale)W + Bias
+  if (cnode->size() > kBiasIndex + kPrimOffset) {
+    std::vector<schema::QuantParamT> bias_weight_quant_params;
+    ret = CalBiasQuantParams({act_quant_param}, weight_quant_params, &bias_weight_quant_params);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode_name << " calculate bias quantization param failed.";
+      return ret;
+    }
+    holder->set_input_quant_param(kBiasIndex, bias_weight_quant_params);
+  }
+  return RET_OK;
+}
+
 // All tensors must float32.
 int SmoothQuant::LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cnode, double alpha) {
   CHECK_NULL_RETURN(cnode);
@@ -204,36 +246,10 @@ int SmoothQuant::LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cn
   }
 
   // update act quant param.
-  float act_min = FLT_MAX;
-  float act_max = FLT_MIN;
-  for (size_t i = 0; i < scale_size; ++i) {
-    auto quant = matrix_a_quants.at(i);
-    float adjust_min = static_cast<float>(quant.min) / smooth_scales.at(i);
-    float adjust_max = static_cast<float>(quant.max) / smooth_scales.at(i);
-    act_min = std::min(act_min, adjust_min);
-    act_min = std::min(act_min, adjust_max);
-    act_max = std::max(act_max, adjust_min);
-    act_max = std::max(act_max, adjust_max);
-  }
-  schema::QuantParamT act_quant_param;
-  ret = CalQuantizationParams(&act_quant_param, act_min, act_max, k8Bit, false);
+  ret = UpdateQuantParam(func_graph, cnode, tensor_info, matrix_a_quants, smooth_scales);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << cnode_name << " calculate quantization param failed.";
+    MS_LOG(ERROR) << cnode_name << " update quant param failed.";
     return ret;
-  }
-  holder->set_input_quant_param(0, {act_quant_param});
-  // update weight quant info
-  weight_tensor_data = static_cast<float *>(tensor_info->data_c());
-  std::vector<schema::QuantParamT> weight_quant_params;
-  GetPerAxisQuantParams(weight_tensor_data, tensor_info->DataSize(), ConvertShapeVectorToInt32(tensor_info->shape_c()),
-                        CHANNEL_OUT_AXIS, &weight_quant_params);
-  holder->set_input_quant_param(kWeightIndex, weight_quant_params);
-  // Bias dont need adjust. Y = (1 / Scale)X * (Scale)W + Bias
-  if (cnode->size() > kBiasIndex + kPrimOffset) {
-    std::vector<schema::QuantParamT> bias_weight_quant_params;
-    CalBiasQuantParams(input_quant_params.at(kInputIndex), input_quant_params.at(kWeightIndex),
-                       &bias_weight_quant_params);
-    holder->set_input_quant_param(kBiasIndex, bias_weight_quant_params);
   }
   return RET_OK;
 }
