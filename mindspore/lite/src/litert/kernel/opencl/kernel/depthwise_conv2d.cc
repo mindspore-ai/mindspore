@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
   if (filter_type_ == MemType::IMG) {
     size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
-    ImageSize img_size{(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
+    ImageSize img_size{static_cast<size_t>(plane_out) / C4NUM, static_cast<size_t>(out_info.N) * CO4, img_dtype};
     packed_weight_ = allocator->Malloc(img_size, temp_filter.data());
 
   } else {
@@ -199,7 +199,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "Malloc failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_weight_);
+  FreeStoredData(&stored_weight_);
   return RET_OK;
 }
 #else
@@ -236,7 +236,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
   if (filter_type_ == MemType::IMG) {
     size_t img_dtype = CL_FLOAT;
-    ImageSize img_size{(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
+    ImageSize img_size{static_cast<size_t>(plane_out) / C4NUM, static_cast<size_t>(out_info.N) * CO4, img_dtype};
     packed_weight_ = allocator->Malloc(img_size, temp_filter.data());
 
   } else {
@@ -246,7 +246,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "Malloc data failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_weight_);
+  FreeStoredData(&stored_weight_);
   return RET_OK;
 }
 #endif
@@ -292,7 +292,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
 
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 #else
@@ -325,7 +325,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
 
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 #endif
@@ -395,8 +395,8 @@ int DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // set global
   size_t CO4 = UP_DIV(out_info.C, C4NUM * block_size_.C);
-  global_size_ = {CO4, (size_t)UP_DIV(out_info.W, block_size_.W),
-                  (size_t)UP_DIV(out_info.H, block_size_.H) * out_info.N};
+  global_size_ = {CO4, static_cast<size_t>(UP_DIV(out_info.W, block_size_.W)),
+                  static_cast<size_t>(UP_DIV(out_info.H, block_size_.H)) * out_info.N};
   // set local
   int local_max = filter_type_ == MemType::IMG ? 64 : 128;  // IMG : 64, BUFFER : 128
   if (ocl_runtime_->DeviceComputeUnits() > 16) {            // Max Device Compute Units : 16

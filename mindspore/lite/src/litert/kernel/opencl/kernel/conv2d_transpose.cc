@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,10 @@ int Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   int oh = out_tensors_[0]->shape()[1];
   int ow = out_tensors_[0]->shape()[2];
   local_size_ = {16, 1, 16};
-  global_size_ = {(size_t)UP_ROUND(UP_DIV(oh, 2), stride_h), (size_t)UP_ROUND(UP_DIV(ow, 2), stride_w),
-                  (size_t)co4 * (size_t)n};
+  //  static_cast<size_t>()
+  global_size_ = {static_cast<size_t>(UP_ROUND(UP_DIV(oh, 2), stride_h)),
+                  static_cast<size_t>(UP_ROUND(UP_DIV(ow, 2), stride_w)),
+                  static_cast<size_t>(co4) * static_cast<size_t>(n)};
   AlignGlobalLocal(global_size_, local_size_);
 
   return RET_OK;
@@ -236,7 +238,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_weight_);
+  FreeStoredData(&stored_weight_);
   return RET_OK;
 }
 
@@ -290,7 +292,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(stored_bias_);
+  FreeStoredData(&stored_bias_);
   return RET_OK;
 }
 
