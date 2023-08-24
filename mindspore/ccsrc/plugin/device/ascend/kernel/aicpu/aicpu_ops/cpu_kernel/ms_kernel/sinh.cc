@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#include "sinh.h"
-
-#include <complex>
+#include "cpu_kernel/ms_kernel/sinh.h"
 #include <unsupported/Eigen/CXX11/Tensor>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+
+#include <algorithm>
+#include <complex>
+#include <vector>
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -116,7 +118,7 @@ inline std::uint32_t SinhExtraCheck(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-std::uint32_t SinhCheck(CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
+std::uint32_t SinhCheck(const CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
   return NormalCheck(ctx, kSinhInputNum, kSinhOutputNum) ? KERNEL_STATUS_PARAM_INVALID : SinhExtraCheck(ctx);
 }
 

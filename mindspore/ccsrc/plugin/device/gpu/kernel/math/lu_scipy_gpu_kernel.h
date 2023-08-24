@@ -55,7 +55,8 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
     int *info_output_addr = GetDeviceAddress<int>(workspace, kDim0);
     T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim1);
 
-    TransposeInfo info, work_info;
+    TransposeInfo info;
+    TransposeInfo work_info;
     info.input_shape = std::vector<int64_t>{m_, n_};
     info.perm = std::vector<int32_t>{1, 0};
     work_info.input_shape = std::vector<int64_t>{n_, m_};

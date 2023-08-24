@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SMOOTH_L1_LOSS_GRAD_V2_H_
 
 #include <string>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,14 +31,15 @@ class SmoothL1LossGradV2CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParamCheck(CpuKernelContext &ctx);
-  uint32_t AttributesCheck(CpuKernelContext &ctx);
+  uint32_t ParamCheck(const CpuKernelContext &ctx);
+  uint32_t AttributesCheck(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeMean(CpuKernelContext &ctx);
+  uint32_t ComputeMean(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeSum(CpuKernelContext &ctx);
+  uint32_t ComputeSum(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeNone(CpuKernelContext &ctx);
+  uint32_t ComputeNone(const CpuKernelContext &ctx);
+  std::string reduction{"mean"};
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_SMOOTH_L1_LOSS_GRAD_V2_H_

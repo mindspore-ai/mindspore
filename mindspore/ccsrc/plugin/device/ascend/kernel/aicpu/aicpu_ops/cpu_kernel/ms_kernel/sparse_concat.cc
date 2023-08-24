@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-#include "sparse_concat.h"
+#include "cpu_kernel/ms_kernel/sparse_concat.h"
+
+#include <algorithm>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
+
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "frontend/parallel/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "status.h"
-using namespace std;
+
 namespace {
 const char *kSparseConcat = "SparseConcat";
 const uint32_t kOutputNum = 3;
@@ -162,6 +167,7 @@ class MySparseTensor {
     order_.assign(order.begin(), order.end());
     return 0;
   }
+
   template <typename T>
   static MySparseTensor *Concat(const std::vector<MySparseTensor *> &tensors, Tensor *output_ix, Tensor *output_vals) {
     const int dims = tensors[0]->dims_;
@@ -170,7 +176,6 @@ class MySparseTensor {
     std::vector<int64_t> final_order(order_0.begin(), order_0.end());
     std::vector<int64_t> final_shape(tensors[0]->shape_.begin(), tensors[0]->shape_.end());
     final_shape[primary_dim] = 0;  // We'll build this up as we go along.
-    int num_entries = 0;
 
     bool fully_ordered = true;
     for (const MySparseTensor *st : tensors) {
@@ -179,8 +184,6 @@ class MySparseTensor {
 
       // Update dimension of final shape
       final_shape[primary_dim] = (final_shape[primary_dim] + st_shape[primary_dim]);
-
-      num_entries += st->ix_->GetTensor()->GetTensorShape()->GetDimSize(0);  // Update number of entries
     }
 
     // If nonconsistent ordering among inputs, set final order to -1s.
@@ -214,7 +217,8 @@ class MySparseTensor {
     res->CreateSparseTensor(output_ix, output_vals, final_shape, final_order);
     return res;
   }
-  std::vector<int64_t> shape() { return shape_; };
+
+  std::vector<int64_t> shape() { return shape_; }
 
  private:
   std::shared_ptr<EigenTensor> ix_;
@@ -223,18 +227,19 @@ class MySparseTensor {
   std::vector<int64_t> order_;
   int32_t dims_;
 };
+
 template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx) {
+uint32_t DoCompute(const CpuKernelContext &ctx) {
   int64_t concat_dim_attr_ = ctx.GetAttr("concat_dim") != NULL ? ctx.GetAttr("concat_dim")->GetInt() : 0;
   int64_t N = ctx.GetAttr("N") != NULL ? ctx.GetAttr("N")->GetInt() : 1;
 
-  vector<Tensor *> inds;
-  vector<Tensor *> vals;
-  vector<Tensor *> shapes;
+  std::vector<Tensor *> inds;
+  std::vector<Tensor *> vals;
+  std::vector<Tensor *> shapes;
 
-  vector<typename TTypes<int64_t>::Matrix> inds_t;
-  vector<typename TTypes<T>::Vec> vals_t;
-  vector<typename TTypes<int64_t>::Vec> shapes_t;
+  std::vector<typename TTypes<int64_t>::Matrix> inds_t;
+  std::vector<typename TTypes<T>::Vec> vals_t;
+  std::vector<typename TTypes<int64_t>::Vec> shapes_t;
   for (int i = 0; i < N; i++) {
     Tensor *indice = ctx.Input(i);
     Tensor *value = ctx.Input(i + N);
@@ -297,10 +302,10 @@ uint32_t DoCompute(CpuKernelContext &ctx) {
       }
     }
   }
-  vector<int64_t> std_order(input_rank);
-  iota(std_order.begin(), std_order.end(), 0);
+  std::vector<int64_t> std_order(input_rank);
+  std::iota(std_order.begin(), std_order.end(), 0);
 
-  vector<int64_t> concat_order;
+  std::vector<int64_t> concat_order;
   concat_order.reserve(input_rank);
   concat_order.push_back(concat_dim);
   for (int j = 0; j < input_rank; ++j) {
@@ -308,9 +313,9 @@ uint32_t DoCompute(CpuKernelContext &ctx) {
       concat_order.push_back(j);
     }
   }
-  vector<MySparseTensor *> sp_inputs;
+  std::vector<MySparseTensor *> sp_inputs;
   for (int i = 0; i < N; ++i) {
-    vector<int64_t> current_shape;
+    std::vector<int64_t> current_shape;
     for (int j = 0; j < input_rank; j++) current_shape.push_back(shapes_t[i](j));
     MySparseTensor *tensor = new MySparseTensor();
     tensor->CreateSparseTensor(inds[i], vals[i], current_shape, std_order);

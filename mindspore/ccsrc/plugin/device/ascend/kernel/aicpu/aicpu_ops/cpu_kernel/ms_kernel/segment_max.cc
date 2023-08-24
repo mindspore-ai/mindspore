@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "segment_max.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/segment_max.h"
+#include <algorithm>
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/common/runtime_tensor_desc.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/common/runtime_tensor_desc.h"
 
 namespace {
 const uint32_t kInputNum = 2;
@@ -48,6 +49,49 @@ const int64_t kDataSize = 2 * 1024;
   SEGMENTMAX_COMPUTE_CASE(DT_FLOAT16, Eigen::half, TYPE, CTX) \
   SEGMENTMAX_COMPUTE_CASE(DT_FLOAT, float, TYPE, CTX)         \
   SEGMENTMAX_COMPUTE_CASE(DT_DOUBLE, double, TYPE, CTX)
+
+template <typename T>
+uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
+                           std::vector<int64_t> *const segments_segment_ids) {
+  if (segment_ids_data_addr[0] < 0) {
+    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
+    return aicpu::KERNEL_STATUS_PARAM_INVALID;
+  }
+  int64_t seg_tmp = 1;
+  for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
+    if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
+      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
+      return aicpu::KERNEL_STATUS_PARAM_INVALID;
+    }
+    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
+      seg_tmp++;
+    } else {
+      segments_segment_ids->push_back(seg_tmp);
+      seg_tmp = 1;
+    }
+    if (i == segment_ids_data_num - ge::DIM_SIZE2) {
+      segments_segment_ids->push_back(seg_tmp);
+    }
+  }
+  return aicpu::KERNEL_STATUS_OK;
+}
+
+template <typename T1, typename T2>
+void InnerCompute(const int64_t start, const int64_t end, const int64_t input_addr_base, const T1 *input_x_addr,
+                  T1 *const output_data_addr, const T2 *segment_ids_data_addr, const int64_t count,
+                  const int64_t num_compare_per, const int64_t count_no) {
+  for (int64_t j = start; j < end; j++) {
+    int64_t max_init_addr = input_addr_base + j;
+    T1 max_value = input_x_addr[max_init_addr];
+    for (int64_t k = 1; k < count; k++) {
+      int64_t cmp_addr = max_init_addr + k * num_compare_per;
+      if (max_value < input_x_addr[cmp_addr]) {
+        max_value = input_x_addr[cmp_addr];
+      }
+    }
+    output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
+  }
+}
 }  // namespace
 
 namespace aicpu {
@@ -83,7 +127,7 @@ uint32_t SegmentMaxCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
+uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
   Tensor *input_x_data = ctx.Input(0);
   auto input_x_addr = reinterpret_cast<T1 *>(input_x_data->GetData());
   auto input_x_shape = input_x_data->GetTensorShape();
@@ -118,25 +162,9 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
     KERNEL_LOG_ERROR("The amount of data for input[1] must be equal to the first dimension of input[0].");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (segment_ids_data_addr[0] < 0) {
-    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  int64_t seg_tmp = 1;
-  for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
-    if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
-      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
-      return KERNEL_STATUS_PARAM_INVALID;
-    }
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments_segment_ids.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    if (i == segment_ids_data_num - ge::DIM_SIZE2) {
-      segments_segment_ids.push_back(seg_tmp);
-    }
+  if (auto status = SegmentIdsCompute(segment_ids_data_addr, segment_ids_data_num, &segments_segment_ids);
+      status != KERNEL_STATUS_OK) {
+    return status;
   }
   const int64_t num_compare_per = input_x_num / (input_x_shape->GetDimSize(0));
   const int64_t num_segments_segment_ids = segments_segment_ids.size();
@@ -149,17 +177,8 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
       }
       int64_t input_addr_base = count_no * num_compare_per;
       if (num_compare_per < kDataSize) {
-        for (int64_t j = 0; j < num_compare_per; j++) {
-          int64_t max_init_addr = input_addr_base + j;
-          T1 max_value = input_x_addr[max_init_addr];
-          for (int64_t k = 1; k < count; k++) {
-            int cmp_addr = max_init_addr + k * num_compare_per;
-            if (max_value < input_x_addr[cmp_addr]) {
-              max_value = input_x_addr[cmp_addr];
-            }
-          }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
-        }
+        InnerCompute(0, num_compare_per, input_addr_base, input_x_addr, output_data_addr, segment_ids_data_addr, count,
+                     num_compare_per, count_no);
       } else {
         uint32_t min_core_num = 1;
         int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
@@ -167,17 +186,8 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
           max_core_num = num_compare_per;
         }
         auto shard_compute = [&](size_t start, size_t end) {
-          for (size_t j = start; j < end; j++) {
-            int64_t max_init_addr = input_addr_base + j;
-            T1 max_value = input_x_addr[max_init_addr];
-            for (int64_t k = 1; k < count; k++) {
-              int cmp_addr = max_init_addr + k * num_compare_per;
-              if (max_value < input_x_addr[cmp_addr]) {
-                max_value = input_x_addr[cmp_addr];
-              }
-            }
-            output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
-          }
+          InnerCompute(static_cast<int64_t>(start), static_cast<int64_t>(end), input_addr_base, input_x_addr,
+                       output_data_addr, segment_ids_data_addr, count, num_compare_per, count_no);
         };
         KERNEL_HANDLE_ERROR(
           CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / max_core_num, shard_compute),
@@ -198,17 +208,8 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
           count_no += segments_segment_ids[j];
         }
         int64_t input_addr_base = count_no * num_compare_per;
-        for (int64_t j = 0; j < num_compare_per; j++) {
-          int64_t max_init_addr = input_addr_base + j;
-          T1 max_value = input_x_addr[max_init_addr];
-          for (int64_t k = 1; k < count; k++) {
-            int cmp_addr = max_init_addr + k * num_compare_per;
-            if (max_value < input_x_addr[cmp_addr]) {
-              max_value = input_x_addr[cmp_addr];
-            }
-          }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
-        }
+        InnerCompute(0, num_compare_per, input_addr_base, input_x_addr, output_data_addr, segment_ids_data_addr, count,
+                     num_compare_per, count_no);
       }
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_segments_segment_ids,

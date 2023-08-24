@@ -1,4 +1,20 @@
-#include "sparse_dense_cwise_utils.h"
+/**
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cpu_kernel/utils/sparse_dense_cwise_utils.h"
 
 #include <algorithm>
 #include <cmath>
@@ -7,10 +23,9 @@
 #include <type_traits>
 #include <vector>
 
-#include "broadcast_iterator.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_util.h"
-#include "kernel_log.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/broadcast_iterator.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
@@ -24,7 +39,7 @@ const int64_t kParallelDataNumSameShape = 7 * 1024;
 }  // namespace
 
 template <typename Op>
-uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum_SparseDenseCwiseOp, kOutputNum_SparseDenseCwiseOp),
                       "SparseDenseCwise%s normal check failed.", Op::Name().c_str());
 
@@ -81,12 +96,13 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(CpuKernelContext &ctx) {
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastShapeType type, CpuKernelContext &ctx) {
-  auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
-  auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
-  auto dense_data = reinterpret_cast<T *>(ctx.Input(3)->GetData());
-  auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastShapeType type,
+                                                                        const CpuKernelContext &ctx) {
+  auto sparse_indices_data = static_cast<int64_t *>(ctx.Input(0)->GetData());
+  auto sparse_values_data = static_cast<T *>(ctx.Input(1)->GetData());
+  auto sparse_shape_data = static_cast<int64_t *>(ctx.Input(2)->GetData());
+  auto dense_data = static_cast<T *>(ctx.Input(3)->GetData());
+  auto output_data = static_cast<T *>(ctx.Output(0)->GetData());
 
   int64_t value_nums = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   int64_t dimension = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
@@ -223,7 +239,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(const CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dimension = input2_tensor->NumElements();
@@ -235,12 +251,12 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(CpuKerne
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(CpuKernelContext &ctx) {
-  auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
-  auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
-  auto dense_data = reinterpret_cast<T *>(ctx.Input(3)->GetData());
-  auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuKernelContext &ctx) {
+  auto sparse_indices_data = static_cast<int64_t *>(ctx.Input(0)->GetData());
+  auto sparse_values_data = static_cast<T *>(ctx.Input(1)->GetData());
+  auto sparse_shape_data = static_cast<int64_t *>(ctx.Input(2)->GetData());
+  auto dense_data = static_cast<T *>(ctx.Input(3)->GetData());
+  auto output_data = static_cast<T *>(ctx.Output(0)->GetData());
 
   int64_t value_nums = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   int64_t dimension = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
@@ -345,7 +361,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(CpuKernelC
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(const CpuKernelContext &ctx) {
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     case DT_INT8:
@@ -382,12 +398,12 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(CpuKernelContex
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(const CpuKernelContext &ctx) {
   auto *input3_tensor = ctx.Input(3);
   auto dimension = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
   int32_t dense_dims = input3_tensor->GetTensorShape()->GetDims();
   auto dense_shape = input3_tensor->GetTensorShape()->GetDimSizes();
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
+  auto sparse_shape_data = static_cast<int64_t *>(ctx.Input(2)->GetData());
   int64_t dense_num = ctx.Input(3)->GetTensorShape()->NumElements();
 
   std::vector<int64_t> sparse_shape(dimension);
@@ -415,7 +431,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(CpuKernelContext &ctx) {
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(const CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dense_num = ctx.Input(3)->GetTensorShape()->NumElements();
@@ -450,7 +466,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(CpuKernelContext &ctx) {
 template <typename Op>
 template <typename T>
 uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(BcastShapeType type,
-                                                                               CpuKernelContext &ctx) {
+                                                                               const CpuKernelContext &ctx) {
   auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -591,7 +607,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(const CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dimension = input2_tensor->NumElements();
@@ -604,7 +620,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(C
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(const CpuKernelContext &ctx) {
   auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -714,53 +730,53 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(Cpu
 }
 
 template class SparseDenseCwiseOpKernel<AddOp>;
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 
 template class SparseDenseCwiseOpKernel<DivOp>;
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 
 template class SparseDenseCwiseOpKernel<MulOp>;
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  CpuKernelContext &ctx);
+  const CpuKernelContext &ctx);
 }  // namespace aicpu

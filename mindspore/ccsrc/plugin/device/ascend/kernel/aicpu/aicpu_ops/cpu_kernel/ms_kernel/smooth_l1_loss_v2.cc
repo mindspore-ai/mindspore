@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "smooth_l1_loss_v2.h"
+#include "cpu_kernel/ms_kernel/smooth_l1_loss_v2.h"
 
 #include <mutex>
+#include <algorithm>
 
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -30,7 +31,6 @@ const uint32_t kOutputNum = 1;
 constexpr int64_t kParallelDataNums = 16 * 1024;
 const float opHalf = 0.5;
 float sigma = 1.0;
-std::string reduction = "mean";
 std::mutex mtx;
 
 #define COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX)                  \
@@ -70,7 +70,7 @@ uint32_t SmoothL1LossV2CpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SmoothL1LossV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output_0 = ctx.Output(0);
@@ -108,7 +108,7 @@ uint32_t SmoothL1LossV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
   return AttributeCheck(ctx);
 }
 
-uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(const CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *output_0 = ctx.Output(0);
   auto input0_shape = input_0->GetTensorShape();
@@ -149,7 +149,7 @@ uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
   uint32_t compute_sum_res = ComputeSum<T>(ctx);
   if (compute_sum_res != KERNEL_STATUS_OK) {
     return compute_sum_res;
@@ -169,7 +169,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *loss_tensor = ctx.Output(0);
@@ -227,7 +227,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeNone(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *loss_tensor = ctx.Output(0);

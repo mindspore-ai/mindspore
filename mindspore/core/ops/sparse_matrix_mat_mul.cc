@@ -123,7 +123,8 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
       << adjoint_x2 << ", and transpose_x2 = " << transpose_x2 << ".";
   }
 
-  int64_t row_x2 = -1, col_x2 = -1;
+  int64_t row_x2 = -1;
+  int64_t col_x2 = -1;
   if (!IsDynamicRank(x2_dense_shape)) {
     const int64_t rank_x2 = SizeToLong(x2_dense_shape.size());
     const int64_t kNumTwo = 2;

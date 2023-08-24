@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-#include "sparse_apply_proximal_gradient_descent.h"
+#include "cpu_kernel/ms_kernel/sparse_apply_proximal_gradient_descent.h"
 
+#include <map>
+#include <memory>
+#include <string>
 #include <securec.h>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
+#include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
-#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace {
 const int32_t kInputNum = 6;
@@ -46,7 +50,7 @@ const char *kSparseApplyProximalGradientDescent = "SparseApplyProximalGradientDe
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseApplyProximalGradientDescentCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseApplyProximalGradientDescentCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *alpha_tensor = ctx.Input(1);
   Tensor *l1_tensor = ctx.Input(2);
@@ -134,33 +138,27 @@ uint32_t SparseApplyProximalGradientDescentCpuKernel::Compute(CpuKernelContext &
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyProximalGradientDescentCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseApplyProximalGradientDescentCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   auto var_shape = var->GetTensorShape();
 
   Tensor *alpha = ctx.Input(1);
   Tensor *l1 = ctx.Input(2);
   Tensor *l2 = ctx.Input(3);
-
   Tensor *grad = ctx.Input(4);
   auto grad_shape = grad->GetTensorShape();
 
   Tensor *indices_tensor = ctx.Input(5);
   EigenTensor indices(indices_tensor, indices_tensor->GetData());
   const TI N = indices_tensor->GetTensorShape()->GetDimSize(0);
-
-  int64_t inner_dim = 1;
-  for (int d = 1; d < var_shape->GetDims(); d++) {
-    inner_dim *= grad_shape->GetDimSize(d);
-  }
-
   if (N > 0) {
     auto indices_vec = indices.flat<TI>();
-
     Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> var_flat(
-      (T *)var->GetData(), var_shape->GetDimSize(0), var_shape->NumElements() / var_shape->GetDimSize(0));
+      reinterpret_cast<T *>(var->GetData()), var_shape->GetDimSize(0),
+      var_shape->NumElements() / var_shape->GetDimSize(0));
     Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_flat(
-      (T *)grad->GetData(), grad_shape->GetDimSize(0), grad_shape->NumElements() / grad_shape->GetDimSize(0));
+      reinterpret_cast<T *>(grad->GetData()), grad_shape->GetDimSize(0),
+      grad_shape->NumElements() / grad_shape->GetDimSize(0));
 
     T alpha_scalar = *(reinterpret_cast<const T *>(alpha->GetData()));
     T l1_scalar = *(reinterpret_cast<const T *>(l1->GetData()));

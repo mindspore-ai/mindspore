@@ -16,11 +16,11 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SINH_H_
 #define AICPU_KERNELS_NORMALIZED_SINH_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SinhCpuKernel final : public CpuKernel {
-  virtual std::uint32_t Compute(CpuKernelContext &ctx) override final;
+  std::uint32_t Compute(CpuKernelContext &ctx) final;
 };
 }  // namespace aicpu
 #endif

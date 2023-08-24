@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sinc.h"
-
+#include "cpu_kernel/ms_kernel/sinc.h"
+#include <algorithm>
 #include <complex>
 #include <set>
-#include "cpu_kernel_utils.h"
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -31,7 +32,7 @@ const char *kSinc = "Sinc";
 
 namespace aicpu {
 template <typename T>
-uint32_t SincCpuKernel::SincTypeSameCompute(CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincTypeSameCompute(const CpuKernelContext &ctx) {
   T *x_addr = static_cast<T *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<T *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();
@@ -71,7 +72,7 @@ uint32_t SincCpuKernel::SincTypeSameCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SincCpuKernel::SincTypeChangeCompute(CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincTypeChangeCompute(const CpuKernelContext &ctx) {
   T *x_addr = static_cast<T *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<float *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();
@@ -79,7 +80,7 @@ uint32_t SincCpuKernel::SincTypeChangeCompute(CpuKernelContext &ctx) {
   if (date_size <= paralled_data_size) {
     for (size_t i = 0; i < x_size; i++) {
       if (x_addr[i] == T(0.0f)) {
-        y_addr[i] = float(1.0f);
+        y_addr[i] = static_cast<float>(1.0f);
       } else {
         float product = static_cast<float>(kPI) * x_addr[i];
         y_addr[i] = sin(product) / product;
@@ -89,7 +90,7 @@ uint32_t SincCpuKernel::SincTypeChangeCompute(CpuKernelContext &ctx) {
     auto shard_sinc = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         if (x_addr[i] == T(0.0f)) {
-          y_addr[i] = float(1.0f);
+          y_addr[i] = static_cast<float>(1.0f);
         } else {
           float product = static_cast<float>(kPI) * x_addr[i];
           y_addr[i] = sin(product) / product;
@@ -111,7 +112,7 @@ uint32_t SincCpuKernel::SincTypeChangeCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SincCpuKernel::SincBoolCompute(CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincBoolCompute(const CpuKernelContext &ctx) {
   bool *x_addr = static_cast<bool *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<float *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();

@@ -179,7 +179,8 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   T *d_A = GetDeviceAddress<T>(workspace, kIndex5);
   T *d_output_r_t = GetDeviceAddress<T>(workspace, kIndex6);
 
-  TransposeInfo x_info, y_info;
+  TransposeInfo x_info;
+  TransposeInfo y_info;
   for (size_t i = 0; i < input_dims_; ++i) {
     x_info.input_shape.push_back(static_cast<int64_t>(transpose_input_shape_[i]));
     x_info.perm.push_back(static_cast<int>(transpose_input_axis_[i]));

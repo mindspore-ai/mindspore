@@ -16,7 +16,8 @@
 #ifndef AICPU_KERNELS_SPACETODEPTH_H_
 #define AICPU_KERNELS_SPACETODEPTH_H_
 
-#include "cpu_ops_kernel.h"
+#include <string>
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SpaceToDepthCpuKernel : public CpuKernel {
@@ -24,13 +25,13 @@ class SpaceToDepthCpuKernel : public CpuKernel {
   SpaceToDepthCpuKernel() = default;
   ~SpaceToDepthCpuKernel() = default;
 
-  uint32_t Compute(CpuKernelContext &ctx) override final;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t STDParamCheck(CpuKernelContext &ctx);
+  uint32_t STDParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
   std::string data_format_;
 };  // SpaceToDepthCpuKernel
 }  // namespace aicpu

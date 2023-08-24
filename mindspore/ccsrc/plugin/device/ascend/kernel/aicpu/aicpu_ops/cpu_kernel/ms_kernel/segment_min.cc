@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-#include "segment_min.h"
-#include "cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
+#include "cpu_kernel/ms_kernel/segment_min.h"
+#include <utility>
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-using namespace std;
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 namespace {
-const uint32_t kOutputNum = 1;
-const uint32_t kInputNum = 2;
+constexpr uint32_t kOutputNum = 1;
+constexpr uint32_t kInputNum = 2;
+constexpr uint64_t _8k = 8 * 1024;
+constexpr uint64_t _2k = 2 * 1024;
 const char *kSegmentMin = "SegmentMin";
+
 #define SEGMENT_MIN_COMPUTE_CASE(DTYPE, TYPE, CTX, STYPE)                                                  \
   case (DTYPE): {                                                                                          \
     uint32_t res;                                                                                          \
@@ -46,6 +50,23 @@ const char *kSegmentMin = "SegmentMin";
     }                                                                                                      \
     break;                                                                                                 \
   }
+
+template <typename T1, typename T2>
+void InnerCompute(const uint64_t start_len, const uint64_t end_len, const uint64_t st, const uint64_t ed,
+                  const uint64_t len2, const T1 *const data_data, T2 *const output_data, const uint64_t output_start) {
+  for (uint64_t k = start_len; k < end_len; k++) {
+    for (uint64_t j = st; j <= ed; j++) {
+      uint64_t data_start = j * len2;
+      T1 &u = output_data[output_start + k];
+      const T1 v = data_data[data_start + k];
+      if (j == st) {
+        u = v;
+      } else {
+        u = std::min(u, v);
+      }
+    }
+  }
+}
 }  // namespace
 namespace aicpu {
 uint32_t SegmentMinCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -71,8 +92,29 @@ uint32_t SegmentMinCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
+
+template <typename T>
+uint32_t SegmentMinCpuKernel::OutputInit(const CpuKernelContext &ctx, const uint64_t output_len, T *const output_data) {
+  // 输出初始化为0
+  if (output_len <= _8k) {
+    for (uint64_t i = 0; i < output_len; i++) output_data[i] = static_cast<T>(0);
+    return KERNEL_STATUS_OK;
+  }
+  uint32_t min_core = 1;
+  uint64_t max_core = std::max(min_core, aicpu::CpuKernelUtils::GetCPUNum(ctx) / 2);
+  if (max_core > output_len) {
+    max_core = output_len;
+  }
+  auto init = [&](size_t start, size_t end) {
+    for (auto i = start; i < end; i++) output_data[i] = static_cast<T>(0);
+  };
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, output_len, output_len / max_core, init),
+                      "Initialize value of output failed.");
+  return KERNEL_STATUS_OK;
+}
+
 template <class T1, class T2>
-uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
+uint32_t SegmentMinCpuKernel::SegmentMinCompute(const CpuKernelContext &ctx) {
   auto data = ctx.Input(0);  // tensor*
   auto segment_ids = ctx.Input(1);
   auto output = ctx.Output(0);
@@ -81,32 +123,15 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
   auto segment_ids_len = segment_ids->NumElements();
   auto data_len = data->NumElements();
   auto data_shape = data->GetTensorShape();
-  auto segment_ids_shape = segment_ids->GetTensorShape();
   auto output_data = reinterpret_cast<T1 *>(output->GetData());
   auto output_data_shape_sizes = data_shape->GetDimSizes();
   output_data_shape_sizes[0] = segment_ids_data[segment_ids_len - 1] + 1;
   output->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   uint64_t output_len = output->NumElements();
   uint64_t len2 = data_len / data_shape->GetDimSize(0);
-  uint64_t _8k = 8 * 1024;
-  uint64_t _2k = 2 * 1024;
-  // 输出初始化为0
-  if (output_len <= _8k) {
-    for (uint64_t i = 0; i < output_len; i++) output_data[i] = (T1)0;
-  } else {
-    uint32_t min_core = 1;
-    uint64_t max_core = std::max(min_core, aicpu::CpuKernelUtils::GetCPUNum(ctx) / 2);
-    if (max_core > output_len) {
-      max_core = output_len;
-    }
-    auto init = [&](size_t start, size_t end) {
-      for (auto i = start; i < end; i++) output_data[i] = (T1)0;
-    };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, output_len, output_len / max_core, init),
-                        "Initialize value of output failed.");
-  }
-  vector<T2> nums;
-  vector<pair<uint64_t, uint64_t>> ranges;
+  OutputInit(ctx, output_len, output_data);
+  std::vector<T2> nums;
+  std::vector<std::pair<uint64_t, uint64_t>> ranges;
   for (int64_t i = 0; i < segment_ids_len; ++i) {
     if (i) {
       if (segment_ids_data[i] == nums.back()) {
@@ -115,7 +140,7 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
         nums.push_back(segment_ids_data[i]), ranges.push_back({i, i});
       }
     } else {
-      nums.push_back(segment_ids_data[0]), ranges.push_back(make_pair(0, 0));
+      nums.push_back(segment_ids_data[0]), ranges.push_back(std::make_pair(0, 0));
     }
   }
   uint64_t nums_len = nums.size();
@@ -128,17 +153,7 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
         uint64_t st = ranges[i].first;
         uint64_t ed = ranges[i].second;
         uint64_t output_start = nums[i] * len2;
-        for (uint64_t k = 0; k < len2; k++) {
-          for (uint64_t j = st; j <= ed; j++) {
-            uint64_t data_start = j * len2;
-            T1 &u = output_data[output_start + k];
-            T1 &v = data_data[data_start + k];
-            if (j == st)
-              u = v;
-            else
-              u = std::min(u, v);
-          }
-        }
+        InnerCompute(0, len2, st, ed, len2, data_data, output_data, output_start);
       }
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, nums_len, nums_len / max_core, mt_for_nums),
@@ -149,35 +164,13 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
       uint64_t ed = ranges[i].second;
       uint64_t output_start = nums[i] * len2;
       if (len2 < _2k) {
-        for (uint64_t k = 0; k < len2; k++) {
-          for (uint64_t j = st; j <= ed; j++) {
-            uint64_t data_start = j * len2;
-            T1 &u = output_data[output_start + k];
-            T1 &v = data_data[data_start + k];
-            if (j == st) {
-              u = v;
-            } else {
-              u = std::min(u, v);
-            }
-          }
-        }
+        InnerCompute(0, len2, st, ed, len2, data_data, output_data, output_start);
       } else {
         uint32_t min_core = 1;
         uint64_t max_core = std::max(min_core, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
         max_core = std::min(max_core, len2);
         auto mt_for_len2 = [&](size_t start_len, size_t end_len) {
-          for (uint64_t k = start_len; k < end_len; k++) {
-            for (uint64_t j = st; j <= ed; j++) {
-              uint64_t data_start = j * len2;
-              T1 &u = output_data[output_start + k];
-              T1 &v = data_data[data_start + k];
-              if (j == st) {
-                u = v;
-              } else {
-                u = std::min(u, v);
-              }
-            }
-          }
+          InnerCompute(start_len, end_len, st, ed, len2, data_data, output_data, output_start);
         };
         KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, len2, len2 / max_core, mt_for_len2),
                             "SegmentMin Compute failed.");
@@ -186,7 +179,7 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SegmentMinCpuKernel::SegmentMinCheck(CpuKernelContext &ctx) {
+uint32_t SegmentMinCpuKernel::SegmentMinCheck(const CpuKernelContext &ctx) {
   // inspect the input & output pointer
   KERNEL_CHECK_NULLPTR(ctx.Input(0), KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
   KERNEL_CHECK_NULLPTR(ctx.Input(1), KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")

@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "self_adjoint_eig.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_util.h"
+#include "cpu_kernel/ms_kernel/self_adjoint_eig.h"
+#include <vector>
 #include <complex>
+#include <Eigen/Dense>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/kernel_util.h"
 #include "utils/kernel_util.h"
 #include "Eigen/Core"
-#include <iostream>
-#include <Eigen/Dense>
 
-using namespace std;
 namespace {
 const char *kSelfAdjointEig = "SelfAdjointEig";
 const uint32_t kInputNum = 1;
@@ -48,10 +47,10 @@ uint32_t SelfAdjointEigCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = SelfAdjointEigCompute<double>(ctx);
       break;
     case DT_COMPLEX64:
-      ret = SelfAdjointEigCompute<complex<float>>(ctx);
+      ret = SelfAdjointEigCompute<std::complex<float>>(ctx);
       break;
     case DT_COMPLEX128:
-      ret = SelfAdjointEigCompute<complex<double>>(ctx);
+      ret = SelfAdjointEigCompute<std::complex<double>>(ctx);
       break;
     default:
       KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
@@ -62,7 +61,7 @@ uint32_t SelfAdjointEigCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(CpuKernelContext &ctx) {
+uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(const CpuKernelContext &ctx) {
   auto input_tensor = ctx.Input(0);
   auto output_tensor0 = ctx.Output(0);
   auto output_tensor1 = ctx.Output(1);

@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -27,11 +29,11 @@ namespace aicpu {
 class SparseCrossCpuKernel : public CpuKernel {
  public:
   SparseCrossCpuKernel() = default;
-  ~SparseCrossCpuKernel() override = default;
+  ~SparseCrossCpuKernel() = default;
 
  protected:
   // template <bool HASHED_OUTPUT, typename InternalType>
-  uint32_t Compute(CpuKernelContext &ctx);
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   template <bool HASHED_OUTPUT, typename InternalType>

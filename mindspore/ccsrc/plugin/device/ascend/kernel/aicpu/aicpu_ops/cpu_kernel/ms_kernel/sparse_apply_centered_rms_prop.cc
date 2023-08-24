@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_apply_centered_rms_prop.h"
+
+#include "cpu_kernel/ms_kernel/sparse_apply_centered_rms_prop.h"
 
 #include <securec.h>
-
 #include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include <securec.h>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
 namespace {
+constexpr size_t kNumTwo = 2;
 const int32_t kInputNum = 10;
 const int32_t kOutputNum = 1;
 const char *kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
@@ -48,7 +54,7 @@ const char *kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *mg_tensor = ctx.Input(1);
   Tensor *ms_tensor = ctx.Input(2);
@@ -157,7 +163,7 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   auto var_shape = var->GetTensorShape();
   Tensor *mg = ctx.Input(1);
@@ -188,16 +194,19 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(CpuKernelContext &ctx) {
                          "Index [%d] at offset [%d] in indices is out of range[%d].", index, i, first_dim_size);
     }
 
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> var_flat(
-      (T *)var->GetData(), var_shape->GetDimSize(0), var_shape->NumElements() / var_shape->GetDimSize(0));
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> ms_flat((T *)ms->GetData(), ms_shape->GetDimSize(0),
-                                                                   ms_shape->NumElements() / ms_shape->GetDimSize(0));
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> mg_flat((T *)mg->GetData(), mg_shape->GetDimSize(0),
-                                                                   mg_shape->NumElements() / mg_shape->GetDimSize(0));
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> mom_flat(
-      (T *)mom->GetData(), mom_shape->GetDimSize(0), mom_shape->NumElements() / mom_shape->GetDimSize(0));
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_flat(
-      (T *)grad->GetData(), grad_shape->GetDimSize(0), grad_shape->NumElements() / grad_shape->GetDimSize(0));
+    Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> var_flat(
+      reinterpret_cast<T *>(var->GetData()), var_shape->GetDimSize(0),
+      var_shape->NumElements() / var_shape->GetDimSize(0));
+    Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> ms_flat(
+      reinterpret_cast<T *>(ms->GetData()), ms_shape->GetDimSize(0), ms_shape->NumElements() / ms_shape->GetDimSize(0));
+    Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> mg_flat(
+      reinterpret_cast<T *>(mg->GetData()), mg_shape->GetDimSize(0), mg_shape->NumElements() / mg_shape->GetDimSize(0));
+    Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> mom_flat(
+      reinterpret_cast<T *>(mom->GetData()), mom_shape->GetDimSize(0),
+      mom_shape->NumElements() / mom_shape->GetDimSize(0));
+    Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> grad_flat(
+      reinterpret_cast<T *>(grad->GetData()), grad_shape->GetDimSize(0),
+      grad_shape->NumElements() / grad_shape->GetDimSize(0));
 
     T lr_scalar = *(reinterpret_cast<const T *>(lr->GetData()));
     T rho_scalar = *(reinterpret_cast<const T *>(rho->GetData()));

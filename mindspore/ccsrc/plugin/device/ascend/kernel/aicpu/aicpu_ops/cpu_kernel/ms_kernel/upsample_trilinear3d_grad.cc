@@ -26,6 +26,7 @@
 #include "utils/kernel_util.h"
 
 namespace {
+constexpr double kValueZero = 0.;
 constexpr auto kInputNum = 3;
 constexpr auto kOutputNum = 1;
 constexpr int kValue3 = 3;
@@ -44,7 +45,7 @@ constexpr auto kUpsampleTrilinear3dGrad = "UpsampleTrilinear3dGrad";
 namespace aicpu {
 template <typename T>
 inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {
-  if (scale > 0.) {
+  if (scale > kValueZero) {
     return static_cast<T>(1.0 / scale);
   } else if (output_size > 0) {
     return (static_cast<T>(input_size) / output_size);
@@ -211,8 +212,18 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::RealCompute(const CpuKernelContext &c
   auto loop3d = [&](int64_t begin, int64_t end) {
     for (int64_t c_idx = begin, src_c_offset = begin * input_slice_size; c_idx < end;
          ++c_idx, src_c_offset += input_slice_size) {
-      int64_t id0{0}, id1{0}, ih0{0}, ih1{0}, iw0{0}, iw1{0};
-      S d0lambda{0}, d1lambda{0}, h0lambda{0}, h1lambda{0}, w0lambda{0}, w1lambda{0};
+      int64_t id0{0};
+      int64_t id1{0};
+      int64_t ih0{0};
+      int64_t ih1{0};
+      int64_t iw0{0};
+      int64_t iw1{0};
+      S d0lambda{0};
+      S d1lambda{0};
+      S h0lambda{0};
+      S h1lambda{0};
+      S w0lambda{0};
+      S w1lambda{0};
       for (int64_t od = 0; od < output_depth; ++od) {
         d_helper[od](&id0, &id1, &d0lambda, &d1lambda);
 

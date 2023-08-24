@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "setsize.h"
+
+#include "cpu_kernel/ms_kernel/setsize.h"
 #include <securec.h>
-#include "cpu_kernel_utils.h"
-#include "status.h"
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
-using namespace std;
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -100,7 +101,7 @@ uint32_t SetSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SetSizeCpuKernel::SparseTensorFromContext(CpuKernelContext &ctx, const bool validate_indices,
+uint32_t SetSizeCpuKernel::SparseTensorFromContext(const CpuKernelContext &ctx, const bool validate_indices,
                                                    SparseTensor &st) {
   auto sparse_shape = set_shape_->GetTensorShape();
   std::vector<int64_t> dense_shape;
@@ -120,7 +121,7 @@ uint32_t SetSizeCpuKernel::SparseTensorFromContext(CpuKernelContext &ctx, const 
   return IndicesValid(ctx, st);
 }
 
-uint32_t SetSizeCpuKernel::IndicesValid(CpuKernelContext &ctx, SparseTensor &st) {
+uint32_t SetSizeCpuKernel::IndicesValid(const CpuKernelContext &ctx, SparseTensor &st) {
   int64_t dim_size =
     (set_indices_->GetTensorShape()->GetDims() == 0) ? 1 : set_indices_->GetTensorShape()->GetDimSize(0);
   if (dim_size >= kParallelDataNumSameShape) {
@@ -158,7 +159,7 @@ uint32_t SetSizeCpuKernel::IndicesValid(CpuKernelContext &ctx, SparseTensor &st)
 }
 
 template <typename T>
-uint32_t SetSizeCpuKernel::CheckGroup(CpuKernelContext &ctx, const Group &group,
+uint32_t SetSizeCpuKernel::CheckGroup(const CpuKernelContext &ctx, const Group &group,
                                       const std::vector<int64_t> &sparse_tensor_shape) {
   const int64_t num_values = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   const auto indices_t = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
@@ -175,7 +176,7 @@ uint32_t SetSizeCpuKernel::CheckGroup(CpuKernelContext &ctx, const Group &group,
 }
 
 template <typename T>
-uint32_t SetSizeCpuKernel::PopulateFromSparseGroup(CpuKernelContext &ctx, const Group &group,
+uint32_t SetSizeCpuKernel::PopulateFromSparseGroup(const CpuKernelContext &ctx, const Group &group,
                                                    const std::vector<int64_t> &sparse_tensor_shape,
                                                    std::unordered_set<T> *result) {
   if (validate_indices_ == false) CheckGroup<T>(ctx, group, sparse_tensor_shape);
@@ -210,7 +211,7 @@ uint32_t SetSizeCpuKernel::PopulateFromSparseGroup(CpuKernelContext &ctx, const 
 }
 
 template <typename T>
-uint32_t SetSizeCpuKernel::SetSizeCompute(CpuKernelContext &ctx, SparseTensor &st) {
+uint32_t SetSizeCpuKernel::SetSizeCompute(const CpuKernelContext &ctx, SparseTensor &st) {
   auto output_t = reinterpret_cast<int32_t *>(ctx.Output(0)->GetData());
   std::vector<int64_t> group_ix(dims_ - 1);
   std::iota(group_ix.begin(), group_ix.end(), 0);
@@ -242,13 +243,13 @@ uint32_t SetSizeCpuKernel::SetSizeCompute(CpuKernelContext &ctx, SparseTensor &s
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SetSizeCpuKernel::SetSizeCompute_string(CpuKernelContext &ctx, SparseTensor &st) {
+uint32_t SetSizeCpuKernel::SetSizeCompute_string(const CpuKernelContext &ctx, SparseTensor &st) {
   auto output_t = reinterpret_cast<int32_t *>(ctx.Output(0)->GetData());
   std::vector<int64_t> group_ix(dims_ - 1);
   std::iota(group_ix.begin(), group_ix.end(), 0);
   std::vector<int64_t> strides(dims_);
   int64_t num2 = 2;
-  auto shape_t = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
+  auto shape_t = reinterpret_cast<int64_t *>(ctx.Input(num2)->GetData());
   if (dims_ > 1) {
     strides[dims_ - num2] = 1;
   }

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "select.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/select.h"
+#include <vector>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -66,7 +67,7 @@ uint32_t SelectCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SelectCpuKernel::SelectParamCheck(CpuKernelContext &ctx) {
+uint32_t SelectCpuKernel::SelectParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -104,21 +105,19 @@ uint32_t SelectCpuKernel::SelectParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SelectCpuKernel::SelectCompute(CpuKernelContext &ctx) {
+uint32_t SelectCpuKernel::SelectCompute(const CpuKernelContext &ctx) {
   bool *condition = static_cast<bool *>(ctx.Input(0)->GetData());
   T *x1 = static_cast<T *>(ctx.Input(1)->GetData());
   T *x2 = static_cast<T *>(ctx.Input(2)->GetData());
   T *y = static_cast<T *>(ctx.Output(0)->GetData());
   auto input_shape_a = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  auto input_shape_b = ctx.Input(2)->GetTensorShape()->GetDimSizes();
   auto input_shape_mask = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_shape;
   int64_t tensor_size = 1;
   int64_t position = 0;
   if (input_shape_a == input_shape_mask) {
-    for (const int64_t &d : input_shape_a) {
-      tensor_size *= d;
-    }
+    tensor_size =
+      std::accumulate(input_shape_a.begin(), input_shape_a.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     for (int64_t i = 0; i < tensor_size; ++i) {
       if (condition[i]) {
         y[position++] = x1[i];
@@ -129,9 +128,8 @@ uint32_t SelectCpuKernel::SelectCompute(CpuKernelContext &ctx) {
   } else {
     auto ret = GetBroadcastShape(input_shape_a, input_shape_mask, output_shape);
     KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Shape of x and mask can't be broadcast.");
-    for (const int64_t &d : output_shape) {
-      tensor_size *= d;
-    }
+    tensor_size =
+      std::accumulate(output_shape.begin(), output_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     BroadcastIterator iter(input_shape_a, input_shape_mask, output_shape);
     iter.SetPos(0);
     for (int64_t i = 0; i < tensor_size; ++i) {

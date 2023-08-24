@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cpu_ops_kernel.h"
-#include <string>
-#include "sparse_cross.h"
+
+#include "cpu_kernel/ms_kernel/sparse_cross.h"
+
 #include <iostream>
-#include "securec.h"
+#include <limits>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace {
 static const uint64_t k0 = 0xc3a5c85c97cb3127ULL;
@@ -56,9 +59,9 @@ static inline uint64_t HashLen0to16(const char *s, size_t len) {
   return k2;
 }
 
-uint64_t FarmHash64(const char *s, size_t len) { return HashLen0to16(s, len); }
+uint64_t FarmHash64(const char *s, const size_t len) { return HashLen0to16(s, len); }
 
-uint64_t Fingerprint64(const string s) { return FarmHash64(s.data(), s.size()); }
+uint64_t Fingerprint64(const std::string s) { return FarmHash64(s.data(), s.size()); }
 
 template <typename InternalType>
 class ColumnInterface {
@@ -167,7 +170,7 @@ class StringCrosser {
       cross_vec[i] = columns_[i]->Feature(batch_index, permutation[i]);
     }
     size_t i;
-    string str1 = "";
+    std::string str1 = "";
     for (i = 0; i < cross_vec.size() - 1; i++) {
       str1 = str1 + cross_vec[i].data();
       str1 = str1 + k_feature_separator;
@@ -423,7 +426,6 @@ uint32_t SparseCrossCpuKernel::SparseCrossCompute(CpuKernelContext &ctx) {
   const auto batch_size = CalculateBatchSize(shapes_list_in, dense_list_in);
   for (int64_t i = 0; i < size; i++) {
     EigenTensor shapes_list_in_e(shapes_list_in[i], shapes_list_in[i]->GetData());
-    int64_t value = 2;
     if (shapes_list_in_e.vec<int64_t>().size() != value) {
       KERNEL_LOG_ERROR("shape should imply a 2D tensor, but got [%d].", shapes_list_in[i]->GetTensorShape());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -463,7 +465,7 @@ uint32_t SparseCrossCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType intertype = ctx.GetAttr("internal_type")->GetDataType();
   if (hash_out == 0) {
     if (intertype == 0) {
-      uint32_t res = SparseCrossCompute<false, string>(ctx);
+      uint32_t res = SparseCrossCompute<false, std::string>(ctx);
       if (res == 1) {
         return KERNEL_STATUS_PARAM_INVALID;
       }
