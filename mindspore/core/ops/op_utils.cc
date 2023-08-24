@@ -960,7 +960,7 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     size_t element_size = tensor->DataSize();
-    array_data.reserve(element_size);
+    array_data.resize(element_size);
     void *data = tensor->data_c();
     auto ret = memcpy_s(array_data.data(), array_data.size() * sizeof(T), data, element_size * sizeof(T));
     if (ret != EOK) {
