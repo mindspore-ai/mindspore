@@ -230,7 +230,7 @@ class {class_name}(Primitive):
 {args_assign if args_assign else '        pass'}
 
     def __call__(self, *args):
-        super.__call__(self, *args, {', '.join([f'self.{arg}' for arg in init_args])})
+        super().__call__(self, *args, {', '.join([f'self.{arg}' for arg in init_args])})
 """
 
         gen_py += primitive_code
