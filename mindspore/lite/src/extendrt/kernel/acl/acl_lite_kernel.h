@@ -20,12 +20,12 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include "src/litert/lite_kernel.h"
+#include "src/extendrt/kernel/base_kernel.h"
 #include "kernel/kernel.h"
 #include "ops/base_operator.h"
 
 namespace mindspore::kernel {
-class AclLiteKernel : public LiteKernel {
+class AclLiteKernel : public BaseKernel {
  public:
   explicit AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
                          std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
