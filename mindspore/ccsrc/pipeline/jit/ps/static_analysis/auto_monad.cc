@@ -675,10 +675,10 @@ class SideEffectFinder {
   }
 
   // Trace effect info from tuple_getitem cnode.
-  EffectInfo TraceTupleGetItemEffectInfo(const CNodePtr &cnode, std::stack<int64_t> *tuple_indexes) {
+  EffectInfo TraceGetItemEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
     MS_EXCEPTION_IF_NULL(cnode);
-    MS_EXCEPTION_IF_NULL(tuple_indexes);
-    constexpr size_t tuple_input = 1;
+    MS_EXCEPTION_IF_NULL(indexes);
+    constexpr size_t tuple_or_dict_input = 1;
     constexpr size_t index_input = 2;
     constexpr size_t cnode_size = 3;
     if (cnode->size() != cnode_size) {
@@ -686,20 +686,19 @@ class SideEffectFinder {
     }
     // Get item index.
     auto &index_node = cnode->inputs().at(index_input);
-    auto index_value = GetValueNode<Int64ImmPtr>(index_node);
+    auto index_value = dyn_cast<ValueNode>(index_node);
     if (index_value == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Tuple_getitem with non-const index " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "tuple_getitem with non-const index, cnode: " << cnode->DebugString();
     }
-    int64_t index = index_value->value();
 
-    // Get tuple value.
-    const auto &tuple_node = cnode->inputs().at(tuple_input);
-    // Push tuple index.
-    tuple_indexes->push(index);
-    return TraceTupleEffectInfo(tuple_node, tuple_indexes);
+    // Get tuple or dict value.
+    const auto &tuple_or_dict_node = cnode->inputs().at(tuple_or_dict_input);
+    // Push tuple or dict index.
+    indexes->push(index_value->value());
+    return TraceTupleOrDictEffectInfo(tuple_or_dict_node, indexes);
   }
 
-  EffectInfo TraceTupleEffectInfo(const AnfNodePtr &tuple_node, std::stack<int64_t> *tuple_indexes) {
+  EffectInfo TraceTupleOrDictEffectInfo(const AnfNodePtr &tuple_node, std::stack<ValuePtr> *tuple_indexes) {
     MS_EXCEPTION_IF_NULL(tuple_indexes);
     auto para = dyn_cast<Parameter>(tuple_node);
     if (para != nullptr) {
@@ -713,64 +712,156 @@ class SideEffectFinder {
     MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: tuple_cnode is nullptr.";
   }
 
-  EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, const std::stack<int64_t> &tuple_indexes) {
+  EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &tuple_indexes) {
     EffectInfo info{EffectInfo::kDetected, false, false, false, false};
     ForEachRealArguments(para, [this, &info, tuple_indexes](const AnfNodePtr &arg) {
       // Merge real argument effect info.
       auto tuple_indexes_copy = tuple_indexes;
-      auto arg_info = TraceTupleEffectInfo(arg, &tuple_indexes_copy);
+      auto arg_info = TraceTupleOrDictEffectInfo(arg, &tuple_indexes_copy);
       info.Merge(arg_info);
     });
     return info;
   }
 
-  EffectInfo TraceTupleCNodeEffectInfo(const CNodePtr &cnode, std::stack<int64_t> *tuple_indexes) {
+  size_t GetInputIndex(const ValuePtr &top_index_value, const CNodePtr &origin_cnode, size_t inputs_size) {
+    auto int64_imm = dyn_cast<Int64Imm>(top_index_value);
+    if (int64_imm == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << origin_cnode->DebugString()
+                                 << ", index: " << (top_index_value == nullptr ? "null" : top_index_value->ToString());
+    }
+    auto top_index = int64_imm->value();
+    size_t input_index = 0;
+    // Support tuple index is negative
+    if (top_index < 0) {
+      if (SizeToLong(inputs_size) + top_index < 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << origin_cnode->DebugString() << " index=" << top_index;
+      }
+      input_index = static_cast<size_t>(inputs_size + top_index);
+    } else {
+      // Follow the tuple item according the index.
+      input_index = static_cast<size_t>(top_index) + 1;
+    }
+    if (input_index >= inputs_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << origin_cnode->DebugString() << " index=" << top_index;
+    }
+    return input_index;
+  }
+
+  EffectInfo TraceMakeTupleEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+    constexpr int recursive_level = 2;
+    if (tuple_indexes->empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(recursive_level);
+    }
+    // Pop out tuple index.
+    auto top_index_value = tuple_indexes->top();
+    tuple_indexes->pop();
+    auto input_index = GetInputIndex(top_index_value, cnode, cnode->size());
+    if (tuple_indexes->empty()) {
+      // Trace non-tuple.
+      return TraceEffectInfo(cnode->inputs().at(input_index));
+    }
+    // This is the tuple of tuple case.
+    return TraceTupleOrDictEffectInfo(cnode->inputs().at(input_index), tuple_indexes);
+  }
+
+  EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+    constexpr int recursive_level = 2;
+    if (tuple_indexes->empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_dict: " << cnode->DebugString(recursive_level);
+    }
+    // Pop out tuple index.
+    auto top_key_value = tuple_indexes->top();
+    MS_EXCEPTION_IF_NULL(top_key_value);
+    tuple_indexes->pop();
+    constexpr size_t keys_node_index = 1;
+    constexpr size_t values_node_index = 2;
+    auto keys_node = cnode->input(keys_node_index);
+    MS_EXCEPTION_IF_NULL(keys_node);
+    auto keys = GetValueNode<ValueTuplePtr>(keys_node);
+    if (keys == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_dict: " << cnode->DebugString()
+                                 << ", the keys node: " << keys_node->DebugString();
+    }
+    for (size_t i = 0; i < keys->size(); ++i) {
+      MS_EXCEPTION_IF_NULL(keys->value()[i]);
+      if (*(keys->value()[i]) == *top_key_value) {
+        // The values_node is a make_tuple.
+        tuple_indexes->push(MakeValue(SizeToLong(i)));
+        return TraceTupleOrDictEffectInfo(cnode->inputs().at(values_node_index), tuple_indexes);
+      }
+    }
+    MS_LOG(WARNING) << "make_dict untraceable from: " << cnode->DebugString(recursive_level);
+    return {EffectInfo::kDetected, false, false, false};
+  }
+
+  EffectInfo TraceDictItemsEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
+    constexpr int recursive_level = 2;
+    // Pop list_getitem index.
+    if (tuple_indexes->empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
+    }
+    auto list_getitem_index_value = tuple_indexes->top();
+    tuple_indexes->pop();
+    // Pop tuple_getitem index.
+    if (tuple_indexes->empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
+    }
+    auto tuple_getitem_index_value = tuple_indexes->top();
+    tuple_indexes->pop();
+    constexpr size_t key_and_value_tuple_size = 2;
+    auto tuple_getitem_index = GetInputIndex(tuple_getitem_index_value, cnode, key_and_value_tuple_size + 1);
+    // If the item is a value_node, skip.
+    if (tuple_getitem_index == 1) {
+      MS_LOG(INFO) << "dict_items untraceable from: " << cnode->DebugString(recursive_level);
+      return {EffectInfo::kDetected, false, false, false};
+    }
+    // dict_items(make_dict(keys_value_tuple, make_tuple()))
+    if (!IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeDict)) {
+      MS_LOG(WARNING) << "dict_items untraceable from: " << cnode->DebugString(recursive_level);
+      return {EffectInfo::kDetected, false, false, false};
+    }
+    // Trace the make_tuple.
+    auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
+    constexpr size_t values_node_index = 2;
+    tuple_indexes->push(list_getitem_index_value);
+    return TraceTupleOrDictEffectInfo(make_dict_cnode->input(values_node_index), tuple_indexes);
+  }
+
+  EffectInfo TraceTupleCNodeEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *tuple_indexes) {
     MS_EXCEPTION_IF_NULL(tuple_indexes);
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     constexpr int recursive_level = 2;
     // Trace MakeTuple.
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
-      if (tuple_indexes->empty()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(recursive_level);
-      }
-      // Pop out tuple index.
-      auto top_index = tuple_indexes->top();
-      tuple_indexes->pop();
-      size_t input_index = 0;
-      // Support tuple index is negative
-      if (top_index < 0) {
-        if (SizeToLong(cnode->size()) + top_index < 0) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
-        }
-        input_index = static_cast<size_t>(cnode->size() + top_index);
-      } else {
-        // Follow the tuple item according the index.
-        input_index = static_cast<size_t>(top_index) + 1;
-      }
-      if (input_index >= cnode->size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
-      }
-      if (tuple_indexes->empty()) {
-        // Trace non-tuple.
-        return TraceEffectInfo(cnode->inputs().at(input_index));
-      }
-      // This is the tuple of tuple case.
-      return TraceTupleEffectInfo(cnode->inputs().at(input_index), tuple_indexes);
+      return TraceMakeTupleEffectInfo(cnode, tuple_indexes);
     }
-    // Trace TupleGetItem (tuple of tuple).
-    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem)) {
-      return TraceTupleGetItemEffectInfo(cnode, tuple_indexes);
+    // Trace MakeDict.
+    if (IsPrimitiveEquals(prim, prim::kPrimMakeDict)) {
+      return TraceMakeDictEffectInfo(cnode, tuple_indexes);
+    }
+    // Trace the case of tuple, list or dict nested.
+    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimListGetItem) ||
+        IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
+      return TraceGetItemEffectInfo(cnode, tuple_indexes);
+    }
+    if (IsPrimitiveEquals(prim, prim::kPrimDictGetValues) && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeDict)) {
+      auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
+      constexpr size_t values_node_index = 2;
+      return TraceTupleOrDictEffectInfo(make_dict_cnode->input(values_node_index), tuple_indexes);
+    }
+    if (IsPrimitiveEquals(prim, prim::kPrimDictItems)) {
+      return TraceDictItemsEffectInfo(cnode, tuple_indexes);
     }
     // Trace primitive propagating side effect from its input, such as Depend, etc.
     int input_index = GetSideEffectPropagate(prim);
     if (input_index > 0 && input_index < static_cast<int>(cnode->size())) {
-      return TraceTupleEffectInfo(cnode->input(static_cast<size_t>(input_index)), tuple_indexes);
+      return TraceTupleOrDictEffectInfo(cnode->input(static_cast<size_t>(input_index)), tuple_indexes);
     }
     // Tuple returned from func graph call.
     auto func_graph = GetFuncGraph(cnode);
     if (func_graph != nullptr) {
-      return TraceTupleEffectInfo(func_graph->output(), tuple_indexes);
+      return TraceTupleOrDictEffectInfo(func_graph->output(), tuple_indexes);
     }
     // Tuple returned from a Switch call.
     if (cnode->size() == 1 && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
@@ -795,13 +886,13 @@ class SideEffectFinder {
   }
 
   // Trace effect info from a Switch node that output is a tuple.
-  EffectInfo TraceTupleFromSwitch(const CNodePtr &switch_cnode, const std::stack<int64_t> &tuple_indexes) {
+  EffectInfo TraceTupleFromSwitch(const CNodePtr &switch_cnode, const std::stack<ValuePtr> &tuple_indexes) {
     auto branches = GetSwitchBranches(switch_cnode);
     EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
     for (auto &branch : branches) {
       MS_EXCEPTION_IF_NULL(branch);
       auto tuple_indexes_copy = tuple_indexes;
-      EffectInfo branch_info = TraceTupleEffectInfo(branch->output(), &tuple_indexes_copy);
+      EffectInfo branch_info = TraceTupleOrDictEffectInfo(branch->output(), &tuple_indexes_copy);
       info.Merge(branch_info);
     }
     return info;
@@ -850,10 +941,10 @@ class SideEffectFinder {
       return TraceSwitchLayerEffectInfo(cnode);
     }
 
-    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem)) {
-      // Trace tuple_getitem.
-      std::stack<int64_t> tuple_indexes;
-      return TraceTupleGetItemEffectInfo(cnode, &tuple_indexes);
+    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
+      // Trace tuple_getitem or dict_getitem.
+      std::stack<ValuePtr> indexes;
+      return TraceGetItemEffectInfo(cnode, &indexes);
     }
 
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
