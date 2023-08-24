@@ -26,6 +26,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
@@ -66,6 +67,10 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (!GraphKernelCluster::IsClusterableOp(node)) {
     return false;
   }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   if (device_ == "Ascend") {
@@ -73,9 +78,13 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
     if (type_id == kNumberTypeInt64) {
       return false;
     }
+    auto node_name = AnfUtils::GetCNodeName(node);
+    if (node_name.find("MatMul") != std::string::npos && type_id != kNumberTypeFloat16 &&
+        type_id != kNumberTypeFloat32) {
+      return false;
+    }
   }
   // check if the node has dynamic shape
-  auto cnode = node->cast<CNodePtr>();
   for (size_t i = 0; i < cnode->size() - 1; i++) {
     if (!cnode->input(i + 1)->isa<Parameter>() && !cnode->input(i + 1)->isa<ValueNode>() &&
         cb->GetInputShape(cnode, i).size() == 0) {
