@@ -20,6 +20,7 @@ endif()
 
 if(ENABLE_GEN_CODE)
     include(${CMAKE_SOURCE_DIR}/cmake/gencode.cmake)
+    set(ENABLE_AUTO_GEN_CODE on)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_GEN_CODE")
