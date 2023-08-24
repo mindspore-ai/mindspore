@@ -297,7 +297,7 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   const std::string &phase = PhaseManager::GetInstance().phase();
   bool is_train = false;
   if (phase.length() != 0) {
-    is_train = pipeline::GetPhasePrefix(phase) == "train";
+    is_train = pipeline::GetPhasePrefix(phase) == "train" || common::GetEnv("MS_GE_TRAIN") == "1";
   }
   if (is_parallel_mode && (!is_enable_ge || !is_train)) {
     return false;

@@ -90,7 +90,7 @@ class DfGraphConvertor {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     bool enable_ge = context->backend_policy() == "ge";
-    bool enable_training = phase_prefix_ == "train";
+    bool enable_training = phase_prefix_ == "train" || common::GetEnv("MS_GE_TRAIN") == "1";
     static bool is_training = false;
     if (enable_ge && enable_training) {
       is_training = true;
