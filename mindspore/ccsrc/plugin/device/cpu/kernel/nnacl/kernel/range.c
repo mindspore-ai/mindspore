@@ -24,6 +24,8 @@
 #endif
 
 int RangeCompute(KernelBase *self) {
+  NNACL_CHECK_NULL_RETURN_ERR(self);
+
   TensorC *input = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output = self->out_[OUTPUT_INDEX];

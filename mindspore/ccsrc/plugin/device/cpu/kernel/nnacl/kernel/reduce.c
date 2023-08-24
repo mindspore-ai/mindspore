@@ -81,8 +81,8 @@ int CallReduceUnit(KernelBase *base, int task_id) {
 }
 
 int ReduceImpl(void *cdata, int task_id, float l, float r) {
-  ReduceStruct *reduce = (ReduceStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(cdata);
+  ReduceStruct *reduce = (ReduceStruct *)cdata;
   return reduce->call_uint_((KernelBase *)reduce, task_id);
 }
 
@@ -104,6 +104,9 @@ int CopyReduceyInputToOutput(ReduceStruct *reduce) {
 }
 
 int MallocReduceTmpBuffer(ReduceStruct *reduce) {
+  // Clean pointers in data_buffer for free condition checking in FreeReduceTmpBuffer.
+  memset(reduce->data_buffers_, 0, reduce->data_buffers_size_ * sizeof(void *));
+
   for (int i = 0; i < reduce->data_buffers_size_; i++) {
     reduce->data_buffers_[i] = reduce->base_.env_->Alloc(
       reduce->base_.env_->allocator_, reduce->data_buffer_sizes_[i] * DataTypeCSize(reduce->data_type_));
