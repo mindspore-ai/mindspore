@@ -75,15 +75,6 @@ class CallFunction(Node, NodeManager):
             stree = self.get_belong_symbol_tree()
             stree.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
 
-    def replace(self, old_node: Node, new_nodes: [Node]):
-        """Replace an old_node with a node list."""
-        base_node = old_node
-        for node in new_nodes:
-            self.insert(node, base_node, True)
-            base_node = node
-        self.erase(old_node)
-        return new_nodes[-1]
-
     def set_belong_symbol_tree(self, symbol_tree):
         """Set the symbol tree to which node belongs."""
         self._belong_tree = symbol_tree

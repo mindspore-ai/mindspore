@@ -115,15 +115,6 @@ class CellContainer(Node, NodeManager):
             insert_ast = ast.parse(insert_code).body[0]
             init_ast_functiondef.body.append(insert_ast)
 
-    def replace(self, old_node: Node, new_nodes: [Node]):
-        """Replace an old_node with a node list."""
-        base_node = old_node
-        for node in new_nodes:
-            self.insert_node(node, base_node, False, True)
-            base_node = node
-        self.erase(old_node)
-        return new_nodes[-1]
-
     def set_belong_symbol_tree(self, symbol_tree):
         """Set the symbol tree to which node belongs."""
         self._belong_tree = symbol_tree
