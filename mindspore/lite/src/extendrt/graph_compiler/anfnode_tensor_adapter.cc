@@ -25,6 +25,7 @@
 using ShapePtr = mindspore::abstract::ShapePtr;
 using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
 using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
+using AbstractSequencePtr = mindspore::abstract::AbstractSequencePtr;
 
 namespace mindspore {
 namespace lite {
@@ -84,6 +85,58 @@ InferTensor *TensorAdapter::ToTensor() {
   own_data_ = false;
   tensor->set_format(format_);
   return tensor;
+}
+
+std::vector<std::unique_ptr<InferTensor>> TensorAdapter::CreateTensorsFromAbstract(const AbstractBasePtr &abstract,
+                                                                                   Format format) {
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Input `abstract` is nullptr.";
+    return {};
+  }
+  std::vector<std::unique_ptr<InferTensor>> results;
+  // multi output abstract
+  if (utils::isa<AbstractSequencePtr>(abstract)) {
+    auto elements = utils::cast<AbstractSequencePtr>(abstract)->elements();
+    for (auto &element : elements) {
+      auto tensor = TensorAdapter::Convert2Tensor(element, format);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
+        return {};
+      }
+      results.emplace_back(std::unique_ptr<InferTensor>(tensor));
+    }
+    return results;
+  }
+  // single output abstract
+  if (utils::isa<AbstractTensorPtr>(abstract)) {
+    auto tensor = TensorAdapter::Convert2Tensor(abstract, format);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
+      return {};
+    }
+    results.emplace_back(std::unique_ptr<InferTensor>(tensor));
+    return results;
+  }
+  MS_LOG(ERROR) << "Unsupported abstract: " << abstract;
+  return {};
+}
+
+std::vector<InferTensor *> TensorAdapter::Convert2Tensor(const CNodePtr &cnode, Format format) {
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "Input cnode is nullptr.";
+    return {};
+  }
+
+  auto tmp = TensorAdapter::CreateTensorsFromAbstract(cnode->abstract());
+  if (tmp.empty()) {
+    MS_LOG(ERROR) << "Create tensors from output abstract of cnode failed, cnode : " << cnode->fullname_with_scope();
+    return {};
+  }
+  std::vector<InferTensor *> results;
+  results.reserve(tmp.size());
+  std::transform(tmp.begin(), tmp.end(), std::back_inserter(results),
+                 [](std::unique_ptr<InferTensor> &tensor) { return tensor.release(); });
+  return results;
 }
 
 TensorAdapterPtr TensorAdapter::Create(const ParameterPtr &param_node, Format format) {

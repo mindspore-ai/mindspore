@@ -33,6 +33,7 @@
 #include "ops/base_operator.h"
 #include "kernel/common_utils.h"
 #include "src/extendrt/kernel/extendrt_kernel_exec.h"
+#include "src/extendrt/kernel/kernel_spec_infos.h"
 
 namespace mindspore::kernel {
 struct KernelSpec {
@@ -66,7 +67,15 @@ class KernelLib {
       return nullptr;
     }
     auto desc = kernel_exec->desc();
+    if (backend_ == kernel::kBackendAscend) {
+      desc.arch = kernel::KERNEL_ARCH::kACL;
+    } else if (backend_ == kernel::kBackendGPU) {
+      desc.arch = kernel::KERNEL_ARCH::kGPU;
+    } else {
+      desc.arch = kernel::KERNEL_ARCH::kCPU;
+    }
     desc.format = spec.format;
+    desc.kernel_arch = backend_;
     kernel_exec->set_desc(desc);
     kernel_exec->set_context(ctx);
     return kernel_exec;

@@ -58,6 +58,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     return ret;
   }
+  void set_isolate_input_map(std::unordered_map<Tensor *, Tensor *> *input_map) {
+    this->isolate_input_map_ = input_map;
+  }
   virtual int PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                       std::unordered_map<Tensor *, Tensor *> *input_map);
   virtual int PostInit();

@@ -33,7 +33,7 @@
 namespace mindspore::lite {
 class CompileNodeAdapterNode : public AdapterNode {
  public:
-  explicit CompileNodeAdapterNode(const CompileNode *node) : node_(node) {}
+  explicit CompileNodeAdapterNode(CompileNodePtr node) : node_(std::move(node)) {}
 
   std::string GetName() const override { return node_->GetName(); }
   std::vector<Tensor *> GetInputs() const override { return node_->GetInputs(); }
@@ -54,14 +54,14 @@ class CompileNodeAdapterNode : public AdapterNode {
   size_t OutputSize() const override { return node_->OutputSize(); }
 
  private:
-  const CompileNode *node_;
+  const CompileNodePtr node_;
 };
 
 class CompileResultAdapterGraph : public AdapterGraph {
  public:
   static std::shared_ptr<CompileResultAdapterGraph> Create(const CompileResult *graph) {
     auto adapter_graph = std::make_shared<CompileResultAdapterGraph>(graph);
-    for (auto node : graph->GetNodes()) {
+    for (const auto &node : graph->GetNodes()) {
       adapter_graph->nodes_.emplace_back(new CompileNodeAdapterNode(node));
     }
     return adapter_graph;

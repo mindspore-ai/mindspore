@@ -50,19 +50,13 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     return nullptr;
   }
 
-  // fp16/fp32 weight, transpose weight
-  auto cast_ret = HandleWeightForKernels();
-  if (!cast_ret) {
-    MS_LOG(ERROR) << "Handle weight for kernels failed.";
-    return nullptr;
-  }
-
   // append kernel with transpose
   auto kernel = execution_flow_->ConstructFusionKernel();
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Construct subgraph kernel failed.";
     return nullptr;
   }
+  kernel->set_context(context_.get());
   DrawDot(reinterpret_cast<kernel::SubGraphKernel *>(kernel), "select_kernel");
 
   std::vector<kernel::KernelExec *> subkernels = {kernel};
@@ -94,20 +88,8 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
       MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";
       return RET_NOT_SUPPORT;
     }
-    auto desc = kernel_exec->desc();
-    if (compile_option_->backend == kernel::kBackendCPU) {
-      desc.arch = kernel::KERNEL_ARCH::kCPU;
-    } else if (compile_option_->backend == kernel::kBackendAscend) {
-      desc.arch = kernel::KERNEL_ARCH::kACL;
-    } else if (compile_option_->backend == kernel::kBackendGPU) {
-      desc.arch = kernel::KERNEL_ARCH::kGPU;
-    } else {
-      desc.arch = kernel::KERNEL_ARCH::kCPU;
-    }
     kernel_exec->set_name(node->GetName());
-    kernel_exec->set_desc(desc);
-    kernel_exec->set_context(context_.get());
-    kernels.push_back(kernel_exec);
+    kernels.emplace_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);
   return RET_OK;
