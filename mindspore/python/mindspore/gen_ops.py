@@ -20,6 +20,33 @@ import os
 import glob
 import yaml
 
+
+def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
+    """
+    Generate signature rw code
+    """
+    for op in write_list:
+        if op == rw_op_name:
+            return 'sig.sig_rw.RW_WRITE'
+    for op in read_list:
+        if op == rw_op_name:
+            return 'sig.sig_rw.RW_READ'
+    for op in ref_list:
+        if op == rw_op_name:
+            return 'sig.sig_rw.RW_REF'
+    return ''
+
+
+def signature_get_dtype_label(index):
+    """
+    Generate signature dtype code
+    """
+    dtype_index = ''
+    if index > 0:
+        dtype_index = f"""{index}"""
+    return f"""dtype=sig.sig_dtype.T{dtype_index}"""
+
+
 def generate_py_op_signature(args_signature):
     """
     generate __mindspore_signature__
@@ -29,60 +56,66 @@ def generate_py_op_signature(args_signature):
 
     signature_code = f"""__mindspore_signature__ = """
 
-    writable = args_signature.get('writable')
-    same_type = args_signature.get('same_type')
+    rw_write = args_signature.get('rw_write')
+    rw_read = args_signature.get('rw_read')
+    rw_ref = args_signature.get('rw_ref')
+    dtype_group = args_signature.get('dtype_group')
 
-    if writable is None:
+    if rw_write is None and rw_read is None and rw_ref is None:
         signature_code += '(sig.sig_dtype.T, sig.sig_dtype.T)'
         return signature_code
 
-    # deal with writable
-    writable = writable.replace(' ', '')
-    same_type = same_type.replace(' ', '')
+    # init rw
+    rw_write = rw_write.replace(' ', '')
+    rw_read = rw_read.replace(' ', '')
+    rw_ref = rw_ref.replace(' ', '')
+    dtype_group = dtype_group.replace(' ', '')
 
-    signature_code += f""" (
-"""
-    same_type_list = []
-    same_type_parsed = same_type.split("(")
+    write_list = rw_write.split(",")
+    read_list = rw_read.split(",")
+    ref_list = rw_ref.split(",")
+    rw_list = write_list + read_list + ref_list
+    rw_items_used = [False for i in range(len(rw_list))]
+
+    # init dtype group
+    group_list = []
+    same_type_parsed = dtype_group.split("(")
     for item in same_type_parsed:
         if ')' in item:
             parsed = item.split(")")
-            same_type_list.append(parsed[0])
+            group_list.append(parsed[0])
 
-    writable_items = writable.split(",")
-    writable_items_used = [False for i in range(len(writable_items))]
 
-    i = 0
-    dtype = ''
-    for same_type_team in same_type_list:
-        if i == 0:
-            dtype = f"""T"""
-        else:
-            dtype = f"""T{i}"""
-        i = i + 1
-        same_type_items = same_type_team.split(",")
-        for same_type_i in same_type_items:
-            find_writable = False
-            for writable_index, item_name in enumerate(writable_items):
-                if item_name == same_type_i:
-                    find_writable = True
-                    writable_items_used[writable_index] = True
-                    signature_code += f"""     sig.make_sig('{item_name}', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.{dtype}),
+    signature_code += f""" (
 """
-                    break
+    i = 0
+    for dtype_group in group_list:
+        dtype = signature_get_dtype_label(i)
+        i = i + 1
+
+        group_item = dtype_group.split(",")
+        for same_type_op in group_item:
+            find_writable = False
+            for rw_index, rw_op in enumerate(rw_list):
+                if rw_op == same_type_op:
+                    find_writable = True
+                    rw_items_used[rw_index] = True
+                    rw_code = signature_get_rw_label(rw_op, write_list, read_list, ref_list)
+                    signature_code += f"""     sig.make_sig('{rw_op}', {rw_code}, {dtype}),
+"""
             if not find_writable:
-                signature_code += f"""     sig.make_sig('{same_type_i}', dtype=sig.sig_dtype.{dtype}),
+                signature_code += f"""     sig.make_sig('{same_type_op}', {dtype}),
 """
 
     # item has writable but do not has same_type
-    for used_index, used_item in enumerate(writable_items_used):
+    for used_index, used_item in enumerate(rw_items_used):
         if not used_item:
-            item_name = writable_items[used_index]
-            signature_code += f"""     sig.make_sig('{item_name}', sig.sig_rw.RW_WRITE),
+            item_name = rw_list[used_index]
+            rw_code = signature_get_rw_label(item_name, write_list, read_list, ref_list)
+            signature_code += f"""     sig.make_sig('{item_name}', {rw_code}),
 """
 
     signature_code += f"""    )"""
-
     return signature_code
 
 

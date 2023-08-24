@@ -18,6 +18,11 @@
 #          disable: true 
 #     class: #optional
 #          name: SampleOp_ #if class name is not set, operator name with upper camel format will be use as class name.
+#     args_signature: #optional
+#          rw_write: x
+#          rw_read: y
+#          rw_ref:
+#          dtype_group: (x, y) #if input x and y should has same dtype.
 #
 #operator args support one or multiple kind of below dtype:
 #bool, int, float, tensor, str, tuple, list
