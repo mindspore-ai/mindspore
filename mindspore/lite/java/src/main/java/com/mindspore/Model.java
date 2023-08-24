@@ -244,11 +244,14 @@ public class Model {
      * @return input tensor.
      */
     public MSTensor getInputByTensorName(String tensorName) {
-        if (tensorName == null) {
-            return null;
+        List<MSTensor> inputTensors = this.getInputs();
+        for (int i = 0; i < inputTensors.size(); i++) {
+            MSTensor tensor = inputTensors.get(i);
+            if (tensor.tensorName().equals(tensorName)) {
+                return tensor;
+            }
         }
-        long tensorAddr = this.getInputByTensorName(this.modelPtr, tensorName);
-        return new MSTensor(tensorAddr);
+        return null;
     }
 
     /**

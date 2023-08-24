@@ -239,6 +239,11 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
+        if (this.getDataType() != DataType.kNumberTypeFloat32 &&
+            this.getDataType() != DataType.kNumberTypeFloat16) {
+            LOGGER.severe("Data type is not consistent");
+            return false;
+        }
         if (data.length != this.elementsNum()) {
             return false;
         }
@@ -257,6 +262,10 @@ public class MSTensor {
             LOGGER.severe("input param null.");
             return false;
         }
+        if (this.getDataType() != DataType.kNumberTypeInt32) {
+            LOGGER.severe("Data type is not consistent");
+            return false;
+        }
         if (data.length != this.elementsNum()) {
             return false;
         }
@@ -273,6 +282,10 @@ public class MSTensor {
     public boolean setData(long[] data) {
         if (data == null) {
             LOGGER.severe("input param null.");
+            return false;
+        }
+        if (this.getDataType() != DataType.kNumberTypeInt64) {
+            LOGGER.severe("Data type is not consistent");
             return false;
         }
         if (data.length != this.elementsNum()) {
