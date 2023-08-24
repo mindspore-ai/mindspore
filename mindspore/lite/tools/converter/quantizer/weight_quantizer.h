@@ -92,7 +92,7 @@ class WeightQuantizer : public Quantizer {
     quant_type_ = param_->commonQuantParam.quant_type;
     dequant_strategy_ = param_->weightQuantParam.dequant_strategy;
     max_segments_ = param_->weightQuantParam.max_segments;
-    ascend_backend_ = param_->ascendQuantParam.mode != AscendQuantMode::NONE;
+    ascend_backend_ = param_->device.find("Ascend") != std::string::npos;
     per_channel_ = param_->weightQuantParam.per_channel;
     bias_correction_ = param_->weightQuantParam.bias_correction;
     if (per_channel_) {

@@ -815,7 +815,7 @@ std::vector<std::vector<int64_t>> InsertQuantNodeManager::GetAddMulNodeParallelS
 
 int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                       size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis,
-                                                      AscendBackend ascend_backend) {
+                                                      std::string ascend_backend) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   CHECK_NULL_RETURN(primitive);
   auto input_node = cnode->input(input_index);
@@ -842,7 +842,8 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
 
   // Insert cast node
   CNodePtr cast_cnode = nullptr;
-  if (ascend_backend == ASCEND910B) {
+  if (ascend_backend == "910b") {
+    MS_LOG(INFO) << "The ascend_backend is 910b, it will insert antiquant node";
     if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
       cast_cnode = NewAscendAntiQuantCNode(func_graph, cnode, dst_dtype);
     } else {
@@ -858,7 +859,7 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
 
   CHECK_NULL_RETURN(cast_cnode);
   // cast node do not need to set parallel strategy, antiquant node need set parallel strategy
-  if (primitive->HasAttr(IN_STRATEGY) && ascend_backend == ASCEND910B) {
+  if (primitive->HasAttr(IN_STRATEGY) && ascend_backend == "910b") {
     std::vector<std::vector<int64_t>> cast_in_strategy;
     std::vector<int64_t> in_strategy_1 = cnode_in_strategy[input_index - kPrimOffset];
     cast_in_strategy.push_back(in_strategy_1);

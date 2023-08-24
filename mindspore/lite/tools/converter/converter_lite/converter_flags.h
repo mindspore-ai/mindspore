@@ -90,6 +90,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool encryption = false;
 #endif
   std::string device;
+  std::string device_version;
   std::string optimizeTransformerStr;
   bool optimizeTransformer = false;
 };

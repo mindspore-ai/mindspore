@@ -316,35 +316,6 @@ int QuantParamParser::ParseTransformQuant(const TransformQuantString &transform_
   return RET_OK;
 }
 
-int QuantParamParser::ParseAscendQuant(const AscendQuantString &ascend_quant_string,
-                                       quant::AscendQuantParam *ascend_quant) {
-  if (!ascend_quant_string.mode.empty()) {
-    if (ascend_quant_string.mode == "ACL") {
-      ascend_quant->mode = quant::ACL;
-    } else if (ascend_quant_string.mode == "GE") {
-      ascend_quant->mode = quant::GE;
-    } else {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: AscendQuantMode must be ACL|GE.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-  if (!ascend_quant_string.ascend_backend.empty()) {
-    if (ascend_quant_string.ascend_backend == "ASCEND310") {
-      ascend_quant->ascend_backend = quant::ASCEND310;
-    } else if (ascend_quant_string.ascend_backend == "ASCEND710") {
-      ascend_quant->ascend_backend = quant::ASCEND710;
-    } else if (ascend_quant_string.ascend_backend == "ASCEND910A") {
-      ascend_quant->ascend_backend = quant::ASCEND910A;
-    } else if (ascend_quant_string.ascend_backend == "ASCEND910B") {
-      ascend_quant->ascend_backend = quant::ASCEND910B;
-    } else {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: AscendBackend must be ASCEND310|ASCEND710|ASCEND910A|ASCEND910B.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-  return RET_OK;
-}
-
 int QuantParamParser::ParseDynamicQuant(const DynamicQuantString &dynamic_quant_string,
                                         quant::DynamicQuantParam *dynamic_quant) {
   if (!dynamic_quant_string.quant_strategy.empty()) {

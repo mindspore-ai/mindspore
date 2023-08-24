@@ -228,7 +228,7 @@ int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &
       }
       InsertQuantNodeManager quant_manager;
       status = quant_manager.InsertAscendAntiQuantNode(func_graph, follow_cnode, node_user.second, kNumberTypeInt8,
-                                                       type_id, preferred_dim, param_->ascendQuantParam.ascend_backend);
+                                                       type_id, preferred_dim, param_->device_version);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertAscendDequantNode failed : " << status;
         return status;

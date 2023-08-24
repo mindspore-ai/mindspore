@@ -32,6 +32,7 @@ def _support_te():
     except Exception:
         return False
 
+
 if context.get_context('device_target') == "Ascend" and _support_te():
     import mindspore.ops._op_impl._custom_op
 
@@ -212,7 +213,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min_value, max_value)
     """
     support_quant_bit = [4, 7, 8]
-    ascend_support_x_rank = [2, 3, 4]
+    ascend_support_x_rank = [2, 4]
 
     @prim_attr_register
     def __init__(self, ema=False, ema_decay=0.999, channel_axis=1):
@@ -226,7 +227,11 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
         self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
         self.ema_decay = validator.check_float_range(ema_decay, 0, 1, validator.INC_BOTH, 'ema_decay', self.name)
-        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
+        if self.is_ascend:
+            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, validator.INC_BOTH,
+                                                          'channel_axis', self.name)
+        else:
+            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(
             inputs=['x', 'min', 'max'], outputs=['min_up', 'max_up'])
 
@@ -273,6 +278,7 @@ class FakeLearnedScaleQuantPerLayer(PrimitiveWithInfer):
         >>> quant_max_tensor = Tensor(np.array([127]), mstype.float32)
         >>> output_tensor = FakeLearnedScaleQuantPerLayer()(input_tensor, alpha_tensor, quant_max_tensor)
     """
+
     @prim_attr_register
     def __init__(self,
                  quant_delay=0,
@@ -971,7 +977,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 7, 8]
-    ascend_support_x_rank = [2, 4]
+    ascend_support_x_rank = [2, 3, 4]
 
     @prim_attr_register
     def __init__(self,
@@ -1004,11 +1010,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         self.ema_decay = validator.check_float_range(ema_decay, 0, 1, validator.INC_BOTH, 'ema_decay', self.name)
         self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
-        if self.is_ascend:
-            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, validator.INC_BOTH,
-                                                          'channel_axis', self.name)
-        else:
-            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):
@@ -1622,6 +1624,7 @@ class ActsULQ(PrimitiveWithInfer):
         >>> quant_x, clamp_min_mask, clamp_max_mask, x_clamped_loss = acts_ulq(Tensor(x), Tensor( clamp_min),
                                                                                Tensor(clamp_max))
     """
+
     @prim_attr_register
     def __init__(self, fixed_min=False, num_bits=8):
         validator.check_value_type("fixed_min", fixed_min, [bool], self.name)
@@ -1660,6 +1663,7 @@ class ActsULQInputGrad(PrimitiveWithInfer):
     Outputs:
         - **x_grad** (Tensor) - A tensor of data grad with the same type as `y_grad`.
     """
+
     @prim_attr_register
     def __init__(self):
         pass
@@ -1695,6 +1699,7 @@ class ActULQClampMinGrad(PrimitiveWithInfer):
         >>> clamp_min_grad = act_ulq_clamp_min_grad(Tensor(y_grad), Tensor(clamp_min_mask, mindspore.bool_),
                                                            Tensor(x_clamped_loss))
     """
+
     @prim_attr_register
     def __init__(self):
         pass
@@ -1732,6 +1737,7 @@ class ActULQClampMaxGrad(PrimitiveWithInfer):
         >>> clamp_max_grad = act_ulq_clamp_max_grad(Tensor(y_grad), Tensor(clamp_max_mask, mindspore.bool_),
                                                     Tensor(x_clamped_loss))
     """
+
     @prim_attr_register
     def __init__(self):
         pass
@@ -1774,6 +1780,7 @@ class WtsARQ(PrimitiveWithInfer):
         >>> wts_arq = Q.WtsARQ(axes=[0], num_bits=8, offset_flag=False)
         >>> scale, offset, y = wts_arq(data)
     """
+
     @prim_attr_register
     def __init__(self, num_bits, offset_flag):
         validator.check_value_type("num_bits", num_bits, [int], self.name)
