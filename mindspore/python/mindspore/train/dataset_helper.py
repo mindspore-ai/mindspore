@@ -180,29 +180,20 @@ def _get_dataset_aux(dataset):
 
 def connect_network_with_dataset(network, dataset_helper):
     """
-    Connect the `network` with dataset in `dataset_helper`.
-
-    This function wraps the input network with 'GetNext' so that the data can be fetched automatically from the
-    data channel corresponding to the 'queue_name' and passed to the input network during forward computation.
-
-    Note:
-        In the case of running the network on Ascend/GPU in graph mode, this function will wrap the input network with
-        :class:`mindspore.ops.GetNext`. In other cases, the input network will be returned with no change.
-        The :class:`mindspore.ops.GetNext` is required to get data only in sink mode,
-        so this function is not applicable to no-sink mode.
-        when dataset_helper's dataset_sink_mode is True, it can only be connected to one network.
+    Connect the `network` with dataset in `dataset_helper`. Only supported in `sink mode
+    <https://mindspore.cn/tutorials/experts/en/master/optimize/execution_opt.html>`_, (dataset_sink_mode=True).
 
     Args:
         network (Cell): The training network for dataset.
         dataset_helper (DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue
-            name of the dataset to wrap the `GetNext`.
+            name of the dataset.
 
     Returns:
-        Cell, a new network wrapped with 'GetNext' in the case of running the task on Ascend in graph mode, otherwise
-        it is the input network.
+        Cell, a new network containing the type, shape and queue name of the dataset info.
 
     Raises:
         RuntimeError: If the API was not called in dataset sink mode.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -216,7 +207,7 @@ def connect_network_with_dataset(network, dataset_helper):
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> net = nn.Dense(10, 5)
-        >>> net_with_get_next = ms.connect_network_with_dataset(net, dataset_helper)
+        >>> net_with_dataset = ms.connect_network_with_dataset(net, dataset_helper)
     """
     dataset_iter = dataset_helper.iter
     dataset = dataset_iter.dataset
