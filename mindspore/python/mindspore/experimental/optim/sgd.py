@@ -144,3 +144,4 @@ class SGD(Optimizer):
             self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
                            self.parameters[start_id: end_id], self.accum[start_id: end_id],
                            self.stat[start_id: end_id])
+        return True

@@ -22,6 +22,11 @@ mindspore.experimental.optim.lr_scheduler.LRScheduler
 
         返回当前使用的学习率。
 
-    .. py:method:: step()
+    .. py:method:: step(epoch=None)
 
         按照定义的计算逻辑计算并修改学习率。
+
+        参数：
+            - **epoch** (int，可选) - epoch数。默认值： ``None``。
+
+
