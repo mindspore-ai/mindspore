@@ -35,26 +35,25 @@ __inline__ __device__ void LpNormCoreOp(const T *input, size_t input_index, floa
 
 template <typename T>
 __global__ void LpCalKernel(const T *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
-                            const size_t *output_axis, size_t output_shape_length, float p, float *middle_output) {
+                            const size_t *output_axis, const size_t *output_stride, size_t output_shape_length, float p,
+                            float *middle_output) {
   for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (input_elements);
        index += blockDim.x * gridDim.x) {
     size_t flatten_index = index;
     int output_dim = static_cast<int>(output_shape_length - 1);
     int input_dim = static_cast<int>(input_shape_length - 1);
     size_t output_index = 0;
-    size_t carry = 1;
     for (int i = input_dim; i >= 0; --i) {
-      size_t next = flatten_index / input_shape[i];
+      size_t carry = flatten_index / input_shape[i];
       size_t cur = flatten_index % input_shape[i];
       for (int j = output_dim; j >= 0; --j) {
         if (i == output_axis[j]) {
-          output_index += cur * carry;
-          carry = input_shape[i];
+          output_index += cur * output_stride[j];
           output_dim = j - 1;
           break;
         }
       }
-      flatten_index = next;
+      flatten_index = carry;
     }
     LpNormCoreOp(input, index, middle_output, output_index, p);
   }
@@ -86,12 +85,12 @@ __global__ void NormCalIndentity(const float *middle_output, T *output, size_t o
 
 template <>
 cudaError_t CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length,
-                             size_t input_elements, const size_t *output_axis, size_t output_shape_length,
-                             size_t output_elements, float p, float eps, float *middle_output, float *output,
-                             const uint32_t &device_id, cudaStream_t cuda_stream) {
+                             size_t input_elements, const size_t *output_axis, const size_t *output_stride,
+                             size_t output_shape_length, size_t output_elements, float p, float eps,
+                             float *middle_output, float *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_shape, input_shape_length, input_elements, output_axis, output_shape_length, p, output);
+    input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, output);
   if (int_p != 0) {
     NormCalKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       output, output_elements, p, eps);
@@ -101,12 +100,13 @@ cudaError_t CalLpNorm<float>(const float *input, const size_t *input_shape, size
 
 template <>
 cudaError_t CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length,
-                            size_t input_elements, const size_t *output_axis, size_t output_shape_length,
-                            size_t output_elements, float p, float eps, float *middle_output, half *output,
-                            const uint32_t &device_id, cudaStream_t cuda_stream) {
+                            size_t input_elements, const size_t *output_axis, const size_t *output_stride,
+                            size_t output_shape_length, size_t output_elements, float p, float eps,
+                            float *middle_output, half *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_shape, input_shape_length, input_elements, output_axis, output_shape_length, p, middle_output);
+    input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p,
+    middle_output);
   if (int_p != 0) {
     NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       middle_output, output, output_elements, p);
@@ -119,13 +119,14 @@ cudaError_t CalLpNorm<half>(const half *input, const size_t *input_shape, size_t
 
 template CUDA_LIB_EXPORT cudaError_t CalLpNorm<float>(const float *input, const size_t *input_shape,
                                                       size_t input_shape_length, size_t input_elements,
-                                                      const size_t *output_axis, size_t output_shape_length,
-                                                      size_t output_elements, float p, float eps, float *middle_output,
-                                                      float *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
+                                                      const size_t *output_axis, const size_t *output_stride,
+                                                      size_t output_shape_length, size_t output_elements, float p,
+                                                      float eps, float *middle_output, float *output,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT cudaError_t CalLpNorm<half>(const half *input, const size_t *input_shape,
                                                      size_t input_shape_length, size_t input_elements,
-                                                     const size_t *output_axis, size_t output_shape_length,
-                                                     size_t output_elements, float p, float eps, float *middle_output,
-                                                     half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                     const size_t *output_axis, const size_t *output_stride,
+                                                     size_t output_shape_length, size_t output_elements, float p,
+                                                     float eps, float *middle_output, half *output,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
