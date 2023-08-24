@@ -5558,7 +5558,6 @@ class NMSWithMask(PrimitiveWithInfer):
         """Initialize NMSWithMask"""
         validator.check_value_type("iou_threshold", iou_threshold, [float], self.name)
         self.init_prim_io_names(inputs=['bboxes'], outputs=['selected_boxes', 'selected_idx', 'selected_mask'])
-        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, bboxes_shape):
         cls_name = self.name

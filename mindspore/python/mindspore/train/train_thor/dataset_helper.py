@@ -147,7 +147,7 @@ class _DatasetIter:
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
         else:
-            if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend":
+            if context.get_context("device_target") == "Ascend":
                 if self.sink_size > 0:
                     sink_size = self.sink_size
                 else:
