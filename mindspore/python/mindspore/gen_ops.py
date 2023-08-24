@@ -17,6 +17,7 @@ Generate operator definition from ops.yaml
 """
 import sys
 import os
+import glob
 import yaml
 
 def generate_py_op_signature(args_signature):
@@ -407,6 +408,18 @@ OpDef g{class_name} = {{
     return gen_cc, gen_include
 
 
+def merge_files_to_one_file(file_names, one_file_name):
+    merged_content = ''
+    file_names.sort()
+    for file_name in file_names:
+        with open(file_name, 'r') as file:
+            merged_content += file.read()
+            merged_content += '\n'
+    one_file = open(one_file_name, 'w')
+    one_file.write(merged_content)
+    one_file.close()
+
+
 if __name__ == "__main__":
     current_path = os.path.dirname(os.path.abspath(__file__))
     work_path = os.path.join(current_path, '../../../')
@@ -417,17 +430,15 @@ if __name__ == "__main__":
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_doc.yaml')
     yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
 
-
     if len(sys.argv) < 3:
         ops_yaml_str = 'echo "#gen ops yaml"> ' + f'{yaml_path}'
         os.system(ops_yaml_str)
-        append_str = 'ls ' + f'{yaml_dir_path}' + '*op.yaml |xargs -i cat {} >> ' + f'{yaml_path}'
-        os.system(append_str)
+        op_yaml_file_names = glob.glob(os.path.join(yaml_dir_path, '*op.yaml'))
+        merge_files_to_one_file(op_yaml_file_names, yaml_path)
 
-        doc_yaml_str = 'echo "#gen ops doc"> ' + f'{doc_yaml_path}'
-        os.system(doc_yaml_str)
-        doc_append_str = 'ls ' + f'{yaml_dir_path}' + '*doc.yaml |xargs -i cat {} >> ' + f'{doc_yaml_path}'
-        os.system(doc_append_str)
+        ops_yaml_str = 'echo "#gen ops doc yaml"> ' + f'{doc_yaml_path}'
+        op_yaml_doc_file_names = glob.glob(os.path.join(yaml_dir_path, '*doc.yaml'))
+        merge_files_to_one_file(op_yaml_doc_file_names, doc_yaml_path)
 
     if len(sys.argv) > 3:
         yaml_path_root = sys.argv[2]
