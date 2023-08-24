@@ -62,6 +62,7 @@
 #include "utils/interpret_node_recorder.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
+#include "pipeline/jit/ps/fallback.h"
 #include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/event_message_print.h"
@@ -170,11 +171,11 @@ bool Mutable(const py::object &obj, const ValuePtr &value) {
   return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
 }
 
-void CheckAndConvertToVariableLenSequence(const py::object &obj, AbstractBasePtr abs) {
+bool CheckAndConvertToVariableLenSequence(const py::object &obj, AbstractBasePtr abs) {
   constexpr char variable_len_attr[] = "__ms_dynamic_len__";
   bool dynamic_len = (py::hasattr(obj, variable_len_attr) && py::cast<bool>(py::getattr(obj, variable_len_attr)));
   if (!dynamic_len) {
-    return;
+    return false;
   }
   if (!abs->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For mutable, when the dynamic_len the True, the first input should be"
@@ -182,6 +183,7 @@ void CheckAndConvertToVariableLenSequence(const py::object &obj, AbstractBasePtr
   }
   auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
   abs_seq->CheckAndConvertToDynamicLenSequence();
+  return true;
 }
 
 bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
@@ -207,7 +209,11 @@ AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, boo
   if (broaden) {
     ret = AbstractBroaden(ret);
   }
-  CheckAndConvertToVariableLenSequence(arg, ret);
+  auto is_dynamic_len = CheckAndConvertToVariableLenSequence(arg, ret);
+  if (fallback::EnableFallbackList() && !broaden && !is_dynamic_len) {
+    // Attach corresponding list python object for constant list input.
+    fallback::AttachListObjToAbs(ret, arg);
+  }
   return ret;
 }
 
