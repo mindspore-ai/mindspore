@@ -117,8 +117,8 @@ class AnyTypeKernelActor : public SuperKernelActor {
   mindspore::HashMap<int, std::vector<OpData<DeviceTensor> *>> graph_output_op_data_;
   mindspore::HashMap<int, std::vector<AID *>> graph_output_op_control_;
   std::vector<DeviceTensor *> graph_ouput_device_tensors_;
-  size_t graph_output_data_num_{0};
-  size_t graph_output_control_num_{0};
+  mindspore::HashMap<std::string, size_t> graph_output_data_num_;
+  mindspore::HashMap<std::string, size_t> graph_output_control_num_;
 
   AnyTypeKernelActorState actor_state_{kAnyTypeKernelActorInit};
 
