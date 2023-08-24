@@ -385,6 +385,7 @@ void PackExpander::SetMixedPrecisionFlagToGraph() const {
   auto mixed_type = mix_precision_types_.top();
   graphs_.top()->set_flag(GRAPH_FLAG_MIX_PRECISION_FP16, mixed_type == MixedPrecisionType::kFP16);
   graphs_.top()->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, mixed_type == MixedPrecisionType::kFP32);
+  graphs_.top()->set_flag(GRAPH_FLAG_MIX_PRECISION_BF16, mixed_type == MixedPrecisionType::kBF16);
 }
 
 bool PackExpander::SetMixedPrecision(const py::object &obj) {
@@ -411,6 +412,7 @@ void PackExpander::RecoverMixedPrecision() {
   }
   graphs_.top()->erase_flag(GRAPH_FLAG_MIX_PRECISION_FP16);
   graphs_.top()->erase_flag(GRAPH_FLAG_MIX_PRECISION_FP32);
+  graphs_.top()->erase_flag(GRAPH_FLAG_MIX_PRECISION_BF16);
 }
 
 void RegPackExpanderPy(const py::module *m) {

@@ -155,7 +155,6 @@ class Cell(Cell_):
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
         self.grad_ops_label = False
-        self.to_float_fp16 = False
         self.ge_sync_data = False
         self._is_check_and_refresh = False
 
@@ -1451,13 +1450,8 @@ class Cell(Cell_):
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP16)
         if "fp32" in flags and flags.get("fp32", False):
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP32)
-
-    def _add_mixed_precision_flag_recursive(self, **flags):
-        """Add mixed precision flag to each cell"""
-        if "fp16" in flags and flags.get("fp16", False):
-            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
-        if "fp32" in flags and flags.get("fp32", False):
-            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
+        if "bf16" in flags and flags.get("bf16", False):
+            Cell_.set_mixed_precision_type(self, MixedPrecisionType.BF16)
 
     def apply(self, fn):
         """
@@ -1517,7 +1511,6 @@ class Cell(Cell_):
                 dataset. Users can also customize network attributes by this parameter.
         """
         self.add_flags(**flags)
-        self._add_mixed_precision_flag_recursive(**flags)
         for cell in self.cells():
             cell.add_flags_recursive(**flags)
         return self
@@ -1534,12 +1527,6 @@ class Cell(Cell_):
             self._func_graph_flags = {}
         return self._func_graph_flags
 
-    def _set_mixed_precision_type_recursive(self, mixed_type):
-        """Set mixed precision type to each cell"""
-        Cell_.set_mixed_precision_type(self, mixed_type)
-        for cell in self.cells():
-            cell._set_mixed_precision_type_recursive(mixed_type)
-
     def to_float(self, dst_type):
         """
         Add cast on all inputs of cell and child cells to run with certain float type.
@@ -1552,13 +1539,13 @@ class Cell(Cell_):
 
         Args:
             dst_type (:class:`mindspore.dtype`): Transfer cell to run with dst_type.
-                dst_type can be `mstype.float16` or `mstype.float32`.
+                dst_type can be `mstype.float16` , `mstype.float32` or `mstype.bfloat16`.
 
         Returns:
             Cell, the cell itself.
 
         Raises:
-            ValueError: If dst_type is not mstype.float32 or mstype.float16.
+            ValueError: If dst_type is not `mstype.float32` , `mstype.float16` or `mstype.bfloat16`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1572,17 +1559,13 @@ class Cell(Cell_):
             Conv2d<input_channels=120, output_channels=240, kernel_size=(4, 4), stride=(1, 1), pad_mode=same,
             padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=None, format=NCHW>
         """
-        if dst_type not in (mstype.float16, mstype.float32):
-            raise ValueError("For 'to_float', the argument 'dst_type' must be mstype.float32 or mstype.float16, "
-                             "but got type: {} and value: {}.".format(type(dst_type), dst_type))
-        if dst_type == mstype.float16:
-            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
-            self.to_float_fp16 = True
-        else:
-            self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
-            self.to_float_fp16 = False
-        flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32}
+        if dst_type not in (mstype.float16, mstype.float32, mstype.bfloat16):
+            raise ValueError("For 'to_float', the argument 'dst_type' must be mstype.float32, mstype.float16 or "
+                             "mstype.bfloat16, but got type: {} and value: {}.".format(type(dst_type), dst_type))
+        flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32,
+                 'bf16': dst_type == mstype.bfloat16}
         self._add_init_args(**flags)
+        self.add_flags_recursive(**flags)
         return self
 
     def set_boost(self, boost_type):

@@ -40,6 +40,7 @@ namespace {
   _(kNumberTypeFloat16, ACL_FLOAT16)                   \
   _(kNumberTypeFloat32, ACL_FLOAT)                     \
   _(kNumberTypeFloat64, ACL_DOUBLE)                    \
+  _(kNumberTypeBFloat16, ACL_BF16)                     \
   _(kNumberTypeDouble, ACL_DOUBLE)                     \
   _(kNumberTypeComplex, ACL_DT_UNDEFINED)              \
   _(kNumberTypeComplex64, ACL_COMPLEX64)               \

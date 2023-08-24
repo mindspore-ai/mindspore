@@ -274,6 +274,7 @@ def dtype_to_nptype(type_):
         float64: np.float64,
         complex64: np.complex64,
         complex128: np.complex128,
+        bfloat16: np.float32,
     }[type_]
 
 

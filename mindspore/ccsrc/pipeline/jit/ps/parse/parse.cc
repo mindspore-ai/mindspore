@@ -542,6 +542,8 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
     dst_type = kFloat32;
   } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
     dst_type = kFloat16;
+  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_BF16)) {
+    dst_type = kBFloat16;
   } else {
     return param;
   }
@@ -4502,6 +4504,7 @@ void SetMixedPrecisionFlag(const py::object &obj, const FuncGraphPtr &func_graph
   if (mixed_type != MixedPrecisionType::kNotSet) {
     func_graph->set_flag(GRAPH_FLAG_MIX_PRECISION_FP16, mixed_type == MixedPrecisionType::kFP16);
     func_graph->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, mixed_type == MixedPrecisionType::kFP32);
+    func_graph->set_flag(GRAPH_FLAG_MIX_PRECISION_BF16, mixed_type == MixedPrecisionType::kBF16);
   }
 }
 

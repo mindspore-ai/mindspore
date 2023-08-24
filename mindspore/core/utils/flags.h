@@ -21,6 +21,7 @@ namespace mindspore {
 // flag names
 inline const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
 inline const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
+inline const char GRAPH_FLAG_MIX_PRECISION_BF16[] = "bf16";
 inline const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
 inline const char GRAPH_FLAG_SIDE_EFFECT_IO[] = "side_effect_io";
 inline const char GRAPH_FLAG_SIDE_EFFECT_MEM[] = "side_effect_mem";
