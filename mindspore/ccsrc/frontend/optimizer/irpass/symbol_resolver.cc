@@ -30,7 +30,13 @@ namespace irpass {
 // {prim::kPrimSetAttr, object, attr, assigned}
 // {prim::kPrimResolve, namespace, symbol}
 AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  PatternNode<AnfNodePtr> object, attr, setattr_target, setattr_attr, setattr_assigned, ns_node, sym_node;
+  PatternNode<AnfNodePtr> object;
+  PatternNode<AnfNodePtr> attr;
+  PatternNode<AnfNodePtr> setattr_target;
+  PatternNode<AnfNodePtr> setattr_attr;
+  PatternNode<AnfNodePtr> setattr_assigned;
+  PatternNode<AnfNodePtr> ns_node;
+  PatternNode<AnfNodePtr> sym_node;
   auto GetAttrLambda = [&node, &object, &attr, &optimizer]() -> AnfNodePtr {
     auto object_node = object.GetNode(node);
     auto attr_node = attr.GetNode(node);

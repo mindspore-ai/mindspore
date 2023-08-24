@@ -341,7 +341,9 @@ class ZeroLikeFillZero : public AnfVisitor {
 class DependValueElim : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> x, cond, x_user;
+    PatternNode<AnfNodePtr> x;
+    PatternNode cond;
+    PatternNode x_user;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x, cond), x, IsVNode(cond.GetNode(node)));
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x_user, x), x_user,
                      IsUsedByOther(x.GetNode(node), x_user.GetNode(node)));
@@ -464,7 +466,8 @@ class PynativeEliminater : public OptimizerCaller {
   }
 
   void OperatorHandle3(const std::vector<PatternNode<AnfNodePtr>> &args, const AnfNodePtr &node) const {
-    for (size_t i = 0; i < 2; i++) {
+    constexpr size_t args_size = 2;
+    for (size_t i = 0; i < args_size; i++) {
       auto rep = (args[i]).GetNode(node);
       if (rep != nullptr && rep->isa<ValueNode>()) {
         auto value_node = rep->cast<ValueNodePtr>();

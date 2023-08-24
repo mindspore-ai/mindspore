@@ -27,7 +27,9 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  PatternNode x, y, z;
+  PatternNode x;
+  PatternNode y;
+  PatternNode z;
   PConstant one_(node, false, 1);
   PConstant one_scalar_(node, false, 1, true);
   PConstant zero_(node, false, 0);
@@ -46,7 +48,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   }
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     auto IsAddByZeroSimplifiable = [node](const AnfNodePtr &real_x) {
-      // If real_x is Load CNode, We should not simplify it as Load is a no-op at backend, after simplication, the
+      // If real_x is Load CNode, We should not simplify it as Load is a no-op at backend, after simplification, the
       // result of the Load may be incorrect.
       if (IsPrimitiveCNode(real_x, prim::kPrimLoad)) {
         MS_LOG(DEBUG) << "Cannot simplify as real_x is CNode Load: " << real_x->ToString();
@@ -115,7 +117,9 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
 // {prim::kPrimAddN, {prim::kPrimMakeTuple, {prim::kPrimMul, {prim::kPrimAllReduce, X}, Y}, Z}} ->
 // {prim::kPrimMul, {prim::kPrimAllReduce, {prim::kPrimAddN,{prim::kPrimMakeTuple, Z, X}}}, Y}
 AnfNodePtr AdjustAllReduceMulAdd::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  PatternNode x, y, z;
+  PatternNode x;
+  PatternNode y;
+  PatternNode z;
   auto all_reduce_pat = PPrimitive(prim::kPrimAllReduce, x);
   auto mul_pat = PBinOperation(prim::kPrimMul, all_reduce_pat, y, true);
   auto admktup_pat = PBinOperation(prim::kPrimMakeTuple, mul_pat, z, true);
@@ -139,7 +143,8 @@ AnfNodePtr AdjustAllReduceMulAdd::operator()(const OptimizerPtr &, const AnfNode
     auto mul_prim = mul_cnode_->cast<CNodePtr>()->input(0);
     auto addn_maketuple = admktup_pat.GetOriginalNode();
 
-    ShapeVector x_shape, z_shape;
+    ShapeVector x_shape;
+    ShapeVector z_shape;
     if (!x_->isa<ValueNode>()) {
       if ((x_->abstract() == nullptr) || !x_->abstract()->isa<abstract::AbstractTensor>()) {
         return nullptr;
