@@ -598,9 +598,11 @@ FusionActorPtr SchedulerHelper::BuildFusionActor(const std::vector<AbstractActor
 
   std::string fusion_actor_name = std::to_string(++fusion_actor_index_) + kFusionActorNameSuffix;
   auto fusion_actor = std::make_shared<FusionActor>(fusion_actor_name);
+  InsertActor(fusion_actor.get());
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
     actor->parent_fusion_actor_ = fusion_actor.get();
+    MS_LOG(DEBUG) << "Set fusion actor:" << fusion_actor->GetAID() << " to actor:" << actor->GetAID();
     fusion_actor->sub_actors_[actor->GetAID().Name()] = actor;
   }
   return fusion_actor;

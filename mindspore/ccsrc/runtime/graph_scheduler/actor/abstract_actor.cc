@@ -142,7 +142,7 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
                            .get();
     if (device_tensor == nullptr) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
         ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
@@ -154,6 +154,9 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
+      MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
+                    << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
+                    << " key node:" << device_tensor_store_key.second->DebugString();
     }
   }
 }
@@ -206,12 +209,14 @@ void AbstractActor::SendOutputData(
   const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
   mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(batch_output_data);
 
-  if (((output_data_arrows_.size() != output_data_.size()) ||
-       (output_data_arrows_.size() != output_data_nodes_.size())) &&
+  if (((output_data_arrows.size() != output_data_list.size()) ||
+       (output_data_arrows.size() != output_data_nodes.size())) &&
       (type_ < KernelTransformType::kSwitchActor)) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
+      (*context), "The size of output data arrows:" + std::to_string(output_data_arrows.size()) +
+                    " output data:" + std::to_string(output_data_list.size()) + " output node size:" +
+                    std::to_string(output_data_nodes.size()) + " is not equal for actor:" + GetAID().Name());
   }
   for (size_t i = 0; i < output_data_list.size(); ++i) {
     auto &output_data = output_data_list[i];
@@ -229,6 +234,7 @@ void AbstractActor::SendOutputData(
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &((*batch_output_data)[to_op_id.Name()]),
                                   context);
       } else {
@@ -251,6 +257,9 @@ void AbstractActor::SendOutputData(
       // The batch output data only send when the output flag is kOutputDataFlagLastBatch.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        if (to_actor == nullptr) {
+          MS_LOG(EXCEPTION) << "Failed to fetch to actor:" << to_op_id << " in actor:" << GetAID();
+        }
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, output_data.first.get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);

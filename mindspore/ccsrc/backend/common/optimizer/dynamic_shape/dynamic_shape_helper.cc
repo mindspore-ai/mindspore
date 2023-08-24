@@ -414,6 +414,30 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
   return;
 }
 
+TypeId GetTypeIDByAbstract(const AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return TypeId::kTypeUnknown;
+  } else if (abstract->isa<abstract::AbstractScalar>()) {
+    auto type = abstract->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    return type->type_id();
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    const auto &tensor_abs = abstract->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_abs);
+    MS_EXCEPTION_IF_NULL(tensor_abs->element());
+    return GetTypeIDByAbstract(tensor_abs->element());
+  } else if (abstract->isa<abstract::AbstractSequence>()) {
+    const auto &seq_abs = abstract->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    if (seq_abs->elements().empty() || seq_abs->elements()[0] == nullptr) {
+      return TypeId::kTypeUnknown;
+    }
+    return GetTypeIDByAbstract(seq_abs->elements()[0]);
+  }
+  MS_LOG(INFO) << "Invalid abstract:" << abstract->ToString();
+  return TypeId::kTypeUnknown;
+}
+
 void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive,
                             const AbstractBasePtrList &args_spec_list, bool has_py_execute_data) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -433,6 +457,17 @@ void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive
     }
     const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
     cnode->set_abstract(abs);
+    const auto &kernel_info_device = cnode->kernel_info();
+    if (kernel_info_device != nullptr) {
+      auto kernel_info = static_cast<device::KernelInfo *>(kernel_info_device);
+      auto real_type_id = GetTypeIDByAbstract(abs);
+      if (kernel_info != nullptr && kernel_info->GetMutableSelectKernelBuildInfo() != nullptr &&
+          real_type_id != TypeId::kTypeUnknown) {
+        auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+        build_info->SetOutputDeviceType(real_type_id, 0);
+        MS_LOG(DEBUG) << "Set output type:" << real_type_id << " for kernel:" << cnode->fullname_with_scope();
+      }
+    }
   }
 }
 

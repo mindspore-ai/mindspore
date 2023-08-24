@@ -48,6 +48,7 @@ class FusionActor : public AbstractActor {
 
  private:
   friend class SchedulerHelper;
+  friend class AnyTypeGraphScheduler;
 
   // std::pair<actor, input_index> used to find the mapping between fusion actor inputs and real actors inputs.
   std::vector<std::pair<AbstractActor *, size_t>> real_input_data_;

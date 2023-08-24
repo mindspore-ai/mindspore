@@ -28,6 +28,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
+#include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include "runtime/graph_scheduler/mem_swap_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
@@ -115,7 +116,6 @@ class BACKEND_EXPORT GraphScheduler {
   std::vector<KernelActorPtr> BuildKernelActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<CustomActorPtr> BuildCustomActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<SuperKernelActorPtr> BuildSuperKernelActor(const GraphCompilerInfo &graph_compiler_info);
-  std::vector<AnyTypeKernelActorPtr> BuildAnyTypeKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) const;
   DataPrepareActorPtr BuildDataPrepareActor(const GraphCompilerInfo &graph_compiler_info,
@@ -222,11 +222,6 @@ class BACKEND_EXPORT GraphScheduler {
   // bind thread pool to same numa node
   void BindNumaNode();
 
-  // Transform any type input graph to actor DAG, Generate actor set according to real graph, eliminate data source
-  // actor, loop count actor, output actor, and link arrows to any type kernel actor of model graph.
-  std::vector<AbstractActorPtr> TransformForAnyTypeActor(const KernelGraphPtr &model_graph,
-                                                         const KernelGraphPtr &real_graph,
-                                                         const DeviceContext *device_context);
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
 
@@ -239,6 +234,8 @@ class BACKEND_EXPORT GraphScheduler {
 
   // In the control flow, used to build and link control actor.
   ControlNodeScheduler control_node_scheduler_;
+  // If there is an any type input in graph, it will be used to transform it.
+  AnyTypeGraphScheduler any_type_graph_scheduler_;
 
   // Build and link swap actor when memory offload is enabled.
   MemSwapScheduler swap_node_scheduler_;

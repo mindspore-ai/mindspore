@@ -345,7 +345,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         continue;
       }
       MS_LOG(DEBUG) << "Alloc memory for device tensor:" << copy_device_tensor
-                    << " ptr:" << copy_device_tensor->GetPtr() << " index:" << i << " for actor:" << GetAID();
+                    << " ptr:" << copy_device_tensor->GetPtr() << " size:" << copy_device_tensor->GetSize()
+                    << " index:" << i << " for actor:" << GetAID();
       node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
       node_device_tensor->set_from_mem_pool(false);
     } else {
@@ -353,9 +354,10 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     }
     MS_EXCEPTION_IF_NULL(copy_device_tensor);
     MS_LOG(INFO) << "The input data of node:" << input_nodes[i]->DebugString()
-                 << " need copy from address:" << input_device_tensor->GetPtr()
-                 << ", type:" << input_device_tensor->GetDeviceType() << " to address:" << copy_device_tensor->GetPtr()
-                 << ", type:" << copy_device_tensor->GetDeviceType()
+                 << " need copy from device address:" << input_device_tensor << " ptr:" << input_device_tensor->GetPtr()
+                 << " size:" << input_device_tensor->GetSize() << ", type:" << input_device_tensor->GetDeviceType()
+                 << " to device address:" << copy_device_tensor << " ptr:" << copy_device_tensor->GetPtr()
+                 << " size:" << copy_device_tensor->GetSize() << ", type:" << copy_device_tensor->GetDeviceType()
                  << ", is ref node need copy back:" << is_parameters_need_copy_[i];
     if (!Copy(copy_device_tensor.get(), input_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";

@@ -52,6 +52,7 @@ class DataSourceActor : public DebugAwareActor {
  protected:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+  friend class AnyTypeGraphScheduler;
 
   void Init() override;
 
