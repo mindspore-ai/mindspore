@@ -44,7 +44,7 @@ void RegCell(const py::module *m) {
     .value("NOTSET", MixedPrecisionType::kNotSet)
     .value("FP16", MixedPrecisionType::kFP16)
     .value("FP32", MixedPrecisionType::kFP32);
-  (void)py::class_<Cell, std::shared_ptr<Cell>>(*m, "Cell_")
+  (void)py::class_<Cell, std::shared_ptr<Cell>>(*m, "Cell_", py::metaclass(reinterpret_cast<PyObject *>(&PyType_Type)))
     .def(py::init<std::string &>())
     .def("__str__", &Cell::ToString)
     .def("_add_attr", &CellPy::AddAttr, "Add Cell attr.")
