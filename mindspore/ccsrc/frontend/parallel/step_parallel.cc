@@ -65,6 +65,8 @@ namespace mindspore {
 namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
+// the input is tuple or list
+static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK};
 const uint32_t MAX_BFS_DEPTH = 7;
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
@@ -2528,11 +2530,12 @@ static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all
     }
     auto make_tuple_list_next_cnode = make_tuple_list_next_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple_list_next_cnode);
-    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
-    if (op_info == nullptr) {
-      MS_LOG(INFO) << "The cnode has not operator info: " << GetPrimName(make_tuple_list_next_cnode);
+    if (!IsSomePrimitiveList(make_tuple_list_next_cnode, INPUT_IS_TUPLE_OR_LIST_OPS)) {
       continue;
     }
+
+    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
+    MS_EXCEPTION_IF_NULL(op_info);
     cnode->set_user_data<OperatorInfo>(op_info);
   }
 }
