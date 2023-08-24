@@ -259,7 +259,7 @@ class DfGraphConvertor {
   void SetWhileOutputHandle(const OperatorPtr &prev_while_op);
   void GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &graphs);
 
-  bool IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) const;
+  bool IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index);
   void SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePtr &make_tuple_node);
   void SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node);
   bool IsMergeOrSwitchLayerInput(const CNodePtr &node) const;

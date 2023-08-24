@@ -46,6 +46,12 @@ OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) {
       name = GetCNodeTargetFuncName(cnode);
     }
 
+    // Convert TupleGetItem to control edge when it has monad.
+    if (name == kNameTupleGetItem) {
+      if (HasAbstractMonad(node)) {
+        name = kNameUpdateState;
+      }
+    }
     auto it_adpt = OpAdapterMap::get().find(name);
     if (it_adpt != OpAdapterMap::get().end()) {
       return it_adpt->second->Get(train);
