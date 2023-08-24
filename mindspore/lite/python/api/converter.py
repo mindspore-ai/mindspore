@@ -520,12 +520,24 @@ class Converter:
             self._converter.set_no_fusion(False)
             self.device = "GPU"
             self.optimize_user_defined = "gpu_oriented"
-        elif optimize == "ascend_oriented":
+        elif "ascend_oriented" in optimize:
             self._converter.set_no_fusion(False)
             self.device = "Ascend"
+            split_str = optimize.split(":")
+            if len(split_str) == 2:
+                device_version = "default"
+            elif len(split_str) == 1:
+                device_version = split_str[1]
+            else:
+                raise ValueError(f"device_version must be single")
+            check_isinstance("device_version", device_version, str)
+            if device_version not in ["default", "910b"]:
+                raise ValueError(f"device_version must be in [default, 910b], but got {device_version}.")
+            self._converter.set_device_version(device_version)
             self.optimize_user_defined = "ascend_oriented"
         else:
-            raise ValueError(f"optimize must be 'none', 'general', 'gpu_oriented' or 'ascend_oriented'.")
+            raise ValueError(
+                f"optimize must be 'none', 'general', 'gpu_oriented', 'ascend_oriented' or 'ascend_oriented:910b'.")
 
     @property
     def output_data_type(self):

@@ -325,6 +325,20 @@ std::vector<char> Converter::GetProviderChar() {
   return StringToChar(provider);
 }
 
+void Converter::SetDeviceVersion(const std::vector<char> &device_version) {
+  if (data_ != nullptr) {
+    data_->device_version = CharToString(device_version);
+  }
+}
+
+std::vector<char> Converter::GetDeviceVersionChar() {
+  std::string device_version = "";
+  if (data_ != nullptr) {
+    device_version = data_->device_version;
+  }
+  return StringToChar(device_version);
+}
+
 Status Converter::Convert() {
   if (data_ != nullptr) {
     Status ret = Status(static_cast<StatusCode>(lite::RunConverter(data_, nullptr, nullptr, false)));
