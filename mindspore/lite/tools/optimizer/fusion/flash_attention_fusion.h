@@ -19,29 +19,58 @@
 
 #include <string>
 #include <memory>
-#include "tools/optimizer/common/pattern_process_pass_extends.h"
-
+#include <unordered_map>
+#include <vector>
+#include <map>
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 namespace mindspore {
 namespace opt {
-class FlashAttentionFusion : public LitePatternProcessPass {
+/*
+ *
+ * --------------------------------------------------------------------------------------------------------
+ *  Pattern 1: [vae_decoder\vae_encoder]            |   Pattern 2: [controlNet\Unet]
+ *    transpose input[0] is input[K] -> transpose   |     transpose input[0] is input[K] -> transpose
+ *      matmul  input[0] is input[Q] ->   matmul    |       matmul  input[0] is input[Q] ->   matmul
+ *                                         mul      |                                          mul
+ *                                        cast      |                                        softMax
+ *                                       softMax    |                                         cast
+ *                                        cast      |       matmul  input[0] is input[V] ->  matmul
+ *      matmul  input[0] is input[V] ->  matmul     |
+ * --------------------------------------------------------------------------------------------------------
+ *
+ */
+class FlashAttentionFusion : public MultiplePatternProcessPass {
  public:
-  explicit FlashAttentionFusion(bool multigraph = true, const std::string &name = "FlashAttentionFusion")
-      : LitePatternProcessPass(name, multigraph) {}
+  explicit FlashAttentionFusion(const std::string &plugin_custom_ops = "",
+                                const std::map<std::string, std::vector<std::string>> &enable_pattern_names = {},
+                                const std::map<std::string, std::vector<std::string>> &disable_pattern_names = {},
+                                const std::string &name = "FlashAttentionFusion", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {
+    plugin_custom_ops_ = plugin_custom_ops;
+    enable_pattern_names_ = enable_pattern_names;
+    disable_pattern_names_ = disable_pattern_names;
+  }
 
   ~FlashAttentionFusion() override = default;
 
-  const BaseRef DefinePattern() const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &equiv) const override;
+  AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  const VectorRef DefineFlashAttentionPattern1() const;
+  const VectorRef DefineFlashAttentionPattern2() const;
+  const VectorRef DefineFlashAttentionPattern3() const;
   bool InitVar() const;
   bool CheckBatchMatmulTranspose(const CNodePtr &batchmm_cnode, const bool expected_transpose_a,
                                  const bool expected_transpose_b) const;
   bool CheckInputShape(const CNodePtr &cnode, const uint32_t input_index, const uint32_t expected_rank_num,
                        const uint32_t expected_seq_len) const;
-  CNodePtr CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                    const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodePart1(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                         const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodePart2(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                         const AnfNodePtr &node, const EquivPtr &equiv) const;
+  bool CheckNeedFusion(std::vector<std::string> cnode_names) const;
 
  protected:
   mutable VarPtr input_0_batchmm_qk_ = nullptr;
@@ -49,6 +78,9 @@ class FlashAttentionFusion : public LitePatternProcessPass {
   mutable VarPtr input_1_batchmm_sv_ = nullptr;
   mutable VarPtr input_0_mul_ = nullptr;
   mutable bool has_add_cast_ = false;
+  std::string plugin_custom_ops_;
+  std::map<std::string, std::vector<std::string>> enable_pattern_names_;
+  std::map<std::string, std::vector<std::string>> disable_pattern_names_;
 };
 }  // namespace opt
 }  // namespace mindspore

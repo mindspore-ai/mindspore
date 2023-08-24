@@ -23,25 +23,41 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+const size_t kNumInputSize = 2;
+}
 STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(prim);
+
   auto split_num_val = prim->GetAttr(ops::kOutputNum);
   CHECK_NULL_RETURN(split_num_val);
   prim->AddAttr("num_split", split_num_val);
-  if (cnode->size() == opt::kInputSizeThree) {
-    auto dst_prim = std::make_shared<acl::SplitV>();
+  ValuePtr axis_value = prim->GetAttr("axis");
+  ValuePtr size_splits_value = prim->GetAttr("size_splits");
+  PrimitivePtr dst_prim = nullptr;
+  if (cnode->size() == opt::kInputSizeThree ||
+      (cnode->size() == kNumInputSize && axis_value != nullptr && size_splits_value != nullptr)) {
+    dst_prim = std::make_shared<acl::SplitV>();
     if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
       MS_LOG(ERROR) << "Split mapper failed.";
       return RET_ERROR;
     }
+    if (axis_value != nullptr) {
+      dst_prim->AddAttr("split_dim", axis_value);
+    }
+    if (size_splits_value != nullptr) {
+      dst_prim->AddAttr("size_splits", size_splits_value);
+    }
   }
-  int status = AddIntAttrToInput(func_graph, cnode, prim, ops::kAxis, false);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add axis constant value to input failed.";
-    return RET_ERROR;
+  if (size_splits_value == nullptr) {
+    int status = AddIntAttrToInput(func_graph, cnode, prim, ops::kAxis, false);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Add axis constant value to input failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

@@ -57,7 +57,6 @@ class AclPassImpl {
   /* pre or post pass */
   bool IsDynamicInput();
   STATUS CommonPass(const FuncGraphPtr &func_graph);
-  STATUS AdjustInvalidCnodeName(const FuncGraphPtr &func_graph);
   STATUS RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph);
   STATUS MakeListToMakeTuple(const FuncGraphPtr &func_graph);
 
