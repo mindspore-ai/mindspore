@@ -27,8 +27,8 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
     _extend, _dict_clear, _haskey, _update, _fromkeys
 
 from ... import _checkparam as validator
-from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for_squeeze, \
-    check_axis_in_range, check_axis_valid, check_and_canonicalize_axes
+from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
+    check_axis_valid, check_and_canonicalize_axes
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops import composite
@@ -816,12 +816,7 @@ def squeeze(x, axis=None):
         >>> print(x.shape)
         (2, 2)
     """
-    shape = F.shape(x)
-    if axis is None:
-        return F.squeeze(x)
-    # yield squeezed shape based on the axes
-    new_shape = prepare_shape_for_squeeze(shape, axis)
-    return F.reshape(x, new_shape)
+    return F.squeeze(x, axis)
 
 
 def unbind(input, dim=0):
@@ -1753,8 +1748,8 @@ def _infer_out_shape(*shapes):
     shape_out = list()
     max_len = ms_max([len(it) for it in shapes])
     for i in range(max_len):
-        items = [it[i-(max_len-len(it))] if i - (max_len - len(it))
-                 >= 0 else 1 for it in shapes]
+        items = [it[i - (max_len - len(it))] if i - (max_len - len(it))
+                                                >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else ms_max(items)
         shape_out.append(max_size)
     return tuple(shape_out)
@@ -1865,12 +1860,14 @@ def searchsorted(x, v, side='left', sorter=None):
         >>> print(x.searchsorted(3))
         2
     """
+
     def get_log2_size(size):
         """Get log2 size"""
         log2_res = F.log2(F.cast(size, mstype.float32))
         ceil_res = F.ceil(log2_res)
         cast_res = F.cast(ceil_res, mstype.int64)
         return cast_res
+
     if side not in ('left', 'right'):
         const_utils.raise_value_error('invalid value for keyword "side"')
     a = x.astype(mstype.float32)
@@ -2131,27 +2128,14 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
         >>> print(input_x.sum(axis=1))
         [10. 35.]
     """
-    input_x = input.astype(mstype.int32) if input.dtype == mstype.bool_ else input
-    dtype = input_x.dtype if dtype is None else dtype
-    dtype = check_astype_dtype_const(dtype)
-    if not isinstance(keepdims, int):
-        const_utils.raise_type_error("integer argument expected")
     if initial is not None and not isinstance(initial, (int, float, bool)):
-        const_utils.raise_type_error("initial argument should be a scalar.")
-    if axis is None:
-        axis = ()
-    else:
-        axis = check_and_canonicalize_axes(axis, input.ndim)
-
-    if not check_type_support(input_x.dtype, 'GPU', (mstype.float64, mstype.float32, mstype.float16)):
-        input_x = input_x.astype(mstype.float32)
-    if keepdims:
-        res = _reduce_sum_keepdims(input_x, axis)
-    else:
-        res = _reduce_sum_default(input_x, axis)
+        raise TypeError(f"For Tensor.sum, initial must be int, float or bool, but got {type(initial)}.")
+    res = F.sum(input, axis, keepdims)
     if initial is not None:
         res += initial
-    return res.astype(dtype)
+    if dtype is not None:
+        res = res.astype(dtype)
+    return res
 
 
 @_primexpr
