@@ -61,7 +61,9 @@ int64_t MetaTensor::DimensionSize(size_t index) const {
   return dim_size;
 }
 
-int MetaTensor::ElementsNum() const { return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int>()); }
+int64_t MetaTensor::ElementsNum() const {
+  return std::accumulate(shape_.begin(), shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+}
 
 TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   if (type_ptr == nullptr) {

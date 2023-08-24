@@ -41,7 +41,7 @@ static tensor::TensorPtr CreateValuedTensor(const TypePtr &type, const std::vect
   MS_EXCEPTION_IF_NULL(type);
   auto type_id = type->type_id();
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  const size_t &mem_size = IntToSize(tensor->ElementsNum());
+  const size_t &mem_size = LongToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   std::map<TypeId, std::function<void()>> type_dict{
     {kNumberTypeBool,
@@ -83,7 +83,7 @@ static tensor::TensorPtr CreateComplexTensor(const TypePtr &type, const std::vec
   MS_EXCEPTION_IF_NULL(type);
   auto type_id = type->type_id();
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  const size_t &mem_size = IntToSize(tensor->ElementsNum());
+  const size_t &mem_size = LongToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   std::map<TypeId, std::function<void()>> type_dict{
     {kNumberTypeComplex64,
