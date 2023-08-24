@@ -33,12 +33,10 @@ __global__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_di
     j = write_index / output_dim2 % output_dim1;
     k = write_index % output_dim2;
 
-    if ((indices[j] >= 0) && (indices[j] < input_dim1)) {
-      size_t read_index = i * input_dim1 * output_dim2 + indices[j] * output_dim2 + k;
-      output[write_index] = input[read_index];
-    } else {
-      output[write_index] = 0;
-    }
+    CUDA_KERNEL_ASSERT(indices[j] >= 0);
+    CUDA_KERNEL_ASSERT(indices[j] < input_dim1);
+    size_t read_index = i * input_dim1 * output_dim2 + indices[j] * output_dim2 + k;
+    output[write_index] = input[read_index];
   }
 
   return;
@@ -55,13 +53,11 @@ __global__ void GatherV2WithBatchDimsKernel(T *input, S *indices, T *output, siz
     n = write_index / (output_dim1 * output_dim2) % output_dim0;
     k = write_index % output_dim2;
 
-    if ((indices[j] >= 0) && (indices[j] < input_dim1)) {
-      size_t read_index =
-        i * output_dim0 * input_dim1 * output_dim2 + n * input_dim1 * output_dim2 + indices[j] * output_dim2 + k;
-      output[write_index] = input[read_index];
-    } else {
-      output[write_index] = 0;
-    }
+    CUDA_KERNEL_ASSERT(indices[j] >= 0);
+    CUDA_KERNEL_ASSERT(indices[j] < input_dim1);
+    size_t read_index =
+      i * output_dim0 * input_dim1 * output_dim2 + n * input_dim1 * output_dim2 + indices[j] * output_dim2 + k;
+    output[write_index] = input[read_index];
   }
 
   return;

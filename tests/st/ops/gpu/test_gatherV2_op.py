@@ -1406,3 +1406,26 @@ def test_gather_tensor(data_type):
 
     assert out.shape == y_expect.shape
     np.allclose(out.asnumpy(), y_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
+def test_gather_tensor_outofbound(data_type):
+    """
+    Feature: Gather
+    Description: test out of bound case for Gather
+    Expectation: raise runtime error
+    """
+    x = np.array([1, 2, 3, 4, 5, 6, 7]).astype(data_type)
+    input_indices = Tensor(np.array([0, 100, 4, 2, 6], dtype=np.int))
+    axis = 0
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    graph_table_tensor = Tensor(x)
+
+    with pytest.raises(RuntimeError) as raise_info:
+        graph_table_tensor.gather(input_indices, axis)
+    assert "failed" in str(raise_info.value)
