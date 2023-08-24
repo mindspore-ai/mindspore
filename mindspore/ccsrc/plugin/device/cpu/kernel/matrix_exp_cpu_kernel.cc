@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/matrix_exp_cpu_kernel.h"
-#include "mindspore/core/ops/matrix_exp.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,12 +41,13 @@ const std::vector<std::vector<double>> b18 = {
 
 bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatrixExp ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+  //  Todo, dynamic shape
+  //  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
+  //  if (!kernel_ptr) {
+  //    MS_LOG(ERROR) << "cast MatrixExp ops failed!";
+  //    return false;
+  //  }
+  //  kernel_name_ = kernel_ptr->name();
   data_type_ = inputs.at(kIndex0)->dtype_id();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }

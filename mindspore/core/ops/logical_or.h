@@ -22,10 +22,10 @@
 #include <vector>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLogicalOr = "LogicalOr";
 /// \brief Computes the "logical OR" of two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalOr for more details.
 class MIND_API LogicalOr : public BaseOperator {

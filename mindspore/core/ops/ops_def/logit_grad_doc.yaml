@@ -1,5 +1,5 @@
 logit_grad:
-    description: |    
+    description: |
         Computes LogitGrad of input element-wise.
 
         Returns:

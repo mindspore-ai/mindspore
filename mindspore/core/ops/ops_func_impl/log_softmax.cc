@@ -24,12 +24,16 @@ BaseShapePtr LogSoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) const {
   auto x_shape = input_args[kIndex0]->GetShape();
   auto x_shape_vec = x_shape->GetShapeVector();
+  if (MS_UNLIKELY(IsDynamicRank(x_shape_vec))) {
+    return x_shape->Clone();
+  }
+
   int64_t x_rank = SizeToLong(x_shape_vec.size());
   MS_CHECK_VALUE(x_rank >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg("dimension of 'logit'", x_rank, kGreaterEqual,
                                                                           1, primitive));
   auto axis = input_args[kIndex1]->GetValue();
   auto axis_opt = GetScalarValue<int64_t>(axis);
-  if (axis_opt.has_value()) {
+  if (MS_LIKELY(axis_opt.has_value())) {
     auto axis_value = axis_opt.value();
     MS_CHECK_VALUE(
       axis_value >= -x_rank && axis_value < x_rank,

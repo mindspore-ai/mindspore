@@ -21,10 +21,10 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatrixDeterminant = "MatrixDeterminant";
 class MIND_API MatrixDeterminant : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixDeterminant);

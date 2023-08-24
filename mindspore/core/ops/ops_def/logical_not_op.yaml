@@ -1,8 +1,8 @@
-#operator log1p
-log1p:
+#operator logical_not
+logical_not:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
-        y:
+        output:
             dtype: tensor

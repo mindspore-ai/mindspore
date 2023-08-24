@@ -1,7 +1,7 @@
 #operator log_softmax_grad
 log_softmax_grad:
     args:
-        x:
+        logits:
             dtype: tensor
         grad:
             dtype: tensor
@@ -9,5 +9,5 @@ log_softmax_grad:
             dtype: int
             init: -1
     returns:
-        dx:
+        logits_grad:
             dtype: tensor

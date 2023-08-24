@@ -180,16 +180,19 @@ def get_median_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 @vmap_rules_getters.register(G.LogitGrad)
-def get_logit_grad_vmap_rule(prim, axis_size):
+def get_logit_grad_vmap_rule(prim_func, axis_size):
     """VmapRule for `LogitGrad`."""
+    if isinstance(prim_func, str):
+        raise TypeError("prim_func can't be str.")
+
     def vmap_rule(grad_bdim, x_bdim, eps_bdim):
         grad, grad_dim = grad_bdim
         x, x_dim = x_bdim
-        eps, eps_dim = eps_bdim
+        eps, _ = eps_bdim
         x_shape = F.shape(x)
         grad_shape = F.shape(grad)
         if x_dim == grad_dim and x_shape == grad_shape:
-            out = F.logit_grad(grad, x, eps)
+            out = prim_func(grad, x, eps)
             return (out, x_dim)
 
         # This branch means (x_dim is None) and (grad_dim is not None).
@@ -204,7 +207,7 @@ def get_logit_grad_vmap_rule(prim, axis_size):
         else:
             grad = mnp.moveaxis(grad, grad_dim, x_dim)
             out_dim = x_dim
-        out = F.logit_grad(grad, x, eps)
+        out = prim_func(grad, x, eps)
         return out, out_dim
 
     return vmap_rule

@@ -15,23 +15,23 @@
  */
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/log_softmax.h"
+#include "ops/ops_func_impl/matrix_exp.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
-#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(LogSoftmax, EltwiseOpParams);
+OP_FUNC_IMPL_TEST_DECLARE(MatrixExp, EltwiseOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(
-  LogSoftmax,
+  MatrixExp,
   testing::Values(
-    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {CreateScalar<int64_t>(-1)}},
-    EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32, {CreateScalar(kValueAny)}},
-    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32, {CreateScalar(kValueAny)}},
-    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32, {CreateScalar<int64_t>(2)}},
-    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32, {CreateScalar(kValueAny)}}
+    EltwiseOpParams{{2, 3, 2, 2}, kFloat32, {2, 3, 2, 2}, kFloat32},
+    EltwiseOpParams{{2, 3, 2, -1}, kFloat32, {2, 3, 2, -1}, kFloat32},
+    EltwiseOpParams{{2, 3, -1, -1}, kFloat32, {2, 3, -1, -1}, kFloat32},
+    EltwiseOpParams{{2, -1, -1, -1}, kFloat32, {2, -1, -1, -1}, kFloat32},
+    EltwiseOpParams{{-1, -1, -1, -1}, kFloat32, {-1, -1, -1, -1}, kFloat32},
+    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}
   ));
 }  // namespace ops
 }  // namespace mindspore

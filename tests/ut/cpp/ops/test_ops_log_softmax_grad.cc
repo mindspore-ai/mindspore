@@ -37,7 +37,8 @@ OP_FUNC_IMPL_TEST_CASES(
     MultiInputOpParams{{{2, 3}, {-2}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{-2}, {-1, -1}}, {kFloat32, kFloat32}, {{-1, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
     MultiInputOpParams{{{-1, -1}, {-2}}, {kFloat32, kFloat32}, {{-1, -1}}, {kFloat32}, {CreateScalar(kValueAny)}},
-    MultiInputOpParams{{{-2}, {-2}}, {kFloat32, kFloat32}, {{-2}}, {kFloat32}, {CreateScalar(kValueAny)}}
+    MultiInputOpParams{{{-2}, {-2}}, {kFloat32, kFloat32}, {{-2}}, {kFloat32}, {CreateScalar(kValueAny)}},
+    MultiInputOpParams{{{-2}, {-2}}, {kFloat32, kFloat32}, {{-2}}, {kFloat32}, {CreateScalar<int64_t>(2)}}
   ));
 }  // namespace ops
 }  // namespace mindspore

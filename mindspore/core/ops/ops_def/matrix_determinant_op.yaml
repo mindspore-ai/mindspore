@@ -1,7 +1,7 @@
-#operator logical_not
-logical_not:
+#operator matrix_determinant
+matrix_determinant:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output:

@@ -23,10 +23,10 @@
 #include <vector>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLogSoftmax = "LogSoftmax";
 /// \brief Log Softmax activation function. Refer to Python API @ref mindspore.ops.LogSoftmax for more details.
 class MIND_API LogSoftmax : public BaseOperator {
  public:

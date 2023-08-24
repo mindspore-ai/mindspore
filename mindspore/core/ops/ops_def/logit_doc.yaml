@@ -1,5 +1,5 @@
 logit:
-    description: |    
+    description: |
         Calculate the logit of a tensor element-wise. When eps is not None, element in `input` is clamped to [eps, 1-eps].
         When eps is None, input `input` is not clamped.
 

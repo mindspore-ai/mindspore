@@ -27,7 +27,7 @@ BaseShapePtr LogSoftmaxGradFuncImpl::InferShape(const PrimitivePtr &primitive,
   int64_t grad_rank = SizeToLong(grad_shape_vec.size());
   auto axis = input_args[kIndex2]->GetValue();
   auto axis_opt = GetScalarValue<int64_t>(axis);
-  if (axis_opt.has_value()) {
+  if (MS_LIKELY(axis_opt.has_value() && !IsDynamicRank(grad_shape_vec))) {
     auto axis_value = axis_opt.value();
     MS_CHECK_VALUE(axis_value >= -grad_rank && axis_value < grad_rank,
                    CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft,

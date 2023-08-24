@@ -147,8 +147,6 @@ GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimRound, std::make_shared<Primitive>("Round"));
 GVAR_DEF(PrimitivePtr, kPrimLog, std::make_shared<Primitive>(kLogOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogGrad, std::make_shared<Primitive>(kLogGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimLogit, std::make_shared<Primitive>(kLogitOpName));
-GVAR_DEF(PrimitivePtr, kPrimLogitGrad, std::make_shared<Primitive>(kLogitGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLinSpace, std::make_shared<Primitive>("LinSpace"));
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppression, std::make_shared<Primitive>("NonMaxSuppression"));
 GVAR_DEF(PrimitivePtr, kPrimSign, std::make_shared<Primitive>(kSignOpName));
@@ -159,8 +157,6 @@ GVAR_DEF(PrimitivePtr, kPrimCdistGrad, std::make_shared<Primitive>(kCdistGradOpN
 GVAR_DEF(PrimitivePtr, kPrimWhere, std::make_shared<Primitive>("Where"));
 GVAR_DEF(PrimitivePtr, kPrimMatrixInverse, std::make_shared<Primitive>(kMatrixInverseOpName));
 GVAR_DEF(PrimitivePtr, kPrimMatrixPower, std::make_shared<Primitive>(kMatrixPowerOpName));
-GVAR_DEF(PrimitivePtr, kPrimMatrixDeterminant, std::make_shared<Primitive>(kMatrixDeterminantOpName));
-GVAR_DEF(PrimitivePtr, kPrimLogMatrixDeterminant, std::make_shared<Primitive>(kLogMatrixDeterminantOpName));
 GVAR_DEF(PrimitivePtr, kPrimIndexAdd, std::make_shared<Primitive>("IndexAdd"));
 GVAR_DEF(PrimitivePtr, kPrimIndexFill, std::make_shared<Primitive>(kIndexFillOpName));
 GVAR_DEF(PrimitivePtr, kPrimIndexPut, std::make_shared<Primitive>(kIndexPutOpName));

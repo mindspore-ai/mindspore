@@ -988,10 +988,10 @@ def get_smooth_l1_loss_grad_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.nn_ops.LogSoftmax)
-def get_log_softmax_vmap_rule(prim, axis_size):
+def get_log_softmax_vmap_rule(prim_func, axis_size):
     """VmapRule for 'LogSoftmax' operation."""
     def vmap_rule(x_bdim, axis_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
+        is_all_none, result = vmap_general_preprocess(prim_func, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
