@@ -310,7 +310,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
       continue;
     }
-
+    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
+    node_device_tensor->SetSize(input_device_tensor->GetSize());
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
