@@ -1,6 +1,6 @@
-relu6_grad:
+relu_grad:
   description: |
-    Computes gradient for the ReLU6 activation.
+    Computes gradient for the ReLU activation.
 
     Args:
         y_backprop (Tensor): Input gradients tensor,　has the same dtype and shape as `x`.

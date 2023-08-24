@@ -8,5 +8,3 @@ relu:
       dtype: tensor
   class:
     name: ReLU
-  function:
-    name: _relu

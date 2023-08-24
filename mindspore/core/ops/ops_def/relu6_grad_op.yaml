@@ -10,3 +10,5 @@ relu6_grad:
       dtype: tensor
   class:
     name: ReLU6Grad
+  function:
+    name: _relu6_grad

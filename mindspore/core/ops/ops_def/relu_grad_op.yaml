@@ -8,3 +8,5 @@ relu_grad:
   returns:
     output:
       dtype: tensor
+  function:
+    name: _relu_grad

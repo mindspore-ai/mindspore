@@ -8,3 +8,5 @@ rsqrt_grad:
   returns:
     output:
       dtype: tensor
+  function:
+    name: _rsqrt_grad

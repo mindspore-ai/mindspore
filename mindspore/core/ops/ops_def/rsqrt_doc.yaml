@@ -7,14 +7,14 @@ rsqrt:
         out_{i} =  \frac{1}{\sqrt{input_{i}}}
 
     Args:
-        input (Tensor): The input of rsqrt. Its each element must be a non-negative
+        x (Tensor): The input of rsqrt. Its each element must be a non-negative
             number, if an element is negative, the calculation result is nan.
 
     Returns:
-        Tensor, has the same shape and dtype as the `input`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -22,7 +22,7 @@ rsqrt:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> input = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
-        >>> output = ops.rsqrt(input)
+        >>> x = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
+        >>> output = ops.rsqrt(x)
         >>> print(output)
         [       nan 1.8349396  0.80530024        nan]

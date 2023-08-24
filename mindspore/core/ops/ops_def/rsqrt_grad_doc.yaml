@@ -1,6 +1,6 @@
-relu6_grad:
+rsqrt_grad:
   description: |
-    Computes gradient for the ReLU6 activation.
+    Computes gradients for the Rsqrt.
 
     Args:
         y_backprop (Tensor): Input gradients tensor,　has the same dtype and shape as `x`.
