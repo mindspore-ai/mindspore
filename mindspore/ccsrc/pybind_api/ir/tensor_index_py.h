@@ -396,13 +396,17 @@ class TensorIndex final {
                              return BroadCastShape(output_shape, tensor_indexes_shape);
                            });
   }
-  static std::vector<int64_t> SliceToVector(int64_t start, int64_t stop, int64_t step) {
+  static std::vector<int64_t> SliceToVector(int64_t start, int64_t stop, int64_t step, int64_t dims_size) {
     std::vector<int64_t> slice_ele_list_index;
     if (step > 0) {
       for (int64_t j = start; j < stop; j += step) {
         (void)slice_ele_list_index.emplace_back(j);
       }
       return slice_ele_list_index;
+    }
+    if (dims_size == start) {
+      start -= 1;
+      stop -= 1;
     }
     for (int64_t j = start; j > stop; j += step) {
       (void)slice_ele_list_index.emplace_back(j);
