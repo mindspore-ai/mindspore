@@ -19,6 +19,7 @@
 #include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
+#include "src/litert/weight_decoder.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -46,6 +47,7 @@ int QuantDTypeCastCPUKernel::Prepare() {
   CHECK_NULL_RETURN(param);
   src_dtype = in_tensor->data_type();
   dst_dtype = param->dstT;
+  preferred_dim_ = param->axis;
   if (out_tensor->data_type() != dst_dtype) {
     MS_LOG(ERROR) << "param data type and tensor data type do not match.";
     return RET_ERROR;
@@ -58,20 +60,71 @@ int QuantDTypeCastCPUKernel::Prepare() {
     MS_LOG(ERROR) << out_tensors_.front()->tensor_name() << " quant param is empty.";
     return RET_ERROR;
   }
-
+  if (in_tensor->quant_params().empty() && out_tensor->quant_params().empty()) {
+    MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
+    return RET_ERROR;
+  }
+  if (!out_tensor->quant_params().empty() && out_tensor->quant_params().front().inited) {
+    if (ExtractQuantParams(out_tensor, param->axis) != RET_OK) {
+      MS_LOG(ERROR) << out_tensor->tensor_name() << " extract quant param failed.";
+      return RET_ERROR;
+    }
+    quant_dst_dtype = out_tensor->quant_params().front().dstDtype;
+  } else {
+    if (ExtractQuantParams(in_tensor, preferred_dim_) != RET_OK) {
+      MS_LOG(ERROR) << in_tensor->tensor_name() << " extract quant param failed.";
+      return RET_ERROR;
+    }
+    quant_dst_dtype = in_tensor->quant_params().front().dstDtype;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
+int QuantDTypeCastCPUKernel::ExtractQuantParams(const lite::Tensor *tensor, int preferred_dim) {
+  CHECK_NULL_RETURN(tensor);
+  auto quant_params = tensor->quant_params();
+  MS_CHECK_TRUE_RET(!quant_params.empty(), RET_ERROR);
+  perchannel_ = (quant_params.size() > 1);
+  channel_num_ = quant_params.size();
+  if (perchannel_) {
+    auto shapes = tensor->shape();
+    if (channel_num_ != shapes.at(preferred_dim)) {
+      MS_LOG(ERROR) << tensor->tensor_name() << " shapes at preferred_dim " << preferred_dim << " is "
+                    << shapes.at(preferred_dim) << " != channels " << channel_num_;
+      return RET_ERROR;
+    }
+  }
+  scale_ = reinterpret_cast<float *>(malloc(channel_num_ * sizeof(float)));
+  CHECK_NULL_RETURN(scale_);
+  zero_point_ = reinterpret_cast<int32_t *>(malloc(channel_num_ * sizeof(int32_t)));
+  CHECK_NULL_RETURN(zero_point_);
+  for (int i = 0; i < channel_num_; i++) {
+    scale_[i] = quant_params[i].scale;
+    zero_point_[i] = quant_params[i].zeroPoint;
+  }
+  return RET_OK;
+}
+
 int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   MS_CHECK_TRUE_MSG(in_tensor != nullptr, RET_NULL_PTR, "in_tensor is nullptr.");
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
-  thread_n_num_ = MSMIN(thread_num_, num_unit_);
+  if (!perchannel_) {
+    thread_n_num_ = MSMIN(thread_num_, num_unit_);
+  } else {
+    thread_n_num_ = MSMIN(thread_num_, channel_num_);
+  }
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);
-  thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  if (!perchannel_) {
+    thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  } else {
+    thread_channel_stride_ = UP_DIV(channel_num_, thread_n_num_);
+    per_channel_size_ = num_unit_ / channel_num_;
+    thread_n_stride_ = thread_channel_stride_ * per_channel_size_;
+  }
   if (in_tensors_.front()->shape() != out_tensors_.front()->shape()) {
     MS_LOG(ERROR) << "in_tensors shape is " << in_tensors_.front()->shape() << " != out_tensors shape "
                   << out_tensors_.front()->shape();
@@ -80,41 +133,54 @@ int QuantDTypeCastCPUKernel::ReSize() {
   return RET_OK;
 }
 
+int QuantDTypeCastCPUKernel::DoDequantInt8ToFp32(int num_unit_thread, int thread_offset, int channel_offset) {
+  if (!perchannel_) {
+    return DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, scale_[0], zero_point_[0],
+                                  num_unit_thread);
+  } else {
+    int channel_unit_thread = num_unit_thread / per_channel_size_;
+    if (preferred_dim_ == 0) {
+      return DoDequanInt8ToFp32ChannelRow(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset,
+                                          scale_ + channel_offset, zero_point_ + channel_offset, channel_unit_thread,
+                                          per_channel_size_);
+    } else {
+      return DoDequanInt8ToFp32ChannelCol(int8_ptr_ + channel_offset, float32_ptr_ + channel_offset,
+                                          scale_ + channel_offset, zero_point_ + channel_offset, channel_num_,
+                                          channel_unit_thread, per_channel_size_);
+    }
+  }
+}
+
+int QuantDTypeCastCPUKernel::DoDequantFp32ToInt8(int num_unit_thread, int thread_offset) {
+  if (quant_dst_dtype == TypeId::kNumberTypeUInt8) {
+    return DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, scale_[0],
+                                               zero_point_[0], num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
+  } else {
+    return DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, scale_[0], zero_point_[0],
+                                num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
+  }
+}
+
 int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, num_unit_ - task_id * thread_n_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  if (in_tensors_.front()->quant_params().empty() && out_tensors_.front()->quant_params().empty()) {
-    MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
-    return RET_ERROR;
-  }
-  auto quant_arg =
-    (!out_tensors_.front()->quant_params().empty() && out_tensors_.front()->quant_params().front().inited)
-      ? out_tensors_.front()->quant_params().front()
-      : in_tensors_.front()->quant_params().front();
+  int channel_offset = task_id * thread_channel_stride_;
   int ret = RET_ERROR;
   if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
-    ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
-                                 quant_arg.zeroPoint, num_unit_thread);
+    ret = DoDequantInt8ToFp32(num_unit_thread, thread_offset, channel_offset);
   } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
-    if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
-      ret =
-        DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                                            quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
-    } else {
-      ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                                 quant_arg.zeroPoint, num_unit_thread, (int32_t)INT8_MIN, (int32_t)INT8_MAX);
-    }
+    ret = DoDequantFp32ToInt8(num_unit_thread, thread_offset);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
     ret = Int8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
-    ret = DoDequantizeUInt8ToFp32(uint8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
-                                  quant_arg.zeroPoint, num_unit_thread);
+    ret = DoDequantizeUInt8ToFp32(uint8_ptr_ + thread_offset, float32_ptr_ + thread_offset, scale_[0], zero_point_[0],
+                                  num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeUInt8) {
-    ret = DoQuantizeFp32ToUInt8(float32_ptr_ + thread_offset, uint8_ptr_ + thread_offset, quant_arg.scale,
-                                quant_arg.zeroPoint, num_unit_thread);
+    ret = DoQuantizeFp32ToUInt8(float32_ptr_ + thread_offset, uint8_ptr_ + thread_offset, scale_[0], zero_point_[0],
+                                num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
     ret = UInt8ToInt8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
@@ -123,7 +189,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
                                  input_quant_arg.zeroPoint, num_unit_thread);
     if (ret == RET_OK) {
       auto output_quant_arg = out_tensors_.front()->quant_params().front();
-      if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
+      if (quant_dst_dtype == TypeId::kNumberTypeUInt8) {
         ret = DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset,
                                                   output_quant_arg.scale, output_quant_arg.zeroPoint, num_unit_thread,
                                                   (int32_t)INT8_MIN, (int32_t)INT8_MAX);
@@ -159,61 +225,37 @@ int QuantDTypeCastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 int QuantDTypeCastCPUKernel::Run() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
-  if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-      out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
+  if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data());
     float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data());
-    if (int8_ptr_ == nullptr || float32_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    MS_CHECK_TRUE_RET(!(int8_ptr_ == nullptr || float32_ptr_ == nullptr), RET_NULL_PTR);
+  } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
     float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data());
-    if (float32_ptr_ == nullptr || int8_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
+    MS_CHECK_TRUE_RET(!(float32_ptr_ == nullptr || int8_ptr_ == nullptr), RET_NULL_PTR);
+  } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data());
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data());
-    if (int8_ptr_ == nullptr || uint8_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    MS_CHECK_TRUE_RET(!(int8_ptr_ == nullptr || uint8_ptr_ == nullptr), RET_NULL_PTR);
+  } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data());
-    if (uint8_ptr_ == nullptr || int8_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    MS_CHECK_TRUE_RET(!(uint8_ptr_ == nullptr || int8_ptr_ == nullptr), RET_NULL_PTR);
+  } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data());
     int8_out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data());
-    if (int8_ptr_ == nullptr || int8_out_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
+    MS_CHECK_TRUE_RET(!(int8_ptr_ == nullptr || int8_out_ptr_ == nullptr), RET_NULL_PTR);
     MS_CHECK_GT(in_tensors_[0]->ElementsNum(), 0, RET_ERROR);
     float32_ptr_ = new (std::nothrow) float[in_tensors_[0]->ElementsNum()];
-    if (float32_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "new float[] failed";
-      return RET_ERROR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
+    MS_CHECK_TRUE_MSG(float32_ptr_ != nullptr, RET_ERROR, "new float[] failed");
+  } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data());
     float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data());
-    if (uint8_ptr_ == nullptr || float32_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
-  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
-             out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
+    MS_CHECK_TRUE_RET(!(uint8_ptr_ == nullptr || float32_ptr_ == nullptr), RET_NULL_PTR);
+  } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeUInt8) {
     float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data());
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data());
-    if (float32_ptr_ == nullptr || uint8_ptr_ == nullptr) {
-      return RET_NULL_PTR;
-    }
+    MS_CHECK_TRUE_RET(!(float32_ptr_ == nullptr || uint8_ptr_ == nullptr), RET_NULL_PTR);
   } else {
     MS_LOG(ERROR) << "Not support";
     return RET_ERROR;
@@ -222,17 +264,53 @@ int QuantDTypeCastCPUKernel::Run() {
   auto ret = ParallelLaunch(this->ms_context_, QuantDTypeCastRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
-    if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-        out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+    if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
       delete[](float32_ptr_);
       float32_ptr_ = nullptr;
     }
     return RET_ERROR;
   }
-  if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
-      out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
+  if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
     delete[](float32_ptr_);
     float32_ptr_ = nullptr;
+  }
+  return RET_OK;
+}
+
+int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelRow(const int8_t *quant_values, float *real_values, float *scale,
+                                                          int32_t *zp, int channel_unit_num, int per_channel_size) {
+  CHECK_NULL_RETURN(quant_values);
+  CHECK_NULL_RETURN(real_values);
+  CHECK_NULL_RETURN(scale);
+  CHECK_NULL_RETURN(zp);
+
+  for (int i = 0; i < channel_unit_num; i++) {
+    const int8_t *quant_value = quant_values + (i * per_channel_size);
+    float *real_value = real_values + (i * per_channel_size);
+    float scale_value = scale[i];
+    int32_t zp_value = zp[i];
+    for (int j = 0; j < per_channel_size; j++) {
+      real_value[j] = (quant_value[j] - zp_value) * scale_value;
+    }
+  }
+  return RET_OK;
+}
+
+int QuantDTypeCastCPUKernel::DoDequanInt8ToFp32ChannelCol(const int8_t *quant_values, float *real_values, float *scale,
+                                                          int32_t *zp, int channel_num, int channel_unit_num,
+                                                          int per_channel_size) {
+  CHECK_NULL_RETURN(quant_values);
+  CHECK_NULL_RETURN(real_values);
+  CHECK_NULL_RETURN(scale);
+  CHECK_NULL_RETURN(zp);
+  for (int i = 0; i < per_channel_size; i++) {
+    const int8_t *quant_value = quant_values + (i * channel_num);
+    float *real_value = real_values + (i * channel_num);
+    for (int j = 0; j < channel_unit_num; j++) {
+      float scale_value = scale[j];
+      int32_t zp_value = zp[j];
+      real_value[j] = (quant_value[j] - zp_value) * scale_value;
+    }
   }
   return RET_OK;
 }

@@ -627,7 +627,7 @@ int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, co
 
 int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                         size_t input_index, TypeId src_dtype, TypeId dst_dtype,
-                                                        int axis) {
+                                                        int axis, bool is_quant_attribute) {
   MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
   auto cnode_primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   if (cnode_primitive == nullptr) {
@@ -639,37 +639,19 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
     return RET_ERROR;
   }
-
   auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
-  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, {}, axis, false);
-  CHECK_NULL_RETURN(new_primitive);
-  std::vector<float> scales;
-  std::vector<int> zps;
-  std::vector<float> mean_corrs;
-  std::vector<float> var_corrs;
-  for (size_t i = 0; i < input_quant_params.size(); ++i) {
-    scales.push_back(static_cast<float>(input_quant_params.at(i).scale));
-    zps.push_back(static_cast<int64_t>(input_quant_params.at(i).zeroPoint));
-    mean_corrs.push_back(static_cast<float>(input_quant_params.at(i).meanCorr));
-    var_corrs.push_back(static_cast<float>(input_quant_params.at(i).varCorr));
-  }
-  auto scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, "scales");
-  auto zps_node = opt::BuildIntVecParameterNode(func_graph, zps, "zps");
-  auto mean_corrs_node = opt::BuildFloatVecParameterNode(func_graph, mean_corrs, "mean_corrs");
-  auto var_corrs_node = opt::BuildFloatVecParameterNode(func_graph, var_corrs, "var_corrs");
 
-  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node,      scales_node,
-                                       zps_node,      mean_corrs_node, var_corrs_node};
-  auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
-  CHECK_NULL_RETURN(quant_cast_cnode);
-  auto strings = SplitStringToVector(cnode->fullname_with_scope(), "-op");
-  int index = 0;
-  if (!ConvertIntNum(strings.at(strings.size() - 1), &index)) {
-    index = 0;
+  CNodePtr quant_cast_cnode = nullptr;
+  if (is_quant_attribute) {
+    ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, {}, axis, false);
+    MS_CHECK_TRUE_MSG(new_primitive != nullptr, RET_NULL_PTR, "New quant_cast primitive failed!");
+    std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
+    quant_cast_cnode = func_graph->NewCNode(op_inputs);
+  } else {
+    quant_cast_cnode =
+      CreateQuantInputCastNode(func_graph, cnode, input_node, src_dtype, dst_dtype, input_quant_params, axis);
   }
-  const int quant_dtype_cast_offset = 10000;
-  quant_cast_cnode->set_fullname_with_scope(strings.at(0) + "-QuantDtypeCast-op" +
-                                            std::to_string(index + quant_dtype_cast_offset));
+  CHECK_NULL_RETURN(quant_cast_cnode);
   opt::NodeInferShape infer;
   auto status = infer.InferShape(quant_cast_cnode);
   if (status != RET_OK) {
@@ -688,6 +670,45 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
                << " src_dtype: " << src_dtype << " dst_dtype: " << dst_dtype;
 
   return RET_OK;
+}
+
+CNodePtr InsertQuantNodeManager::CreateQuantInputCastNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                          const AnfNodePtr input_node, TypeId src_dtype,
+                                                          TypeId dst_dtype,
+                                                          const std::vector<schema::QuantParamT> &input_quant_params,
+                                                          int axis) {
+  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, {}, axis, false);
+  std::vector<float> scales;
+  std::vector<int> zps;
+  std::vector<float> mean_corrs;
+  std::vector<float> var_corrs;
+  for (size_t i = 0; i < input_quant_params.size(); ++i) {
+    scales.push_back(static_cast<float>(input_quant_params.at(i).scale));
+    zps.push_back(static_cast<int64_t>(input_quant_params.at(i).zeroPoint));
+    mean_corrs.push_back(static_cast<float>(input_quant_params.at(i).meanCorr));
+    var_corrs.push_back(static_cast<float>(input_quant_params.at(i).varCorr));
+  }
+  auto scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, "scales");
+  auto zps_node = opt::BuildIntVecParameterNode(func_graph, zps, "zps");
+  auto mean_corrs_node = opt::BuildFloatVecParameterNode(func_graph, mean_corrs, "mean_corrs");
+  auto var_corrs_node = opt::BuildFloatVecParameterNode(func_graph, var_corrs, "var_corrs");
+
+  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node,      scales_node,
+                                       zps_node,      mean_corrs_node, var_corrs_node};
+  auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
+  if (quant_cast_cnode == nullptr) {
+    MS_LOG(ERROR) << "New quant cast node failed.";
+    return nullptr;
+  }
+  auto strings = SplitStringToVector(cnode->fullname_with_scope(), "-op");
+  int index = 0;
+  if (!ConvertIntNum(strings.at(strings.size() - 1), &index)) {
+    index = 0;
+  }
+  const int quant_dtype_cast_offset = 10000;
+  quant_cast_cnode->set_fullname_with_scope(strings.at(0) + "-QuantDtypeCast-op" +
+                                            std::to_string(index + quant_dtype_cast_offset));
+  return quant_cast_cnode;
 }
 
 int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
