@@ -532,7 +532,7 @@ class TruncatedNormal {
   static T eval_polynomial(const T (&arr)[N], T x) {
     T sum = arr[N - 1];
     if constexpr (N > 1) {
-      eval_polynomial_loop<N - 2>(arr, x, &sum);
+      eval_polynomial_loop<N - kIndex2>(arr, x, &sum);
     }
     return sum;
   }

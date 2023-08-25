@@ -110,7 +110,7 @@ void UpdateKernelInfo(const std::vector<AnfNodePtr> &node_list) {
 
 bool CanConvertDefaultShapeToNZ(const ShapeVector &shape) {
   for (size_t i = 1; i <= shape.size(); ++i) {
-    if (i > 2) {
+    if (i > kIndex2) {
       break;
     }
     if (LongToInt(shape[shape.size() - i]) != 1 && shape[shape.size() - i] % SizeToLong(kCubeSize) != 0) {
