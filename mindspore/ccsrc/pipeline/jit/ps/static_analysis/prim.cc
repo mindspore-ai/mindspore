@@ -1201,7 +1201,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto py_args = PreparePyInputs(args);
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
-  auto abs = CheckAndInfer(prim_py, args);
+  auto abs = eval_impl_.InferShapeAndType(nullptr, prim_py, args);
   MS_EXCEPTION_IF_NULL(abs);
   prim_py->EndRecordAddAttr();
   auto &added_attrs = prim_py->evaluate_added_attrs();
@@ -1275,7 +1275,8 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
 }
 }  // namespace
 
-AbstractBasePtr StandardPrimEvaluator::CheckAndInfer(const PrimitivePtr &primitive, const AbstractBasePtrList &args) {
+AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const PrimitivePtr &primitive,
+                                                          const AbstractBasePtrList &args) {
   if (op_def_ != nullptr) {
     if (op_def_->func_impl_ == nullptr) {
       MS_LOG(EXCEPTION) << "For Primitive[" << primitive->name() << "], the FuncImpl is empty.";
@@ -1283,8 +1284,8 @@ AbstractBasePtr StandardPrimEvaluator::CheckAndInfer(const PrimitivePtr &primiti
 
     (void)op_def_->func_impl_->CheckValidation(primitive, args);
 
-    if (func_impl_ != nullptr) {
-      return func_impl_->InferAbstract(primitive, args);
+    if (frontend_func_impl_ != nullptr) {
+      return frontend_func_impl_->InferAbstract(primitive, args);
     }
 
     auto type = op_def_->func_impl_->InferType(primitive, args);
@@ -1292,11 +1293,41 @@ AbstractBasePtr StandardPrimEvaluator::CheckAndInfer(const PrimitivePtr &primiti
     return MakeAbstract(shape, type);
   }
 
-  if (func_impl_ != nullptr) {
-    return func_impl_->InferAbstract(primitive, args);
+  if (frontend_func_impl_ != nullptr) {
+    return frontend_func_impl_->InferAbstract(primitive, args);
   }
 
-  return eval_impl_.InferShapeAndType(nullptr, primitive, args);
+  return nullptr;
+}
+
+EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  MS_EXCEPTION_IF_NULL(prim_);
+  // To check tuple/list operations with a white list of Python primitive.
+  CheckSequenceArgumentForCppPrimitive(prim_, args);
+
+  bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
+    MS_EXCEPTION_IF_NULL(abs);
+    auto value = abs->BuildValue();
+    return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>() && !value->isa<Monad>() &&
+            !value->isa<FuncGraph>());
+  });
+
+  AbstractBasePtr abs_base = nullptr;
+  prim_->BeginRecordAddAttr();
+  if (need_infer_value && frontend_func_impl_ != nullptr) {
+    auto value = frontend_func_impl_->InferValue(prim_, args);
+    if (value != nullptr) {
+      abs_base = value->ToAbstract();
+      prim_->EndRecordAddAttr();
+      auto added_attrs = prim_->evaluate_added_attrs();
+      return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+    }
+  }
+  abs_base = CheckAndInfer(prim_, args);
+  MS_EXCEPTION_IF_NULL(abs_base);
+  prim_->EndRecordAddAttr();
+  const auto &added_attrs = prim_->evaluate_added_attrs();
+  return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
 }
 
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
@@ -1332,7 +1363,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
       return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
-  abs_base = CheckAndInfer(prim_, args);
+  abs_base = eval_impl_.InferShapeAndType(nullptr, prim_, args);
   MS_EXCEPTION_IF_NULL(abs_base);
   prim_->EndRecordAddAttr();
   const auto &added_attrs = prim_->evaluate_added_attrs();

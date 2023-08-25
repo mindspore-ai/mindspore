@@ -75,7 +75,7 @@ class RegFrontendFuncImplHelper {
   ~RegFrontendFuncImplHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_FRONTEND_FUNC_IMPL(name, func_impl_class) \
+#define REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(name, func_impl_class) \
   static auto helper_##func_impl_class = RegFrontendFuncImplHelper(name, std::make_shared<func_impl_class>());
 }  //  namespace mindspore::ops
 #endif  //  MINDSPORE_CCSRC_FRONTEND_OPERATOR_OPS_FRONTEND_FUNC_IMPL_H

@@ -890,7 +890,7 @@ EvaluatorPtr GetPyEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &e
   return nullptr;
 }
 
-static StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &prim) {
+inline StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &prim) {
   auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
   if (eval_impl_opt.has_value()) {
     // Find prim infer function in the prim function map return a standard evaluator
@@ -899,10 +899,6 @@ static StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &pri
         !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
     }
-  } else if (auto func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name()); func_impl != nullptr) {
-    return std::make_shared<StandardPrimEvaluator>(prim, func_impl);
-  } else if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
-    return std::make_shared<StandardPrimEvaluator>(prim, op_def);
   }
 
   return nullptr;
@@ -935,6 +931,12 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   // Convert PrimitivePy to PrimitiveFunction.
   if (prim->isa<PrimitivePy>()) {
     return std::make_shared<PrimitiveFunctionTransformEvaluator>(prim);
+  }
+
+  if (prim->isa<PrimitiveFunction>()) {
+    auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
+    auto op_def = mindspore::ops::GetOpDef(prim->name());
+    return std::make_shared<PrimitiveFunctionEvaluator>(prim, op_def, frontend_func_impl);
   }
 
   auto standard_evaluator = GetStandardPrimEvaluator(prim);

@@ -32,14 +32,37 @@
 
 namespace mindspore {
 namespace abstract {
+class PrimitiveFunctionEvaluator final : public TrivialPrimEvaluator {
+ public:
+  PrimitiveFunctionEvaluator(const PrimitivePtr &primitive, const mindspore::ops::OpDefPtr &op_def,
+                             const mindspore::ops::OpFrontendFuncImplPtr &frontend_func_impl)
+      : TrivialPrimEvaluator("PrimitiveFunctionEvaluator"),
+        prim_(primitive),
+        op_def_(op_def),
+        frontend_func_impl_(frontend_func_impl) {}
+  explicit PrimitiveFunctionEvaluator(const PrimitivePtr &primitive)
+      : TrivialPrimEvaluator("PrimitiveFunctionEvaluator"), prim_(primitive) {}
+  ~PrimitiveFunctionEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunctionEvaluator, TrivialPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  PrimitivePtr prim() { return prim_; }
+
+  std::string ToString() const override { return identifier_ + "_PrimitiveFunction_" + prim_->name(); }
+
+ protected:
+  bool inplace_prim() const override { return prim_->inplace_prim(); }
+
+ private:
+  AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const AbstractBasePtrList &args);
+  PrimitivePtr prim_;
+  mindspore::ops::OpDefPtr op_def_{nullptr};
+  mindspore::ops::OpFrontendFuncImplPtr frontend_func_impl_{nullptr};
+};
+
 class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
-  StandardPrimEvaluator(const PrimitivePtr &primitive, const mindspore::ops::OpDefPtr &op_def)
-      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), op_def_(op_def) {}
-  StandardPrimEvaluator(const PrimitivePtr &primitive, const mindspore::ops::OpFrontendFuncImplPtr &func_impl)
-      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), func_impl_(func_impl) {}
   explicit StandardPrimEvaluator(const PrimitivePtr &primitive)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive) {}
   ~StandardPrimEvaluator() override = default;
@@ -53,14 +76,11 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
   bool inplace_prim() const override { return prim_->inplace_prim(); }
 
  private:
-  AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const AbstractBasePtrList &args);
   EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
   EvalResultPtr RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
                                 const AbstractBasePtrList &args);
   PrimitivePtr prim_;
   const StandardPrimitiveImplReg eval_impl_;
-  mindspore::ops::OpFrontendFuncImplPtr func_impl_{nullptr};
-  mindspore::ops::OpDefPtr op_def_{nullptr};
 };
 
 using StandardPrimEvaluatorPtr = std::shared_ptr<StandardPrimEvaluator>;

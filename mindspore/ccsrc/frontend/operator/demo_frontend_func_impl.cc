@@ -30,5 +30,5 @@ class DemoFrontendFuncImpl : public OpFrontendFuncImpl {
   }
 };
 
-REGISTER_PRIMITIVE_FRONTEND_FUNC_IMPL("Demo", DemoFrontendFuncImpl);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Demo", DemoFrontendFuncImpl);
 }  // namespace  mindspore::ops
