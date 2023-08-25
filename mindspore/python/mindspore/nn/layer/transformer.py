@@ -69,18 +69,15 @@ class MultiheadAttention(Cell):
           otherwise the shape is :math:`(L, N, E_q)` when `batch_first=False` or :math:`(N, L, E_q)` when
           `batch_first=True`, where :math:`L`is the target sequence length, :math:`N` is the batch size,
           and :math:`E_q` is the query embedding dimension `embed_dim`. Supported types: float16, float32,
-          float64. Queries are compared against key-value pairs to produce the output. See "Attention Is All
-          You Need" for more details.
+          float64. Queries are compared against key-value pairs to produce the output.
         - **key** (Tensor): The key embeddings. If `key` is unbatched, the shape is :math:`(S, E_k)`, otherwise
           the shape is :math:`(S, N, E_k)` when `batch_first=False` or :math:`(N, S, E_k)` when
           `batch_first=True`, where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_k` is the key embedding dimension `kdim`. Supported types: float16, float32, float64.
-          See "Attention Is All You Need" for more details.
         - **value** (Tensor): The value embeddings. If `value` is unbatched, the shape is :math:`(S, E_v)`,
           otherwise the shape is :math:`(S, N, E_v)` when `batch_first=False` or :math:`(N, S, E_v)` when
           `batch_first=True`, where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_v` is the value embedding dimension `vdim`. Supported types: float16, float32, float64.
-          See "Attention Is All You Need" for more details.
         - **key_padding_mask** (Tensor, optional): If specified, a mask of shape :math:`(N, S)` indicating which
           elements within `key` to ignore for the purpose of attention (i.e. treat as "padding").
           For unbatched `query`, shape should be :math:`(S)`. Binary and byte masks are supported.
