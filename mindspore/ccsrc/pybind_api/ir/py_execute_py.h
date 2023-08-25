@@ -66,12 +66,6 @@ struct PyExecuteUserDataCatcherRegister {
 }  // namespace pyexecute_user_data_catcher
 }  // namespace abstract
 
-static py::object CallPythonGetGlobalParams() {
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  constexpr auto python_get_dict = "get_global_params";
-  return python_adapter::CallPyModFn(mod, python_get_dict);
-}
-
 bool ContainStubTensor(const py::object &obj) {
   if (py::isinstance<py::list>(obj)) {
     auto list_obj = py::cast<py::list>(obj);
@@ -156,9 +150,8 @@ class PyExecuteInitializer {
       }
     }
     const auto &py_script = py::str(script_str->value());
-    const auto &global_dict = CallPythonGetGlobalParams();
     auto params = py::tuple(number_two);
-    params[0] = global_dict;
+    params[0] = py::dict();
     params[1] = local_dict;
     MS_LOG(DEBUG) << "Python script: " << py_script << ", local_dict: " << local_dict;
     try {

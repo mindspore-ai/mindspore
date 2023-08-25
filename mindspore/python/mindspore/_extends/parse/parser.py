@@ -822,15 +822,9 @@ def get_script_id_attrs(script):
     return res
 
 
-def merge_global_params(global_dict):
-    """Merge the global parameter."""
-    logger.debug(f'merge global_dict: {global_dict}')
-    _global_params.update(global_dict)
-
-
 def get_global_params():
     """Get the global parameter."""
-    logger.debug(f'get global_dict: {_global_params}')
+    logger.debug(f"get global_dict: {_global_params}")
     return _global_params
 
 
