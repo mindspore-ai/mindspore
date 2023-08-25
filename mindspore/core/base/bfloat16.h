@@ -24,6 +24,7 @@
 #include <ostream>
 #include <limits>
 #include <functional>
+#include "third_party/securec/include/securec.h"
 
 // Implement BFloat16 for mindspore, inspired by Eigen::half.
 namespace mindspore {
@@ -32,6 +33,7 @@ class BFloat16 {
   static constexpr uint16_t value_mask = 0x7fff;
   static constexpr uint16_t inf_value = 0x7f80;
   static constexpr uint16_t true_value = 0x3c00;
+  static constexpr uint32_t f32_inf_value = 0x7f800000;
 
   BFloat16() = default;
   ~BFloat16() = default;
@@ -92,14 +94,20 @@ class BFloat16 {
     float f32 = 0;
     uint32_t f32_tmp = bf16.int_value();
     f32_tmp <<= 16;
-    std::memcpy(&f32, &f32_tmp, sizeof(f32_tmp));
+    auto ret_code = memcpy_s(&f32, sizeof(f32), &f32_tmp, sizeof(f32_tmp));
+    if (ret_code != 0) {
+      return f32_inf_value;
+    }
     return f32;
   }
 
  private:
   static uint16_t FromFloat32(float f32) {
     uint32_t f32_tmp = 0;
-    std::memcpy(&f32_tmp, &f32, sizeof(f32_tmp));
+    auto ret_code = memcpy_s(&f32_tmp, sizeof(f32_tmp), &f32, sizeof(f32_tmp));
+    if (ret_code != 0) {
+      return inf_value;
+    }
     return f32_tmp >> 16;
   }
 
