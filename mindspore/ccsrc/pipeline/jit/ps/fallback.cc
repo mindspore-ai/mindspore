@@ -634,7 +634,7 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
   return ValueToPyData(abs->BuildValue());
 }
 
-void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
+void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
   // Nested attach list object to corresponding abstract list.
   // Do not consider dictionary yet.
   if (!abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractNamedTuple>()) {
@@ -646,11 +646,11 @@ void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
       MS_INTERNAL_EXCEPTION(TypeError) << "Object should be list but got: " << py::str(obj);
     }
     auto list_obj = py::list(obj);
-    abs_list->set_list_py_obj<py::list>(std::make_shared<py::list>(list_obj));
+    abs_list->set_list_py_obj<py::list>(std::make_shared<py::list>(list_obj), create_in_graph);
     for (size_t i = 0; i < abs_list->size(); ++i) {
       auto element_abs = abs_list->elements()[i];
       auto element_obj = list_obj[i];
-      AttachListObjToAbs(element_abs, element_obj);
+      AttachListObjToAbs(element_abs, element_obj, create_in_graph);
     }
     return;
   }
@@ -662,7 +662,7 @@ void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
   for (size_t i = 0; i < abs_tuple->size(); ++i) {
     auto element_abs = abs_tuple->elements()[i];
     auto element_obj = tuple_obj[i];
-    AttachListObjToAbs(element_abs, element_obj);
+    AttachListObjToAbs(element_abs, element_obj, create_in_graph);
   }
 }
 

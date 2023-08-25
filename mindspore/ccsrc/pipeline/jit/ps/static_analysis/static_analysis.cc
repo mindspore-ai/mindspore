@@ -1537,7 +1537,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     // Attach corresponding python sequence object to AbstractSequence.
     py::object py_list_obj = fallback::HasPySeqObject(anf_node) ? *fallback::GetPySeqObject<AnfNode, py::list>(anf_node)
                                                                 : ValueToPyData(value);
-    fallback::AttachListObjToAbs(abs, py_list_obj);
+    fallback::AttachListObjToAbs(abs, py_list_obj, !fallback::HasPySeqObject(anf_node));
     MS_LOG(DEBUG) << "Attach python list object " << fallback::GetPyObjectPtrStr(py_list_obj)
                   << " to new abstract: " << abs->ToString();
     // Set sequence node for new AbstractSequence.

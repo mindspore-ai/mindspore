@@ -70,7 +70,7 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
-void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj);
+void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
 AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
 
 template <typename T>
@@ -123,7 +123,7 @@ void SetPySeqObject(const std::shared_ptr<T> &owner, const std::shared_ptr<U> &d
     if (owner_abs_list == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Abstract: " << owner->ToString() << " can not attach list object.";
     }
-    return owner_abs_list->set_list_py_obj(data);
+    owner_abs_list->set_list_py_obj(data, false);
   }
   constexpr auto py_list_obj_str = "__py_list_object__";
   owner->template set_user_data<U>(py_list_obj_str, data);

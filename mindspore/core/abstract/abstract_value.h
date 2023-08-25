@@ -1099,10 +1099,14 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
 
   /// \brief Set corresponding list user data.
   ///
-  /// \param[in] value The corresponding user data.
+  /// \param[in] list_user_data The corresponding list python object.
+  /// \param[in] create_in_graph Indicate whether the list object is created within graph.
   template <typename T>
-  void set_list_py_obj(const std::shared_ptr<T> &list_user_data) {
-    list_user_data_->set<T>(py_obj_key, list_user_data);
+  void set_list_py_obj(const std::shared_ptr<T> &list_py_obj, bool create_in_graph) {
+    constexpr auto py_obj_key = "py_obj_key";
+    list_user_data_->set<T>(py_obj_key, list_py_obj);
+    constexpr auto create_in_graph_key = "create_in_graph_key";
+    list_user_data_->set<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
   }
 
   /// \brief Get corresponding list user data.
@@ -1110,22 +1114,32 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \return The corresponding list user data.
   template <typename T>
   std::shared_ptr<T> list_py_obj() const {
+    constexpr auto py_obj_key = "py_obj_key";
     return list_user_data_->get<T>(py_obj_key);
   }
 
   /// \brief Check whether the AbstractList has list user data.
   ///
   /// \return True if it exists, otherwise false.
-  bool has_list_py_obj() const { return list_user_data_->has(py_obj_key); }
+  bool has_list_py_obj() const {
+    constexpr auto py_obj_key = "py_obj_key";
+    return list_user_data_->has(py_obj_key);
+  }
+
+  /// \brief Check whether the list object is created in graph.
+  ///
+  /// \return True if the object is created in graph, otherwise false.
+  bool create_in_graph() const {
+    constexpr auto create_in_graph_key = "create_in_graph_key";
+    return *list_user_data_->get<bool>(create_in_graph_key);
+  }
 
   /// \brief Set corresponding list user data.
   ///
-  /// \param[in] value The corresponding user data.
+  /// \param[in] list_user_data The corresponding user data.
   void set_list_user_data(const UserDataPtr &list_user_data) { list_user_data_ = list_user_data; }
 
   /// \brief Clear corresponding list user data.
-  ///
-  /// \param[in] value The corresponding user data.
   void ClearListUserData() { list_user_data_ = std::make_shared<UserData>(); }
 
   /// \brief Get corresponding list user data.
@@ -1141,7 +1155,6 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
 
  private:
   UserDataPtr list_user_data_ = std::make_shared<UserData>();
-  const std::string py_obj_key = "py_obj_key";
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
