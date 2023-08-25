@@ -1087,7 +1087,7 @@ def set_context(**kwargs):
             If device target is not set, the version of MindSpore package is used.
         max_device_memory (str): Set the maximum memory available for devices. The format is "xxGB".
             Default: ``" 1024GB"`` . The actual used memory size is the minimum of the available memory of the device
-            and max_device_memory.
+            and max_device_memory. 'max_device_memory' should be set before the program runs.
         variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
             Please use parameter 'max_device_memory' instead.
         mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
