@@ -1146,7 +1146,8 @@ def tile(input, multiples):
           [1. 2. 1. 2.]
           [3. 4. 3. 4.]]]
     """
-    return tile_(input, multiples)
+    tile_op = _get_cache_prim(P.Tile)()
+    return tile_op(input, multiples)
 
 
 def range(start, end, step):
