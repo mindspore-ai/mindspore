@@ -756,9 +756,9 @@ void ReleaseCacheInfo(const pynative::OpCompilerInfoPtr &op_compiler_info,
   for (auto &execute_kernel : op_compiler_info->execute_kernel_list_) {
     auto kernel = execute_kernel.kernel_;
     for (auto &input_address : execute_kernel.inputs_device_address_) {
-      MS_EXCEPTION_IF_NULL(input_address);
       auto iter = std::find(ref_node.begin(), ref_node.end(), input_address);
-      if (!input_address || iter != ref_node.end()) {
+      if (input_address == nullptr || iter != ref_node.end()) {
+        MS_LOG(DEBUG) << "Release skip input_address:" << kernel->fullname_with_scope();
         continue;
       }
       if (op_compiler_info->value_map_to_tensor_.find(input_address) == op_compiler_info->value_map_to_tensor_.end()) {
