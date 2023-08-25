@@ -58,6 +58,10 @@ class BACKEND_EXPORT AscendKernelMod : public KernelMod {
   std::string GetAtomicCompileInfo() const { return atomic_compile_info_; }
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
+  void set_unique_name(const std::string &unique_name) override { unique_name_ = unique_name; }
+  void set_fullname(const std::string &fullname) override { fullname_ = fullname; }
+  void set_is_monad(bool is_monad) override { is_monad_ = is_monad; }
+
  protected:
   virtual void UpdateOutputSizeList();
   bool IsOutputAllEmptyTensor();
@@ -68,6 +72,10 @@ class BACKEND_EXPORT AscendKernelMod : public KernelMod {
   uint32_t stream_id_{0};
   std::string atomic_compile_info_{};
   bool is_output_all_empty_tensor_{false};
+
+  std::string fullname_;
+  std::string unique_name_;
+  bool is_monad_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

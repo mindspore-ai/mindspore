@@ -38,6 +38,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "utils/ms_context.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "kernel/kernel_build_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace common {
@@ -2044,22 +2046,28 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   return buf.str();
 }
 
-abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
   if (abstract == nullptr) {
-    return nullptr;
-  }
-
-  if (index == 0 || (!abstract->isa<abstract::AbstractTuple>()) || common::AnfAlgo::IsDynamicSequence(node)) {
     return abstract;
   }
 
+  // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node) ||
+      (node->isa<CNode>() &&
+       (mindspore::AnfAlgo::GetOutputKernelObjectType(node, index) == kernel::KernelObjectType::TUPLE))) {
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
+                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    return abstract;
+  }
+
+  // Return element abstract by index for tuple type.
   const auto &abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   const auto &elements = abstract_tuple->elements();
   if (elements.size() <= index) {
-    return nullptr;
+    MS_LOG(EXCEPTION) << "The index: " << index << " is out of range of array, array size: " << elements.size();
   }
   return elements[index];
 }

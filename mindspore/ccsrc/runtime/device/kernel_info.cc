@@ -23,6 +23,51 @@ const kernel::KernelBuildInfo *KernelInfo::select_kernel_build_info() const { re
 
 kernel::KernelBuildInfoPtr KernelInfo::GetMutableSelectKernelBuildInfo() const { return select_kernel_build_info_; }
 
+const KernelTensorPtr &KernelInfo::GetOutputKernelTensor(size_t index) const {
+  if (index >= output_kernel_tensor_list_.size()) {
+    MS_LOG(EXCEPTION) << "Index [" << index << "] out of range 0~" << (output_kernel_tensor_list_.size() - 1);
+  }
+  return output_kernel_tensor_list_[index];
+}
+
+bool KernelInfo::SetOutputKernelTensor(const KernelTensorPtr &kernel_tensor, size_t index) {
+  // Initialize empty output kernel tensor list for Parameter and ValueNode.
+  if (kernel_mod_ == nullptr && index >= output_kernel_tensor_list_.size()) {
+    for (size_t i = output_kernel_tensor_list_.size(); i <= index; i++) {
+      (void)output_kernel_tensor_list_.emplace_back(nullptr);
+    }
+  } else if (kernel_mod_ != nullptr && output_kernel_tensor_list_.empty()) {
+    // Initialize empty output kernel tensor list for CNode.
+    MS_EXCEPTION_IF_NULL(select_kernel_build_info_);
+    for (size_t i = 0; i < select_kernel_build_info_->GetOutputNum(); i++) {
+      (void)output_kernel_tensor_list_.emplace_back(nullptr);
+    }
+  }
+
+  if (index >= output_kernel_tensor_list_.size()) {
+    MS_LOG(ERROR) << "Index [" << index << "] out of range";
+    return false;
+  }
+
+  // Update kernel tensor in KernelInfo if device address exists.
+  if (OutputAddrExist(index) && kernel_tensor != nullptr) {
+    const auto &kernel_tensor_in_device_address = GetMutableOutputAddr(index)->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_in_device_address);
+    kernel_tensor_in_device_address->CopyAbstractInfo(std::move(*kernel_tensor));
+    output_kernel_tensor_list_[index] = kernel_tensor_in_device_address;
+  } else {
+    output_kernel_tensor_list_[index] = kernel_tensor;
+  }
+  return true;
+}
+
+bool KernelInfo::OutputKernelTensorExist(size_t index) const {
+  if (index >= output_kernel_tensor_list_.size()) {
+    return false;
+  }
+  return output_kernel_tensor_list_[index] != nullptr;
+}
+
 const DeviceAddress *KernelInfo::GetOutputAddr(size_t index) const {
   if (index >= output_address_list_.size()) {
     MS_LOG(ERROR) << "Index [" << index << "] out of range 0~" << (output_address_list_.size() - 1);
@@ -64,6 +109,16 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
     return false;
   }
   output_address_list_[index] = output_address;
+
+  // Update kernel tensor in device address if exist kernel tensor in KernelInfo.
+  if (OutputKernelTensorExist(index) && output_address != nullptr) {
+    const auto &kernel_tensor_in_kernel_info = GetOutputKernelTensor(index);
+    const auto &kernel_tensor_in_device_address = output_address->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_in_kernel_info);
+    MS_EXCEPTION_IF_NULL(kernel_tensor_in_device_address);
+    kernel_tensor_in_device_address->CopyAbstractInfo(std::move(*kernel_tensor_in_kernel_info));
+    output_kernel_tensor_list_[index] = kernel_tensor_in_device_address;
+  }
   return true;
 }
 

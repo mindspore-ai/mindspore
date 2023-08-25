@@ -168,8 +168,7 @@ void DeviceAddressUtils::CreateDeviceAddressForTensorValue(const DeviceContext *
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::vector<TensorPtr> tensors;
-  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0 &&
-      common::AnfAlgo::IsDynamicSequence(value_node)) {
+  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0) {
     (void)tensors.emplace_back(AnfAlgo::SequenceToTensor(node_value));
   } else {
     TensorValueToTensor(node_value, &tensors);

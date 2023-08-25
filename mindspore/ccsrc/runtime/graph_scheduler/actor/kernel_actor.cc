@@ -24,6 +24,7 @@
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "kernel/framework_utils.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace runtime {
@@ -91,6 +92,8 @@ void KernelActor::InitInputInfo() {
 
   copy_input_device_tensors_.resize(real_input_num_);
   input_device_tensors_.resize(real_input_num_);
+  input_kernel_tensors_.resize(real_input_num_);
+  input_kernel_tensors_for_infer_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
     (void)memory_free_list_.emplace_back(input_address);
     (void)launch_info_.inputs_.emplace_back(std::make_shared<Address>());
@@ -106,6 +109,7 @@ void KernelActor::InitOutputInfo() {
     auto &output_address = output_addresses[i];
     MS_EXCEPTION_IF_NULL(output_address);
     (void)output_device_tensors_.emplace_back(output_address.get());
+    (void)output_kernel_tensors_.emplace_back(output_address->kernel_tensor().get());
     (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
 
     // The output taken over by soma does not need to allocate memory.
@@ -144,6 +148,7 @@ void KernelActor::InitWorkspaceInfo() {
     auto &workspace_address = workspace_addresses[i];
     MS_EXCEPTION_IF_NULL(workspace_address);
     (void)workspace_device_tensors_.emplace_back(workspace_address.get());
+    (void)workspace_kernel_tensors_.emplace_back(workspace_address->kernel_tensor().get());
     (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
 
     // The workspace taken over by soma does not need to allocate memory.
@@ -173,6 +178,11 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   uint64_t start_time = 0;
   PROFILER_START(start_time);
   FetchInputDeviceTensor(context);
+
+  if (is_dynamic_shape_) {
+    InferShapeAndResize();
+  }
+
   FetchOutputDeviceTensor(context);
   if (is_dynamic_shape_) {
     FetchWorkspaceDeviceTensor();
@@ -226,6 +236,13 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   // Set workspace address new size
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     workspace_device_tensors_[i]->SetSize(workspace_sizes[i]);
+  }
+
+  // Update workspace kernel tensors.
+  workspace_kernel_tensors_.resize(workspace_device_tensors_.size());
+  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(workspace_device_tensors_[i]);
+    workspace_kernel_tensors_[i] = workspace_device_tensors_[i]->kernel_tensor().get();
   }
 }
 
@@ -564,13 +581,19 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
       if (input_device_tensors_[input_index] != input_data->data_) {
         input_device_tensors_[input_index] = input_data->data_;
         memory_free_list_[input_index] = input_data->data_;
+        // Collect the input kernel tensor.
+        input_kernel_tensors_[input_index] = input_device_tensors_[input_index]->kernel_tensor().get();
+        if (is_dynamic_shape_) {
+          input_kernel_tensors_for_infer_[input_index] = input_device_tensors_[input_index]->kernel_tensor();
+        }
       }
       CopyInputDeviceTensor(input_data, context);
     }
   }
 
   // Collect the inputs from device tensor store.
-  FetchInputByTensorStore(&input_device_tensors_, &memory_free_list_, context);
+  FetchInputByTensorStore(&input_device_tensors_, &input_kernel_tensors_, &input_kernel_tensors_for_infer_,
+                          &memory_free_list_, context);
 }
 
 void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context) {
@@ -657,6 +680,56 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   }
 }
 
+void KernelActor::InferShapeAndResize() {
+  // Infer Shape.
+  auto op_def = mindspore::ops::GetOpDef(kernel_mod_->kernel_name());
+  MS_EXCEPTION_IF_NULL(op_def);
+  auto op_fun_impl = op_def->func_impl_;
+  MS_EXCEPTION_IF_NULL(op_fun_impl);
+  auto base_shape = op_fun_impl->InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  MS_EXCEPTION_IF_NULL(base_shape);
+
+  // Update output kernel tensor.
+  size_t output_num = output_device_tensors_.size();
+  if (output_num > 1) {
+    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_shape);
+    const auto &shapes = sequence_shape->shape();
+    if (shapes.size() != output_num) {
+      MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << output_num
+                        << ", but got: " << shapes.size();
+    }
+    for (size_t i = 0; i < output_num; i++) {
+      const auto &kernel_tensor = output_kernel_tensors_[i];
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      kernel_tensor->SetShape(shapes[i]);
+    }
+  } else if (output_num == 1) {
+    const auto &kernel_tensor = output_kernel_tensors_[0];
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    if (kernel_tensor->type_id() == kObjectTypeTensorType && sequence_shape != nullptr) {
+      // For the operator prototype whose output is of type Tuple, the back-end operator is expanded as Tensors, and for
+      // single-output scenarios, the InferShape result is TupleShape, and the back-end needs to expand it to
+      // TensorShape. For example, the output of the split operator is only a Tensor scene.
+      const auto &shapes = sequence_shape->shape();
+      if (shapes.size() != 1) {
+        MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << 1 << ", but got: " << shapes.size();
+      }
+
+      kernel_tensor->SetShape(shapes[0]);
+    } else {
+      kernel_tensor->SetShape(base_shape);
+    }
+  }
+
+  // Resize kernel mod.
+  int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
+  if (ret != kernel::KRET_OK) {
+    MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
+  }
+}
+
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
@@ -691,7 +764,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name();
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-    kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_info_->stream_id());
   MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name();
   return ret;
 }

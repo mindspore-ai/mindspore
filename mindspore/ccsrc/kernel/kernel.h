@@ -142,11 +142,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Constructor of KernelTensor by shape, type, value.
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
-    if (shape) {
-      SetShape(shape);
-    }
     if (type) {
       SetType(type);
+    }
+    if (shape) {
+      // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
+      SetShape(shape);
     }
     if (value) {
       SetValue(value);
@@ -171,11 +172,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
                mindspore::Format format, void *device_ptr, size_t size, const string &device_name, uint32_t device_id)
       : format_(format), device_ptr_(device_ptr), size_(size), device_name_(device_name), device_id_(device_id) {
-    if (shape) {
-      SetShape(shape);
-    }
     if (type) {
       SetType(type);
+    }
+    if (shape) {
+      // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
+      SetShape(shape);
     }
     if (value) {
       SetValue(value);
@@ -224,6 +226,19 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   MS_DECLARE_PARENT(KernelTensor, AbstractBase);
 
+  // Copy shape, type and value info from other kernel tensor.
+  void CopyAbstractInfo(KernelTensor &&other) {
+    shape_ = other.shape_;
+    shape_vector_ = std::move(other.shape_vector_);
+
+    type_ = other.type_;
+    type_id_ = other.type_id_;
+    dtype_ = other.dtype_;
+    dtype_id_ = other.dtype_id_;
+
+    value_ = other.value_;
+  }
+
   // Get the base shape for Tensor/Sequence/Scalar.
   abstract::BaseShapePtr GetShape() const override { return shape_; }
 
@@ -271,8 +286,20 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
     if (value_ && !value_->isa<ValueAny>()) {
+      // Get value store in a scalar tensor.
+      if (value_->isa<tensor::Tensor>()) {
+        auto tensor_ptr = value_->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor_ptr);
+        size_t element_size = tensor_ptr->DataSize();
+        MS_EXCEPTION_IF_CHECK_FAIL((element_size == 1), "The element number of a scalar tensor should be 1, but got: " +
+                                                          std::to_string(element_size));
+        T *data_ptr = reinterpret_cast<T *>(tensor_ptr->data_c());
+        MS_EXCEPTION_IF_NULL(data_ptr);
+        return *data_ptr;
+      }
       return mindspore::GetValue<T>(value_);
     }
+
     if (host_value_.empty() && device_ptr_ == nullptr) {
       return std::nullopt;
     }
@@ -284,12 +311,26 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<IsValidContainer<T>::value>::type * = nullptr>
   std::optional<T> GetValue() {
     if (value_ && !value_->isa<ValueAny>()) {
+      // Get array(vector or string) value store in a tensor.
+      if (value_->isa<tensor::Tensor>()) {
+        auto tensor_ptr = value_->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor_ptr);
+        size_t element_size = tensor_ptr->DataSize();
+        T ret;
+        ret.reserve(element_size);
+        typename T::value_type *tensor_data = reinterpret_cast<typename T::value_type *>(tensor_ptr->data_c());
+        MS_EXCEPTION_IF_NULL(tensor_data);
+        ret.assign(tensor_data, tensor_data + element_size);
+        return ret;
+      }
       return mindspore::GetValue<T>(value_);
     }
+
     if (host_value_.empty() && device_ptr_ == nullptr) {
       return std::nullopt;
     }
     typename T::value_type *data = reinterpret_cast<typename T::value_type *>(host_value_.data());
+    MS_EXCEPTION_IF_NULL(data);
     size_t type_in_byte = GetTypeByte(dtype_);
     if (type_in_byte == 0) {
       // For kTypeNone or kTypeAny, return empty value.
@@ -321,28 +362,14 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     return std::nullopt;
   }
 
-  // Temp GetValueWithCheck
+  // Get the value in KernelTensor, return it if there is specific value, otherwise throw an exception.
   template <typename T>
   T GetValueWithCheck() {
-    mindspore::abstract::AbstractBasePtr abs = nullptr;
-    if (meta_type_ == kObjectTypeTuple) {
-      // Tuple
-      const TupleInfo &info = std::get<TupleInfo>(meta_);
-      abs = info.base_;
-    } else if (meta_type_ == kObjectTypeNumber) {
-      // Scalar
-      const ScalarInfo &info = std::get<ScalarInfo>(meta_);
-      abs = info.base_;
-    } else if (meta_type_ == kObjectTypeList) {
-      // List
-      const ListInfo &info = std::get<ListInfo>(meta_);
-      abs = info.base_;
-    } else {
-      MS_LOG(EXCEPTION) << "Not support " << meta_type_;
+    auto value_opt = GetValue<T>();
+    if (!value_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "Get value failed, there is no any value in KernelTensor.";
     }
-    auto value = abs->BuildValue();
-    T v = mindspore::GetValue<T>(value);
-    return v;
+    return value_opt.value();
   }
 
   // Get the data format.
@@ -474,7 +501,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
  private:
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
-  void SetSequenceDType(const TypePtrList &element_types);
+  void SetSequenceDType(const TypePtr &element_type);
 
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
   // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
@@ -549,7 +576,7 @@ enum KernelErrorCode : int { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_S
 class BACKEND_EXPORT KernelMod {
  public:
   // ===========================New interface==========================================================
-  KernelMod(const std::string &fullname, const PrimitivePtr &primitive) : fullname_(fullname), primitive_(primitive) {}
+  KernelMod() = default;
   virtual ~KernelMod() = default;
 
   virtual std::vector<KernelAttr> GetOpSupport() = 0;
@@ -558,11 +585,18 @@ class BACKEND_EXPORT KernelMod {
     return true;
   }
 
+  inline bool Init(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                   const std::vector<KernelTensor *> &outputs) {
+    primitive_ = primitive;
+    MS_EXCEPTION_IF_NULL(primitive_);
+    kernel_name_ = primitive_->name();
+
+    return Init(inputs, outputs);
+  }
+
   // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
   // routine after infer shape.
-  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    return KRET_OK;
-  }
+  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
@@ -594,8 +628,10 @@ class BACKEND_EXPORT KernelMod {
   void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
   void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
 
+  const PrimitivePtr &primitive() const { return primitive_; }
+  const std::string &kernel_name() const { return kernel_name_; }
+
   // =======================Old interface, will deleted after all kernel modified used new interface=================
-  KernelMod() {}
   explicit KernelMod(const BaseOperatorPtr &op) : op_(op) {}
   // Initialization for the kernel mod.
   inline bool Init_(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
@@ -629,9 +665,15 @@ class BACKEND_EXPORT KernelMod {
     return outputs_;
   }
 
-  void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
-  void set_fullname(const std::string &fullname) { fullname_ = fullname; }
-  void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
+  virtual void set_unique_name(const std::string &unique_name) {
+    MS_LOG(EXCEPTION) << "Call the method which doesn't implement";
+  }
+
+  virtual void set_fullname(const std::string &fullname) {
+    MS_LOG(EXCEPTION) << "Call the method which doesn't implement";
+  }
+
+  virtual void set_is_monad(bool is_monad) { MS_LOG(EXCEPTION) << "Call the method which doesn't implement"; }
 
   // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
   virtual void set_input_user_data(UserData *user_data, size_t input_index) {}
@@ -668,7 +710,6 @@ class BACKEND_EXPORT KernelMod {
 
  protected:
   // ===========================New member==========================================================
-  std::string fullname_;
   std::string kernel_name_;
   PrimitivePtr primitive_;
   uint32_t device_id_ = 0;
@@ -680,8 +721,6 @@ class BACKEND_EXPORT KernelMod {
   std::vector<AddressPtr> outputs_addr_;
 
   // =======================Old member, will deleted after all kernel modified used new interface=================
-  std::string unique_name_;
-  bool is_monad_{false};
   bool is_need_retrieve_output_shape_ = false;
   int32_t task_id_ = -1;
   BaseOperatorPtr op_;

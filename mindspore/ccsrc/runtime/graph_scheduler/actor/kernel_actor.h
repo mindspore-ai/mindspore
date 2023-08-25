@@ -38,6 +38,8 @@ using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
 using mindspore::kernel::KernelLaunchInfo;
 using mindspore::kernel::KernelMod;
+using mindspore::kernel::KernelTensor;
+using mindspore::kernel::KernelTensorPtr;
 using mindspore::session::SomasInfo;
 using mindspore::tensor::TensorPtr;
 
@@ -102,6 +104,9 @@ class KernelActor : public DebugAwareActor {
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
 
+  // Re-InferShape and resize before kernel launch in dynamic scenarios.
+  void InferShapeAndResize();
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
@@ -114,6 +119,14 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> input_device_tensors_;
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
+
+  // The input kernel tensors for infer shape.
+  std::vector<abstract::AbstractBasePtr> input_kernel_tensors_for_infer_;
+  // The kernel tensors for resize and launch.
+  std::vector<KernelTensor *> input_kernel_tensors_;
+  std::vector<KernelTensor *> output_kernel_tensors_;
+  std::vector<KernelTensor *> workspace_kernel_tensors_;
+
   // The received input device type and format may be different from the formal parameter in the control flow scenarios,
   // so it needs to be copied from the input data to real data that kernel launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;

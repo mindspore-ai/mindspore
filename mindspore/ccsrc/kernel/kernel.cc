@@ -29,19 +29,24 @@ constexpr int64_t kInvalidShape = -2;
 void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;
+  // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
   if (type_id_ == kObjectTypeTensorType) {
     shape_vector_ = shape_->GetShapeVector();
   } else if (type_id_ == kObjectTypeTuple || type_id_ == kObjectTypeList) {
-    const auto &tuple_shape = shape_->cast<abstract::SequenceShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (shape->isa<abstract::DynamicSequenceShape>()) {
+      shape_vector_ = {-1};
+      return;
+    }
+    const auto &seq_shape = shape_->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape);
     shape_vector_.clear();
-    shape_vector_.push_back(tuple_shape->size());
-    const auto &shapes = tuple_shape->shape();
+    shape_vector_.push_back(seq_shape->size());
+    const auto &shapes = seq_shape->shape();
     if (shapes.empty()) {
       return;
     }
     const auto &element_shape = shapes[0];
-    MS_EXCEPTION_IF_NULL(tuple_shape);
+    MS_EXCEPTION_IF_NULL(seq_shape);
     if (element_shape->isa<abstract::TensorShape>()) {
       const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
       shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
@@ -83,15 +88,39 @@ void KernelTensor::SetType(const TypePtr &type) {
     case kObjectTypeTuple: {
       auto tuple_type = type_->cast<TuplePtr>();
       MS_EXCEPTION_IF_NULL(tuple_type);
-      const TypePtrList &element_types = tuple_type->elements();
-      SetSequenceDType(element_types);
+      TypePtr element_type = nullptr;
+      if (tuple_type->dynamic_len()) {
+        element_type = tuple_type->dynamic_element_type();
+        if (element_type == nullptr) {
+          return;
+        }
+      } else {
+        const TypePtrList &element_types = tuple_type->elements();
+        if (element_types.empty()) {
+          return;
+        }
+        element_type = element_types[0];
+      }
+      SetSequenceDType(element_type);
     } break;
 
     case kObjectTypeList: {
-      auto tuple_type = type_->cast<ListPtr>();
-      MS_EXCEPTION_IF_NULL(tuple_type);
-      const TypePtrList &element_types = tuple_type->elements();
-      SetSequenceDType(element_types);
+      auto list_type = type_->cast<ListPtr>();
+      MS_EXCEPTION_IF_NULL(list_type);
+      TypePtr element_type = nullptr;
+      if (list_type->dynamic_len()) {
+        element_type = list_type->dynamic_element_type();
+        if (element_type == nullptr) {
+          return;
+        }
+      } else {
+        const TypePtrList &element_types = list_type->elements();
+        if (element_types.empty()) {
+          return;
+        }
+        element_type = element_types[0];
+      }
+      SetSequenceDType(element_type);
     } break;
 
     case kObjectTypeNumber: {
@@ -104,12 +133,7 @@ void KernelTensor::SetType(const TypePtr &type) {
   }
 }
 
-void KernelTensor::SetSequenceDType(const TypePtrList &element_types) {
-  if (element_types.empty()) {
-    return;
-  }
-
-  const TypePtr &element_type = element_types[0];
+void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
   MS_EXCEPTION_IF_NULL(element_type);
   if (element_type->object_type() == kObjectTypeTensorType) {
     // Tensor type element.
@@ -386,6 +410,43 @@ int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vec
   inputs_ = inputs;
   outputs_ = outputs;
   return Resize(this->op_, inputs, outputs, inputsOnHost);
+}
+
+int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KRET_OK;
+  workspace_size_list_.clear();
+  input_size_list_.clear();
+  output_size_list_.clear();
+
+  for (size_t idx = 0; idx < outputs.size(); idx++) {
+    auto &output = outputs[idx];
+    size_t tensor_size = 0;
+    MS_EXCEPTION_IF_NULL(output);
+    size_t type_size = GetTypeByte(output->dtype());
+    auto shape = output->GetShapeVector();
+    if (!IsValidShape(shape)) {
+      // Note:
+      // If output shape is unknown, the op is a compute-depended op, and the output_size_list_ can be set by default
+      // size: type_size.
+      tensor_size = type_size;
+      ret = KRET_UNKNOWN_OUT_SHAPE;
+    } else {
+      if (shape.empty()) {
+        tensor_size = type_size;
+      } else {
+        auto cur_out_shape_num = SizeOf(shape);
+        tensor_size = cur_out_shape_num * type_size;
+        if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
+          MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the shape of outputs[" << output_size_list_.size()
+                                   << "]: " << shape
+                                   << " is too big, mindspore cannot apply for such a large amount of memory.";
+        }
+      }
+      tensor_size = std::max(tensor_size, type_size);
+    }
+    (void)output_size_list_.emplace_back(tensor_size);
+  }
+  return static_cast<int>(ret);
 }
 
 int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

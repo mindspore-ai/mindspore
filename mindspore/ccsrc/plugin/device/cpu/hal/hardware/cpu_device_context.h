@@ -67,8 +67,8 @@ class CPUKernelExecutor : public KernelExecutor {
 
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
-  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                     size_t /* stream_id */) const override;
 
   bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
@@ -85,14 +85,13 @@ class CPUKernelExecutor : public KernelExecutor {
   void OptimizeMindIR(const KernelGraphPtr &graph) const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
-  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                 const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
-
+  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                      const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs) const;
   void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
 
   mutable std::mutex launch_mutex_;

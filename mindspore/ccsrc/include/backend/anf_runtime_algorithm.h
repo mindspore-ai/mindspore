@@ -46,6 +46,8 @@ using DeviceAddressPtr = device::DeviceAddressPtr;
 using Address = kernel::Address;
 using AddressPtr = kernel::AddressPtr;
 using kernel::KernelObjectType;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 
 class BACKEND_EXPORT AnfRuntimeAlgorithm {
  public:
@@ -122,6 +124,16 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
                                                     bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
+
+  // Get output kernel tensor if exists, otherwise create a new one and set into node.
+  static const KernelTensorPtr &GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+  // Get input kernel tensor if exists, otherwise create a new one and set into node.
+  static const KernelTensorPtr &GetOrCreatePrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx);
+  // Get all input kernel tensor if exists, otherwise create new KernelTensor and set into input node.
+  static std::vector<KernelTensor *> GetOrCreateAllInputKernelTensors(const AnfNodePtr &node);
+  // Get all output kernel tensor if exists, otherwise create new KernelTensor and set into node.
+  static std::vector<KernelTensor *> GetOrCreateAllOutputKernelTensors(const AnfNodePtr &node);
+
   static size_t GetOutputAddressNum(const AnfNodePtr &node);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);

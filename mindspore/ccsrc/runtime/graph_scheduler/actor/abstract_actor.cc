@@ -130,9 +130,10 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
-                                            std::vector<DeviceTensor *> *const memory_free_tensors,
-                                            OpContext<DeviceTensor> *const context) const {
+void AbstractActor::FetchInputByTensorStore(
+  std::vector<DeviceTensor *> *const input_device_tensors, std::vector<KernelTensor *> *const input_kernel_tensors,
+  std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
+  std::vector<DeviceTensor *> *const memory_free_tensors, OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(input_device_tensors);
   MS_EXCEPTION_IF_NULL(memory_free_tensors);
   MS_EXCEPTION_IF_NULL(context);
@@ -156,6 +157,11 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
+      // Collect the input kernel tensor.
+      if (input_kernel_tensors && input_kernel_tensors_for_infer) {
+        (*input_kernel_tensors)[device_tensor_store_key.first] = device_tensor->kernel_tensor().get();
+        (*input_kernel_tensors_for_infer)[device_tensor_store_key.first] = device_tensor->kernel_tensor();
+      }
       MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
                     << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                     << " key node:" << device_tensor_store_key.second->DebugString();

@@ -688,8 +688,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
   MS_EXCEPTION_IF_NULL(context);
 
   std::vector<TensorPtr> tensors;
-  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0 &&
-      common::AnfAlgo::IsDynamicSequence(node)) {
+  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0) {
     (void)tensors.emplace_back(AnfAlgo::SequenceToTensor(node_value));
   } else {
     TensorValueToTensor(node_value, &tensors);

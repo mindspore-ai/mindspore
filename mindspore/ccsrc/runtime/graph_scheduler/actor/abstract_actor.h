@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::kernel::KernelTensor;
 
 // The flag of output data.
 constexpr size_t kOutputDataFlagInit = 0;
@@ -115,6 +116,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Fetch input data from the device tensor store.
   void FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                               std::vector<KernelTensor *> *const input_kernel_tensors,
+                               std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
                                std::vector<DeviceTensor *> *const memory_free_tensors,
                                OpContext<DeviceTensor> *const context) const;
 

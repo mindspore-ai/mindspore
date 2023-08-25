@@ -387,30 +387,30 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   return true;
 }
 
-kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
-                                                const AnfNodePtr &node) {
+std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                          const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   auto input_size = runtime_info->GetInputSize();
-  kernel::AddressPtrList inputs;
+  std::vector<kernel::KernelTensor *> inputs;
   for (size_t i = 0; i < input_size; ++i) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(std::make_shared<kernel::Address>());
+      (void)inputs.emplace_back(nullptr);
       MS_LOG(DEBUG) << "Input[" << i << "]:"
                     << " is None Input";
       continue;
     }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
-    (void)inputs.emplace_back(
-      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_LOG(DEBUG) << "input[" << i << "]:" << inputs.back()->addr << " size:" << inputs.back()->size;
+    (void)inputs.emplace_back(device_address->kernel_tensor().get());
+    MS_EXCEPTION_IF_NULL(inputs.back());
+    MS_LOG(DEBUG) << "input[" << i << "]:" << inputs.back()->device_ptr() << " size:" << inputs.back()->size();
   }
   return inputs;
 }
 
-kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
-                                                    const device::DeviceContext *device_context, const CNodePtr &kernel,
-                                                    bool is_dynamic_shape) {
+std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                              const device::DeviceContext *device_context,
+                                                              const CNodePtr &kernel, bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
@@ -442,7 +442,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     device_address->SetSize(workspace_sizes[i]);
   }
 
-  kernel::AddressPtrList workspaces;
+  std::vector<kernel::KernelTensor *> workspaces;
   for (size_t i = 0; i < workspace_size && i < workspace_sizes.size(); ++i) {
     auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -450,9 +450,10 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
-    (void)workspaces.emplace_back(
-      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
+    (void)workspaces.emplace_back(device_address->kernel_tensor().get());
+    MS_EXCEPTION_IF_NULL(workspaces.back());
+    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
+                  << " size:" << workspaces.back()->size();
   }
 
   for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
@@ -462,9 +463,9 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
-    (void)workspaces.emplace_back(
-      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
+    (void)workspaces.emplace_back(device_address->kernel_tensor().get());
+    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
+                  << " size:" << workspaces.back()->size();
   }
   return workspaces;
 }
@@ -496,16 +497,15 @@ kernel::AddressPtrList CreateKernelWorkspaceAddressDynamic(
   return workspaces;
 }
 
-kernel::AddressPtrList CreateKernelOutputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
+std::vector<kernel::KernelTensor *> GetOutputKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   auto output_size = runtime_info->GetOutputSize();
-  kernel::AddressPtrList outputs;
+  std::vector<kernel::KernelTensor *> outputs;
   for (size_t i = 0; i < output_size; ++i) {
     auto device_address = runtime_info->GetOutputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
-    (void)outputs.emplace_back(
-      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_LOG(DEBUG) << "output[" << i << "]:" << outputs.back()->addr << " size:" << outputs.back()->size;
+    (void)outputs.emplace_back(device_address->kernel_tensor().get());
+    MS_LOG(DEBUG) << "output[" << i << "]:" << outputs.back()->device_ptr() << " size:" << outputs.back()->size();
   }
   return outputs;
 }
@@ -1027,7 +1027,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
-    auto inputs = CreateKernelInputAddress(runtime_info, node);
+    auto inputs = GetInputKernelTensors(runtime_info, node);
     if (is_dynamic_shape) {
       InferNodeRealShape(node);
       auto args = kernel::GetArgsFromCNode(node);
@@ -1039,12 +1039,12 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
 #endif
     }
 
-    auto workspaces = CreateKernelWorkspaceAddress(runtime_info, device_context, node, is_dynamic_shape);
+    auto workspaces = GetWorkspaceKernelTensors(runtime_info, device_context, node, is_dynamic_shape);
 
     if (!MallocForKernelOutput(runtime_info, node, device_context)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
-    auto outputs = CreateKernelOutputAddress(runtime_info);
+    auto outputs = GetOutputKernelTensors(runtime_info);
     const size_t stream_id = AnfAlgo::GetStreamId(node);
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));
