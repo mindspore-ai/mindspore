@@ -27,7 +27,6 @@
 namespace mindspore {
 namespace prim {
 // Activation
-GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
 GVAR_DEF(PrimitivePtr, kPrimCeluV2, std::make_shared<Primitive>("CeluV2"));
 GVAR_DEF(PrimitivePtr, kPrimReluGradV2, std::make_shared<Primitive>("ReluGradV2"));
 GVAR_DEF(PrimitivePtr, kPrimRelu6Grad, std::make_shared<Primitive>("Relu6Grad"));
