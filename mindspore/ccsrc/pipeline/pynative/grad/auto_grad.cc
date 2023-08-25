@@ -652,6 +652,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
     (void)cell_inputs_.emplace_back(input_parameter, input_adjoint);
     (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
   }
+  device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
 bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
@@ -1618,8 +1619,7 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
                   << din->DebugString();
 #ifndef ENABLE_TEST
     // VM no need run pass
-    std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    din = ConvertConstInputToAttr(din, device_target, grad_by_value);
+    din = ConvertConstInputToAttr(din, device_target_, grad_by_value);
     ConvertValueNodeValueToTensor(din);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
