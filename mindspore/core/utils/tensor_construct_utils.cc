@@ -23,7 +23,7 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type, c
   MS_EXCEPTION_IF_NULL(type);
   auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  size_t mem_size = IntToSize(tensor->ElementsNum());
+  size_t mem_size = LongToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   char *data = reinterpret_cast<char *>(tensor_data);
   MS_EXCEPTION_IF_NULL(data);
@@ -40,7 +40,7 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, co
   MS_EXCEPTION_IF_NULL(type);
   auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  const size_t &mem_size = IntToSize(tensor->ElementsNum());
+  const size_t &mem_size = LongToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   std::map<TypeId, std::function<void()>> type_dict{
     {kNumberTypeBool, [&tensor_data, mem_size]() { SetTensorData<bool>(tensor_data, true, mem_size); }},

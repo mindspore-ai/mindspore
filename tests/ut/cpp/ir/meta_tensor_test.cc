@@ -74,6 +74,10 @@ TEST_F(TestMetaTensor, ShapeTest) {
 
   // Test number of elements
   ASSERT_EQ(210, meta_tensor_.ElementsNum());
+
+  std::vector<int64_t> dimensions1({100000, 100000, 100000});
+  meta_tensor_.set_shape(dimensions1);
+  ASSERT_EQ(1e15, meta_tensor_.ElementsNum());
 }
 
 TEST_F(TestMetaTensor, EqualTest) {
@@ -284,7 +288,7 @@ TEST_F(TestTensor, InitByFloatArrayDataCTest) {
   // Print each elements
   std::cout << "Elements: " << std::endl;
   float *tensor_data = reinterpret_cast<float *>(tensor->data_c());
-  for (int i = 0; i < tensor->ElementsNum(); i++) {
+  for (int64_t i = 0; i < tensor->ElementsNum(); i++) {
     std::cout << tensor_data[i] << std::endl;
   }
 }
