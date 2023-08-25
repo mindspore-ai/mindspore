@@ -246,6 +246,7 @@ class Conv2dOp : public OpaqueOp {
  public:
   explicit Conv2dOp(const std::string &op) : OpaqueOp(op) {}
   ~Conv2dOp() = default;
+  static bool HadPad(const ShapeVector &pad_list, const std::string &pad_mode);
 
  protected:
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
