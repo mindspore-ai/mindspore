@@ -439,6 +439,16 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
     }
   }
 
+  // Set Weight Node quant Param
+  if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
+    auto ret = SetWeightQuantParam(func_graph);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to SetWeightQuantParam";
+      return ret;
+    }
+    return RET_OK;
+  }
+
   // Matmul Add Fusion
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
@@ -449,16 +459,6 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
   if (optimizer->Optimize(func_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";
     return RET_ERROR;
-  }
-
-  // Set Weight Node quant Param
-  if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
-    auto ret = SetWeightQuantParam(func_graph);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Fail to SetWeightQuantParam";
-      return ret;
-    }
-    return RET_OK;
   }
 
   // Set input quant param
