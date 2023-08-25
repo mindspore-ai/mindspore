@@ -29,25 +29,25 @@
 #include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::ops {
-const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
-                                              kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
+                                              kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
 
-const std::set<TypePtr> common_valid_types_with_bool = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
-                                                        kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool};
+const std::set<TypePtr> common_valid_types_with_bool = {
+  kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};
 
-const std::set<TypePtr> common_valid_types_with_complex = {kInt8,    kInt16,     kInt32,     kInt64,   kUInt8,
-                                                           kUInt16,  kUInt32,    kUInt64,    kFloat16, kFloat32,
-                                                           kFloat64, kComplex64, kComplex128};
+const std::set<TypePtr> common_valid_types_with_complex = {kInt8,    kInt16,     kInt32,      kInt64,   kUInt8,
+                                                           kUInt16,  kUInt32,    kUInt64,     kFloat16, kFloat32,
+                                                           kFloat64, kComplex64, kComplex128, kBFloat16};
 
 const std::set<TypePtr> common_valid_types_with_complex_and_bool = {
-  kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
-  kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
+  kInt8,    kInt16,   kInt32,   kInt64,     kUInt8,      kUInt16, kUInt32,  kUInt64,
+  kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool,   kBFloat16};
 
 const std::set<TypePtr> common_integral_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64};
-const std::set<TypePtr> all_types = {kBool,    kInt,     kInt8,    kInt16,     kInt32,     kInt64,
-                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,    kFloat,
-                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64, kBFloat16};
+const std::set<TypePtr> all_types = {kBool,    kInt,     kInt8,    kInt16,     kInt32,      kInt64,
+                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,     kFloat,
+                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
                                        const std::string &op_name, const std::string &op_x_name = "input1",
                                        const std::string &op_y_name = "input2");

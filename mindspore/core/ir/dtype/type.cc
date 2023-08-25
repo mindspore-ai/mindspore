@@ -72,7 +72,6 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kNumberTypeFloat16, "Float16"},
                                                               {kNumberTypeFloat32, "Float32"},
                                                               {kNumberTypeFloat64, "Float64"},
-                                                              {kNumberTypeBFloat, "BFloat"},
                                                               {kNumberTypeBFloat16, "BFloat16"},
                                                               {kNumberTypeComplex, "Complex"},
                                                               {kNumberTypeComplex64, "Complex64"},
@@ -183,8 +182,8 @@ TypeId NormalizeTypeId(const TypeId type_id) {
   } else if ((type_id == kNumberTypeFloat) || (type_id == kNumberTypeFloat16) || (type_id == kNumberTypeFloat32) ||
              (type_id == kNumberTypeFloat64)) {
     return kNumberTypeFloat;
-  } else if ((type_id == kNumberTypeBFloat) || (type_id == kNumberTypeBFloat16)) {
-    return kNumberTypeBFloat;
+  } else if (type_id == kNumberTypeBFloat16) {
+    return kNumberTypeBFloat16;
   } else if ((type_id == kNumberTypeUInt) || (type_id == kNumberTypeUInt8) || (type_id == kNumberTypeUInt16) ||
              (type_id == kNumberTypeUInt32) || (type_id == kNumberTypeUInt64)) {
     return kNumberTypeUInt;

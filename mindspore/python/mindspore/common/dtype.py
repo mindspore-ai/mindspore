@@ -36,14 +36,14 @@ __dtype__ = [
     "float32", "single",
     "float64", "double",
     "bool_", "float_",
-    "bfloat16", "bfloat",
     "list_", "tuple_",
     "int_", "uint",
     "number", "tensor_type",
     "string", "type_none",
     "TensorType", "_null",
     "Type", "Int",
-    "complex64", "complex128"
+    "complex64", "complex128",
+    "bfloat16"
 ]
 
 __method__ = [
@@ -90,7 +90,6 @@ number = typing.Number()
 int_ = typing.Int()
 uint = typing.UInt()
 float_ = typing.Float()
-bfloat = typing.BFloat()
 string = typing.String()
 list_ = typing.List()
 tuple_ = typing.Tuple()
@@ -310,7 +309,6 @@ def dtype_to_pytype(type_):
         float16: float,
         float32: float,
         float64: float,
-        bfloat: float,
         bfloat16: float,
         list_: list,
         tuple_: tuple,

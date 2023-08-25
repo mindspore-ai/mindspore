@@ -197,7 +197,7 @@ class MS_CORE_API Float : public Number {
 class MS_CORE_API BFloat : public Number {
  public:
   /// \brief Default constructor for BFloat.
-  BFloat() : Number(kNumberTypeBFloat, 0) {}
+  BFloat() : Number(kNumberTypeBFloat16, 0) {}
 
   /// \brief Constructor for BFloat.
   ///
@@ -208,7 +208,7 @@ class MS_CORE_API BFloat : public Number {
   ~BFloat() override {}
   MS_DECLARE_PARENT(BFloat, Number)
 
-  TypeId generic_type_id() const override { return kNumberTypeBFloat; }
+  TypeId generic_type_id() const override { return kNumberTypeBFloat16; }
   TypePtr DeepCopy() const override {
     if (nbits() == 0) {
       return std::make_shared<BFloat>();

@@ -153,7 +153,6 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
     case kNumberTypeInt16:
     case kNumberTypeUInt16:
     case kNumberTypeFloat16:
-    case kNumberTypeBFloat:
     case kNumberTypeBFloat16:
       bytes = sizeof(int16_t);
       break;

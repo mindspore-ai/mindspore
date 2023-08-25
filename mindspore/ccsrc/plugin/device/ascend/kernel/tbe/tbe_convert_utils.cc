@@ -28,7 +28,6 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeFloat16, "float16"},
   {TypeId::kNumberTypeFloat, "float32"},
   {TypeId::kNumberTypeFloat64, "float64"},
-  {TypeId::kNumberTypeBFloat, "bfloat16"},
   {TypeId::kNumberTypeBFloat16, "bfloat16"},
   {TypeId::kNumberTypeDouble, "double"},
   {TypeId::kNumberTypeInt, "int"},
@@ -64,7 +63,6 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   static const std::map<std::string, TypeId> type_str_id_maps = {
     {"float", TypeId::kNumberTypeFloat32},
     {"float16", TypeId::kNumberTypeFloat16},
-    {"bfloat", TypeId::kNumberTypeBFloat},
     {"bfloat16", TypeId::kNumberTypeBFloat16},
     {"float32", TypeId::kNumberTypeFloat32},
     {"float64", TypeId::kNumberTypeFloat64},
