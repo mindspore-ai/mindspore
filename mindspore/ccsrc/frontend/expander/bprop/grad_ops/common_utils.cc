@@ -583,8 +583,11 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
   auto x_shape = ib->GetShape(x);
   int64_t x_axis = axis;
-  if (!IsDynamic(x_shape)) {
+  if (!IsDynamicRank(x_shape)) {
     x_axis = CheckRange(axis, SizeToLong(x_shape.size()));
+  } else if (axis < 0) {
+    MS_LOG_EXCEPTION << "For ArgminOrArgmaxGrad, when axis is negative,"
+                     << "input_x is currently not supported as a dynamic rank.";
   }
   NodePtr dout_expand;
   NodePtr new_out = out;
