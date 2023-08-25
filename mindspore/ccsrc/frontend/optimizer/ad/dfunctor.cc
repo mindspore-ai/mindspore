@@ -127,7 +127,8 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
   }
   auto fv_node = fv_adjoint->second->k();
   auto cached_envitem_iter = anfnode_to_envitem_.find(fv_node);
-  CNodePtr embed_node, default_val_node;
+  CNodePtr embed_node;
+  CNodePtr default_val_node;
   if (cached_envitem_iter != anfnode_to_envitem_.end()) {
     embed_node = cached_envitem_iter->second.first;
     default_val_node = cached_envitem_iter->second.second;

@@ -103,7 +103,9 @@ bool IsNodeScalarMinFLT(const AnfNodePtr &node) {
 }
 
 AnfNodePtr ValueBasedEliminate::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  PatternNode x, y, z;
+  PatternNode x;
+  PatternNode y;
+  PatternNode z;
   PConstant zero_(node, false, 0);
   PConstant zero_scalar_(node, false, 0, true);
 

@@ -33,7 +33,9 @@ namespace irpass {
 class SparseTensorEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode x, y, z;
+    PatternNode x;
+    PatternNode y;
+    PatternNode z;
     auto sparse = PPrimitive(prim::kPrimMakeCOOTensor, x, y, z).MinExtraNodes(0);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimCOOTensorGetIndices, sparse), x);
     MATCH_REPLACE(node, PPrimitive(prim::kPrimCOOTensorGetValues, sparse), y);

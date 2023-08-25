@@ -39,7 +39,9 @@ namespace irpass {
 class SwitchSimplify : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> cond, true_br, false_br;
+    PatternNode<AnfNodePtr> cond;
+    PatternNode<AnfNodePtr> true_br;
+    PatternNode<AnfNodePtr> false_br;
     auto SwitchSimplLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
       auto value_ptr = GetValueNode(cond.GetNode(node));
       bool cond_value;
@@ -72,7 +74,9 @@ class SwitchSimplify : public OptimizerCaller {
 class CompareSwitchSimplify : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> cond, true_br, false_br;
+    PatternNode<AnfNodePtr> cond;
+    PatternNode<AnfNodePtr> true_br;
+    PatternNode<AnfNodePtr> false_br;
     auto CompareSwitchSimplifyLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -135,7 +139,10 @@ class CompareSwitchSimplify : public OptimizerCaller {
 class FloatTupleGetItemSwitch : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> cond, true_br, false_br, x;
+    PatternNode<AnfNodePtr> cond;
+    PatternNode<AnfNodePtr> true_br;
+    PatternNode<AnfNodePtr> false_br;
+    PatternNode<AnfNodePtr> x;
     MATCH_REPLACE_IF(node,
                      PPrimitive(prim::kPrimTupleGetItem, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x),
                      PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimTupleGetItem, true_br, x),
@@ -150,7 +157,11 @@ class FloatTupleGetItemSwitch : public OptimizerCaller {
 class FloatEnvironGetSwitch : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> cond, true_br, false_br, x, x2;
+    PatternNode<AnfNodePtr> cond;
+    PatternNode<AnfNodePtr> true_br;
+    PatternNode<AnfNodePtr> false_br;
+    PatternNode<AnfNodePtr> x;
+    PatternNode<AnfNodePtr> x2;
     MATCH_REPLACE(node,
                   PPrimitive(prim::kPrimEnvironGet, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), x, x2),
                   PPrimitive(prim::kPrimSwitch, cond, PPrimitive(prim::kPrimEnvironGet, true_br, x, x2),
@@ -214,7 +225,11 @@ class ExchangeSwitchDependValue : public OptimizerCaller {
     ScopePtr scope = node->cast<CNodePtr>()->scope();
     ScopeGuard scope_guard(scope);
 
-    PatternNode<AnfNodePtr> cond, true_br, false_br, v, x;
+    PatternNode<AnfNodePtr> cond;
+    PatternNode<AnfNodePtr> true_br;
+    PatternNode<AnfNodePtr> false_br;
+    PatternNode<AnfNodePtr> v;
+    PatternNode<AnfNodePtr> x;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSwitch, PPrimitive(prim::kPrimDepend, v, x), true_br, false_br),
                      PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimSwitch, v, true_br, false_br), x),
                      IsVNode(v.GetNode(node)));

@@ -48,7 +48,8 @@ class AGCustomInfer : public abstract::OpInferBase {
     }
 
     auto kernel_name = primitive->name();
-    std::string file_path, func_name;
+    std::string file_path;
+    std::string func_name;
 
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
