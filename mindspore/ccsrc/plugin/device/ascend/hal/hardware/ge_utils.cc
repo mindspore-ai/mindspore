@@ -55,7 +55,7 @@ bool IsGeTrain() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool enable_ge = context->backend_policy() == "ge";
-  bool enable_training = GetPhasePrefix() == "train";
+  bool enable_training = GetPhasePrefix() == "train" || common::GetEnv("MS_GE_TRAIN") == "1";
   if (enable_ge && enable_training) {
     return true;
   }

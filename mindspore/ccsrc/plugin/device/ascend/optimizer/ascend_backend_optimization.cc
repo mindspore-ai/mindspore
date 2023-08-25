@@ -858,7 +858,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   MS_EXCEPTION_IF_NULL(ms_context);
   bool enable_ge = ms_context->backend_policy() == "ge";
   if (enable_ge) {
-    bool enable_training = device::ascend::GetPhasePrefix() == "train";
+    bool enable_training = device::ascend::GetPhasePrefix() == "train" || common::GetEnv("MS_GE_TRAIN") == "1";
     if (enable_training) {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());

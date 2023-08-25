@@ -105,7 +105,7 @@ void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &m
   MS_LOG(INFO) << "Set GE atomic clean policy to " << atomic_clean_policy << ".";
 
   const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
-  bool is_training = device::ascend::IsGeTrain();
+  bool is_training = device::ascend::IsGeTrain() || common::GetEnv("MS_GE_TRAIN") == "1";
   if (is_training) {
     (*options)["ge.graphRunMode"] = "1";
   } else {
