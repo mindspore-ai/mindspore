@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "c_api/include/graph.h"
+#include "include/c_api/ms/graph.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"

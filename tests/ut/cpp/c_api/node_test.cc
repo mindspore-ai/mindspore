@@ -18,12 +18,12 @@
 #include <sstream>
 #include <unordered_map>
 #include "common/common_test.h"
-#include "include/node.h"
-#include "include/tensor.h"
-#include "include/graph.h"
-#include "include/context.h"
-#include "include/base/status.h"
-#include "include/base/handle_types.h"
+#include "include/c_api/ms/node.h"
+#include "include/c_api/ms/tensor.h"
+#include "include/c_api/ms/graph.h"
+#include "include/c_api/ms/context.h"
+#include "include/c_api/ms/base/status.h"
+#include "include/c_api/ms/base/handle_types.h"
 
 namespace mindspore {
 class TestCApiNode : public UT::CApiCommon {

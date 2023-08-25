@@ -23,7 +23,7 @@
 #include <vector>
 #include <memory>
 #include "base/base.h"
-#include "c_api/include/base/handle_types.h"
+#include "include/c_api/ms/base/handle_types.h"
 #include "c_api/src/common.h"
 #include "pipeline/jit/ps/resource.h"
 #include "utils/ms_context.h"

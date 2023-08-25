@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "c_api/include/value.h"
+#include "include/c_api/ms/value.h"
 #include <memory>
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"

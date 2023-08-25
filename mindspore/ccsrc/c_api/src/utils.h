@@ -25,8 +25,8 @@
 #include "base/base.h"
 #include "base/base_ref.h"
 #include "c_api/src/resource_manager.h"
-#include "c_api/include/context.h"
-#include "c_api/include/node.h"
+#include "include/c_api/ms/context.h"
+#include "include/c_api/ms/node.h"
 #include "c_api/src/common.h"
 
 const std::map<DTypeFormat, std::vector<std::string>> kDTypeFmtEnumToStrMap = {
