@@ -92,6 +92,7 @@ AnfNodePtr FallbackIRBuilder::Run(const CNodePtr &cnode, const IRBuilderHandle &
   attrs_ptr_ = &(GetCNodePrimitive(cnode)->attrs());
   auto outputs = handle.func(this);
   if (!success_ || outputs.empty()) {
+    MS_LOG(DEBUG) << "Exec func result: success=" << success_ << ", outputs.empty()=" << outputs.empty();
     return nullptr;
   }
   if (outputs.size() > 1) {

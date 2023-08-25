@@ -131,13 +131,7 @@ class MatMulInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(y->element()->GetTypeTrack());
 
     TypePtr x_type = x->element()->GetTypeTrack();
-    if (x_type->type_id() == TypeId::kNumberTypeInt8) {
-      x_type = kInt32;
-    }
     TypePtr y_type = y->element()->GetTypeTrack();
-    if (y_type->type_id() == TypeId::kNumberTypeInt8) {
-      y_type = kInt32;
-    }
 
     if (x_type->type_id() != y_type->type_id()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name
@@ -153,8 +147,8 @@ class MatMulInfer : public abstract::OpInferBase {
       x_type = out_type->cast<TypePtr>();
     }
 
-    const std::set valid_types = {kUInt8,   kInt16,   kInt32,     kInt64,     kFloat16,
-                                  kFloat32, kFloat64, kComplex64, kComplex128};
+    const std::set valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
+                                  kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("y", input_args[kInputIndex1]->BuildType());

@@ -43,7 +43,15 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator
      []() { return std::make_shared<MatMulCpuKernelFunc>(); }},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
      []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
     {KernelAttr()
        .AddInputAttr(kNumberTypeComplex64)

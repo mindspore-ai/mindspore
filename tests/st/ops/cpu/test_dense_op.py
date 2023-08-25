@@ -244,3 +244,130 @@ def test_3d_backward():
     assert np.abs(dx_ms - dx_np).mean() < error
     assert np.abs(dw_ms - dw_np).mean() < error
     assert np.abs(db_ms - db_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_1d_complex64_backward():
+    """
+    Feature: Test dense 1d complex64 backward.
+    Description: Test dense 1d complex64 backward for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dtype = np.complex64
+    error = 1e-3
+    x_np = np.array([0.6 + 0.7j, 0.7 + 0.9j, 0.0 + 0.7j]).astype(dtype)
+    w_np = np.array([0.2 + 0.1j, 0.8 + 0.4j, 0.9 + 0.7j]).astype(dtype)
+    b_np = np.array(-0.5 + 0.6j).astype(dtype)
+    dout_np = np.array(-1.3 - 0.1j).astype(dtype)
+    dx_np = np.array([-0.27 + 0.11j, -1.08 + 0.44j, -1.24 + 0.82j]).astype(dtype)
+    dw_np = np.array([-0.85 + 0.85j, -1.0 + 1.1j, -0.07 + 0.91j]).astype(dtype)
+    db_np = np.array(-1.3 - 0.1j).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    dout_ms = Tensor(dout_np)
+    net = Dense()
+    grad_net = DenseGrad(net)
+    grad_net.set_train()
+
+    input_grad = grad_net(x_ms, w_ms, b_ms, dout_ms)
+    dx_ms = input_grad[0][0].asnumpy()
+    dw_ms = input_grad[0][1].asnumpy()
+    db_ms = input_grad[0][2].asnumpy()
+
+    assert np.abs(dx_ms - dx_np).mean() < error
+    assert np.abs(dw_ms - dw_np).mean() < error
+    assert np.abs(db_ms - db_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_2d_complex128_backward():
+    """
+    Feature: Test dense 2d complex128 backward.
+    Description: Test dense 2d complex128 backward for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dtype = np.complex128
+    error = 1e-3
+    x_np = np.array([[0.6 + 0.7j, 0.7 + 0.9j, 0.0 + 0.7j]]).astype(dtype)
+    w_np = np.array([[0.2 + 0.1j, 0.8 + 0.4j, 0.9 + 0.7j]]).astype(dtype)
+    b_np = np.array([-0.5 + 0.6j]).astype(dtype)
+    dout_np = np.array([[-1.3 - 0.1j]]).astype(dtype)
+    dx_np = np.array([[-0.27 + 0.11j, -1.08 + 0.44j, -1.24 + 0.82j]]).astype(dtype)
+    dw_np = np.array([[-0.85 + 0.85j, -1.0 + 1.1j, -0.07 + 0.91j]]).astype(dtype)
+    db_np = np.array([-1.3 - 0.1j]).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    dout_ms = Tensor(dout_np)
+    net = Dense()
+    grad_net = DenseGrad(net)
+    grad_net.set_train()
+
+    input_grad = grad_net(x_ms, w_ms, b_ms, dout_ms)
+    dx_ms = input_grad[0][0].asnumpy()
+    dw_ms = input_grad[0][1].asnumpy()
+    db_ms = input_grad[0][2].asnumpy()
+
+    assert np.abs(dx_ms - dx_np).mean() < error
+    assert np.abs(dw_ms - dw_np).mean() < error
+    assert np.abs(db_ms - db_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_2d_dtypes_forward():
+    """
+    Feature: Test dense 2d dtypes forward.
+    Description: Test dense 2d dtypes forward for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dtypes = (np.uint8, np.int8, np.int16, np.int32, np.int64, np.float16,
+              np.float32, np.float64, np.complex64, np.complex128)
+    error = 1e-3
+    net = Dense()
+    for dtype in dtypes:
+        x_np = np.array([_ for _ in range(6)]).reshape(2, 3).astype(dtype)
+        w_np = np.array([_ for _ in range(12)]).reshape(4, 3).astype(dtype)
+        b_np = np.array([_ for _ in range(4)]).astype(dtype)
+        x_ms = Tensor(x_np)
+        w_ms = Tensor(w_np)
+        b_ms = Tensor(b_np)
+        out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+        out_np = np.array([5, 15, 25, 35, 14, 51, 88, 125]).reshape(2, 4).astype(dtype)
+        assert np.abs(out_ms - out_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_empty_tensor():
+    """
+    Feature: Test dense empty tensor.
+    Description: Test dense empty tensor for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    error = 1e-3
+    dtype = np.float32
+    net = Dense()
+    x_np = np.array([]).astype(dtype)
+    w_np = np.array([]).astype(dtype)
+    b_np = np.array(np.random.randn()).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    out_ms = net(x_ms, w_ms, None).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - 0.0).mean() < error
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - b_np).mean() < error

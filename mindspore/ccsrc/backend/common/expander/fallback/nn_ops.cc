@@ -67,15 +67,24 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   NodePtrList reshape_shapes;
-  bool is_dynamic_rank = IsDynamicRank(x->shape()) || IsDynamicRank(w->shape());
-  bool need_reshape = (is_dynamic_rank || x->shape().size() != kRank2 || w->shape().size() != kRank2);
+  auto has_bias = ib->GetAttr<bool>("has_bias");
+  auto x_shape = x->shape();
+  auto w_shape = w->shape();
+  bool is_empty_tensor = x_shape.size() == 1 && w_shape.size() == 1 && x_shape[0] == 0 && w_shape[0] == 0;
+  if (is_empty_tensor) {
+    if (has_bias) {
+      return {ib->GetInput(kIndex2)};
+    }
+    return {ib->Tensor(0, x->dtype())};
+  }
+  bool is_dynamic_rank = IsDynamicRank(x_shape) || IsDynamicRank(w_shape);
+  bool need_reshape = (is_dynamic_rank || x_shape.size() != kRank2 || w_shape.size() != kRank2);
   if (need_reshape) {
     reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x, w});
     x = ib->Reshape(x, reshape_shapes[kIndex0]);
     w = ib->Reshape(w, reshape_shapes[kIndex1]);
   }
   auto ret = ib->MatMul(x, w, false, true);
-  auto has_bias = ib->GetAttr<bool>("has_bias");
   if (has_bias) {
     auto b = ib->GetInput(kIndex2);
     ret = ib->Add(ret, b);

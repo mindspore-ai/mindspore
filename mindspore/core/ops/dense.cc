@@ -138,8 +138,8 @@ class DenseInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto op_name = primitive->name();
-    const std::set valid_types = {kUInt8,   kInt16,   kInt32,     kInt64,     kFloat16,
-                                  kFloat32, kFloat64, kComplex64, kComplex128};
+    const std::set valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
+                                  kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kDenseIndex0]->BuildType());
     (void)types.emplace("w", input_args[kDenseIndex1]->BuildType());
