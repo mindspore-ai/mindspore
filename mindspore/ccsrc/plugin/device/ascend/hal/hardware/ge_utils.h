@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_GE_UTILS_H_
 
 #include <string>
+#include <unordered_set>
 #include "include/transform/graph_ir/types.h"
 #include "utils/phase.h"
 
@@ -40,6 +41,14 @@ inline std::string GetPhasePrefix() {
 
   return "";
 }
+
+class InferNeedUpdateParaNames {
+ public:
+  std::unordered_set<std::string> &GetInferParameterNames() { return infer_need_update_para_names; }
+
+ private:
+  std::unordered_set<std::string> infer_need_update_para_names;
+};
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

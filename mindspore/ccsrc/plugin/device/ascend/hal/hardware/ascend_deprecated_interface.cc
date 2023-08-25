@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <tuple>
 #include <utility>
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include "include/transform/graph_ir/types.h"
@@ -35,6 +36,8 @@
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
+#include "mindspore/core/utils/singleton.h"
+#include "mindspore/core/utils/phase.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -51,7 +54,10 @@ namespace device {
 namespace ascend {
 namespace {
 std::mutex g_tsd_mutex;
-void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors) {
+void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors,
+                            const FuncGraphPtr &anf_graph) {
+  const auto &infer_need_update_parameter_names =
+    Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (auto item : dict) {
     if ((!py::isinstance<py::str>(item.first))) {
       MS_LOG(WARNING) << "Type of key of py_dict is not string, ignore it.";
@@ -59,6 +65,21 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     }
     std::shared_ptr<tensor::Tensor> tensor;
     std::string name = py::cast<std::string>(item.first);
+    bool infer = false;
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    bool enable_ge = context_ptr->backend_policy() == "ge";
+    bool is_train = false;
+    if (anf_graph->has_attr("phase")) {
+      std::string phase = anf_graph->get_attr("phase")->ToString();
+      is_train = phase == "train";
+    }
+    if (enable_ge && !is_train) {
+      infer = true;
+    }
+    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end()) {
+      continue;
+    }
     if (py::isinstance<py::float_>(item.second.attr("data"))) {
       // convert float to tensor with shape([1])
       tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int64_t>({1}));
@@ -86,7 +107,7 @@ void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_pa
                     std::vector<transform::GeTensorPtr> *ge_tensors) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_input_map;
-  ConvertObjectToTensors(init_params, &init_input_map);
+  ConvertObjectToTensors(init_params, &init_input_map, anf_graph);
   std::vector<tensor::TensorPtr> init_input;
   (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
                        [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
@@ -126,6 +147,8 @@ void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, cons
       MS_LOG(INFO) << "Exec broadcast graph success.";
     }
   }
+  auto &infer_need_update_parameter_names = Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
+  infer_need_update_parameter_names.clear();
 }
 
 void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
@@ -242,7 +265,7 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap init_tensors{};
-  ConvertObjectToTensors(init_params, &init_tensors);
+  ConvertObjectToTensors(init_params, &init_tensors, anf_graph);
   return GeGraphExecutor::BuildDFGraph(anf_graph, init_tensors, true);
 }
 
