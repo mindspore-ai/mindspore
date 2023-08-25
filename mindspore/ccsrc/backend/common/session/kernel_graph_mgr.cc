@@ -1003,6 +1003,7 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
       new_parameter = iter->second;
     }
     if (new_parameter != nullptr) {
+      graph_inputs->push_back(new_parameter);
       return new_parameter;
     }
     TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
