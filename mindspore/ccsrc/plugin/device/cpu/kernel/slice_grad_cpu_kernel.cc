@@ -123,6 +123,12 @@ int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     get_attr_value_ = got_begin.first && got_size.first;
   }
 
+  for (auto s : size_) {
+    if (s < 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of size can not be negative.";
+    }
+  }
+
   if (get_attr_value_) {
     FormatArgs(kernel_name_ == prim::kPrimStridedSliceGrad->name());
     ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
