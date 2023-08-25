@@ -76,6 +76,55 @@ std::vector<int64_t> Print::get_value_type_pos() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
+std::string PrintValueToString(const ValuePtr &value) {
+  if (value == nullptr) {
+    return "UnknownValue";
+  }
+  if (value == kValueAny) {
+    return "UnknownValue";
+  }
+  if (value->isa<StringImm>()) {
+    return value->ToString();
+  }
+  if (value->isa<Scalar>()) {
+    std::ostringstream buffer;
+    buffer << "Scalar(" << value->ToString() << ")";
+    return buffer.str();
+  }
+  return value->ToString();
+}
+
+std::string PrintAbstractToString(const AbstractBasePtr &abstract) {
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    auto value = abstract->BuildValue();
+    return PrintValueToString(value);
+  }
+  if (abstract->isa<abstract::AbstractTensor>()) {
+    std::ostringstream buffer;
+    auto abs_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    buffer << "Tensor(shape:" << abs_tensor->GetShapeTrack()->ToString()
+           << ", dtype:" << abs_tensor->GetTypeTrack()->ToString()
+           << ", value:" << PrintValueToString(abs_tensor->BuildValue()) << ")";
+    return buffer.str();
+  }
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    auto abs_list = abstract->cast<abstract::AbstractSequencePtr>();
+    std::ostringstream buffer;
+    buffer << (abstract->isa<abstract::AbstractList>() ? "List[" : "Tuple(");
+    if (abs_list->dynamic_len()) {
+      buffer << PrintAbstractToString(abs_list->dynamic_len_element_abs());
+      buffer << "......";
+    } else {
+      for (const auto &element : abs_list->elements()) {
+        buffer << PrintAbstractToString(element) << ", ";
+      }
+    }
+    buffer << (abstract->isa<abstract::AbstractList>() ? "]" : ")");
+    return buffer.str();
+  }
+  return abstract->ToString();
+}
+
 MIND_API_OPERATOR_IMPL(Print, BaseOperator);
 
 class PrintInfer : public abstract::OpInferBase {
@@ -87,6 +136,13 @@ class PrintInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    std::ostringstream buffer;
+    if (common::GetEnv("MS_DEV_COMPILE_PRINT") == "1") {
+      for (const auto &input_arg : input_args) {
+        buffer << PrintAbstractToString(input_arg);
+      }
+      std::cout << buffer.str() << std::endl;
+    }
     return std::make_shared<TensorType>(kInt32);
   }
 };
