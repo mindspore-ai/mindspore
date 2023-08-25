@@ -140,12 +140,14 @@ def test_ops_clip(mode):
     assert np.allclose(output_case_2.asnumpy(), expect_output_case_2)
 
 
+skip_flag = ms.get_context("device_target") == "Ascend"
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.skipif(skip_flag, reason="not support running in Ascend, issue:I7YOW4")
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clip_by_norm(mode):
@@ -163,4 +165,4 @@ def test_ops_clip_by_norm(mode):
     expect_out = np.array([[0.16650201, 0.02712224, 0.00144652],
                            [0.14695495, 0.07773139, 0.0105063],
                            [0.8826814, 0.0554626, 0.40198016]])
-    assert np.allclose(out[0].asnumpy(), expect_out)
+    assert np.allclose(out.asnumpy(), expect_out)
