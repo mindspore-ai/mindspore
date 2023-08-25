@@ -2942,8 +2942,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
     // extract shape and strategy, set operator_info
     ExtractInformation(all_nodes);
-    ReshapeInit(all_nodes);
   }
+  ReshapeInit(all_nodes);
 
   SetCastForParamNotRecompute(all_nodes);
 

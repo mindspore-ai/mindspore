@@ -1784,10 +1784,21 @@ Status CostGraph::InitReshapeStrategy() {
     if (ops_[i]->IsReshape()) {
       auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(ops_[i]);
       auto in_edges = GetOriginalPrevEdges(ops_[i]);
+      auto out_edges = GetOriginalNextEdges(ops_[i]);
+      // deal with consecutive reshape op
+      auto pre_reshape_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
+        return edge->prev_operator()->IsReshape();
+      });
+      auto next_reshape_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
+        return edge->next_operator()->IsReshape();
+      });
+      if (pre_reshape_iter != in_edges.end() || next_reshape_iter != out_edges.end()) {
+        reshape_info->set_strategy(nullptr);
+        continue;
+      }
       auto pre_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
         return edge->prev_operator()->name() == reshape_info->pre_operator_name();
       });
-      auto out_edges = GetOriginalNextEdges(ops_[i]);
       auto next_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
         return edge->next_operator()->name() == reshape_info->next_operator_name();
       });
