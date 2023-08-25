@@ -124,9 +124,6 @@ class BACKEND_EXPORT CollectiveManager {
   // exits unexpectedly is detected.
   std::atomic_bool need_reinit_;
 
-  // The device type read from MindSpore context.
-  std::string device_type_;
-
   // The device context on both host and device side. They are used to access the communication library on different
   // devices.
   DeviceContext *host_ctx_;

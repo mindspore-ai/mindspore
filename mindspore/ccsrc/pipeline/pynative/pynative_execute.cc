@@ -299,6 +299,8 @@ void PyNativeExecutor::ReinitAfterFork() {
   OpCompiler::GetInstance().ClearAllCache();
   // Reset ForwardExecuteor resources
   forward_executor_->ClearRes();
+  // Reinit ForwardExecuteor
+  forward_executor_->ReInit();
   MS_LOG(INFO) << "PyNativeExecutor resources reinitializing done.";
 }
 

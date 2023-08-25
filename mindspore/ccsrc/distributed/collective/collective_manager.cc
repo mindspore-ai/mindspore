@@ -147,14 +147,14 @@ bool CollectiveManager::Initialize() {
     return true;
   }
   need_host_collective_ = common::UseHostCollective();
-  device_type_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
   // Ascend. On other types of devices, exception should be thrown.
-  if (device_type_ != kAscendDevice && !need_host_collective_) {
+  if (device_type != kAscendDevice && !need_host_collective_) {
     MS_LOG(EXCEPTION) << kDetailedFailureReason;
   }
 
-  MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type_ << "...";
+  MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type << "...";
 
   if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize device communication library.");
@@ -179,7 +179,7 @@ bool CollectiveManager::Initialize() {
                              "Failed to create group " + group_name);
   }
 
-  MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type_;
+  MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
   finalized_ = false;
   need_reinit_ = false;
@@ -433,11 +433,12 @@ bool CollectiveManager::InitHostCommlib() {
 }
 
 bool CollectiveManager::InitDeviceCommLib() {
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // If library on device side is not supported, replace it with host library.
   if (!device_lib_supported_) {
-    device_type_ = kCPUDevice;
+    device_type = kCPUDevice;
   }
-  device::DeviceContextKey device_key = {device_type_, local_rank_id_};
+  device::DeviceContextKey device_key = {device_type, local_rank_id_};
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
   // We can initialize device context now because device id(local_rank_id_) is already assigned.
