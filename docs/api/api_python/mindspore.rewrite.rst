@@ -297,7 +297,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     - **Input**：输入节点代表SymbolTree的输入，对应方法的参数。
     - **Output**: 输出节点代表SymbolTree的输出，对应方法的 `return` 语句。
     - **Tree**: 树节点代表前向计算中调用了别的网络。
-    - **CellContainer**: `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequantialCell` 函数。
+    - **CellContainer**: `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequentialCell` 函数。
     - **MathOps**： 运算符节点代表在前向计算中的一个运算操作，如加法运算或比较运算。
 
 .. py:class:: mindspore.rewrite.ScopedValue(arg_type: ValueType, scope: str = "", value=None)

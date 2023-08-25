@@ -30,7 +30,7 @@ class NodeType(Enum):
     - Input: `Input` node represents input of `SymbolTree` corresponding to arguments of forward method.
     - Output: `Output` node represents output of SymbolTree corresponding to return statement of forward method.
     - Tree: `Tree` node represents sub-network invoking in forward method.
-    - CellContainer: `CellContainer` node represents invoking method :class:`mindspore.nn.SequantialCell` in
+    - CellContainer: `CellContainer` node represents invoking method :class:`mindspore.nn.SequentialCell` in
       forward method.
     - MathOps: `MathOps` node represents a mathematical operation, such as adding or comparing in forward method.
 

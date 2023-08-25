@@ -412,7 +412,8 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         network (Cell): The training network. The network only supports single output.
         optimizer (Cell): Optimizer for updating the weights.
         scale_sense (Union[Tensor, Cell]): If this value is Cell type, the loss scaling update logic cell.If this value
-                                          is Tensor type, Tensor with shape :math:`()` or :math:`(1,)`.
+            is Tensor type, :func:`mindspore.nn.TrainOneStepWithLossScaleCell.set_sense_scale` can be called to update
+            loss scale factor, Tensor with shape :math:`()` or :math:`(1,)`.
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.

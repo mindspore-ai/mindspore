@@ -298,7 +298,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
         - **optimizer** (Cell) - 用于更新网络参数的优化器。
-        - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
+        - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 :func:`mindspore.nn.TrainOneStepWithLossScaleCell.set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     输入：
         - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。shape为 :math:`(N, \ldots)`。
