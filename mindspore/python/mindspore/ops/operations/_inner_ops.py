@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Inner operators."""
+# pylint: disable=unused-import
 from types import FunctionType, MethodType
 from collections.abc import Iterable
 import numpy as np
@@ -37,7 +38,7 @@ from mindspore.communication.management import GlobalComm, get_rank
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
-from ..auto_generate import TensorCopySlices, SiLU
+from ..auto_generate import TensorCopySlices, SiLU, Cummin
 
 # Bit operation
 bit_and = bit_and()
@@ -1550,46 +1551,6 @@ class DynamicBroadcastTo(Primitive):
     def __init__(self):
         """Initialize DynamicBroadcastTo"""
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
-
-
-class Cummin(Primitive):
-    r"""
-    Returns the cumulative minimum of elements and the index.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.cummin` for more detail.
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor.
-
-    Outputs:
-        A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-        >>> func = ops.Cummin(axis=0)
-        >>> output = func(a)
-        >>> print(output[0])
-        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
-        >>> print(output[1])
-        [0 1 1 1 4 4]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize Cummin"""
-        validator.check_value_type('axis', axis, [int], self.name)
 
 
 class DynamicResizeNearestNeighbor(Primitive):

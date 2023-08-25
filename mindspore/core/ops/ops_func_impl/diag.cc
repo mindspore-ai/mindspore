@@ -56,8 +56,6 @@ BaseShapePtr DiagFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr DiagFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kIndex0]->GetType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types_with_complex,
-                                                   primitive->name());
   return x_type->Clone();
 }
 }  // namespace ops

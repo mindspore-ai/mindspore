@@ -184,17 +184,17 @@ class COMMON_EXPORT Emitter {
   NodePtr Real(const NodePtr &x) { return Emit(kRealOpName, {x}); }
   NodePtr Imag(const NodePtr &x) { return Emit(kImagOpName, {x}); }
 
-  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
-    return Emit("CumProd", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
+  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const NodePtr &exclusive, const NodePtr &reverse) {
+    return Emit("CumProd", {x, axis, exclusive, reverse});
   }
   NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) {
-    return CumProd(x, axis, MakeValue(exclusive), MakeValue(reverse));
+    return CumProd(x, axis, Value(exclusive), Value(reverse));
   }
-  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
-    return Emit("CumSum", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
+  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const NodePtr &exclusive, const NodePtr &reverse) {
+    return Emit("CumSum", {x, axis, exclusive, reverse});
   }
   NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) {
-    return CumSum(x, axis, MakeValue(exclusive), MakeValue(reverse));
+    return CumSum(x, axis, Value(exclusive), Value(reverse));
   }
   NodePtr CSR2COO(const NodePtr &indptr, const NodePtr &nnz) { return Emit("CSR2COO", {indptr, nnz}); }
 

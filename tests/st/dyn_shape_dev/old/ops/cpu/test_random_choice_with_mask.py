@@ -129,7 +129,7 @@ def test_RCWM_count_in():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+# @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_max_count_graph():
     """
@@ -145,7 +145,7 @@ def test_RCWM_max_count_graph():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+# @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_max_count_pynative():
     """

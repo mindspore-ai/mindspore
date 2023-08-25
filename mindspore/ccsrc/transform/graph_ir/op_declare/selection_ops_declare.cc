@@ -30,11 +30,11 @@ ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bo
 OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
 
 // Cumsum
-INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumsum) = {{"axis", "axis"}};
-ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumsum) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumsum) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumsum) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                          {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumsum) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(Cumsum))
@@ -48,11 +48,11 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cumprod, kNameCumprod, ADPT_DESC(CumprodD))
 
 // Cumprod
-INPUT_MAP(Cumprod) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumprod) = {{"axis", "axis"}};
-ATTR_MAP(Cumprod) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                     {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumprod) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumprod) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumprod) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumprod) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                           {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumprod) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumprodD, ADPT_DESC(Cumprod))
 REG_ADPT_DESC(CumProd, kNameCumProd, ADPT_DESC(Cumprod))
 
@@ -268,10 +268,18 @@ OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceUpdate, kInplaceUpdateDOpName, ADPT_DESC(InplaceUpdate))
 
 // Cummin
-INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
+INPUT_MAP(Cummin) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummin) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummin) = {{kIndex2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummin) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
+
+// Cummax
+INPUT_MAP(Cummax) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummax) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummax) = {{kIndex2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummax) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
+REG_ADPT_DESC(Cummax, prim::kPrimCummax->name(), ADPT_DESC(Cummax))
 
 // StridedRead
 INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};

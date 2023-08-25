@@ -37,7 +37,6 @@ GVAR_DEF(PrimitivePtr, kPrimLeftShift, std::make_shared<Primitive>(kLeftShiftOpN
 GVAR_DEF(PrimitivePtr, kPrimFillDiagonal, std::make_shared<Primitive>(kFillDiagonalOpName));
 GVAR_DEF(PrimitivePtr, kPrimUnravelIndex, std::make_shared<Primitive>(kUnravelIndexOpName));
 GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastTo, std::make_shared<Primitive>(kDynamicBroadcastToOpName));
-GVAR_DEF(PrimitivePtr, kPrimCummin, std::make_shared<Primitive>("Cummin"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastTo, std::make_shared<Primitive>("BroadcastTo"));
 GVAR_DEF(PrimitivePtr, kPrimScalarToArray, std::make_shared<Primitive>("scalar_to_array"));
 GVAR_DEF(PrimitivePtr, kPrimLogNormalReverse, std::make_shared<Primitive>("LogNormalReverse"));
@@ -181,7 +180,6 @@ GVAR_DEF(PrimitivePtr, kPrimExtractVolumePatches, std::make_shared<Primitive>("E
 GVAR_DEF(PrimitivePtr, kPrimLstsq, std::make_shared<Primitive>(kLstsqOpName));
 GVAR_DEF(PrimitivePtr, kPrimLowerBound, std::make_shared<Primitive>(kLowerBoundOpName));
 GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBoundOpName));
-GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummaxOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgamma, std::make_shared<Primitive>(kMvlgammaOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgammaGrad, std::make_shared<Primitive>(kMvlgammaGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogSpace, std::make_shared<Primitive>(kLogSpaceOpName));

@@ -40,7 +40,8 @@ from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
-                             Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split)
+                             Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
+                             Cummax, CumSum, CumProd, CumMax, CumMin)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -1354,16 +1355,16 @@ class FillV2(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
     def check_elim(self, dims, x):
-        if x is None or (not isinstance(x, (Tensor, Tensor_))) or (x.shape != ()) or\
-            dims is None or (isinstance(dims, (tuple, list)) and dims) or\
-            isinstance(dims, (Tensor, Tensor_)):
+        if x is None or (not isinstance(x, (Tensor, Tensor_))) or (x.shape != ()) or \
+                dims is None or (isinstance(dims, (tuple, list)) and dims) or \
+                isinstance(dims, (Tensor, Tensor_)):
             return (False, None)
         return (True, x)
 
     def infer_value(self, dims, x):
-        if x is None or dims is None or\
-            (isinstance(dims, (tuple, list)) and dims) or\
-            isinstance(dims, (Tensor, Tensor_)):
+        if x is None or dims is None or \
+                (isinstance(dims, (tuple, list)) and dims) or \
+                isinstance(dims, (Tensor, Tensor_)):
             return None
         return x
 
@@ -1849,6 +1850,7 @@ class ArgMinWithValue(Primitive):
         self.keep_dims = keep_dims
         self.add_prim_attr('dimension', self.axis)
 
+
 class UnsortedSegmentSum(Primitive):
     r"""
     Computes the sum of a tensor along segments.
@@ -2284,7 +2286,7 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
 
     out_n = len(x_shape)
     for i in range(1, out_n):
-        if x_type[i] != x_type[i-1]:
+        if x_type[i] != x_type[i - 1]:
             raise TypeError(f"For {prim_name}, all types should be same, but got {x_type}")
 
     new_x_shape = []
@@ -6540,53 +6542,6 @@ class UpperBound(Primitive):
         valid_values = (mstype.int32, mstype.int64)
         validator.check_type_name("out_type", out_type, valid_values, self.name)
         self.init_prim_io_names(inputs=['sorted_x', 'values'], outputs=['y'])
-
-
-class Cummax(Primitive):
-    """
-    Returns the cumulative maximum of elements and the index.
-
-    Refer to :func:`mindspore.ops.cummax` for more details.
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor.
-
-    Outputs:
-        A tuple of 2 Tensors(values, indices), containing the cumulative maximum of elements and the index,
-        The shape of each output tensor is the same as input `input`.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> cummax = ops.Cummax(axis=0)
-        >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
-        >>> output = cummax(x)
-        >>> print(output[0])
-        [[ 3.  4.  6. 10.]
-         [ 3.  6.  7. 10.]
-         [ 4.  6.  8. 10.]
-         [ 4.  6.  8. 10.]]
-        >>> print(output[1])
-        [[0 0 0 0]
-         [0 1 1 0]
-         [2 1 2 0]
-         [2 1 2 0]]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize Cummax"""
-        validator.check_value_type("axis", axis, [int], self.name)
-        self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
-        self.add_prim_attr("dim", axis)
 
 
 class LogSpace(Primitive):

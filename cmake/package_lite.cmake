@@ -182,7 +182,6 @@ function(__install_white_list_ops)
         #     ${TOP_DIR}/mindspore/core/ops/log_softmax.h
             ${TOP_DIR}/mindspore/core/ops/call.h
             ${TOP_DIR}/mindspore/core/ops/custom.h
-            ${TOP_DIR}/mindspore/core/ops/cumsum.h
             ${TOP_DIR}/mindspore/core/ops/split_with_overlap.h
             ${TOP_DIR}/mindspore/core/ops/ragged_range.h
             ${TOP_DIR}/mindspore/core/ops/glu.h

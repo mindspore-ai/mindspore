@@ -292,6 +292,8 @@ mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetPyTyp
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
 mindspore/mindspore/core/ops/sparse_to_dense_v2.cc:mindspore::ops::SparseToDenseV2InferShape  
 mindspore/mindspore/core/ops/ops_func_impl/div.cc:mindspore::ops::DivFrontendFuncImpl::InferValue
+mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/cumprod_gpu_kernel.cc:mindspore::kernel::CumProdGpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cumprod_cpu_kernel.cc:mindspore::kernel::CumProdCpuKernelMod::GetFuncList
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute

@@ -181,7 +181,6 @@
 #include "ops/ops_func_impl/abs_grad.h"
 #include "ops/splice.h"
 #include "ops/call.h"
-#include "ops/cumsum.h"
 #include "ops/split_with_overlap.h"
 #include "ops/glu.h"
 #include "ops/tensor_array.h"

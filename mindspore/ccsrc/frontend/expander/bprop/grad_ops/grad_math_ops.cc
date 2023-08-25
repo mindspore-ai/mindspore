@@ -637,11 +637,13 @@ REG_BPROP_BUILDER("Maximum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return MinimumMaximumGrad(ib, x, y, dout, false);
 });
 
-REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  return {ib->CumSum(dout, axis, ib->GetAttr("exclusive"), MakeValue(!reverse)), ib->OutZeros(axis)};
+  auto exclusive = ib->GetInput(kIndex2);
+  auto reverse = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  return {ib->CumSum(dout, axis, GetValue<bool>(exclusive->BuildValue()), !GetValue<bool>(reverse->BuildValue())),
+          ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
 });
 
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -890,12 +892,14 @@ REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  auto prod = ib->CumProd(x, axis, ib->GetAttr("exclusive"), MakeValue(reverse));
-  out = ib->CumSum(ib->Mul(prod, dout), axis, ib->GetAttr("exclusive"), MakeValue(!reverse));
-  return {ib->RealDiv(out, x), ib->OutZeros(axis)};
+  auto exclusive = ib->GetInput(kIndex2);
+  auto reverse = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+  auto prod = ib->Emit("CumProd", {x, axis, exclusive, reverse});
+  out = ib->CumSum(ib->Mul(prod, dout), axis, GetValue<bool>(exclusive->BuildValue()),
+                   !GetValue<bool>(reverse->BuildValue()));
+  return {ib->RealDiv(out, x), ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
 });
 
 REG_BPROP_BUILDER("IsFinite").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);

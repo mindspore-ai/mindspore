@@ -39,7 +39,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div)
+                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd, CumSum)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -556,78 +556,6 @@ class Bucketize(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
-class CumProd(Primitive):
-    """
-    Computes the cumulative product of the tensor x along axis.
-    For example, if input is a vector of size N, the result will also be a vector of size N, with elements.
-
-    .. math::
-        y_i = x_1 * x_2 * x_3 * ... * x_i
-
-    Args:
-        exclusive (bool): If ``True`` , perform exclusive cumulative product. Default: ``False`` .
-        reverse (bool): If ``True`` , reverse the result along axis. Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor[Number]) - The input Tensor with shape
-          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
-        - **axis** (int) - The dimensions to compute the cumulative product.
-          Only constant value is allowed.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `exclusive` or `reverse` is not a bool.
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is None.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> a, b, c, = 1, 2, 3
-        >>> x = Tensor(np.array([a, b, c]).astype(np.float32))
-        >>> op0 = ops.CumProd()
-        >>> output0 = op0(x, 0) # output=[a, a * b, a * b * c]
-        >>> op1 = ops.CumProd(exclusive=True)
-        >>> output1 = op1(x, 0) # output=[1, a, a * b]
-        >>> op2 = ops.CumProd(reverse=True)
-        >>> output2 = op2(x, 0) # output=[a * b * c, b * c, c]
-        >>> op3 = ops.CumProd(exclusive=True, reverse=True)
-        >>> output3 = op3(x, 0) # output=[b * c, c, 1]
-        >>> print(output0)
-        [1. 2. 6.]
-        >>> print(output1)
-        [1. 1. 2.]
-        >>> print(output2)
-        [6. 6. 3.]
-        >>> print(output3)
-        [6. 3. 1.]
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [5, 3, 5]]).astype(np.float32))
-        >>> output4 = op0(x, 0)
-        >>> output5 = op0(x, 1)
-        >>> print(output4)
-        [[ 1.  2.  3.]
-         [ 4. 10. 18.]
-         [20. 30. 90.]]
-        >>> print(output5)
-        [[  1.   2.   6.]
-         [  4.  20. 120.]
-         [  5.  15.  75.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, exclusive=False, reverse=False):
-        """Initialize CumProd."""
-        cls_name = self.name
-        self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
-        self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
-        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
-
-
 class Lcm(Primitive):
     """
     Computes least common multiplier of input tensors element-wise.
@@ -897,82 +825,6 @@ class BatchMatMul(Primitive):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
         self.add_prim_attr('adj_x1', self.transpose_a)
         self.add_prim_attr('adj_x2', self.transpose_b)
-
-
-class CumSum(Primitive):
-    """
-    Computes the cumulative sum of input tensor along axis.
-
-    .. math::
-
-        y_i = x_1 + x_2 + x_3 + ... + x_i
-
-    Args:
-        exclusive (bool): By default, this op performs an inclusive cumsum, which means that the first
-            element of the input is identical to the first element of the output. Default: ``False`` .
-        reverse (bool): If ``True`` , perform inverse cumulative sum. Default: ``False`` .
-
-    Inputs:
-        - **input** (Tensor) - The input Tensor with shape
-          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
-        - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
-          Must be in the range [-rank(input), rank(input)).
-
-    Outputs:
-        Tensor, the shape of the output tensor is consistent with the input tensor's.
-
-    Raises:
-        TypeError: If `exclusive` or `reverse` is not a bool.
-        TypeError: If `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
-        >>> cumsum = ops.CumSum()
-        >>> # case 1: along the axis 0
-        >>> y = cumsum(x, 0)
-        >>> print(y)
-        [[ 3.  4.  6. 10.]
-         [ 4. 10. 13. 19.]
-         [ 8. 13. 21. 26.]
-         [ 9. 16. 28. 35.]]
-        >>> # case 2: along the axis 1
-        >>> y = cumsum(x, 1)
-        >>> print(y)
-        [[ 3.  7. 13. 23.]
-         [ 1.  7. 14. 23.]
-         [ 4.  7. 15. 22.]
-         [ 1.  4. 11. 20.]]
-        >>> # Next demonstrate exclusive and reverse, along axis 1
-        >>> # case 3: exclusive = True
-        >>> cumsum = ops.CumSum(exclusive=True)
-        >>> y = cumsum(x, 1)
-        >>> print(y)
-        [[ 0.  3.  7. 13.]
-         [ 0.  1.  7. 14.]
-         [ 0.  4.  7. 15.]
-         [ 0.  1.  4. 11.]]
-        >>> # case 4: reverse = True
-        >>> cumsum = ops.CumSum(reverse=True)
-        >>> y = cumsum(x, 1)
-        >>> print(y)
-        [[23. 20. 16. 10.]
-         [23. 22. 16.  9.]
-         [22. 18. 15.  7.]
-         [20. 19. 16.  9.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, exclusive=False, reverse=False):
-        """Initialize cumsum"""
-        cls_name = self.name
-        validator.check_value_type('exclusive', exclusive, [bool], cls_name)
-        validator.check_value_type('reverse', reverse, [bool], cls_name)
-        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
 
 class AddN(Primitive):

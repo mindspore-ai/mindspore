@@ -29,7 +29,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import constexpr, _primexpr
-from mindspore.ops.operations._inner_ops import Cummin, TileSize
+from mindspore.ops.operations._inner_ops import TileSize
+from mindspore.ops.auto_generate import Cummin
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack

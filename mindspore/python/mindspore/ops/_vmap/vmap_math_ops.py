@@ -732,24 +732,17 @@ def get_log_matrix_determinant_vmap_rule(prim, axis_size):
 def get_cum_min_max_vmap_rule(prim, axis_size):
     """VmapRule for `Cummax` and `Cummin` operation."""
 
-    cum_fun_map = {
-        "Cummin": _inner_ops.Cummin,
-        "Cummax": P.Cummax,
-    }
-    axis = prim.axis
-    prim_name = prim.name
-    prim_class = cum_fun_map.get(prim_name)
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
         old_x_ndim = F.rank(x) - 1
         old_axis = axis if axis >= 0 else axis + old_x_ndim
         new_axis = old_axis if old_axis < x_dim else old_axis + 1
-        value, index = prim_class(new_axis)(x)
+        value, index = prim(x, new_axis)
         return (value, x_dim), (index, x_dim)
 
     return vmap_rule
