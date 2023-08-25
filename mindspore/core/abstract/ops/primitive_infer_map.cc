@@ -283,15 +283,6 @@ StandardPrimitiveImplReg::StandardPrimitiveImplReg(const InferAbstractImpl &infe
   in_white_list_ = in_white_list;
 }
 
-AbstractBasePtr StandardPrimitiveImplReg::InferAbstract(const PrimitivePtr &primitive,
-                                                        const std::vector<AbstractBasePtr> &input_args) const {
-  if (op_infer_ == nullptr) {
-    return nullptr;
-  }
-
-  return op_infer_->InferAbstract(primitive, input_args);
-}
-
 AbstractBasePtr StandardPrimitiveImplReg::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
                                                             const PrimitivePtr &primitive,
                                                             const std::vector<AbstractBasePtr> &input_args) const {

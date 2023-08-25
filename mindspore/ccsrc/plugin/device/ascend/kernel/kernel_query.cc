@@ -166,11 +166,16 @@ void CheckKernelInfoListEmpty(const std::vector<std::shared_ptr<kernel::KernelBu
 
 abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto found = abstract::GetPrimitiveInferImpl(primitive);
+  if (!found.has_value()) {
+    MS_LOG(INTERNAL_EXCEPTION) << primitive->name() << "infer is not registered.";
+  }
 
   std::vector<AbstractBasePtr> input_args;
   std::for_each(input_list.begin(), input_list.end(),
                 [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
-  auto abs = ops::CheckAndInfer(primitive, input_args);
+  auto infer_impl = found.value();
+  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;

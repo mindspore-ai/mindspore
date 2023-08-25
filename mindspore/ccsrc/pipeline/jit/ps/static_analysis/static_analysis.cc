@@ -42,6 +42,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace abstract {
@@ -889,6 +890,24 @@ EvaluatorPtr GetPyEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &e
   return nullptr;
 }
 
+static StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &prim) {
+  auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
+  if (eval_impl_opt.has_value()) {
+    // Find prim infer function in the prim function map return a standard evaluator
+    auto eval_impl = eval_impl_opt.value();
+    if (eval_impl.IsImplInferShapeAndType() && !IsPrimitiveEquals(prim, prim::kPrimMakeTuple) &&
+        !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+    }
+  } else if (auto func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name()); func_impl != nullptr) {
+    return std::make_shared<StandardPrimEvaluator>(prim, func_impl);
+  } else if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
+    return std::make_shared<StandardPrimEvaluator>(prim, op_def);
+  }
+
+  return nullptr;
+}
+
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
   MS_EXCEPTION_IF_NULL(prim);
@@ -909,24 +928,18 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<SwitchEvaluator>();
   }
 
+  if (PrimNeedFrontendInferValue(prim) && prim->HasPyEvaluator()) {
+    return GetPyEvaluator(prim, engine);
+  }
+
   // Convert PrimitivePy to PrimitiveFunction.
   if (prim->isa<PrimitivePy>()) {
     return std::make_shared<PrimitiveFunctionTransformEvaluator>(prim);
   }
 
-  if (!IsPrimitiveEquals(prim, prim::kPrimMakeTuple) && !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
-    auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
-    if (eval_impl_opt.has_value()) {
-      // Find prim infer function in the prim function map return a standard evaluator
-      // TODO(DynamicShape): this will be deprecated when all ops are defined by yaml
-      auto eval_impl = eval_impl_opt.value();
-      if (eval_impl.IsImplInferShapeAndType()) {
-        return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
-      }
-    } else {
-      // For yaml op, no eval_impl is need
-      return std::make_shared<StandardPrimEvaluator>(prim);
-    }
+  auto standard_evaluator = GetStandardPrimEvaluator(prim);
+  if (standard_evaluator != nullptr) {
+    return standard_evaluator;
   }
 
   // Use python infer function if the infer function not founded in the map return a python evaluator
@@ -956,6 +969,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
       evaluator = iter->second;
     }
   }
+
   if (evaluator == nullptr) {
     MS_LOG(DEBUG) << "The evaluator of the primitive is not defined (" << prim->name() << ").";
   }

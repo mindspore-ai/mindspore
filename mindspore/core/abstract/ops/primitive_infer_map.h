@@ -49,7 +49,6 @@ class MS_CORE_API StandardPrimitiveImplReg {
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const;
-  AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const;
   BaseShapePtr InferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
   TypePtr InferType(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
   ValuePtr InferValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;

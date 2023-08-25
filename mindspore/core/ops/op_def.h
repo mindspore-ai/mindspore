@@ -54,7 +54,7 @@ struct OpDef {
 
 using OpDefPtr = OpDef *;
 
-OpDefPtr GetOpDef(const std::string &op_name);
+MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
 MS_CORE_API void AddOpDef(const std::string &op_name, const OpDefPtr op_def);
 
 class OpDefRegHelper {
@@ -65,6 +65,5 @@ class OpDefRegHelper {
 
 #define REGISTER_PRIMITIVE_OP_DEF(op_name, op_def) \
   static auto op_def_helper_##op_name = OpDefRegHelper(op_name, op_def);
-
 }  // namespace mindspore::ops
 #endif

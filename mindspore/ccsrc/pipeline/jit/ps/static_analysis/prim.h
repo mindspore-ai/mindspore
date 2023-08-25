@@ -27,6 +27,8 @@
 #include "utils/hash_map.h"
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/op_def.h"
+#include "frontend/operator/ops_frontend_func_impl.h"
 
 namespace mindspore {
 namespace abstract {
@@ -34,6 +36,10 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
+  StandardPrimEvaluator(const PrimitivePtr &primitive, const mindspore::ops::OpDefPtr &op_def)
+      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), op_def_(op_def) {}
+  StandardPrimEvaluator(const PrimitivePtr &primitive, const mindspore::ops::OpFrontendFuncImplPtr &func_impl)
+      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), func_impl_(func_impl) {}
   explicit StandardPrimEvaluator(const PrimitivePtr &primitive)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive) {}
   ~StandardPrimEvaluator() override = default;
@@ -47,11 +53,14 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
   bool inplace_prim() const override { return prim_->inplace_prim(); }
 
  private:
+  AbstractBasePtr CheckAndInfer(const PrimitivePtr &primitive, const AbstractBasePtrList &args);
   EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
   EvalResultPtr RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
                                 const AbstractBasePtrList &args);
   PrimitivePtr prim_;
   const StandardPrimitiveImplReg eval_impl_;
+  mindspore::ops::OpFrontendFuncImplPtr func_impl_{nullptr};
+  mindspore::ops::OpDefPtr op_def_{nullptr};
 };
 
 using StandardPrimEvaluatorPtr = std::shared_ptr<StandardPrimEvaluator>;

@@ -148,26 +148,38 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
 
   // Cannot find any c++ infer
   if (!eval_impl.has_value()) {
-    py::gil_scoped_acquire acquire;
-    CallPyInferFunc(prim, op_run_info);
-    MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
-    prim->EndRecordAddAttr();
-    return;
-  }
-
-  // the WhileList ops should be constant fold in Pynative mode.
-  if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
-    auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
-    if (value != nullptr && !value->isa<ValueAny>()) {
-      op_run_info->base_op_run_info.abstract = value->ToAbstract();
+    auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
+    if (frontend_func_impl != nullptr) {
+      op_run_info->base_op_run_info.abstract =
+        frontend_func_impl->InferAbstract(prim, op_run_info->op_grad_info->input_abs);
+    } else if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
+      MS_EXCEPTION_IF_NULL(op_def->func_impl_);
+      (void)op_def->func_impl_->CheckValidation(prim, op_run_info->op_grad_info->input_abs);
+      auto shape = op_def->func_impl_->InferShape(prim, op_run_info->op_grad_info->input_abs);
+      auto type = op_def->func_impl_->InferType(prim, op_run_info->op_grad_info->input_abs);
+      op_run_info->base_op_run_info.abstract = mindspore::abstract::MakeAbstract(shape, type);
+    } else {
+      py::gil_scoped_acquire acquire;
+      CallPyInferFunc(prim, op_run_info);
+      MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
       prim->EndRecordAddAttr();
       return;
     }
+  } else {
+    // the WhileList ops should be constant fold in Pynative mode.
+    if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
+      auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
+      if (value != nullptr && !value->isa<ValueAny>()) {
+        op_run_info->base_op_run_info.abstract = value->ToAbstract();
+        prim->EndRecordAddAttr();
+        return;
+      }
+    }
+
+    op_run_info->base_op_run_info.abstract =
+      eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
   }
 
-  // Call Cpp infer
-  op_run_info->base_op_run_info.abstract =
-    eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
   if (op_run_info->base_op_run_info.abstract == nullptr) {
     if (prim->name() == kPackFuncOpName) {
       const auto &func_graph =

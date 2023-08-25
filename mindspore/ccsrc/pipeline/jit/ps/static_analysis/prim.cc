@@ -64,6 +64,7 @@
 #include "utils/parallel_node_check.h"
 #include "utils/shape_utils.h"
 #include "utils/symbolic.h"
+#include "frontend/operator/ops_frontend_func_impl.h"
 
 namespace mindspore {
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
@@ -1200,7 +1201,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto py_args = PreparePyInputs(args);
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
-  auto abs = mindspore::ops::CheckAndInfer(prim_py, args);
+  auto abs = CheckAndInfer(prim_py, args);
   MS_EXCEPTION_IF_NULL(abs);
   prim_py->EndRecordAddAttr();
   auto &added_attrs = prim_py->evaluate_added_attrs();
@@ -1274,6 +1275,30 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
 }
 }  // namespace
 
+AbstractBasePtr StandardPrimEvaluator::CheckAndInfer(const PrimitivePtr &primitive, const AbstractBasePtrList &args) {
+  if (op_def_ != nullptr) {
+    if (op_def_->func_impl_ == nullptr) {
+      MS_LOG(EXCEPTION) << "For Primitive[" << primitive->name() << "], the FuncImpl is empty.";
+    }
+
+    (void)op_def_->func_impl_->CheckValidation(primitive, args);
+
+    if (func_impl_ != nullptr) {
+      return func_impl_->InferAbstract(primitive, args);
+    }
+
+    auto type = op_def_->func_impl_->InferType(primitive, args);
+    auto shape = op_def_->func_impl_->InferShape(primitive, args);
+    return MakeAbstract(shape, type);
+  }
+
+  if (func_impl_ != nullptr) {
+    return func_impl_->InferAbstract(primitive, args);
+  }
+
+  return eval_impl_.InferShapeAndType(nullptr, primitive, args);
+}
+
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
   // To check tuple/list operations with a white list of Python primitive.
   CheckSequenceArgumentForCppPrimitive(prim_, args);
@@ -1307,7 +1332,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
       return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
-  abs_base = mindspore::ops::CheckAndInfer(prim_, args);
+  abs_base = CheckAndInfer(prim_, args);
   MS_EXCEPTION_IF_NULL(abs_base);
   prim_->EndRecordAddAttr();
   const auto &added_attrs = prim_->evaluate_added_attrs();
@@ -2279,7 +2304,8 @@ EvalResultPtr PrimitiveFunctionTransformEvaluator::EvalPrim(const AnalysisEngine
   MS_EXCEPTION_IF_NULL(out_conf);
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto fg = out_conf->func_graph();
+  // auto fg = out_conf->func_graph();
+  auto fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
 
   auto prim_func = std::make_shared<PrimitiveFunction>(prim_);

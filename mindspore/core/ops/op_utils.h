@@ -227,8 +227,6 @@ bool IsValueKnown(const ValuePtr &value);
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
 
-AbstractBasePtr MIND_API CheckAndInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
-
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";
 constexpr auto kCSRDenseShape = "dense_shape";
