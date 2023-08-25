@@ -485,6 +485,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             return "Unknown Tensor type!"
         return str(self.asnumpy())
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["value"] = Tensor_.__getstate__(self)
+        return state
+
+    def __setstate__(self, state):
+        value = state.pop("value")
+        Tensor_.__setstate__(self, value)
+        self.__dict__.update(state)
+
     @property
     def shape(self):
         """
