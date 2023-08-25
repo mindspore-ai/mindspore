@@ -360,9 +360,10 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
   auto use_py = common::GetEnv("MS_DEV_PYEXPANDER");
   if (use_py.empty()) {
     if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
-      return DefaultExpander::ExpandToGraph(node);
+      return LitegraphExpander::ExpandToGraph(node);
     }
   }
+  MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope() << " by PyExpander";
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode && PyGILState_Check() == 0) {

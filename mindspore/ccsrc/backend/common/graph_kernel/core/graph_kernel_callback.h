@@ -157,6 +157,11 @@ class BACKEND_EXPORT Callback {
    */
   virtual void ResetKernelInfo(const AnfNodePtr &node) = 0;
 
+  /**
+   * @brief The Callback implementation use nodes' device info.
+   */
+  virtual bool IsUseDeviceInfo() { return true; }
+
  private:
   // to avoid the default argument in virtual function.
   virtual std::string GetTargetFromContextImpl(bool detail) = 0;

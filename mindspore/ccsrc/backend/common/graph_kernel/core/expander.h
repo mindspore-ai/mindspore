@@ -36,12 +36,21 @@ using ExpanderPtr = std::shared_ptr<Expander>;
 class DefaultExpander : public Expander {
  public:
   explicit DefaultExpander(const CallbackPtr &cb) : cb_(cb) {}
-  virtual ~DefaultExpander() = default;
+  ~DefaultExpander() override = default;
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
   virtual FuncGraphPtr ExpandToGraph(const CNodePtr &node);
   CallbackPtr cb_;
+};
+
+class LitegraphExpander : public DefaultExpander {
+ public:
+  explicit LitegraphExpander(const CallbackPtr &cb) : DefaultExpander(cb) {}
+  ~LitegraphExpander() override = default;
+
+ protected:
+  FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
 };
 
 class BACKEND_EXPORT ExpanderDecorator : public Expander {

@@ -87,6 +87,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${TOOLS_DIR}/graph_kernel/common/*.cc
                 ${TOOLS_DIR}/graph_kernel/converter/*.cc
                 ${CCSRC_DIR}/backend/common/graph_kernel/core/*.cc
+                ${CCSRC_DIR}/backend/common/graph_kernel/expander/*.cc
                 ${CCSRC_DIR}/backend/common/graph_kernel/expanders/*.cc
                 ${CCSRC_DIR}/backend/common/graph_kernel/model/*.cc
                 ${CCSRC_DIR}/backend/common/graph_kernel/split_model/*.cc
