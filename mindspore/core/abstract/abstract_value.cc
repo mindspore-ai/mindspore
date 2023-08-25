@@ -292,20 +292,20 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
   }
-  const auto &type_self = GetTypeTrack();
-  const auto &type_other = other->GetTypeTrack();
-  TypePtr res_type = TypeJoin(type_self, type_other);
+  const auto &this_type = GetTypeTrack();
+  const auto &other_type = other->GetTypeTrack();
+  TypePtr res_type = TypeJoin(this_type, other_type);
   if (res_type == kTypeAny) {
-    TypeJoinLogging(type_self, type_other, shared_from_base<AbstractBase>(), other);
+    TypeJoinLogging(this_type, other_type, shared_from_base<AbstractBase>(), other);
   }
-  const auto &value_self = GetValueTrack();
+  const auto &this_value = GetValueTrack();
   const auto &value_other = other->GetValueTrack();
-  if (other->isa<AbstractNegligible>() && !value_self->isa<ValueAny>()) {
+  if (other->isa<AbstractNegligible>() && !this_value->isa<ValueAny>()) {
     return std::make_shared<AbstractAny>();
   }
 
-  ValuePtr res_value = ValueJoin(value_self, value_other);
-  if (res_value == value_self) {
+  ValuePtr res_value = ValueJoin(this_value, value_other);
+  if (res_value == this_value) {
     return shared_from_base<AbstractBase>();
   }
   return std::make_shared<AbstractScalar>(res_value, res_type);
@@ -326,12 +326,12 @@ AbstractBasePtr AbstractScalar::Clone() const {
 }
 
 AbstractBasePtr AbstractType::Clone() const {
-  ValuePtr value_self = GetValueTrack();
-  if (value_self == nullptr || !value_self->isa<Type>()) {
+  ValuePtr this_value = GetValueTrack();
+  if (this_value == nullptr || !this_value->isa<Type>()) {
     return nullptr;
   }
-  auto type_self = value_self->cast_ptr<Type>();
-  return std::make_shared<AbstractType>(type_self->Clone());
+  auto this_type = this_value->cast_ptr<Type>();
+  return std::make_shared<AbstractType>(this_type->Clone());
 }
 
 bool AbstractType::operator==(const AbstractBase &other) const {
@@ -344,19 +344,30 @@ bool AbstractType::operator==(const AbstractBase &other) const {
 
 std::string AbstractType::ToString() const {
   std::ostringstream buffer;
-  ValuePtr value_self = GetValueTrack();
-  if (value_self == nullptr) {
+  ValuePtr this_value = GetValueTrack();
+  if (this_value == nullptr) {
     buffer << "AbstractType value: nullptr";
     return buffer.str();
   }
-  if (!value_self->isa<Type>()) {
+  if (!this_value->isa<Type>()) {
     buffer << type_name() << "(Value: nullptr)";
     return buffer.str();
   }
-  auto type_self = value_self->cast_ptr<Type>();
+  auto this_type = this_value->cast_ptr<Type>();
   buffer << type_name() << "("
-         << "Value: " << type_self->ToString() << ")";
+         << "Value: " << this_type->ToString() << ")";
   return buffer.str();
+}
+
+AbstractBasePtr AbstractClass::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
+  bool success = (*this == *other);
+  if (!success) {
+    const auto &this_type = GetTypeTrack();
+    const auto &other_type = other->GetTypeTrack();
+    TypeJoinLogging(this_type, other_type, shared_from_base<AbstractBase>(), other);
+  }
+  return shared_from_base<AbstractBase>();
 }
 
 AbstractBasePtr AbstractClass::Clone() const { return std::make_shared<AbstractClass>(GetValueTrack()); }
@@ -810,7 +821,7 @@ std::string AbstractSequence::ToString() const {
   ss << "{";
   ss << ToStringInternal();
   if (!dynamic_len_ && sequence_nodes() != nullptr && !sequence_nodes()->empty()) {
-    ss << ", " << std::string(" ", space_num_) << "sequence_nodes: {";
+    ss << ", " << std::string(space_num_, ' ') << "sequence_nodes: {";
     for (size_t i = 0; i < sequence_nodes()->size(); ++i) {
       auto sequence_node = (*sequence_nodes())[i].lock();
       if (sequence_node == nullptr) {

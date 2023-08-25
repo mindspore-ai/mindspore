@@ -693,11 +693,8 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
 
-  if (*(func_graph->switch_input())) {
-    oss << "switch_input: " << *(func_graph->switch_input()) << "\n";
-  }
-  if (*(func_graph->switch_layer_input())) {
-    oss << "switch_layer_input: " << *(func_graph->switch_layer_input()) << "\n";
+  if (*(func_graph->indirect())) {
+    oss << "indirect: " << *(func_graph->indirect()) << "\n";
   }
   oss << "subgraph attr:" << std::endl;
   for (const auto &attr : func_graph->attrs()) {

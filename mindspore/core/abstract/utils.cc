@@ -118,24 +118,24 @@ AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list) {
   return arg_spec_tmp;
 }
 
-AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const AbstractBasePtrList &spec2) {
-  if (spec1.size() != spec2.size()) {
-    MS_LOG(EXCEPTION) << "Join failed as list don't have the same size. spec1: " << ::mindspore::ToString(spec1)
-                      << ", spec2: " << ::mindspore::ToString(spec2);
+AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) {
+  if (lhs.size() != rhs.size()) {
+    MS_LOG(EXCEPTION) << "Join failed as list don't have the same size. lhs: " << ::mindspore::ToString(lhs)
+                      << ", rhs: " << ::mindspore::ToString(rhs);
   }
   AbstractBasePtrList joined_list;
   bool changes = false;
-  for (std::size_t i = 0; i < spec1.size(); i++) {
-    MS_EXCEPTION_IF_NULL(spec1[i]);
-    auto joined_elem = spec1[i]->Join(spec2[i]);
+  for (std::size_t i = 0; i < lhs.size(); i++) {
+    MS_EXCEPTION_IF_NULL(lhs[i]);
+    auto joined_elem = lhs[i]->Join(rhs[i]);
     MS_EXCEPTION_IF_NULL(joined_elem);
-    if (joined_elem != spec1[i]) {
+    if (joined_elem != lhs[i]) {
       changes = true;
     }
     joined_list.push_back(joined_elem);
   }
   if (!changes) {
-    return spec1;
+    return lhs;
   }
   return joined_list;
 }

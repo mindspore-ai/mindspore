@@ -347,12 +347,16 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
-  std::shared_ptr<bool> switch_input() const { return switch_input_; }
-  void set_switch_input(const std::shared_ptr<bool> &switch_input) { switch_input_ = switch_input; }
-  std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
-  void set_switch_layer_input(const std::shared_ptr<bool> &switch_layer_input) {
-    switch_layer_input_ = switch_layer_input;
+
+  std::shared_ptr<bool> indirect() {
+    // Lazy initialization.
+    if (!indirect_) {
+      indirect_ = std::make_shared<bool>(false);
+    }
+    return indirect_;
   }
+  void set_indirect(std::shared_ptr<bool> indirect) { indirect_ = indirect; }
+
   void SetMultiTarget() const;
   bool exist_multi_target() const { return exist_multi_target_; }
   void set_exist_multi_target(bool exist_multi_target) { exist_multi_target_ = exist_multi_target; }
@@ -458,10 +462,10 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
   bool stub_;
-  // Design switch_input and switch_layer_input as a ptr to
-  // share between derived backpropagator and cloned graphs.
-  std::shared_ptr<bool> switch_input_;
-  std::shared_ptr<bool> switch_layer_input_;
+
+  // The graph is used as some input of Switch, SwitchLayer, or Partial.
+  std::shared_ptr<bool> indirect_;
+
   int64_t stage_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>

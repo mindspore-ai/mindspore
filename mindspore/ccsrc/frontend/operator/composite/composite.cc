@@ -378,26 +378,26 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
 }
 
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_abs_list) {
-  FuncGraphPtr ptr_graph = std::make_shared<FuncGraph>();
-  ptr_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ptr_graph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
-  ptr_graph->debug_info()->set_name("hyper_map");
+  FuncGraphPtr res_fg = std::make_shared<FuncGraph>();
+  res_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  res_fg->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  res_fg->debug_info()->set_name("hyper_map");
 
-  AnfNodePtr ptrFnArg = nullptr;
+  AnfNodePtr fn_param = nullptr;
   std::size_t i = 0;
   ArgsPairList argmap;
   if (fn_leaf_ == nullptr) {
-    ptrFnArg = ptr_graph->add_parameter();
+    fn_param = res_fg->add_parameter();
     i = 1;
   }
 
   std::size_t size = args_abs_list.size();
   for (; i < size; ++i) {
-    argmap.push_back(std::make_pair(ptr_graph->add_parameter(), args_abs_list[i]));
+    argmap.push_back(std::make_pair(res_fg->add_parameter(), args_abs_list[i]));
   }
 
-  ptr_graph->set_output(Make(ptr_graph, ptrFnArg, argmap));
-  return ptr_graph;
+  res_fg->set_output(Make(res_fg, fn_param, argmap));
+  return res_fg;
 }
 
 abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {

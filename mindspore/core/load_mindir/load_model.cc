@@ -2362,7 +2362,10 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
         return nullptr;
       }
       auto partial_node = anf_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(partial_node);
+      if (!IsPrimitiveCNode(partial_node, prim::kPrimPartial)) {
+        MS_LOG(ERROR) << "Not partial CNode, but got " << partial_node->DebugString();
+        return nullptr;
+      }
       AbstractBasePtrList args_spec_list;
       auto &inputs = partial_node->inputs();
       const size_t kPartial_args_begin_pos = 2;
@@ -2374,13 +2377,18 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
       (void)std::transform(inputs.begin() + kPartial_args_begin_pos, inputs.end(), std::back_inserter(args_spec_list),
                            [](const AnfNodePtr &arg) -> AbstractBasePtr { return arg->abstract(); });
       auto &op_node = inputs[kPartial_fn_pos];
+      MS_EXCEPTION_IF_NULL(op_node);
       abstract::AbstractFuncAtomPtr fn;
       if (op_node->abstract() != nullptr) {
         fn = op_node->abstract()->cast<abstract::AbstractFuncAtomPtr>();
         if (fn == nullptr) {
           MS_LOG(DEBUG) << "Can't get the abstract of partial node: " << op_node->ToString();
           FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op_node);
-          MS_EXCEPTION_IF_NULL(fg);
+          if (fg == nullptr) {
+            MS_LOG(INTERNAL_EXCEPTION) << "partial_node: " << partial_node->DebugString()
+                                       << ", op_node: " << op_node->DebugString() << ", "
+                                       << op_node->abstract()->ToString();
+          }
           fn = fg->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>();
         }
       } else {

@@ -186,6 +186,32 @@ ParameterPtr GetFuncParameter(const CNodePtr &cnode) {
   return nullptr;
 }
 
+FuncGraphPtr GetFuncGraphFromAbstract(const abstract::AbstractBasePtr &abs) {
+  if (abs == nullptr) {
+    return nullptr;
+  }
+  auto func_graph_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(abs);
+  if (func_graph_abstract != nullptr) {
+    MS_EXCEPTION_IF_NULL(func_graph_abstract);
+    if (!func_graph_abstract->specialized()) {
+      MS_LOG(ERROR) << "Unspecialized func graph, " << abs->ToString();
+      return nullptr;
+    }
+    return func_graph_abstract->func_graph();
+  }
+  auto partial_closure = dyn_cast<abstract::PartialAbstractClosure>(abs);
+  if (partial_closure != nullptr) {
+    MS_EXCEPTION_IF_NULL(partial_closure);
+    if (partial_closure->fn() == nullptr) {
+      MS_LOG(ERROR) << "Partial closure's func graph is null, " << abs->ToString();
+      return nullptr;
+    }
+    return GetFuncGraphFromAbstract(partial_closure->fn());
+  }
+  MS_LOG(DEBUG) << "Unexpected abstract, " << abs->ToString();
+  return nullptr;
+}
+
 // Gets first input as MultitypeFuncGraph from the given cnode,
 // return null if input[0] is not a MultitypeFuncGraph.
 prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
@@ -237,7 +263,7 @@ class SccFinder {
   };
 
   // Search SCCs from the given graph.
-  State &Search(FuncGraphPtr graph) {
+  State &Search(const FuncGraphPtr &graph) {
     // Create graph state, set it as visited.
     MS_EXCEPTION_IF_NULL(graph);
     auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
@@ -348,11 +374,16 @@ class SideEffectFinder {
     // Update order list to include outer cnodes.
     UpdateOrderLists();
     // Find side effects by DFS from the top graph.
-    (void)GetEffectInfo(root_);
-    // Check switch calls, add monad arguments if need.
+    (void)ObtainEffectInfoForFuncGraph(root_);
+    // Check Switch calls, add monad arguments if need.
     HandleSwitchCalls();
-    // Check switch layer calls, add monad arguments if need.
+    // Check SwitchLayer calls, add monad arguments if need.
     HandleSwitchLayerCalls();
+    // Check Partial CNode calls, add monad arguments if need.
+    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    if (enable_pre_lift) {
+      HandlePartialCNodeCalls();
+    }
   }
 
   void UpdateOrderLists() const {
@@ -449,6 +480,29 @@ class SideEffectFinder {
   }
 
   // Trace effect info for Switch cnode.
+  EffectInfo TracePartialCNodeCallEffectInfo(const CNodePtr &cnode) {
+    const ParameterPtr &func_para = GetFuncParameter(cnode);
+    MS_EXCEPTION_IF_NULL(func_para);
+    MS_EXCEPTION_IF_NULL(func_para->abstract());
+    EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
+    auto partial_real_func = GetFuncGraphFromAbstract(func_para->abstract());
+    if (partial_real_func == nullptr) {
+      return info;
+    }
+
+    // Record the Partial CNode callers and real func graph.
+    (void)partial_cnode_calls_.emplace(cnode, partial_real_func);
+
+    // Try to obtain the effect info of func graph.
+    auto effect_info = ObtainEffectInfoForFuncGraph(partial_real_func);
+    MS_LOG(DEBUG) << "Parameter func: " << func_para->DebugString()
+                  << ", partial_real_func: " << partial_real_func->ToString() << ", "
+                  << func_para->abstract()->ToString() << ", cnode: " << cnode->DebugString()
+                  << ", effect_info: " << effect_info.memory << "/" << effect_info.io << "/" << effect_info.load;
+    return effect_info;
+  }
+
+  // Trace effect info for Switch cnode.
   EffectInfo TraceSwitchEffectInfo(const CNodePtr &cnode) {
     // Find branches from switch cnode.
     auto branches = GetSwitchBranches(cnode);
@@ -457,7 +511,7 @@ class SideEffectFinder {
     // For some case, only one branch is set.
     if (branches.size() == 1) {
       auto &branch = branches.front();
-      return GetEffectInfo(branch);
+      return ObtainEffectInfoForFuncGraph(branch);
     }
     // When both branches are set, merge their effect infos.
     EffectInfo info = MergeEffectInfo(branches);
@@ -484,6 +538,18 @@ class SideEffectFinder {
       call.branches = move(branches);
     }
     return info;
+  }
+
+  void HandlePartialCNodeCalls() {
+    for (auto &call : partial_cnode_calls_) {
+      const auto &caller = call.first;
+      const auto &func_graph = call.second;
+      const auto &effect_info = ObtainEffectInfoForFuncGraph(func_graph);
+      MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", caller: " << caller->DebugString() << ", "
+                    << caller->abstract()->ToString() << ", "
+                    << ", effect_info: " << effect_info.memory << "/" << effect_info.io << "/" << effect_info.load;
+      AddMonadForCaller(caller, effect_info);
+    }
   }
 
   void HandleSwitchCalls() {
@@ -921,14 +987,14 @@ class SideEffectFinder {
     EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
     for (auto &branch : branches) {
       MS_EXCEPTION_IF_NULL(branch);
-      EffectInfo branch_info = GetEffectInfo(branch);
+      EffectInfo branch_info = ObtainEffectInfoForFuncGraph(branch);
       info.Merge(branch_info);
     }
     return info;
   }
 
   // Trace a cnode for effect info.
-  EffectInfo TraceEffectInfo(const CNodePtr &cnode) {
+  EffectInfo TraceEffectInfoForCNode(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     if (IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
@@ -1009,21 +1075,21 @@ class SideEffectFinder {
     std::vector<ValuePtr> values;
     GetOutputValues(cnode, &values);
     if (values.size() == 1) {
-      return GetEffectInfo(values.front());
+      return ObtainEffectInfoForValue(values.front());
     }
     EffectInfo info{EffectInfo::kDetected, false, false, false, false};
     for (auto &value : values) {
-      info.Merge(GetEffectInfo(value));
+      info.Merge(ObtainEffectInfoForValue(value));
     }
     return info;
   }
 
-  EffectInfo GetEffectInfo(const ValuePtr &value) {
+  EffectInfo ObtainEffectInfoForValue(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
     // FuncGraph.
     auto graph = dyn_cast<FuncGraph>(value);
     if (graph != nullptr) {
-      return GetEffectInfo(graph);
+      return ObtainEffectInfoForFuncGraph(graph);
     }
     // Primitive.
     auto prim = dyn_cast<Primitive>(value);
@@ -1107,13 +1173,13 @@ class SideEffectFinder {
     // Trace cnode.
     auto cnode = node->cast<CNodePtr>();
     if (cnode != nullptr) {
-      return TraceEffectInfo(cnode);
+      return TraceEffectInfoForCNode(cnode);
     }
 
     // Trace parameter.
     auto para = node->cast<ParameterPtr>();
     if (para != nullptr) {
-      return TraceEffectInfo(para);
+      return TraceEffectInfoForParameter(para);
     }
 
     // Trace primitive.
@@ -1125,7 +1191,7 @@ class SideEffectFinder {
     // Trace func graph.
     auto graph = GetValueNode<FuncGraphPtr>(node);
     if (graph != nullptr) {
-      return GetEffectInfo(graph);
+      return ObtainEffectInfoForFuncGraph(graph);
     }
 
     // Other ValueNode has no side effects. For example: ValueNode<ClassType> node.
@@ -1153,9 +1219,9 @@ class SideEffectFinder {
   }
 
   // Trace effect info from function parameter.
-  EffectInfo TraceEffectInfo(const ParameterPtr &para) {
+  EffectInfo TraceEffectInfoForParameter(const ParameterPtr &para) {
     EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-    ForEachRealArguments(para, [this, &info](const AnfNodePtr &arg) {
+    ForEachRealArguments(para, [this, &para, &info](const AnfNodePtr &arg) {
       // Merge caller input effect info.
       auto input_info = TraceEffectInfo(arg);
       info.Merge(input_info);
@@ -1208,11 +1274,11 @@ class SideEffectFinder {
     if (func_graph == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
-    return GetEffectInfo(func_graph);
+    return ObtainEffectInfoForFuncGraph(func_graph);
   }
 
   // Detect effect info by depth first search.
-  EffectInfo DetectEffectInfo(const CNodePtr &cnode) {
+  EffectInfo ObtainEffectInfoForCNodeInner(const CNodePtr &cnode) {
     // For primitive, get effect info from its attributes and inputs.
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     if (prim != nullptr) {
@@ -1244,7 +1310,7 @@ class SideEffectFinder {
       // Save the caller of the graph, so that we can update
       // monad parameters for it when requires.
       (void)graph_callers_[func_graph].emplace(cnode);
-      return GetEffectInfo(func_graph);
+      return ObtainEffectInfoForFuncGraph(func_graph);
     }
 
     // When input[0] is a cnode, it is a function returned from
@@ -1252,14 +1318,20 @@ class SideEffectFinder {
     auto func_cnode = GetFuncCNode(cnode);
     if (func_cnode != nullptr) {
       caller_ = cnode;
-      return TraceEffectInfo(func_cnode);
+      return TraceEffectInfoForCNode(func_cnode);
     }
 
     // When input[0] is a parameter, it is a function parameter for
     // the high-order function, we trace it by caller.
     auto func_para = GetFuncParameter(cnode);
     if (func_para != nullptr) {
-      return TraceEffectInfo(func_para);
+      auto effect_info = TraceEffectInfoForParameter(func_para);
+      // Retry for Partial CNode call.
+      static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+      if (enable_pre_lift && !effect_info.memory && !effect_info.io && !effect_info.load) {
+        return TracePartialCNodeCallEffectInfo(cnode);
+      }
+      return effect_info;
     }
 
     // When input[0] is a MultitypeFuncGraph, it's not specialized
@@ -1280,7 +1352,7 @@ class SideEffectFinder {
   }
 
   // Gets EffectInfo for CNode.
-  EffectInfo GetEffectInfo(const CNodePtr &cnode) {
+  EffectInfo ObtainEffectInfoForCNode(const CNodePtr &cnode) {
     const auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state == EffectInfo::kDetected) {
       // Effect info already detected, return it.
@@ -1288,7 +1360,7 @@ class SideEffectFinder {
     }
 
     // Detect effect info for the cnode.
-    EffectInfo info = DetectEffectInfo(cnode);
+    EffectInfo info = ObtainEffectInfoForCNodeInner(cnode);
     if (info.state == EffectInfo::kDetected) {
       // Save detected info into cnode.
       cnode->SetEffectInfo(info);
@@ -1315,7 +1387,7 @@ class SideEffectFinder {
   }
 
   // Gets EffectInfo for func graph.
-  EffectInfo GetEffectInfo(const FuncGraphPtr &func_graph) {
+  EffectInfo ObtainEffectInfoForFuncGraph(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
     const auto &effect_info = func_graph->GetEffectInfo();
     if (effect_info.state != EffectInfo::kUnknown) {
@@ -1335,7 +1407,7 @@ class SideEffectFinder {
       MS_EXCEPTION_IF_NULL(g);
       for (auto &cnode : g->order_list()) {
         MS_EXCEPTION_IF_NULL(cnode);
-        auto cnode_effect = GetEffectInfo(cnode);
+        auto cnode_effect = ObtainEffectInfoForCNode(cnode);
         if (cnode_effect.state != EffectInfo::kDetected) {
           // For side effect undetected node, it could be a call to the SCC member graph,
           // we will try to check side effect again after SCC side effect detected.
@@ -1347,7 +1419,7 @@ class SideEffectFinder {
       // Make sure all sub-graphs is checked. since some sub-graphs may not directly called,
       // for example: return ValueNode(sub_graph).
       for (auto &sg : g->func_graphs_used()) {
-        (void)GetEffectInfo(sg.first);
+        (void)ObtainEffectInfoForFuncGraph(sg.first);
       }
     }
     // Update effect into for all members of the SCC.
@@ -1356,13 +1428,13 @@ class SideEffectFinder {
     // Check undetected cnodes again after side effect of the SCC is detected.
     for (auto &cnode : undetected) {
       MS_EXCEPTION_IF_NULL(cnode);
-      auto cnode_effect = GetEffectInfo(cnode);
+      auto cnode_effect = ObtainEffectInfoForCNode(cnode);
       // Side effect should be detected now, except free variable nodes that not belong to current SCC.
       if (cnode_effect.state != EffectInfo::kDetected && scc->find(cnode->func_graph()) != scc->end()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Side effect is undectable: " << cnode->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Side effect is undetectable: " << cnode->DebugString();
       }
     }
-    // graph which need PipelineSplit doesn't have effect.
+    // Graph which need PipelineSplit doesn't have effect.
     if (func_graph->stage() != -1) {
       info.memory = false;
       info.load = false;
@@ -1464,6 +1536,10 @@ class SideEffectFinder {
   // Current high order func caller cnode.
   CNodePtr caller_ = nullptr;
 
+  // Save partial CNode caller cnodes and its real func graph, so that we can check and
+  // update monad parameters for the real func graph according the caller inputs.
+  mindspore::HashMap<CNodePtr, FuncGraphPtr> partial_cnode_calls_;
+
   // Save switch caller cnodes and their branches, so that we can check and
   // update monad parameters for branches according the caller inputs.
   mindspore::HashMap<CNodePtr, FuncGraphVector> switch_calls_;
@@ -1511,7 +1587,7 @@ class AutoMonadConverter {
   static bool HasSideEffects(const EffectInfo &info) { return (info.memory || info.io || info.load || info.back_mem); }
 
   // Gets effect info for a cnode.
-  const EffectInfo &GetEffectInfo(const CNodePtr &cnode) const {
+  const EffectInfo &GetEffectInfoFromCNode(const CNodePtr &cnode) const {
     MS_EXCEPTION_IF_NULL(cnode);
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
@@ -1544,7 +1620,7 @@ class AutoMonadConverter {
           continue;
         }
       }
-      auto &info = GetEffectInfo(cnode);
+      auto &info = GetEffectInfoFromCNode(cnode);
       has_effect_cnodes_ = (has_effect_cnodes_ || HasSideEffects(info));
       if (cnode->func_graph() != func_graph_) {
         // Handle outer cnode.
@@ -1982,7 +2058,7 @@ class AutoMonadConverter {
   }
 
   bool HasSideEffect(const CNodePtr &cnode) const {
-    const auto &cnode_info = GetEffectInfo(cnode);
+    const auto &cnode_info = GetEffectInfoFromCNode(cnode);
     return (cnode_info.memory || cnode_info.load || cnode_info.io);
   }
 

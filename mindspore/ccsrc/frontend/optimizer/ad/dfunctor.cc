@@ -53,8 +53,7 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     k_graph_ = std::make_shared<FuncGraph>();
   }
   // To keep switch or switch_layer's inputs from being inlined
-  k_graph_->set_switch_input(primal_graph->switch_input());
-  k_graph_->set_switch_layer_input(primal_graph->switch_layer_input());
+  k_graph_->set_indirect(primal_graph->indirect());
   k_graph_->set_stage(primal_graph->stage());
 
   {

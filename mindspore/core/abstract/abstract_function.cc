@@ -332,11 +332,11 @@ std::string PartialAbstractClosure::ToString() const {
     return "<recurred>";
   }
   std::ostringstream buffer;
-  buffer << "PartialAbstractClosure(" << fn_->ToString() << "(";
+  buffer << "PartialAbstractClosure{" << fn_->ToString() << "(";
   for (const auto &arg : args_abs_list_) {
     buffer << (arg == nullptr ? "<null>" : arg->ToString()) << ", ";
   }
-  buffer << "))";
+  buffer << ")}";
   return buffer.str();
 }
 

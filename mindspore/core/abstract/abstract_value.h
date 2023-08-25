@@ -362,6 +362,8 @@ class MS_CORE_API AbstractClass final : public AbstractBase {
 
   AbstractBasePtr Broaden() const override { return Clone(); }
 
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+
  private:
   std::size_t hash_;
 };

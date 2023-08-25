@@ -169,6 +169,7 @@ class MsClassObject final : public PyObjectWrapper {
   ~MsClassObject() override = default;
   MS_DECLARE_PARENT(MsClassObject, PyObjectWrapper);
   abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return name() + "|" + py::str(obj()).cast<std::string>(); }
 };
 using MsClassObjectPtr = std::shared_ptr<MsClassObject>;
 

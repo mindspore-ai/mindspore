@@ -98,10 +98,10 @@ abstract::AbstractBasePtr MsClassObject::ToAbstract() {
     // Class type as func, such as Net(x, y)
     auto abs_class = std::make_shared<abstract::AbstractClass>(shared_from_base<MsClassObject>());
     AbstractBasePtrList args_abs_list = {abs_class};
-    auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
-    auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
-    ret_val->set_value_desc(ToString());
-    return ret_val;
+    auto func = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
+    auto res_val = std::make_shared<abstract::PartialAbstractClosure>(func, args_abs_list);
+    res_val->set_value_desc(ToString());
+    return res_val;
   } else {
     // Class instance as func, such as net(x, y)
     return std::make_shared<abstract::AbstractClass>(shared_from_base<MsClassObject>());
@@ -128,10 +128,10 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   }
   AbstractBasePtrList args_abs_list = {abs_scalar};
 
-  auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
-  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
-  ret_val->set_value_desc(ToString());
-  return ret_val;
+  auto func = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
+  auto res_val = std::make_shared<abstract::PartialAbstractClosure>(func, args_abs_list);
+  res_val->set_value_desc(ToString());
+  return res_val;
 }
 
 using tensor::MapTensorPtr;

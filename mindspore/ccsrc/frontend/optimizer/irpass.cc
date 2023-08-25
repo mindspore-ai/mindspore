@@ -270,16 +270,19 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Value_Based Eliminate
   value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
                                             {prim::kPrimSelect, prim::kPrimMinimum, prim::kPrimMaximum});
+  // Partial func graph input defer inline
+  partial_defer_inline_ =
+    MakeSubstitution(std::make_shared<PartialDeferInline>(), "partial_defer_inline", prim::kPrimPartial);
 
-  // switch defer inline
+  // Switch func graph input defer inline
   switch_defer_inline_ =
     MakeSubstitution(std::make_shared<SwitchDeferInline>(), "switch_defer_inline", prim::kPrimSwitch);
 
-  // switch_layer defer inline
+  // SwitchLayer func graph input defer inline
   switch_layer_defer_inline_ =
     MakeSubstitution(std::make_shared<SwitchLayerDeferInline>(), "switch_layer_defer_inline", prim::kPrimSwitchLayer);
 
-  // recompute
+  // Recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
   remove_not_recompute_node_ =

@@ -285,8 +285,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr
   target_func_graph->set_fv_param_count(func_graph->fv_param_count());
   target_func_graph->set_is_generate(func_graph->is_generated());
   target_func_graph->set_stub(func_graph->stub());
-  target_func_graph->set_switch_input(func_graph->switch_input());
-  target_func_graph->set_switch_layer_input(func_graph->switch_layer_input());
+  target_func_graph->set_indirect(func_graph->indirect());
   target_func_graph->set_python_obj(func_graph->python_obj());
 }
 
@@ -1028,9 +1027,8 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   new_func_graph->set_kwonlyargs_count(func_graph->kwonlyargs_count());
   new_func_graph->set_fv_param_count(func_graph->fv_param_count());
   new_func_graph->set_is_generate(func_graph->is_generated());
+  new_func_graph->set_indirect(func_graph->indirect());
   new_func_graph->set_stub(func_graph->stub());
-  new_func_graph->set_switch_input(func_graph->switch_input());
-  new_func_graph->set_switch_layer_input(func_graph->switch_layer_input());
   for (auto &item : func_graph->parameter_default_value()) {
     new_func_graph->set_param_default_value(item.first, cloner[item.second]);
   }

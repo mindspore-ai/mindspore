@@ -48,8 +48,6 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       manager_(),
       debug_info_(std::move(debug_info)),
       stub_(false),
-      switch_input_(std::make_shared<bool>(false)),
-      switch_layer_input_(std::make_shared<bool>(false)),
       stage_(-1),
       phase_(PhaseManager::GetInstance().phase()) {}
 

@@ -271,6 +271,11 @@ FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
   int variable_args_count = pos_args_input_count - GetPositionalArgsCount();
   std::vector<AnfNodePtr> specialized_parameter_list;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl_nodes;
+  MS_LOG(DEBUG) << "specialized_graph: " << specialized_graph->ToString()
+                << ", variable_args_count: " << variable_args_count
+                << ", pos_args_input_count: " << pos_args_input_count
+                << ", GetPositionalArgsCount: " << GetPositionalArgsCount() << ", arguments_count: " << arguments_count
+                << ", kwarg_count: " << kwarg_count << ", fv_param_count_: " << fv_param_count_;
   GenerateVarParams(specialized_graph, variable_args_count, pos_args_input_count, &specialized_parameter_list,
                     &repl_nodes);
   GenerateKwParams(specialized_graph, kwarg_list, pos_args_input_count, &specialized_parameter_list, &repl_nodes);
