@@ -21,10 +21,10 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRoll = "Roll";
 /// \brief Rolls the elements of a tensor along an axis.
 class MIND_API Roll : public BaseOperator {
  public:

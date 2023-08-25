@@ -23,10 +23,10 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReverseV2 = "ReverseV2";
 /// \brief Reverses specific dimensions of a tensor.
 /// Refer to Python API @ref mindspore.ops.ReverseV2 for more details.
 class MIND_API ReverseV2 : public BaseOperator {

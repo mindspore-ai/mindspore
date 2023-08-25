@@ -310,14 +310,51 @@ namespace mindspore::ops {{
     op_name_gen += op_name_end
     return op_name_gen
 
+def generate_op_prim_opdef(yaml_data):
+    """
+    generate primitive c++ def
+    """
+    ops_prim_head = f"""
+#ifndef MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_H_
+#define MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_H_
+
+#include <memory>
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ops/gen_ops_name.h"
+#include "mindapi/base/macros.h"
+
+namespace mindspore::prim {{
+"""
+
+    ops_prim_end = f"""}}  // namespace mindspore::prim
+#endif  // MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_H_
+"""
+
+    #
+
+    ops_prim_gen = ''
+    ops_prim_gen += ops_prim_head
+    for operator_name, operator_data in yaml_data.items():
+        k_name_op = ''.join(word.capitalize() for word in operator_name.split('_'))
+        class_def = operator_data.get('class')
+        if class_def:
+            item = class_def.get("name")
+            if item:
+                k_name_op = item
+        ops_prim_gen += f"""GVAR_DEF(PrimitivePtr, kPrim{k_name_op}, std::make_shared<Primitive>(ops::kName{k_name_op}))
+"""
+    ops_prim_gen += ops_prim_end
+    return ops_prim_gen
+
 
 def generate_lite_ops(yaml_data):
     """
     generate BaseOperator parameter set and get func
     """
     lite_ops_head = f"""
-#ifndef MINDSPORE_CORE_LITE_OPS_H_
-#define MINDSPORE_CORE_LITE_OPS_H_
+#ifndef MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
+#define MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 
 #include "ops/base_operator.h"
 #include "ops/gen_ops_name.h"
@@ -327,7 +364,7 @@ namespace mindspore::ops {{
 """
 
     lite_ops_end = f"""}}  // namespace mindspore::ops
-#endif  // MINDSPORE_CORE_LITE_OPS_H_
+#endif  // MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 """
 
     lite_ops_gen = ''
@@ -489,6 +526,7 @@ if __name__ == "__main__":
 
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/gen_ops_def.py')
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
+    op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
     lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/gen_lite_ops.h')
 
@@ -564,6 +602,11 @@ namespace mindspore::ops {{
     lite_ops_file = None
     with open(lite_ops_path, 'w') as lite_ops_file:
         lite_ops_file.write(cc_license_str + lite_ops_code)
+
+    op_prim_code = generate_op_prim_opdef(yaml_str)
+    op_prim_file = None
+    with open(op_prim_path, 'w') as op_prim_file:
+        op_prim_file.write(cc_license_str + op_prim_code)
 
     op_name_code = generate_op_name_opdef(yaml_str)
     op_name_file = None

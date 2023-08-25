@@ -20,10 +20,10 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRightShift = "RightShift";
 /// \brief Shift x to the right by y in element-wise.
 /// Refer to Python API @ref mindspore.ops.RightShift for more details.
 class MIND_API RightShift : public BaseOperator {

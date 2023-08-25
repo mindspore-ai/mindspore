@@ -22,29 +22,24 @@
 #include "ir/primitive.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "utils/hash_map.h"
+#include "ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {
 // Activation
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
 GVAR_DEF(PrimitivePtr, kPrimCeluV2, std::make_shared<Primitive>("CeluV2"));
-GVAR_DEF(PrimitivePtr, kPrimReluGrad, std::make_shared<Primitive>(kReLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimReluGradV2, std::make_shared<Primitive>("ReluGradV2"));
-GVAR_DEF(PrimitivePtr, kPrimReLU6Grad, std::make_shared<Primitive>("ReLU6Grad"));
 GVAR_DEF(PrimitivePtr, kPrimRelu6Grad, std::make_shared<Primitive>("Relu6Grad"));
-GVAR_DEF(PrimitivePtr, kPrimGeLU, std::make_shared<Primitive>(kGeLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimGelu, std::make_shared<Primitive>("Gelu"));
-GVAR_DEF(PrimitivePtr, kPrimGeLUGrad, std::make_shared<Primitive>(kGeLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimGeluGrad, std::make_shared<Primitive>("GeluGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFastGeLU, std::make_shared<Primitive>(kFastGeLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimFastGelu, std::make_shared<Primitive>("FastGelu"));
 GVAR_DEF(PrimitivePtr, kPrimFastGeLUGrad, std::make_shared<Primitive>(kFastGeLUGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimFastGeluGrad, std::make_shared<Primitive>("FastGeluGrad"));
-GVAR_DEF(PrimitivePtr, kPrimReLU, std::make_shared<Primitive>(kReLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimRelu, std::make_shared<Primitive>("Relu"));
 GVAR_DEF(PrimitivePtr, kPrimElu, std::make_shared<Primitive>("Elu"));
 GVAR_DEF(PrimitivePtr, kPrimEluGrad, std::make_shared<Primitive>("EluGrad"));
-GVAR_DEF(PrimitivePtr, kPrimReLU6, std::make_shared<Primitive>(kReLU6OpName));
 GVAR_DEF(PrimitivePtr, kPrimReLUV2, std::make_shared<Primitive>(kReLUV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimReluV2, std::make_shared<Primitive>("ReluV2"));
 GVAR_DEF(PrimitivePtr, kPrimReLUV3, std::make_shared<Primitive>(kReLUV3OpName));

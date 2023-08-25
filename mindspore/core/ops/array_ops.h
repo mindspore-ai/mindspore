@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
+#include "ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {
@@ -178,7 +179,6 @@ GVAR_DEF(PrimitivePtr, kPrimScatterNdUpdate, std::make_shared<Primitive>("Scatte
 GVAR_DEF(PrimitivePtr, kPrimScatterNonAliasingAdd, std::make_shared<Primitive>("ScatterNonAliasingAdd"));
 GVAR_DEF(PrimitivePtr, kPrimConstantOfShape, std::make_shared<Primitive>("ConstantOfShape"));
 GVAR_DEF(PrimitivePtr, kPrimSquaredDifference, std::make_shared<Primitive>("SquaredDifference"));
-GVAR_DEF(PrimitivePtr, kPrimReverseV2, std::make_shared<Primitive>("ReverseV2"));
 GVAR_DEF(PrimitivePtr, kPrimReverseSequence, std::make_shared<Primitive>("ReverseSequence"));
 GVAR_DEF(PrimitivePtr, kPrimRank, std::make_shared<Primitive>("Rank"));
 GVAR_DEF(PrimitivePtr, kPrimSort, std::make_shared<Primitive>("Sort"));
@@ -208,7 +208,6 @@ GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBoundO
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummaxOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgamma, std::make_shared<Primitive>(kMvlgammaOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgammaGrad, std::make_shared<Primitive>(kMvlgammaGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShiftOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogSpace, std::make_shared<Primitive>(kLogSpaceOpName));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTrilOpName));
 GVAR_DEF(PrimitivePtr, kPrimEye, std::make_shared<Primitive>(kEyeOpName));
