@@ -340,3 +340,49 @@ def test_attention_reshape():
     assert validator.check_parameter_shape('bias', [8])
     reshape_expect_inputs = ['Add-0', '((1, -1, 2, 4))']
     assert validator.check_node_inputs_fuzzy_match('Reshape-0', reshape_expect_inputs)
+
+
+class AttentionNet2(Cell):
+    def __init__(self, weight, bias, strategy1=None, strategy2=None, strategy3=None, strategy4=None):
+        super().__init__()
+        self.matmul = P.MatMul().shard(strategy1)
+        self.weight = Parameter(weight, "w1")
+        self.add = P.Add().shard(strategy2)
+        self.bias = Parameter(bias, "bias")
+        self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)
+        self.transpose = P.Transpose().shard(strategy3)
+        self.realdiv = P.RealDiv().shard(strategy4)
+
+    def construct(self, x):
+        out = self.matmul(x, self.weight)
+        out = self.add(out, self.bias)
+        bs = P.Shape()(out)[0]
+        out = self.reshape(out, (bs // 2, 2, 16, 4))
+        out = self.transpose(out, (0, 2, 1, 3))
+        out = self.realdiv(out, 1.0)
+        return out
+
+
+def test_attention_reshape_dst_shape_is_not_a_value_node():
+    """
+    Feature: test attention parallel, the dst shape of reshape is not a value node
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1), (1, 8))
+    strategy2 = ((1, 8), (8,))
+    strategy3 = ((1, 1, 8, 1),)
+    strategy4 = ((1, 8, 1, 1), ())
+    weight = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    bias = Tensor(np.ones([64]), dtype=ms.float32)
+    net = AttentionNet2(weight, bias, strategy1, strategy2, strategy3, strategy4)
+    input_x = Tensor(shape=[None, 32], dtype=ms.float32)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('Reshape-0', ['Add-0'])
+    assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0'])
+    assert validator.check_parameter_shape('w1', [32, 8])
+    assert validator.check_parameter_shape('bias', [8])
