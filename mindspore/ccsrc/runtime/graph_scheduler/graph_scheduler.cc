@@ -1661,9 +1661,14 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   } else {
     // front node ---> actor.
     if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find actor by front node:"
-                                 << common::AnfAlgo::GetNodeDebugString(front_output_node)
-                                 << ", internal parameter:" << common::AnfAlgo::GetNodeDebugString(internal_parameter);
+      const auto &new_front_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(
+        front_output_with_index.first, front_output_with_index.second, false);
+      if (graph_output_to_actor_.count(new_front_output_with_index) == 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find actor by front node:"
+                                   << common::AnfAlgo::GetNodeDebugString(front_output_node) << ", internal parameter:"
+                                   << common::AnfAlgo::GetNodeDebugString(internal_parameter);
+      }
+      front_output_with_index = new_front_output_with_index;
     }
     auto actor_pair = graph_output_to_actor_[front_output_with_index];
     MS_EXCEPTION_IF_NULL(actor_pair.first);
