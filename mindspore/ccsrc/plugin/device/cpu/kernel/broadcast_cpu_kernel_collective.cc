@@ -49,7 +49,7 @@ bool BroadcastCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
   root_rank_ = LongToUint(GetValue<std::int64_t>(prim->GetAttr("root_rank")));
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
 #else
   MS_LOG(EXCEPTION) << "The CPU kernel broadcast is only supported on linux platform.";
 #endif

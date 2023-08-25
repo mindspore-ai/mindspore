@@ -31,8 +31,8 @@ bool RightShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRightShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRightShiftOutputsNum, kernel_name_);
-  input_type_1_ = inputs.at(kIndex0)->GetDtype();
-  input_type_2_ = inputs.at(kIndex1)->GetDtype();
+  input_type_1_ = inputs.at(kIndex0)->dtype_id();
+  input_type_2_ = inputs.at(kIndex1)->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "input1 and input2 must have the same type.";
   }

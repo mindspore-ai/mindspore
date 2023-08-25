@@ -61,7 +61,7 @@ bool PopulationCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << outputs.size();
     return false;
   }
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   switch (dtype_) {
     case kNumberTypeInt8:
       kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int8_t>;

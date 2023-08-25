@@ -38,8 +38,8 @@ bool SparseSegmentMeanGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
   kernel_func_ = kernel_attr_map_[index].second;
-  unit_grad_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_idx_seg_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  unit_grad_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_idx_seg_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   return true;
 }
 

@@ -45,8 +45,8 @@ int InSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   ele_shape_ = inputs[0]->GetShapeVector();
   tuple_shape_ = inputs[1]->GetShapeVector();
-  ele_type_ = inputs[0]->GetDtype();
-  input_type_ = inputs[1]->GetDtype();
+  ele_type_ = inputs[0]->dtype_id();
+  input_type_ = inputs[1]->dtype_id();
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }

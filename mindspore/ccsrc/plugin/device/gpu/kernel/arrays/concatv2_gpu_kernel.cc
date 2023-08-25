@@ -111,7 +111,7 @@ int ConcatV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto input_0_shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto input_0_shape = inputs[0]->GetDeviceShapeVector();
   int dims = SizeToInt(input_0_shape.size());
   axis_ = ori_axis_;
   if (axis_ < -dims || axis_ >= dims) {
@@ -121,14 +121,14 @@ int ConcatV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (axis_ < 0) {
     axis_ += dims;
   }
-  auto input_format = mindspore::FormatEnumToString(inputs[0]->GetFormat());
+  auto input_format = mindspore::FormatEnumToString(inputs[0]->format());
   axis_ = AxisTransform(origin_data_format_, input_format, axis_);
 
   not_null_input_index_.clear();
   len_axis_.clear();
   input_num_ = inputs.size();
   for (int i = 0; i < input_num_; i++) {
-    auto input_shape = inputs[i]->GetDeviceShapeAdaptively();
+    auto input_shape = inputs[i]->GetDeviceShapeVector();
     auto is_null_input = CHECK_NULL_INPUT(input_shape);
     if (!is_null_input) {
       not_null_input_index_.push_back(i);
@@ -140,7 +140,7 @@ int ConcatV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   workspace_size_list_.push_back(sizeof(int) * input_num_);
   inputs_host_.resize(input_num_);
 
-  auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[0]->GetDeviceShapeVector();
   all_size_before_axis_ = 1;
   all_size_axis_ = 1;
   for (int i = 0; i < SizeToInt(output_shape.size()); i++) {

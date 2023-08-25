@@ -37,7 +37,7 @@ bool ApplyAdadeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
 
-  auto input_type_id = inputs[0]->GetDtype();
+  auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  does not support " << TypeIdToString(input_type_id);
     return false;

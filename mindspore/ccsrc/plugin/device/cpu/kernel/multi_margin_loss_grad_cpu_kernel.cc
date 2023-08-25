@@ -43,7 +43,7 @@ bool MultiMarginLossGradCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   p = kernel_ptr->get_p();
   margin = kernel_ptr->get_margin();
 
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   input_num = inputs.size();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }

@@ -105,7 +105,7 @@ bool BinaryCrossEntropyGradCpuKernelMod::Init(const BaseOperatorPtr &base_operat
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropyGrad>(base_operator);
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceGradInputsNumWithWeight);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
 
   const auto reduction = kernel_ptr->get_reduction();
   if (reduction == Reduction::NONE) {

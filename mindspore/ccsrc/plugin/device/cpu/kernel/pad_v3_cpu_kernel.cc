@@ -70,8 +70,8 @@ int PadV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_dim_ = SizeToLong(input_shape.size());
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   auto padding_shape = inputs[kIndex1]->GetShapeVector();
   if (padding_shape.size() != 1) {
     paddings_num_ = 1;

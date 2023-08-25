@@ -53,8 +53,8 @@ size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_s
 
   size_t msg_size = 0;
   auto shapes = dynamic_shape_input->GetShapeVector();
-  TypeId data_type = dynamic_shape_input->GetDtype();
-  size_t input_size = dynamic_shape_input->IsDynamicShape() ? kSizeZero : dynamic_shape_input->GetSizeInBytes();
+  TypeId data_type = dynamic_shape_input->dtype_id();
+  size_t input_size = dynamic_shape_input->IsDynamicShape() ? kSizeZero : dynamic_shape_input->size();
 
   runtime::rpc::DynamicShapeMessage pb_msg;
   pb_msg.set_type_id(static_cast<int>(data_type));
@@ -76,7 +76,7 @@ void RpcSendKernelMod::AssignWorkspaceSize(const std::vector<KernelTensorPtr> &i
   total_size = std::accumulate(inputs.begin(), inputs.end(), total_size,
                                [this](size_t total_size, const KernelTensorPtr &input_tensor) {
                                  return is_dynamic_shape_ ? (total_size + GetDynamicShapeMsgSize(input_tensor))
-                                                          : (total_size + input_tensor->GetSizeInBytes());
+                                                          : (total_size + input_tensor->size());
                                });
 
   workspace_size_list_.push_back(total_size);

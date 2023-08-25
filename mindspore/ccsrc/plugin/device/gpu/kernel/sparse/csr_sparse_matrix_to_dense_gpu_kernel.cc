@@ -78,12 +78,12 @@ int CSRSparseMatrixToDenseGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
     }
     return res;
   };
-  dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(dense_shape_shape_);
-  batch_ptr_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(batch_ptr_shape_);
-  row_ptr_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(row_ptr_shape_);
-  col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype()) * GetNums(col_indices_shape_);
-  values_size_ = abstract::TypeIdSize(inputs[kIndex4]->GetDtype()) * GetNums(values_shape_);
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * GetNums(output_shape_);
+  dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(dense_shape_shape_);
+  batch_ptr_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(batch_ptr_shape_);
+  row_ptr_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(row_ptr_shape_);
+  col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id()) * GetNums(col_indices_shape_);
+  values_size_ = abstract::TypeIdSize(inputs[kIndex4]->dtype_id()) * GetNums(values_shape_);
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * GetNums(output_shape_);
 
   InitSizeLists();
   return 0;

@@ -95,7 +95,7 @@ int AssertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   summarizes_.resize(inputs_size);
   for (size_t i = 0; i < inputs_size; i++) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
-    auto input_type_id = inputs[i]->GetDtype();
+    auto input_type_id = inputs[i]->dtype_id();
     auto func_iter = func_map_.find(input_type_id);
     if (func_iter == func_map_.end()) {
       MS_LOG(ERROR) << "assert kernel does not support " << TypeIdToString(input_type_id);

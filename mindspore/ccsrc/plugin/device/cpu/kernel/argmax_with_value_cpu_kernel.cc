@@ -101,7 +101,7 @@ bool ArgMaxWithValueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                                        const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto input_type_id = inputs.at(kIndex0)->GetDtype();
+  auto input_type_id = inputs.at(kIndex0)->dtype_id();
   switch (input_type_id) {
     case kNumberTypeFloat64:
       kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<double>;
@@ -149,7 +149,7 @@ int ArgMaxWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetDeviceShapeAdaptively());
+  shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetDeviceShapeVector());
   size_t shape_len = shape_.size();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);

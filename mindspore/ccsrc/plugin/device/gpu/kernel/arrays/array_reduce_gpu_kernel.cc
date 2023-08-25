@@ -343,7 +343,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
 
-  auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
   input_num_ = SizeOf(input_shape);
 
   if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
@@ -355,7 +355,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
   }
 
-  auto output_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
   if (is_null_input_) {
@@ -363,7 +363,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
 
   SimplyReduce(input_shape, attr_axis);
-  input_size_ = inputs[kIndex0]->GetSizeInBytes();
+  input_size_ = inputs[kIndex0]->size();
   workspace_size_list_.push_back(input_size_);
 
   auto input_reshape_dim = input_reshape_.size();

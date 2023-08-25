@@ -95,10 +95,10 @@ int ExtractGlimpseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
     return res;
   };
-  inputs_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(inputs_shape);
-  size_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(size_shape);
-  offsets_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(offsets_shape);
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * output_elements_;
+  inputs_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(inputs_shape);
+  size_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(size_shape);
+  offsets_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(offsets_shape);
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * output_elements_;
   return 0;
 }
 

@@ -79,7 +79,7 @@ int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   output_before_reduction_shape_size_ = std::accumulate(
     output_before_reduction_shape_.begin(), output_before_reduction_shape_.end(), 1, std::multiplies<int64_t>());
 
-  size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
   if (reductionMode_ != ops::kNone) {
     workspace_size_list_.push_back(output_before_reduction_shape_size_ * type_size);
   }

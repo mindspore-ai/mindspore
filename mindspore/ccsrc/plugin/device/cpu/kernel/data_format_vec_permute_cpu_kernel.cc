@@ -41,8 +41,8 @@ bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   auto kernel_ptr = std::make_shared<ops::DataFormatVecPermute>(base_operator->GetPrim());
   src_format_ = kernel_ptr->get_src_format();
   dst_format_ = kernel_ptr->get_dst_format();
-  input_type_ = inputs[0]->GetDtype();
-  output_type_ = outputs[0]->GetDtype();
+  input_type_ = inputs[0]->dtype_id();
+  output_type_ = outputs[0]->dtype_id();
   return true;
 }
 
@@ -55,8 +55,8 @@ int DataFormatVecPermuteCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
 
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
+  output_shape_ = outputs[0]->GetDeviceShapeVector();
   dim_ = input_shape_.size();
   return KRET_OK;
 }

@@ -141,9 +141,9 @@ static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr 
   auto group = static_cast<int>(GetValue<int64_t>(prim->GetAttr("group")));
   auto pad_mode = GetValue<std::string>(prim->GetAttr("pad_mode"));
 
-  auto data_type = inputs[0]->GetDtype();
+  auto data_type = inputs[0]->dtype_id();
   auto data_format_attr = GetValue<std::string>(prim->GetAttr("format"));
-  auto data_format = mindspore::FormatEnumToString(inputs[0]->GetFormat());
+  auto data_format = mindspore::FormatEnumToString(inputs[0]->format());
   if (data_format == kOpFormat_DEFAULT) {
     data_format = kOpFormat_NCHW;
   }

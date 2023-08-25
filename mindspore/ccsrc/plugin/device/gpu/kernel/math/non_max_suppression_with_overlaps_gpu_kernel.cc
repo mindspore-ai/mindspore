@@ -72,16 +72,16 @@ bool NMSWithOverlapsFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   kernel_func_ = func_list_[index].second;
   data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  std::vector<int64_t> overlaps_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> scores_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> max_output_size_shape = std::vector<int64_t>(
-    inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> overlaps_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> scores_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> max_output_size_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                                    inputs.at(kIndex2)->GetDeviceShapeVector().end());
   std::vector<int64_t> overlap_threshold_shape = std::vector<int64_t>(
-    inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> score_threshold_shape = std::vector<int64_t>(
-    inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
+    inputs.at(kIndex3)->GetDeviceShapeVector().begin(), inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> score_threshold_shape = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                                                    inputs.at(kIndex4)->GetDeviceShapeVector().end());
   int64_t overlaps_dims = overlaps_shape.size();
   int64_t scores_dims = scores_shape.size();
   int64_t max_output_size_dims = max_output_size_shape.size();
@@ -146,8 +146,8 @@ int NMSWithOverlapsFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                  inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
     num_input_ = shape[kIndex0];  // Get N value in [N,N] data

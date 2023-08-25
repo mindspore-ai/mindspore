@@ -72,7 +72,7 @@ bool CTCGreedyDecoderCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   for (size_t i = 0; i < kOutputNum - 1; i++) {
     (void)types_.emplace_back(TypeId::kNumberTypeInt64);
   }
-  (void)types_.emplace_back(inputs[0]->GetDtype());
+  (void)types_.emplace_back(inputs[0]->dtype_id());
 
   is_need_retrieve_output_shape_ = true;
   return true;

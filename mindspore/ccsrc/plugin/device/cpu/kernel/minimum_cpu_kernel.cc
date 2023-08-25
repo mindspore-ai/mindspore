@@ -57,11 +57,11 @@ int MinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
 
-  input_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_y_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  TypeId input_x_dtype = inputs[kIndex0]->GetDtype();
-  TypeId input_y_dtype = inputs[kIndex1]->GetDtype();
+  input_x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_y_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  TypeId input_x_dtype = inputs[kIndex0]->dtype_id();
+  TypeId input_y_dtype = inputs[kIndex1]->dtype_id();
   output_num_ = 1;
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();

@@ -27,10 +27,10 @@ bool AdamWeightDecayGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  auto var_data_type = inputs.at(kIndex0)->GetDtype();
+  auto var_data_type = inputs.at(kIndex0)->dtype_id();
   s_type_id_size_ = abstract::TypeIdSize(var_data_type);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
-  auto m_data_type = inputs.at(kIndex1)->GetDtype();
+  auto m_data_type = inputs.at(kIndex1)->dtype_id();
   t_type_id_size_ = abstract::TypeIdSize(m_data_type);
   return MatchKernelFunc(base_operator, inputs, outputs);
 }

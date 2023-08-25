@@ -66,7 +66,7 @@ bool MinimumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
   kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

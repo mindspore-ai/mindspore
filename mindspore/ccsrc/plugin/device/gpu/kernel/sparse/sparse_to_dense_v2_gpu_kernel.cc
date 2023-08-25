@@ -63,12 +63,12 @@ int SparseToDenseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  indices_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                      inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> input_shape_values = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  indices_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                      inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<size_t> input_shape_values = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex2)->GetDeviceShapeVector().end());
   indices_dims_ = indices_shape_.size();
   ndims = indices_shape_.size() > 1 ? indices_shape_[1] : 1;
   num_elems = indices_shape_.size() > 0 ? indices_shape_[0] : 1;

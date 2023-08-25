@@ -49,7 +49,7 @@ int SequenceEqualCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   x_size_ = inputs[0]->GetShapeVector()[0];
   y_size_ = inputs[1]->GetShapeVector()[0];
-  if (inputs[0]->GetDtype() != inputs[1]->GetDtype()) {
+  if (inputs[0]->dtype_id() != inputs[1]->dtype_id()) {
     is_inputs_type_diff_ = true;
   }
   return KRET_OK;

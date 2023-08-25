@@ -77,7 +77,7 @@ int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   workspace_size_list_.push_back(sizeof(int) * input_num_);
   inputs_host_.resize(input_num_);
 
-  auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[0]->GetDeviceShapeVector();
   all_size_before_axis_ = 1;
   all_size_axis_ = 1;
   for (int i = 0; i < SizeToInt(output_shape.size()); i++) {

@@ -54,16 +54,16 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     }
   }
   ResetResource();
-  reverse_map_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  reverse_map_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t reverse_map_dims = reverse_map_shape_.size();
   if (reverse_map_dims != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'reverse_index_map' must be 1-D, but got "
                   << reverse_map_dims << "-D.";
     return false;
   }
-  std::vector<int64_t> grad_values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                                inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> grad_values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                                inputs.at(kIndex1)->GetDeviceShapeVector().end());
   int64_t grad_values_dims = grad_values_shape.size();
   if (grad_values_dims != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'grad_values' must be 1-D, but got "
@@ -80,13 +80,13 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     is_null_input_ = true;
   }
 
-  output_dvalues_size_ = reverse_map_num_ * abstract::TypeIdSize(outputs[kIndex0]->GetDtype());
-  output_ddefault_value_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype());
-  reverse_map_size_ = reverse_map_num_ * abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  grad_values_size_ = grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  output_dvalues_size_ = reverse_map_num_ * abstract::TypeIdSize(outputs[kIndex0]->dtype_id());
+  output_ddefault_value_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id());
+  reverse_map_size_ = reverse_map_num_ * abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  grad_values_size_ = grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   workspace_flag_size_ = grad_values_num_ * sizeof(bool);
   workspace_sum_val_size_ =
-    grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->GetDtype());  // Precision need auxlilary memory
+    grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->dtype_id());  // Precision need auxlilary memory
 
   input_size_list_.push_back(reverse_map_size_);
   input_size_list_.push_back(grad_values_size_);

@@ -55,10 +55,10 @@ int MaximumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  x1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  grad_y1_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  grad_y2_shape_ = inputs[kIndex3]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  grad_y1_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  grad_y2_shape_ = inputs[kIndex3]->GetDeviceShapeVector();
 
   tensor_size_ = 1;
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);

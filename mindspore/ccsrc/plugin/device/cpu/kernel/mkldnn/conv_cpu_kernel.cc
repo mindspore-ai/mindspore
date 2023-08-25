@@ -44,9 +44,9 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (ret != KRET_OK) {
     return ret;
   }
-  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto weight_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  auto weight_shape = inputs[kIndex1]->GetDeviceShapeVector();
+  auto dst_shape = outputs[kIndex0]->GetDeviceShapeVector();
   auto src_dim = src_shape.size();
   if (src_dim != weight_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

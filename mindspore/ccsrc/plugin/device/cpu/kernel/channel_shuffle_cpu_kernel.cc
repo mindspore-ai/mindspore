@@ -35,7 +35,7 @@ constexpr size_t kChannelShuffleOutputsNum = 1;
 bool ChannelShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   group_ = GetValue<int64_t>(base_operator->GetAttr("group"));
   return true;
 }

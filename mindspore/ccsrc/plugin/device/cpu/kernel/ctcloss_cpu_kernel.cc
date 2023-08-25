@@ -97,7 +97,7 @@ int CTCLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   probs_shape_ = inputs[0]->GetShapeVector();
   indices_dims_ = inputs[1]->GetShapeVector();
   labels_dims_ = inputs[2]->GetShapeVector();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   if (probs_shape_.size() != 3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' must be 3-D, but got " << probs_shape_.size()

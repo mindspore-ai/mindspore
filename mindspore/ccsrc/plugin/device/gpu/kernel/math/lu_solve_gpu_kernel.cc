@@ -105,7 +105,7 @@ int LuSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
   const size_t a_size = LongToSize(std::accumulate(a_shape.begin(), a_shape.end(), int64_t(1), std::multiplies{}));
   const size_t b_size = LongToSize(std::accumulate(b_shape.begin(), b_shape.end(), int64_t(1), std::multiplies{}));
-  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->GetDtype()));
+  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->dtype_id()));
 
   workspace_size_list_.clear();
   workspace_size_list_ = {

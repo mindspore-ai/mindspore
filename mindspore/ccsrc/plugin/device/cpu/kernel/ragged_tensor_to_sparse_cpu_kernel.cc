@@ -67,8 +67,8 @@ bool RaggedTensorToSparseCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   kernel_name_ = base_operator->name();
   auto input_num = inputs.size();
   n_ = static_cast<int64_t>(input_num - 1);
-  splits_type_ = inputs[0]->GetDtype();
-  values_type_ = inputs[n_]->GetDtype();
+  splits_type_ = inputs[0]->dtype_id();
+  values_type_ = inputs[n_]->dtype_id();
   size_t min_input_num = 2;
   if (input_num < min_input_num) {
     MS_LOG(EXCEPTION) << "For op " << kernel_name_ << ", the input number must be bigger than " << min_input_num

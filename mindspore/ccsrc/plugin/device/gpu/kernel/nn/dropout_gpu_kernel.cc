@@ -61,8 +61,8 @@ int DropoutFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 
   MS_EXCEPTION_IF_CHECK_FAIL(!input_shape_.empty(), "input shape should not be empty!");
   num_count_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  input_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * num_count_;
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * num_count_;
+  input_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * num_count_;
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * num_count_;
   InitSizeLists();
   keep_prob_ = kernel_ptr->get_keep_prob();
   input_shape_ = inputs[kIndex0]->GetShapeVector();

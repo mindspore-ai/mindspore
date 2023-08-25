@@ -169,8 +169,8 @@ int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_ope
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
-  x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kInputX1]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kInputX2]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

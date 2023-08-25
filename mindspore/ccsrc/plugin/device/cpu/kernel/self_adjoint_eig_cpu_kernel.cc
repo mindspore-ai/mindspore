@@ -41,7 +41,7 @@ bool SelfAdjointEigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   compute_v_ = GetValue<bool>(prim->GetAttr("compute_v"));
 
   return true;

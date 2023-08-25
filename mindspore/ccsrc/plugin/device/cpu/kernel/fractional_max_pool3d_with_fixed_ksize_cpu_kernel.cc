@@ -94,11 +94,11 @@ int FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr 
   if (ret != KRET_OK) {
     return ret;
   }
-  input_type_ = inputs[kInputIndex0]->GetDtype();
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
-  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
+  input_type_ = inputs[kInputIndex0]->dtype_id();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  random_samples_type_ = inputs[kInputIndex1]->dtype_id();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  argmax_type_ = outputs[kOutputIndex1]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DWithFixedKsize>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   output_shape_ = kernel_ptr->get_output_shape();

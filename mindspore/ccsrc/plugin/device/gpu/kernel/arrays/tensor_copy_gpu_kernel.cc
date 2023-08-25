@@ -36,8 +36,8 @@ int TensorCopyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   auto input_shapes = inputs.at(kIndex0)->GetShapeVector();
   auto output_shapes = outputs.at(kIndex0)->GetShapeVector();
-  auto input_type = inputs.at(kIndex0)->GetDtype();
-  auto output_type = outputs.at(kIndex0)->GetDtype();
+  auto input_type = inputs.at(kIndex0)->dtype_id();
+  auto output_type = outputs.at(kIndex0)->dtype_id();
   if (input_type != output_type) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the type of 'input' and the type of 'output' should be same, but 'input' type is "

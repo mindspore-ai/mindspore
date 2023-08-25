@@ -57,7 +57,7 @@ int HammingWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   auto output = outputs.at(kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, KRET_RESIZE_FAILED);
   std::vector<int64_t> output_shape =
-    std::vector<int64_t>(output->GetDeviceShapeAdaptively().begin(), output->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t>(output->GetDeviceShapeVector().begin(), output->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;

@@ -56,8 +56,8 @@ int SearchSortedCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
-  sequence_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  sequence_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   search_len_ = LongToSize(sequence_shape_.back());
   return KRET_OK;
 }

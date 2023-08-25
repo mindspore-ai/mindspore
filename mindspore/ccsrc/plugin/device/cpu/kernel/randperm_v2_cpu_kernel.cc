@@ -43,7 +43,7 @@ bool RandpermV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   MS_EXCEPTION_IF_NULL(randperm_ptr);
   kernel_name_ = base_operator->GetPrim()->name();
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
-  output_type_ = outputs[kOutputIndex0]->GetDtype();
+  output_type_ = outputs[kOutputIndex0]->dtype_id();
   int64_t layout_ = GetValue<int64_t>(randperm_ptr->GetAttr("layout"));
   if (seed_ < 0 && seed_ != -1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_

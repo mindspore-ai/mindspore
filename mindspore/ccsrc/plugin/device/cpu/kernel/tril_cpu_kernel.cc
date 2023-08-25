@@ -34,7 +34,7 @@ bool TrilCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   MS_EXCEPTION_IF_NULL(base_operator);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Tril>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   diagonal_ = kernel_ptr->get_diagonal();
@@ -48,7 +48,7 @@ int TrilCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be at least 1-D, but got "

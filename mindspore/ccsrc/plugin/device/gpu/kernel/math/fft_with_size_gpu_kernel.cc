@@ -176,7 +176,7 @@ bool FFTWithSizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
       return false;
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
+  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   return true;
 }
 

@@ -72,7 +72,7 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
   mode_ = mode_iter->second;
 
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   return true;
 }
 
@@ -97,7 +97,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                                       "For 'ActivationGrad', cudnnCreateTensorDescriptor failed.");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateActivationDescriptor(&activation_desc_),
                                       "For 'ActivationGrad', cudnnCreateActivationDescriptor failed.");
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
   CheckTensorSize({input_shape_});
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? ReLU6_UP_TURNING_POINT : 0.0;
@@ -108,7 +108,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   const int split_dim = 4;
   if (input_shape_.size() <= split_dim) {
     ShapeNdTo4d(input_shape_, &shape);
-    if (inputs.at(kIndex0)->GetFormat() == mindspore::Format::NHWC) {
+    if (inputs.at(kIndex0)->format() == mindspore::Format::NHWC) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, LongToInt(shape[0]),
                                    LongToInt(shape[3]), LongToInt(shape[1]), LongToInt(shape[2])),

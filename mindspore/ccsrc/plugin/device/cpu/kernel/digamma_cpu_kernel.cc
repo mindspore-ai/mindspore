@@ -55,7 +55,7 @@ int DigammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   input_shape_ = inputs[kInputIndex]->GetShapeVector();
   output_shape_ = outputs[kOutputIndex]->GetShapeVector();
   input_tensor_size_ = SizeToLong(SizeOf(input_shape_));
-  dtype_ = inputs[kInputIndex]->GetDtype();
+  dtype_ = inputs[kInputIndex]->dtype_id();
   return 0;
 }
 

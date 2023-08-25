@@ -58,7 +58,7 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 
   is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < kOutputNum; i++) {
-    auto dtype = inputs[i]->GetDtype();
+    auto dtype = inputs[i]->dtype_id();
     (void)types_.emplace_back(dtype);
   }
   return true;

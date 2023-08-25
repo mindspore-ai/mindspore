@@ -40,8 +40,8 @@ bool DenseToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
-  indices_type_ = inputs[kInputIndex1]->GetDtype();
-  values_type_ = inputs[kInputIndex0]->GetDtype();
+  indices_type_ = inputs[kInputIndex1]->dtype_id();
+  values_type_ = inputs[kInputIndex0]->dtype_id();
   return true;
 }
 

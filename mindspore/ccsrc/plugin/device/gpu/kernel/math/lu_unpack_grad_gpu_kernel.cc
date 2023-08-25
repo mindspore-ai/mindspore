@@ -43,13 +43,13 @@ bool LuUnpackGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
 
   kernel_func_ = func_list_[pair.second].second;
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                        inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                        inputs.at(kIndex2)->GetDeviceShapeVector().end());
   return true;
 }
 
@@ -62,12 +62,12 @@ int LuUnpackGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
 
   ResetResource();
-  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                        inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                        inputs.at(kIndex2)->GetDeviceShapeVector().end());
   int64_t input_L_elements_ =
     std::accumulate(input_L_shape.begin(), input_L_shape.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t input_U_elements_ =

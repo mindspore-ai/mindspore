@@ -144,7 +144,7 @@ bool MatrixTriangularSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   }
 
   // the size of per element of args
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
   // set mode and operation
   lower_ = GetValue<bool>(base_operator->GetAttr("lower"));

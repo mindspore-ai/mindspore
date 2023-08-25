@@ -71,7 +71,7 @@ int AdaptiveAvgPool2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   input_dim_sizes_ = inputs[kIndex0]->GetShapeVector();
   size_t input_dims = input_dim_sizes_.size();
   if (input_dims != k3D && input_dims != k4D) {

@@ -38,7 +38,7 @@ bool HistogramCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  x_type_ = inputs[kIndex0]->GetDtype();
+  x_type_ = inputs[kIndex0]->dtype_id();
   auto op_prim = std::dynamic_pointer_cast<ops::Histogram>(base_operator);
   MS_ERROR_IF_NULL(op_prim);
   bins_ = op_prim->get_bins();

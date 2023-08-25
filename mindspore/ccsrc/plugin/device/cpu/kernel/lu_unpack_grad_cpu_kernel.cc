@@ -52,9 +52,9 @@ int LuUnpackGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_L_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_U_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  LU_data_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  input_L_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_U_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  LU_data_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

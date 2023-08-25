@@ -79,7 +79,7 @@ bool BinaryCrossEntropyGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kNumInputWithWeight);
   return true;
@@ -95,7 +95,7 @@ int BinaryCrossEntropyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_size_ = SizeOf(input_shape);
-  workspace_size_ = sizeof(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  workspace_size_ = sizeof(TypeIdToType(inputs[kIndex0]->dtype_id()));
   if (reduction_ != ReductionMode::kNone) {
     workspace_size_ *= input_size_;
   }

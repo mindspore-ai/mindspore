@@ -30,7 +30,7 @@ bool CheckNumericsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'x' should be float16, float32 or float64, but got: " << input_dtype_;

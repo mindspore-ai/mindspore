@@ -53,9 +53,9 @@ int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     num_dim_ = input_indices_shape[1];
 
     output_size_list_.clear();
-    output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype())));
-    output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[kIndex1]->GetDtype())));
-    output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype())));
+    output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id())));
+    output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[kIndex1]->dtype_id())));
+    output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->dtype_id())));
 
     workspace_size_list_.clear();
     workspace_size_list_.push_back(sizeof(int64_t));

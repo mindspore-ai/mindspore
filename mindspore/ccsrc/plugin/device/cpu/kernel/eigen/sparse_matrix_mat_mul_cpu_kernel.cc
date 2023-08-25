@@ -82,8 +82,8 @@ bool SparseMatrixMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   MS_EXCEPTION_IF_NULL(conjugate_output_ptr);
   conjugate_output_ = GetValue<bool>(conjugate_output_ptr);
 
-  indice_type_ = inputs.at(kIndex0)->GetDtype();
-  value_type_ = inputs.at(kIndex4)->GetDtype();
+  indice_type_ = inputs.at(kIndex0)->dtype_id();
+  value_type_ = inputs.at(kIndex4)->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

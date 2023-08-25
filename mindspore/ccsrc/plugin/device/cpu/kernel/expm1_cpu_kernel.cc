@@ -28,7 +28,7 @@ constexpr size_t kExpm1OutputsNum = 1;
 bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
     MS_LOG(ERROR) << "For '" << kernel_name_

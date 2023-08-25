@@ -40,7 +40,7 @@ bool MaximumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                   << kMaximumGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 

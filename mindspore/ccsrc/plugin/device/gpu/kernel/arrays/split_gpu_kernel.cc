@@ -83,7 +83,7 @@ int SplitFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     axis_ += dims;
   }
   std::string origin_data_format = kOpFormat_DEFAULT;
-  auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
+  auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
   axis_ = AxisTransform(origin_data_format, input_format, axis_);
   (void)CheckParam(inputs, outputs);
 

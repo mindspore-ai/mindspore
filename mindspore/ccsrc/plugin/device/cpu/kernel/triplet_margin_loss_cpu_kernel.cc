@@ -44,10 +44,10 @@ int TripletMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_0_ = inputs[kIndex0]->GetDtype();
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  positive_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  negative_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  dtype_0_ = inputs[kIndex0]->dtype_id();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  positive_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  negative_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   auto broadcast_shape_x_and_positive = CPUKernelUtils::GetBroadcastShape(x_shape_, positive_shape_);
   broadcast_shape_ = CPUKernelUtils::GetBroadcastShape(broadcast_shape_x_and_positive, negative_shape_);
   size_t dim_x = x_shape_.size();

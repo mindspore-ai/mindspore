@@ -143,7 +143,7 @@ int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (TryGetIntValue(inputs, kAxisIndex1st, kernel_name_, &perm)) {
     GetPermValue(perm, &input_perm);
   }
-  auto input_shape = inputs[kAxisIndexZero]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[kAxisIndexZero]->GetDeviceShapeVector();
   shape_size_ = input_shape.size();
   if (shape_size_ > transpose_max_dimension) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "

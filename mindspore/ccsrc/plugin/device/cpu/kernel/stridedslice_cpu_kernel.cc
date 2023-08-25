@@ -63,7 +63,7 @@ int StridedSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   input_shape_ = inputs[0]->GetShapeVector();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   output_shape_ = outputs[0]->GetShapeVector();
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be in range [1D, 8D], but got "

@@ -92,7 +92,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size();
   }
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   if (batch_rank_ > 0) {
     if (shape.size() != static_cast<size_t>(batch_rank_ + 1)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -101,7 +101,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                         << shape << " and 'batch_rank': " << batch_rank_;
     }
     std::vector<size_t> pad_shape =
-      std::vector<size_t>(inputs[1]->GetDeviceShapeAdaptively().begin(), inputs[1]->GetDeviceShapeAdaptively().end());
+      std::vector<size_t>(inputs[1]->GetDeviceShapeVector().begin(), inputs[1]->GetDeviceShapeVector().end());
     auto pad_nums = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int64_t>());
     auto batch_size = std::accumulate(shape.begin(), shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
     if (pad_nums != static_cast<int64_t>(batch_size)) {
@@ -118,8 +118,8 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_OK;
   }
 
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
-  input_shapes.emplace_back(inputs[1]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
+  input_shapes.emplace_back(inputs[1]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   is_need_retrieve_output_shape_ = false;

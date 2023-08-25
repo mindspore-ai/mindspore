@@ -55,8 +55,8 @@ bool SparseTensorToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base
                                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  indice_type_ = inputs.at(kIndex0)->GetDtype();
-  value_type_ = inputs.at(kIndex1)->GetDtype();
+  indice_type_ = inputs.at(kIndex0)->dtype_id();
+  value_type_ = inputs.at(kIndex1)->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorToCSRSparseMatrixInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorToCSRSparseMatrixOutputsNum, kernel_name_);
   return true;

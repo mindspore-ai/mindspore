@@ -84,7 +84,7 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  data_type_ = inputs.at(kIndex0)->GetDtype();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   if (input_shape.empty()) {

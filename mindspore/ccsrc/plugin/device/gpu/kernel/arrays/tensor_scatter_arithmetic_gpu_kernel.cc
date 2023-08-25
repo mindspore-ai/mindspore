@@ -90,8 +90,8 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input args not supports Complex.";
     return false;
   }
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   return true;
 }
 

@@ -139,7 +139,7 @@ int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &, const std::vector
     out_row_ = static_cast<size_t>(out_shape[kDim0]);
     out_col_ = static_cast<size_t>(out_shape[kDim1]);
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return KRET_OK;
 }
 

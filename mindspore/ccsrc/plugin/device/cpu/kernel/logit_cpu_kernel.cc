@@ -52,7 +52,7 @@ int LogitCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   if (ret != KRET_OK) {
     return ret;
   }
-  input_dtype_ = inputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ =

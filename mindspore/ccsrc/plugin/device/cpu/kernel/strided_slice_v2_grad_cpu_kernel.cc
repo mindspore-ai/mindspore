@@ -386,8 +386,8 @@ bool StridedSliceV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  dtype_ = inputs[kIndex4]->GetDtype();
-  dtype_grad_attr = inputs[kIndex1]->GetDtype();
+  dtype_ = inputs[kIndex4]->dtype_id();
+  dtype_grad_attr = inputs[kIndex1]->dtype_id();
 
   return true;
 }

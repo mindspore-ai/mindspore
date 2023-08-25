@@ -140,13 +140,13 @@ int RaggedRangeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
   }
   auto starts_shape = inputs[startsIdx]->GetShapeVector();
-  auto starts_type = inputs[startsIdx]->GetDtype();
+  auto starts_type = inputs[startsIdx]->dtype_id();
   size_t starts_dim = starts_shape.size();
   auto limits_shape = inputs[limitsIdx]->GetShapeVector();
-  auto limits_type = inputs[limitsIdx]->GetDtype();
+  auto limits_type = inputs[limitsIdx]->dtype_id();
   size_t limits_dim = limits_shape.size();
   auto deltas_shape = inputs[deltasIdx]->GetShapeVector();
-  auto deltas_type = inputs[deltasIdx]->GetDtype();
+  auto deltas_type = inputs[deltasIdx]->dtype_id();
   size_t deltas_dim = deltas_shape.size();
   if (starts_dim > 1) {
     MS_LOG(EXCEPTION) << "For RaggedRange, the dimension of RaggedRange input starts must be less than 2, but got "

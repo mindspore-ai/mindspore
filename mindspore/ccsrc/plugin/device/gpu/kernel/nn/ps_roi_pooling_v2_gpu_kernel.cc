@@ -93,7 +93,7 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_RESIZE_FAILED;
   }
 
-  data_type_id_ = inputs[0]->GetDtype();
+  data_type_id_ = inputs[0]->dtype_id();
 
   auto input_size = inputs[0]->GetShapeVector();
   feature_channels_ = static_cast<int32_t>(input_size[kInputChannelsIndex]);
@@ -140,11 +140,11 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   output_size_list_.clear();
 
   for (auto tensor_ptr : inputs) {
-    input_size_list_.push_back(tensor_ptr->GetSizeInBytes());
+    input_size_list_.push_back(tensor_ptr->size());
   }
 
   for (auto tensor_ptr : outputs) {
-    output_size_list_.push_back(tensor_ptr->GetSizeInBytes());
+    output_size_list_.push_back(tensor_ptr->size());
   }
 
   return KRET_OK;

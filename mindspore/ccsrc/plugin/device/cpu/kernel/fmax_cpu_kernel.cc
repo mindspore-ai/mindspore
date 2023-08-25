@@ -67,8 +67,8 @@ int FmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   input_y_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
   output_num_ = 1;
-  TypeId input_x_dtype = inputs[0]->GetDtype();
-  TypeId input_y_dtype = inputs[1]->GetDtype();
+  TypeId input_x_dtype = inputs[0]->dtype_id();
+  TypeId input_y_dtype = inputs[1]->dtype_id();
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {

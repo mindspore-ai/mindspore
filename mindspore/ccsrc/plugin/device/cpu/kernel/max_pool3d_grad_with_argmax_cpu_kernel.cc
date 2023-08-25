@@ -38,8 +38,8 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->GetPrim()->name();
 
-  x_dtype_ = inputs[kZero]->GetDtype();
-  argmax_dtype_ = inputs[kTwo]->GetDtype();
+  x_dtype_ = inputs[kZero]->dtype_id();
+  argmax_dtype_ = inputs[kTwo]->dtype_id();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DGradWithArgmax>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
@@ -66,9 +66,9 @@ int MaxPool3DGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     return ret;
   }
 
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grads_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  y_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  grads_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  y_shape_ = outputs[kZero]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

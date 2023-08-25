@@ -57,9 +57,9 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-  dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+  dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+  dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
 
   if (dtype_a_ != dtype_b_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the types of inputs are not the same.";

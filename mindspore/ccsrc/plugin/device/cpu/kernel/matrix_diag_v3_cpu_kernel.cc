@@ -74,9 +74,9 @@ int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
-  diagonal_data_type_ = inputs[kIndex0]->GetDtype();
-  auto padding_type = inputs[kIndexPaddingValue]->GetDtype();
-  auto output_data_type = outputs[kIndex0]->GetDtype();
+  diagonal_data_type_ = inputs[kIndex0]->dtype_id();
+  auto padding_type = inputs[kIndexPaddingValue]->dtype_id();
+  auto output_data_type = outputs[kIndex0]->dtype_id();
 
   if (diagonal_data_type_ != padding_type) {
     MS_LOG(ERROR) << "For MatrixDiagV3, the data type of x need be same with padding_value.";

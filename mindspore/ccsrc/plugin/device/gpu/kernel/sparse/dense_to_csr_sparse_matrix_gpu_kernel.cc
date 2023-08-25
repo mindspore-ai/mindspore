@@ -266,13 +266,13 @@ int DenseToCSRSparseMatrixKernelMod::Resize(const BaseOperatorPtr &base_operator
     return ret;
   }
 
-  input_shapes_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetDeviceShapeAdaptively());
-  indices_shapes_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetDeviceShapeAdaptively());
-  dense_shape_shapes_ = Convert2SizeTClipNeg(outputs[kIndex0]->GetDeviceShapeAdaptively());
-  batch_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex1]->GetDeviceShapeAdaptively());
-  row_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex2]->GetDeviceShapeAdaptively());
-  col_indices_shapes_ = Convert2SizeTClipNeg(outputs[kIndex3]->GetDeviceShapeAdaptively());
-  value_shapes_ = Convert2SizeTClipNeg(outputs[kIndex4]->GetDeviceShapeAdaptively());
+  input_shapes_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetDeviceShapeVector());
+  indices_shapes_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetDeviceShapeVector());
+  dense_shape_shapes_ = Convert2SizeTClipNeg(outputs[kIndex0]->GetDeviceShapeVector());
+  batch_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex1]->GetDeviceShapeVector());
+  row_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex2]->GetDeviceShapeVector());
+  col_indices_shapes_ = Convert2SizeTClipNeg(outputs[kIndex3]->GetDeviceShapeVector());
+  value_shapes_ = Convert2SizeTClipNeg(outputs[kIndex4]->GetDeviceShapeVector());
 
   nnz_ = value_shapes_[kIndex0];
   m_ = input_shapes_[kIndex0];

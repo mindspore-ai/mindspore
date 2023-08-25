@@ -107,10 +107,10 @@ int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                     inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto in_shape_size = input_shape_.size();
   if (in_shape_size > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

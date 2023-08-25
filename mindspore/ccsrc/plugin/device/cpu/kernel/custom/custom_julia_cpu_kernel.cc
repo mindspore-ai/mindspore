@@ -44,7 +44,7 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   func_name_ = exec_info.substr(pos2 + 1);
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    auto dtype = inputs[i]->GetDtype();
+    auto dtype = inputs[i]->dtype_id();
     auto in_shape = inputs[i]->GetShapeVector();
     ndims_.push_back(in_shape.size());
     shape_list_.push_back(in_shape);
@@ -52,7 +52,7 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    auto dtype = outputs[i]->GetDtype();
+    auto dtype = outputs[i]->dtype_id();
     auto out_shape = outputs[i]->GetShapeVector();
     ndims_.push_back(out_shape.size());
     shape_list_.push_back(out_shape);

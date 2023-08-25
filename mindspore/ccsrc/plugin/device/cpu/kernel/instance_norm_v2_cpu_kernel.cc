@@ -205,7 +205,7 @@ bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  in_type_ = inputs[kIndex0]->GetDtype();
+  in_type_ = inputs[kIndex0]->dtype_id();
   is_training_ = GetValue<bool>(prim->GetAttr(kAttrIsTraining));
   momentum_ = GetValue<float>(prim->GetAttr(kAttrMomentum));
   epsilon_ = GetValue<float>(prim->GetAttr(kAttrEpsilon));

@@ -53,8 +53,8 @@ int FractionalAvgPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (ret != KRET_OK) {
     return ret;
   }
-  orig_input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  out_backprop_shape_ = inputs[1]->GetDeviceShapeAdaptively();
+  orig_input_shape_ = inputs[0]->GetDeviceShapeVector();
+  out_backprop_shape_ = inputs[1]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

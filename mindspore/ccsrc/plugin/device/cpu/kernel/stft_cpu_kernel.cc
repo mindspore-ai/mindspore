@@ -129,9 +129,9 @@ bool STFTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  input_type_1_ = inputs[kIndex0]->GetDtype();
-  input_type_2_ = inputs[kIndex1]->GetDtype();
-  output_type_ = outputs[kIndex0]->GetDtype();
+  input_type_1_ = inputs[kIndex0]->dtype_id();
+  input_type_2_ = inputs[kIndex1]->dtype_id();
+  output_type_ = outputs[kIndex0]->dtype_id();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;

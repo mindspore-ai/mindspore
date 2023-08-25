@@ -68,11 +68,11 @@ int ExtractGlimpseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_dtype_ = inputs[kIndex0]->GetDtype();
-  size_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  offsets_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
+  size_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  offsets_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

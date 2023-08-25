@@ -43,7 +43,7 @@ bool TruncCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   return true;
 }
 

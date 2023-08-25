@@ -66,7 +66,7 @@ int MvlgammaGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
   return KRET_OK;
 }

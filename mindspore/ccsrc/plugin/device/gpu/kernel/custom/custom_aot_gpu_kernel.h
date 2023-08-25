@@ -153,7 +153,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
 
     for (size_t i = 0; i < inputs.size(); i++) {
       auto in_shape = inputs[i]->GetShapeVector();
-      auto dtype = inputs[i]->GetDtype();
+      auto dtype = inputs[i]->dtype_id();
       (void)type_list_.emplace_back(TypeIdToString(dtype, true));
       ndims_.push_back(SizeToInt(in_shape.size()));
       (void)shape_list_.emplace_back(in_shape);
@@ -161,7 +161,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
 
     for (size_t i = 0; i < outputs.size(); i++) {
       auto out_shape = outputs[i]->GetShapeVector();
-      auto dtype = outputs[i]->GetDtype();
+      auto dtype = outputs[i]->dtype_id();
       (void)shape_list_.emplace_back(out_shape);
       ndims_.push_back(SizeToInt(out_shape.size()));
       (void)type_list_.emplace_back(TypeIdToString(dtype, true));

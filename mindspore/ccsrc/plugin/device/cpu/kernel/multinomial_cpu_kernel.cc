@@ -66,9 +66,9 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  output_dtype_ = outputs[0]->GetDtype();
-  input0_dtype_ = inputs[0]->GetDtype();
-  input1_dtype_ = inputs[1]->GetDtype();
+  output_dtype_ = outputs[0]->dtype_id();
+  input0_dtype_ = inputs[0]->dtype_id();
+  input1_dtype_ = inputs[1]->dtype_id();
   uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
   uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);

@@ -30,7 +30,7 @@ bool ApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 

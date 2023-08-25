@@ -63,9 +63,9 @@ int DropoutGradBwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   MS_EXCEPTION_IF_CHECK_FAIL(!dy_shape_.empty(), "dy_shape_ should not be empty!");
   num_count_ = std::accumulate(dy_shape_.begin(), dy_shape_.end(), 1, std::multiplies<size_t>());
 
-  dy_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * num_count_;
-  mask_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * num_count_;
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * num_count_;
+  dy_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * num_count_;
+  mask_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * num_count_;
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * num_count_;
 
   InitSizeLists();
   return 0;

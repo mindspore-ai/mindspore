@@ -52,7 +52,7 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = kernel_ptr->name();
   p_ = kernel_ptr->get_p();
 
-  auto input_type_id = inputs[0]->GetDtype();
+  auto input_type_id = inputs[0]->dtype_id();
   switch (input_type_id) {
     case kNumberTypeFloat32:
       InitFunc(p_);

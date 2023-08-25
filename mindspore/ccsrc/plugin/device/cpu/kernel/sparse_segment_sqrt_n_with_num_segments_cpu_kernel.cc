@@ -39,8 +39,8 @@ bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNWithNumSegmentsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNWithNumSegmentsOutputsNum, kernel_name_);
-  xdtype_ = inputs.at(kIndex0)->GetDtype();
-  dtype1_ = inputs.at(kIndex1)->GetDtype();
+  xdtype_ = inputs.at(kIndex0)->dtype_id();
+  dtype1_ = inputs.at(kIndex1)->dtype_id();
   return true;
 }
 
@@ -52,10 +52,10 @@ int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr 
     return ret;
   }
   MS_EXCEPTION_IF_NULL(base_operator);
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

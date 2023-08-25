@@ -108,7 +108,7 @@ bool ScaleGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_name_ = kernel_ptr->name();
   auto input_size = inputs.size();
   for (size_t index = 0; index < input_size; index++) {
-    auto type_id = inputs[index]->GetDtype();
+    auto type_id = inputs[index]->dtype_id();
     input_info_.push_back(type_id);
     auto size = GetInputSize(inputs[index]->GetShapeVector(), type_id);
     input_size_list_.push_back(size);

@@ -36,7 +36,7 @@ bool InTopKGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   auto kernel_ptr = std::dynamic_pointer_cast<ops::InTopK>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   k_ = kernel_ptr->get_k();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

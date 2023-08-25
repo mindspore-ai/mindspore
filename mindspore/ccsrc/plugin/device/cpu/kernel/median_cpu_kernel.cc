@@ -52,7 +52,7 @@ bool MedianCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianOutputsNum, kernel_name_);
   kernel_name_ = base_operator->GetPrim()->name();
-  input_type_ = inputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
@@ -70,7 +70,7 @@ int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return ret;
   }
 
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   input_dim_ = input_shape_.size();
   input_num_elements_ = 1;
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

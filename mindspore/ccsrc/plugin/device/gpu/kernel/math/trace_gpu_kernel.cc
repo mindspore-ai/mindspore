@@ -53,8 +53,8 @@ int TraceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   size_t input_dims = input_shape.size();
   if (input_dims <= kIndex1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims

@@ -123,7 +123,7 @@ bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
   }
 
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   kernel_name_ = prim->name();
   batch_rank_ = base_operator->get_batch_rank();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);

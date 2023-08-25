@@ -165,7 +165,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
     MS_EXCEPTION_IF_NULL(kernel_ptr);
     InitResource();
-    data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+    data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
     (void)CheckIONumber(inputs, outputs);
     epsilon_ = kernel_ptr->get_epsilon();
     return true;

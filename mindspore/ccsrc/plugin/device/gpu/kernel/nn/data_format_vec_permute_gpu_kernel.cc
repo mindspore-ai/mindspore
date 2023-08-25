@@ -75,10 +75,10 @@ int DataFormatVecPermuteGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
   std::vector<int64_t> shape1 = {4};
   std::vector<int64_t> shape2 = {4, 2};
   if (input_shape_ != shape1 && input_shape_ != shape2) {

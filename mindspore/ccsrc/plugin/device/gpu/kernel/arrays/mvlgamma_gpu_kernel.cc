@@ -56,8 +56,8 @@ int MvlgammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
   if (input_elements_ == 0) {
     is_null_input_ = true;

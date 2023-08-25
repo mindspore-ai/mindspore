@@ -54,7 +54,7 @@ bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  out_backprop_type_ = inputs[kInputIndex1]->GetDtype();
+  out_backprop_type_ = inputs[kInputIndex1]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -79,9 +79,9 @@ int FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPt
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
   if (input_shape_.size() != kInputsDimSize) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', The dim of input origin_input must be 4, but got "
                              << input_shape_.size() << ".";

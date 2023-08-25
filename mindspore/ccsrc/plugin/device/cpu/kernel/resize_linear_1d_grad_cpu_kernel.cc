@@ -143,7 +143,7 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  type_ = inputs[kIndex0]->GetDtype();
+  type_ = inputs[kIndex0]->dtype_id();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;

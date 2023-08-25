@@ -88,10 +88,10 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
 
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   output_size_ = SizeOf(output_shape_);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   num_axes_ = input_shape_.size();
   strides_.resize(num_axes_);
   out_strides_.resize(num_axes_);
@@ -102,8 +102,8 @@ int TransposeFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     out_strides_[i - 1] = output_shape_[i] * out_strides_[i];
   }
 
-  perm_type_ = inputs[kIndex1]->GetDtype();
-  perm_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  perm_type_ = inputs[kIndex1]->dtype_id();
+  perm_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
 
   perm_.clear();
   got_perm_value_ = TryGetIntValue(inputs, kIndex1, kernel_name_, &perm_, false);

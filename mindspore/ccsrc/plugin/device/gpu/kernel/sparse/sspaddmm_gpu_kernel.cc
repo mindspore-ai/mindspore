@@ -59,14 +59,14 @@ int SspaddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     }
   }
   ResetResource();
-  std::vector<int64_t> x1_indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> x2_indices_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> x3_dense_shape = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex6)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> y_indices_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> x1_indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> x2_indices_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> x3_dense_shape = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex6)->GetDeviceShapeVector().end());
+  std::vector<int64_t> y_indices_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              outputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t x3_dense_elements_ =
     std::accumulate(x3_dense_shape.begin(), x3_dense_shape.end(), int64_t(1), std::multiplies<int64_t>());
   x1_values_num_ = x1_indices_shape[1];

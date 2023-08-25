@@ -60,11 +60,11 @@ int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &b
   if (ret != KRET_OK) {
     return ret;
   }
-  x_dtype_ = inputs[kIndex0]->GetDtype();
-  indices_dtype_ = inputs[kIndex1]->GetDtype();
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  x_dtype_ = inputs[kIndex0]->dtype_id();
+  indices_dtype_ = inputs[kIndex1]->dtype_id();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

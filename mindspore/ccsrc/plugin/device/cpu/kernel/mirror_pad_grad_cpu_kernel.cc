@@ -37,8 +37,8 @@ bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   std::string mode = GetValue<std::string>(prim->GetAttr("mode"));
-  dtype_ = inputs[0]->GetDtype();
-  pad_dtype_ = inputs[1]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
+  pad_dtype_ = inputs[1]->dtype_id();
   if (mode == "REFLECT") {
     mode_ = 1;
   } else if (mode == "SYMMETRIC") {

@@ -57,10 +57,10 @@ int ExpandCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_x_shape_ = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeAdaptively());
-  input_x_dtype_ = inputs[kIndex0]->GetDtype();
-  input_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeAdaptively());
-  output_y_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeAdaptively());
+  input_x_shape_ = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeVector());
+  input_x_dtype_ = inputs[kIndex0]->dtype_id();
+  input_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeVector());
+  output_y_shape_ = LongVecToSizeVec(outputs[kIndex0]->GetDeviceShapeVector());
   return KRET_OK;
 }
 

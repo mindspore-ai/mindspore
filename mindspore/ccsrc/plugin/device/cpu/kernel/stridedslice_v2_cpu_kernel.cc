@@ -441,8 +441,8 @@ bool StridedSliceV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
-  dtype_attr_ = inputs[kIndex1]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  dtype_attr_ = inputs[kIndex1]->dtype_id();
 
   return true;
 }

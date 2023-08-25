@@ -33,8 +33,8 @@ bool EluGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   auto kernel_ptr = std::dynamic_pointer_cast<ops::EluGrad>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   kernel_name_ = kernel_ptr->name();
-  dtype_ = inputs[0]->GetDtype();
-  auto dtype_1 = inputs[1]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
+  auto dtype_1 = inputs[1]->dtype_id();
   if (dtype_ != dtype_1) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', 'input0' and 'input1' must have the same data type, but got the dtype of 'input0': " << dtype_

@@ -31,7 +31,7 @@ bool AngleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   return true;
 }
 

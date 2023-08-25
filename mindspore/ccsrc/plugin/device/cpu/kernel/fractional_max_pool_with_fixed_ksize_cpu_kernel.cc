@@ -67,9 +67,9 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &ba
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  input_type_ = inputs[kInputIndex0]->GetDtype();
-  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
-  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
+  input_type_ = inputs[kInputIndex0]->dtype_id();
+  random_samples_type_ = inputs[kInputIndex1]->dtype_id();
+  argmax_type_ = outputs[kOutputIndex1]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -120,8 +120,8 @@ int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &b
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
 
   input_n_ = input_shape_[kInputDimIndexN];
   input_c_ = input_shape_[kInputDimIndexC];

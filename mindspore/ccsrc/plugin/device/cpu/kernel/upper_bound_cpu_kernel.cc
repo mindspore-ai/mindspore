@@ -45,9 +45,9 @@ int UpperBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     return ret;
   }
 
-  sorted_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  sorted_x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
 
   size_t size_exp = 2;
   if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||

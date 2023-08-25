@@ -55,7 +55,7 @@ int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborGrad>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(op_prim, KRET_RESIZE_FAILED);
   align_corners_ = op_prim->get_align_corners();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input must be "

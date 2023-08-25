@@ -32,7 +32,7 @@ bool TriuCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   MS_EXCEPTION_IF_NULL(base_operator);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   kernel_name_ = base_operator->name();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Triu>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   diagonal_ = kernel_ptr->get_diagonal();

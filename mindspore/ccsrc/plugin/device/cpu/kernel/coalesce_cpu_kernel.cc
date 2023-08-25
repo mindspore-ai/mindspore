@@ -56,7 +56,7 @@ bool CoalesceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCoalesceInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCoalesceOutputsNum, kKernelName);
-  dtype_ = inputs.at(kIndex1)->GetDtype();
+  dtype_ = inputs.at(kIndex1)->dtype_id();
   is_need_retrieve_output_shape_ = true;
   return true;
 }

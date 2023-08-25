@@ -43,8 +43,8 @@ bool NonZeroCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
-  data_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  index_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype());
+  data_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  index_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id());
   return true;
 }
 
@@ -56,7 +56,7 @@ int NonZeroCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   ResetResource();
-  auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
   input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>{});

@@ -147,7 +147,7 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
       const unsigned int lrnN = 2 * depth_radius_ + 1;
       double lrnAlpha = lrnN * alpha_;
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->dtype_id()));
       SetCUDNNDescriptors(input_shape_, lrnN, lrnAlpha);
     }
 

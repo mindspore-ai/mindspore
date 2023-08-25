@@ -40,7 +40,7 @@ bool OrmqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     return false;
   }
   launch_kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   left_ = kernel_ptr->get_left();
   transpose_ = kernel_ptr->get_transpose();
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
@@ -64,7 +64,7 @@ int OrmqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   side_ = left_ ? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT;
   bool is_complex =
-    (inputs[kIndex0]->GetDtype() == kNumberTypeComplex64) || (inputs[kIndex0]->GetDtype() == kNumberTypeComplex128);
+    (inputs[kIndex0]->dtype_id() == kNumberTypeComplex64) || (inputs[kIndex0]->dtype_id() == kNumberTypeComplex128);
   trans_ = transpose_ ? (is_complex ? CUBLAS_OP_C : CUBLAS_OP_T) : CUBLAS_OP_N;
   m_ = other_shape_[other_shape_.size() - kDim2];
   n_ = other_shape_[other_shape_.size() - kDim1];

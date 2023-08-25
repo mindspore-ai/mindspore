@@ -69,7 +69,7 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   format_ = kernel_ptr->get_format();
   beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   size_t input_num = inputs.size();
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
     if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM && activation_type_ != mindspore::ActivationType::SWISH) {
@@ -104,10 +104,10 @@ int BatchNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 
   beta_data_diff_ = 0;
 
-  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
 
-  auto format = inputs[kIndex0]->GetFormat();
+  auto format = inputs[kIndex0]->format();
   if (x_shape_size == kBatchNormGradInputShapeMinSize) {
     format = Format::NCHW;
   } else if (format_ == Format::NHWC) {

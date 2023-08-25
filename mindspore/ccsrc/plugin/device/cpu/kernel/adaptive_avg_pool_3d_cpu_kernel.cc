@@ -93,7 +93,7 @@ int AdaptiveAvgPool3DCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   size_t input_dims = input_dim_sizes_.size();
   if (input_dims != k4D && input_dims != k5D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimensions of input should be 4 or 5, but got "

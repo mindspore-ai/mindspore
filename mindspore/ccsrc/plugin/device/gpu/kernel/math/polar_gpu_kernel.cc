@@ -64,8 +64,8 @@ int PolarGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;

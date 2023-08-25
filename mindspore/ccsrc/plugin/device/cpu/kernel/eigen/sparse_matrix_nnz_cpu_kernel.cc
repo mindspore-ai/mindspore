@@ -65,7 +65,7 @@ int SparseMatrixNNZCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                       << ",).";
   }
   batch_size_ = static_cast<size_t>(inputs.at(kIndex1)->GetShapeVector()[0] - 1);
-  value_type_ = inputs.at(kIndex0)->GetDtype();
+  value_type_ = inputs.at(kIndex0)->dtype_id();
   return KRET_OK;
 }
 

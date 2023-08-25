@@ -52,10 +52,10 @@ int TruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return false;
   }
   ResetResource();
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
   for (size_t i = 0; i < input_shape_.size(); i++) {
     input_num_ *= input_shape_[i];

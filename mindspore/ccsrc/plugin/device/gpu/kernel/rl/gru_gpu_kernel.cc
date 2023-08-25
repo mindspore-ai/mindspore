@@ -45,7 +45,7 @@ bool GruGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGruOutputsNum, kernel_name_);
   InitResource();
 
-  if (!GetCudnnDataType(TypeIdLabel(inputs[kInputsXIndex]->GetDtype()), &cudnn_data_type_)) {
+  if (!GetCudnnDataType(TypeIdLabel(inputs[kInputsXIndex]->dtype_id()), &cudnn_data_type_)) {
     MS_LOG(ERROR) << kernel_name_ << ": Get cudnn data type failed.";
     return false;
   }

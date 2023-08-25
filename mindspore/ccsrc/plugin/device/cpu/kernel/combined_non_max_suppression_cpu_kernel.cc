@@ -367,17 +367,17 @@ int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   CHECK_KERNEL_INPUTS_NUM(input_num, kCombinedNonMaxSuppressionInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kCombinedNonMaxSuppressionOutputsNum, kernel_name_);
 
-  input0_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input1_shape_ = inputs.at(KIndex1)->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs.at(KIndex2)->GetDeviceShapeAdaptively();
-  input3_shape_ = inputs.at(KIndex3)->GetDeviceShapeAdaptively();
-  input4_shape_ = inputs.at(KIndex4)->GetDeviceShapeAdaptively();
-  input5_shape_ = inputs.at(KIndex5)->GetDeviceShapeAdaptively();
+  input0_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input1_shape_ = inputs.at(KIndex1)->GetDeviceShapeVector();
+  input2_shape_ = inputs.at(KIndex2)->GetDeviceShapeVector();
+  input3_shape_ = inputs.at(KIndex3)->GetDeviceShapeVector();
+  input4_shape_ = inputs.at(KIndex4)->GetDeviceShapeVector();
+  input5_shape_ = inputs.at(KIndex5)->GetDeviceShapeVector();
 
-  output0_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  output1_shape_ = outputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  output2_shape_ = outputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  output3_shape_ = outputs.at(kIndex3)->GetDeviceShapeAdaptively();
+  output0_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
+  output1_shape_ = outputs.at(kIndex1)->GetDeviceShapeVector();
+  output2_shape_ = outputs.at(kIndex2)->GetDeviceShapeVector();
+  output3_shape_ = outputs.at(kIndex3)->GetDeviceShapeVector();
 
   soft_nms_sigma_ = 0.0;
   num_bath_ = static_cast<int>(input0_shape_[0]);

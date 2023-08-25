@@ -52,7 +52,7 @@ bool PoolingGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     include_ = kernel_ptr->get_count_include_pad();
   }
   SetFirstInputIndex(inputs.size());
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(first_input_index_)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(first_input_index_)->dtype_id()));
   SetPoolingMode();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -203,15 +203,15 @@ bool PoolingGradGpuKernelMod::InitShape(const std::vector<KernelTensorPtr> &inpu
                                         int *strideAout, int nbDims) {
   ShapeVector dout_shape, input_mask, output_shape, input_shape;
   if (kernel_name_ == kAvgPool3DGrad) {
-    dout_shape = inputs.at(first_input_index_)->GetDeviceShapeAdaptively();
-    output_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+    dout_shape = inputs.at(first_input_index_)->GetDeviceShapeVector();
+    output_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
     input_mask = dout_shape;
     input_shape = output_shape;
   } else {
-    input_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-    input_mask = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-    dout_shape = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-    output_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+    input_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+    input_mask = inputs.at(kIndex1)->GetDeviceShapeVector();
+    dout_shape = inputs.at(kIndex2)->GetDeviceShapeVector();
+    output_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   }
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(input_mask, kernel_name_, "mask") ||
@@ -220,7 +220,7 @@ bool PoolingGradGpuKernelMod::InitShape(const std::vector<KernelTensorPtr> &inpu
     InitSizeLists();
     return false;
   }
-  auto data_format = GetFormatFromEnumToStr(inputs.at(first_input_index_)->GetFormat());
+  auto data_format = GetFormatFromEnumToStr(inputs.at(first_input_index_)->format());
   if (Anyone(format_attr_, Format::NHWC, Format::NDHWC)) {
     data_format = GetFormatFromEnumToStr(format_attr_);
   }

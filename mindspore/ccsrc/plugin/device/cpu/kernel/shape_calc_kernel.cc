@@ -44,6 +44,27 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "cast ShapeCalc ops failed!";
     return KRET_RESIZE_FAILED;
   }
+  is_need_retrieve_output_shape_ = (ret == KRET_UNKNOWN_OUT_SHAPE);
+  inputs_size_.clear();
+  inputs_type_.clear();
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto input_shape = inputs[i]->GetShapeVector();
+    auto sz = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
+    inputs_size_.push_back(sz);
+
+    auto type_id = inputs[i]->dtype_id();
+    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
+      MS_LOG(EXCEPTION) << "For ShapeCalc input should be int32 or int64, but got " << TypeIdToString(type_id);
+    }
+    inputs_type_.push_back(type_id);
+  }
+
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto type_id = outputs[i]->dtype_id();
+    if (type_id != kNumberTypeInt64) {
+      MS_LOG(EXCEPTION) << "For ShapeCalc output should be int64, but got " << TypeIdToString(type_id);
+    }
+  }
   outs_shape_ = operator_ptr->get_calc_result();
   return ret;
 }

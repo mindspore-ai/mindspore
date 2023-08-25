@@ -178,7 +178,7 @@ int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape[batch_rank_] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else {

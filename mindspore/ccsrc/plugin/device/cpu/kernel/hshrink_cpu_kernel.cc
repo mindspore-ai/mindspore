@@ -47,7 +47,7 @@ bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   lambd_ = kernel_ptr->get_lambd();
 
-  auto input_type_id = inputs[0]->GetDtype();
+  auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "HShrink kernel does not support " << TypeIdToString(input_type_id);
     return false;

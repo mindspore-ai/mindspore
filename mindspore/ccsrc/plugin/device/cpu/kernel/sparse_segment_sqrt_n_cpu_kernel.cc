@@ -38,9 +38,9 @@ bool SparseSegmentSqrtNCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNOutputsNum, kernel_name_);
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  dtype1_ = inputs.at(kIndex1)->GetDtype();
-  dtype2_ = inputs.at(kIndex2)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  dtype1_ = inputs.at(kIndex1)->dtype_id();
+  dtype2_ = inputs.at(kIndex2)->dtype_id();
   return true;
 }
 

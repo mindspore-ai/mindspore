@@ -40,7 +40,7 @@ bool UnsortedSegmentProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
 
-  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -57,9 +57,9 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return ret;
   }
 
-  auto input_shapes = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto ids_shapes = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto output_shapes = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input_shapes = inputs[kIndex0]->GetDeviceShapeVector();
+  auto ids_shapes = inputs[kIndex1]->GetDeviceShapeVector();
+  auto output_shapes = outputs[kIndex0]->GetDeviceShapeVector();
 
   batch_size_ = 1;
   for (int64_t i = 0; i < batch_rank_; i++) {

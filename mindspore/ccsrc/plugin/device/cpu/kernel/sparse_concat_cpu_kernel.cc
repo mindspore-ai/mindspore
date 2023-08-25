@@ -47,8 +47,8 @@ bool SparseConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   kernel_name_ = base_operator->name();
   input_num_ = inputs.size();
   size_t N = input_num_ / kCOOTensorNum;
-  values_dtype_ = inputs[N]->GetDtype();
-  shapes_dtype_ = inputs[N * kSpInputShapesStart]->GetDtype();
+  values_dtype_ = inputs[N]->dtype_id();
+  shapes_dtype_ = inputs[N * kSpInputShapesStart]->dtype_id();
   size_t min_input_mun = 6;
   size_t nocoo_input_num = 0;
   if (((input_num_ % kCOOElementNum) != nocoo_input_num) && (input_num_ < min_input_mun)) {

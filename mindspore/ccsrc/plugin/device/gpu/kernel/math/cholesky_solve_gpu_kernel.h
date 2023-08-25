@@ -175,7 +175,7 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     ldb_ = m_;
     lda_ = m_;
     nrhs_ = b_shape.back();
-    size_t out_size = SizeOf(outputs[0]->GetShapeVector()) * GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
+    size_t out_size = SizeOf(outputs[0]->GetShapeVector()) * GetTypeByte(TypeIdToType(outputs[0]->dtype_id()));
     workspace_size_list_.clear();
     workspace_size_list_ = {batch_num_ * sizeof(float *), batch_num_ * sizeof(float *), batch_num_ * sizeof(float *),
                             out_size};

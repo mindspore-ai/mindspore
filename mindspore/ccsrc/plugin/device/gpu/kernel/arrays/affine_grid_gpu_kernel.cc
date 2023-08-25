@@ -110,7 +110,7 @@ bool AffineGridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
+  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   return true;
 }
 

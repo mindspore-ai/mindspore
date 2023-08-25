@@ -65,22 +65,22 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeFloat32) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeFloat32) {
     computeType = CUDA_R_32F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeFloat64) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeFloat64) {
     computeType = CUDA_R_64F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeComplex64) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeComplex64) {
     computeType = CUDA_C_32F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeComplex128) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeComplex128) {
     computeType = CUDA_C_64F;
   }
   is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < inputs.size(); i++) {
-    std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> input_shape =
+      std::vector<int64_t>(inputs.at(i)->GetDeviceShapeVector().begin(), inputs.at(i)->GetDeviceShapeVector().end());
 
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
@@ -95,8 +95,8 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
   x2_nnz = ele_size_vec[InputList::X2_VALUES][0];
   batch_ele = ele_size_vec[InputList::X1_BATCH_POINTERS][0];
   for (size_t i = 0; i < outputs.size(); i++) {
-    std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                             outputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> output_shape =
+      std::vector<int64_t>(outputs.at(i)->GetDeviceShapeVector().begin(), outputs.at(i)->GetDeviceShapeVector().end());
     size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).dtype);
     output_size_list_.push_back(output_elements_ * unit_size_);

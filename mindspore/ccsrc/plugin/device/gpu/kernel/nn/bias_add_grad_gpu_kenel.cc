@@ -49,7 +49,7 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return KRET_UNKNOWN_SHAPE;
   }
   ResetResource();
-  auto dtype = inputs.at(kIndex0)->GetDtype();
+  auto dtype = inputs.at(kIndex0)->dtype_id();
   unit_size_ = abstract::TypeIdSize(dtype);
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(dtype));
@@ -58,7 +58,7 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
                       << num_dims_;
   }
-  auto input_device_format = GetFormatFromEnumToStr(inputs.at(kIndex0)->GetFormat());
+  auto input_device_format = GetFormatFromEnumToStr(inputs.at(kIndex0)->format());
   cudnn_compute_format_ = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
   data_format_ = input_device_format;
   std::string format = GetValue<std::string>(base_operator->GetAttr("format"));

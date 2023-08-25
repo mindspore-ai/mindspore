@@ -39,7 +39,7 @@ bool TridiagonalMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {

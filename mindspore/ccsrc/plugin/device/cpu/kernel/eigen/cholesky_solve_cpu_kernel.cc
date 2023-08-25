@@ -50,7 +50,7 @@ int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
   auto shape = inputs[kIndex0]->GetShapeVector();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   std::vector<size_t> x1_shape = Convert2SizeT(shape);
   size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {

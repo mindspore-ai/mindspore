@@ -76,7 +76,7 @@ bool AdamDeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
@@ -90,7 +90,7 @@ int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  auto delta_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto delta_shape = outputs[0]->GetDeviceShapeVector();
   if (delta_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }

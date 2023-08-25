@@ -63,7 +63,7 @@ int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   // For input shape and output shape's rationality have been checked in core/ops/matrix_determinant or
   // core/ops/log_matrix_determinant , we ignore shape's checking.
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

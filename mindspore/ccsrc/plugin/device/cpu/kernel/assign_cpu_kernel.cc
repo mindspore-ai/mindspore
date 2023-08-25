@@ -52,7 +52,7 @@ bool AssignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
 
-  input_x_dtype_ = inputs[0]->GetDtype();
+  input_x_dtype_ = inputs[0]->dtype_id();
   return true;
 }
 

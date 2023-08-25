@@ -34,7 +34,7 @@ bool MatrixPowerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   auto op_prim = std::dynamic_pointer_cast<ops::MatrixPower>(base_operator);
   MS_ERROR_IF_NULL(op_prim);
   power_ = op_prim->get_exponent();

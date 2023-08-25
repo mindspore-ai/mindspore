@@ -35,8 +35,8 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::Init(const BaseOperatorPtr &base_opera
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->GetPrim()->name();
 
-  x_dtype_ = inputs[kIndex0]->GetDtype();
-  argmax_dtype_ = inputs[kIndex2]->GetDtype();
+  x_dtype_ = inputs[kIndex0]->dtype_id();
+  argmax_dtype_ = inputs[kIndex2]->dtype_id();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradWithArgmaxV2>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);

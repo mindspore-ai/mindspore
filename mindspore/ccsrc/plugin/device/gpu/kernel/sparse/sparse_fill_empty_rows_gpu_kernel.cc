@@ -38,7 +38,7 @@ bool SparseFillEmptyRowsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_EXCEPTION(TypeError) << "For '" << kernel_ptr->name()
                             << "', it does not support this kernel data type: " << kernel_attr;
   }
-  if (abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) != abstract::TypeIdSize(inputs[kIndex3]->GetDtype())) {
+  if (abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) != abstract::TypeIdSize(inputs[kIndex3]->dtype_id())) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_ptr->name()
                              << "The datatypes of values and default_value are not same.";
   }
@@ -96,11 +96,11 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (inputs[kIndex0]->GetShapeVector()[0] != inputs[kIndex1]->GetShapeVector()[0]) {
     MS_EXCEPTION(ValueError) << "The element number of indices should be equal to values element number.";
   }
-  input_default_values_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype());
+  input_default_values_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id());
   input_indice_size_ =
-    abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * input_indices_shapes_[kIndex0] * input_indices_shapes_[kIndex1];
-  input_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * input_values_shapes_[kIndex0];
-  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * input_dense_shape_shapes_[kIndex0];
+    abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * input_indices_shapes_[kIndex0] * input_indices_shapes_[kIndex1];
+  input_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * input_values_shapes_[kIndex0];
+  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * input_dense_shape_shapes_[kIndex0];
   output_elements1_ =
     std::accumulate(output_indices_shapes_.begin(), output_indices_shapes_.end(), 1, std::multiplies<int64_t>());
   output_elements2_ =
@@ -113,11 +113,11 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (output_elements1_ == 0 || output_elements2_ == 0 || output_elements3_ == 0 || output_elements4_ == 0) {
     is_null_input_ = true;
   }
-  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * output_elements1_;
-  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype()) * output_elements2_;
-  auto output_empty_row_indicator_type = outputs[kIndex2]->GetDtype();
+  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * output_elements1_;
+  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id()) * output_elements2_;
+  auto output_empty_row_indicator_type = outputs[kIndex2]->dtype_id();
   output_empty_row_indicator_size_ = abstract::TypeIdSize(output_empty_row_indicator_type) * output_elements3_;
-  auto output_reverse_index_map_type = outputs[kIndex3]->GetDtype();
+  auto output_reverse_index_map_type = outputs[kIndex3]->dtype_id();
   output_reverse_index_map_size_ = abstract::TypeIdSize(output_reverse_index_map_type) * output_elements4_;
 
   auto workspace_elements_per_rows_size = dense_row * sizeof(int64_t);

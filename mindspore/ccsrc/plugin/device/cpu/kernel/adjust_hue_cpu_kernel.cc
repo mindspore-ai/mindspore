@@ -285,7 +285,7 @@ bool AdjustHueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 

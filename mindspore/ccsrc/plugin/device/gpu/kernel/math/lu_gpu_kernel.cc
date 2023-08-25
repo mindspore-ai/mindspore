@@ -48,7 +48,7 @@ int LuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   auto in_shape = inputs.at(kIndex0)->GetShapeVector();
   if (in_shape.size() <= 1) {
     MS_LOG(ERROR) << kernel_name_ << " input shape is " << in_shape.size() << " which is invalid.";

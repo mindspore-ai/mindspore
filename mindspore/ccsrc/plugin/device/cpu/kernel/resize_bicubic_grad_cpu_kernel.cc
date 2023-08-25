@@ -337,8 +337,8 @@ int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  resize_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  origin_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  resize_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+  origin_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

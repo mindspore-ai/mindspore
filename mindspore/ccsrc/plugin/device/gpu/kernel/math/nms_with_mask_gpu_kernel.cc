@@ -54,7 +54,7 @@ int NMSWithMaskFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 
   num_input_ = LongToSizeClipNeg(in_shape[0]);  // Get N value in [N,5] data
   auto ceil_power_2 = NmsRoundUpPower2(num_input_);
-  auto dtype_byte = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dtype_byte = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
   input_size_list_.clear();
   input_size_list_.push_back(num_input_ * dtype_byte * box_size_);

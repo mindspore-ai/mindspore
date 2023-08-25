@@ -51,9 +51,9 @@ bool MatrixSetDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   }
   kernel_func_ = func_list_[index].second;
 
-  auto diagonal_data_type = inputs.at(kIndex1)->GetDtype();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
-  auto output_data_type = outputs.at(kIndex0)->GetDtype();
+  auto diagonal_data_type = inputs.at(kIndex1)->dtype_id();
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
+  auto output_data_type = outputs.at(kIndex0)->dtype_id();
 
   if (diagonal_data_type != input_dtype_) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, the data type of x need be same diagonal.";
@@ -72,9 +72,9 @@ int MatrixSetDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  diagonal_shape_ = inputs[1]->GetDeviceShapeAdaptively();
-  k_shape_ = inputs[kIndexK]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[0]->GetDeviceShapeVector();
+  diagonal_shape_ = inputs[1]->GetDeviceShapeVector();
+  k_shape_ = inputs[kIndexK]->GetDeviceShapeVector();
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {

@@ -55,9 +55,9 @@ int LuSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
 
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

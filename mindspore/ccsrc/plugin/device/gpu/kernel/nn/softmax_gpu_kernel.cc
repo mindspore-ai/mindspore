@@ -34,7 +34,7 @@ bool SoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_data_type = inputs.at(kIndex0)->GetDtype();
+  auto input_data_type = inputs.at(kIndex0)->dtype_id();
   type_id_size_ = abstract::TypeIdSize(input_data_type);
 
   return true;

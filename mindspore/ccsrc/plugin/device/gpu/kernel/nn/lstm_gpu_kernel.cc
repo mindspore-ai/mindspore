@@ -43,8 +43,8 @@ bool LstmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   kernel_func_ = func_list_[index].second;
 
   InitResource();
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
   auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTM>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast LSTM ops failed!";

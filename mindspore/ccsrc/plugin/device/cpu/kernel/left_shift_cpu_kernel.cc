@@ -32,8 +32,8 @@ bool LeftShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLeftShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLeftShiftOutputsNum, kernel_name_);
-  input_type_1_ = inputs[0]->GetDtype();
-  input_type_2_ = outputs[0]->GetDtype();
+  input_type_1_ = inputs[0]->dtype_id();
+  input_type_2_ = outputs[0]->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'x2' must be the same as the type of 'x1', "

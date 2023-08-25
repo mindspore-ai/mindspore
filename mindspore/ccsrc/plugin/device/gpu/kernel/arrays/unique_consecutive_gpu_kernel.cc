@@ -136,7 +136,7 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   DestroyResource();
   ResetResource();
 
-  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[0]->GetDeviceShapeVector();
   int64_t dims = SizeToLong(input_shape.size());
   if (dims <= 1) {
     dims = 1;
@@ -155,14 +155,14 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   // Check if shape contains 0.
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
 
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
   helper_ptr_->set_return_idx(return_idx_);
   helper_ptr_->set_return_counts(return_counts_);
   helper_ptr_->set_is_flattend(is_flattend_);

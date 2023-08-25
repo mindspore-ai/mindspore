@@ -135,8 +135,8 @@ int SparseMatrixTransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 
   rank_ = input_dense_shape_shapes_[kIndex0];
   batched = (rank_ == kBatchCSR) ? true : false;
-  ms_type_ = inputs[kIndex4]->GetDtype();
-  output_values_size_ = abstract::TypeIdSize(outputs[kIndex4]->GetDtype()) * SizeOf(output_values_shapes_);
+  ms_type_ = inputs[kIndex4]->dtype_id();
+  output_values_size_ = abstract::TypeIdSize(outputs[kIndex4]->dtype_id()) * SizeOf(output_values_shapes_);
   return 0;
 }
 

@@ -61,9 +61,9 @@ int IdentityNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
-    auto in_type = inputs[idx]->GetDtype();
+    auto in_type = inputs[idx]->dtype_id();
     (void)CheckType(in_type, idx);
-    auto out_type = outputs[idx]->GetDtype();
+    auto out_type = outputs[idx]->dtype_id();
     if (in_type != out_type) {
       MS_EXCEPTION(TypeError) << "For IdentityN, input tensor datatype should be same to output. But datatype ["
                               << TypeIdLabel(in_type) << "] != [" << TypeIdLabel(out_type) << "].";

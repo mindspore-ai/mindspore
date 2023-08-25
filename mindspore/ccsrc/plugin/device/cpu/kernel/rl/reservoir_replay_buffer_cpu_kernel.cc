@@ -89,7 +89,7 @@ bool ReservoirReplayBufferPushCpuKernel::Init(const BaseOperatorPtr &base_operat
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type_id = inputs[i]->GetDtype();
+    TypeId type_id = inputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -126,7 +126,7 @@ bool ReservoirReplayBufferSampleCpuKernel::Init(const BaseOperatorPtr &base_oper
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    TypeId type_id = outputs[i]->GetDtype();
+    TypeId type_id = outputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = outputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());

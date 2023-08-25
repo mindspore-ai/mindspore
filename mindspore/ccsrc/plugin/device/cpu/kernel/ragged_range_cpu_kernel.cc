@@ -46,8 +46,8 @@ bool RaggedRangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
-  tsplits_type_ = outputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
+  tsplits_type_ = outputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -57,11 +57,11 @@ int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto starts_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto starts_shape = inputs[kIndex0]->GetDeviceShapeVector();
   size_t starts_dim = starts_shape.size();
-  auto limits_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto limits_shape = inputs[kIndex1]->GetDeviceShapeVector();
   size_t limits_dim = limits_shape.size();
-  auto deltas_shape = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  auto deltas_shape = inputs[kIndex2]->GetDeviceShapeVector();
   size_t deltas_dim = deltas_shape.size();
 
   broadcast_starts_ = starts_dim == 0;

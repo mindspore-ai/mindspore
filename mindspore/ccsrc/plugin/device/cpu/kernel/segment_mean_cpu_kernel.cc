@@ -46,9 +46,9 @@ T ComplexDiv(T sum, size_t num) {
 bool SegmentMeanCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  input_x_dtype_ = inputs.at(kIndex0)->GetDtype();
-  segment_ids_dtype_ = inputs.at(kIndex1)->GetDtype();
-  output_dtype_ = outputs.at(kIndex0)->GetDtype();
+  input_x_dtype_ = inputs.at(kIndex0)->dtype_id();
+  segment_ids_dtype_ = inputs.at(kIndex1)->dtype_id();
+  output_dtype_ = outputs.at(kIndex0)->dtype_id();
   return true;
 }
 

@@ -43,8 +43,8 @@ bool InplaceOpV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
-  indices_size_ = abstract::TypeIdSize(inputs[1]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
+  indices_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
   return true;
 }
 
@@ -59,12 +59,12 @@ int InplaceOpV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> input_shape_indices = std::vector<int64_t>(
-    inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> input_shape_indices = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                                  inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex2)->GetDeviceShapeVector().end());
   band_size_ = 1;
   for (size_t i = 1; i < input_shape_x.size(); ++i) {
     band_size_ *= input_shape_x[i];

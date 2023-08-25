@@ -120,7 +120,7 @@ int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
   auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
   sorted_ = kernel_ptr->get_attr("sorted");
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   size_t element_size = outer_size_ * inner_size_;
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));

@@ -75,8 +75,8 @@ int Conv2dFilterGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto dy_shape = inputs[0]->GetDeviceShapeAdaptively();
-  auto input_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto dy_shape = inputs[0]->GetDeviceShapeVector();
+  auto input_shape = inputs[kIndex1]->GetDeviceShapeVector();
   std::vector<int64_t> filter_shape;
 
   if (!TryGetIntValue(inputs, kShapeIndex, kernel_name_, &filter_shape, true)) {

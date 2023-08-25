@@ -77,11 +77,11 @@ int ScatterAddWithAxisCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  x_type_ = inputs[kIndex0]->GetDtype();
-  indices_type_ = inputs[kIndex1]->GetDtype();
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  updates_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  x_type_ = inputs[kIndex0]->dtype_id();
+  indices_type_ = inputs[kIndex1]->dtype_id();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  indices_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  updates_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
 
   // Get and check 3 input dim info
   int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());

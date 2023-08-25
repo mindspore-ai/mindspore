@@ -37,8 +37,8 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Init(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
-  indices_type = inputs[kInputIndex0]->GetDtype();
-  values_type = inputs[kInputIndex4]->GetDtype();
+  indices_type = inputs[kInputIndex0]->dtype_id();
+  values_type = inputs[kInputIndex4]->dtype_id();
   return true;
 }
 

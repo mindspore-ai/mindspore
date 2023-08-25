@@ -44,8 +44,8 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
     return false;
   }
-  std::vector<size_t> input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                         inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   if (is_null_input_) {

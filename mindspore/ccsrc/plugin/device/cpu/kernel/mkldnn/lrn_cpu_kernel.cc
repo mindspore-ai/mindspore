@@ -76,7 +76,7 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   }
   constexpr size_t kInputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  TypeId ms_type_id = inputs.at(kIndex0)->GetDtype();
+  TypeId ms_type_id = inputs.at(kIndex0)->dtype_id();
   auto dnnl_type_id = GetDnnlDataType(ms_type_id);
   if (dnnl_type_id == dnnl::memory::data_type::undef) {
     MS_LOG(ERROR) << "For '" << kernel_name_

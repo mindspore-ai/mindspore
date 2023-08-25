@@ -121,17 +121,17 @@ bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  TypeId a_dtype = inputs.at(kInputa_values)->GetDtype();
-  TypeId b_dtype = inputs.at(kInputb_values)->GetDtype();
+  TypeId a_dtype = inputs.at(kInputa_values)->dtype_id();
+  TypeId b_dtype = inputs.at(kInputb_values)->dtype_id();
   if (a_dtype != b_dtype) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', The type of input a must be the same as b, got ranks: " << a_dtype << ", and " << b_dtype;
   }
-  dtype_ = inputs.at(kInputa_values)->GetDtype();
-  itype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kInputa_values)->dtype_id();
+  itype_ = inputs.at(kIndex0)->dtype_id();
   value_size_ = static_cast<int64_t>(abstract::TypeIdSize(dtype_));
   indice_size_ = static_cast<int64_t>(abstract::TypeIdSize(itype_));
-  shape_size_ = static_cast<int64_t>(abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype()));
+  shape_size_ = static_cast<int64_t>(abstract::TypeIdSize(inputs.at(kIndex2)->dtype_id()));
   return true;
 }
 

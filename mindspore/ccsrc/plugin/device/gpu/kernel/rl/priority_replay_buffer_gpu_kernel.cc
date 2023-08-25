@@ -117,7 +117,7 @@ bool PriorityReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operato
                                     "cudaMemcpy failed.");
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type_id = inputs[i]->GetDtype();
+    TypeId type_id = inputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -161,7 +161,7 @@ bool PriorityReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_opera
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    TypeId type_id = outputs[i]->GetDtype();
+    TypeId type_id = outputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = outputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -220,7 +220,7 @@ bool PriorityReplayBufferUpdateGpuKernel::Init(const BaseOperatorPtr &base_opera
                                     "cudaMemcpy failed.");
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type_id = inputs[i]->GetDtype();
+    TypeId type_id = inputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());

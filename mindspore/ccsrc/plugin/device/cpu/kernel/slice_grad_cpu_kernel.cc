@@ -70,8 +70,8 @@ bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   auto input_num = inputs.size();
   MS_EXCEPTION_IF_CHECK_FAIL(input_num == kSliceGradInputsNum || input_num == kStridedSliceGradInputsNum,
                              "Input number check failed!");
-  dtype_ = inputs.at(0)->GetDtype();
-  begin_dtype_ = inputs.at(kBeginIndex_)->GetDtype();
+  dtype_ = inputs.at(0)->dtype_id();
+  begin_dtype_ = inputs.at(kBeginIndex_)->dtype_id();
   return true;
 }
 

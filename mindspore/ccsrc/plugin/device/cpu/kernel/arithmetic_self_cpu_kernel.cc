@@ -765,7 +765,7 @@ void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &) {
   kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   base_op = base_operator;
 }
 

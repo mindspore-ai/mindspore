@@ -94,7 +94,7 @@ bool GatherDGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   if (is_v2_) {
-    dim_type_ = inputs.at(dim_idx_)->GetDtype();
+    dim_type_ = inputs.at(dim_idx_)->dtype_id();
   } else {
     axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrDim));
   }

@@ -69,7 +69,7 @@ bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   outputs_size_ = outputs.size();
   for (size_t i = 0; i < outputs_size_; i++) {
     MS_EXCEPTION_IF_NULL(outputs[i]);
-    dtypes_.push_back(outputs[i]->GetDtype());
+    dtypes_.push_back(outputs[i]->dtype_id());
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

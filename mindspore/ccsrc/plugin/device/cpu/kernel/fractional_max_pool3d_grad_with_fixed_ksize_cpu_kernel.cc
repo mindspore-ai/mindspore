@@ -54,8 +54,8 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Init(const BaseOperatorP
                                                              const std::vector<KernelTensorPtr> &inputs,
                                                              const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
-  out_backprop_type_ = inputs[kInputIndex1]->GetDtype();
-  argmax_type_ = inputs[kInputIndex2]->GetDtype();
+  out_backprop_type_ = inputs[kInputIndex1]->dtype_id();
+  argmax_type_ = inputs[kInputIndex2]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DGradWithFixedKsize>(base_operator);
   data_format_ = kernel_ptr->get_data_format();
   return true;
@@ -70,9 +70,9 @@ int FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Resize(const BaseOperator
     return ret;
   }
 
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  out_backprop_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  argmax_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
   size_t input_dims = input_shape_.size();
   size_t out_backprop_dims = out_backprop_shape_.size();
   size_t argmax_dims = argmax_shape_.size();

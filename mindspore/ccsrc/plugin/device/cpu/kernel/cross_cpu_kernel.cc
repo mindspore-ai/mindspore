@@ -49,10 +49,10 @@ int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  input1_dtype_ = inputs[kIndex0]->GetDtype();
+  input1_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input2_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  input1_dtype_ = inputs[kIndex0]->dtype_id();
   auto cross_ptr = std::dynamic_pointer_cast<ops::Cross>(base_operator);
   MS_EXCEPTION_IF_NULL(cross_ptr);
   dim_ = cross_ptr->get_dim();

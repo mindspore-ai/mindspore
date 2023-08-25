@@ -44,8 +44,8 @@ bool QuantileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  q_unit_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  input_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  q_unit_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;

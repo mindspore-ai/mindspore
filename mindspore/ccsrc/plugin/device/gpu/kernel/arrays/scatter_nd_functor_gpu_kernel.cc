@@ -100,7 +100,7 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->GetDtype() == kNumberTypeBool)) {
+  if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->dtype_id() == kNumberTypeBool)) {
     const auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
@@ -159,7 +159,7 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   work_shape_.clear();
   work_shape_ = std::vector<int32_t>(input_shape.begin(), input_shape.end());
 
-  const auto index_size = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  const auto index_size = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   workspace_size_list_ = {
     out_strides_.size() * index_size,
     work_shape_.size() * index_size,

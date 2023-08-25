@@ -56,10 +56,10 @@ int OrgqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_tau_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                         inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_tau_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                         inputs.at(kIndex1)->GetDeviceShapeVector().end());
   input_x_dims_ = input_x_shape_.size();
   input_tau_dims_ = input_tau_shape_.size();
   is_null_input_ = (input_x_dims_ == 0 || input_tau_dims_ == 0);

@@ -66,8 +66,8 @@ int StandardLaplaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t input_dims = shape_shape.size();
   if (input_dims != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'shape' must be 1-D, but got " << input_dims
@@ -75,8 +75,8 @@ int StandardLaplaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_RESIZE_FAILED;
   }
 
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t shape_elements = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies<int64_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {

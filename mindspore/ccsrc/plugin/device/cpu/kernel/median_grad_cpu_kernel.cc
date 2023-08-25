@@ -40,8 +40,8 @@ bool MedianGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianGradOutputsNum, kernel_name_);
   kernel_name_ = base_operator->GetPrim()->name();
-  input0_type_ = inputs[kIndex0]->GetDtype();
-  input1_type_ = inputs[kIndex1]->GetDtype();
+  input0_type_ = inputs[kIndex0]->dtype_id();
+  input1_type_ = inputs[kIndex1]->dtype_id();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
@@ -66,9 +66,9 @@ int MedianGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
                     << input_element_num;
     return KRET_OK;
   }
-  input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  input0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  input2_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   input0_dim_ = input0_shape_.size();
   input1_dim_ = input1_shape_.size();
   input2_dim_ = input2_shape_.size();

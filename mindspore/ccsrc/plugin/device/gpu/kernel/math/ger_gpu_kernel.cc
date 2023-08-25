@@ -52,16 +52,16 @@ int GerGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  std::vector<int64_t> clo_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> row_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> clo_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> row_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex1)->GetDeviceShapeVector().end());
   if (clo_shape.size() != 1 || row_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x1' and 'x2' should be 1-D.";
     return KRET_RESIZE_FAILED;

@@ -111,9 +111,9 @@ int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     rank_ = input_indices_shape[1];
 
     output_size_list_.clear();
-    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->GetDtype())));
-    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
-    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype())));
+    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->dtype_id())));
+    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
+    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->dtype_id())));
   }
   return ret;
 }

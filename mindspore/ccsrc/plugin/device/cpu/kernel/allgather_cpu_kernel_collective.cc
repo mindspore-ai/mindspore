@@ -48,7 +48,7 @@ bool AllGatherCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (group != kMCCLGlobalGroupName) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
 #else
   MS_LOG(EXCEPTION) << "The CPU kernel allgather is only supported on linux platform.";
 #endif

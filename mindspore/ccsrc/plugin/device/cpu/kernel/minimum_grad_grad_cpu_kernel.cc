@@ -59,10 +59,10 @@ int MinimumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   tensor_size_ = 1;
 
-  x1_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  grad_y1_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
-  grad_y2_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  grad_y1_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
+  grad_y2_shape_ = inputs[kInputIndex3]->GetDeviceShapeVector();
 
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
   for (const int64_t &d : output_shape_) {

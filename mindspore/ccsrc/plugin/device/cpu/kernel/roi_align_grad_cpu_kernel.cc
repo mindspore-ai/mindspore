@@ -189,10 +189,10 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
-  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   dy_size_ = LongToSize(std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies{})) * dy_type_size;
 
-  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   rois_size_ = LongToSize(std::accumulate(rois_shape.begin(), rois_shape.end(), 1, std::multiplies{})) * rois_type_size;
   roi_rows_ = LongToInt(rois_shape[kIndex0]);
   roi_cols_ = LongToInt(rois_shape[kIndex1]);

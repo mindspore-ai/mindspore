@@ -45,7 +45,7 @@ bool GridSampler3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3DGrad>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   interpolation_mode = kernel_ptr->get_interpolation_mode();
@@ -67,11 +67,11 @@ int GridSampler3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   grid_stride_.clear();
   dx_stride_.clear();
   dgrid_stride_.clear();
-  grad_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kTwo]->GetDeviceShapeAdaptively();
-  dx_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
-  dgrid_shape_ = outputs[kOne]->GetDeviceShapeAdaptively();
+  grad_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  x_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kTwo]->GetDeviceShapeVector();
+  dx_shape_ = outputs[kZero]->GetDeviceShapeVector();
+  dgrid_shape_ = outputs[kOne]->GetDeviceShapeVector();
   dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree] * dx_shape_[kFour]);
   grid_size_ = LongToSize(grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree]);
   size_t stride_tmp = kOne;

@@ -42,9 +42,9 @@ bool SearchSortedGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  sequence_per_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
-  value_per_size_ = abstract::TypeIdSize(inputs[1]->GetDtype());
-  unit_output_size_ = abstract::TypeIdSize(outputs[0]->GetDtype());
+  sequence_per_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
+  value_per_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
+  unit_output_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
   right = kernel_ptr_->get_right();
   return true;
 }
@@ -59,8 +59,8 @@ int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto sequence_shape = inputs.at(kSearchSortedIndex0)->GetShapeVector();
   auto value_shape = inputs.at(kSearchSortedIndex1)->GetShapeVector();
   (void)std::transform(sequence_shape.begin(), sequence_shape.end(), std::back_inserter(sequence_shape_),

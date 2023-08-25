@@ -34,12 +34,12 @@ void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(
-    inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                                  inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex3)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);

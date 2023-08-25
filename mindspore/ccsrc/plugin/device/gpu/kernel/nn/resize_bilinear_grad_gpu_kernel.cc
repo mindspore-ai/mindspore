@@ -84,8 +84,8 @@ int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   dy_w_ = LongToInt(dy_shape[kDyIndexForW]);
   dx_h_ = LongToInt(dx_shape[kDxIndexForH]);
   dx_w_ = LongToInt(dx_shape[kDxIndexForW]);
-  dx_size_ = abstract::TypeIdSize(inputs[1]->GetDtype()) * SizeOf(dx_shape);
-  if (inputs[0]->GetDtype() == kNumberTypeFloat16) {
+  dx_size_ = abstract::TypeIdSize(inputs[1]->dtype_id()) * SizeOf(dx_shape);
+  if (inputs[0]->dtype_id() == kNumberTypeFloat16) {
     workspace_size_ = SizeOf(dx_shape) * sizeof(float);
   } else {
     workspace_size_ = dx_size_;

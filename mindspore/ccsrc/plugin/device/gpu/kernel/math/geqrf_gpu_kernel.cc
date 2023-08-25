@@ -55,8 +55,8 @@ int GeqrfGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_x_dims_ = input_x_shape_.size();
   is_null_input_ = (input_x_dims_ == 0);
   if (is_null_input_) {

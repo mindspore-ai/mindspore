@@ -44,7 +44,7 @@ bool GridSampler3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3D>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   interpolation_mode_ = kernel_ptr->get_interpolation_mode();
@@ -60,9 +60,9 @@ int GridSampler3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  output_shape_ = outputs[kZero]->GetDeviceShapeVector();
   x_stride_.clear();
   grid_stride_.clear();
   output_stride_.clear();

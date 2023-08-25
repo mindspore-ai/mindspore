@@ -53,10 +53,10 @@ int LowerBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     }
   }
   ResetResource();
-  std::vector<int64_t> sorted_x_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> values_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> sorted_x_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> values_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex1)->GetDeviceShapeVector().end());
   sorted_x_elements_ = std::accumulate(sorted_x_shape_.begin(), sorted_x_shape_.end(), 1, std::multiplies<int64_t>());
   values_elements_ = std::accumulate(values_shape_.begin(), values_shape_.end(), 1, std::multiplies<int64_t>());
   if (sorted_x_elements_ == 0 || values_elements_ == 0) {

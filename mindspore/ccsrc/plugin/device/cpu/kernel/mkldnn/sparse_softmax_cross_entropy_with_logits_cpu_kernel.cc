@@ -53,8 +53,8 @@ int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPt
     return ret;
   }
 
-  auto logits_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  auto label_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  auto logits_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+  auto label_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
   size_t tensor_size =
     std::accumulate(logits_shape.begin(), logits_shape.end(), sizeof(float), std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);

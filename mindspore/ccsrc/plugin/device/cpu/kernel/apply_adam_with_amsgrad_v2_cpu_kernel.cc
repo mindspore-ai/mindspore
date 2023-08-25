@@ -40,7 +40,7 @@ bool ApplyAdamWithAmsgradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operat
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
   kernel_name_ = kernel_ptr->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   batch_rank_ = base_operator->get_batch_rank();
 
   if (inputs.size() != kApplyAdamWithAmsgradV2InputsNum || outputs.size() != kApplyAdamWithAmsgradV2OutputsNum) {

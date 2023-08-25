@@ -68,7 +68,7 @@ bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_name_ = kernel_ptr->name();
   p_ = kernel_ptr->get_p();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 

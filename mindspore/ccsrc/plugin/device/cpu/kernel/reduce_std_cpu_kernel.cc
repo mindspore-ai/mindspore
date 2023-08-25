@@ -44,7 +44,7 @@ bool ReduceStdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   auto kernel_ptr = std::make_shared<ops::ReduceStd>(base_operator->GetPrim());
   unbiased_ = kernel_ptr->get_unbiased();
   axis_ = kernel_ptr->get_axis();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   if (dtype_ != kNumberTypeFloat16 && dtype_ != kNumberTypeFloat32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
                             << dtype_ << "].";

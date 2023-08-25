@@ -54,9 +54,9 @@ int SparseSegmentMeanGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

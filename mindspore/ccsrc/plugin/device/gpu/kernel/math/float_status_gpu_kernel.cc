@@ -59,7 +59,7 @@ bool FloatStatusGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   auto type_iter = kOpTypeMap.find(kernel_name_);
   kernel_type_ = type_iter->second;
 
-  type_id_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  type_id_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   return true;
 }
 

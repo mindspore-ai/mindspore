@@ -63,9 +63,9 @@ bool AffineGridGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_name_ = base_operator->name();
   auto prim = base_operator->GetPrim();
   align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
-  auto type_id = inputs[0]->GetDtype();
+  auto type_id = inputs[0]->dtype_id();
   input_info_.push_back(type_id);
-  type_id = inputs[1]->GetDtype();
+  type_id = inputs[1]->dtype_id();
   input_info_.push_back(type_id);
   return true;
 }
@@ -76,7 +76,7 @@ int AffineGridGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
+  x_size_dims_ = inputs[1]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

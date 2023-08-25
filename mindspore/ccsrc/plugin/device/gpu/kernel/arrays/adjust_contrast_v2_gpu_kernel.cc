@@ -78,17 +78,17 @@ int AdjustContrastV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                  inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
     int num_dims = shape.size();
     per_batch_elements_ = shape[num_dims - last_dim] * shape[num_dims - second_dim] * shape[num_dims - third_dim];
     total_ = std::accumulate(shape.begin(), shape.end() - third_dim, third_dim, std::multiplies<int>());
-    std::vector<int64_t> images_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> images_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex0)->GetDeviceShapeVector().end());
     std::vector<int64_t> contrast_factor_shape = std::vector<int64_t>(
-      inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+      inputs.at(kIndex1)->GetDeviceShapeVector().begin(), inputs.at(kIndex1)->GetDeviceShapeVector().end());
     int64_t images_dims = images_shape.size();
     int64_t contrast_factor_dims = contrast_factor_shape.size();
     if (images_dims < INPUT_DIMS_3) {

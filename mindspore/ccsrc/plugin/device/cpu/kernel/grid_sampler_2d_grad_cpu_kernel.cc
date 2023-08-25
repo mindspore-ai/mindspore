@@ -38,7 +38,7 @@ bool GridSampler2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -61,11 +61,11 @@ int GridSampler2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  grad_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kTwo]->GetDeviceShapeAdaptively();
-  dx_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
-  dgrid_shape_ = outputs[kOne]->GetDeviceShapeAdaptively();
+  grad_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  x_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kTwo]->GetDeviceShapeVector();
+  dx_shape_ = outputs[kZero]->GetDeviceShapeVector();
+  dgrid_shape_ = outputs[kOne]->GetDeviceShapeVector();
   dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree]);
   grid_size_ = LongToSize(grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree]);
   return ret;

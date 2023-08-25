@@ -116,9 +116,9 @@ bool XdivyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  auto x_type = inputs[0]->GetDtype();
-  auto y_type = inputs[1]->GetDtype();
-  auto out_type = outputs[0]->GetDtype();
+  auto x_type = inputs[0]->dtype_id();
+  auto y_type = inputs[1]->dtype_id();
+  auto out_type = outputs[0]->dtype_id();
   if (!(x_type == y_type && x_type == out_type)) {
     MS_LOG(ERROR) << "Xdivy need same input and output data type, but got X type:" << x_type << " Y type:" << y_type
                   << " out type:" << out_type;

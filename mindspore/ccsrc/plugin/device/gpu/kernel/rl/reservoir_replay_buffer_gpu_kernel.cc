@@ -113,7 +113,7 @@ bool ReservoirReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operat
                                     "cudaMemcpy failed.");
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type = inputs[i]->GetDtype();
+    TypeId type = inputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type));
     const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -155,7 +155,7 @@ bool ReservoirReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_oper
   MS_EXCEPTION_IF_NULL(reservior_replay_buffer_);
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    TypeId type_id = outputs[i]->GetDtype();
+    TypeId type_id = outputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = outputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());

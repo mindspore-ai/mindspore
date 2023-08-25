@@ -48,9 +48,9 @@ int Conv3DTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> src_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  std::vector<int64_t> weight_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  std::vector<int64_t> dst_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  std::vector<int64_t> src_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
+  std::vector<int64_t> weight_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
+  std::vector<int64_t> dst_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
   size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv3DTranspose only supports 5D input, but got " << src_dim << "D!";

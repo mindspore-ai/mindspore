@@ -49,7 +49,7 @@ bool SquareSumAllCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   dtype_size_ = abstract::TypeIdSize(dtype_);
   PrimitivePtr prim = base_operator->GetPrim();
   if (prim->HasAttr(kBatchRank)) {
@@ -65,7 +65,7 @@ int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[0]->GetDeviceShapeVector();
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   num_batch_ =
     std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, size_t(1), std::multiplies<size_t>());

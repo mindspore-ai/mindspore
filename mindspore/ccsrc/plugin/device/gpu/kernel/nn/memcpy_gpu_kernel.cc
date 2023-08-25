@@ -43,7 +43,7 @@ int MemcpyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (is_null_input_) {
     return KRET_OK;
   }
-  size_t input_data_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  size_t input_data_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   input_size_ = std::accumulate(shape.begin(), shape.end(), input_data_size, std::multiplies{});
 
   return KRET_OK;

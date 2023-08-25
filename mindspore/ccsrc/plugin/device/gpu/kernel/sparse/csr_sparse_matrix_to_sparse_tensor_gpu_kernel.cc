@@ -92,15 +92,15 @@ int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const BaseOperatorPtr &bas
     }
     return res;
   };
-  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(input_dense_shape_shapes_);
+  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(input_dense_shape_shapes_);
   input_batch_pointers_size_ =
-    abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(input_batch_pointers_shapes_);
-  input_row_pointers_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(input_row_pointers_shapes_);
-  input_col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype()) * GetNums(input_col_indices_shapes_);
-  input_values_size_ = abstract::TypeIdSize(inputs[kIndex4]->GetDtype()) * GetNums(input_values_shapes_);
-  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * GetNums(output_indices_shapes_);
-  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype()) * GetNums(output_values_shapes_);
-  output_dense_shape_size_ = abstract::TypeIdSize(outputs[kIndex2]->GetDtype()) * GetNums(output_dense_shape_shapes_);
+    abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(input_batch_pointers_shapes_);
+  input_row_pointers_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(input_row_pointers_shapes_);
+  input_col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id()) * GetNums(input_col_indices_shapes_);
+  input_values_size_ = abstract::TypeIdSize(inputs[kIndex4]->dtype_id()) * GetNums(input_values_shapes_);
+  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * GetNums(output_indices_shapes_);
+  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id()) * GetNums(output_values_shapes_);
+  output_dense_shape_size_ = abstract::TypeIdSize(outputs[kIndex2]->dtype_id()) * GetNums(output_dense_shape_shapes_);
   InitSizeLists();
   return 0;
 }

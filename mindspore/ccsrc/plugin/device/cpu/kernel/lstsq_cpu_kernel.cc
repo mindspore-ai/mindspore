@@ -36,8 +36,8 @@ bool LstsqCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstsqInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstsqOutputsNum, kernel_name_);
 
-  dtype_0_ = inputs.at(kIndex0)->GetDtype();
-  dtype_1_ = inputs.at(kIndex1)->GetDtype();
+  dtype_0_ = inputs.at(kIndex0)->dtype_id();
+  dtype_1_ = inputs.at(kIndex1)->dtype_id();
   if (dtype_0_ != dtype_1_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input's dtypes are not the same.";
     return false;
@@ -53,8 +53,8 @@ int LstsqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
 
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   if (input_0_shape_.size() != kXDimNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the input x tensor's rank must be 2 for 'Lstsq' Op, but x tensor's rank is "

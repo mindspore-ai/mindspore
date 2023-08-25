@@ -24,14 +24,14 @@ void AdamaxGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   input_size_list_.clear();
   output_size_list_.clear();
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex8)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex8)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                       inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex8)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex8)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);

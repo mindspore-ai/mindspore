@@ -157,8 +157,8 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeAdaptively(); });
-  std::vector<int64_t> out_shapes = outputs[0]->GetDeviceShapeAdaptively();
+                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeVector(); });
+  std::vector<int64_t> out_shapes = outputs[0]->GetDeviceShapeVector();
   output_shapes.emplace_back(out_shapes);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
@@ -169,7 +169,7 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
 void SliceGradGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs) {
   auto input_shape = inputs[1]->GetShapeVector();
-  auto data_format = inputs[1]->GetFormat();
+  auto data_format = inputs[1]->format();
   auto dy_shape = inputs[0]->GetShapeVector();
   if (dy_shape.size() <= kSliceGradDefaultInputShapeSize) {
     ShapeNdToMd(dy_shape, &dy_shape_, kDim4);

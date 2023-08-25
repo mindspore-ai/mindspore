@@ -35,7 +35,7 @@ bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   for (size_t i = 0; i < inputs.size(); ++i) {
-    TypeId type = inputs[i]->GetDtype();
+    TypeId type = inputs[i]->dtype_id();
     (void)data_types_.emplace_back(type);
   }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Print>(base_operator);
@@ -67,7 +67,7 @@ int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     for (size_t j = 0; j < input_shape.size(); ++j) {
       size *= input_shape[j];
     }
-    auto type_id = inputs[i]->GetDtype();
+    auto type_id = inputs[i]->dtype_id();
     size_t unit_size = UnitSizeInBytes(type_id);
     auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
     (void)input_sizes_.emplace_back(LongToSize(size));

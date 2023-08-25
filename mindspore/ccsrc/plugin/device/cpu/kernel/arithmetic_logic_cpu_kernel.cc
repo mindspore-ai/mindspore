@@ -62,8 +62,8 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
-    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
+    dtype_ = inputs.at(kIndex0)->dtype_id();
+    auto dtype_1 = inputs.at(kIndex1)->dtype_id();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
@@ -158,8 +158,8 @@ class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
-    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
+    dtype_ = inputs.at(kIndex0)->dtype_id();
+    auto dtype_1 = inputs.at(kIndex1)->dtype_id();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "

@@ -72,7 +72,7 @@ int AdaptiveAvgPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   grad_output_dim_sizes = inputs[kIndex0]->GetShapeVector();
   grad_input_dim_sizes = outputs[kIndex0]->GetShapeVector();
   auto input_1_shape = inputs[kIndex1]->GetShapeVector();

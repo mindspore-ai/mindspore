@@ -92,7 +92,7 @@ bool Conv3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
   data_format_ = kOpFormat_NCDHW;
   return true;
 }

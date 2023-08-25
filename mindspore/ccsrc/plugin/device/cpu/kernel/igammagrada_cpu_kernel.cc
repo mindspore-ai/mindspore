@@ -381,7 +381,7 @@ bool IgammaGradACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   constexpr size_t output_num = kOutputsNum;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -399,9 +399,9 @@ int IgammaGradACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (ret != KRET_OK) {
     return ret;
   }
-  a_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[1]->GetDeviceShapeAdaptively();
-  z_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  a_shape_ = inputs[0]->GetDeviceShapeVector();
+  x_shape_ = inputs[1]->GetDeviceShapeVector();
+  z_shape_ = outputs[0]->GetDeviceShapeVector();
   return ret;
 }
 

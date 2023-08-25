@@ -68,8 +68,8 @@ int AffineGridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  output_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
-  output_type_ = outputs[0]->GetDtype();
+  output_size_dims_ = inputs[1]->GetDeviceShapeVector();
+  output_type_ = outputs[0]->dtype_id();
   return KRET_OK;
 }
 

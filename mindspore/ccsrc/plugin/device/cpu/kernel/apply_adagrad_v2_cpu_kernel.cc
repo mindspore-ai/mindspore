@@ -67,7 +67,7 @@ int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &i
   auto var_shape = inputs[kVarIndex]->GetShapeVector();
   auto accum_shape = inputs[kAccumIndex]->GetShapeVector();
   auto grad_shape = inputs[kGradIndex]->GetShapeVector();
-  auto lr_dtype = inputs[kLRIndex]->GetDtype();
+  auto lr_dtype = inputs[kLRIndex]->dtype_id();
   if (var_shape != accum_shape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'accum' and 'var' should be the same, "

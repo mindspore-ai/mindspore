@@ -72,8 +72,8 @@ int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     return ret;
   }
 
-  std::vector<size_t> input_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> input_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex0)->GetDeviceShapeVector().end());
   size_t dim = input_shape.size();
   if (dim < kDim2) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input dimension must be greater than or equal to 2.";

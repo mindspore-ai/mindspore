@@ -43,7 +43,7 @@ bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   exclusive_ = kernel_ptr->GetExclusive();
   reverse_ = kernel_ptr->GetReverse();
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();

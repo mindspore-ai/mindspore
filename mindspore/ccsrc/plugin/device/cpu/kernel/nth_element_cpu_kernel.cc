@@ -43,7 +43,7 @@ int NthElementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   input_elements_ = SizeOf(input_shape_);
   output_elements_ = SizeOf(output_shape_);

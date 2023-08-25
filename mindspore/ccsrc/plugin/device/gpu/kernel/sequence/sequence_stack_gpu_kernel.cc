@@ -66,7 +66,7 @@ int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     axis_ += (SizeToInt(shape_vec_item.size()) + 1);
   }
   auto origin_data_format = kOpFormat_DEFAULT;
-  auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
+  auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
   axis_ = AxisTransform(origin_data_format, input_format, axis_);
   input_num_ = tuple_shape_[0];
   inputs_host_.resize(input_num_);

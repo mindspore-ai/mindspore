@@ -76,12 +76,12 @@ int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_op
   }
 
   ResetResource();
-  std::vector<size_t> input0_shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                         inputs[kIndex0]->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> input1_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
-                                                         inputs[kIndex1]->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> output0_shape = std::vector<size_t>(outputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                          outputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> input0_shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<size_t> input1_shape =
+    std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(), inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<size_t> output0_shape = std::vector<size_t>(outputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                          outputs[kIndex0]->GetDeviceShapeVector().end());
   batch_size_ = static_cast<int>(input0_shape[kIndex0]);
   num_boxes_ = static_cast<int>(input0_shape[kIndex1]);
   q_ = static_cast<int>(input0_shape[kIndex2]);

@@ -60,8 +60,8 @@ int LuUnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   auto input_0_size = input_0_shape_.size();
   auto input_1_size = input_1_shape_.size();
   if (input_0_size < kDimNum) {

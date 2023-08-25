@@ -35,7 +35,7 @@ const double epslon = 1e-6;
 bool SparseDenseCwiseDivCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
-  data_type_ = inputs.at(kIndex3)->GetDtype();
+  data_type_ = inputs.at(kIndex3)->dtype_id();
   return true;
 }
 

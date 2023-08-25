@@ -81,9 +81,9 @@ int LSTMGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return ret;
   }
   input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
-  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto src_c_shape = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeVector();
+  auto src_c_shape = inputs[kIndex2]->GetDeviceShapeVector();
   if (src_shape.size() != kDims || src_h_shape.size() != kDims || src_c_shape.size() != kDims) {
     MS_LOG(ERROR) << "Lstm only support 3-D input!";
     return KRET_RESIZE_FAILED;

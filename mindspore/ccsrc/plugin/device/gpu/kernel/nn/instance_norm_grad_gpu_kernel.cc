@@ -45,7 +45,7 @@ bool InstanceNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   epsilon_ = kernel_ptr->get_epsilon();
   beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;

@@ -53,7 +53,7 @@ int LogMatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   shape_x_ = inputs[kIndex0]->GetShapeVector();
   auto shape_sign = outputs[kIndex0]->GetShapeVector();
   auto shape_y = outputs[kIndex1]->GetShapeVector();

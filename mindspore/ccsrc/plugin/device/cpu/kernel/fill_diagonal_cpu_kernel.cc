@@ -39,7 +39,7 @@ bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillDiagonalInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillDiagonalOutputNum, kernel_name_);
 
-  input_type_ = inputs[0]->GetDtype();
+  input_type_ = inputs[0]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "Init FillDiagonal kernel ptr failed.";
@@ -62,7 +62,7 @@ int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

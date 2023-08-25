@@ -98,7 +98,7 @@ bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << kPdistGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  auto x_dtype_ = inputs[1]->GetDtype();
+  auto x_dtype_ = inputs[1]->dtype_id();
   switch (x_dtype_) {
     case kNumberTypeFloat32:
       kernel_func_ = &PdistGradCpuKernelMod::LaunchKernel<float>;

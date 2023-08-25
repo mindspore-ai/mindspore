@@ -39,7 +39,7 @@ bool ScaleAndTranslateCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  input0_dtype_ = inputs[kIndex0]->GetDtype();
+  input0_dtype_ = inputs[kIndex0]->dtype_id();
   kernel_type_ = kernel_ptr->get_kernel_type();
   antialias_ = kernel_ptr->get_antialias();
   switch (input0_dtype_) {

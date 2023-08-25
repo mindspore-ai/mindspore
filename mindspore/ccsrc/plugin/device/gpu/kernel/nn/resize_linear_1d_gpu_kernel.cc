@@ -65,11 +65,11 @@ int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   batch_ = LongToSize(input_shape_[kIndex0]);
   channel_ = LongToSize(input_shape_[kIndex1]);
   in_width_ = input_shape_[kIndex2];
-  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   out_width_ = output_shape_[kIndex2];
   return KRET_OK;
 }

@@ -40,8 +40,8 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   MS_EXCEPTION_IF_NULL(outputs[0]);
   output_shape_ = outputs[0]->GetShapeVector();
   alpha_shape_ = inputs[1]->GetShapeVector();
-  alpha_dtype_ = inputs[1]->GetDtype();
-  shape_dtype_ = inputs[0]->GetDtype();
+  alpha_dtype_ = inputs[1]->dtype_id();
+  shape_dtype_ = inputs[0]->dtype_id();
   shape_shape_ = inputs[0]->GetShapeVector();
   rng_.Init(seed, seed2);
 
@@ -72,8 +72,8 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
   alpha_shape_ = inputs[1]->GetShapeVector();
-  alpha_dtype_ = inputs[1]->GetDtype();
-  shape_dtype_ = inputs[0]->GetDtype();
+  alpha_dtype_ = inputs[1]->dtype_id();
+  shape_dtype_ = inputs[0]->dtype_id();
   shape_shape_ = inputs[0]->GetShapeVector();
   return KRET_OK;
 }

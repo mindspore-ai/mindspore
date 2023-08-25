@@ -37,7 +37,7 @@ bool SparseSegmentSqrtNGradCpuKernelMod::Init(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+  x_dtype_ = inputs.at(kIndex0)->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNGradOutputsNum, kernel_name_);
   return true;
@@ -50,11 +50,11 @@ int SparseSegmentSqrtNGradCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  output_dim0_shape_ = inputs.at(kIndex3)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  output_dim0_shape_ = inputs.at(kIndex3)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

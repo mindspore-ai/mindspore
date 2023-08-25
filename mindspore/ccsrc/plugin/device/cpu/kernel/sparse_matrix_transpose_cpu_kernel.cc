@@ -89,8 +89,8 @@ bool SparseMatrixTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixTranspose>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   conjugate = kernel_ptr->get_conjugate();
-  indiceT_ = inputs.at(kInputIndex0)->GetDtype();
-  valueT_ = inputs.at(kInputIndex4)->GetDtype();
+  indiceT_ = inputs.at(kInputIndex0)->dtype_id();
+  valueT_ = inputs.at(kInputIndex4)->dtype_id();
   return true;
 }
 

@@ -123,7 +123,7 @@ int PrintGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     if (is_null_input_) {
       return KRET_OK;
     }
-    auto type_id = inputs[i]->GetDtype();
+    auto type_id = inputs[i]->dtype_id();
     size_t unit_size = UnitSizeInBytes(type_id);
     auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
     input_info_.push_back(std::make_tuple(size_in_byte, type_id));

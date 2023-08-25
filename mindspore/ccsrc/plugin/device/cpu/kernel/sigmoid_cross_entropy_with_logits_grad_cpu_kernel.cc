@@ -39,7 +39,7 @@ int SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Resize(const BaseOperatorPtr 
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs.at(0)->GetDtype();
+  dtype_ = inputs.at(0)->dtype_id();
   auto x_shape = inputs.at(0)->GetShapeVector();
   tensor_size_ = SizeOf(x_shape);
   return KRET_OK;

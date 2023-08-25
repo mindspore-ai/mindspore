@@ -134,7 +134,7 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   format_ = kernel_ptr->get_format();
   exp_avg_factor_ = kernel_ptr->get_momentum();
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   size_t input_num = inputs.size();
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
     if (input_num != CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
@@ -158,10 +158,10 @@ int BatchNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
 
-  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
 
-  auto format = inputs[kIndex0]->GetFormat();
+  auto format = inputs[kIndex0]->format();
   if (x_shape_size == kBatchNormInputShapeMinSize) {
     format = Format::NCHW;
   } else if (format_ == Format::NHWC) {

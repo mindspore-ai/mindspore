@@ -30,7 +30,7 @@ using KernelRunFunc = LinSpaceCpuKernelMod::KernelRunFunc;
 bool LinSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  num_dtype_ = inputs[kIndex2]->GetDtype();
+  num_dtype_ = inputs[kIndex2]->dtype_id();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -52,7 +52,7 @@ int LinSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 
   multi_dims_ = (batch_num_ != 1);
 
-  const auto dtype_size = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  const auto dtype_size = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   // Deal with workspace_size_list_
   workspace_size_list_.clear();
   workspace_size_list_ = {LongToSize(batch_num_) * dtype_size};

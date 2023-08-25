@@ -91,7 +91,7 @@ bool AdjustContrastv2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -102,7 +102,7 @@ int AdjustContrastv2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  images_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  images_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

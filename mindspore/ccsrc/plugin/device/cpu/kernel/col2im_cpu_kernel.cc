@@ -58,7 +58,7 @@ int Col2ImCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
   return KRET_OK;
 }

@@ -57,7 +57,7 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
 
-  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeMaxSize - x_shape.size(), 1);
 
   batch_size_ = x_shape[0];
@@ -96,7 +96,7 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
 void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
   size_t type_size = sizeof(float);
-  auto shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto shape = inputs[0]->GetDeviceShapeVector();
   size_t tensor_size = static_cast<size_t>(shape[1]) * 2 * type_size;  // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
 }

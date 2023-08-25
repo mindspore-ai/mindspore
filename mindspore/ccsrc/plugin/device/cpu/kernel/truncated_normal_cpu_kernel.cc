@@ -77,8 +77,8 @@ int TruncatedNormalCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input tensor shape must >= 2, but got "
                              << shape_input[kIndex0];
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
-  output_type_ = outputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
+  output_type_ = outputs[kIndex0]->dtype_id();
   return KRET_OK;
 }
 

@@ -58,7 +58,7 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                   << indexing;
     return false;
   }
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   return true;
 }
 

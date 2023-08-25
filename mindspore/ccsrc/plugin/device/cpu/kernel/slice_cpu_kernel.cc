@@ -64,16 +64,16 @@ bool SliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "input size should be " << kSliceInputsNum;
   }
 
-  TypeId dtype = inputs[0]->GetDtype();
+  TypeId dtype = inputs[0]->dtype_id();
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
     MS_LOG(EXCEPTION) << "Slice supports type in type_size_map, but got " << TypeIdToType(dtype)->ToString();
   }
   data_size_ = size_pair->second;
 
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.at(1)->GetDtype() == inputs[kSliceInputIndex2]->GetDtype(),
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.at(1)->dtype_id() == inputs[kSliceInputIndex2]->dtype_id(),
                              "Begin and size dtype should be same.");
-  param_dtype_ = inputs.at(1)->GetDtype();
+  param_dtype_ = inputs.at(1)->dtype_id();
 
   return true;
 }

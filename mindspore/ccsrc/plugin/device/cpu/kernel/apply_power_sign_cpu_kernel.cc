@@ -84,7 +84,7 @@ bool ApplyPowerSignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   batch_rank_ = base_operator->get_batch_rank();
   return true;
 }

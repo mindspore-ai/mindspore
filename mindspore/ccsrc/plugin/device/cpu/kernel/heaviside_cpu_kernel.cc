@@ -40,8 +40,8 @@ bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHeavisideInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHeavisideOutputsNum, kernel_name_);
-  input0_dtype_ = inputs[0]->GetDtype();
-  input1_dtype_ = inputs[1]->GetDtype();
+  input0_dtype_ = inputs[0]->dtype_id();
+  input1_dtype_ = inputs[1]->dtype_id();
   if (input0_dtype_ != input1_dtype_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', 'x' and 'values' should have the same data "

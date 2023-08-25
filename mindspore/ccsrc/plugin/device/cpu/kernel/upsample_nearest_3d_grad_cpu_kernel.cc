@@ -66,8 +66,8 @@ int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   // workspace
   size_t unit_size = sizeof(int64_t);
   workspace_size_list_.push_back(unit_size * static_cast<size_t>(output_shape_[kIndex2]));

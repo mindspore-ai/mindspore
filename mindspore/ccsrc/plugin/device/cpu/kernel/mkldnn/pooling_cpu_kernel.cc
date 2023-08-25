@@ -33,7 +33,7 @@ void PoolingCpuKernelMod::InitPoolingFields(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
@@ -81,8 +81,8 @@ int PoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto src_shape = inputs[0]->GetDeviceShapeAdaptively();
-  dst_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[0]->GetDeviceShapeVector();
+  dst_shape_ = outputs[0]->GetDeviceShapeVector();
   const size_t src_dim = src_shape.size();
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape_);

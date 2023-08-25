@@ -80,8 +80,8 @@ bool OneHotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   check_input_num(input_size, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
-  input_dtype_ = inputs[kIndex0]->GetDtype();
-  output_dtype_ = outputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
+  output_dtype_ = outputs[kIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {

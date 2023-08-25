@@ -65,8 +65,8 @@ void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *
 bool LUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                           const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+  kernel_name_ = base_operator->GetPrim()->name();
+  dtype_ = inputs[0]->dtype_id();
   size_t input_num = inputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
   size_t output_num = outputs.size();

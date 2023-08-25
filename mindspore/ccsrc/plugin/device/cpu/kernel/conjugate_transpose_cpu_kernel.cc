@@ -49,8 +49,8 @@ bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  perm_type_ = inputs.at(kIndex1)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  perm_type_ = inputs.at(kIndex1)->dtype_id();
   launch_map_[kNumberTypeBool] = &ConjugateTransposeCpuKernelMod::LaunchKernel<bool>;
   launch_map_[kNumberTypeInt8] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &ConjugateTransposeCpuKernelMod::LaunchKernel<int16_t>;
@@ -82,8 +82,8 @@ int ConjugateTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
 
   return KRET_OK;
 }

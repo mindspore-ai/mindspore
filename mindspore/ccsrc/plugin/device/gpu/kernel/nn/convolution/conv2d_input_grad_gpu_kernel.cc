@@ -66,8 +66,8 @@ int Conv2dInputGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto dy_shape = inputs[0]->GetDeviceShapeAdaptively();
-  auto filter_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto dy_shape = inputs[0]->GetDeviceShapeVector();
+  auto filter_shape = inputs[kIndex1]->GetDeviceShapeVector();
   std::vector<int64_t> input_shape;
   if (!TryGetIntValue(inputs, kShapeIndex, kernel_name_, &input_shape, true)) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get input_sizes input!";

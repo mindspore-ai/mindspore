@@ -28,7 +28,7 @@ bool TraceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  values_type_ = inputs.at(kIndex0)->GetDtype();
+  values_type_ = inputs.at(kIndex0)->dtype_id();
   return true;
 }
 
@@ -38,7 +38,7 @@ int TraceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
   const std::vector<int64_t> x_shape_ = {2};
   if (input_shape_ != x_shape_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << x_shape_

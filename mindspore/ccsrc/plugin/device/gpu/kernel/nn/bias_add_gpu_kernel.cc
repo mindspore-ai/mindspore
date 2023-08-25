@@ -35,7 +35,7 @@ bool BiasAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
   return true;
 }
 

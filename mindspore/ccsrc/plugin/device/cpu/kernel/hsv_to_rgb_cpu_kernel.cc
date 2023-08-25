@@ -40,7 +40,7 @@ bool HSVToRGBCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_dtype = inputs[kZero]->GetDtype();
+  input_dtype = inputs[kZero]->dtype_id();
   return true;
 }
 int HSVToRGBCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -50,7 +50,7 @@ int HSVToRGBCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (ret != KRET_OK) {
     return ret;
   }
-  shape = inputs[kZero]->GetDeviceShapeAdaptively();
+  shape = inputs[kZero]->GetDeviceShapeVector();
   return ret;
 }
 

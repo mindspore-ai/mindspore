@@ -62,8 +62,8 @@ int RandomPoissonGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
   ResetResource();
-  std::vector<int64_t> rate_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  std::vector<int64_t> rate_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   rate_elements_ = std::accumulate(rate_shape.begin(), rate_shape.end(), 1, std::multiplies<int64_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {

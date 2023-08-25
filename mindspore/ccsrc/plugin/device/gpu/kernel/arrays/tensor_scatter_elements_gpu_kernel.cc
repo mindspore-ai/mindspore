@@ -161,14 +161,14 @@ int TensorScatterElementsGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   FreeResource();
   sync_resource_ = true;
 
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  indices_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  updates_shape_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                     inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  indices_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  updates_shape_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
   input_dims_ = input_shape_.size();
 

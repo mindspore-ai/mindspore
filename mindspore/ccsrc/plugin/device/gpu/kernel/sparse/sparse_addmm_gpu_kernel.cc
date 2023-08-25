@@ -41,8 +41,8 @@ bool SparseAddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   return true;
 }
 
@@ -58,14 +58,14 @@ int SparseAddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   ResetResource();
 
-  std::vector<int64_t> indices_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> mat2_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> mat3_shape_ = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> mat2_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> mat3_shape_ = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex4)->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
   int64_t mat2_elements_ =
     std::accumulate(mat2_shape_.begin(), mat2_shape_.end(), int64_t(1), std::multiplies<int64_t>());

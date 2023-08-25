@@ -90,7 +90,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
     auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
     MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
     is_grad_ = kernel_ptr->get_is_grad();
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
     InitResource();
     return true;
   }

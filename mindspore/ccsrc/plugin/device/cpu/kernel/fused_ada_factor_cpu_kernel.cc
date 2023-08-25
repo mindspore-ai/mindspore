@@ -53,7 +53,7 @@ bool FusedAdaFactorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  param_dtype_ = inputs[kParamIndex]->GetDtype();
+  param_dtype_ = inputs[kParamIndex]->dtype_id();
   auto op_ptr = std::dynamic_pointer_cast<ops::FusedAdaFactor>(base_operator);
   MS_EXCEPTION_IF_NULL(op_ptr);
   enable_scale_parameter_ = op_ptr->get_enable_scale_parameter();

@@ -58,7 +58,7 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
+    dtype_ = inputs.at(kIndex0)->dtype_id();
     dtype_size_ = abstract::TypeIdSize(dtype_);
     return true;
   }

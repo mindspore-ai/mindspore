@@ -69,7 +69,7 @@ bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
   kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
   strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
-  dtype_ = inputs[grad_index_]->GetDtype();
+  dtype_ = inputs[grad_index_]->dtype_id();
   return true;
 }
 

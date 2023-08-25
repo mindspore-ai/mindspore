@@ -41,7 +41,7 @@ bool MatrixDeterminantCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the inputs number must be 1, but got " << outputs.size();
     return false;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 

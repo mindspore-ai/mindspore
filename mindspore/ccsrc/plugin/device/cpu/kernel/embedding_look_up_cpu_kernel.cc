@@ -155,11 +155,11 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = 1; i < input_params_shape.size(); ++i) {
     outer_dim_size_ *= LongToSize(input_params_shape[i]);
   }
-  input_params_dtype_ = inputs[kIndex0]->GetDtype();
+  input_params_dtype_ = inputs[kIndex0]->dtype_id();
 
   std::vector<int64_t> input_indices_shape = inputs[kIndex1]->GetShapeVector();
   input_indices_lens_ = SizeOf(input_indices_shape);
-  input_indices_dtype_ = inputs[kIndex1]->GetDtype();
+  input_indices_dtype_ = inputs[kIndex1]->dtype_id();
   return KRET_OK;
 }
 

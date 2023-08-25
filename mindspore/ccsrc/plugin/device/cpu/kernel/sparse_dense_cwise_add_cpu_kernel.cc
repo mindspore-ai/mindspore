@@ -33,7 +33,7 @@ const int64_t kIndex3 = 3;
 bool SparseDenseCwiseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
-  data_type_ = inputs.at(kIndex3)->GetDtype();
+  data_type_ = inputs.at(kIndex3)->dtype_id();
   return true;
 }
 

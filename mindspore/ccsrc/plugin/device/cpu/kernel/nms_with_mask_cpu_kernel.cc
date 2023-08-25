@@ -82,7 +82,7 @@ int NMSWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   num_input_ = LongToInt(in_shape[0]);  //  Get N values in  [N, 5] data.
   ceil_power_2_ = static_cast<size_t>(NmsRoundUpPower2(num_input_));
 
-  workspace_size_list_.push_back(ceil_power_2_ * abstract::TypeIdSize(inputs[kIndex0]->GetDtype()));  //  data buff
+  workspace_size_list_.push_back(ceil_power_2_ * abstract::TypeIdSize(inputs[kIndex0]->dtype_id()));  //  data buff
   workspace_size_list_.push_back(ceil_power_2_ * sizeof(int));                                        //  index buff
   workspace_size_list_.push_back(IntToSize(num_input_ * num_input_) * sizeof(bool));                  //  mask list
   return KRET_OK;

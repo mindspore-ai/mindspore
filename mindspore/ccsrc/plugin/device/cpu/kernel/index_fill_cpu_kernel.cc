@@ -46,9 +46,9 @@ bool IndexFillCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  x_type_ = inputs[kInputIndex0]->GetDtype();
-  dim_type_ = inputs[kInputIndex1]->GetDtype();
-  indices_type_ = inputs[kInputIndex2]->GetDtype();
+  x_type_ = inputs[kInputIndex0]->dtype_id();
+  dim_type_ = inputs[kInputIndex1]->dtype_id();
+  indices_type_ = inputs[kInputIndex2]->dtype_id();
   if (dim_type_ != kNumberTypeInt32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'dim' must be int32 or int64, but got "
                             << dim_type_;
@@ -73,10 +73,10 @@ int IndexFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  dim_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
-  value_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  dim_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  indices_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
+  value_shape_ = inputs[kInputIndex3]->GetDeviceShapeVector();
   return ret;
 }
 

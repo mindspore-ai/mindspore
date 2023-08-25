@@ -49,7 +49,7 @@ bool AddcmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -59,12 +59,12 @@ int AddcmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kInputData]->GetDtype();
-  dtype_value_ = inputs[kInputValue]->GetDtype();
-  input_shape0_ = inputs[kInputData]->GetDeviceShapeAdaptively();
-  input_shape1_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
-  input_shape2_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
-  input_shape3_ = inputs[kInputValue]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kInputData]->dtype_id();
+  dtype_value_ = inputs[kInputValue]->dtype_id();
+  input_shape0_ = inputs[kInputData]->GetDeviceShapeVector();
+  input_shape1_ = inputs[kInputX1]->GetDeviceShapeVector();
+  input_shape2_ = inputs[kInputX2]->GetDeviceShapeVector();
+  input_shape3_ = inputs[kInputValue]->GetDeviceShapeVector();
   output_shape_ = outputs[kOutputData]->GetShapeVector();
   data_shape_size_ = input_shape0_.size();
   inputx_shape_size_ = input_shape1_.size();

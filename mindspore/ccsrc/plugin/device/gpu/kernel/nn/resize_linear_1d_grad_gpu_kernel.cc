@@ -70,12 +70,12 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  grad_output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  grad_output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   batch_ = grad_output_shape_[kIndex0];
   channel_ = grad_output_shape_[kIndex1];
   out_width_ = grad_output_shape_[kIndex2];
 
-  grad_input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  grad_input_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   in_width_ = grad_input_shape_[kIndex2];
   size_t work_space_size = SizeOf(grad_input_shape_);
   workspace_size_list_.push_back(work_space_size * sizeof(float));

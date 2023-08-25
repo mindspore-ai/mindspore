@@ -47,7 +47,7 @@ bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   if (inputs.empty()) {
     MS_EXCEPTION(ValueError) << "ApplyAdagradDA input is empty";
   }
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   batch_rank_ = base_operator->get_batch_rank();
   return true;
 }

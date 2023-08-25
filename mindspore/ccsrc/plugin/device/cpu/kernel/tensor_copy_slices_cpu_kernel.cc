@@ -64,7 +64,7 @@ bool TensorCopySlicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  data_type_ = inputs.at(kIndex0)->GetDtype();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
   return true;
 }
 

@@ -76,19 +76,19 @@ int AdaptiveAvgPool3DGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  grad_output_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  grad_output_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   size_t input_1_shape_size = grad_output_dim_sizes_.size();
   if (input_1_shape_size != k4D && input_1_shape_size != k5D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimensions of input should be 4 or 5, but got "
                       << input_1_shape_size;
   }
-  orig_input_shape_dim_sizes_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  orig_input_shape_dim_sizes_ = inputs.at(kIndex1)->GetDeviceShapeVector();
   size_t input_shape_size = orig_input_shape_dim_sizes_.size();
   if (input_shape_size != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimensions of the 2st input shape should be 1, but got "
                       << input_shape_size;
   }
-  grad_input_dim_sizes_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  grad_input_dim_sizes_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

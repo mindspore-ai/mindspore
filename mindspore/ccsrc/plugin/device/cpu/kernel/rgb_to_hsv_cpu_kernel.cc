@@ -31,7 +31,7 @@ bool RGBToHSVCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  input_dtype = inputs.at(kIndex0)->GetDtype();
+  input_dtype = inputs.at(kIndex0)->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -48,7 +48,7 @@ int RGBToHSVCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return ret;
   }
 
-  auto input_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto input_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
   input0_elements_nums_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     input0_elements_nums_ *= static_cast<size_t>(input_shape[i]);

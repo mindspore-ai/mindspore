@@ -114,7 +114,7 @@ bool SparseCountSparseOutputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   maxlength_ = kernel_ptr->get_maxlength();
 
   (void)types_.emplace_back(TypeId::kNumberTypeInt64);
-  (void)types_.emplace_back(inputs[1]->GetDtype());
+  (void)types_.emplace_back(inputs[1]->dtype_id());
   (void)types_.emplace_back(TypeId::kNumberTypeInt64);
   is_need_retrieve_output_shape_ = true;
   return true;

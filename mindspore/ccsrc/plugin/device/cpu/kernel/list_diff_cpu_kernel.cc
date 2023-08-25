@@ -42,15 +42,15 @@ bool ListDiffCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   MS_EXCEPTION_IF_NULL(base_operator);
   is_need_retrieve_output_shape_ = true;
   kernel_name_ = base_operator->name();
-  TypeId x_type = inputs.at(kIndex0)->GetDtype();
-  TypeId y_type = inputs.at(kIndex1)->GetDtype();
-  out_type_ = outputs.at(kIndex0)->GetDtype();
+  TypeId x_type = inputs.at(kIndex0)->dtype_id();
+  TypeId y_type = inputs.at(kIndex1)->dtype_id();
+  out_type_ = outputs.at(kIndex0)->dtype_id();
   if (x_type != y_type || x_type != out_type_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input 'x', 'y' and output 'out' should be same type, but get x["
                       << TypeIdLabel(x_type) << "], y[" << TypeIdLabel(y_type) << "], out[" << TypeIdLabel(out_type_)
                       << "].";
   }
-  idx_type_ = outputs.at(kIndex1)->GetDtype();
+  idx_type_ = outputs.at(kIndex1)->dtype_id();
   MS_EXCEPTION_IF_CHECK_FAIL((idx_type_ == kNumberTypeInt32 || idx_type_ == kNumberTypeInt64),
                              "attr 'out_idx' should be int32 or int64");
   out_size_ = 0;

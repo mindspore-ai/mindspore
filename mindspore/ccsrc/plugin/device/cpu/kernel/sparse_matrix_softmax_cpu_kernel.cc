@@ -42,7 +42,7 @@ bool SparseMatrixSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[logits_values]->GetDtype();
+  dtype_ = inputs[logits_values]->dtype_id();
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(ERROR) << "For " << kernel_name_

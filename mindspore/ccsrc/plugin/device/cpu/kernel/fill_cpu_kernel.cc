@@ -36,7 +36,7 @@ constexpr size_t kFillOutputsNum = 1;
 bool FillCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  input0_dtype_ = inputs[kIndex0]->GetDtype();
+  input0_dtype_ = inputs[kIndex0]->dtype_id();
 
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   x_type_id_ = tensor_attr.GetInputAttr(kIndex1).dtype;

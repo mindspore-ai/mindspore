@@ -129,8 +129,8 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       ceil_mode_ = inputs[ceil_mode_index]->GetValueWithCheck<bool>();
       AvgPool3DPadListCheck(inputs);
     }
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
-    data_format_ = mindspore::FormatEnumToString(inputs[0]->GetFormat());
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->dtype_id()));
+    data_format_ = mindspore::FormatEnumToString(inputs[0]->format());
     // auto format_attr = GetValue<std::string>(prim->GetAttr("format"));
     // change all the string format to Enum(todo)
     size_t format_index = ops::GetInputIndexByName(kernel_name_, "format");
@@ -149,8 +149,8 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     ResetResource();
-    auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
-    auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+    auto input_shape = inputs[0]->GetDeviceShapeVector();
+    auto output_shape = outputs[0]->GetDeviceShapeVector();
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -385,8 +385,8 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     if (strides.size() != k3dSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "strides must be " << k3dSizeLowerLimit << "D, but got " << strides.size();
     }
-    auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
-    auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+    auto input_shape = inputs[0]->GetDeviceShapeVector();
+    auto output_shape = outputs[0]->GetDeviceShapeVector();
     kernel_size_ = {kernel_size[kIdxD], kernel_size[kIdxH], kernel_size[kIdxW]};
     std::vector<int64_t> stride = {strides[kIdxD], strides[kIdxH], strides[kIdxW]};
     std::vector<int64_t> shape_exclude_nc = {SizeToLong(input_shape[kIdxD]), SizeToLong(input_shape[kIdxH]),

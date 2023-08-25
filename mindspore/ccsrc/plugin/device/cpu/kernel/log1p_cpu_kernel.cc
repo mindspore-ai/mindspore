@@ -34,7 +34,7 @@ bool Log1pCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = prim->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLog1pInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLog1pOutputsNum, kernel_name_);
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

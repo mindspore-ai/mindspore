@@ -62,12 +62,12 @@ int AddcdivCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kInputData]->GetDtype();
-  dtype_value = inputs[kInputValue]->GetDtype();
-  input_shape0_ = inputs[kInputData]->GetDeviceShapeAdaptively();
-  input_shape1_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
-  input_shape2_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
-  input_shape3_ = inputs[kInputValue]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kInputData]->dtype_id();
+  dtype_value = inputs[kInputValue]->dtype_id();
+  input_shape0_ = inputs[kInputData]->GetDeviceShapeVector();
+  input_shape1_ = inputs[kInputX1]->GetDeviceShapeVector();
+  input_shape2_ = inputs[kInputX2]->GetDeviceShapeVector();
+  input_shape3_ = inputs[kInputValue]->GetDeviceShapeVector();
   output_shape_ = outputs[kOutputData]->GetShapeVector();
   data_shape_size_ = SizeToLong(input_shape0_.size());
   inputx_shape_size_ = SizeToLong(input_shape1_.size());

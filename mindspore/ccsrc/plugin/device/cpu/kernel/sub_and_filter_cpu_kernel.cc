@@ -29,7 +29,7 @@ bool SubAndFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+  x_dtype_ = inputs.at(kIndex0)->dtype_id();
   x_dtype_size_ = abstract::TypeIdSize(x_dtype_);
   is_need_retrieve_output_shape_ = true;
   return true;

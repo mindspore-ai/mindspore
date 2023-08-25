@@ -40,7 +40,7 @@ bool CumulativeLogsumexpCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
   shape_ = inputs[kInputIndex0]->GetShapeVector();
-  dtype_ = inputs[kInputIndex0]->GetDtype();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::CumulativeLogsumexp>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel_ptr is null.";
@@ -61,7 +61,7 @@ int CumulativeLogsumexpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
 
   shape_ = inputs[kInputIndex0]->GetShapeVector();
-  dtype_ = inputs[kInputIndex0]->GetDtype();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
   return KRET_OK;
 }
 

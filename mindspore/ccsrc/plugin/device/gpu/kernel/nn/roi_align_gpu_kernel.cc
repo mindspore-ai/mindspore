@@ -67,8 +67,8 @@ int ROIAlignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   width_ = x_shape[kIndex3];
   roi_rows_ = rois_shape[kIndex0];
   roi_cols_ = rois_shape[kIndex1];
-  auto x_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  auto x_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   x_size_ = batch_ * channel_ * height_ * width_ * x_type_size;
   rois_size_ = roi_rows_ * roi_cols_ * rois_type_size;
   output_size_ = roi_rows_ * channel_ * pooled_height_ * pooled_width_ * rois_type_size;

@@ -37,8 +37,8 @@ bool SparseSegmentMeanWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &b
                                                         const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  x_dtype_ = inputs.at(kIndex0)->GetDtype();
-  indices_dtype_ = inputs.at(kIndex1)->GetDtype();
+  x_dtype_ = inputs.at(kIndex0)->dtype_id();
+  indices_dtype_ = inputs.at(kIndex1)->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentMeanWithNumSegmentsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentMeanWithNumSegmentsOutputsNum, kernel_name_);
   return true;
@@ -51,9 +51,9 @@ int SparseSegmentMeanWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();
+  y_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   return KRET_OK;
 }
 

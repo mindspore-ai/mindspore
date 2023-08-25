@@ -100,7 +100,7 @@ bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const 
     MS_LOG(ERROR) << "Pooling only supports Avg or Max, but got " << kernel_name_;
     return false;
   }
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
   pad_mode_ = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
   kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
@@ -120,8 +120,8 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  in_size_ = inputs[0]->GetDeviceShapeAdaptively();
-  out_size_ = outputs[0]->GetDeviceShapeAdaptively();
+  in_size_ = inputs[0]->GetDeviceShapeVector();
+  out_size_ = outputs[0]->GetDeviceShapeVector();
   auto src_dim = in_size_.size();
   if (!(src_dim == SHAPE_4D && out_size_.size() == SHAPE_4D) &&
       !(src_dim == SHAPE_5D && out_size_.size() == SHAPE_5D)) {
@@ -183,8 +183,8 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   batches_ = in_size_[0];
   channels_ = in_size_[1];
   output_num_ = batches_ * channels_ * out_size_[kD] * out_size_[kH] * out_size_[kW];
-  auto in_dtype_size = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
-  auto out_dtype_size = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
+  auto in_dtype_size = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
+  auto out_dtype_size = GetTypeByte(TypeIdToType(outputs[0]->dtype_id()));
 
   use_channel_last_ = src_dim == SHAPE_5D && dtype_ == kNumberTypeFloat32 && channels_ >= kMinChannelBlock;
   if (use_channel_last_) {

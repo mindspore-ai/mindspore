@@ -36,8 +36,8 @@ bool MulNoNanCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMulNoNanInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMulNoNanOutputsNum, kernel_name_);
 
-  input_dtype_ = inputs[kIndex0]->GetDtype();
-  output_dtype_ = outputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
+  output_dtype_ = outputs[kIndex0]->dtype_id();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -48,9 +48,9 @@ int MulNoNanCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return ret;
   }
 
-  input0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

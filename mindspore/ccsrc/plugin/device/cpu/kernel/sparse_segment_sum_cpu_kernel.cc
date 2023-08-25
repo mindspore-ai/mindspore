@@ -41,8 +41,8 @@ int SparseSegmentSumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  segment_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  segment_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

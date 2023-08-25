@@ -53,9 +53,9 @@ bool ConjugateTransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_one_ = abstract::TypeIdSize(inputs[0]->GetDtype());
-  unit_size_two_ = abstract::TypeIdSize(inputs[1]->GetDtype());
-  out_unit_size_ = abstract::TypeIdSize(outputs[0]->GetDtype());
+  unit_size_one_ = abstract::TypeIdSize(inputs[0]->dtype_id());
+  unit_size_two_ = abstract::TypeIdSize(inputs[1]->dtype_id());
+  out_unit_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
 
   return true;
 }

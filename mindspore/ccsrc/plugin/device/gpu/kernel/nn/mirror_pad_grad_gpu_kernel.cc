@@ -78,8 +78,8 @@ bool MirrorPadGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
                       << mode;
   }
-  input_type_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  padding_type_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  input_type_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  padding_type_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

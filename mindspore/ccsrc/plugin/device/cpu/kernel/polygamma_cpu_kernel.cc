@@ -167,8 +167,8 @@ int PolygammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   x_shape_ = inputs[kInputIndex1]->GetShapeVector();
   x_tensor_size_ = SizeOf(x_shape_);
-  a_dtype_ = inputs[kInputIndex0]->GetDtype();
-  x_dtype_ = inputs[kInputIndex1]->GetDtype();
+  a_dtype_ = inputs[kInputIndex0]->dtype_id();
+  x_dtype_ = inputs[kInputIndex1]->dtype_id();
   return 0;
 }
 

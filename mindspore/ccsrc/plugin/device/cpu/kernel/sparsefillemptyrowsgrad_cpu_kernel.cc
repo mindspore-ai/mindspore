@@ -62,8 +62,8 @@ bool SparseFillEmptyRowsGradCpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  output_y_values_type_ = inputs[kIndex0]->GetDtype();
-  output_y_default_value_type_ = inputs[kIndex1]->GetDtype();
+  output_y_values_type_ = inputs[kIndex0]->dtype_id();
+  output_y_default_value_type_ = inputs[kIndex1]->dtype_id();
 
   return true;
 }

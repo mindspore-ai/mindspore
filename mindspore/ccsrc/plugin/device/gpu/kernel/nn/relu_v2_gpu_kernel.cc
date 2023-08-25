@@ -42,7 +42,7 @@ int ReluV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeAdaptively());
+  auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeVector());
   element_num_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<>());
   output_size_list_.pop_back();
   auto mask_size = (element_num_ + 31) / 32 * sizeof(uint32_t);

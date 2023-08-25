@@ -29,7 +29,7 @@ bool L2NormalizeGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
   InitResource();
-  data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

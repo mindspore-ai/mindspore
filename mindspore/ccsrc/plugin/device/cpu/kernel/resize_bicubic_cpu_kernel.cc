@@ -335,8 +335,8 @@ int ResizeBicubicCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  x_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  y_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+  y_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   sta.CalculateSize();
   return KRET_OK;
 }

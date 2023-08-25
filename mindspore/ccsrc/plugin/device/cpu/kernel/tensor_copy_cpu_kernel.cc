@@ -35,8 +35,8 @@ bool TensorCopyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   kernel_name_ = base_operator->name();
   auto input_shape = inputs[ktInput]->GetShapeVector();
   auto output_shape = outputs[ktOutput]->GetShapeVector();
-  auto input_type = inputs[ktInput]->GetDtype();
-  auto output_type = inputs[ktOutput]->GetDtype();
+  auto input_type = inputs[ktInput]->dtype_id();
+  auto output_type = inputs[ktOutput]->dtype_id();
 
   auto copy_size = GetTypeByte(TypeIdToType(input_type));
   copy_size = std::accumulate(input_shape.begin(), input_shape.end(), copy_size, std::multiplies<size_t>());

@@ -62,7 +62,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   align_corners_ = kernel_ptr->get_align_corners();
   auto x = inputs.at(kIndex0);
   MS_EXCEPTION_IF_NULL(x);
-  x_type_ = x->GetDtype();
+  x_type_ = x->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -81,8 +81,8 @@ int UpsampleTrilinear3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     return ret;
   }
   // shape
-  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   // workspace
   size_t unit_size = sizeof(WeightsAndIndices<float>);
   if (x_type_ == kNumberTypeFloat64) {

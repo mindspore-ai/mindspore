@@ -66,8 +66,8 @@ int CholeskyInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   int64_t input_dims = input_shape.size();
   if (input_dims <= 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims

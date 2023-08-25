@@ -49,8 +49,8 @@ int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   auto shape = inputs[0]->GetShapeVector();
   auto indices_shape_ori = inputs[1]->GetShapeVector();
   auto updates_shape_ori = inputs[2]->GetShapeVector();
-  dtype_value_ = inputs[0]->GetDtype();
-  dtype_shape_ = inputs[1]->GetDtype();
+  dtype_value_ = inputs[0]->dtype_id();
+  dtype_shape_ = inputs[1]->dtype_id();
   auto indices_shape = Convert2SizeT(indices_shape_ori);
   auto updates_shape = Convert2SizeT(updates_shape_ori);
   auto indices_unit_rank = indices_shape.back();

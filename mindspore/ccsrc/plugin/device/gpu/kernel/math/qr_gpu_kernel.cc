@@ -60,8 +60,8 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
     is_null_input_ = true;
   }
 
-  std::vector<size_t> x_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                    inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> x_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                    inputs.at(kIndex0)->GetDeviceShapeVector().end());
   total_size_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<size_t>());
   input_dims_ = x_shape.size();
   if (input_dims_ < kDim2) {

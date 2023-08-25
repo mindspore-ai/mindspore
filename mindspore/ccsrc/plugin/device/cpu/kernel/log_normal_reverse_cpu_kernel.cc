@@ -56,7 +56,7 @@ int LogNormalReverseCpuKernel::Resize(const BaseOperatorPtr &base_operator, cons
   if (ret != KRET_OK) {
     return ret;
   }
-  input_dtype_ = inputs[kIndex0]->GetDtype();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
   return KRET_OK;
 }
 

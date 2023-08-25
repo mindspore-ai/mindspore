@@ -33,7 +33,7 @@ constexpr size_t kOutputsNum = 2;
 bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   compute_eigen_vectors_ = GetValue<bool>(base_operator->GetAttr(C_EIEH_VECTOR));
   lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));

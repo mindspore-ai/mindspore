@@ -47,7 +47,7 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_o
   }
   kernel_func_ = func_list_[index].second;
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  y_type_ = outputs[kIndex0]->GetDtype();
+  y_type_ = outputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -61,8 +61,8 @@ int ResizeNearestNeighborV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_
   if (ret != KRET_OK) {
     return ret;
   }
-  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  grads_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  grads_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   y_size_ = SizeOf(y_shape_);
   if (y_type_ == kNumberTypeFloat16) {
     workspace_size_list_.push_back(y_size_ * sizeof(float));

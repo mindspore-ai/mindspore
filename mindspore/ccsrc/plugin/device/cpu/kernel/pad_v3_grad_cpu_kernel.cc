@@ -74,7 +74,7 @@ bool PadV3GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   kernel_func_ = func_list_[index].second;
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -86,8 +86,8 @@ int PadV3GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_dim_ = SizeToLong(input_shape.size());
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
 
   auto padding_shape = inputs[kIndex1]->GetShapeVector();
   // get padding_num

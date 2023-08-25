@@ -37,7 +37,7 @@ bool GridSampler2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -62,9 +62,9 @@ int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
 
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  output_shape_ = outputs[kZero]->GetDeviceShapeVector();
   output_number_ = LongToSize(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree]);
   x_stride_.clear();
   grid_stride_.clear();

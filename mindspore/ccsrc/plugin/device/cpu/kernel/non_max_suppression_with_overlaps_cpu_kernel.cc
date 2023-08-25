@@ -57,7 +57,7 @@ int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &bas
     return ret;
   }
 
-  auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeVector();
   num_boxes_ = LongToInt(overlaps_shape[0]);
   return KRET_OK;
 }

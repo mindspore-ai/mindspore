@@ -43,7 +43,7 @@ bool BesselK0eCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
 
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
 
   switch (input_dtype_) {
     case kNumberTypeFloat64:

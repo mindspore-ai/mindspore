@@ -115,7 +115,7 @@ bool Conv3dTransposeFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
   data_format_ = kOpFormat_NCDHW;  // only support NCDHW right now
   format_attr_ = kernel_ptr->get_data_format();
   group_ = static_cast<int>(kernel_ptr->get_group());

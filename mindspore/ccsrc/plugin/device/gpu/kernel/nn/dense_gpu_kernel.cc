@@ -58,9 +58,9 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     dtype_b_ = CUDA_R_32F;
     dtype_c_ = CUDA_R_32F;
   } else {
-    dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-    dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-    dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+    dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+    dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+    dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
   }
 
   if (dtype_a_ == CUDA_R_16F) {

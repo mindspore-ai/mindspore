@@ -79,7 +79,7 @@ int CTCLossV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   const auto target_shape = inputs[kIndex2]->GetShapeVector();
   max_target_length_ = target_shape[kIndex1];
 
-  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   workspace_size_list_.clear();
   workspace_size_list_ = {
     LongToSize(batch_size_ * T_ * (target_mul * max_target_length_ + 1)) * scalar_type_size,

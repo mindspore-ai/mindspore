@@ -81,7 +81,7 @@ int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  data_type_ = inputs.at(kIndex0)->GetDtype();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);

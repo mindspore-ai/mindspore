@@ -76,8 +76,8 @@ bool SparseApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_var_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndicesIndex]->GetDtype());
+  unit_var_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndicesIndex]->dtype_id());
   return true;
 }
 
@@ -100,14 +100,14 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
 
-  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs.at(kVarIndex)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kVarIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs.at(kGradIndex)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kGradIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> indices = std::vector<int64_t>(inputs.at(kIndicesIndex)->GetDeviceShapeAdaptively().begin(),
-                                                      inputs.at(kIndicesIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs.at(kLRIndex)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kLRIndex)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs.at(kVarIndex)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kVarIndex)->GetDeviceShapeVector().end());
+  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs.at(kGradIndex)->GetDeviceShapeVector().begin(),
+                                                         inputs.at(kGradIndex)->GetDeviceShapeVector().end());
+  std::vector<int64_t> indices = std::vector<int64_t>(inputs.at(kIndicesIndex)->GetDeviceShapeVector().begin(),
+                                                      inputs.at(kIndicesIndex)->GetDeviceShapeVector().end());
+  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs.at(kLRIndex)->GetDeviceShapeVector().begin(),
+                                                       inputs.at(kLRIndex)->GetDeviceShapeVector().end());
   int64_t indices_nums_ = std::accumulate(indices.begin(), indices.end(), int64_t(1), std::multiplies<int64_t>());
 
   if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
@@ -231,12 +231,12 @@ void SparseApplyAdagradDAGpuKernelMod::CheckDType(const std::vector<KernelTensor
                                                   const std::vector<KernelTensorPtr> &outputs) const {
   std::vector<TypeId> input_types(kSparseApplyAdagradDAInputsNum);
   for (size_t i = 0; i < kSparseApplyAdagradDAInputsNum; ++i) {
-    input_types[i] = inputs[i]->GetDtype();
+    input_types[i] = inputs[i]->dtype_id();
   }
 
   std::vector<TypeId> output_types(kSparseApplyAdagradDAOutputsNum);
   for (size_t i = 0; i < kSparseApplyAdagradDAOutputsNum; ++i) {
-    output_types[i] = outputs[i]->GetDtype();
+    output_types[i] = outputs[i]->dtype_id();
   }
 
   for (size_t i = 1; i < kGlobalStepIndex; ++i) {

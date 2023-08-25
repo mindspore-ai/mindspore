@@ -73,7 +73,7 @@ bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
+  const auto dtype = inputs.at(kIndex0)->dtype_id();
 
   auto kernel_ptr = std::make_shared<ops::MatrixSolve>(base_operator->GetPrim());
   bool adjoint = kernel_ptr->get_adjoint();
@@ -117,7 +117,7 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     LongToSize(std::accumulate(matrix_shape.begin(), matrix_shape.end(), int64_t(1), std::multiplies{}));
   const size_t rhs_size =
     LongToSize(std::accumulate(rhs_shape.begin(), rhs_shape.end(), int64_t(1), std::multiplies{}));
-  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex1)->GetDtype()));
+  const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex1)->dtype_id()));
 
   workspace_size_list_.clear();
   workspace_size_list_ = {

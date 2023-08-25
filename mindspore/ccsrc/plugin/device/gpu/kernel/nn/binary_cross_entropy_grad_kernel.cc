@@ -68,7 +68,7 @@ bool BinaryCrossEntropyGradGpuKernelMod::Init(const BaseOperatorPtr &base_operat
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   const auto reduction = kernel_ptr->get_reduction();
   if (reduction == Reduction::NONE) {
     reduction_ = ReductionMode::kNone;

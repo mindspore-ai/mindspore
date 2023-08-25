@@ -49,8 +49,8 @@ bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
                   << kGerOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  input_type_1_ = inputs[0]->GetDtype();
-  input_type_2_ = inputs[1]->GetDtype();
+  input_type_1_ = inputs[0]->dtype_id();
+  input_type_2_ = inputs[1]->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input1 and input2 must have the same type. But got input1 type "
                   << input_type_1_ << ", input2 type " << input_type_2_;
@@ -72,12 +72,12 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     return ret;
   }
 
-  input_shape_1_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_shape_2_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_1_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_shape_2_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto in_shape_size_1 = input_shape_1_.size();
   auto in_shape_size_2 = input_shape_2_.size();
 

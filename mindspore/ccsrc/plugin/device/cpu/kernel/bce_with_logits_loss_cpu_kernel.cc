@@ -80,7 +80,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   // The output_size_list_ should be clear and reset.
   output_size_list_.clear();
   workspace_size_list_.clear();
-  size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
+  size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->dtype_id()));
   size_t input_byte_size = input_size_ * unit_byte_size;
   if (reduction_ == kNone) {
     // The output is a Tensor in ReductionType none.

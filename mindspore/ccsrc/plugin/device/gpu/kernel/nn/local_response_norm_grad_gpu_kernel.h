@@ -149,7 +149,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       transpose_shape_.push_back(input_shape_[1]);
     } else {
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
       SetCUDNNDescriptors(input_shape_, lrnN, lrnAlpha);
     }
 

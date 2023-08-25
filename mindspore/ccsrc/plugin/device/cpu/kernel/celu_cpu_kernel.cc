@@ -30,7 +30,7 @@ const std::vector<KernelAttr> kernel_attr = {
 
 bool CeluCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
-  auto input_type_id = inputs[0]->GetDtype();
+  auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "celu kernel does not support " << TypeIdToString(input_type_id);
     return false;

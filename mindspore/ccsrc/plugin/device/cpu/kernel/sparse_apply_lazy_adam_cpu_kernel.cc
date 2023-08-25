@@ -181,7 +181,7 @@ int SparseApplyLazyAdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return KRET_RESIZE_FAILED;
   }
 
-  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
+  indices_data_type_ = inputs[kIndicesIndex]->dtype_id();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {

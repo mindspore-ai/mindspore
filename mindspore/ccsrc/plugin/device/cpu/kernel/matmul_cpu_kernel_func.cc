@@ -98,7 +98,7 @@ void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const s
     for (size_t j = 0; j < inputs_shape_i.size(); j++) {
       in_[i]->shape_[j] = inputs_shape_i[j];
     }
-    in_[i]->data_type_ = inputs[i]->GetDtype();
+    in_[i]->data_type_ = inputs[i]->dtype_id();
   }
   for (size_t i = 0; i < out_size_; i++) {
     out_[i] = new TensorC;
@@ -107,7 +107,7 @@ void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const s
     for (size_t j = 0; j < outputs_shape_i.size(); j++) {
       out_[i]->shape_[j] = outputs_shape_i[j];
     }
-    out_[i]->data_type_ = outputs[i]->GetDtype();
+    out_[i]->data_type_ = outputs[i]->dtype_id();
   }
   op_parameter_ = new OpParameter;
   int thread_num = GetActorMgrInnerThreadPool()->GetKernelThreadNum();
@@ -184,7 +184,7 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     for (size_t j = 0; j < inputs_shape_i.size(); j++) {
       in_[i]->shape_[j] = inputs_shape_i[j];
     }
-    in_[i]->data_type_ = inputs[i]->GetDtype();
+    in_[i]->data_type_ = inputs[i]->dtype_id();
   }
   for (size_t i = 0; i < out_size_; i++) {
     auto outputs_shape_i = outputs[i]->GetShapeVector();
@@ -192,7 +192,7 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     for (size_t j = 0; j < outputs_shape_i.size(); j++) {
       out_[i]->shape_[j] = outputs_shape_i[j];
     }
-    out_[i]->data_type_ = outputs[i]->GetDtype();
+    out_[i]->data_type_ = outputs[i]->dtype_id();
   }
   return 0;
 }

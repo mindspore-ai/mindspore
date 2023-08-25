@@ -38,7 +38,7 @@ bool MeshgridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                   << indexing;
     return false;
   }
-  auto data_type = inputs.at(kIndex0)->GetDtype();
+  auto data_type = inputs.at(kIndex0)->dtype_id();
   data_size_ = GetTypeByte(TypeIdToType(data_type));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

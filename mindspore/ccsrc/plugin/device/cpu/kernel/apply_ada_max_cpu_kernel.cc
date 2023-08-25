@@ -49,7 +49,7 @@ namespace kernel {
 bool ApplyAdaMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   batch_rank_ = base_operator->get_batch_rank();
   return true;
 }

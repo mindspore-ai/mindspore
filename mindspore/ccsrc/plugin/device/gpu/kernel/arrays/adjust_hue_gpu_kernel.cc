@@ -64,8 +64,8 @@ bool AdjustHueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                  inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
     input_elements = 1;
@@ -96,8 +96,8 @@ int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                   << shape[input_dims - 1] << ".";
     return false;
   }
-  std::vector<size_t> delta_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
-                                                        inputs[kIndex1]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> delta_shape =
+    std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(), inputs[kIndex1]->GetDeviceShapeVector().end());
   int64_t delta_dims = delta_shape.size();
   if (delta_dims != DETLA_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the  dimension of 'dalta' should be equal to 0-D, but got "

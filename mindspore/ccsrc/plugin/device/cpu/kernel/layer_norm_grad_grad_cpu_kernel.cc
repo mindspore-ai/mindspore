@@ -40,7 +40,7 @@ bool LayerNormGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -58,9 +58,9 @@ int LayerNormGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  mean_shape_ = inputs[kIndex3]->GetDeviceShapeAdaptively();
-  g_shape_ = inputs[kIndex4]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  mean_shape_ = inputs[kIndex3]->GetDeviceShapeVector();
+  g_shape_ = inputs[kIndex4]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

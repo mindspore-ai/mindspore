@@ -39,7 +39,7 @@ bool MatrixInverseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(ERROR) << "cast " << kernel_name_ << "  ops failed!";
     return false;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   adjoint_ = kernel_ptr->get_adjoint();
   return true;
 }

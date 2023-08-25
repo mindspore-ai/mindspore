@@ -53,13 +53,13 @@ int ResizeAreaCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto input0_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input0_shape = inputs[kIndex0]->GetDeviceShapeVector();
   batch_size_ = input0_shape[kIndex0];
   in_height_ = input0_shape[kIndex1];
   in_width_ = input0_shape[kIndex2];
   channels_ = input0_shape[kIndex3];
 
-  auto output_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   out_height_ = output_shape[kIndex1];
   out_width_ = output_shape[kIndex2];
   height_scale_ = Scaling(in_height_, out_height_, align_corners_);

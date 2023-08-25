@@ -78,12 +78,12 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
-  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   dy_size_ = dy_shape[kIndex0] * dy_shape[kIndex1] * dy_shape[kIndex2] * dy_shape[kIndex3] * dy_type_size;
 
   roi_rows_ = rois_shape[kIndex0];
   roi_cols_ = rois_shape[kIndex1];
-  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   rois_size_ = roi_rows_ * roi_cols_ * rois_type_size;
 
   batch_ = xdiff_shape[kIndex0];

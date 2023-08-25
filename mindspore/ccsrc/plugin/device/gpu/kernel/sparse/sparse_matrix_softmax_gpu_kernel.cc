@@ -55,28 +55,28 @@ int SparseMatrixSoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return ret;
   }
 
-  input_dense_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_dense_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
   dense_shape_elements_ =
     std::accumulate(input_dense_shape_.begin(), input_dense_shape_.end(), 1, std::multiplies<size_t>());
 
-  input_batch_pointers_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                              inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  input_batch_pointers_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                              inputs.at(kIndex1)->GetDeviceShapeVector().end());
   batch_pointers_elements_ =
     std::accumulate(input_batch_pointers_.begin(), input_batch_pointers_.end(), 1, std::multiplies<size_t>());
 
-  input_row_pointers_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                            inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  input_row_pointers_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                            inputs.at(kIndex2)->GetDeviceShapeVector().end());
   row_pointers_elements_ =
     std::accumulate(input_row_pointers_.begin(), input_row_pointers_.end(), 1, std::multiplies<size_t>());
 
-  input_col_indices_ = std::vector<size_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                           inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  input_col_indices_ = std::vector<size_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                           inputs.at(kIndex3)->GetDeviceShapeVector().end());
   col_indices_elements_ =
     std::accumulate(input_col_indices_.begin(), input_col_indices_.end(), 1, std::multiplies<size_t>());
 
-  input_values_ = std::vector<size_t>(inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(),
-                                      inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
+  input_values_ = std::vector<size_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                      inputs.at(kIndex4)->GetDeviceShapeVector().end());
   values_elements_ = std::accumulate(input_values_.begin(), input_values_.end(), 1, std::multiplies<size_t>());
 
   return KRET_OK;

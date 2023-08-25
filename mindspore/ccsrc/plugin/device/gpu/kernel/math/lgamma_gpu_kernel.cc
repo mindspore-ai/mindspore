@@ -51,8 +51,8 @@ int LgammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return ret;
   }
   ResetResource();
-  std::vector<size_t> output_shape = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                         outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> output_shape = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                         outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), size_t(1), std::multiplies<size_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;

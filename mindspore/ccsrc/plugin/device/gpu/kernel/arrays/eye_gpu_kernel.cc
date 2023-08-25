@@ -51,7 +51,7 @@ int EyeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
-  auto out_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto out_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   num_n_ = out_shape[kIndex0];
   num_m_ = out_shape[kIndex1];
   return 0;

@@ -267,7 +267,7 @@ template <typename T>
 int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
   if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axis_, false)) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
   }

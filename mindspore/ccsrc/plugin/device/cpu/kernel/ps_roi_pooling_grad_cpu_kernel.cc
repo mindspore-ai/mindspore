@@ -156,7 +156,7 @@ int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTens
     return KRET_RESIZE_FAILED;
   }
 
-  auto dy_type = inputs[0]->GetDtype();
+  auto dy_type = inputs[0]->dtype_id();
   if (!IsSupportedDtype(dy_type)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0] is expected to have type_id kNumberTypeFloat32("
                   << kNumberTypeFloat32 << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but got type_id "
@@ -171,7 +171,7 @@ int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTens
     return KRET_RESIZE_FAILED;
   }
 
-  auto rois_type = inputs[1]->GetDtype();
+  auto rois_type = inputs[1]->dtype_id();
   if (!IsSupportedDtype(rois_type)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[1] is expected to have type_id kNumberTypeFloat32("
                   << kNumberTypeFloat32 << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but got type_id "
@@ -222,7 +222,7 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_RESIZE_FAILED;
   }
 
-  data_type_id_ = inputs[0]->GetDtype();
+  data_type_id_ = inputs[0]->dtype_id();
   auto rois_shape = inputs[1]->GetShapeVector();
   batch_size_ = static_cast<int32_t>(rois_shape[0]);
   rois_num_ = static_cast<int32_t>(rois_shape[ROIS_NUM_INDEX]);
@@ -293,11 +293,11 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_size_list_.clear();
 
   for (auto tensor_ptr : inputs) {
-    input_size_list_.push_back(tensor_ptr->GetSizeInBytes());
+    input_size_list_.push_back(tensor_ptr->size());
   }
 
   for (auto tensor_ptr : outputs) {
-    output_size_list_.push_back(tensor_ptr->GetSizeInBytes());
+    output_size_list_.push_back(tensor_ptr->size());
   }
 
   return KRET_OK;

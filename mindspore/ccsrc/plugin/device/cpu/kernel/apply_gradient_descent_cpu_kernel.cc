@@ -40,7 +40,7 @@ bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyGradientDescentOutputsNum, kernel_name_);

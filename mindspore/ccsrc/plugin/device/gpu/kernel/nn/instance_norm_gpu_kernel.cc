@@ -43,7 +43,7 @@ bool InstanceNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   epsilon_ = kernel_ptr->get_epsilon();
   exp_avg_factor_ = kernel_ptr->get_momentum();
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;

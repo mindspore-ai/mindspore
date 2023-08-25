@@ -170,8 +170,8 @@ int ListDiffGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  input_shapes.emplace_back(inputs[kIndex0]->GetDeviceShapeAdaptively());
-  input_shapes.emplace_back(inputs[kIndex1]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[kIndex0]->GetDeviceShapeVector());
+  input_shapes.emplace_back(inputs[kIndex1]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   ResetResource();
   InitSizeLists();

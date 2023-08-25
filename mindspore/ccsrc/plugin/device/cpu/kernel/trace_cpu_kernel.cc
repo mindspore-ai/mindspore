@@ -29,7 +29,7 @@ bool TraceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  values_type_ = inputs.at(kIndex0)->GetDtype();
+  values_type_ = inputs.at(kIndex0)->dtype_id();
   return true;
 }
 
@@ -39,7 +39,7 @@ int TraceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = Convert2SizeT(inputs.at(kIndex0)->GetDeviceShapeAdaptively());
+  input_shape_ = Convert2SizeT(inputs.at(kIndex0)->GetDeviceShapeVector());
   if (input_shape_.size() != kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension should be " << kInputDim
                       << ", but got " << input_shape_.size();

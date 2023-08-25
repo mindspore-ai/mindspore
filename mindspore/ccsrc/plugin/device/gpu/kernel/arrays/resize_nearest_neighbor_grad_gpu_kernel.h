@@ -70,7 +70,7 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
     auto out = outputs.at(kIndex0);
     MS_EXCEPTION_IF_NULL(out);
-    auto o_type = out->GetDtype();
+    auto o_type = out->dtype_id();
     is_fp16 = (o_type == kNumberTypeFloat16);
     return true;
   }

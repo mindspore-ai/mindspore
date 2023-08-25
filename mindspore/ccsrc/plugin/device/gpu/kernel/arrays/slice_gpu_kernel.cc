@@ -251,8 +251,8 @@ int SliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeAdaptively(); });
-  std::vector<int64_t> out_shape = outputs[0]->GetDeviceShapeAdaptively();
+                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeVector(); });
+  std::vector<int64_t> out_shape = outputs[0]->GetDeviceShapeVector();
   output_shapes.emplace_back(out_shape);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
@@ -319,7 +319,7 @@ void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs)
   constexpr auto kIdx2 = 2;
   constexpr auto kIdx3 = 3;
   constexpr auto kIdx4 = 4;
-  auto data_format = inputs[0]->GetFormat();
+  auto data_format = inputs[0]->format();
   if (data_format == mindspore::Format::NHWC) {
     std::swap(begin_[1], begin_[kIdx3]);
     std::swap(begin_[1], begin_[kIdx2]);

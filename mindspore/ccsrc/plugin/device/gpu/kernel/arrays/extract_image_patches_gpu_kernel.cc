@@ -144,7 +144,7 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   MS_EXCEPTION_IF_ZERO("other stride", other_stride_);
   need_batch_ = (output_size_ - 1) / other_stride_;
 
-  size_t type_size = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   workspace_size_list_.push_back(input_size_ * type_size);
   workspace_size_list_.push_back(output_size_ * type_size);
   return static_cast<int>(KRET_OK);

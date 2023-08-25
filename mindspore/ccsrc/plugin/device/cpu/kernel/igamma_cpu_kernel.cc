@@ -348,7 +348,7 @@ bool IgammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
-  dtype_ = inputs[kInputIndex0]->GetDtype();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -366,9 +366,9 @@ int IgammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (ret != KRET_OK) {
     return ret;
   }
-  a_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  z_shape_ = outputs[kOutputIndex0]->GetDeviceShapeAdaptively();
+  a_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  x_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  z_shape_ = outputs[kOutputIndex0]->GetDeviceShapeVector();
   return ret;
 }
 

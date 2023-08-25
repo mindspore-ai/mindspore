@@ -66,7 +66,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
       axis_ += (SizeToInt(input_shape.size()) + 1);
     }
     auto origin_data_format = kOpFormat_DEFAULT;
-    auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
+    auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
     input_num_ = inputs.size();

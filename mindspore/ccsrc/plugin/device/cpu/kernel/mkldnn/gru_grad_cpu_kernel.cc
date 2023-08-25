@@ -77,8 +77,8 @@ int GRUGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   input_size_list_[kIndex8] = reserve_size_;
-  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeVector();
   if (src_shape.size() != kDims || src_h_shape.size() != kDims) {
     MS_LOG(ERROR) << "GRU only support 3-D input!,but the src_shape dim is" << src_shape.size()
                   << ", the src_shape dim is" << src_h_shape.size();

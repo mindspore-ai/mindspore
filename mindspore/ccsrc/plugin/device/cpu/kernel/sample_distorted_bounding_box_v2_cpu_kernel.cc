@@ -250,9 +250,9 @@ int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
-  auto shape_image_size = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto shape_bounding_boxes = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  auto shape_image_size = inputs[kIndex0]->GetDeviceShapeVector();
+  auto shape_bounding_boxes = inputs[kIndex1]->GetDeviceShapeVector();
   size_t shape_dim_image_size = shape_image_size.size();
   size_t shape_dim_bounding_boxes = shape_bounding_boxes.size();
 

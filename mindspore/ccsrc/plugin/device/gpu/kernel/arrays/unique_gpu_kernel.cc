@@ -88,12 +88,12 @@ int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     return KRET_OK;
   }
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   return KRET_OK;

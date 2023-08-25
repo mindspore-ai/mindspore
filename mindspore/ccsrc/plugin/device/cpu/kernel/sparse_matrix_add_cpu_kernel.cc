@@ -83,7 +83,7 @@ int SparseMatrixAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
     row_ = LongToSize(indptr_shape[0] - 1);
     for (size_t i = 0; i < kOutputNum; i++) {
-      auto dtype = inputs[i]->GetDtype();
+      auto dtype = inputs[i]->dtype_id();
       (void)types_.emplace_back(dtype);
     }
     output_size_list_.clear();

@@ -57,8 +57,8 @@ int ResizeNearestNeighborV2CpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

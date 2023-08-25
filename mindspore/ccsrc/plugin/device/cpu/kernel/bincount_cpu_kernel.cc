@@ -33,8 +33,8 @@ bool BincountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dt_arr_ = inputs[kIndex0]->GetDtype();
-  dt_weights_ = inputs[kIndex2]->GetDtype();
+  dt_arr_ = inputs[kIndex0]->dtype_id();
+  dt_weights_ = inputs[kIndex2]->dtype_id();
   return true;
 }
 
@@ -44,10 +44,10 @@ int BincountCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_arr_sizes_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_size_sizes_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  input_weights_sizes_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  output_sizes_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_arr_sizes_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_size_sizes_ = inputs[kIndex1]->GetDeviceShapeVector();
+  input_weights_sizes_ = inputs[kIndex2]->GetDeviceShapeVector();
+  output_sizes_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

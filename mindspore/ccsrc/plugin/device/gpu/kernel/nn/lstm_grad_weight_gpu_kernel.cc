@@ -33,8 +33,8 @@ bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_func_ = func_list_[index].second;
 
   InitResource();
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTMGradWeight>(base_operator);
   if (!kernel_ptr) {

@@ -49,7 +49,7 @@ int TriuIndicesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   ResetResource();
   auto ret = KRET_OK;
   size_t tensor_size = 0;
-  size_t type_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->dtype_id()));
   auto shape = outputs.at(kIndex0)->GetShapeVector();
   if (!IsValidShape(shape)) {
     ret = KRET_UNKNOWN_OUT_SHAPE;

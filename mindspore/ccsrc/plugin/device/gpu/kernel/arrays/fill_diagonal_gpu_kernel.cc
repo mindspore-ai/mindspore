@@ -50,7 +50,7 @@ bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   fill_value_ = kernel_ptr_->get_fill_value();
   wrap_ = kernel_ptr_->get_wrap();
 
-  if (IsOneOfUnsignedType(inputs.at(0)->GetDtype()) && fill_value_ < 0) {
+  if (IsOneOfUnsignedType(inputs.at(0)->dtype_id()) && fill_value_ < 0) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
     return false;
   }
@@ -71,8 +71,8 @@ int FillDiagonalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   matrix_row_ = input_shape[kInputDimIndex0];
   matrix_col_ = input_shape[kInputDimIndex1];
   int64_t min_size = std::min(matrix_row_, matrix_col_);

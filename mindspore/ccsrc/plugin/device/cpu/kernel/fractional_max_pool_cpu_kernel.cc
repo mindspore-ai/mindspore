@@ -85,8 +85,8 @@ int FractionalMaxPoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
+  output_shape_ = outputs[0]->GetDeviceShapeVector();
 
   if (input_shape_.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";

@@ -54,8 +54,8 @@ int ApproximateEqualGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   size_t input_size = input_elements_ * unit_size_;
   input_size_list_.push_back(input_size);

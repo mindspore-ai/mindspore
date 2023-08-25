@@ -50,12 +50,12 @@ int ApplyPowerSignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
   }
   ResetResource();
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> learning_rate_shape_ = std::vector<int64_t>(
-    inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex6)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> learning_rate_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                                   inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex6)->GetDeviceShapeVector().end());
   t_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<size_t>());
   s_elements_ = std::accumulate(learning_rate_shape_.begin(), learning_rate_shape_.end(), 1, std::multiplies<size_t>());
   g_elements_ = std::accumulate(gradient_shape_.begin(), gradient_shape_.end(), 1, std::multiplies<size_t>());

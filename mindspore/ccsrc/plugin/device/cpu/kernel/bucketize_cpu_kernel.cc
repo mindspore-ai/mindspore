@@ -34,7 +34,7 @@ bool BucketizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Bucketize>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   boundaries_ = kernel_ptr->get_boundaries();

@@ -52,13 +52,13 @@ bool SspaddmmCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  output_values_dtype_ = inputs.at(kIndex1)->GetDtype();
-  input_indices_dtype_ = inputs.at(kIndex0)->GetDtype();
-  input_shape_dtype_ = inputs.at(kIndex2)->GetDtype();
-  mat1_indices_dtype_ = inputs.at(kIndex3)->GetDtype();
-  mat1_shape_dtype_ = inputs.at(kIndex5)->GetDtype();
-  alpha_dtype_ = inputs.at(kIndex7)->GetDtype();
-  beta_dtype_ = inputs.at(kIndex8)->GetDtype();
+  output_values_dtype_ = inputs.at(kIndex1)->dtype_id();
+  input_indices_dtype_ = inputs.at(kIndex0)->dtype_id();
+  input_shape_dtype_ = inputs.at(kIndex2)->dtype_id();
+  mat1_indices_dtype_ = inputs.at(kIndex3)->dtype_id();
+  mat1_shape_dtype_ = inputs.at(kIndex5)->dtype_id();
+  alpha_dtype_ = inputs.at(kIndex7)->dtype_id();
+  beta_dtype_ = inputs.at(kIndex8)->dtype_id();
   return true;
 }
 
@@ -71,7 +71,7 @@ int SspaddmmCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   auto input_indices_shape = inputs.at(kIndex0)->GetShapeVector();
   auto mat1_indices_shape = inputs.at(kIndex3)->GetShapeVector();
   auto mat2_shape = inputs.at(kIndex6)->GetShapeVector();
-  auto y_indices_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto y_indices_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   input_values_num_ = LongToSize(input_indices_shape[1]);
   mat1_values_num_ = LongToSize(mat1_indices_shape[1]);
   y_values_num_ = LongToSize(y_indices_shape[1]);

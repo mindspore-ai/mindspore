@@ -37,11 +37,11 @@ bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = kernel_attr_vec_[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  dtype_x_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  dtype_w_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-  dtype_dout_ = GetCudaDataType(TypeIdLabel(inputs[kIndex2]->GetDtype()));
-  dtype_dx_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
-  dtype_dw_ = GetCudaDataType(TypeIdLabel(outputs[kIndex1]->GetDtype()));
+  dtype_x_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  dtype_w_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+  dtype_dout_ = GetCudaDataType(TypeIdLabel(inputs[kIndex2]->dtype_id()));
+  dtype_dx_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
+  dtype_dw_ = GetCudaDataType(TypeIdLabel(outputs[kIndex1]->dtype_id()));
 
   if (dtype_x_ != dtype_w_ || dtype_x_ != dtype_dout_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the types of inputs are not the same.";
@@ -121,7 +121,7 @@ int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 #endif
 
   if (has_bias_) {
-    cudnnDataType_t cudnn_data_type = GetCudnnDataType(TypeIdLabel(inputs[kIndex2]->GetDtype()));
+    cudnnDataType_t cudnn_data_type = GetCudnnDataType(TypeIdLabel(inputs[kIndex2]->dtype_id()));
 
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(dy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type, m_, k_, 1, 1),

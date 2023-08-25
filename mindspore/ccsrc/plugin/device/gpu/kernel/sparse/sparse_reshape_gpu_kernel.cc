@@ -47,12 +47,12 @@ int SparseReshapeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> new_shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> new_shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex2)->GetDeviceShapeVector().end());
   if (indices_shape.size() != INDICES_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'indices' should be 2-D, but got "
                   << indices_shape.size() << "-D.";

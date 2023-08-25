@@ -61,7 +61,7 @@ int CTCLossV2GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   log_alpha_shape_.y = LongToSize(time_series_);
   log_alpha_shape_.z = LongToSize(kInterval * max_target_length_ + 1);
 
-  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   workspace_size_list_.clear();
   workspace_size_list_ = {
     LongToSize(batch_size_ * time_series_ * (kInterval * max_target_length_ + 1)) * scalar_type_size,

@@ -72,8 +72,8 @@ int FractionalMaxPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (ret != KRET_OK) {
     return ret;
   }
-  tensor_in_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  tensor_out_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  tensor_in_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  tensor_out_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
   return ret;
 }
 

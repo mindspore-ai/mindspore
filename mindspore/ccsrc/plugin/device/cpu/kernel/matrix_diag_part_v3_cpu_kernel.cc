@@ -70,9 +70,9 @@ int MatrixDiagPartV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
-  auto padding_dtype = inputs[kIndex2]->GetDtype();
-  auto output_dtype = outputs[kIndex0]->GetDtype();
-  input_dtype_ = inputs[kIndex0]->GetDtype();
+  auto padding_dtype = inputs[kIndex2]->dtype_id();
+  auto output_dtype = outputs[kIndex0]->dtype_id();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
   if (input_dtype_ != padding_dtype) {
     MS_LOG(ERROR) << "For MatrixDiagPartV3, the data type of x need be same with padding_value.";
     return KRET_RESIZE_FAILED;

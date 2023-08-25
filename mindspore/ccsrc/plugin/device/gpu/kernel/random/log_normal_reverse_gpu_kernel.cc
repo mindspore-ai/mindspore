@@ -62,8 +62,8 @@ bool LogNormalReverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
-  output_dtype_ = outputs.at(kIndex0)->GetDtype();
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
+  output_dtype_ = outputs.at(kIndex0)->dtype_id();
   if (input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat64) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the datatype of the input should be in "
                       << "[ float16, float32, float64 ], "
@@ -106,8 +106,8 @@ int LogNormalReverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<int64_t>());
   size_t input_size = input_elements_ * unit_size_;
   input_size_list_.push_back(input_size);

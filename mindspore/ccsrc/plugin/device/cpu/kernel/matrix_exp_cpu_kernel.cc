@@ -48,7 +48,7 @@ bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  data_type_ = inputs.at(kIndex0)->GetDtype();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

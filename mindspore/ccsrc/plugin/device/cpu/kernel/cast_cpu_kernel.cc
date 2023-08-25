@@ -817,8 +817,8 @@ bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  source_dtype_ = inputs[kIndex0]->GetDtype();
-  target_dtype_ = outputs[kIndex0]->GetDtype();
+  source_dtype_ = inputs[kIndex0]->dtype_id();
+  target_dtype_ = outputs[kIndex0]->dtype_id();
 
   ResetKernelFunc(inputs, outputs);
   return true;
@@ -836,8 +836,8 @@ std::vector<KernelAttr> CastCpuKernelMod::GetOpSupport() {
 int CastCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->GetDtype())->ToString()
-                << ", out : " << TypeIdToType(outputs[0]->GetDtype())->ToString();
+  MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->dtype_id())->ToString()
+                << ", out : " << TypeIdToType(outputs[0]->dtype_id())->ToString();
   ResetKernelFunc(inputs, outputs);
   return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
 }

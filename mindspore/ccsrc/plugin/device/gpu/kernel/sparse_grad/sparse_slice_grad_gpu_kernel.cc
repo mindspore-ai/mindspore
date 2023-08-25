@@ -50,31 +50,31 @@ int SparseSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   auto x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
   num_grad_val_ = x_size;
-  size_t unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  size_t unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   input_size_list_.push_back(x_size * unit_size_);
 
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto indices_size = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies<size_t>());
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   input_size_list_.push_back(indices_size * unit_size_);
   input_nnz_ = indices_shape[0];
   num_dim_ = indices_shape[1];
 
   auto start_shape = inputs.at(kIndex2)->GetShapeVector();
   auto start_size = std::accumulate(start_shape.begin(), start_shape.end(), 1, std::multiplies<size_t>());
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex2)->dtype_id());
   input_size_list_.push_back(start_size * unit_size_);
 
   auto new_indices_shape = inputs.at(kIndex3)->GetShapeVector();
   auto new_indices_size =
     std::accumulate(new_indices_shape.begin(), new_indices_shape.end(), 1, std::multiplies<size_t>());
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex3)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex3)->dtype_id());
   input_size_list_.push_back(new_indices_size * unit_size_);
   output_nnz_ = new_indices_shape[0];
 
   auto input_indices_shape = inputs.at(kIndex1)->GetShapeVector();
   const int64_t input_nnz = input_indices_shape[0];
-  unit_size_ = abstract::TypeIdSize(outputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(outputs.at(kIndex0)->dtype_id());
   output_size_list_.clear();
   output_size_list_.push_back(input_nnz * unit_size_);
 

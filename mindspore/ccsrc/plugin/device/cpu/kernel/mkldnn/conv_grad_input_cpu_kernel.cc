@@ -60,9 +60,9 @@ int ConvGradInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> src_shape = outputs[0]->GetDeviceShapeAdaptively();
-  std::vector<int64_t> weight_shape = inputs[weight_index_]->GetDeviceShapeAdaptively();
-  std::vector<int64_t> dst_shape = inputs[diff_dst_index_]->GetDeviceShapeAdaptively();
+  std::vector<int64_t> src_shape = outputs[0]->GetDeviceShapeVector();
+  std::vector<int64_t> weight_shape = inputs[weight_index_]->GetDeviceShapeVector();
+  std::vector<int64_t> dst_shape = inputs[diff_dst_index_]->GetDeviceShapeVector();
   size_t src_dim = src_shape.size();
   if (src_dim != weight_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

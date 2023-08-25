@@ -48,7 +48,7 @@ bool AngleGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(ERROR) << "For '" << kernel_name_ << "'support complex64 or complex128, but got " << kernel_attr;
     return false;
   }
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
   kernel_func_ = func_list_[index].second;
   return true;
 }

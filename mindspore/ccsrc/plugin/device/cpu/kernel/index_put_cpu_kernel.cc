@@ -69,12 +69,12 @@ bool IndexPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexPut>(base_operator);
   kernel_name_ = kernel_ptr->name();
-  auto type_id = inputs[0]->GetDtype();
+  auto type_id = inputs[0]->dtype_id();
   input_info_.push_back(type_id);
-  type_id = inputs[1]->GetDtype();
+  type_id = inputs[1]->dtype_id();
   input_info_.push_back(type_id);
   for (size_t i = 2; i < inputs.size(); i++) {
-    type_id = inputs[i]->GetDtype();
+    type_id = inputs[i]->dtype_id();
     input_info_.push_back(type_id);
   }
   inputs_nums = inputs.size();

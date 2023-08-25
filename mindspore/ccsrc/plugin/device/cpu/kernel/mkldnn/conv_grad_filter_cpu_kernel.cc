@@ -59,9 +59,9 @@ int ConvGradFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto src_shape = inputs[src_index_]->GetDeviceShapeAdaptively();
-  auto dst_shape = inputs[diff_dst_index_]->GetDeviceShapeAdaptively();
-  auto weight_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[src_index_]->GetDeviceShapeVector();
+  auto dst_shape = inputs[diff_dst_index_]->GetDeviceShapeVector();
+  auto weight_shape = outputs[0]->GetDeviceShapeVector();
   size_t src_dim = src_shape.size();
   if (src_dim != weight_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

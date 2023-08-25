@@ -82,7 +82,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     size_t input_num = inputs.size();
     for (size_t i = 0; i < input_num; i++) {
       int64_t input_size = 1;
-      auto input_shape_i = inputs[i]->GetDeviceShapeAdaptively();
+      auto input_shape_i = inputs[i]->GetDeviceShapeVector();
       for (size_t j = 0; j < input_shape_i.size(); j++) {
         input_size *= input_shape_i[j];
       }

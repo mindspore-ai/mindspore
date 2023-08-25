@@ -205,14 +205,14 @@ bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  TypeId input_dtype = inputs[0]->GetDtype();
+  TypeId input_dtype = inputs[0]->dtype_id();
   if (mode_ != "nearest") {
     if (input_dtype != kNumberTypeFloat16 && input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' linear and cubic mode only support float16, float32, float64.";
       return false;
     }
   }
-  sizes_dtype_ = inputs[kIndex3]->GetDtype();
+  sizes_dtype_ = inputs[kIndex3]->dtype_id();
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }

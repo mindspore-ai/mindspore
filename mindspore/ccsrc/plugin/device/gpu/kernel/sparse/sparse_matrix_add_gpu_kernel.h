@@ -92,7 +92,7 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) {
     MS_EXCEPTION_IF_NULL(base_operator);
     is_need_retrieve_output_shape_ = true;
-    type_id_ = inputs.at(InputList::X1_VALUE)->GetDtype();
+    type_id_ = inputs.at(InputList::X1_VALUE)->dtype_id();
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x1_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x2_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&y_descr_), "Create descriptor failed.");

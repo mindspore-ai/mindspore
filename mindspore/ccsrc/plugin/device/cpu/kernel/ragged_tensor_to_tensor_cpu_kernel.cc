@@ -50,8 +50,8 @@ bool RaggedTensorToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   kernel_name_ = base_operator->name();
   row_partition_types_ = GetValue<std::vector<std::string>>(base_operator->GetAttr("row_partition_types"));
   ragged_rank_ = GetRaggedRank(row_partition_types_);
-  shape_dtype_ = inputs[kShapeInputIndex]->GetDtype();
-  values_dtype_ = inputs[kValueInputIndex]->GetDtype();
+  shape_dtype_ = inputs[kShapeInputIndex]->dtype_id();
+  values_dtype_ = inputs[kValueInputIndex]->dtype_id();
   size_t output_num = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kRaggedTensorToTensorOutputsNum, kernel_name_);
   return true;

@@ -67,7 +67,7 @@ int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   if (m_ <= kBatchedMaxRowCol && n_ <= kBatchedMaxRowCol && batch_size_ > 1 && (full_matrices_ || m_ == n_)) {
     batched_ = true;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   ResetResource();
   InitSizeLists();
   return 0;

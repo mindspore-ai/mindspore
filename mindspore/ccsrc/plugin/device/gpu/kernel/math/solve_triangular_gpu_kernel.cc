@@ -79,7 +79,7 @@ int SolveTriangularGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   lda_ = SizeToInt(m_);
   ldb_ = SizeToInt(m_);
 
-  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->GetDtype()));
+  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->dtype_id()));
   constexpr size_t pointer_size = sizeof(float *);
   size_t b_size = batch_ * m_ * n_ * unit_size;
   workspace_size_list_.clear();

@@ -87,30 +87,30 @@ int SparseDenseCwiseOperationGpuKernelMod::Resize(const BaseOperatorPtr &base_op
     o_[i] = 1;
   }
 
-  std::vector<int64_t> indice_shape = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                           inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indice_shape = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                           inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(indice_shape, kernel_name_, "input");
   if (!is_null_input_) {
     value_num_ = indice_shape[0];
     dimension_ = indice_shape[1];
-    dense_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeAdaptively().begin(),
-                                        inputs[kIndex3]->GetDeviceShapeAdaptively().end());
+    dense_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeVector().begin(),
+                                        inputs[kIndex3]->GetDeviceShapeVector().end());
 
     dense_num_ =
       std::accumulate(dense_shape_.begin(), dense_shape_.end(), 1,
                       std::multiplies<int64_t>());  // dense_dims_ = static_cast<int64_t>(dense_shape_.size());
   }
 
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
-  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> dense_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  std::vector<int64_t> dense_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex3)->GetDeviceShapeVector().end());
 
   if (indices_shape.size() != INPUT_DIMS_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  the dim of indices must be 2, but got " << indices_shape.size()

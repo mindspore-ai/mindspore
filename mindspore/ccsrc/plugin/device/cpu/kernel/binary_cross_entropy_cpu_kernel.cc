@@ -145,7 +145,7 @@ bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = kernel_ptr->name();
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
 
   const auto reduction = kernel_ptr->get_reduction();
   if (reduction == Reduction::NONE) {

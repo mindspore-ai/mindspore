@@ -149,7 +149,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
                              << "'num_true': " << num_true_;
   }
 
-  auto output_kIndex0_type = outputs.at(kIndex0)->GetDtype();
+  auto output_kIndex0_type = outputs.at(kIndex0)->dtype_id();
   if (output_kIndex0_type == kNumberTypeInt32) {
     if (range_max_ > std::numeric_limits<int>::max()) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'range_max' can not exceed the range of int32, but "

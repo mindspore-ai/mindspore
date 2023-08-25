@@ -47,7 +47,7 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   auto &input = inputs[0];
   size_t tensor_size = 0;
-  size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(input->dtype_id()));
   auto shape = input->GetShapeVector();
   if (!IsValidShape(shape)) {
     ret = KRET_UNKNOWN_SHAPE;

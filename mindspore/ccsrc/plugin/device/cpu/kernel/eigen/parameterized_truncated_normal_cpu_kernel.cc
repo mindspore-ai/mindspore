@@ -57,12 +57,12 @@ bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_
   uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
-  input_type_ = inputs[kInput0]->GetDtype();
-  input_means_type_ = inputs[kInput1]->GetDtype();
-  input_stdevs_type_ = inputs[kInput2]->GetDtype();
-  input_min_type_ = inputs[kInput3]->GetDtype();
-  input_max_type_ = inputs[kInput4]->GetDtype();
-  output_type_ = outputs[kOutputData]->GetDtype();
+  input_type_ = inputs[kInput0]->dtype_id();
+  input_means_type_ = inputs[kInput1]->dtype_id();
+  input_stdevs_type_ = inputs[kInput2]->dtype_id();
+  input_min_type_ = inputs[kInput3]->dtype_id();
+  input_max_type_ = inputs[kInput4]->dtype_id();
+  output_type_ = outputs[kOutputData]->dtype_id();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -73,11 +73,11 @@ int ParameterizedTruncatedNormalCpuKernelMod::Resize(const BaseOperatorPtr &base
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInput0]->GetDeviceShapeAdaptively();
-  input_means_shape_ = inputs[kInput1]->GetDeviceShapeAdaptively();
-  input_stdevs_shape_ = inputs[kInput2]->GetDeviceShapeAdaptively();
-  input_min_shape_ = inputs[kInput3]->GetDeviceShapeAdaptively();
-  input_max_shape_ = inputs[kInput4]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInput0]->GetDeviceShapeVector();
+  input_means_shape_ = inputs[kInput1]->GetDeviceShapeVector();
+  input_stdevs_shape_ = inputs[kInput2]->GetDeviceShapeVector();
+  input_min_shape_ = inputs[kInput3]->GetDeviceShapeVector();
+  input_max_shape_ = inputs[kInput4]->GetDeviceShapeVector();
   return KRET_OK;
 }
 

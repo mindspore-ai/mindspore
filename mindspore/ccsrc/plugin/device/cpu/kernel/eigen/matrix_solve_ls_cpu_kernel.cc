@@ -368,8 +368,8 @@ bool MatrixSolveLsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
 
-  matrix_dtype_ = inputs[0]->GetDtype();
-  rhs_dtype_ = inputs[1]->GetDtype();
+  matrix_dtype_ = inputs[0]->dtype_id();
+  rhs_dtype_ = inputs[1]->dtype_id();
 
   if (prim->HasAttr(kFast)) {
     qr_chole_ = GetValue<bool>(prim->GetAttr(kFast));

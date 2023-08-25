@@ -51,9 +51,9 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
-  auto filter_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[0]->GetDeviceShapeVector();
+  auto filter_shape = inputs[kIndex1]->GetDeviceShapeVector();
+  auto output_shape = outputs[0]->GetDeviceShapeVector();
   if (!CheckTensorSize({input_shape, filter_shape, output_shape})) {
     return KRET_RESIZE_FAILED;
   }

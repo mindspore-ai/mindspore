@@ -92,7 +92,7 @@ bool AdamWeightDecayCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 

@@ -73,8 +73,8 @@ int NuclearNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
 
-  input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_dtype = inputs[kIndex0]->GetDtype();
+  input_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  input_dtype = inputs[kIndex0]->dtype_id();
 
   size_t x_type_size = (input_dtype == kNumberTypeFloat32) ? sizeof(float) : sizeof(double);
   const size_t input_dimnum = input_shape.size();

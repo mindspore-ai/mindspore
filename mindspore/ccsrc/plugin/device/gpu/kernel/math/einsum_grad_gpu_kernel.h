@@ -80,7 +80,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(ERROR) << "For " << node_name_ << ", input number should be no less than 2, but got " << input_num;
       return false;
     }
-    type_id_ = inputs[0]->GetDtype();
+    type_id_ = inputs[0]->dtype_id();
     return true;
   }
 
@@ -96,7 +96,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
 
     size_t input_num = inputs.size();
     for (size_t idx = 0; idx < input_num - 1; ++idx) {
-      TypeId cur_type_id = inputs[idx]->GetDtype();
+      TypeId cur_type_id = inputs[idx]->dtype_id();
       if (cur_type_id != type_id_) {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return KRET_RESIZE_FAILED;

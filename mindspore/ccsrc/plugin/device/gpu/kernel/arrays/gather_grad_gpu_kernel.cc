@@ -88,10 +88,10 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
-  idx_type_size_ = abstract::TypeIdSize(inputs.at(index_idx_)->GetDtype());
-  grad_type_size_ = abstract::TypeIdSize(inputs.at(grad_idx_)->GetDtype());
+  idx_type_size_ = abstract::TypeIdSize(inputs.at(index_idx_)->dtype_id());
+  grad_type_size_ = abstract::TypeIdSize(inputs.at(grad_idx_)->dtype_id());
   if (is_v2_) {
-    dim_type_ = inputs.at(dim_idx_)->GetDtype();
+    dim_type_ = inputs.at(dim_idx_)->dtype_id();
   }
   return true;
 }

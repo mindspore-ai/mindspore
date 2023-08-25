@@ -30,7 +30,7 @@ bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
   num_split = kernel_ptr->get_num_split();
 
-  input_dtype_ = inputs[kIndex2]->GetDtype();
+  input_dtype_ = inputs[kIndex2]->dtype_id();
   size_t outputs_num = Kindex3 * num_split;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
@@ -69,17 +69,17 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
     input_nnz_ = input_indices_shape[0];
     num_dim_ = input_indices_shape[1];
-    input_dtype_ = inputs[kIndex2]->GetDtype();
+    input_dtype_ = inputs[kIndex2]->dtype_id();
 
     output_size_list_.clear();
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
+      (void)output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
     }
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[Kindex2]->GetDtype())));
+      (void)output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[Kindex2]->dtype_id())));
     }
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[Kindex3]->GetDtype())));
+      (void)output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[Kindex3]->dtype_id())));
     }
 
     workspace_size_list_.clear();
@@ -87,7 +87,7 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     workspace_size_list_.push_back(num_split * sizeof(void *));
     workspace_size_list_.push_back(num_split * sizeof(void *));
     workspace_size_list_.push_back(num_split * sizeof(int));
-    workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
+    workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
   }
   return ret;
 }

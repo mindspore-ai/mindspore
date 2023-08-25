@@ -60,11 +60,11 @@ bool SparseSparseMinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseMinimumOutputsNum, kernel_name_);
-  dtype_ = inputs.at(kIndex1)->GetDtype();
-  itype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex1)->dtype_id();
+  itype_ = inputs.at(kIndex0)->dtype_id();
   value_size_ = SizeToLong(abstract::TypeIdSize(dtype_));
   indice_size_ = SizeToLong(abstract::TypeIdSize(itype_));
-  shape_size_ = SizeToLong(abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype()));
+  shape_size_ = SizeToLong(abstract::TypeIdSize(inputs.at(kIndex2)->dtype_id()));
   return true;
 }
 

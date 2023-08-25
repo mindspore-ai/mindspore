@@ -87,10 +87,10 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    std::vector<int64_t> out_shape = outputs[i]->GetDeviceShapeAdaptively();
+    std::vector<int64_t> out_shape = outputs[i]->GetDeviceShapeVector();
     output_shapes.emplace_back(out_shape);
   }
 
@@ -99,14 +99,14 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     InitSizeLists();
     return true;
   }
-  for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeAdaptively());
+  for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   // is_need_retrieve_output_shape_ = true;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (size_t i = 0; i < inputs.size(); i++) {
-      auto input_shape = inputs[i]->GetDeviceShapeAdaptively();
+      auto input_shape = inputs[i]->GetDeviceShapeVector();
       if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
         is_input_dynamic_shape = true;
         break;
