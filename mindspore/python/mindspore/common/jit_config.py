@@ -39,12 +39,17 @@ class JitConfig:
             - "no_sink": Build computational graphs with no sink mode.
 
         jit_syntax_level (str, optional): JIT syntax level for graph compiling.
-            Supports ["STRICT", "LAX"]. Default to an empty string, which means ignore this option.
+            The value must be ``"STRICT"`` , ``"LAX"`` or ``""`` . Default to an empty string, which means that this
+            JitConfig configuration will be ignored and the jit_syntax_level of ms.context will be used.
+            For more details about ms.context, refer to
+            `set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html>`_ .
             Default: ``""`` .
 
-            - "STRICT": Only basic syntax is supported, and execution performance is optimal.
+            - "STRICT": Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
+              load and export.
             - "LAX": Compatible with all Python syntax as much as possible. However, execution performance may be
-              affected and not optimal.
+              affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
+              able to be exported.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 

@@ -1305,13 +1305,16 @@ def set_context(**kwargs):
               - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
                 Default: False.
-        jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
-            The value must be in [STRICT, LAX]. Default: LAX. All levels
-            support all backends.
 
-            - STRICT: Only basic syntax is supported, and execution performance is optimal.
-            - LAX: Compatible with all Python syntax as much as possible. However, execution performance may be
-              affected and not optimal.
+        jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
+            The value must be ``STRICT`` or ``LAX`` . Default: ``LAX`` . All levels support all backends.
+
+            - ``STRICT`` : Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
+              load and export.
+            - ``LAX`` : Compatible with all Python syntax as much as possible. However, execution performance may be
+              affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
+              able to be exported.
+
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
             Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
             and `matmul_allow_tf32` are supported on GPU hardware platform.

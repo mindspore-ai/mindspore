@@ -209,11 +209,13 @@ mindspore.set_context
             - **enable_task_opt** (bool): 为True时表示开启通信算子task数量优化。默认值：False。
             - **interleaved_matmul_comm** (bool): 为True时表示开启Matmul-Comm的细粒度双副本优化。默认值：False。
             - **interleaved_layernorm_comm** (bool): 为True时表示开启LayerNorm-Comm细粒度双副本优化。默认值：False。
-        - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
-          其值必须在[STRICT，LAX]范围内，默认值为LAX。全部级别都支持所有后端。
 
-          - STRICT: 仅支持基础语法，且执行性能最佳。
-          - LAX: 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。
+        - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
+          其值必须为 ``STRICT`` 或 ``LAX`` ，默认值为 ``LAX`` 。全部级别都支持所有后端。
+
+          - ``STRICT`` : 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。
+          - ``LAX`` : 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。
+
         - **gpu_config** (dict) - 设置GPU硬件平台专用的参数，默认不设置。
           目前只支持GPU硬件平台上设置conv_fprop_algo、conv_dgrad_algo、conv_wgrad_algo、conv_allow_tf32和matmul_allow_tf32参数。
 
