@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include "ops/test_ops_binary_op.h"
-#include "ops/ops_func_impl/add.h"
+#include "ops/ops_func_impl/atan2.h"
 
 namespace mindspore {
 namespace ops {
-BINARY_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Add);
+BINARY_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Atan2);
 }  // namespace ops
 }  // namespace mindspore

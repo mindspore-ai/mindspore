@@ -48,11 +48,8 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
     return x_shape;
   }
 
-  constexpr int dynamic_rank_len = 1;
-  constexpr int dynamic_rank_value = -2;
-  if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
-      (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
-    return std::vector<int64_t>({dynamic_rank_value});
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return {abstract::Shape::kShapeRankAny};
   }
 
   std::vector<int64_t> broadcast_shape;

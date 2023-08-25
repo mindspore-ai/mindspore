@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/test_ops_binary_op.h"
-#include "ops/ops_func_impl/add.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_H_
+
+#include "mindapi/base/macros.h"
+#include "ops/ops_func_impl/binary_op.h"
 
 namespace mindspore {
 namespace ops {
-BINARY_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Add);
+class MIND_API AddFuncImpl : public BinaryOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_H_

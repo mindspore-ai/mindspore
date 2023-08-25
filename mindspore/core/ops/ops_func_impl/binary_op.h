@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/test_ops_binary_op.h"
-#include "ops/ops_func_impl/add.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_OP_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_OP_H_
+
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-BINARY_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Add);
+class BinaryOpFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_OP_H_

@@ -25,7 +25,7 @@
 #include "utils/symbolic.h"
 #include "utils/shape_utils.h"
 #include "ops/real_div.h"
-#include "ops/add.h"
+#include "ops/ops_func_impl/add.h"
 #include "ops/mul.h"
 #include "ops/sub.h"
 #include "ops/square.h"
@@ -36,6 +36,15 @@ constexpr auto kRankSize = "rank_size";
 }  // namespace
 
 namespace mindspore {
+namespace ops {
+// Apply ops will have a refractor and add_infer is just a temp modify
+auto AddInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                   const AbstractBasePtrList &input_args) {
+  auto add_op = AddFuncImpl();
+  return abstract::MakeAbstract(add_op.InferShape(primitive, input_args), add_op.InferType(primitive, input_args));
+};
+}  // namespace ops
+
 namespace abstract {
 AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_abs_list) {
