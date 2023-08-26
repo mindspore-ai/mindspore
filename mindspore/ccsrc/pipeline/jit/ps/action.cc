@@ -1653,6 +1653,11 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     }
 #endif
   }
+  auto is_precompile_only = MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY);
+  if (is_precompile_only) {
+    MS_LOG(INFO) << "PrecompileOnly, stop run graph";
+    return actions;
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifndef WITH_BACKEND
