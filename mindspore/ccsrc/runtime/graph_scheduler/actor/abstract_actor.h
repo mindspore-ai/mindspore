@@ -102,6 +102,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
  protected:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+  friend class AnyTypeGraphScheduler;
   friend class SchedulerHelper;
 
   // Check whether satisfy the actor running condition.

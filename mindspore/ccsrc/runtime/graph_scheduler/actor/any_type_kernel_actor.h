@@ -81,7 +81,7 @@ class AnyTypeKernelActor : public SuperKernelActor {
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 
  private:
-  friend class GraphScheduler;
+  friend class AnyTypeGraphScheduler;
 
   // When the actor receives the input of the graph, it can determine the data type of the parameter and then compile
   // an executable kernel graph and actors.

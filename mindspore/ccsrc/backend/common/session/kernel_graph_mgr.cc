@@ -1078,7 +1078,7 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
     } else if ((is_depend && input_idx > kRealInputIndexInDepend && !enable_ge)) {
-      cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
+      cnode_inputs->push_back(graph->NewValueNode(std::make_shared<Tensor>(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
       cnode_inputs->push_back((*other_graph_cnode)[anf]);
@@ -1092,6 +1092,9 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       continue;
     } else if (anf->isa<Parameter>()) {
       auto new_parameter = CreateNewParameterFromParameter(anf, graph);
+      MS_EXCEPTION_IF_NULL(new_parameter);
+      MS_LOG(DEBUG) << "Create new parameter:" << new_parameter->DebugString()
+                    << " by front parameter:" << anf->DebugString();
       cnode_inputs->push_back(new_parameter);
       graph->FrontBackendMapAdd(anf, new_parameter);
       continue;
@@ -1101,6 +1104,9 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       if (parameter_from_cnode == nullptr) {
         parameter_from_cnode = NewValueNode(MakeValue(SizeToLong(input_idx)));
       }
+      MS_EXCEPTION_IF_NULL(parameter_from_cnode);
+      MS_LOG(DEBUG) << "graph:" << graph->ToString() << " front node:" << anf->DebugString()
+                    << " parameter:" << parameter_from_cnode->DebugString();
       if (parameter_from_cnode->isa<Parameter>() && IsPrimitiveCNode(anf, prim::kPrimLoad)) {
         auto para = parameter_from_cnode->cast<ParameterPtr>();
         auto load_cnode = anf->cast<CNodePtr>();

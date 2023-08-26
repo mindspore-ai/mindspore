@@ -391,6 +391,7 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
   auto backend_output = graph->output();
   MS_EXCEPTION_IF_NULL(backend_output);
   graph->CacheGraphOutputToFrontNodeWithIndex({backend_output}, outputs);
+  graph->UpdateInternalParameter();
   DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
 
   auto output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());

@@ -499,15 +499,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
 #endif
 }
 
-std::vector<AbstractActorPtr> GraphScheduler::TransformForAnyTypeActor(const KernelGraphPtr &model_graph,
-                                                                       const KernelGraphPtr &real_graph,
-                                                                       const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(model_graph);
-  MS_EXCEPTION_IF_NULL(real_graph);
-  std::vector<AbstractActorPtr> actors;
-  return actors;
-}
-
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
   struct ScopeCleaner {
     GraphScheduler *const scheduler_;
@@ -797,7 +788,8 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->custom_actors_ = BuildCustomActor(graph_compiler_info);
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
   actor_set->super_kernel_actors_ = BuildSuperKernelActor(graph_compiler_info);
-  actor_set->any_type_kernel_actors_ = BuildAnyTypeKernelActor(graph_compiler_info);
+  actor_set->any_type_kernel_actors_ =
+    any_type_graph_scheduler_.Build(graph_compiler_info, memory_manager_aid_, debug_aid_);
   actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info);
   actor_set->output_actor_ = BuildOutputActor(graph_compiler_info);
   actor_set->data_prepare_actor_ =
@@ -1215,50 +1207,6 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     (void)super_kernel_actors.emplace_back(super_kernel_actor);
   }
   return super_kernel_actors;
-}
-
-std::vector<AnyTypeKernelActorPtr> GraphScheduler::BuildAnyTypeKernelActor(
-  const GraphCompilerInfo &graph_compiler_info) {
-  std::vector<AnyTypeKernelActorPtr> any_type_kernel_actors;
-
-  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
-    const auto &graph = graph_compiler_info.graphs_[i];
-    const auto &device_context = graph_compiler_info.device_contexts_[i];
-    MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->is_any_type_input()) {
-      continue;
-    }
-    if (graph->execution_order().empty()) {
-      MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips building.";
-      continue;
-    }
-
-    auto actor_name = graph->ToString() + kAnyTypeKernelActorNameSuffix;
-    auto any_type_kernel_actor =
-      std::make_shared<AnyTypeKernelActor>(actor_name, graph, device_context, memory_manager_aid_, debug_aid_, nullptr);
-    any_type_kernel_actor->compile_func_ = graph_compiler_info.compile_func_;
-    any_type_kernel_actor->transform_func_ = [this](const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph,
-                                                    const DeviceContext *device_context) {
-      return TransformForAnyTypeActor(model_graph, real_graph, device_context);
-    };
-    any_type_kernel_actor->schedule_func_ = [this](const std::vector<AbstractActorPtr> &actors) {
-      auto actor_manager = ActorMgr::GetActorMgrRef();
-      MS_EXCEPTION_IF_NULL(actor_manager);
-      for (auto actor : actors) {
-        MS_EXCEPTION_IF_NULL(actor);
-        // The sub actors in the fusion actor do not participate in message interaction.
-        if (actor->parent_fusion_actor_ == nullptr) {
-          (void)actor_manager->Spawn(actor);
-        } else {
-          actor->Init();
-        }
-      }
-    };
-    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
-    InsertActor(any_type_kernel_actor.get());
-    (void)any_type_kernel_actors.emplace_back(any_type_kernel_actor);
-  }
-  return any_type_kernel_actors;
 }
 
 LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info) {
@@ -1704,6 +1652,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   }
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
+    MS_EXCEPTION_IF_NULL(internal_parameter);
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid internal parameter:"
                                << internal_parameter->DebugString() << ", type:" << kernel_type;
   }
@@ -1797,14 +1746,19 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   MS_EXCEPTION_IF_NULL(to_actor);
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-
+  MS_LOG(DEBUG) << "Link data arrow for copy actor from actor:" << from_actor->GetAID()
+                << " to actor:" << to_actor->GetAID() << " from kernel:" << from_kernel->DebugString()
+                << " from index:" << from_kernel_with_output_idx.second << " to kernel:"
+                << (to_kernel_with_input_idx.first == nullptr ? "null" : to_kernel_with_input_idx.first->DebugString())
+                << " to index:" << to_kernel_with_input_idx.second;
   std::string name = "copy_from:" + from_actor->GetAID().Name() + "_node:" + from_kernel->fullname_with_scope() +
                      "_output_index:" + std::to_string(from_kernel_with_output_idx.second);
   CopyActor *copy_actor = dynamic_cast<CopyActor *>(FetchActor(name));
   // Link between from actor and copy actor.
   if (copy_actor == nullptr) {
     KernelGraphPtr from_graph = nullptr;
-    if (from_actor->type() == KernelTransformType::kSuperKernelActor) {
+    if (from_actor->type() == KernelTransformType::kSuperKernelActor ||
+        from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
       auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(from_actor);
       MS_EXCEPTION_IF_NULL(super_kernel_actor);
       from_graph = super_kernel_actor->graph();
@@ -1829,7 +1783,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
     (void)copy_actor->device_contexts_.emplace_back(to_device_context);
 
     // Set the member output_ of the copy actor.
-    if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
+    if (to_actor->type_ == KernelTransformType::kSuperKernelActor ||
+        to_actor->type_ == KernelTransformType::kAnyTypeKernelActor) {
       // Use address of to_kernel directly to avoid data copy in the subgraph sink.
       copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false);
     } else {
@@ -1857,7 +1812,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   // If the copy actor already exists, only need link between copy actor and to actor.
   SchedulerHelper::AddDataArrow(copy_actor, to_actor, 0, to_kernel_with_input_idx.second, nullptr);
   copy_actor->output_->ClearFlag(device::kDeviceAddressFlagNotUsed);
-  if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
+  if (to_actor->type_ == KernelTransformType::kSuperKernelActor ||
+      to_actor->type_ == KernelTransformType::kAnyTypeKernelActor) {
     UpdateRefCount(copy_actor->output_.get(), true);
   } else {
     UpdateRefCount(copy_actor->output_.get(), false);

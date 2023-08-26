@@ -530,8 +530,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                                 new_device_tensor->GetSize());
   }
   MS_LOG(INFO) << GetAID().Name() << " the input position:" << input_data_index
-               << " copy from device address:" << input_data->data_ << ", type:" << input_data->data_->GetDeviceType()
-               << ", format:" << input_data->data_->format() << " to device address:" << new_device_tensor.get()
+               << " copy from device address:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr()
+               << ", type:" << input_data->data_->GetDeviceType() << ", format:" << input_data->data_->format()
+               << " to device address:" << new_device_tensor.get() << " ptr:" << new_device_tensor->GetPtr()
                << ", type:" << new_device_tensor->GetDeviceType() << ", format:" << new_device_tensor->format();
   // Copy from the real parameter to formal parameter and insert the device tensor copy store.
   if (!Copy(new_device_tensor.get(), input_data->data_)) {

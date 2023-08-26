@@ -1666,7 +1666,9 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraphInSinkMode(const KernelGrap
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(parser);
   MS_LOG(DEBUG) << "Link data arrow in sink mode by kernel graph:" << graph->ToString();
-  auto to_actor = FetchActor(KernelTransformType::kSuperKernelActor, "", nullptr, graph);
+  auto to_actor = FetchActor(
+    graph->is_any_type_input() ? KernelTransformType::kAnyTypeKernelActor : KernelTransformType::kSuperKernelActor, "",
+    nullptr, graph);
   MS_EXCEPTION_IF_NULL(to_actor);
   auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(to_actor);
   MS_EXCEPTION_IF_NULL(super_kernel_actor);
@@ -1721,7 +1723,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
     from_actor = dynamic_cast<ControlActor *>(actor);
   }
 
-  if (graph->is_graph_run_mode()) {
+  if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
     // Link data arrow in graph mode.
     LinkDataArrowByKernelGraphInSinkMode(graph, from_actor, parser);
     return;

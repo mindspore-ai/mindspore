@@ -95,6 +95,8 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
       std::string error_info = "Copy device tensor failed: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
+    output_device_tensor_[0]->SetNodeIndex(input_device_tensor_[0]->node_index().first.lock(),
+                                           input_device_tensor_[0]->node_index().second);
   }
 
   PostRun(context);

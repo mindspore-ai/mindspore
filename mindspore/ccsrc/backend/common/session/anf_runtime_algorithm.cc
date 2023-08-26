@@ -1673,11 +1673,15 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
 
 void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel_info);
+  MS_EXCEPTION_IF_NULL(kernel);
   auto &output_addresses = kernel_info->output_address_list();
   for (size_t i = 0; i < output_addresses.size(); ++i) {
     auto output_address = output_addresses[i].get();
     MS_EXCEPTION_IF_NULL(output_address);
     auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
+    MS_LOG(DEBUG) << "output size:" << output_addr_size << " index:" << i
+                  << " for kernel:" << kernel->fullname_with_scope()
+                  << " abstract:" << (kernel->abstract() == nullptr ? "null" : kernel->abstract()->ToString());
     if (output_addr_size != output_address->GetSize()) {
       output_address->SetSize(output_addr_size);
     }
