@@ -80,10 +80,10 @@ class GroupLossScaleManager(Cell):
         >>> param_group1 = []
         >>> param_group2 = []
         >>> for param in net.trainable_params():
-        >>>     if 'conv' in param.name:
-        >>>         param_group1.append(param)
-        >>>     else:
-        >>>         param_group2.append(param)
+        ...     if 'conv' in param.name:
+        ...         param_group1.append(param)
+        ...     else:
+        ...         param_group2.append(param)
         >>> loss_scale_manager.loss_scale_groups = [param_group1, param_group2]
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
