@@ -298,18 +298,18 @@ class ExponentialLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
-        >>>     def construct(self, x):
-        >>>         return self.fc(x)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.fc = nn.Dense(16 * 5 * 5, 120)
+        ...     def construct(self, x):
+        ...         return self.fc(x)
         >>> net = Net()
         >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
         >>> scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
         >>> for i in range(3):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.005)]
         [Tensor(shape=[], dtype=Float32, value= 0.0025)]
         [Tensor(shape=[], dtype=Float32, value= 0.00125)]
@@ -362,18 +362,18 @@ class PolynomialLR(LRScheduler):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
-        >>>     def construct(self, x):
-        >>>         return self.fc(x)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.fc = nn.Dense(16 * 5 * 5, 120)
+        ...     def construct(self, x):
+        ...         return self.fc(x)
         >>> net = Net()
         >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
         >>> scheduler = optim.lr_scheduler.PolynomialLR(optimizer)
         >>> for i in range(6):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.008)]
         [Tensor(shape=[], dtype=Float32, value= 0.006)]
         [Tensor(shape=[], dtype=Float32, value= 0.004)]
@@ -416,20 +416,20 @@ class ChainedScheduler:
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.fc = nn.Dense(16 * 5 * 5, 120)
-        >>>     def construct(self, x):
-        >>>         return self.fc(x)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.fc = nn.Dense(16 * 5 * 5, 120)
+        ...     def construct(self, x):
+        ...         return self.fc(x)
         >>> net = Net()
         >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
         >>> scheduler1 = optim.lr_scheduler.PolynomialLR(optimizer)
         >>> scheduler2 = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
         >>> scheduler = optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
         >>> for i in range(6):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.004)]
         [Tensor(shape=[], dtype=Float32, value= 0.0015)]
         [Tensor(shape=[], dtype=Float32, value= 0.0005)]
@@ -488,9 +488,9 @@ class LambdaLR(LRScheduler):
         >>> lmbda = lambda epoch: 0.9 ** epoch
         >>> scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[lmbda])
         >>> for i in range(3):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.009)]
         [Tensor(shape=[], dtype=Float32, value= 0.0081)]
         [Tensor(shape=[], dtype=Float32, value= 0.00729)]
@@ -539,9 +539,9 @@ class MultiplicativeLR(LRScheduler):
         >>> lmbda = lambda epoch: 0.95
         >>> scheduler = optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lmbda)
         >>> for i in range(3):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.0095)]
         [Tensor(shape=[], dtype=Float32, value= 0.009025)]
         [Tensor(shape=[], dtype=Float32, value= 0.00857375)]
@@ -598,9 +598,9 @@ class MultiStepLR(LRScheduler):
         >>> # lr = 0.0005   if epoch >= 4
         >>> scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2,4], gamma=0.1)
         >>> for i in range(6):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.05)]
         [Tensor(shape=[], dtype=Float32, value= 0.005)]
         [Tensor(shape=[], dtype=Float32, value= 0.005)]
@@ -653,9 +653,9 @@ class ConstantLR(LRScheduler):
         >>> # lr = 0.05    if epoch >= 4
         >>> scheduler = optim.lr_scheduler.ConstantLR(optimizer, factor=0.5, total_iters=4)
         >>> for i in range(6):
-        >>>     scheduler.step()
-        >>>     current_lr = scheduler.get_last_lr()
-        >>>     print(current_lr)
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.025)]
         [Tensor(shape=[], dtype=Float32, value= 0.025)]
         [Tensor(shape=[], dtype=Float32, value= 0.025)]
