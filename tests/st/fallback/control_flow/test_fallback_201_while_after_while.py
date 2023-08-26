@@ -67,7 +67,9 @@ def test_while_after_while_tensor_2():
     assert res == 6
 
 
-@case_register.skip(reason='Not support graph fallback feature yet')
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_after_while_numpy_2():
     """
     Feature: JIT Fallback

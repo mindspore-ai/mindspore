@@ -71,7 +71,6 @@ def test_raise_error_in_variable_scene():
     assert output == Tensor([1])
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -586,7 +585,6 @@ def test_try_except_in_graph():
     print("out:", test_try_except_out)
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
@@ -654,7 +652,6 @@ def test_set_comprehension_in_graph():
     assert test_set_comprehension_out == {1, 4, 9}
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard

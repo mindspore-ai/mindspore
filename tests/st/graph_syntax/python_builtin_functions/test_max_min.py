@@ -182,7 +182,6 @@ def test_builtin_function_min_with_tensor_1d(mode):
     assert res == 1
 
 
-@pytest.mark.skip(reason="SequenceMax/SequenceMin give wrong output")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

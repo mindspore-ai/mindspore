@@ -373,7 +373,6 @@ def test_tensor_condition():
     assert out == 10
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -394,7 +393,6 @@ def test_bool_asnumpy():
     assert out is True
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
