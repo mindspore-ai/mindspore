@@ -281,20 +281,6 @@ Status ReshapeInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-/*
- * the output tensor strategy is the same as input tensor strategy
- * only support batch parallel reshape operator in ReID (batch parallel degree can be smaller than device number)
- */
-Strategies ReshapeInfo::GetOutputsStrategy() {
-  Strategies outputs_strategy;
-  Dimensions strategy;
-  for (size_t j = 0; j < outputs_shape_[0].size(); ++j) {
-    strategy.push_back(1);
-  }
-  outputs_strategy.push_back(strategy);
-  return outputs_strategy;
-}
-
 Status ReshapeInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   if (inputs_layout == nullptr || outputs_layout == nullptr) {
     MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
@@ -358,25 +344,14 @@ Status ReshapeInfo::InferTensorInfo() {
     return SUCCESS;
   }
 
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategies inputs_strategy = strategy_->GetInputDim();
-  Strategies outputs_strategy = GetOutputsStrategy();
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-
   TensorLayouts inputs_layout, outputs_layout;
   if (InferTensorLayout(&inputs_layout, &outputs_layout) != SUCCESS) {
     return FAILED;
   }
   TensorLayout tensor_layout_in = inputs_layout.at(0);
   TensorLayout tensor_layout_out = outputs_layout.at(0);
-  Shape shape_array_in = inputs_shape_.at(0);
-  Shape slice_shape_in = inputs_slice_shape.at(0);
-  Shape shape_array_out = outputs_shape_.at(0);
-  Shape slice_shape_out = outputs_slice_shape.at(0);
-  TensorInfo tensor_info_in(tensor_layout_in, shape_array_in, slice_shape_in);
-  TensorInfo tensor_info_out(tensor_layout_out, shape_array_out, slice_shape_out);
+  TensorInfo tensor_info_in(tensor_layout_in);
+  TensorInfo tensor_info_out(tensor_layout_out);
   inputs_tensor_info_.push_back(tensor_info_in);
   outputs_tensor_info_.push_back(tensor_info_out);
   return SUCCESS;

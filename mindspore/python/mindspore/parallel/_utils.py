@@ -137,14 +137,17 @@ def _to_full_shapes(shapes, device_num):
                                  "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
             new_shape = ()
             for i, item in enumerate(shape):
-                new_shape += (item * dataset_strategy[index][i],)
+                if item > 0:
+                    new_shape += (item * dataset_strategy[index][i],)  # static shape
+                else:
+                    new_shape += (item,)  # dynamic shape
             new_shapes.append(new_shape)
         return new_shapes
     for shape in shapes:
         new_shape = ()
         for i, item in enumerate(shape):
-            if i == 0:
-                new_shape += (item * device_num,)
+            if i == 0 and item > 0:
+                new_shape += (item * device_num,)  # only for static shape
             else:
                 new_shape += (item,)
         new_shapes.append(new_shape)

@@ -256,8 +256,6 @@ class OperatorInfo {
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
   // is used for grad and overload the function. If the output is a scalar, need to override the function too.
   virtual Status InferAsLossDivisor();
-  Status InferSliceShape(const Strategies &inputs_strategy, const Strategies &outputs_strategy,
-                         Shapes *inputs_slice_shape, Shapes *outputs_slice_shape);
   void BreakingTiesForPreferringDataParallel(const StrategyPtr &stra, const CostPtr &cost) const;
   int64_t GetIntAttr(const std::string &attr_name);
   bool GetBoolAttr(const std::string &attr_name);

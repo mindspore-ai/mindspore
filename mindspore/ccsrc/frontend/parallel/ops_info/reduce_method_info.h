@@ -46,7 +46,6 @@ class ReduceMethod : public OperatorInfo {
   bool cross_batch_ = false;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
-  Dimensions InferOutputStrategy();
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
   Status InferMirrorOps() override;

@@ -912,66 +912,6 @@ Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy) {
   return slice_shape;
 }
 
-Status InferSliceShapeByStrategy(const Strategies &strategys, const Shapes &shapes, Shapes *slice_shapes) {
-  if (slice_shapes == nullptr) {
-    MS_LOG(ERROR) << "The slice_shapes is null.";
-    return FAILED;
-  }
-  if (strategys.size() != shapes.size()) {
-    MS_LOG(ERROR) << "Strategy size " << strategys.size() << " not equal to shape size " << shapes.size();
-    return FAILED;
-  }
-
-  for (size_t i = 0; i < strategys.size(); ++i) {
-    if (strategys.at(i).size() != shapes.at(i).size()) {
-      MS_LOG(ERROR) << "Strategy dimension " << strategys.at(i).size() << " not equal to shape dimension "
-                    << shapes.at(i).size();
-      slice_shapes->clear();
-      return FAILED;
-    }
-
-    for (size_t j = 0; j < shapes.at(i).size(); ++j) {
-      if (strategys.at(i).at(j) <= 0) {
-        MS_LOG(ERROR) << "Invalid strategy: " << ShapeToString(strategys[i])
-                      << " the element is less than or equal to 0.";
-        slice_shapes->clear();
-        return FAILED;
-      }
-      if (shapes.at(i).at(j) % strategys.at(i).at(j) != 0) {
-        MS_LOG(ERROR) << "Shape cannot be divisible by strategy, " << shapes.at(i).at(j) << " : "
-                      << strategys.at(i).at(j);
-        slice_shapes->clear();
-        return FAILED;
-      }
-    }
-    Shape slice_shape = GetSliceShape(shapes.at(i), strategys.at(i));
-    slice_shapes->push_back(slice_shape);
-  }
-
-  return SUCCESS;
-}
-
-Status OperatorInfo::InferSliceShape(const Strategies &inputs_strategy, const Strategies &outputs_strategy,
-                                     Shapes *inputs_slice_shape, Shapes *outputs_slice_shape) {
-  if (inputs_slice_shape == nullptr || outputs_slice_shape == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The slice_shape is null.";
-    return FAILED;
-  }
-
-  if (InferSliceShapeByStrategy(inputs_strategy, inputs_shape_, inputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer inputs slice shape error.";
-    return FAILED;
-  }
-
-  if (InferSliceShapeByStrategy(outputs_strategy, outputs_shape_, outputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer outputs slice shape error.";
-    inputs_slice_shape->clear();
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
 Status OperatorInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
