@@ -204,7 +204,7 @@ class AutoBoost:
         >>> import json
         >>> boost_json = "/path/boost_config.json"
         >>> with open(boost_json, 'r') as fp:
-        >>>     boost_config_dict = json.load(fp)
+        ...     boost_config_dict = json.load(fp)
         >>> boost = AutoBoost("O1", boost_config_dict)
     """
     _instance_lock = threading.Lock()
