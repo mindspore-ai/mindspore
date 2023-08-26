@@ -680,7 +680,7 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
-        TypeError: If dtype of `indices` is not uint8, int32 or int64.
+        TypeError: If dtype of `indices` is not int32 or int64.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, ndim].
         ValueError: If `depth` is less than 0.

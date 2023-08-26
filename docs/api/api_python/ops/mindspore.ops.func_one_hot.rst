@@ -22,7 +22,7 @@ mindspore.ops.one_hot
 
     异常：
         - **TypeError** - `axis` 或 `depth` 不是int。
-        - **TypeError** - `indices` 的数据类型既不是uint8，也不是int32或者int64。
+        - **TypeError** - `indices` 的数据类型不是int32或者int64。
         - **TypeError** - `indices`、`on_value` 或 `off_value` 不是Tensor。
         - **ValueError** - `axis` 不在[-1, ndim]范围内。ndim为 `indices` 的维度。
         - **ValueError** - `depth` 小于0。
