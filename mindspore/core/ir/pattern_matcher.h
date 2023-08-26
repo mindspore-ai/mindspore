@@ -618,8 +618,8 @@ class PConstant : public PBase<PConstant<T> > {
     if (x_tensor_ptr->DataSize() == 1) {
       auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
       char *data = static_cast<char *>(new_tensor_ptr->data_c());
-      for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
-        ret = memcpy_s(data + IntToSize(i) * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
+      for (int64_t i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
+        ret = memcpy_s(data + LongToSize(i) * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
         if (ret != EOK) {
           MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << tensor_type_byte << ", dest size "
                        << tensor_type_byte;
@@ -649,7 +649,7 @@ class PConstant : public PBase<PConstant<T> > {
     ShapeVector tensor_shape = tensor_abstract->shape()->shape();
 
     auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
+    size_t mem_size = GetTypeByte(tensor_type_ptr) * LongToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
     if (memset_s(data, mem_size, value, mem_size) != EOK) {
@@ -748,7 +748,7 @@ class PConstant : public PBase<PConstant<T> > {
     }
     ShapeVector tensor_out_shape = new_tensor_ptr->shape();
     int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-    size_t mem_size = GetTypeByte(new_tensor_ptr->Dtype()) * IntToSize(new_tensor_ptr->ElementsNum());
+    size_t mem_size = GetTypeByte(new_tensor_ptr->Dtype()) * LongToSize(new_tensor_ptr->ElementsNum());
     char *data = static_cast<char *>(new_tensor_ptr->data_c());
 
     int ret = 0;

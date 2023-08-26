@@ -170,7 +170,7 @@ class MS_CORE_API MetaTensor : public Value {
   /// \brief Get total number of elements in a tensor.
   ///
   /// \return The total number of elements in a tensor.
-  int ElementsNum() const;
+  int64_t ElementsNum() const;
 
   std::size_t hash() const override {
     std::size_t hash_value = std::hash<int>{}(static_cast<int>(data_type_));
