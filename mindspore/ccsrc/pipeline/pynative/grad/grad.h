@@ -170,6 +170,7 @@ class GradExecutor {
   inline bool is_high_order_top_cell() const {
     return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
+  uint32_t kernel_graph_id_for_control_flow() { return --kernel_graph_id_for_control_flow_; }
   void ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_need_clear_device_mem);
   bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info, const std::string &obj_id_with_grad_order);
   void SwitchTopCell();
@@ -217,6 +218,7 @@ class GradExecutor {
   bool enable_grad_{true};
   bool grad_is_running_{false};
   bool save_graphs_{false};
+  uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...

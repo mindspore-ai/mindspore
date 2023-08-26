@@ -328,7 +328,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   other_device_ = target;
 }
 
-GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) {
+GraphId MsBackend::CompileGraph(const NotNull<FuncGraphPtr> &fg) {
   MS_EXCEPTION_IF_NULL(target_sess_);
   return target_sess_->CompileGraph(fg);
 }
@@ -483,6 +483,9 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_outputs);
   AnfNodePtr front_node = graph->GetFrontAnfByBackendAnf(kernel);
+  if (front_node == nullptr && graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    front_node = kernel;
+  }
   MS_EXCEPTION_IF_NULL(front_node);
   if (!front_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "The front node of bprop_cut is not CNode";
@@ -668,7 +671,7 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
 
 void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                      const VectorRef &args, VectorRef *outputs) {
-  MS_LOG(INFO) << "Start";
+  MS_LOG(INFO) << "Status record: begin run actor: " << actor_info;
   WaitTaskFinish();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto graphs = graph_compiler_info.graphs_;
@@ -707,6 +710,12 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
+  auto output = root_graph_->output();
+  MS_LOG(DEBUG) << "Current out " << output->DebugString();
+  if (root_graph_->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    MS_EXCEPTION_IF_NULL(output_node_);
+    root_graph_->set_output(output_node_);
+  }
   ConstructOutputs(actor_set, outputs, root_graph_);
 
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
@@ -728,7 +737,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.Register([this]() { BatchBuildCallback(); });
 
-  MS_LOG(DEBUG) << "Start";
+  MS_LOG(INFO) << "Status record: begin run graph by single op";
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &graphs = graph_compiler_info.graphs_;
   auto inputs = GetRunGraphInputs(graph_compiler_info, args);
@@ -803,7 +812,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     }
     WaitTaskFinish();
   }
-  MS_LOG(DEBUG) << "End";
+  MS_LOG(INFO) << "Status record: end run graph by single op";
 }
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
@@ -816,7 +825,6 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
   } else {
     RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
   }
-  MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
 void MindRTBackend::WaitTaskFinish() const {

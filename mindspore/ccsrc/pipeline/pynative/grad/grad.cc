@@ -150,14 +150,17 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool has_contro
   return after_opt_bg;
 }
 
-void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res, bool is_tuple_sens,
-                       VectorRef *const arg_list) {
+void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
+                       size_t graph_param_size, bool is_tuple_sens, VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
-  AnfNodePtrList graph_params = graph->parameters();
-  std::size_t graph_params_size = graph_params.size();
+  const auto &graph_params = graph->parameters();
+  if (graph_params.size() < graph_param_size) {
+    MS_LOG(EXCEPTION) << "Get initial bprop graph param size " << graph_param_size << " less than current param size "
+                      << graph_params.size();
+  }
   auto input_arg_list = input_vec;
   if (is_tuple_sens) {
     input_arg_list.clear();
@@ -166,10 +169,10 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
   (void)std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
                        [](const ValuePtr &v) { return v; });
   size_t arg_size = (*arg_list).size();
-  if (arg_size != graph_params_size) {
+  if (arg_size != graph_param_size) {
     // Maybe have some default parameter for input
-    MS_LOG(DEBUG) << "Get args size " << (*arg_list).size() << ", graph param size " << graph_params_size;
-    for (std::size_t i = arg_size; i < graph_params_size; ++i) {
+    MS_LOG(DEBUG) << "Get args size " << (*arg_list).size() << ", graph param size " << graph_param_size;
+    for (std::size_t i = arg_size; i < graph_param_size; ++i) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
       auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
       MS_EXCEPTION_IF_NULL(param_ptr);
@@ -182,6 +185,15 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
       }
       arg_list->push_back(param_ptr->default_param());
     }
+  }
+}
+
+void RestoreBpropGraphParameter(const FuncGraphPtr &graph, size_t graph_param_size) {
+  auto parameters = graph->parameters();
+  // Is ascend, kernel graph maybe adjust and insert some control parameters
+  if (parameters.size() > graph_param_size) {
+    (void)parameters.erase(parameters.begin() + graph_param_size, parameters.end());
+    graph->set_parameters(std::move(parameters));
   }
 }
 
@@ -1131,6 +1143,14 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
+  bool has_control_flow = top_cell()->has_control_flow();
+  bprop_graph->set_flag(kFlagIsPyNativeBpropKernelGraph, !has_control_flow);
+  // Control graph will generate kernel graph in compile graphs again. Graph id is conflict with default id 0
+  if (has_control_flow) {
+    auto kernel_graph = bprop_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    kernel_graph->set_graph_id(kernel_graph_id_for_control_flow());
+  }
   bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(top_input_args_info_->obj_id));
   return bprop_graph;
 }
@@ -1202,7 +1222,7 @@ py::object GradExecutor::RunGradGraph() {
   MS_LOG(DEBUG) << "Run cell id " << top_input_args_info_->cell_id << ", resource ptr " << resource.get();
   VectorRef arg_list;
   SetGraphInputArgs(
-    top_input_args_info_->input_arg_value_vec, resource,
+    top_input_args_info_->input_arg_value_vec, resource, top_cell()->initial_graph_param_size(),
     top_input_args_info_->has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>(),
     &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
@@ -1220,12 +1240,10 @@ py::object GradExecutor::RunGradGraph() {
   top_input_args_info_ = top_input_args_info;
   grad_is_running_ = false;
   MS_LOG(DEBUG) << "Eval run end " << out_value.ToString();
-  const auto &cur_run_bprop_graph = resource->optimize_graph();
-  auto out_abs = cur_run_bprop_graph->output()->abstract();
   MakeNestedCnode(top_input_args_info_->has_custom_bprop, top_input_args_info_->input_arg_value_vec,
-                  cur_run_bprop_graph, out_value);
+                  resource->optimize_graph(), out_value);
   top_input_args_info_ = nullptr;
-  return BaseRefToPyData(out_value, out_abs);
+  return BaseRefToPyData(out_value);
 }
 
 void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<ValuePtr> &forward_args,
@@ -1242,7 +1260,10 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   if (has_custom_bprop) {
     first_grad_fg = curr_g();
     MS_LOG(DEBUG) << "Bprop nested";
+  } else {
+    RestoreBpropGraphParameter(cur_run_bprop_graph, top_cell()->initial_graph_param_size());
   }
+
   MS_EXCEPTION_IF_NULL(first_grad_fg);
   PyNativeAlgo::Common::DumpGraphIR("first_grad_fg.ir", first_grad_fg);
   ValuePtrList weights_args;

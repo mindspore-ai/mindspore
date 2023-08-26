@@ -20,6 +20,8 @@
 namespace mindspore {
 namespace pynative {
 namespace {
+constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
+constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 const size_t kMaxCacheDynamicShapeCellNum = 2;
 
 bool IsValuePtrEqual(const ValuePtr &v1, const ValuePtr &v2) {
@@ -70,6 +72,12 @@ bool IsDynamicDetectAbsChange(const abstract::AbstractBasePtrList &node_abs,
 bool IsDynamicDetectPrimChange(const PrimitivePtr &old_prim, const PrimitivePtr &new_prim) {
   if (old_prim == nullptr && new_prim == nullptr) {
     return false;
+  }
+  // Use kernel graph will add kIsFeatureMapOutput adn kIsFeatureMapOutput attr,
+  // but check must be remove them
+  if (old_prim != nullptr && old_prim->HasAttr(kIsFeatureMapOutput)) {
+    old_prim->EraseAttr(kIsFeatureMapOutput);
+    old_prim->EraseAttr(kIsFeatureMapInputList);
   }
   if (new_prim != nullptr && old_prim != nullptr) {
     return !common::IsEqual(old_prim, new_prim);
@@ -377,8 +385,11 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
   }
 
   if (IsDynamicDetectPrimChange(old_node_info->op_prim, node->op_prim)) {
-    MS_LOG(DEBUG) << "Graph is dynamic, old node prim: " << old_node_info->op_prim->name()
-                  << ", attr: " << old_node_info->op_prim->GetAttrsText() << " new node prim: "
+    MS_LOG(DEBUG) << "Graph is dynamic, old node prim : "
+                  << (old_node_info->op_prim != nullptr
+                        ? old_node_info->op_prim->name() + ", attr: " + old_node_info->op_prim->GetAttrsText()
+                        : "")
+                  << " new node prim: "
                   << (node->op_prim != nullptr ? node->op_prim->name() + ", attr: " + node->op_prim->GetAttrsText()
                                                : "")
                   << " node_idx: " << node_idx;

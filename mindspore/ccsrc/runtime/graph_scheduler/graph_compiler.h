@@ -83,7 +83,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
                     const std::vector<AnfNodePtr> &control_nodes,
                     const std::vector<AnfNodePtr> &origin_parameters_order, const ControlNodeParserPtr &parser,
                     const KernelMapPosition &origin_outputs_order, const size_t outputs_num, const std::string &name,
-                    bool need_erase, GraphExecutionStrategy strategy, CompileFunc comile_func)
+                    bool need_erase, GraphExecutionStrategy strategy, CompileFunc compile_func)
       : graphs_(graphs),
         device_contexts_(device_contexts),
         tensors_mask_(tensors_mask),
@@ -96,7 +96,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
         name_(name),
         need_erase_(need_erase),
         strategy_(strategy),
-        compile_func_(comile_func) {}
+        compile_func_(std::move(compile_func)) {}
   ~GraphCompilerInfo();
   std::vector<KernelGraphPtr> graphs_;
   std::vector<DeviceContext *> device_contexts_;
@@ -123,8 +123,13 @@ class GraphCompiler {
   GraphId CompileGraph(const GraphSegmentPtr &segment, const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
                        const DeviceContext *device_context, device::RunMode run_mode, bool run_in_pynative = false);
 
+  GraphId CompileGraph(const KernelGraphPtr &kernel_graph, const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
+                       const DeviceContext *device_context, device::RunMode run_mode, bool run_in_pynative);
+
+  // For Pyantive dynamic shape or dynamic structure
   GraphId CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                               const DeviceContext *device_context);
+  GraphId CompileDynamicGraph(const KernelGraphPtr &kernel_graph, const DeviceContext *device_context);
 
   // Construct kernel graph from function graph and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
@@ -190,6 +195,7 @@ class GraphCompiler {
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
   GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context,
                            bool run_in_pynative = true) const;
+  const session::SessionPtr &session_ptr() const { return session_; }
 
  private:
   DISABLE_COPY_AND_ASSIGN(GraphCompiler);
@@ -197,7 +203,7 @@ class GraphCompiler {
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
-  // Set Graph's dependencies for pre_graph and post_graph.
+  // Set Graph's dependencies for pre_graph and post_graph
   void SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const;
   KernelGraphPtr ConstructKernelGraphForGraphRunMode(const FuncGraphPtr &func_graph,
                                                      const DeviceContext *device_context,

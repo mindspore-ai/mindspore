@@ -423,7 +423,7 @@ void GraphAdapter::UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph) {
     return;
   }
   MS_LOG(INFO) << "Update dynamic shape value node for graph " << graph->graph_id();
-  auto value_nodes = graph->graph_value_nodes();
+  const auto &value_nodes = graph->graph_value_nodes();
   for (auto &value_node : value_nodes) {
     MS_EXCEPTION_IF_NULL(value_node);
     const auto &value = value_node->value();
@@ -443,7 +443,7 @@ void GraphAdapter::SensTensorToDevice(const KernelGraphPtr &graph, const device:
   if (!graph->is_dynamic_shape()) {
     return;
   }
-  auto value_nodes = graph->graph_value_nodes();
+  const auto &value_nodes = graph->graph_value_nodes();
   for (const auto &value_node : value_nodes) {
     MS_EXCEPTION_IF_NULL(value_node);
     auto value = value_node->value();

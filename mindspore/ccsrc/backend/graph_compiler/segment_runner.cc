@@ -48,7 +48,7 @@ namespace {
 AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
                          const mindspore::HashSet<AnfNodePtr> &seen) {
   AnfNodePtrList output;
-  if (users.size() == 0) {
+  if (users.empty()) {
     return output;
   }
   for (auto &node : nodes) {
@@ -61,11 +61,9 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
       continue;
     }
     auto &node_users = iter->second;
-    const bool has_outer_user = std::any_of(std::begin(node_users), std::end(node_users),
-                                            [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool {
-                                              const bool is_outer_user = (seen.find(u.first) == seen.end());
-                                              return is_outer_user;
-                                            });
+    const bool has_outer_user = std::any_of(
+      std::begin(node_users), std::end(node_users),
+      [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool { return seen.find(u.first) == seen.end(); });
     if (has_outer_user) {
       output.emplace_back(node);
     }
@@ -108,7 +106,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   AnfNodePtrList inputs;
   AnfNodePtrToAnfNodePtrMap eqv;
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
-  for (auto n : lst) {
+  for (const auto &n : lst) {
     MS_EXCEPTION_IF_NULL(n);
     if (!n->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Inst is not CNode";

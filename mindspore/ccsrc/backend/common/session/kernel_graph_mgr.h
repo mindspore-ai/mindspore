@@ -85,6 +85,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  void SetKernelGraphId(const KernelGraphPtr &kernel_graph);
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
 
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);

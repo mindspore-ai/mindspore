@@ -859,7 +859,11 @@ bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_
     return false;
   }
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info_ptr = node->kernel_info();
+  if (kernel_info_ptr == nullptr) {
+    return false;
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_info_ptr);
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->OutputAddrExist(output_idx);
 }

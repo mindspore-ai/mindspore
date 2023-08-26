@@ -832,8 +832,11 @@ ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGra
       MS_LOG(INFO) << "Data sync for Tensor " << tensor->ToString();
     }
   }
-  auto new_value_node = graph->NewValueNode(value_node);
-  graph->FrontBackendMapAdd(anf, new_value_node);
+  auto new_value_node = value_node;
+  if (!graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    new_value_node = graph->NewValueNode(value_node);
+    graph->FrontBackendMapAdd(anf, new_value_node);
+  }
   graph->AddValueNodeToGraph(new_value_node);
   return new_value_node;
 }
@@ -956,7 +959,7 @@ AnfNodePtr KernelGraphMgr::CreateParameterFromTuple(const AnfNodePtr &node, Kern
     const auto &parameter = parameters[i];
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == true) {
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
       // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
       // which needs to be linked when processing the internal node.
       graph->CacheInternalParameterToFrontNode(parameter, {node, i});
@@ -996,6 +999,7 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
   ParameterPtr new_parameter = nullptr;
   auto func_graph = anf->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
+  bool is_pynative_bprop_kernel_graph = graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
   if (func_graph->manager() != nullptr && func_graph->exist_multi_target() &&
       graph->device_target() == device::DeviceType::kCPU) {
     auto iter = default_param_map_.find(anf);
@@ -1007,32 +1011,39 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
       return new_parameter;
     }
     TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
-    new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
+    new_parameter = anf->cast<ParameterPtr>();
+    if (!is_pynative_bprop_kernel_graph) {
+      new_parameter = graph->NewParameter(new_parameter);
+    }
     graph_inputs->push_back(new_parameter);
     valid_inputs->push_back(true);
     default_param_map_[anf] = new_parameter;
     return new_parameter;
   }
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
-  if (param_value != nullptr) {
-    new_parameter = param_value->parameter();
-  }
-  if (new_parameter == nullptr) {
-    TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
-    new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
-
-    auto input_node_iter = partial_parameters_map_.find(anf);
-    if (input_node_iter != partial_parameters_map_.end()) {
-      InitInternalOutputParameter(input_node_iter->second, new_parameter);
-    }
-
+  if (!is_pynative_bprop_kernel_graph) {
     if (param_value != nullptr) {
-      param_value->set_parameter(new_parameter);
+      new_parameter = param_value->parameter();
     }
+    if (new_parameter == nullptr) {
+      TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
+      new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
+
+      auto input_node_iter = partial_parameters_map_.find(anf);
+      if (input_node_iter != partial_parameters_map_.end()) {
+        InitInternalOutputParameter(input_node_iter->second, new_parameter);
+      }
+
+      if (param_value != nullptr) {
+        param_value->set_parameter(new_parameter);
+      }
+    }
+    new_parameter->IncreaseUsedGraphCount();
+  } else {
+    new_parameter = anf->cast<ParameterPtr>();
   }
-  new_parameter->IncreaseUsedGraphCount();
-  graph_inputs->push_back(new_parameter);
-  valid_inputs->push_back(true);
+  (void)graph_inputs->emplace_back(new_parameter);
+  (void)valid_inputs->emplace_back(true);
   return new_parameter;
 }
 
@@ -1803,6 +1814,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     graph->set_flag(kFlagEnableZeroCopyInGraph, true);
   }
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
+  graph->set_device_target(device_target);
   for (const auto &node : lst) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
@@ -1811,7 +1823,6 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    graph->set_device_target(device_target);
     // create a new cnode object
     auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
     MS_EXCEPTION_IF_NULL(new_cnode);
@@ -2290,7 +2301,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->CanDump(kIntroductory)) {
-    for (auto iter : graphs_) {
+    for (const auto &iter : graphs_) {
       auto dump_name = std::string("loaded_") + iter.second->ToString() + ".ir";
       DumpIR(dump_name, iter.second);
     }
@@ -2578,9 +2589,14 @@ CNodePtr KernelGraphMgr::ConstructOutput(const AnfNodePtrList &outputs, const st
 KernelGraphPtr KernelGraphMgr::NewKernelGraph() {
   auto graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(graph);
-  graph->set_graph_id(graph_sum_);
-  graphs_[graph_sum_++] = graph;
+  SetKernelGraphId(graph);
   return graph;
+}
+
+void KernelGraphMgr::SetKernelGraphId(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  kernel_graph->set_graph_id(graph_sum_);
+  graphs_[graph_sum_++] = kernel_graph;
 }
 
 void KernelGraphMgr::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }

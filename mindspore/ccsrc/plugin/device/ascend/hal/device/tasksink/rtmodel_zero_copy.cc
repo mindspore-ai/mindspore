@@ -513,8 +513,6 @@ bool RtModelZeroCopy::GenerateZeroCopyTaskForSubGraphSink(const session::KernelG
                        [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
 
   const auto &nodes = graph.execution_order();
-  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph.output());
-  const auto &ref_node_map = graph.GetRefMap();
   // Collect all the zero task node with its offset, if the task is an input copy the offset is the index of input,
   // if is output, it is the index of output add its input num.
   std::set<std::pair<AnfNodePtr, size_t>> node_to_offset;

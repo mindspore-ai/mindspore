@@ -130,6 +130,7 @@ class TopCellInfo {
   }
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
+  inline size_t initial_graph_param_size() const { return initial_graph_param_size_; }
   const TensorReplaceInfo &replace_info() { return replace_info_; }
   inline InputArgsInfoPtr input_args_info() { return input_args_info_; }
   inline void set_input_args_info(const InputArgsInfoPtr &input_args_info) { input_args_info_ = input_args_info; }
@@ -178,6 +179,8 @@ class TopCellInfo {
   bool is_unknown_shape_{false};
   size_t grad_order_{0};
   size_t op_index_{0};
+  // Use kernel graph will change parameter size
+  size_t initial_graph_param_size_{0};
   std::string obj_id_with_grad_order_;
   std::string cell_id_;
   std::string already_run_cell_id_;

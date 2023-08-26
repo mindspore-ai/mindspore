@@ -260,14 +260,18 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
 
 void KernelGraph::PostNewCNode(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
-  cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
+  if (cnode->abstract() == nullptr) {
+    cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
+  }
   if (common::AnfAlgo::IsGraphKernel(cnode)) {
     CreateKernelInfoFromNewParameter(cnode);
   }
   if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimCast->name()) {
     common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
-  SetKernelInfoForNode(cnode);
+  if (cnode->kernel_info() == nullptr) {
+    SetKernelInfoForNode(cnode);
+  }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
 }
 
@@ -689,7 +693,7 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
   tensor_to_value_node_map_[tensor] = value_node;
 }
 
-void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.insert(value_node); }
+void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.emplace(value_node); }
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 

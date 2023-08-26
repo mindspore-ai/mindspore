@@ -190,6 +190,7 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
 
 void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "Save top cell forward output tensor info";
+  initial_graph_param_size_ = func_graph->parameters().size();
   SaveForwardOutputTensorInfo(func_graph, !use_dynamic_shape_process_, &replace_info_);
 }
 
