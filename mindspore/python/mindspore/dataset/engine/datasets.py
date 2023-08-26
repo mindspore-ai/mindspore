@@ -4099,6 +4099,14 @@ class _ToDevice:
         """
         return self._to_device.GetDataInfo()
 
+    def get_send_info(self):
+        """
+        In sink mode, it returns the send information of dataset at this moment.
+        Send information includes number of send batches, time summary of fetching data on host
+        and time summary of sending data.
+        """
+        return self._to_device.GetSendInfo()
+
     def release(self):
         """
         Manually terminate Device Queue instead of relying on out of scope destruction.
@@ -4204,6 +4212,16 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
+
+    def get_send_info(self):
+        """
+        In sink mode, it returns the send information of dataset at this moment.
+        Send information includes number of send batches, time summary of fetching data on host
+        and time summary of sending data.
+        """
+        if self._to_device is not None:
+            return self._to_device.get_send_info()
+        raise RuntimeError("Calling get_send_info with bad state, data queue is not initialized.")
 
     def get_offload_model(self):
         if self._to_device is not None:
