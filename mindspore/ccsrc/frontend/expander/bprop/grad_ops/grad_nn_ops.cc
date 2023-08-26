@@ -314,12 +314,21 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto w = ib->GetInput(kIndex1);
   auto b = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto dtype = ib->GetDtype(x);
+  bool is_complex = (*dtype) == (*kComplex64) || (*dtype) == (*kComplex128);
   NodePtr dx, dw, db;
   auto dout_shp = dout->shape();
   if (dout_shp.size() == 0) {
+    db = dout;
+    if (is_complex) {
+      dout = ib->Emit("Conj", {dout});
+    }
     dw = ib->Mul(dout, x);
     dx = ib->Mul(dout, w);
-    db = dout;
+    if (is_complex) {
+      dx = ib->Emit("Conj", {dx});
+      dw = ib->Emit("Conj", {dw});
+    }
     return {dx, dw, db};
   }
   ShapeVector dout_2d_shape = {-1, dout_shp.back()};
@@ -330,7 +339,15 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     x_shape.back() = w->shape().back();
   }
   dout = ib->Reshape(dout, dout_2d_shape);
+  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
+  db = ib->ReduceSum(dout, ret_shape[kIndex0]);
+  if (is_complex) {
+    dout = ib->Emit("Conj", {dout});
+  }
   dx = ib->MatMul(dout, w, false, false);
+  if (is_complex) {
+    dx = ib->Emit("Conj", {dx});
+  }
   if (x_shape.size() != 2) {
     dx = ib->Reshape(dx, x_shape);
     int64_t first_dim = 1;
@@ -341,8 +358,9 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     x = ib->Reshape(x, x_2d_shape);
   }
   dw = ib->MatMul(dout, x, true, false);
-  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
-  db = ib->ReduceSum(dout, ret_shape[kIndex0]);
+  if (is_complex) {
+    dw = ib->Emit("Conj", {dw});
+  }
   return {dx, dw, db};
 });
 

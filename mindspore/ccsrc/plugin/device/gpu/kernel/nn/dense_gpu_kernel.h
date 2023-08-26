@@ -74,6 +74,7 @@ class DenseGpuKernelMod : public NativeGpuKernelMod {
   int ldb_{0};
   int ldc_{0};
   std::string kernel_name_;
+  bool is_empty_tensor_ = false;
 
   cublasHandle_t handle_{nullptr};
   cudaDataType_t dtype_a_{CUDA_R_32F};
@@ -87,6 +88,11 @@ class DenseGpuKernelMod : public NativeGpuKernelMod {
   cublasGemmAlgo_t algo_{CUBLAS_GEMM_DEFAULT};
 
   bool has_bias_{true};
+  bool need_cast_{false};
+  size_t x_size_{0};
+  size_t w_size_{0};
+  size_t b_size_{0};
+  size_t out_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

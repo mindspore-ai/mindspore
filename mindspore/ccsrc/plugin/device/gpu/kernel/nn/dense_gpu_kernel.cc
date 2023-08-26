@@ -23,6 +23,7 @@
 #include "ops/dense.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -47,9 +48,19 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-  dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+  auto dtype_str = TypeIdLabel(inputs[kIndex0]->GetDtype());
+  const std::vector<std::string> need_cast_dtypes = {"Int8", "Int16", "Int32", "Int64", "UInt8"};
+  auto it = std::find(need_cast_dtypes.begin(), need_cast_dtypes.end(), dtype_str);
+  need_cast_ = it != need_cast_dtypes.end();
+  if (need_cast_) {
+    dtype_a_ = CUDA_R_32F;
+    dtype_b_ = CUDA_R_32F;
+    dtype_c_ = CUDA_R_32F;
+  } else {
+    dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
+    dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
+    dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+  }
 
   if (dtype_a_ == CUDA_R_16F) {
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
@@ -72,7 +83,11 @@ int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   auto input1_shape = inputs[kIndex0]->GetShapeVector();
 
   auto dims = output_shape.size();
+  is_empty_tensor_ = false;
   if (dims == 0) {
+    if (input1_shape[0] == 0) {
+      is_empty_tensor_ = true;
+    }
     m_ = n_ = 1;
     k_ = input1_shape[0];
     lda_ = SizeToInt(k_);
@@ -102,6 +117,19 @@ int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
   compute_type_ = GetComputeType(dtype_a_);
 
+  if (need_cast_) {
+    x_size_ = m_ * k_;
+    w_size_ = n_ * k_;
+    out_size_ = m_ * n_;
+    workspace_size_list_.push_back(sizeof(float) * x_size_);
+    workspace_size_list_.push_back(sizeof(float) * w_size_);
+    workspace_size_list_.push_back(sizeof(float) * out_size_);
+    if (has_bias_) {
+      b_size_ = n_;
+      workspace_size_list_.push_back(sizeof(float) * b_size_);
+    }
+  }
+
   return KRET_OK;
 }
 
@@ -111,13 +139,57 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto input1_addr = GetDeviceAddress<T>(inputs, 0);
   auto input2_addr = GetDeviceAddress<T>(inputs, 1);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+  cudaError_t status;
+
+  if (is_empty_tensor_) {
+    if (has_bias_) {
+      auto input3_addr = GetDeviceAddress<T>(inputs, kIndex2);
+      status = Fill(m_, n_, input3_addr, output_addr, stream);
+      CHECK_CUDA_STATUS(status, kernel_name_);
+    }
+    return true;
+  }
+
+  if (need_cast_) {
+    auto cast_x = GetPossiblyNullDeviceAddress<float>(workspace, kIndex0);
+    auto cast_w = GetPossiblyNullDeviceAddress<float>(workspace, kIndex1);
+    auto cast_out = GetPossiblyNullDeviceAddress<float>(workspace, kIndex2);
+
+    status = Cast(x_size_, input1_addr, cast_x, stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    status = Cast(w_size_, input2_addr, cast_w, stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
+
+    float alpha = 1.0f;
+    float beta = 0.0f;
+
+    if (has_bias_) {
+      auto b_addr = GetDeviceAddress<T>(inputs, kIndex2);
+      auto cast_b = GetPossiblyNullDeviceAddress<float>(workspace, kIndex3);
+      status = Cast(b_size_, b_addr, cast_b, stream);
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      status = Fill(m_, n_, cast_b, cast_out, stream);
+      CHECK_CUDA_STATUS(status, kernel_name_);
+      beta = 1.0f;
+    }
+
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasGemmEx(handle_, CUBLAS_OP_T, CUBLAS_OP_N, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha, cast_w,
+                   dtype_b_, ldb_, cast_x, dtype_a_, lda_, &beta, cast_out, dtype_c_, ldc_, compute_type_, algo_),
+      "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
+
+    status = Cast(out_size_, cast_out, output_addr, stream);
+    CHECK_CUDA_STATUS(status, kernel_name_);
+    return true;
+  }
 
   S alpha = static_cast<S>(1.0f);
   S beta = static_cast<S>(0.0f);
 
   if (has_bias_) {
     auto input3_addr = GetDeviceAddress<T>(inputs, 2);
-    auto status = Fill(m_, n_, input3_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    status = Fill(m_, n_, input3_addr, output_addr, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
     beta = static_cast<S>(1.0f);
   }
@@ -144,7 +216,17 @@ std::map<std::string, std::vector<std::pair<KernelAttr, DenseGpuKernelMod::Dense
       {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
        &DenseGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
       {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-       &DenseGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>}}}};
+       &DenseGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &DenseGpuKernelMod::LaunchKernel<uint8_t, float>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &DenseGpuKernelMod::LaunchKernel<int8_t, float>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+       &DenseGpuKernelMod::LaunchKernel<int16_t, float>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &DenseGpuKernelMod::LaunchKernel<int32_t, float>},
+      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &DenseGpuKernelMod::LaunchKernel<int64_t, float>}}}};
 
 std::vector<KernelAttr> DenseGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);

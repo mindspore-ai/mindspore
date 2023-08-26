@@ -248,3 +248,31 @@ def test_3d_backward():
     assert np.abs(dx_ms - dx_np).mean() < error
     assert np.abs(dw_ms - dw_np).mean() < error
     assert np.abs(db_ms - db_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_empty_tensor():
+    """
+    Feature: Test dense empty tensor.
+    Description: Test dense empty tensor for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    error = 1e-3
+    dtype = np.float32
+    net = Dense()
+    x_np = np.array([]).astype(dtype)
+    w_np = np.array([]).astype(dtype)
+    b_np = np.array(np.random.randn()).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    out_ms = net(x_ms, w_ms, None).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - 0.0).mean() < error
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - b_np).mean() < error

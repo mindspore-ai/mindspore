@@ -89,7 +89,7 @@ bool IbTryExpandCNode(const IRBuilderHandle &handle, const CNodePtr &cnode, cons
   MS_EXCEPTION_IF_NULL(mng);
   FallbackIRBuilder ib(AnfUtils::GetCNodeName(cnode), cnode->func_graph(), func);
   auto output = ib.Run(cnode, handle);
-  if (output == nullptr || !output->isa<CNode>()) {
+  if (output == nullptr) {
     MS_LOG(INFO) << "Undo expanding cnode " << cnode->fullname_with_scope();
     return false;
   }
@@ -97,7 +97,12 @@ bool IbTryExpandCNode(const IRBuilderHandle &handle, const CNodePtr &cnode, cons
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kAdvanced)) {
-    DumpGraph(cnode, output->cast<CNodePtr>());
+    if (output->isa<CNode>()) {
+      DumpGraph(cnode, output->cast<CNodePtr>());
+    } else {
+      MS_LOG(INFO) << "The output is not a CNode, cannot dump graph. original node: " << cnode->fullname_with_scope()
+                   << ", output->DebugString: " << output->DebugString();
+    }
   }
 #endif
   if (!(*cnode->abstract() == *output->abstract())) {
