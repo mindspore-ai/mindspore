@@ -68,7 +68,8 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
   auto partial_x = ib->Exp(
     ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
   auto dout = ib->GetInput(kIndex3);
-  NodePtr r1, r2;
+  NodePtr r1 = nullptr;
+  NodePtr r2 = nullptr;
   if (!ra.empty()) {
     r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
   } else {

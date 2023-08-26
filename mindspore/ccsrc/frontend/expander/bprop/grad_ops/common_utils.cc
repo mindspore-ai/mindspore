@@ -377,9 +377,10 @@ int64_t CheckRange(int64_t idx, int64_t dim_size) {
 }
 
 NodePtr GetEps(BpropIRBuilder *ib, const TypePtr &type) {
+  constexpr auto epsilon = 0.000977;
   switch (type->type_id()) {
     case kNumberTypeFloat16:
-      return ib->Tensor(0.000977, type);
+      return ib->Tensor(epsilon, type);
     case kNumberTypeFloat32:
       return ib->Tensor(std::numeric_limits<float>::epsilon(), type);
     case kNumberTypeFloat64:
