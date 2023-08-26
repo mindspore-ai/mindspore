@@ -51,3 +51,41 @@ def to_paddings(pad):
     if isinstance(pad, (tuple, list)):
         return pad
     raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
+
+
+def to_3d_kernel_size(kernel_size):
+    if isinstance(kernel_size, int):
+        return (kernel_size, kernel_size, kernel_size)
+    if isinstance(kernel_size, (tuple, list)):
+        if len(kernel_size) == 5:
+            return (kernel_size[2], kernel_size[3], kernel_size[4])
+        return kernel_size
+    raise ValueError(f"For arg 'kernel_size', the value is invalid: {kernel_size}.")
+
+
+def to_3d_strides(stride):
+    if isinstance(stride, int):
+        return (stride, stride, stride)
+    if isinstance(stride, (tuple, list)):
+        if len(stride) == 5:
+            return (stride[2], stride[3], stride[4])
+        return stride
+    raise ValueError(f"For arg 'stride', the value is invalid: {stride}.")
+
+
+def to_3d_dilations(dilation):
+    if isinstance(dilation, int):
+        return (dilation, dilation, dilation)
+    if isinstance(dilation, (tuple, list)):
+        if len(dilation) == 5:
+            return (dilation[2], dilation[3], dilation[4])
+        return dilation
+    raise ValueError(f"For arg 'dilation', the value is invalid: {dilation}.")
+
+
+def to_3d_paddings(pad):
+    if isinstance(pad, int):
+        return (pad,) * 6
+    if isinstance(pad, (tuple, list)):
+        return pad
+    raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
