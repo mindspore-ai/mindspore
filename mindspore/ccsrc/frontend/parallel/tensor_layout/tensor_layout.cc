@@ -324,10 +324,8 @@ Arrangement TensorLayout::slice_shape() const {
   for (size_t index = 0; index < tensor_map_.GetDimSize(); index++) {
     int64_t dim = tensor_map_.GetDimByIdx(index);
     int64_t num = tensor_shape_.GetDimByIdx(index);
-    MS_LOG(INFO) << "dim is : " << dim << "num is :" << num;
     if (dim == -1 || num == -1) {
-      MS_LOG(INFO) << "This is dynamic shape";
-      shape.push_back(num);
+      shape.push_back(num);  // num == -1 means dynamic shape
     } else {
       int64_t divisor = device_arrangement_.GetDimByReverseIdx(LongToUlong(dim));
       shape.push_back(num / divisor);

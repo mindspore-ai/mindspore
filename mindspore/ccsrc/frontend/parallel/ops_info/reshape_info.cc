@@ -95,9 +95,14 @@ std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_no
     for (size_t i = 1; i < shape_input_cnode->inputs().size(); ++i) {
       auto input_node = shape_input_cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
-      auto input_value_node = input_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_value_node);
-      origin_dst_shape.push_back(GetValue<int64_t>(input_value_node->value()));
+      if (input_node->isa<ValueNode>()) {
+        auto input_value_node = input_node->cast<ValueNodePtr>();
+        MS_EXCEPTION_IF_NULL(input_value_node);
+        origin_dst_shape.push_back(GetValue<int64_t>(input_value_node->value()));
+      } else {
+        // the dst shape is dynamic, if two or more dimensions are dynamic, it requires additional processing
+        origin_dst_shape.push_back(abstract::Shape::kShapeDimAny);
+      }
     }
   } else if (IsPrimitiveCNode(shape_input_node, prim::kPrimShape)) {
     // dynamic shape: the dst shape is Shape op
@@ -190,9 +195,6 @@ Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
 }
 
 Status ReshapeInfo::ComputeReplaceOp() {
-  RankList dev_list = stage_device_list();
-  TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
-
   // handle dynamic shape
   auto input_shape = input_layout_.tensor_shape_origin().array();
   auto output_shape = output_layout_.tensor_shape_origin().array();
@@ -201,17 +203,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
     return ComputeReplaceOpForDynamicShape();
   }
 
-  if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
-    if (is_generating_costs_) {
-      MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": tensor_redistribution init failed.";
-    }
-    return FAILED;
-  }
-  MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
-  MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
-  MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
   if (is_skip_) {
     ConstructOperator constructor;
     replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
@@ -219,6 +210,20 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(INFO) << "skip reshape redistribution and reshape slice_shape is "
                  << ShapeToString(output_layout_.slice_shape().array());
   } else {
+    RankList dev_list = stage_device_list();
+    TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
+    if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
+      if (is_generating_costs_) {
+        MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
+      } else {
+        MS_LOG(ERROR) << name_ << ": tensor_redistribution init failed.";
+      }
+      return FAILED;
+    }
+    MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
+    MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
+    MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
+
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
     if (redistribution_oplist_ptr == nullptr) {
       if (is_generating_costs_) {
