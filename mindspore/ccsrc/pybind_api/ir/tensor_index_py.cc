@@ -677,10 +677,7 @@ py::object TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, cons
       int64_t stop = slice_info.stop();
       int64_t step = slice_info.step();
 
-      std::vector<int64_t> slice_ele_list_index;
-      for (int64_t j = start; j < stop; j += step) {
-        (void)slice_ele_list_index.emplace_back(j);
-      }
+      std::vector<int64_t> slice_ele_list_index = SliceToVector(start, stop, step, dim_size);
       (void)slice_shapes.emplace_back(SizeToLong(slice_ele_list_index.size()));
       (void)tuple_index_new.emplace_back(std::make_shared<Tensor>(slice_ele_list_index));
     }
@@ -1039,7 +1036,7 @@ py::object TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
         *by_pass = true;
         return py::none();
       }
-      std::vector<int64_t> slice_ele_list_index = SliceToVector(start, stop, step);
+      std::vector<int64_t> slice_ele_list_index = SliceToVector(start, stop, step, dim_size);
       (void)slice_shapes.emplace_back(SizeToLong(slice_ele_list_index.size()));
       (void)tuple_index_new.emplace_back(std::make_shared<Tensor>(slice_ele_list_index));
     }
