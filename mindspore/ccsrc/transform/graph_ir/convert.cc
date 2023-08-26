@@ -3013,8 +3013,8 @@ void DfGraphConvertor::ConvertParallelGroupToHcom(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
-void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
-  MS_LOG(INFO) << "Add AllReduce fusion_id";
+void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
+  MS_LOG(INFO) << "Add Hcom fusion_id";
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
     return;
@@ -3029,7 +3029,7 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
   int64_t fusion_id = -1;
 
   // fusion 0: no fusion; 1(default): fusion; 2: fusion the ops by fusion id.
-  if (fusion > 1) {
+  if (fusion >= 1) {
     fusion_id = fusion;
     fusion = kHcclFusionByFusionID;
   } else if (fusion < 0) {
@@ -3228,7 +3228,8 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       // Add attr 'N' to DynamicStitch
       {prim::kPrimDynamicStitch->name(), &DfGraphConvertor::ConvertDynamicStitch},
       // Convert hccl op for comm handle
-      {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertAllReduce},
+      {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertHcomFusionId},
+      {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcomFusionId},
       {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimBroadcast->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},

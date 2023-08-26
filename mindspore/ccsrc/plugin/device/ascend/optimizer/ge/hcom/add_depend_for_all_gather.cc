@@ -30,70 +30,9 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool InsertDependForAllGatherParallel(
-  const FuncGraphPtr &graph, const std::map<std::string, std::vector<AnfNodePtr>> &all_gather_nodes_map,
-  const std::map<std::string, std::vector<AnfNodePtr>> &allgather_succ_nodes_map,
-  const std::map<std::string, std::vector<AnfNodePtr>> &allgather_second_succ_nodes_map) {
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
-    return false;
-  }
-  bool changed = false;
-  auto group_nums = all_gather_nodes_map.size();
-  auto nodes_iter = all_gather_nodes_map.begin();
-  auto succ_iter = allgather_succ_nodes_map.begin();
-  auto second_succ_iter = allgather_second_succ_nodes_map.begin();
-  for (size_t i = 0; i < group_nums; i++) {
-    auto all_gather_node = (nodes_iter++)->second;
-    auto allgather_succ_nodes = (succ_iter++)->second;
-    auto allgather_second_succ_nodes = (second_succ_iter++)->second;
-    for (size_t j = 1; j < all_gather_node.size(); j++) {
-      MS_EXCEPTION_IF_NULL(all_gather_node[j]);
-      if (allgather_second_succ_nodes[j] == nullptr || allgather_succ_nodes[j] == nullptr) {
-        MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
-                      << all_gather_node[j]->fullname_with_scope();
-        continue;
-      }
-      if (!IsPrimitiveCNode(allgather_succ_nodes[j], prim::kPrimLoad)) {
-        MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: "
-                      << allgather_succ_nodes[j]->fullname_with_scope()
-                      << ", AllGather node:" << all_gather_node[j]->fullname_with_scope();
-        continue;
-      }
-      AnfNodePtr another_input = nullptr;
-      auto second_succ_cnode = allgather_second_succ_nodes[j]->cast<CNodePtr>();
-      auto succ_cnode = allgather_succ_nodes[j]->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(second_succ_cnode);
-      MS_EXCEPTION_IF_NULL(succ_cnode);
-      for (size_t k = 1; k < second_succ_cnode->inputs().size(); k++) {
-        auto succ_input = second_succ_cnode->input(k);
-        if (succ_input != allgather_succ_nodes[j]) {
-          another_input = succ_input;
-          break;
-        }
-      }
-      if (another_input == nullptr) {
-        MS_LOG(DEBUG) << "AllGather second successor node has no other input, AllGather name: "
-                      << all_gather_node[i]->fullname_with_scope()
-                      << ", second successor node: " << second_succ_cnode->fullname_with_scope();
-        continue;
-      }
-
-      std::vector<AnfNodePtr> new_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                            common::AnfAlgo::GetInputNode(succ_cnode, 0), another_input};
-      auto new_input_depend = graph->NewCNode(new_inputs);
-      new_input_depend->set_abstract(succ_cnode->abstract());
-      MS_LOG(DEBUG) << "Insert Depend node: " << new_input_depend->fullname_with_scope()
-                    << ", for AllGather: " << all_gather_node[j]->fullname_with_scope();
-      common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
-      changed = true;
-    }
-  }
-  return changed;
-}
-
 AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
-                             std::map<AnfNodePtr, size_t> node_index_map, std::vector<AnfNodePtr> all_nodes) {
+                             const std::map<AnfNodePtr, size_t> &node_index_map,
+                             const std::vector<AnfNodePtr> &all_nodes) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
@@ -106,14 +45,15 @@ AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
   for (const auto &node_pair : user_items) {
     auto node = node_pair.first;
     MS_EXCEPTION_IF_NULL(node);
-    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    auto cnode = node->cast<CNodePtr>();
+    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) || common::AnfAlgo::GetCNodeName(cnode) == kDependOpName) {
       continue;
     }
     if (node_index_map.find(node) == node_index_map.end()) {
       MS_LOG(EXCEPTION) << "Can not find node in node_index_map, node: " << node->fullname_with_scope();
     }
-    if (min_index > node_index_map[node]) {
-      min_index = node_index_map[node];
+    if (min_index > node_index_map.at(node)) {
+      min_index = node_index_map.at(node);
     }
   }
 
@@ -129,6 +69,77 @@ AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
 }
 }  // namespace
 
+bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::map<int64_t, AnfNodePtr> &all_gather_nodes,
+                                      const std::map<int64_t, std::vector<AnfNodePtr>> &fusion_allgather_nodes,
+                                      const std::map<AnfNodePtr, size_t> &node_index_map,
+                                      const std::vector<AnfNodePtr> &node_list) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
+    return false;
+  }
+  bool changed = false;
+  std::map<int64_t, AnfNodePtr> fusion_allgather_outputs;
+  auto iter = fusion_allgather_nodes.begin();
+  for (size_t i = 1; i < fusion_allgather_nodes.size(); i++) {
+    auto pre_fusion_id = iter->first;
+    auto nodes = (++iter)->second;
+    for (auto &node : nodes) {
+      MS_EXCEPTION_IF_NULL(node);
+      auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
+      auto allgather_second_succ = GetFirstNextUsers(graph, allgather_first_succ, node_index_map, node_list);
+      if (allgather_first_succ == nullptr || allgather_second_succ == nullptr) {
+        MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
+                      << node->fullname_with_scope();
+        continue;
+      }
+      if (!IsPrimitiveCNode(allgather_first_succ, prim::kPrimLoad)) {
+        MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: " << node->fullname_with_scope()
+                      << ", AllGather node:" << node->fullname_with_scope();
+        continue;
+      }
+      AnfNodePtr another_input = nullptr;
+      auto second_succ_cnode = allgather_second_succ->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(second_succ_cnode);
+      for (size_t j = 1; j < second_succ_cnode->inputs().size(); j++) {
+        auto succ_input = second_succ_cnode->input(j);
+        if (succ_input != allgather_first_succ) {
+          another_input = succ_input;
+          break;
+        }
+      }
+      fusion_allgather_outputs[pre_fusion_id] = another_input;
+      break;
+    }
+  }
+  auto node_iter = all_gather_nodes.begin();
+  for (size_t i = 1; i < all_gather_nodes.size(); i++) {
+    auto pre_fusion_id = node_iter->first;
+    auto node = (++node_iter)->second;
+    MS_EXCEPTION_IF_NULL(node);
+    auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
+    if (allgather_first_succ == nullptr) {
+      MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
+                    << node->fullname_with_scope();
+      continue;
+    }
+    if (!IsPrimitiveCNode(allgather_first_succ, prim::kPrimLoad)) {
+      MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: " << node->fullname_with_scope()
+                    << ", AllGather node:" << node->fullname_with_scope();
+      continue;
+    }
+    auto succ_cnode = allgather_first_succ->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(succ_cnode);
+    auto &pre_fusion_output = fusion_allgather_outputs[pre_fusion_id];
+    std::vector<AnfNodePtr> new_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                          common::AnfAlgo::GetInputNode(succ_cnode, 0), pre_fusion_output};
+    auto new_input_depend = graph->NewCNode(new_inputs);
+    new_input_depend->set_abstract(succ_cnode->abstract());
+    common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
+    changed = true;
+  }
+  return changed;
+}
+
 bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   static const bool is_cell_reuse =
@@ -138,14 +149,12 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   }
   bool changed = false;
   const auto &node_list = TopoSort(graph->get_return());
-  std::map<std::string, std::vector<AnfNodePtr>> all_gather_node;
-  std::map<std::string, std::vector<AnfNodePtr>> allgather_succ_nodes;
-  std::map<std::string, std::vector<AnfNodePtr>> allgather_second_succ_nodes;
+  std::map<int64_t, AnfNodePtr> all_gather_node;
+  std::map<int64_t, std::vector<AnfNodePtr>> fusion_allgather_nodes;
   std::map<AnfNodePtr, size_t> node_index_map;
   for (size_t i = 0; i < node_list.size(); i++) {
     node_index_map.insert(std::pair<AnfNodePtr, int64_t>(node_list[i], i));
   }
-
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->cast<CNodePtr>() || !AnfUtils::IsRealKernel(node)) {
@@ -155,38 +164,39 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
     bool is_recompute = cnode->GetAttr(kAttrDuplicated) != nullptr && GetValue<bool>(cnode->GetAttr(kAttrDuplicated));
     if (common::AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
         common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0 && !is_recompute) {
-      auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
-      if (allgather_first_succ == nullptr) {
-        continue;
-      }
-      auto group = hccl::HcclAdapter::GetInstance().GetHcomGroup(cnode);
-      all_gather_node[group].push_back(node);
-      allgather_succ_nodes[group].push_back(allgather_first_succ);
-      allgather_second_succ_nodes[group].push_back(
-        GetFirstNextUsers(graph, allgather_first_succ, node_index_map, node_list));
+      fusion_allgather_nodes[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)].push_back(node);
+      all_gather_node[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
     }
   }
-  auto group_num = all_gather_node.size();
-  auto nodes_iter = all_gather_node.begin();
-  auto succ_nodes_iter = allgather_succ_nodes.begin();
-  for (int64_t i = 0; i < SizeToInt(group_num); ++i) {
-    auto group_nodes = (nodes_iter++)->second;
-    auto succ_nodes = (succ_nodes_iter++)->second;
-    for (int64_t j = 0; j < SizeToInt(group_nodes.size()) - 1; ++j) {
-      auto next_node = group_nodes[j + 1];
-      MS_EXCEPTION_IF_NULL(next_node);
-      auto next_cnode = next_node->cast<CNodePtr>();
+  auto next_iter = all_gather_node.begin();
+  auto iter = fusion_allgather_nodes.begin();
+  auto fusion_size = all_gather_node.size();
+  for (size_t i = 1; i < fusion_size; ++i) {
+    auto next_node = (++next_iter)->second;
+    MS_EXCEPTION_IF_NULL(next_node);
+    auto next_cnode = next_node->cast<CNodePtr>();
+    auto fusion_nodes = (iter++)->second;
+    for (auto &node : fusion_nodes) {
+      MS_EXCEPTION_IF_NULL(node);
+      auto succ_node = GetFirstNextUsers(graph, node, node_index_map, node_list);
+      if (succ_node == nullptr) {
+        MS_LOG(DEBUG) << "allgather node " << node->fullname_with_scope() << "has no outputs.";
+        continue;
+      }
       std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                        common::AnfAlgo::GetInputNode(next_cnode, 0), succ_nodes[j]};
+                                        common::AnfAlgo::GetInputNode(next_cnode, 0), succ_node};
+      MS_LOG(DEBUG) << "Add Depend between node: " << succ_node->fullname_with_scope()
+                    << " and node: " << next_node->fullname_with_scope();
       auto new_input = graph->NewCNode(inputs);
       new_input->set_abstract(common::AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
       common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
-      changed = true;
     }
+    changed = true;
   }
-
-  return InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes) ||
-         changed;
+  changed =
+    InsertDependForAllGatherParallel(graph, all_gather_node, fusion_allgather_nodes, node_index_map, node_list) ||
+    changed;
+  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore
