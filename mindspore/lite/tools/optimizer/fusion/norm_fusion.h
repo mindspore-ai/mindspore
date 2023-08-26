@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ class NormFusion : public LitePatternProcessPass {
                     int *begin_norm_axis, int *begin_params_axis) const;
   CNodePtr CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const schema::PrimitiveType type,
                           float epsilon, int begin_norm_axis, int begin_params_axis) const;
+  CNodePtr CreateActivationNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   std::map<string, int> ShapeSizeInfer(const FuncGraphPtr &func_graph) const;
 
  protected:
@@ -64,6 +65,7 @@ class NormFusion : public LitePatternProcessPass {
   mutable VarPtr gamma_ = nullptr;
   mutable VarPtr beta_ = nullptr;
   mutable VarPtr epsilon_ = nullptr;
+  mutable ActivationType add_act_type_{NO_ACTIVATION};
   std::map<schema::PrimitiveType, std::function<int(std::vector<int>, const schema::PrimitiveT &)>>
     shape_size_infer_registry_;
 };
