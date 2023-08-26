@@ -66,6 +66,7 @@
 #include "src/common/common.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
+#include "tools/optimizer/graph/make_list_pass.h"
 
 namespace mindspore {
 namespace opt {
@@ -85,6 +86,7 @@ constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kCustomOpFusionForFlashAttention = "FlashAttentionFusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
+constexpr auto kMakeListPass = "MakeListPass";
 constexpr auto kFuncType = "func_type";
 constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
@@ -218,13 +220,9 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Remove single input concat node failed.";
     return lite::RET_ERROR;
   }
-  if (MakeListToMakeTuple(func_graph) != RET_OK) {
-    MS_LOG(ERROR) << "Convert make_list to MakeTuple failed.";
-    return lite::RET_ERROR;
-  }
-  if (!lite::RunOptimizerPass(func_graph, {kScalarOpPass, kRemoveRedundantOpPass, kRemoveUnusedAddNodePass,
-                                           kCustomOpFusionForFlashAttention})) {
-    MS_LOG(ERROR) << "Remove redundant op pass failed.";
+  if (!lite::RunOptimizerPass(func_graph, {kMakeListPass, kScalarOpPass, kRemoveRedundantOpPass,
+                                           kRemoveUnusedAddNodePass, kCustomOpFusionForFlashAttention})) {
+    MS_LOG(ERROR) << "Run optimizer pass failed.";
     return lite::RET_ERROR;
   }
   if (fmk_type_ == converter::kFmkTypeMs) {
