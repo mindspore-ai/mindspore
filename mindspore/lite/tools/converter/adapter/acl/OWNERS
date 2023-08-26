@@ -1,5 +1,7 @@
 approvers:
-- jpc_chenjianping #
+- jianghui58
+- jpc_chenjianping
+- yefeng #
 
 options:
   no_parent_owners: false
