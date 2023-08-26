@@ -103,6 +103,10 @@ void DealRefOutput::AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, cons
 AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                    size_t output_index, size_t input_index,
                                                    const AnfNodePtr &get_item) const {
+  if (is_ge_) {
+    MS_LOG(DEBUG) << "Add ref pair for ge graph";
+    return AddAdditionalToRefOutputForGe(func_graph, cnode, output_index, input_index, get_item);
+  }
   AnfNodePtr final_node = (get_item == nullptr ? cnode : get_item);
   bool need_refresh_ref_addr = false;
   size_t final_index = output_index;
@@ -158,6 +162,24 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
     final_node = MakeDependency(get_item, final_node, cnode, func_graph);
     MS_LOG(INFO) << "DealRefTranshwAndCast add denpend, op debug info is " << final_node->DebugString();
   }
+  return final_node;
+}
+
+AnfNodePtr DealRefOutput::AddAdditionalToRefOutputForGe(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                        size_t output_index, size_t input_index,
+                                                        const AnfNodePtr &get_item) const {
+  AnfNodePtr final_node = (get_item == nullptr ? cnode : get_item);
+  size_t final_index = output_index;
+  AnfNodePtr input_node = common::AnfAlgo::GetInputNode(cnode, input_index);
+  session::KernelWithIndex origin_pair = FindRefOriginNode(input_node);
+  MS_EXCEPTION_IF_NULL(origin_pair.first);
+  MS_LOG(DEBUG) << "DealRefTransAndCast the node input index " << input_index << ", find origin op is "
+                << origin_pair.first->DebugString() << ", index is " << origin_pair.second;
+
+  // add ref pair
+  auto ref_final_node =
+    common::AnfAlgo::GetCNodeName(final_node) == kReshapeOpName ? final_node->cast<CNodePtr>()->input(1) : final_node;
+  AddRefPairToKernelGraph(func_graph, cnode, get_item, ref_final_node, final_index, origin_pair);
   return final_node;
 }
 

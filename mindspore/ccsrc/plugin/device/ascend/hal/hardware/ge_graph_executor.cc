@@ -616,9 +616,10 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
                           << " size: " << output_addr->GetSize();
       }
       MS_LOG(INFO) << "ge input data " << ge_inputs.size() << " name: " << name << " size: " << output_addr->GetSize();
-    } else {
-      (void)need_update_input.emplace_back(node, ge_inputs.size());
     }
+    // The device address of input tensor may change every step.
+    // Always keep the input node address consistent with the input tensor address.
+    (void)need_update_input.emplace_back(node, ge_inputs.size());
     (void)ge_inputs.emplace_back(std::move(ge_tensor));
   }
   while (cur_inputs_index < cur_inputs.size() && HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
@@ -680,6 +681,20 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
     // Parameter's memory is allocated earlier, and there is no need to reallocate memory if Parameter is output.
     if (output_node->isa<Parameter>()) {
       continue;
+    }
+
+    // Process ref node output address.
+    if (kernel_graph->IsInRefOutputMap(output_with_index)) {
+      auto [origin_node, origin_index] = kernel_graph->GetRefCorrespondOutput(output_with_index);
+      if (origin_node->isa<Parameter>()) {
+        auto origin_output_addr = AnfAlgo::GetMutableOutputAddr(origin_node, origin_index);
+        MS_EXCEPTION_IF_NULL(origin_output_addr);
+        AnfAlgo::SetOutputAddr(origin_output_addr, index, output_node.get());
+        MS_LOG(DEBUG) << "Set DeviceAddress " << origin_output_addr.get() << " dev ptr "
+                      << origin_output_addr->GetMutablePtr() << " to RefNode " << output_node->fullname_with_scope()
+                      << " output " << index;
+        continue;
+      }
     }
 
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
