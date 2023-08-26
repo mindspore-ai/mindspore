@@ -23,6 +23,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
+#include "ops/gen_ops_primitive.h"
 #include "utils/hash_set.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/anf_runtime_algorithm.h"

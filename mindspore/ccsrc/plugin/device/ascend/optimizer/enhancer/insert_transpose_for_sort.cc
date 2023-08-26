@@ -19,6 +19,7 @@
 #include <string>
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
+#include "ops/gen_ops_primitive.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
 
 namespace mindspore {

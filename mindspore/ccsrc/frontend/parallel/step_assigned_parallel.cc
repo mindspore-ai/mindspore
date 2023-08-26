@@ -31,6 +31,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/gen_ops_primitive.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"

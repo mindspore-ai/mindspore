@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/optimizer/remove_format_transform_pair.h"
 #include <memory>
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/gen_ops_primitive.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

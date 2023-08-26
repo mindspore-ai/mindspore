@@ -19,6 +19,7 @@
 #include <vector>
 #include "ops/conv_pool_ops.h"
 #include "ops/nn_ops.h"
+#include "ops/gen_ops_primitive.h"
 
 namespace mindspore::transform {
 // BiasAddGrad

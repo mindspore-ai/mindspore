@@ -25,6 +25,7 @@
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace parallel {

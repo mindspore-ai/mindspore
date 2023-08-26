@@ -15,10 +15,10 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/transpose_gpu_kernel.h"
-#include "ops/transpose.h"
 #include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "utils/check_convert_utils.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,53 +26,30 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 constexpr size_t kPermInputNum = 2;
-constexpr size_t kDimSize4 = 4;
-constexpr size_t kAxisZero = 0;
-constexpr size_t kAxis1st = 1;
-constexpr size_t kAxis2nd = 2;
-constexpr size_t kAxis3rd = 3;
-constexpr size_t kAxisIndexZero = 0;
-constexpr size_t kAxisIndex1st = 1;
-constexpr size_t kAxisIndex2nd = 2;
-constexpr size_t kAxisIndex3rd = 3;
 
-#define OP_REGISTER(INPUTX, PERM, OUTPUT, T)                                    \
-  {                                                                             \
-    KernelAttr().AddInputAttr(INPUTX).AddInputAttr(PERM).AddOutputAttr(OUTPUT), \
-      &TransposeGpuKernelMod::LaunchKernel<T>                                   \
+#define OP_REGISTER(INPUTX, OUTPUT, T)                                                                        \
+  {                                                                                                           \
+    KernelAttr().AddInputAttr(INPUTX).AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(OUTPUT), \
+      &TransposeGpuKernelMod::LaunchKernel<T>                                                                 \
   }
 
 const std::vector<std::pair<KernelAttr, TransposeGpuKernelMod::KernelRunFunc>> &TransposeGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, TransposeGpuKernelMod::KernelRunFunc>> func_list = {
-    OP_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, Complex<float>),
-    OP_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128, Complex<double>),
-    OP_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, bool),
-    OP_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, double),
-    OP_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, float),
-    OP_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, half),
-    OP_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t),
-    OP_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
-    OP_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, int16_t),
-    OP_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, int8_t),
-    OP_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
-    OP_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
-    OP_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
-    OP_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
-    OP_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>),
-    OP_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>),
-    OP_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool),
-    OP_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
-    OP_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
-    OP_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half),
-    OP_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
-    OP_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t),
-    OP_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t),
-    OP_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t),
-    OP_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
-    OP_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
-    OP_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
-    OP_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
+    OP_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>),
+    OP_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>),
+    OP_REGISTER(kNumberTypeBool, kNumberTypeBool, bool),
+    OP_REGISTER(kNumberTypeFloat64, kNumberTypeFloat64, double),
+    OP_REGISTER(kNumberTypeFloat32, kNumberTypeFloat32, float),
+    OP_REGISTER(kNumberTypeFloat16, kNumberTypeFloat16, half),
+    OP_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t),
+    OP_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t),
+    OP_REGISTER(kNumberTypeInt16, kNumberTypeInt16, int16_t),
+    OP_REGISTER(kNumberTypeInt8, kNumberTypeInt8, int8_t),
+    OP_REGISTER(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
+    OP_REGISTER(kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
+    OP_REGISTER(kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
+    OP_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
   };
   return func_list;
 }
@@ -109,14 +86,13 @@ void TransposeGpuKernelMod::GetPermValue(const std::vector<int64_t> &perm, std::
   }
 }
 
-bool TransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool TransposeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   size_t input_num = inputs.size();
   size_t output_num = outputs.size();
-  kernel_name_ = base_operator->name();
   if (input_num != kPermInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kPermInputNum << ", but got "
                       << input_num;
@@ -132,18 +108,15 @@ bool TransposeGpuKernelMod::IsCopy(const std::vector<int32_t> &perm) {
   return !(std::any_of(perm.begin(), perm.end(), [&](int32_t x) { return x != index++; }));
 }
 
-int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int TransposeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> perm;
+  auto perm = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   std::vector<int32_t> input_perm;
-  if (TryGetIntValue(inputs, kAxisIndex1st, kernel_name_, &perm)) {
-    GetPermValue(perm, &input_perm);
-  }
-  auto input_shape = inputs[kAxisIndexZero]->GetDeviceShapeVector();
+  GetPermValue(perm, &input_perm);
+  auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
   shape_size_ = input_shape.size();
   if (shape_size_ > transpose_max_dimension) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "

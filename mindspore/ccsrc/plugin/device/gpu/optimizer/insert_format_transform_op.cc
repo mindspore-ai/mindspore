@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "ops/gen_ops_primitive.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

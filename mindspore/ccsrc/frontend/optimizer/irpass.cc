@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/gen_ops_primitive.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"

@@ -28,6 +28,7 @@
 #include "ops/nn_ops.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/sparse_ops.h"
+#include "ops/gen_ops_primitive.h"
 #include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
 

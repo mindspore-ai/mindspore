@@ -61,7 +61,6 @@ GVAR_DEF(PrimitivePtr, kPrimSqueezeV3, std::make_shared<Primitive>("SqueezeV3"))
 GVAR_DEF(PrimitivePtr, kPrimUnsqueeze, std::make_shared<Primitive>("Unsqueeze"));
 GVAR_DEF(PrimitivePtr, kPrimConjugateTranspose, std::make_shared<Primitive>(kConjugateTransposeOpName));
 GVAR_DEF(PrimitivePtr, kPrimTransposeD, std::make_shared<Primitive>("TransposeD"));
-GVAR_DEF(PrimitivePtr, kPrimTranspose, std::make_shared<Primitive>(kTransposeOpName));
 GVAR_DEF(PrimitivePtr, kPrimGatherV2, std::make_shared<Primitive>("GatherV2"));
 GVAR_DEF(PrimitivePtr, kPrimGather, std::make_shared<Primitive>("Gather"));
 GVAR_DEF(PrimitivePtr, kPrimSelectView, std::make_shared<Primitive>("SelectView"));
