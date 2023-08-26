@@ -23,20 +23,22 @@ class JitConfig:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        jit_level (str, optional): Option for argument `level` for Optimization of lift graph.
+        jit_level (str, optional): Used to control the compilation optimization level.
             Supports ["O0", "O1", "O2", "O3"]. Default: ``"O1"`` .
 
-            - "O0": Basic optimization.
-            - "O1": Manual optimization.
-            - "O2": Manual optimization and graph computation fusion.
-            - "O3": Performance optimization, no generalization guaranteed.
+            - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off.
+            - ``"O1"``: Using commonly used optimizations, recommended to set the O1 level.
+            - ``"O2"``: Activate some experimental level optimizations.
+            - ``"O3"``: Performance optimization carries the risk of being unenforceable.
 
-        exc_mode (str, optional): Mode for execute the network.
+        exc_mode (str, optional): Control the execution mode of the model.
             Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
 
-            - "auto": Automatic Policies.
-            - "sink": Build computational graphs with the sink mode.
-            - "no_sink": Build computational graphs with no sink mode.
+            - ``"auto"``: The framework automatically selects the execution method.
+            - ``"sink"``: Support the network to load and load the entire device at once, and then execute it by
+              input driver, without the need to iterate through each operator to achieve better execution performance.
+              This mode is only supported on the Ascend backend.
+            - ``"no_sink"``: The network model is executed asynchronously one by one using a single operator.
 
         jit_syntax_level (str, optional): JIT syntax level for graph compiling.
             The value must be ``"STRICT"`` , ``"LAX"`` or ``""`` . Default to an empty string, which means that this
@@ -45,9 +47,9 @@ class JitConfig:
             `set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html>`_ .
             Default: ``""`` .
 
-            - "STRICT": Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
+            - ``"STRICT"``: Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
               load and export.
-            - "LAX": Compatible with all Python syntax as much as possible. However, execution performance may be
+            - ``"LAX"``: Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
 
