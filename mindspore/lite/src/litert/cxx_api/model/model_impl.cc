@@ -327,7 +327,7 @@ Status ModelImpl::Build() {
 
 static void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
-    tensors.at(j)->set_data(old_data.at(j));
+    tensors.at(j)->set_data(old_data.at(j), tensors.at(j)->own_data());
   }
 }
 
