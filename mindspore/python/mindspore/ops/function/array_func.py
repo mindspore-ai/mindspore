@@ -3490,8 +3490,8 @@ def gather(input_params, input_indices, axis, batch_dims=0):
 
     .. note::
         1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
-           On CPU, an error is raised if an out of bound indice is found. On Ascend and GPU, the result is undefined
-           when any indice is out of range.
+           On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
+           undefined.
 
         2. The data type of input_params cannot be
            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
@@ -3516,6 +3516,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         ValueError: If `axis` is a Tensor and its size is not 1.
         TypeError:  If `input_params` is not a tensor.
         TypeError:  If `input_indices` is not a tensor of type int.
+        RuntimeError: If `input_indices` is out of range `[0, input_param.shape[axis])` on CPU or GPU.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
