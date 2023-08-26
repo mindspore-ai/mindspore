@@ -722,14 +722,8 @@ def normal(shape, mean, stddev, seed=None):
     """
     _check_param("normal", "mean", mean)
     _check_param("normal", "stddev", stddev)
-    if not isinstance(mean, Tensor):
-        mean = Tensor(mean)
-    if not isinstance(stddev, Tensor):
-        stddev = Tensor(stddev)
-    mean_dtype = F.dtype(mean)
-    stddev_dtype = F.dtype(stddev)
-    const_utils.check_type_valid(mean_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
-    const_utils.check_type_valid(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
+    mean = Tensor(mean)
+    stddev = Tensor(stddev)
     seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
     stdnormal = _set_prim_op_user_data(stdnormal, "random_cache", False)

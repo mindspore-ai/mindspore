@@ -224,6 +224,7 @@ class Model:
         self._check_for_graph_cell(kwargs)
         self._build_boost_network(kwargs)
         self._train_network = self._build_train_network()
+        self._train_network._jit_config_dict = network.jit_config_dict
         self._build_eval_network(metrics, self._eval_network, eval_indexes)
         self._build_predict_network()
         self._current_epoch_num = 0

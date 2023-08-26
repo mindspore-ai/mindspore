@@ -1471,7 +1471,7 @@ class _CellGraphExecutor:
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
-
+        logger.debug("Convert the network.", do_convert)
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args, False)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
@@ -1487,9 +1487,6 @@ class _CellGraphExecutor:
         self._set_dataset_mode(obj)
         self._set_compile_cache_dep_files(phase)
 
-        enable_ge = context.get_context("enable_ge")
-        if enable_ge:
-            obj.add_flags(ge_init=True)
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if jit_config_dict:
             self._graph_executor.set_jit_config(jit_config_dict)
@@ -1513,16 +1510,8 @@ class _CellGraphExecutor:
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
             obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
 
-        if not do_convert:
-            return phase, True
-
-        # the following GE init process is not needed when use vm or ms backend
-        if enable_ge:
-            pass
-        elif "export" in phase:
+        if "export" in phase:
             self._build_data_graph(obj, phase)
-        elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():
-            _parameter_broadcast(obj)
 
         return phase, True
 

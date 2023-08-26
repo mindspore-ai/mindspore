@@ -365,7 +365,6 @@ class CropAndResize(Primitive):
         self.method = method
         validator.check_value_type("extrapolation_value", extrapolation_value, [float], self.name)
         self.extrapolation_value = extrapolation_value
-        self.is_ge = context.get_context("enable_ge")
 
 
 class NonMaxSuppressionV3(Primitive):

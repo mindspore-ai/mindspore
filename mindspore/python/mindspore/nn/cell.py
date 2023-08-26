@@ -156,7 +156,6 @@ class Cell(Cell_):
         self._jit_config_dict = dict()
         self.grad_ops_label = False
         self.to_float_fp16 = False
-        self.ge_init = False
         self.ge_sync_data = False
         self._is_check_and_refresh = False
 

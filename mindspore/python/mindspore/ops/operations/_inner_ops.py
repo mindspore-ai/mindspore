@@ -28,7 +28,6 @@ from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
 from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive,\
     _run_op, _check_contains_variable
-from mindspore import context
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
 from mindspore import _checkparam as validator
@@ -123,7 +122,6 @@ class ExtractImagePatches(Primitive):
         validator.check_value_type('padding', padding, [str], self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
-        self.is_ge = context.get_context("enable_ge")
 
 
 class Quant(PrimitiveWithInfer):

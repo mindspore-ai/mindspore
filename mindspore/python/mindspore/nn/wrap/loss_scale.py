@@ -360,6 +360,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
                             "the 'scale_sense' must be Cell or Tensor, but got 'scale_sense' type: {}."
                             .format(type(scale_sense)))
         self.enable_tuple_broaden = True
+        self._jit_config_dict = network.jit_config_dict
 
     def construct(self, *inputs):
         weights = self.weights
