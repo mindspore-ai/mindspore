@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/random_cpu_kernel.h"
-#include <random>
 #include <thread>
 #include <memory>
 #include <algorithm>
@@ -24,6 +23,7 @@
 #endif
 #include "mindspore/core/ops/random_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,39 +33,25 @@ constexpr size_t kUniformRealInputsNum = 1;
 constexpr size_t kUniformIntOutputsNum = 1;
 constexpr size_t kUniformRealOutputsNum = 1;
 constexpr size_t kStandardNormalOutputsNum = 1;
-constexpr float kRandomBlockSize = 128.0;
 constexpr char kKernelName[] = "Random";
 }  // namespace
-void StandardNormal(float *output, std::normal_distribution<float> distribution,
-                    std::default_random_engine random_generator, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    output[i] = distribution(random_generator);
-  }
-}
-
-void LaunchStandardNormal(RandomCpuKernelMod *content, unsigned int seed, const std::vector<AddressPtr> &outputs) {
+void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<AddressPtr> &outputs) {
+  // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
-  // multithreading
-  size_t lens = outputs[0]->size / sizeof(float);
-  if (lens == 0) {
-    return;
-  }
-  auto thread_pool = GetActorMgrInnerThreadPool();
-  size_t max_thread_num = thread_pool->GetKernelThreadNum();
-  size_t thread_num = lens < kRandomBlockSize * max_thread_num ? std::ceil(lens / kRandomBlockSize) : max_thread_num;
-  MS_EXCEPTION_IF_ZERO("thread num", thread_num);
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+
+  // Init sample number.
+  size_t num_sample = outputs[0]->size / sizeof(float);
+
+  // Init random normal generator.
   std::normal_distribution<float> distribution;
-  auto task = [&](size_t start, size_t end) {
-    auto task_id = start / once_compute_size;
-    std::default_random_engine random_generator(seed + task_id + content->seed_offset_);
-    StandardNormal(output, distribution, random_generator, start, end);
-  };
-  content->seed_offset_ += 1;
-  ParallelLaunch(task, lens, kRandomBlockSize, content);
+
+  // Generate random normal values.
+  for (size_t i = 0; i < num_sample; ++i) {
+    output[i] = distribution(*rng);
+  }
 }
 
-void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
+void LaunchUniformInt(std::mt19937 *rng, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &outputs) {
   // Init min/max values.
   int min_val = reinterpret_cast<int *>(inputs[1]->addr)[0];
@@ -81,16 +67,15 @@ void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
   size_t num_sample = outputs[0]->size / sizeof(int);
 
   // Init random int generator.
-  std::mt19937 gen(seed);
   std::uniform_int_distribution<> distrib(min_val, max_val - 1);
 
   // Generate random int values.
   for (size_t i = 0; i < num_sample; ++i) {
-    output[i] = distrib(gen);
+    output[i] = distrib(*rng);
   }
 }
 
-void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs) {
+void LaunchUniformReal(std::mt19937 *rng, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs) {
   // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
 
@@ -98,12 +83,11 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const
   size_t num_sample = outputs[0]->size / sizeof(int);
 
   // Init random real generator.
-  std::mt19937 gen(seed);
   std::uniform_real_distribution<> distrib(0.0, 1.0);
 
   // Generate random real values.
   for (size_t i = 0; i < num_sample; ++i) {
-    output[i] = static_cast<float>(distrib(gen));
+    output[i] = static_cast<float>(distrib(*rng));
   }
 }
 
@@ -117,8 +101,11 @@ bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   } else {
     random_op_type_ = iter->second;
   }
-  seed_ = LongToInt(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  seed2_ = LongToInt(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  mtrng_.seed(init_seed);
+  dfrng_.seed(init_seed);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto res = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!res.first) {
@@ -140,42 +127,17 @@ int RandomCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  unsigned int RNG_seed = 0;
-  if (seed2_ != 0) {
-    RNG_seed = IntToUint(seed2_);
-  } else if (seed_ != 0) {
-    RNG_seed = IntToUint(seed_);
-  } else {
-#if defined(_WIN32) || defined(_WIN64)
-    HCRYPTPROV h_crypt_prov;
-    if (!CryptAcquireContext(reinterpret_cast<HCRYPTPROV *>(&h_crypt_prov), nullptr, nullptr, PROV_RSA_FULL,
-                             CRYPT_VERIFYCONTEXT)) {
-      auto err_code = GetLastError();
-      MS_LOG(EXCEPTION) << "Acquire crypt context failed when generate a seed value for the random operator: "
-                        << kernel_type_ << ". The error code: " << err_code;
-    }
-    if (!CryptGenRandom(h_crypt_prov, sizeof(unsigned int), reinterpret_cast<BYTE *>(&RNG_seed))) {
-      auto err_code = GetLastError();
-      MS_LOG(EXCEPTION) << "Generate crypt random failed when generate a seed value for the random operator: "
-                        << kernel_type_ << ". The error code: " << err_code;
-    }
-#else
-    std::random_device rd;
-    RNG_seed = rd();
-#endif
-  }
-
   if (random_op_type_ == RANDOM_OP_NORMAL) {
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_type_);
-    LaunchStandardNormal(this, RNG_seed, outputs);
+    LaunchStandardNormal(&dfrng_, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformIntInputsNum, kernel_type_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformIntOutputsNum, kernel_type_);
-    LaunchUniformInt(RNG_seed, inputs, outputs);
+    LaunchUniformInt(&mtrng_, inputs, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_type_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_type_);
-    LaunchUniformReal(RNG_seed, inputs, outputs);
+    LaunchUniformReal(&mtrng_, inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "

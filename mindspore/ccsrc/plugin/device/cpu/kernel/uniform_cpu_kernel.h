@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/random_util.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,14 +56,14 @@ class UniformCpuKernelMod : public NativeCpuKernelMod {
                                          const std::vector<kernel::AddressPtr> &)>;
 
  private:
-  random::MSPhiloxRandom generator_;
-  using ResType = random::Array<uint32_t, random::MSPhiloxRandom::kResultElementCount>;
+  random::PhiloxRandom generator_;
+  using ResType = random::Array<uint32_t, random::PhiloxRandom::kResultElementCount>;
   ResType unused_results_;
-  size_t used_result_index_ = random::MSPhiloxRandom::kResultElementCount;
+  size_t used_result_index_ = random::PhiloxRandom::kResultElementCount;
 
   float RandFloat();
   uint64_t New64() const;
-  void InitMSPhiloxRandom(int64_t seed, int64_t offset);
+  void InitPhiloxRandom(int64_t seed, int64_t offset);
   uint32_t GenerateSingle();
 
   static std::vector<std::pair<KernelAttr, UniformFunc>> func_list_;
@@ -71,8 +71,6 @@ class UniformCpuKernelMod : public NativeCpuKernelMod {
   int64_t input_elements_;
   float from_{0.0};
   float to_{1.0};
-  int64_t seed_{0};
-  int64_t offset_{0};
   BaseOperatorPtr kernel_ptr_{nullptr};
 };
 }  // namespace kernel

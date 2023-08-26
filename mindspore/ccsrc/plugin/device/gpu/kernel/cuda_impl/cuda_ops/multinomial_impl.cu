@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@ inline T Ceil(const T &num, const S &unit) {
   return static_cast<T>((num + unit - 1) / unit);
 }
 
-__global__ void InitRandStateKernel(int seed, int num, curandState *state) {
+__global__ void InitRandStateKernel(uint64_t seed, uint64_t seed_offset, int num, curandState *state) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += blockDim.x * gridDim.x) {
-    curand_init(seed, i, 0, &state[i]);
+    curand_init(seed, i, seed_offset, &state[i]);
   }
 }
 
-cudaError_t InitRandState(int seed, int num, curandState *state, cudaStream_t stream) {
-  InitRandStateKernel<<<(num + 127) / 128, 128, 0, stream>>>(seed, num, state);
+cudaError_t InitRandState(uint64_t seed, uint64_t seed_offset, int num, curandState *state, cudaStream_t stream) {
+  InitRandStateKernel<<<(num + 127) / 128, 128, 0, stream>>>(seed, seed_offset, num, state);
   return GetCudaStatus();
 }
 

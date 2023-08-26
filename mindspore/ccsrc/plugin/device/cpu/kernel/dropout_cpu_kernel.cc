@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #include "plugin/device/cpu/kernel/dropout_cpu_kernel.h"
 
 #include <algorithm>
-#include <random>
 #include <map>
 #include <functional>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/dropout.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,14 +51,10 @@ bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  auto seed = GetValue<int64_t>(base_operator->GetAttr("Seed0"));
-  if (seed == 0) {
-    seed = GetValue<int64_t>(base_operator->GetAttr("Seed1"));
-    if (seed == 0) {
-      seed = time(nullptr);
-    }
-  }
-  seed_ = static_cast<uint64_t>(seed);
+  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed0")));
+  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed1")));
+  uint64_t init_seed = random::GetSeed(seed0, seed1);
+  rng_.seed(init_seed);
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -86,16 +82,14 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
   T scale = static_cast<T>(1.f / keep_prob_);
-  std::default_random_engine generator(seed_ + seed_offset_);
   std::uniform_real_distribution<float> uniform(0.f, 1.f);
-  auto task = [input_addr, output_addr, mask_addr, scale, &uniform, &generator, this](size_t start, size_t end) {
+  auto task = [input_addr, output_addr, mask_addr, scale, &uniform, this](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      mask_addr[i] = static_cast<T>(uniform(generator) < keep_prob_);
+      mask_addr[i] = static_cast<T>(uniform(this->rng_) < keep_prob_);
       output_addr[i] = mask_addr[i] * input_addr[i] * scale;
     }
   };
   ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
-  seed_offset_ += 1;
   return true;
 }
 

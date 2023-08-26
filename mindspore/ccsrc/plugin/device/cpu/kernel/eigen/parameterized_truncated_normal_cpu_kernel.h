@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,9 +79,7 @@ class ParameterizedTruncatedNormalCpuKernelMod : public NativeCpuKernelMod,
   TypeId input_stdevs_type_;
   TypeId input_min_type_;
   TypeId input_max_type_;
-  std::default_random_engine rng;
-  int64_t seed_{0};
-  int64_t seed2_{0};
+  std::default_random_engine rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

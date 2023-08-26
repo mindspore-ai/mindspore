@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ class MultinomialGpuKernelMod : public NativeGpuKernelMod {
  private:
   size_t distributions_{0};
   size_t categories_{0};
-  int seed_{0};
-  int seed2_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   bool rand_state_init_{false};
   curandState *rand_state_{nullptr};
 

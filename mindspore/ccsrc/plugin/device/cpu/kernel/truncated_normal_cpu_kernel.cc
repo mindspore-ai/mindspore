@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/truncated_normal_cpu_kernel.h"
 #include <cmath>
 #include <ctime>
-#include <random>
 #include <utility>
 #include <vector>
 #include <algorithm>
@@ -26,6 +25,7 @@
 #include "mindspore/core/ops/truncated_normal.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -43,8 +43,13 @@ bool TruncatedNormalCPUKernelMod::Init(const BaseOperatorPtr &base_operator, con
   kernel_name_ = base_operator->name();
   auto op_prim = std::dynamic_pointer_cast<ops::TruncatedNormal>(base_operator);
   MS_ERROR_IF_NULL(op_prim);
-  seed_ = op_prim->get_seed();
-  seed2_ = op_prim->get_seed2();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  if (seed != 0 || seed2 != 0) {
+    flag_ = false;
+  }
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  rng_.seed(init_seed);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -98,17 +103,11 @@ bool TruncatedNormalCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
 
   auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
   size_t output_elem_num = outputs[0]->size / sizeof(T2);
-  std::random_device rd;
-  seedc_ = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : rd());
-  std::default_random_engine final_seed(seedc_);
-  if (seed_ != 0 || seed2_ != 0) {
-    flag_ = false;
-  }
 
-  std::normal_distribution<T3> dis(0, 1);
+  std::normal_distribution<double> dis(0, 1);
   auto task = [&](size_t start, size_t end) {
     for (size_t j = start; j < end;) {
-      auto data = dis(final_seed);
+      auto data = dis(rng_);
       if (data >= -kMax && data <= kMax) {
         output[j++] = static_cast<T2>(data);
       }
@@ -118,7 +117,7 @@ bool TruncatedNormalCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     CPUKernelUtils::ParallelFor(task, output_elem_num);
   } else {
     for (size_t i = 0; i < output_elem_num;) {
-      auto data = dis(final_seed);
+      auto data = dis(rng_);
       if (data >= -kMax && data <= kMax) {
         output[i++] = static_cast<T2>(data);
       }

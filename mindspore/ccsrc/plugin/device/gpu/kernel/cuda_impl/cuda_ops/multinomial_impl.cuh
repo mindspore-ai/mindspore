@@ -20,7 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-CUDA_LIB_EXPORT cudaError_t InitRandState(int seed, int num, curandState *state, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t InitRandState(uint64_t seed, uint64_t seed_offset, int num, curandState *state,
+                                          cudaStream_t stream);
 template <typename T, typename S>
 CUDA_LIB_EXPORT cudaError_t Multinomial(int row, int col, T *probs, curandState *rand_state, int64_t *num_sample,
                                         S *output, cudaStream_t stream);

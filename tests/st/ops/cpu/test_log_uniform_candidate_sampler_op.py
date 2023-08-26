@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,57 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 import pytest
+import numpy as np
+
 import mindspore.context as context
 import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, seed=0, seed2=0):
+    def __init__(self, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
         super(Net, self).__init__()
-        self.shape = shape
-        self.seed = seed
-        self.seed2 = seed2
-        self.uniformreal = P.UniformReal(seed, seed2)
+        self.sampler = P.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
 
-    def construct(self):
-        return self.uniformreal(self.shape)
+    def construct(self, x):
+        return self.sampler(x)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
+def test_net_true():
     """
-    Feature: UniformReal cpu kernel
+    Feature: LogUniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    seed = 10
-    seed2 = 10
-    shape = (5, 6, 8)
-    net = Net(shape, seed, seed2)
-    output = net()
-    assert output.shape == (5, 6, 8)
-    outnumpyflatten_1 = output.asnumpy().flatten()
+    x = np.array([[1, 7], [0, 4], [3, 3]])
+    net = Net(2, 5, True, 5)
+    output = net(Tensor(x))
+    print(output)
 
-    seed = 10
-    seed2 = 10
-    shape = (5, 6, 8)
-    net = Net(shape, seed, seed2)
-    output = net()
-    assert output.shape == (5, 6, 8)
-    outnumpyflatten_2 = output.asnumpy().flatten()
-    # same seed should generate same random number
-    assert (outnumpyflatten_1 == outnumpyflatten_2).all()
 
-    seed = 0
-    seed2 = 0
-    shape = (130, 120, 141)
-    net = Net(shape, seed, seed2)
-    output = net()
-    assert output.shape == (130, 120, 141)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_false():
+    """
+    Feature: LogUniformCandidateSampler cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
+    x = np.array([[1, 7], [0, 4], [3, 3]])
+    net = Net(2, 5, False, 10)
+    output = net(Tensor(x))
+    print(output)

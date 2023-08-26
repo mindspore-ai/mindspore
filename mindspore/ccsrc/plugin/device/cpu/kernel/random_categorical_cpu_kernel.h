@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ class RandomCategoricalCpuKernel : public NativeCpuKernelMod, public MatchKernel
 
  private:
   ShapeVector input_shape_;
+  int init_seed_{0};
+  bool init_state_{true};
   std::default_random_engine rng_;
 };
 }  // namespace kernel

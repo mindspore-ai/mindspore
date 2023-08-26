@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <map>
 #include <vector>
+#include <random>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -50,9 +51,7 @@ class TruncatedNormalCPUKernelMod : public NativeCpuKernelMod {
   TruncatedNormalFunc kernel_func_;
   TypeId output_type_{kTypeUnknown};
   TypeId input_type_{kTypeUnknown};
-  int64_t seed_{0};
-  int64_t seed2_{0};
-  int64_t seedc_{0};
+  std::default_random_engine rng_;
   bool flag_{true};
 };
 }  // namespace kernel

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ bool TruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto kernel_ptr = std::make_shared<ops::TruncatedNormal>(base_operator->GetPrim());
-  seed_ = static_cast<int>(kernel_ptr->get_seed());
-  seed2_ = static_cast<int>(kernel_ptr->get_seed2());
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  seed_ = random::GetSeed(seed, seed2);
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   return true;
@@ -86,8 +86,9 @@ bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
   devStates = reinterpret_cast<curandState *>(workspace_addr);
   auto status =
-    TruncatedNormal(seed_, seed2_, devStates, output, output_num_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    TruncatedNormal(seed_, seed_offset_, devStates, output, output_num_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
   return true;
 }
 

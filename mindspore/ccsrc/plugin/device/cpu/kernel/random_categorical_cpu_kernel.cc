@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/random_categorical.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -147,7 +148,7 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
 
   T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
   int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->addr)[0];
-  int seed = reinterpret_cast<int *>(inputs[kIndex2]->addr)[0];
+  int input_seed = reinterpret_cast<int *>(inputs[kIndex2]->addr)[0];
   T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->addr);
 
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -159,7 +160,15 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
   std::vector<T1> host_cdf(batch_size * num_classes);
   GetCdf(input_tensor, host_cdf.data(), batch_size, num_classes);
   std::uniform_real_distribution<> dist(0, 1);
-  rng_.seed(seed);
+  // Is the op running for the first time or multiple times but the seed has changed
+  if (init_state_ || input_seed != init_seed_) {
+    if (init_state_) {
+      init_state_ = false;
+    }
+    init_seed_ = input_seed;
+    uint64_t seed = random::GetSeed(0, static_cast<uint64_t>(input_seed));
+    rng_.seed(seed);
+  }
 
   std::vector<T1> host_rand(batch_size * num_sample);
   for (int j = 0; j < num_sample; j++) {

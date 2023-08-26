@@ -31,11 +31,15 @@ class RCnet(nn.Cell):
     def construct(self, logits, num_sample, seed):
         return self.rc(logits, num_sample, seed)
 
-TARGET = "GPU"
+TARGET = "CPU"
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_graph_fp16_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -45,7 +49,7 @@ def test_rc_graph_fp16_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -53,9 +57,13 @@ def test_rc_graph_fp16_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_graph_fp32_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -65,7 +73,7 @@ def test_rc_graph_fp32_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -73,9 +81,13 @@ def test_rc_graph_fp32_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_graph_fp64_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -85,7 +97,7 @@ def test_rc_graph_fp64_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -93,9 +105,13 @@ def test_rc_graph_fp64_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_graph_fp16_int16():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -105,7 +121,7 @@ def test_rc_graph_fp16_int16():
     num_sample = 10
     seed = 5
     dtype = ms.int16
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int16)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int16)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -113,9 +129,13 @@ def test_rc_graph_fp16_int16():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_graph_fp16_int32():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -125,7 +145,7 @@ def test_rc_graph_fp16_int32():
     num_sample = 10
     seed = 5
     dtype = ms.int32
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int32)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -133,9 +153,13 @@ def test_rc_graph_fp16_int32():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp16_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -145,7 +169,7 @@ def test_rc_pynative_fp16_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -153,9 +177,13 @@ def test_rc_pynative_fp16_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp32_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -165,7 +193,7 @@ def test_rc_pynative_fp32_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -173,9 +201,13 @@ def test_rc_pynative_fp32_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp64_int64():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -185,7 +217,7 @@ def test_rc_pynative_fp64_int64():
     num_sample = 10
     seed = 5
     dtype = ms.int64
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int64)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -193,9 +225,13 @@ def test_rc_pynative_fp64_int64():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp16_int16():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -205,7 +241,7 @@ def test_rc_pynative_fp16_int16():
     num_sample = 10
     seed = 5
     dtype = ms.int16
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int16)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int16)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -213,9 +249,13 @@ def test_rc_pynative_fp16_int16():
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32():
     """
-    Feature: RandomCategorical gpu kernel
+    Feature: RandomCategorical cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
@@ -225,7 +265,7 @@ def test_rc_pynative_fp16_int32():
     num_sample = 10
     seed = 5
     dtype = ms.int32
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int32)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
@@ -234,8 +274,8 @@ def test_rc_pynative_fp16_int32():
     assert np.all(diff == 0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32_dynamic_shape():
     """
@@ -249,7 +289,7 @@ def test_rc_pynative_fp16_int32_dynamic_shape():
     num_sample = 10
     seed = 5
     dtype = ms.int32
-    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [3, 4, 4, 4, 2, 4, 0, 3, 4, 2]], dtype=np.int32)
+    expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
     x_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
     random_cateogoric = RCnet(dtype)
     random_cateogoric.set_inputs(x_dyn, num_sample, seed)

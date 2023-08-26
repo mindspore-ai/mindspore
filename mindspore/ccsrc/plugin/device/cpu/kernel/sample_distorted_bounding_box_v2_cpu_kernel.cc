@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::InitMSPhiloxRandom(int64_t seed, 
     seed = static_cast<int64_t>(New64());
     seed2 = static_cast<int64_t>(New64());
   }
-  generator_ = random::MSPhiloxRandom(seed, seed2);
+  generator_ = random::PhiloxRandom(seed, seed2);
 }
 
 float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
@@ -85,7 +85,7 @@ uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::Uniform(uint32_t n) {
 }
 
 uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::GenerateSingle() {
-  if (used_result_index_ == random::MSPhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::PhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }

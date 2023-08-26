@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
 
   template <typename T>
   int64_t Sampling(const std::set<T> &set_input, std::vector<T> *sampled_candidates) {
-    int64_t counter = 0;
     T tmp;
+    T range;
     int64_t picked;
+    int64_t counter = 0;
     std::set<T> set_container;
     // pick between [0, range_max_-1]
-    T range;
     if (range_max_ > static_cast<int64_t>(std::numeric_limits<T>::max())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', range_max_ failed to cast";
     }
@@ -69,7 +69,7 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
     if (unique_) {
       picked = 0;
       while (picked < num_sampled_) {
-        tmp = distribution(generator_);
+        tmp = distribution(rng_);
         counter++;
         if ((set_container.find(tmp) == set_container.end()) &&
             ((!remove_accidental_hits_) || set_input.find(tmp) == set_input.end())) {
@@ -80,7 +80,7 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
       }
     } else {
       for (int64_t i = 0; i < num_sampled_; i++) {
-        sampled_candidates->push_back(distribution(generator_));
+        sampled_candidates->push_back(distribution(rng_));
       }
       counter = num_sampled_;
     }
@@ -118,10 +118,7 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_{0};
   bool remove_accidental_hits_{false};
   bool is_null_input_{false};
-  std::default_random_engine generator_;
-
-  int64_t init_seed_{0};
-  int64_t cur_seed_{0};
+  std::default_random_engine rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,16 +52,9 @@ bool ParameterizedTruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
 
   // setup seed
-  int64_t seed_ = GetValue<int64_t>(base_operator->GetAttr("seed"));
-  int64_t seed2_ = GetValue<int64_t>(base_operator->GetAttr("seed2"));
-  if (seed_ > 0) {
-    final_seed_ = seed_;
-  } else if (seed2_ > 0) {
-    final_seed_ = seed2_;
-  } else {
-    std::random_device rd;
-    final_seed_ = static_cast<int64_t>(rd());
-  }
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  seed_ = random::GetSeed(seed, seed2);
 
   return true;
 }
@@ -150,10 +143,11 @@ bool ParameterizedTruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<ke
   }
 
   // launch kernel function
-  auto status = ParameterizedTruncatedNormal(final_seed_, batch_size_, samples_per_batch_, mean, stdevs, min, max,
-                                             output, scalar_mean_, scalar_stdevs_, scalar_min_, scalar_max_, device_id_,
-                                             reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = ParameterizedTruncatedNormal(seed_, seed_offset_, batch_size_, samples_per_batch_, mean, stdevs, min,
+                                             max, output, scalar_mean_, scalar_stdevs_, scalar_min_, scalar_max_,
+                                             device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
   return true;
 }
 

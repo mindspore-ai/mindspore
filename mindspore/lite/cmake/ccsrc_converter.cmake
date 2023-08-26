@@ -31,6 +31,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/kernel/ops_utils.cc
                 ${CCSRC_DIR}/kernel/common_utils.cc
                 ${CCSRC_DIR}/kernel/framework_utils.cc
+                ${CCSRC_DIR}/kernel/philox_random.cc
                 ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
                 ${CCSRC_DIR}/kernel/kernel_build_info.cc
                 ${CCSRC_DIR}/kernel/oplib/oplib.cc

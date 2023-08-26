@@ -73,12 +73,11 @@ class RandomChoiceWithMaskGpuKernelMod : public NativeGpuKernelMod {
  private:
   const int kSmallK = 2048;
   int input_shape_size_{0};
-  int seed_{0};
-  int seed2_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   int input_size_{1};
   int count_{0};
   int ceil_power2_{0};
-  std::mt19937 generator_;
   std::vector<int> input_shape_5D_;
 
   size_t batch_rank_{0};

@@ -63,6 +63,11 @@ class RCWM_1D(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_3D():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_tensor = Tensor(np.ones([3, 4, 5]).astype(np.bool))
     expect1 = (10, 3)
@@ -77,6 +82,11 @@ def test_RCWM_3D():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_count_out():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
                                     [0, 0, 0, 1]]).astype(np.bool))
@@ -92,6 +102,11 @@ def test_RCWM_count_out():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_count_in():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
                                     [0, 0, 0, 1]]).astype(np.bool))
@@ -107,11 +122,16 @@ def test_RCWM_count_in():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_RCWM_1D():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_tensor = Tensor(
         np.array([1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1]).astype(np.bool))
-    expect_index = np.array([[11], [0], [8], [2], [9], [7],
-                             [10], [15], [0], [0]]).astype(np.int32)
+    expect_index = np.array([[7], [2], [11], [9], [10], [0],
+                             [8], [15], [0], [0]]).astype(np.int32)
     expect_index_mac = np.array([[11], [7], [9], [15], [2], [10],
                                  [8], [0], [0], [0]]).astype(np.int32)
     expect_index_windows = np.array([[2], [7], [10], [15], [8], [9],

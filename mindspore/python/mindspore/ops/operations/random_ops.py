@@ -83,15 +83,10 @@ class TruncatedNormal(Primitive):
     Note:
         - The value of `shape` must be greater than zero. The output length can not exceed 1000000.
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -152,15 +147,10 @@ class StandardNormal(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -208,15 +198,10 @@ class StandardLaplace(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -266,15 +251,10 @@ class RandomGamma(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -380,15 +360,10 @@ class Gamma(PrimitiveWithInfer):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -468,15 +443,10 @@ class ParameterizedTruncatedNormal(Primitive):
     Note:
         - The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -551,15 +521,10 @@ class Poisson(PrimitiveWithInfer):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -630,15 +595,10 @@ class RandomPoisson(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -705,15 +665,10 @@ class UniformInt(Primitive):
     Note:
         - The number in tensor minval must be strictly less than maxval at any position after broadcasting.
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -769,15 +724,10 @@ class UniformReal(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -826,15 +776,10 @@ class RandomChoiceWithMask(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
@@ -945,15 +890,10 @@ class Multinomial(Primitive):
         - The rows of input do not need to sum to one (in which case we use the values as weights),
           but must be non-negative, finite and have a non-zero sum.
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -1024,8 +964,8 @@ class MultinomialWithReplacement(Primitive):
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
           dimensions.
-        - **seed** (Tensor) - If `seed` is set to -1, and `offset` is set to 0, the random number
-          generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
+        - **seed** (Tensor) - If `seed` and 'offset' are both set to 0, the random number generator
+          is seeded by a random seed. Otherwise, it is seeded by the given seed and offset.
           Supported dtype: int64.
         - **offset** (Tensor) - Offset used to avoid seed collision. Supported dtype: int64.
 
@@ -1206,15 +1146,10 @@ class RandomShuffle(Primitive):
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same in two
+          and the random seed determines the initial value of this random number. If the random seed is the same in two
           separate calls, the random number generated will not change.
-        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
-        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with 0 to generate random number.
-        - Global random seed is not set, operator-level random seed is set: 0
-          splices with the operator-level random seed to generate random number.
-        - Both Global random and operator-level random seed are set: the global random seed will splice with the
-          operator-level random seed to generate random number.
+        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
+          to worry about which seed is more important.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,

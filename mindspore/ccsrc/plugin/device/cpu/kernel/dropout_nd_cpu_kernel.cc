@@ -128,44 +128,36 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
     return true;
   }
   size_t inner_size = input_elements_ / channels_;
-  // Get channel index over all samples.
-  CTask task;
   int ret_code = EOK;
-  task = [this, &input, &output, &mask, &inner_size, &ret_code](size_t start, size_t end) {
-    auto per_input = input + start * inner_size;
-    auto per_output = output + start * inner_size;
-    auto per_mask = mask + start * inner_size;
-    for (size_t i = start; i < end; ++i) {
-      bool keep = distribution_(generator_);
-      if (keep) {
-        std::fill(per_mask, per_mask + inner_size, keep);
-        if constexpr (std::is_same<T, float>::value) {
-          DropoutFp32(per_input, scale_, SizeToInt(inner_size), per_output);
-        } else {
-          for (size_t j = 0; j < inner_size; ++j) {
-            per_output[j] = static_cast<T>(scale_ * static_cast<float>(per_input[j]));
-          }
-        }
+  for (size_t i = 0; i < channels_; ++i) {
+    bool keep = distribution_(generator_);
+    if (keep) {
+      std::fill(mask, mask + inner_size, keep);
+      if constexpr (std::is_same<T, float>::value) {
+        DropoutFp32(input, scale_, SizeToInt(inner_size), output);
       } else {
-        auto temp_code = memset_s(per_mask, inner_size * sizeof(bool), 0, inner_size * sizeof(bool));
-        if (temp_code != EOK) {
-          ret_code = temp_code;
-          return;
-        }
-        temp_code = memset_s(per_output, inner_size * sizeof(T), 0, inner_size * sizeof(T));
-        if (temp_code != EOK) {
-          ret_code = temp_code;
-          return;
+        for (size_t j = 0; j < inner_size; ++j) {
+          output[j] = static_cast<T>(scale_ * static_cast<float>(input[j]));
         }
       }
-      per_input += inner_size;
-      per_output += inner_size;
-      per_mask += inner_size;
+    } else {
+      auto temp_code = memset_s(mask, inner_size * sizeof(bool), 0, inner_size * sizeof(bool));
+      if (temp_code != EOK) {
+        ret_code = temp_code;
+        break;
+      }
+      temp_code = memset_s(output, inner_size * sizeof(T), 0, inner_size * sizeof(T));
+      if (temp_code != EOK) {
+        ret_code = temp_code;
+        break;
+      }
     }
-  };
-  ParallelLaunch(task, channels_, 0, this, pool_);
+    input += inner_size;
+    output += inner_size;
+    mask += inner_size;
+  }
   if (ret_code != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does  parallel launch failed, error code: " << ret_code;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it launch kernel failed, error code: " << ret_code;
   }
   return true;
 }

@@ -62,6 +62,11 @@ class RCWM_1D(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_3D():
+    """
+    Feature: RandomChoiceWithMask gpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.ones([3, 4, 5]).astype(np.bool))
     expect1 = (10, 3)
@@ -76,6 +81,11 @@ def test_RCWM_3D():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_out():
+    """
+    Feature: RandomChoiceWithMask gpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
                                     [0, 0, 0, 1]]).astype(np.bool))
@@ -91,6 +101,11 @@ def test_RCWM_count_out():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_in():
+    """
+    Feature: RandomChoiceWithMask gpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
                                     [0, 0, 0, 1]]).astype(np.bool))
@@ -106,11 +121,16 @@ def test_RCWM_count_in():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_1D():
+    """
+    Feature: RandomChoiceWithMask gpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     input_tensor = Tensor(
         np.array([1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1]).astype(np.bool))
-    expect_index = np.array([[11], [9], [2], [15], [10], [7],
-                             [8], [0], [0], [0]]).astype(np.int32)
+    expect_index = np.array([[11], [9], [7], [10], [8], [0],
+                             [15], [2], [0], [0]]).astype(np.int32)
     expect_mask = np.array(
         [True, True, True, True, True, True, True, True, False, False])
     rcwm = RCWM_1D()

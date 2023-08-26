@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_STANDARD_LAPLACE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_STANDARD_LAPLACE_CPU_KERNEL_H_
 
+#include <random>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kUnknown = "Unknown";
-
 class StandardLaplaceCpuKernelMod : public NativeCpuKernelMod {
  public:
   StandardLaplaceCpuKernelMod() = default;
@@ -39,8 +38,7 @@ class StandardLaplaceCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  int seed_{0};
-  int seed2_{0};
+  std::default_random_engine rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

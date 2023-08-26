@@ -47,7 +47,7 @@ def test_net():
     assert output.shape == (5, 6, 8)
     outnumpyflatten_1 = output.asnumpy().flatten()
 
-    seed = 0
+    seed = 10
     seed2 = 10
     shape = (5, 6, 8)
     net = Net(shape, seed, seed2)

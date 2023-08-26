@@ -27,7 +27,7 @@ from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import _sequence_ops as seq
 import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
-from mindspore.ops.function.random_func import _get_seed
+from mindspore.ops.function.random_func import _get_seed, _set_prim_op_user_data
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -40,6 +40,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
+from mindspore.common.api import _function_forbid_reuse
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -1244,6 +1245,7 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
+@_function_forbid_reuse
 def dropout(input, p=0.5, training=True, seed=None):
     r"""
     During training, randomly zeroes some of the elements of the input tensor
@@ -1283,7 +1285,9 @@ def dropout(input, p=0.5, training=True, seed=None):
         return input
     keep_prob = 1 - p
     seed0, seed1 = _get_seed(seed, "dropout")
-    out, _ = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)(input)
+    dropout_op = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)
+    dropout_op = _set_prim_op_user_data(dropout_op, "random_cache", False)
+    out, _ = dropout_op(input)
     return out
 
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/random_ops.h"
 #include "abstract/utils.h"
 #include "mindspore/core/ops/uniform_candidate_sampler.h"
+#include "kernel/philox_random.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -49,7 +50,7 @@ const size_t kInputRank = 2;
 }  // namespace
 
 template <typename T>
-int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, unsigned int seed, const size_t length) {
+int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, const size_t length) {
   size_t target_length = LongToSize(num_sampled_) * sizeof(T);
   if (length != target_length) {
     return 0;
@@ -63,11 +64,10 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, un
   } else {
     MS_LOG(EXCEPTION) << "Unknown type for sampling.";
   }
-  std::default_random_engine random_generator(seed);
   std::uniform_int_distribution<T> distribution(0, range - 1);
   if (!unique_) {
     for (int64_t i = 0; i < num_sampled_; i++) {
-      sampled_candidates_[i] = distribution(random_generator);
+      sampled_candidates_[i] = distribution(rng_);
     }
     return num_sampled_;
   }
@@ -76,7 +76,7 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, un
   int64_t counter = 0;
   std::unordered_set<T> set_container;
   while (picked < num_sampled_) {
-    T sample = distribution(random_generator);
+    T sample = distribution(rng_);
     counter++;
     if ((set_container.find(sample) == set_container.end()) &&
         ((!remove_accidental_hits_) || set_input_.find(sample) == set_input_.end())) {
@@ -190,8 +190,8 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'seed' can not be less than 0, but got: "
                              << seed_;
   }
-
-  init_seed_ = LongToUint(seed_);
+  uint64_t init_seed = random::GetSeed(static_cast<uint64_t>(seed_), 0);
+  rng_.seed(init_seed);
   // check the attribute, inputs and outputs
   CheckAttribute();
 
@@ -244,13 +244,6 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  unsigned int RNG_seed = 0;
-  if (init_seed_ != 0) {
-    RNG_seed = init_seed_;
-  } else {
-    RNG_seed = static_cast<uint32_t>(time(nullptr));
-  }
-  MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : RNG_seed = " << RNG_seed;
   for (int64_t j = 0; j < batch_size_; ++j) {
     if (remove_accidental_hits_) {
       set_input_.clear();  // reset for each batch
@@ -265,7 +258,7 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
       }
     }
     size_t sampled_candidate_size = LongToSize(num_sampled_) * sizeof(T);
-    int64_t counter = Sampling<T>(sampled_candidates, RNG_seed, sampled_candidate_size);
+    int64_t counter = Sampling<T>(sampled_candidates, sampled_candidate_size);
     // calculate expected count.
     ExpectedLanuch<S>(counter, true_expected_count, sampled_expected_count);
 

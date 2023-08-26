@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   void CheckInputsAndOutputs(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
 
   template <typename T>
-  int64_t Sampling(T *sampled_candidates, unsigned int seed, const size_t length);
+  int64_t Sampling(T *sampled_candidates, const size_t length);
 
   template <typename S>
   void ExpectedLanuch(const int64_t counter, S *true_expected_count, S *sampled_expected_count);
@@ -86,7 +86,7 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   bool remove_accidental_hits_;
   bool is_null_input_;
 
-  unsigned int init_seed_{0};
+  std::default_random_engine rng_;
   std::unordered_set<int64_t> set_input_;
 };
 }  // namespace kernel

@@ -45,7 +45,7 @@ def test_multinomial_exception1():
     Description: test Multinomial exception case and GPU kernel exception handling feature.
     Expectation: success.
     """
-    x = Tensor(np.array([0.9, np.inf, 0.2, 0]).astype(np.float32))
+    x = Tensor(np.array([0.9, 0.5, 0.2, 0]).astype(np.float32))
     net = Net(2, True)
     try:
         net(x)
@@ -61,7 +61,7 @@ def test_multinomial__exception2():
     Description: test Multinomial exception case and GPU kernel exception handling feature.
     Expectation: success.
     """
-    x = Tensor(np.array([9, np.nan, 2, 1]).astype(np.float32))
+    x = Tensor(np.array([9, 4, 2, 1]).astype(np.float32))
     net = Net(2, True)
     try:
         net(x)

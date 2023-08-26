@@ -1088,7 +1088,7 @@ def test_gpu_train():
     losses = asr_run(context.GRAPH_MODE)
     current_time = time.time()
     logging.info("Run asr with %f s.", current_time - start_time)
-    expect_losses = [np.array(362.0659, dtype=np.float32), np.array(287.72534, dtype=np.float32),
-                     np.array(143.58578, dtype=np.float32), np.array(131.3605, dtype=np.float32)]
+    expect_losses = [np.array(365.14368, dtype=np.float32), np.array(293.88275, dtype=np.float32),
+                     np.array(153.87912, dtype=np.float32), np.array(129.04703, dtype=np.float32)]
     _compare_result(losses, expect_losses)
     logging.info("Test asr done.")

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "mindspore/core/ops/uniform.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,6 +60,8 @@ class UniformGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
   float from_{0.0};
   float to_{1.0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   size_t unit_input_size_{1};
   size_t input_size_{1};
   UniformFunc kernel_func_;

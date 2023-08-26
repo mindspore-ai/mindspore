@@ -73,7 +73,7 @@ class RandomShuffleCpuKernelMod : public NativeCpuKernelMod {
   size_t shuffle_size_{1};
   size_t batch_rank_{0};
   std::vector<int64_t> input_shape_;
-  std::default_random_engine generator_;
+  std::default_random_engine rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/random_util.h"
+#include "kernel/philox_random.h"
 #include "mindspore/core/ops/random_gamma.h"
 
 namespace mindspore {
@@ -52,16 +53,13 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
   void Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void InferShape(const std::vector<AddressPtr> &inputs);
-  int64_t seed_{0};
-  int64_t seed2_{0};
-
   ShapeVector output_shape_;
   ShapeVector shape_shape_;
   ShapeVector alpha_shape_;
   TypeId shape_dtype_{kTypeUnknown};
   TypeId alpha_dtype_{kTypeUnknown};
 
-  random::GuardedPhiloxRandom generator_;
+  random::GuardedPhiloxRandom rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

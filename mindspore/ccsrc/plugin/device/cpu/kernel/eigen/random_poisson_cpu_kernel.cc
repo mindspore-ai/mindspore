@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/eigen/random_poisson_cpu_kernel.h"
-#include <random>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,33 +48,34 @@ EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
 }
 #endif
 
-static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t seed) {
-  seed = (seed == 0) ? get_random_seed() : seed;
+static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t seed, uint64_t seed2) {
+  if (seed == 0 && seed2 == 0) {
+    seed = get_random_seed();
+  } else {
+    seed = random::GetSeed(seed, seed2);
+  }
   return seed * 6364136223846793005ULL + 0xda3e39cb94b95bdbULL;
 }
 }  // namespace
 
 template <typename T>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, uint64_t m_stream, double rate) {
-  using Eigen::numext::exp;
-  using Eigen::numext::log;
-  using Eigen::numext::pow;
-  T result;
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(std::mt19937 *rng, double rate) {
+  std::uniform_real_distribution<double> standard_uniform(0.0, 1.0);
 
   // if rate < 10, use Knuth's algorithm
   if (rate < static_cast<double>(10.0)) {
-    const double exp_neg_rate = Eigen::numext::exp(-rate);
-    double prod = 1;
-    double x = 0;
+    double x, prod, exp_neg_rate;
 
+    x = 0.0;
+    prod = 1.0;
+    exp_neg_rate = std::exp(-rate);
     // Keep trying until we surpass e^(-rate). This will take
     // expected time proportional to rate.
     while (true) {
-      double u = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
-      prod = prod * u;
+      double u = standard_uniform(*rng);
+      prod *= u;
       if (prod <= exp_neg_rate && x <= static_cast<double>(Eigen::NumTraits<T>::highest())) {
-        result = static_cast<T>(x);
-        return result;
+        return static_cast<T>(x);
       }
       x += 1;
     }
@@ -84,44 +85,43 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, uin
     T k = Eigen::NumTraits<T>::infinity();
     return k;
   } else {
-    const double log_rate = log(rate);
-    const double b = static_cast<double>(0.931) + static_cast<double>(2.53) * Eigen::numext::sqrt(rate);
-    const double a = static_cast<double>(-0.059) + static_cast<double>(0.02483) * b;
-    const double inv_alpha = static_cast<double>(1.1239) + static_cast<double>(1.1328) / (b - static_cast<double>(3.4));
+    double a, b, inv_alpha, vr;
+
+    double log_rate = std::log(rate);
+    double sqrt_rate = std::sqrt(rate);
+    b = static_cast<double>(0.931) + static_cast<double>(2.53) * sqrt_rate;
+    a = static_cast<double>(-0.059) + static_cast<double>(0.02483) * b;
+    inv_alpha = static_cast<double>(1.1239) + static_cast<double>(1.1328) / (b - static_cast<double>(3.4));
+    vr = static_cast<double>(0.9277) - static_cast<double>(3.6224) / (b - static_cast<double>(2));
 
     while (true) {
-      double u = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
-      u -= static_cast<double>(0.5);
-      double v = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
-      double u_shifted = static_cast<double>(0.5) - Eigen::numext::abs(u);
-      double k =
-        Eigen::numext::floor((static_cast<double>(2) * a / u_shifted + b) * u + rate + static_cast<double>(0.43));
+      double u = standard_uniform(*rng) - static_cast<double>(0.5);
+      double v = standard_uniform(*rng);
+      double us = static_cast<double>(0.5) - std::fabs(u);
+      double k = std::floor((static_cast<double>(2) * a / us + b) * u + rate + static_cast<double>(0.43));
 
-      if (k > Eigen::NumTraits<double>::highest()) {
+      if (k > static_cast<double>(Eigen::NumTraits<double>::highest())) {
         continue;
       }
 
       // When alpha * f(G(U)) * G'(U) is close to 1, it is possible to
-      // find a rectangle (-u_r, u_r) x (0, v_r) under the curve, such
-      // that if v <= v_r and |u| <= u_r, then we can accept.
-      // Here v_r = 0.9227 - 3.6224 / (b - 2) and u_r = 0.43.
-      if (u_shifted >= static_cast<double>(0.07) &&
-          v <= static_cast<double>(0.9277) - static_cast<double>(3.6224) / (b - static_cast<double>(2))) {
-        result = static_cast<T>(k);
-        return result;
+      // find a rectangle (-u_s, u_s) x (0, v_r) under the curve, such
+      // that if v <= v_r and |u| <= u_s, then we can accept.
+      // Here v_r = 0.9227 - 3.6224 / (b - 2) and u_s = 0.43.
+      if ((us >= static_cast<double>(0.07)) && (v <= vr)) {
+        return static_cast<T>(k);
       }
 
-      if (k < 0 || (u_shifted < static_cast<double>(0.013) && v > u_shifted)) {
+      if ((k < 0) || ((us < static_cast<double>(0.013)) && (v > us))) {
         continue;
       }
 
       // The expression below is equivalent to the computation of step 2)
       // in transformed rejection (v <= alpha * F'(G(u)) * G'(u)).
-      double s = log(v * inv_alpha / (a / (u_shifted * u_shifted) + b));
-      double t = -rate + k * log_rate - Eigen::numext::lgamma(k + 1);
+      double s = std::log(v * inv_alpha / (a / (us * us) + b));
+      double t = -rate + k * log_rate - std::lgamma(k + 1);
       if (s <= t) {
-        result = static_cast<T>(k);
-        return result;
+        return static_cast<T>(k);
       }
     }
   }
@@ -130,20 +130,15 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, uin
 template <typename T>
 class PoissonRandomGenerator {
  public:
-  // Uses the given "seed" if non-zero, otherwise uses a random seed.
-  PoissonRandomGenerator(double rate, uint64_t seed) : m_rate(rate), m_state(PCG_XSH_RS_state(seed)) {}
+  explicit PoissonRandomGenerator(double rate) : m_rate(rate) {}
   void setRate(double rate) { m_rate = rate; }
-  T gen() const {
-    T result = RandomToTypePoisson<T>(&m_state, m_stream, m_rate);
+  T gen(std::mt19937 *rng) const {
+    T result = RandomToTypePoisson<T>(rng, m_rate);
     return result;
   }
 
  private:
   double m_rate;
-  mutable uint64_t m_state;
-  // Adapt Eigen 3.4.0 new api for stream random number generator.
-  // Here's no parallel computing, so we set stream to any fixed value.
-  static constexpr uint64_t m_stream = 0;
 };
 
 bool AddrAlignedCheck(const void *addr, uint64_t alignment = 16) {
@@ -163,8 +158,10 @@ bool RandomPoissonCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
 
   MS_EXCEPTION_IF_NULL(prim);
-  seed_ = GetValue<int64_t>(prim->GetAttr("seed"));
-  seed2_ = GetValue<int64_t>(prim->GetAttr("seed2"));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = PCG_XSH_RS_state(seed, seed2);
+  rng_.seed(init_seed);
   return true;
 }
 
@@ -183,29 +180,22 @@ bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   size_t num_of_rate = inputs[1]->size / sizeof(Tin);
   size_t num_of_output = outputs[0]->size / sizeof(T);
 
-  auto attr_seed = LongToUlong(seed_);
-  uint64_t final_seed = attr_seed;
-  if (final_seed == 0) {
-    auto attr_seed2 = seed2_;
-    final_seed = LongToUlong(attr_seed2);
-  }
-
   if (AddrAlignedCheck(outputs[0]->addr)) {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> eigen_output(static_cast<T *>(output), num_of_output);
-    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]), final_seed);
+    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]));
     for (size_t i = 0; i < num_of_rate; i++) {
       m_generator.setRate(static_cast<double>(rate_flat[i]));
       for (size_t j = i; j < num_of_output; j += num_of_rate) {
-        eigen_output(j) = m_generator.gen();
+        eigen_output(j) = m_generator.gen(&rng_);
       }
     }
   } else {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Unaligned> eigen_output(static_cast<T *>(output), num_of_output);
-    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]), final_seed);
+    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]));
     for (size_t i = 0; i < num_of_rate; i++) {
       m_generator.setRate(static_cast<double>(rate_flat[i]));
       for (size_t j = i; j < num_of_output; j += num_of_rate) {
-        eigen_output(j) = m_generator.gen();
+        eigen_output(j) = m_generator.gen(&rng_);
       }
     }
   }

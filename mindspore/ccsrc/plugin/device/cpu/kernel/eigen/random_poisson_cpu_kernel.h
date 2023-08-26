@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
+#include <map>
 #include <vector>
 #include <string>
-#include <map>
+#include <random>
+#include <limits>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -47,8 +49,7 @@ class RandomPoissonCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
-  int64_t seed_{0};
-  int64_t seed2_{0};
+  std::mt19937 rng_;
 };
 }  // namespace kernel
 }  // namespace mindspore
