@@ -37,6 +37,7 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "include/backend/optimizer/helper.h"
+#include "kernel/opapi/aclnn_kernel_build.h"
 #include "kernel/acl/acl_kernel_build.h"
 #include "kernel/aicpu/aicpu_kernel_build.h"
 #include "kernel/aicpu/aicpu_kernel_metadata.h"
@@ -57,6 +58,10 @@ namespace mindspore::device::ascend {
 namespace {
 std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node);
+  // Todo: add datatype and format filter
+  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel::IsRegisteredAclnnOp(node)) {
+    return {KernelType::OPAPI_KERNEL, {}};
+  }
   if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel_type != KernelType::HCCL_KERNEL) {
     return {kernel_type, {}};
   }
@@ -215,6 +220,8 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
+    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::OPAPI_KERNEL) {
+      kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
@@ -277,7 +284,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     }
     // in this func, no select process, acl/aicpu/host kernel may not support pre node's format.
     GenerateKernelBuildInfo(kernel, kernel_type);
-    if (kernel_type != ACL_KERNEL) {
+    if (kernel_type != ACL_KERNEL && kernel_type != OPAPI_KERNEL) {
       auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
       MS_EXCEPTION_IF_NULL(kernel_info);
       auto build_info = kernel_info->select_kernel_build_info();

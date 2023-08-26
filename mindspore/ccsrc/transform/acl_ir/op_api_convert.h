@@ -26,9 +26,9 @@
 #include "ir/tensor.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 
 namespace mindspore::transform {
-using TensorPtr = mindspore::tensor::TensorPtr;
 
 // Api data struct.
 typedef struct aclOpExecutor aclOpExecutor;
@@ -188,14 +188,14 @@ class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
   inline aclDataType GetDataType(const ValuePtr &value) { return AclConverter::ConvertType(value->type()->type_id()); }
 };
 
-inline aclTensor *ConvertType(const TensorPtr &tensor) {
+inline aclTensor *ConvertType(const device::ascend::AscendDeviceAddressPtr &tensor) {
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
     return nullptr;
   }
 
-  auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
-  auto shape = tensor->shape();
+  auto acl_data_type = AclConverter::ConvertType(tensor->type_id());
+  auto shape = tensor->host_shape();
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {
@@ -220,7 +220,7 @@ inline aclTensor *ConvertType(const TensorPtr &tensor) {
   strides.push_back(1);
 
   auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                    shape_size, tensor->data_c());
+                                    shape_size, tensor->GetMutablePtr());
   return acl_tensor;
 }
 

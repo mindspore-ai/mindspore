@@ -69,6 +69,7 @@ static std::map<KernelType, TaskInfoTaskType> KernelType2TaskTypeEnum{
   {KernelType::GPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
   {KernelType::BISHENG_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
   {KernelType::ACL_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::OPAPI_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
   {KernelType::UNKNOWN_KERNEL_TYPE, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE}};
 
 // 0 means unknown format
