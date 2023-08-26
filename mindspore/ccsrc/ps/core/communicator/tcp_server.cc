@@ -110,7 +110,8 @@ bool TcpConnection::SendMessage(const std::shared_ptr<MessageMeta> &meta, const 
   return res;
 }
 
-TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configuration *const config)
+TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configuration *const config,
+                     const std::pair<uint32_t, uint32_t> &port_range)
     : base_(nullptr),
       signal_event_(nullptr),
       listener_(nullptr),
@@ -118,7 +119,8 @@ TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configurati
       server_port_(port),
       is_stop_(true),
       config_(config),
-      max_connection_(0) {}
+      max_connection_(0),
+      port_range_(port_range) {}
 
 TcpServer::~TcpServer() {
   if (signal_event_ != nullptr) {
@@ -172,15 +174,25 @@ void TcpServer::Init() {
     MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
   }
   sin.sin_family = AF_INET;
-  sin.sin_port = htons(server_port_);
   sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
-
-  listener_ = evconnlistener_new_bind(base_, ListenerCallback, reinterpret_cast<void *>(this),
-                                      LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
-                                      reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
-  if (listener_ == nullptr) {
-    MS_LOG(EXCEPTION) << "bind ip & port failed. please check.";
-  }
+  // We do not use server_port_ because it's always 0.
+  MS_LOG(INFO) << "Initialize TcpServer with port range " << port_range_.first << " to " << port_range_.second;
+  uint16_t current_port = static_cast<uint16_t>(port_range_.first);
+  do {
+    sin.sin_port = htons(current_port);
+    listener_ = evconnlistener_new_bind(base_, ListenerCallback, reinterpret_cast<void *>(this),
+                                        LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
+                                        reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
+    if (listener_ == nullptr) {
+      current_port++;
+      MS_LOG(WARNING) << "The port " << current_port << " is already in use. So increase port to: " << current_port;
+      if (current_port > port_range_.second) {
+        MS_LOG(EXCEPTION) << "Port range " << port_range_.first << " to " << port_range_.second
+                          << " are all in use already. You can run 'netstat -anp|grep <port number>' command to check "
+                             "which process occupies the port.";
+      }
+    }
+  } while (listener_ == nullptr);
 
   if (server_port_ == 0) {
     struct sockaddr_in sin_bound {};

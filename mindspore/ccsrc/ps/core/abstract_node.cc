@@ -1418,7 +1418,7 @@ bool AbstractNode::IsWorkerOrServer0(const std::unordered_map<std::string, NodeI
   return false;
 }
 
-void AbstractNode::CreateTcpServer() {
+void AbstractNode::CreateTcpServer(const std::pair<uint32_t, uint32_t> &port_range) {
   MS_EXCEPTION_IF_NULL(config_);
   std::string interface;
   std::string server_ip = common::GetEnv("MS_WORKER_IP");
@@ -1427,7 +1427,7 @@ void AbstractNode::CreateTcpServer() {
     CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   }
 
-  server_ = std::make_shared<TcpServer>(server_ip, 0, config_.get());
+  server_ = std::make_shared<TcpServer>(server_ip, 0, config_.get(), port_range);
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {

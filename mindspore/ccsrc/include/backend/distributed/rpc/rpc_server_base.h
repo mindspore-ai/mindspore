@@ -27,7 +27,8 @@ namespace distributed {
 namespace rpc {
 class RPCServerBase {
  public:
-  explicit RPCServerBase(bool enable_ssl) : ip_(""), port_(0), enable_ssl_(enable_ssl) {}
+  explicit RPCServerBase(bool enable_ssl, const ServerPortRange &port_range)
+      : ip_(""), port_(0), enable_ssl_(enable_ssl), port_range_(port_range) {}
   virtual ~RPCServerBase() = default;
 
   // Init server using the specified url, with memory allocating function.
@@ -51,6 +52,7 @@ class RPCServerBase {
   uint32_t port_;
 
   bool enable_ssl_;
+  ServerPortRange port_range_;
 };
 }  // namespace rpc
 }  // namespace distributed

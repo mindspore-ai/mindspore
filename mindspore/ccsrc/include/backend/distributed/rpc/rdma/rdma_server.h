@@ -28,8 +28,8 @@ namespace distributed {
 namespace rpc {
 class BACKEND_EXPORT RDMAServer : public RPCServerBase {
  public:
-  explicit RDMAServer(bool enable_ssl = false)
-      : RPCServerBase(enable_ssl),
+  explicit RDMAServer(bool enable_ssl = false, const ServerPortRange &port_range = {})
+      : RPCServerBase(enable_ssl, port_range),
         urpc_allocator_(urpc_get_default_allocator_func()),
         dev_name_(kDefaultIfName),
         ip_addr_(kDefaultIP),

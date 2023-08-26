@@ -189,11 +189,11 @@ bool TCPComm::Initialize() {
   return true;
 }
 
-bool TCPComm::StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb) {
+int TCPComm::StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb) {
   server_fd_ = SocketOperation::Listen(url);
   if (server_fd_ < 0) {
-    MS_LOG(ERROR) << "Failed to call socket listen, url: " << url.c_str();
-    return false;
+    MS_LOG(WARNING) << "Failed to call socket listen, url: " << url.c_str();
+    return server_fd_;
   }
   url_ = url;
   allocate_cb_ = allocate_cb;
@@ -210,13 +210,13 @@ bool TCPComm::StartServerSocket(const std::string &url, const MemAllocateCallbac
                                                  reinterpret_cast<void *>(this));
   if (retval != RPC_OK) {
     MS_LOG(ERROR) << "Failed to add server event, url: " << url.c_str();
-    return false;
+    return -1;
   }
   MS_LOG(INFO) << "Start server succ, fd: " << server_fd_ << ", url: " << url.c_str();
-  return true;
+  return 0;
 }
 
-bool TCPComm::StartServerSocket(const MemAllocateCallback &allocate_cb) {
+int TCPComm::StartServerSocket(const MemAllocateCallback &allocate_cb) {
   auto ip = SocketOperation::GetLocalIP();
   // The port 0 means that the port will be allocated randomly by the os system.
   auto url = ip + ":0";

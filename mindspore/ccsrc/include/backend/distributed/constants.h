@@ -22,6 +22,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <utility>
 #include <functional>
 
 #include "actor/log.h"
@@ -94,6 +95,7 @@ constexpr uint32_t kDefaultFinishTimeout = 30;
 constexpr uint32_t kStartPort = 8118;
 constexpr uint32_t kNodePortRangeNum = 4096;
 constexpr char kNodePortRange[] = "node_port_range";
+using ServerPortRange = std::pair<uint32_t, uint32_t>;
 
 constexpr char kDataSyncSrcOpName[] = "DataSyncSrc";
 constexpr char kDataSyncDstOpName[] = "DataSyncDst";

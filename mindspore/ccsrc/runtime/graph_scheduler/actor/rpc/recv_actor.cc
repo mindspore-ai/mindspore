@@ -86,7 +86,7 @@ bool RecvActor::StartServer() {
       MS_LOG(EXCEPTION) << "Failed to initialize RDMAServer.";
     }
   } else {
-    server_ = std::make_unique<TCPServer>();
+    server_ = std::make_unique<TCPServer>(false, distributed::cluster::ClusterContext::instance()->port_range());
     MS_EXCEPTION_IF_NULL(server_);
     // Set the memory allocating callback using void* message.
     std::function<void *(size_t size)> allocate_callback =
@@ -96,7 +96,7 @@ bool RecvActor::StartServer() {
     }
   }
 #else
-  server_ = std::make_unique<TCPServer>();
+  server_ = std::make_unique<TCPServer>(false, distributed::cluster::ClusterContext::instance()->port_range());
   MS_EXCEPTION_IF_NULL(server_);
   // Set the memory allocating callback using void* message.
   std::function<void *(size_t size)> allocate_callback =

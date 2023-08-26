@@ -33,6 +33,8 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <utility>
+
 #include "ps/core/communicator/tcp_message_handler.h"
 #include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/core/cluster_config.h"
@@ -86,7 +88,8 @@ class TcpServer {
   using OnTimerOnce = std::function<void(const TcpServer &)>;
   using OnTimer = std::function<void()>;
 
-  TcpServer(const std::string &address, std::uint16_t port, Configuration *const config);
+  TcpServer(const std::string &address, std::uint16_t port, Configuration *const config,
+            const std::pair<uint32_t, uint32_t> &port_range = {});
   TcpServer(const TcpServer &server);
   virtual ~TcpServer();
 
@@ -139,6 +142,7 @@ class TcpServer {
   // The Configuration file
   Configuration *config_;
   int64_t max_connection_;
+  std::pair<uint32_t, uint32_t> port_range_;
 };
 }  // namespace core
 }  // namespace ps
