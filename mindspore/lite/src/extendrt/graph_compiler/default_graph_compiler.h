@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <vector>
-
+#include <tuple>
 #include "infer/graph_compiler.h"
 #include "infer/context.h"
 #include "src/extendrt/graph_compiler/compile_result.h"
@@ -49,21 +49,22 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
 
  private:
   Status CreateExecPlanKernels(const std::vector<GraphSegmentPtr> &graph_segments,
-                               std::vector<AnfNodePtrList> *segments_inputs,
                                std::vector<AnfNodePtrList> *segments_outputs);
-  Status CreateExecPlanInputs(const FuncGraphPtr &func_graph, std::vector<AnfNodePtrList> *segments_inputs);
+  Status UpdateSubGraphInoutMap(const kernel::KernelExec &subgraph, const AnfNodePtrList &inputs,
+                                const AnfNodePtrList &outputs);
+  std::tuple<AnfNodePtrList, AnfNodePtrList> GetSegmentInout(const GraphSegment &graph_segment);
+  Status CreateExecPlanInputs(const FuncGraphPtr &func_graph);
   Status CreateExecPlanOutputs(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtrList> &segments_outputs);
-  InferTensor *CreateTensor(const AnfNodePtr &node);
-  std::vector<InferTensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
-  Status GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type, ShapeVector *shape_vector);
-  Status GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
-                                   ShapeVector *shape_vector);
-  std::vector<AnfNodePtr> SkipMakeTuple(AnfNodePtr origin_node);
+  Status IsolateSubGraphs();
+  static std::vector<InferTensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
+  std::vector<AnfNodePtr> SkipMakeTuple(const AnfNodePtr &origin_node);
 
  private:
   std::shared_ptr<infer::ExecutionPlan> execution_plan_{nullptr};
   std::vector<InferTensor *> graph_input_tensors_;
   mindspore::HashMap<AnfNodePtr, InferTensor *> anf_tensor_map_;
+  mindspore::HashMap<InferTensor *, AnfNodePtr> subgraph_input_map_;
+  mindspore::HashMap<AnfNodePtr, InferTensor *> subgraph_output_map_;
   SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;
   InferContextPtr inner_context_{nullptr};

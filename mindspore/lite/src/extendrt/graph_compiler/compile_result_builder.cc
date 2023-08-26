@@ -39,17 +39,15 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
     MS_LOG(ERROR) << "Please don't call BuildInputs twice.";
     return kLiteError;
   }
-  std::vector<std::unique_ptr<InferTensor>> results;
   for (auto &input : inputs) {
-    results.clear();
-    auto ret = CreateTensorsFromAbstract(input->abstract(), &results, compile_option_->graph_input_format);
-    if (ret != kSuccess) {
+    auto results = TensorAdapter::CreateTensorsFromAbstract(input->abstract(), compile_option_->graph_input_format);
+    if (results.empty()) {
       MS_LOG(ERROR) << "Create tensors from abstract of segments input failed, input : "
                     << input->fullname_with_scope();
-      return ret;
+      return kLiteError;
     }
     auto arg_node = std::make_shared<CompileNode>(input->fullname_with_scope(), kernel::PrimitiveType());
-    ret = graph_->AppendArgNode(arg_node);
+    auto ret = graph_->AppendArgNode(arg_node);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Append input lite-node to graph failed, input : " << input->fullname_with_scope();
       return ret;
@@ -399,74 +397,35 @@ StatusCode CompileResultBuilder::CreateAndAppendNode(const CNodePtr &cnode) {
   return kSuccess;
 }
 
-StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr &abstract,
-                                                           std::vector<std::unique_ptr<InferTensor>> *results,
-                                                           Format format) {
-  if (results == nullptr) {
-    MS_LOG(ERROR) << "Input `results` is nullptr.";
-    return kLiteInputParamInvalid;
-  }
-  if (abstract == nullptr) {
-    MS_LOG(ERROR) << "Input `abstract` is nullptr.";
-    return kLiteInputParamInvalid;
-  }
-  results->clear();
-  // multi output abstract
-  if (utils::isa<AbstractSequencePtr>(abstract)) {
-    auto elements = utils::cast<AbstractSequencePtr>(abstract)->elements();
-    for (auto &element : elements) {
-      auto tensor = TensorAdapter::Convert2Tensor(element, format);
-      if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
-        return kLiteError;
-      }
-      results->emplace_back(std::unique_ptr<InferTensor>(tensor));
-    }
-    return kSuccess;
-  }
-  // single output abstract
-  if (utils::isa<AbstractTensorPtr>(abstract)) {
-    auto tensor = TensorAdapter::Convert2Tensor(abstract, format);
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
-      return kLiteError;
-    }
-    results->emplace_back(std::unique_ptr<InferTensor>(tensor));
-    return kSuccess;
-  }
-  MS_LOG(ERROR) << "Unsupported abstract: " << abstract;
-  return kLiteNotSupport;
-}
-
 StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNodePtr &compile_node) {
-  if (cnode == nullptr) {
-    MS_LOG(ERROR) << "Input cnode is nullptr.";
-    return kLiteInputParamInvalid;
-  }
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr.";
     return kLiteInputParamInvalid;
-  }
-  std::vector<std::unique_ptr<InferTensor>> results;
-  auto ret = CreateTensorsFromAbstract(cnode->abstract(), &results);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Create tensors from output abstract of cnode failed, cnode : " << cnode->fullname_with_scope();
-    return ret;
   }
   if (compile_node->OutputSize() > 0) {
     MS_LOG(ERROR) << "Build node output twice, node : " << compile_node->GetName();
     return kLiteError;
   }
-  for (auto &result : results) {
-    auto tensor = result.release();
+  auto results = TensorAdapter::Convert2Tensor(cnode);
+  if (results.empty()) {
+    MS_LOG(ERROR) << "Create tensors from cnode failed, cnode : " << cnode->fullname_with_scope();
+    return kLiteError;
+  }
+  size_t index = 0;
+  auto ret = kSuccess;
+  for (; index < results.size(); index++) {
+    auto tensor = results[index];
     ret = graph_->AppendNodeOutputTensor(compile_node, tensor);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Append output tensor to node failed, node: " << compile_node->GetName();
-      delete (tensor);
-      return ret;
+      break;
     }
   }
-  return kSuccess;
+  // release results if failed
+  for (; index < results.size(); index++) {
+    delete results[index];
+  }
+  return ret;
 }
 
 StatusCode CompileResultBuilder::BuildNodes(const FuncGraphPtr &func_graph) {

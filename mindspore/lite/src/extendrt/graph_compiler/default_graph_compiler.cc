@@ -114,7 +114,7 @@ std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr
   return {scheduler_->Schedule(compile_result)};
 }
 
-std::vector<AnfNodePtr> DefaultGraphCompiler::SkipMakeTuple(AnfNodePtr origin_node) {
+std::vector<AnfNodePtr> DefaultGraphCompiler::SkipMakeTuple(const AnfNodePtr &origin_node) {
   if (!origin_node->isa<CNode>()) {
     // not cnode, return origin node
     return {origin_node};
@@ -134,77 +134,123 @@ std::vector<AnfNodePtr> DefaultGraphCompiler::SkipMakeTuple(AnfNodePtr origin_no
   return results;
 }
 
+Status DefaultGraphCompiler::UpdateSubGraphInoutMap(const kernel::KernelExec &subgraph, const AnfNodePtrList &inputs,
+                                                    const AnfNodePtrList &outputs) {
+  // add subgraph_input_map: subgraph.input-tensors --> anfnode
+  auto count = inputs.size();
+  // not support tuple as an input of cnode now except return and tuplegetitem, but return is skipped before and
+  // tuplegetitem is not a cut point.
+  if (MS_UNLIKELY(count != subgraph.in_tensors().size())) {
+    MS_LOG(ERROR) << "Subgraph has " << subgraph.in_tensors().size() << " inputs while segment has " << count
+                  << " inputs.";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < count; i++) {
+    subgraph_input_map_[subgraph.in_tensors()[i]] = inputs[i];
+  }
+  // add subgraph_output_map: anfnode --> subgraph.output-tensors
+  count = outputs.size();
+  // not support tuple as an input of cnode now except return and tuplegetitem, but return is skipped before and
+  // tuplegetitem is not a cut point.
+  if (MS_UNLIKELY(count != subgraph.out_tensors().size())) {
+    MS_LOG(ERROR) << "Subgraph has " << subgraph.out_tensors().size() << " outputs while segment has " << count
+                  << " outputs.";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < count; i++) {
+    subgraph_output_map_[outputs[i]] = subgraph.out_tensors()[i];
+  }
+  return kSuccess;
+}
+
+std::tuple<AnfNodePtrList, AnfNodePtrList> DefaultGraphCompiler::GetSegmentInout(const GraphSegment &graph_segment) {
+  FuncGraphPtr fg = nullptr;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = FuncGraphUtils::TransformSegmentToAnfGraph(graph_segment.nodes_);
+  // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we erase weight.
+  for (auto iter = inputs.begin(); iter != inputs.end();) {
+    if (utils::isa<ParameterPtr>(*iter) && (utils::cast<ParameterPtr>(*iter))->has_default()) {
+      iter = inputs.erase(iter);
+    } else {
+      iter++;
+    }
+  }
+  // maketuple and tuplegetitem make nosense in inference, skip nodes with these types for outputs
+  AnfNodePtrList real_outputs;
+  real_outputs.reserve(outputs.size());
+  for (auto &output : outputs) {
+    std::vector<AnfNodePtr> seg_outputs = SkipMakeTuple(output);
+    real_outputs.insert(real_outputs.end(), seg_outputs.begin(), seg_outputs.end());
+  }
+  return std::make_tuple(inputs, real_outputs);
+}
+
 Status DefaultGraphCompiler::CreateExecPlanKernels(const std::vector<GraphSegmentPtr> &graph_segments,
-                                                   std::vector<AnfNodePtrList> *segments_inputs,
                                                    std::vector<AnfNodePtrList> *segments_outputs) {
   MS_ASSERT(execution_plan_ != nullptr);
   for (const auto &graph_segment : graph_segments) {
+    if (graph_segment == nullptr) {
+      MS_LOG(ERROR) << "graph segment is nullptr.";
+      return kLiteNullptr;
+    }
     if (graph_segment->nodes_.size() == 1) {
       auto &node = graph_segment->nodes_[0];
       if (opt::CheckPrimitiveType(node, prim::kPrimReturn)) {
         continue;
       }
     }
-    FuncGraphPtr fg = nullptr;
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
-    std::tie(fg, inputs, outputs) = FuncGraphUtils::TransformSegmentToAnfGraph(graph_segment->nodes_);
-    // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we erase weight.
-    for (auto iter = inputs.begin(); iter != inputs.end();) {
-      if (utils::isa<ParameterPtr>(*iter) && (utils::cast<ParameterPtr>(*iter))->has_default()) {
-        iter = inputs.erase(iter);
-      } else {
-        iter++;
-      }
-    }
+    std::tie(inputs, outputs) = GetSegmentInout(*graph_segment);
+    // maketuple tuplegetitem is deleted inside of Compile
     auto compile_result = this->Compile(graph_segment, inputs, outputs);
     if (compile_result == nullptr) {
       MS_LOG(ERROR) << "DefaultGraphCompiler::CreateExecPlanKernels convert to CompileResult failed";
       return kLiteError;
     }
     auto kernels = this->Schedule(compile_result);
-    if (kernels.size() != 1 || kernels[0] == nullptr) {
+    if (kernels.size() != 1) {
       MS_LOG(ERROR) << "Only support one subgraph from one graph segment now, got " << kernels.size();
       return kLiteError;
     }
-    segments_inputs->emplace_back(inputs);
-    segments_outputs->emplace_back(outputs);
     auto kernel = kernels[0];
-    kernel->set_context(inner_context_.get());
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "Schedule failed, return nullptr.";
+      return kLiteError;
+    }
+    auto ret = UpdateSubGraphInoutMap(*kernel, inputs, outputs);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateSubGraphInoutMap failed: " << ret;
+      return ret;
+    }
+    segments_outputs->emplace_back(outputs);
     execution_plan_->AddKernel(kernel);
   }
   return kSuccess;
 }
 
-Status DefaultGraphCompiler::CreateExecPlanInputs(const FuncGraphPtr &func_graph,
-                                                  std::vector<AnfNodePtrList> *segments_inputs) {
-  MS_ASSERT(execution_plan_ != nullptr);
-  MS_ASSERT(segments_inputs != nullptr);
+Status DefaultGraphCompiler::CreateExecPlanInputs(const FuncGraphPtr &func_graph) {
   MS_ASSERT(graph_input_tensors_.empty());
   auto graph_inputs = func_graph->get_inputs();
   if (graph_inputs.empty()) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
     return kLiteError;
   }
-  MS_ASSERT(execution_plan_->GetKernels().size() == segments_inputs->size());
-  for (size_t i = 0; i < execution_plan_->GetKernels().size(); i++) {
-    auto &inputs = (*segments_inputs)[i];
-    auto kernel = execution_plan_->GetKernels()[i];
-    if (MS_UNLIKELY(kernel->in_tensors().size() != inputs.size())) {
-      MS_LOG(ERROR) << "Subgraph has " << kernel->in_tensors().size() << " inputs while segment has " << inputs.size()
-                    << " inputs.";
+  for (const auto &input : func_graph->get_inputs()) {
+    if (!utils::isa<ParameterPtr>(input)) {
+      MS_LOG(ERROR) << "Not supported graph input: " << input;
       return kLiteError;
     }
-    for (size_t j = 0; j < kernel->in_tensors().size(); j++) {
-      auto input_tensor = kernel->in_tensors()[j];
-      auto input_node = inputs[j];
-      auto it = std::find_if(graph_inputs.begin(), graph_inputs.end(),
-                             [&input_node](const AnfNodePtr &node) { return node == input_node; });
-      if (it != graph_inputs.end()) {
-        input_tensor->set_category(GRAPH_INPUT);
-        graph_input_tensors_.emplace_back(input_tensor);
-      }
+    auto parameter = utils::cast<ParameterPtr>(input);
+    auto tensor = TensorAdapter::Convert2Tensor(parameter, option_->graph_input_format);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Create graph input tensor failed, input : " << input->fullname_with_scope();
+      return kLiteError;
     }
+    tensor->set_category(GRAPH_INPUT);
+    graph_input_tensors_.push_back(tensor);
+    subgraph_output_map_[input] = tensor;
   }
   execution_plan_->SetInputs(graph_input_tensors_);
   return kSuccess;
@@ -221,7 +267,7 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
   }
   std::vector<AnfNodePtr> graph_outputs = SkipMakeTuple(graph_output);
 
-  auto graph_output_tensors = CreateTensors(graph_outputs);
+  auto graph_output_tensors = DefaultGraphCompiler::CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
     return kLiteError;
@@ -241,20 +287,15 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
 
   auto *output_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
   for (size_t i = 0; i < execution_plan_->GetKernels().size(); i++) {
-    AnfNodePtrList real_segment_outputs;
-    for (auto &output : segments_outputs[i]) {
-      auto no_tuple_output = SkipMakeTuple(output);
-      real_segment_outputs.insert(real_segment_outputs.end(), no_tuple_output.begin(), no_tuple_output.end());
-    }
     auto kernel = execution_plan_->GetKernels()[i];
-    if (MS_UNLIKELY(kernel->out_tensors().size() != real_segment_outputs.size())) {
+    if (MS_UNLIKELY(kernel->out_tensors().size() != segments_outputs[i].size())) {
       MS_LOG(ERROR) << "Subgraph has " << kernel->in_tensors().size() << " outputs while segment has "
-                    << real_segment_outputs.size() << " outputs.";
+                    << segments_outputs[i].size() << " outputs.";
       return kLiteError;
     }
     for (size_t j = 0; j < kernel->out_tensors().size(); j++) {
       auto output_tensor = kernel->out_tensors()[j];
-      auto &output_node = real_segment_outputs[j];
+      auto &output_node = segments_outputs[i][j];
       auto it = anf_tensor_map_.find(output_node);
       if (it != anf_tensor_map_.end()) {
         auto outter_tensor = it->second;
@@ -263,6 +304,30 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
     }
   }
   execution_plan_->SetOutputsMap(output_isolate_map);
+  return kSuccess;
+}
+
+Status DefaultGraphCompiler::IsolateSubGraphs() {
+  auto *subgraph_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
+  for (auto &kernel : execution_plan_->GetKernels()) {
+    auto &in_tensors = kernel->in_tensors();
+    for (size_t i = 0; i < in_tensors.size(); i++) {
+      auto &input = in_tensors[i];
+      auto anf_node = subgraph_input_map_.find(input);
+      if (anf_node == subgraph_input_map_.end()) {
+        MS_LOG(ERROR) << "Can not find corresponding anf_node for " << i << "th input of subgraph " << kernel->name();
+        return kLiteError;
+      }
+      auto output = subgraph_output_map_.find(anf_node->second);
+      if (output == subgraph_output_map_.end()) {
+        MS_LOG(ERROR) << "Can not find corresponding output tensor for anf_node: "
+                      << anf_node->second->fullname_with_scope();
+        return kLiteError;
+      }
+      (*subgraph_isolate_map)[input] = output->second;
+    }
+  }
+  this->execution_plan_->SetInputsMap(subgraph_isolate_map);
   return kSuccess;
 }
 
@@ -277,14 +342,13 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
     func_manager = Manage(func_graph, true);
     func_graph->set_manager(func_manager);
   }
-  std::vector<AnfNodePtrList> segments_inputs;
   std::vector<AnfNodePtrList> segments_outputs;
-  auto ret = CreateExecPlanKernels(graph_segments, &segments_inputs, &segments_outputs);
+  auto ret = CreateExecPlanKernels(graph_segments, &segments_outputs);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Create graph subgraphs failed";
     return nullptr;
   }
-  ret = CreateExecPlanInputs(func_graph, &segments_inputs);
+  ret = CreateExecPlanInputs(func_graph);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Create graph input tensors failed";
     return nullptr;
@@ -294,96 +358,12 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
     MS_LOG(ERROR) << "Create graph output tensors failed";
     return nullptr;
   }
+  ret = IsolateSubGraphs();
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Isolate subgraphs failed";
+    return nullptr;
+  }
   return execution_plan_;
-}
-
-// todo remove
-InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor cnode is nullptr";
-      return nullptr;
-    }
-    auto abstract = cnode->abstract();
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor abstract is nullptr";
-      return nullptr;
-    }
-    if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
-      auto tensor = TensorAdapter::Convert2Tensor(abstract);
-      if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
-        return nullptr;
-      }
-      return tensor;
-    }
-  } else if (node->isa<Parameter>()) {
-    auto parameter_node = node->cast<ParameterPtr>();
-    if (parameter_node == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor parameter node is nullptr";
-      return nullptr;
-    }
-    ShapeVector shape_vector;
-    TypeId data_type = kTypeUnknown;
-    auto status = GetDTAndShapeFromParameter(parameter_node, &data_type, &shape_vector);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor get data_type and shape failed";
-      return nullptr;
-    }
-    if (data_type == kObjectTypeString) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor not support String type";
-      return nullptr;
-    }
-    std::vector<int> lite_shape;
-    std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(lite_shape),
-                   [](int64_t dim) { return static_cast<int>(dim); });
-    auto lite_tensor = new InferTensor(data_type, lite_shape);
-    if (lite_tensor == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor new tensor failed, may be memory is not enough";
-      return nullptr;
-    }
-    anf_tensor_map_[node] = lite_tensor;
-    return lite_tensor;
-  }
-  return nullptr;
-}
-
-Status DefaultGraphCompiler::GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type,
-                                                        ShapeVector *shape_vector) {
-  MS_ASSERT(parameter != nullptr && data_type != nullptr && shape_vector != nullptr);
-  auto abstract_base = parameter->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "abstract base is nullptr";
-    return kLiteError;
-  }
-  auto abstract_tensor = utils::cast<mindspore::abstract::AbstractTensorPtr>(abstract_base);
-  if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "abstract tensor is nullptr";
-    return kLiteError;
-  }
-  return GetDTAndShapeFromAbTensor(abstract_tensor, data_type, shape_vector);
-}
-
-Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract,
-                                                       TypeId *data_type, ShapeVector *shape_vector) {
-  MS_ASSERT(abstract != nullptr && data_type != nullptr && shape_vector != nullptr);
-  if (abstract->element() == nullptr) {
-    MS_LOG(ERROR) << "'element' of abstract is nullptr";
-    return kLiteError;
-  }
-  auto type_ptr = abstract->element()->GetTypeTrack();
-  if (type_ptr == nullptr) {
-    MS_LOG(ERROR) << "type of abstract is nullptr";
-    return kLiteError;
-  }
-  *data_type = type_ptr->type_id();
-  if (!utils::isa<mindspore::abstract::ShapePtr>(abstract->BuildShape())) {
-    MS_LOG(ERROR) << "Shape of Abstract of Parameter should be ShapePtr";
-    return kLiteError;
-  }
-  *shape_vector = utils::cast<mindspore::abstract::ShapePtr>(abstract->BuildShape())->shape();
-  return kSuccess;
 }
 
 std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
@@ -391,48 +371,36 @@ std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector
   for (const auto &node : nodes) {
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      if (cnode == nullptr) {
-        MS_LOG(ERROR) << "cast to CNode with nullptr";
+      auto tmp = TensorAdapter::Convert2Tensor(cnode);
+      if (tmp.empty()) {
+        MS_LOG(ERROR) << "Create tensors from cnode failed, node : " << node->fullname_with_scope();
+        for (auto tensor : tensors) {
+          delete tensor;
+        }
         return {};
       }
-      auto abstract = cnode->abstract();
-      if (abstract == nullptr) {
-        MS_LOG(ERROR) << "get abstract is nullptr for node " << node->fullname_with_scope();
-        return {};
-      }
-      if (abstract->isa<mindspore::abstract::AbstractTuple>()) {
-        auto abstract_tuple = abstract->cast<mindspore::abstract::AbstractTuplePtr>();
-        if (abstract_tuple == nullptr) {
-          MS_LOG(ERROR) << "cast to Abstract Tuple with nullptr";
-          return {};
-        }
-        auto elements = abstract_tuple->elements();
-        for (const auto &element : elements) {
-          if (utils::isa<mindspore::abstract::AbstractTensorPtr>(element)) {
-            auto tensor = TensorAdapter::Convert2Tensor(element);
-            if (tensor == nullptr) {
-              MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
-              return {};
-            }
-            tensors.emplace_back(tensor);
-          }
-        }
-      } else {
-        auto tensor = this->CreateTensor(node);
-        if (tensor == nullptr) {
-          MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
-          return {};
-        }
-        tensors.emplace_back(tensor);
-      }
-    } else {
-      // node must be Parameter
-      auto tensor = this->CreateTensor(node);
+      (void)tensors.insert(tensors.cend(), tmp.begin(), tmp.end());
+      continue;
+    }
+    if (node->isa<Parameter>()) {
+      auto param_node = node->cast<ParameterPtr>();
+      auto tensor = TensorAdapter::Convert2Tensor(param_node);
       if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Create tensor from abstract failed, node : " << node->fullname_with_scope();
+        MS_LOG(ERROR) << "Create tensors from parameter failed, node : " << node->fullname_with_scope();
         return {};
       }
       tensors.emplace_back(tensor);
+      continue;
+    }
+    if (node->isa<ValueNode>()) {
+      auto value_node = node->cast<ValueNodePtr>();
+      auto tensor = TensorAdapter::Convert2Tensor(value_node);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensors from value node failed, node : " << node->fullname_with_scope();
+        return {};
+      }
+      tensors.emplace_back(tensor);
+      continue;
     }
   }
   return tensors;

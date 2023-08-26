@@ -76,7 +76,12 @@ int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::KernelExec *> &k
     for (size_t k = 0; k < in_tensor_size; ++k) {
       auto tensor = kernels[j]->in_tensors()[k];
       if (!tensor->IsGraphInput()) {
-        continue;
+        // for that extendrt create isolated_input_map_ outside of executor
+        auto input = isolate_input_map_->find(tensor);
+        if (input == isolate_input_map_->end() || !input->second->IsGraphInput()) {
+          continue;
+        }
+        tensor = input->second;
       }
       size_t idx = std::find(inputs.begin(), inputs.end(), tensor) - inputs.begin();
       if (idx == inputs.size()) {
@@ -145,7 +150,17 @@ int MindrtExecutor::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
 }
 
 int MindrtExecutor::PreInitActors() {
-  for (auto actor : op_actors_) {
+  // for that extendrt create isolated_input_map_ outside of executor
+  if (!isolate_input_map_->empty()) {
+    for (auto &iter : *isolate_input_map_) {
+      ctx_->SetLinkInfo(iter.second, iter.first);
+    }
+    for (const auto &actor : op_actors_) {
+      actor->set_isolate_input_map(isolate_input_map_);
+    }
+    return RET_OK;
+  }
+  for (const auto &actor : op_actors_) {
     int ret = actor->PreInit(&op_actors_, isolate_input_map_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "IsolateInputData failed, actor aid: " << actor->GetAID();

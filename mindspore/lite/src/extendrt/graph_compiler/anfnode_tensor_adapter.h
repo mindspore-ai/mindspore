@@ -47,6 +47,9 @@ class TensorAdapter {
                                  Format format = DEFAULT_FORMAT);
   static TensorAdapterPtr Create(const mindspore::abstract::AbstractBasePtr &abstract, Format format = DEFAULT_FORMAT);
 
+  static std::vector<std::unique_ptr<InferTensor>> CreateTensorsFromAbstract(const AbstractBasePtr &abstract,
+                                                                             Format format = Format::DEFAULT_FORMAT);
+  static std::vector<InferTensor *> Convert2Tensor(const CNodePtr &cnode, Format format = DEFAULT_FORMAT);
   static InferTensor *Convert2Tensor(const ParameterPtr &param_node, Format format = DEFAULT_FORMAT);
   static InferTensor *Convert2Tensor(const ValueNodePtr &value_node, Format format = DEFAULT_FORMAT);
   static InferTensor *Convert2Tensor(const mindspore::abstract::AbstractTensorPtr &abstract,
