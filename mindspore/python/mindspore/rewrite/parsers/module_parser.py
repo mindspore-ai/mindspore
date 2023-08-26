@@ -81,7 +81,7 @@ class ModuleParser(Parser):
         if level_num > 1:
             for _ in range(level_num - 1):
                 file_path = os.path.dirname(file_path)
-        sys_path_append_ast = ast.parse(f"sys.path.append(r'{file_path}')").body[0]
+        sys_path_append_ast = ast.parse(f"sys.path.insert(0, r'{file_path}')").body[0]
         stree.get_import_asts().append(ast.Import([ast.alias(name='sys', asname=None)]))
         stree.get_import_asts().append(sys_path_append_ast)
 
@@ -101,6 +101,47 @@ class ModuleParser(Parser):
         ModuleParser.save_imports_from_file(stree, net_path)
 
     @staticmethod
+    def get_valid_import_info(import_node, file_path):
+        """Get valid import info while import_node.module is None"""
+        # copy to a new node to avoid origin import_node being modified.
+        import_node_test = copy.deepcopy(import_node)
+        file_path = os.path.dirname(os.path.abspath(file_path))
+        # get real path from import_node.level
+        # from . import xxx: current path
+        # from .. import xxx: last level path
+        if import_node.level > 1:
+            for _ in range(import_node.level - 1):
+                file_path = os.path.dirname(file_path)
+        file_path_tmp = file_path[:]
+        max_level_count = file_path.count('/') + file_path.count('\\') - 1
+        level_count = 0
+        while level_count < max_level_count:
+            file_path_tmp = os.path.dirname(file_path_tmp)
+            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace('/', '.')
+            import_node_test.level = 0
+            import_code = astunparse.unparse(import_node_test).strip()
+            test_code = f"import sys\nsys.path.insert(0, r'{file_path_tmp}')\n{import_code}"
+            try:
+                exec(test_code) # pylint: disable=W0122
+            except ValueError as e:
+                # try upper level to avoid ValueError: attempted relative import beyond top-level package
+                logger.warning(f"For MindSpore Rewrite, in module parser, test import code: "
+                               f"{import_code} failed: {e}. Try upper level.")
+                level_count += 1
+                continue
+            except Exception as e: # pylint: disable=W0703
+                logger.error(f"For MindSpore Rewrite, in module parser, process import code: "
+                             f"{import_code} failed: {e}. Ignore this import code.")
+                return None, None
+            else:
+                # try test code success
+                return import_node_test.module, file_path_tmp
+        # try codes with all level failed
+        logger.error(f"For MindSpore Rewrite, in module parser, test import code: "
+                     f"{astunparse.unparse(import_node).strip()} failed. Ignore this import code.")
+        return None, None
+
+    @staticmethod
     def save_imports_from_file(stree, file_path):
         """Save imports from file"""
         if not os.path.exists(file_path):
@@ -111,17 +152,22 @@ class ModuleParser(Parser):
                 import_nodes = ModuleParser._get_import_node(ast.parse(source_code))
         except RuntimeError as err:
             raise RuntimeError(f"For MindSpore Rewrite, in module parser, get import nodes error: {err}")
-        if import_nodes:
-            for import_node in import_nodes:
-                if isinstance(import_node, ast.ImportFrom):
-                    if import_node.level > 1:
-                        # For ImportFrom with dots(e.g. from ..file import abc), dot will be removed.
-                        # The corresponding path will be saved into sys.path according to `import_node.level`.
-                        ModuleParser.save_file_path_to_sys(stree, import_node.level, file_path)
-                    import_node.level = 0
-                    if import_node.module is None:
-                        import_node = ast.Import(names=import_node.names)
-                stree.get_import_asts().append(import_node)
+        if not import_nodes:
+            return
+        for import_node in import_nodes:
+            if isinstance(import_node, ast.ImportFrom):
+                if import_node.module is None:
+                    import_module, import_path = ModuleParser.get_valid_import_info(import_node, file_path)
+                    if not import_module:
+                        continue
+                    ModuleParser.save_file_path_to_sys(stree, 0, import_path)
+                    import_node.module = import_module
+                elif import_node.level > 1:
+                    # For ImportFrom with dots(e.g. from ..file import abc), dot will be removed.
+                    # The corresponding path will be saved into sys.path according to `import_node.level`.
+                    ModuleParser.save_file_path_to_sys(stree, import_node.level, file_path)
+                import_node.level = 0
+            stree.get_import_asts().append(import_node)
 
     def target(self):
         """Parse target type"""
