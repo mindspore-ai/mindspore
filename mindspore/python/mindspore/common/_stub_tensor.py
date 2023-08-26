@@ -156,6 +156,17 @@ class StubTensor:
             self.stub = None
         return self.tensor
 
+    def __getstate__(self):
+        state = {}
+        value = self.stub.get_value() if self.stub else self.tensor.__getstate__()
+        state["value"] = value
+        return state
+
+    def __setstate__(self, state):
+        value = state.pop("value")
+        self.stub = None
+        self.tensor = Tensor(value, internal=True)
+
 
 def _init_stub_tensor_api():
     """adapt to python tensor and cpp tensor api"""
