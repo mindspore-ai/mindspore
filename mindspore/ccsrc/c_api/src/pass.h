@@ -21,7 +21,7 @@
 #include <map>
 #include "base/base.h"
 #include "c_api/src/common.h"
-#include "c_api/include/base/types.h"
+#include "include/c_api/ms/base/types.h"
 
 bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 

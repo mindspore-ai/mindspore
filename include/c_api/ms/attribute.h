@@ -19,11 +19,11 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "c_api/base/macros.h"
-#include "c_api/base/handle_types.h"
-#include "c_api/base/types.h"
-#include "c_api/base/status.h"
-#include "c_api/include/context.h"
+#include "include/c_api/ms/base/macros.h"
+#include "include/c_api/ms/base/handle_types.h"
+#include "include/c_api/ms/base/types.h"
+#include "include/c_api/ms/base/status.h"
+#include "include/c_api/ms/context.h"
 
 #ifdef __cplusplus
 extern "C" {

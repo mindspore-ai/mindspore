@@ -19,10 +19,10 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "include/node.h"
-#include "include/base/macros.h"
-#include "include/base/status.h"
-#include "include/context.h"
+#include "include/c_api/ms/node.h"
+#include "include/c_api/ms/base/macros.h"
+#include "include/c_api/ms/base/status.h"
+#include "include/c_api/ms/context.h"
 
 #ifdef __cplusplus
 extern "C" {

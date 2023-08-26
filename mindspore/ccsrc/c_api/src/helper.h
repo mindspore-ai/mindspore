@@ -20,7 +20,7 @@
 #include <memory>
 #include "base/base.h"
 #include "c_api/src/resource_manager.h"
-#include "c_api/include/context.h"
+#include "include/c_api/ms/context.h"
 #include "c_api/src/common.h"
 
 Handle GetRawPtr(ResMgrHandle res_mgr, const BasePtr &src_ptr);

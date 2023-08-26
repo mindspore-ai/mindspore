@@ -17,12 +17,12 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "include/graph.h"
-#include "include/node.h"
-#include "include/tensor.h"
-#include "include/base/status.h"
-#include "include/base/handle_types.h"
-#include "include/value.h"
+#include "include/c_api/ms/graph.h"
+#include "include/c_api/ms/node.h"
+#include "include/c_api/ms/tensor.h"
+#include "include/c_api/ms/base/status.h"
+#include "include/c_api/ms/base/handle_types.h"
+#include "include/c_api/ms/value.h"
 
 class TestIfWhile : public ST::Common {
  public:

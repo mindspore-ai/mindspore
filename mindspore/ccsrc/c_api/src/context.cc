@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "c_api/include/context.h"
+#include "include/c_api/ms/context.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
 #include "c_api/src/resource_manager.h"

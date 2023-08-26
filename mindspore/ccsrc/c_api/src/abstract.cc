@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "c_api/include/abstract.h"
+#include "include/c_api/ms/abstract.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"

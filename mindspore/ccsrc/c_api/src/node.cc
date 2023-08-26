@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "c_api/include/node.h"
+#include "include/c_api/ms/node.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
