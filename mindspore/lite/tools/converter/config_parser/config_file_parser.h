@@ -120,11 +120,6 @@ struct TransformQuantString {
   std::string export_precision_mode;
 };
 
-struct AscendQuantString {
-  std::string mode;
-  std::string ascend_backend;
-};
-
 struct DynamicQuantString {
   std::string quant_strategy;
 };
@@ -147,7 +142,6 @@ class ConfigFileParser {
   MicroParamString GetMicroParamString() { return this->micro_param_string_; }
   CpuOptionCfgString GetCpuOptionCfgString() { return this->cpu_option_cfg_string_; }
   TransformQuantString GetTransformQuantString() const { return this->transform_quant_string_; }
-  AscendQuantString GetAscendQuantString() const { return this->ascend_quant_string_; }
   DynamicQuantString GetDynamicQuantString() const { return this->dynamic_quant_string_; }
   GraphKernelString GetGraphKernelString() const { return this->graph_kernel_string_; }
 
@@ -164,7 +158,6 @@ class ConfigFileParser {
   int ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseCpuOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseTransformQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
-  int ParseAscendQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseDynamicQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseGraphKernelString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   void SetVariableParams(const std::shared_ptr<mindspore::ConverterPara> &param,
@@ -184,7 +177,6 @@ class ConfigFileParser {
   MicroParamString micro_param_string_;
   CpuOptionCfgString cpu_option_cfg_string_;
   TransformQuantString transform_quant_string_;
-  AscendQuantString ascend_quant_string_;
   DynamicQuantString dynamic_quant_string_;
   GraphKernelString graph_kernel_string_;
   std::vector<int64_t> inputs_variable_index_;

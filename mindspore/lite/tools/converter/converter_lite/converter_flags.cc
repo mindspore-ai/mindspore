@@ -285,9 +285,18 @@ int Flags::InitOptimize() {
   } else if (this->optimizeStr == "gpu_oriented") {
     this->disableFusion = false;
     this->device = "GPU";
-  } else if (this->optimizeStr == "ascend_oriented") {
+  } else if (this->optimizeStr.find("ascend_oriented") != std::string::npos) {
     this->disableFusion = false;
     this->device = "Ascend";
+    auto string_split = lite::StrSplit(this->optimizeStr, std::string(":"));
+    if (string_split.size() == 1) {
+      this->device_version = "default";
+    } else if (string_split.size() == 2) {
+      this->device_version = string_split[1];
+    } else {
+      MS_LOG(ERROR) << "not support ascend_oriented has more than one device model";
+      return lite::RET_ERROR;
+    }
   } else if (!this->optimizeStr.empty()) {
     std::cerr << "INPUT ILLEGAL: optimize must be none|general|gpu_oriented|ascend_oriented" << std::endl;
     return RET_INPUT_PARAM_INVALID;

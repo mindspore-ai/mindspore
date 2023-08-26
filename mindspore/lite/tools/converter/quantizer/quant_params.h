@@ -96,14 +96,6 @@ enum TargetDevice {
   ASCEND,
 };
 
-enum AscendBackend {
-  ASCEND_ALL,  // no special backend
-  ASCEND310,
-  ASCEND710,
-  ASCEND910A,
-  ASCEND910B,
-};
-
 enum DebugMode {
   FAST,
   DETAIL,
@@ -128,12 +120,6 @@ enum DequantStrategy {
 enum PrecisionMode {
   QUANT,
   FLOAT32,
-};
-
-enum AscendQuantMode {
-  NONE,
-  ACL,
-  GE,
 };
 
 enum DynamicQuantStrategy {
@@ -180,11 +166,6 @@ struct FullQuantParam {
 
 struct TransformQuantParam {
   PrecisionMode precision_mode = QUANT;
-};
-
-struct AscendQuantParam {
-  AscendQuantMode mode = NONE;
-  AscendBackend ascend_backend = ASCEND_ALL;
 };
 
 struct DynamicQuantParam {

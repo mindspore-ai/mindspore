@@ -522,11 +522,6 @@ int ConverterImpl::ParseParam(lite::ConfigFileParser *config_parser, const std::
     MS_LOG(ERROR) << "Parse transform quant param failed.";
     return ret;
   }
-  ret = lite::QuantParamParser::ParseAscendQuant(config_parser->GetAscendQuantString(), &param->ascendQuantParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse ascend quant param failed.";
-    return ret;
-  }
   ret = lite::QuantParamParser::ParseDynamicQuant(config_parser->GetDynamicQuantString(), &param->dynamicQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse dynamic quant param failed.";

@@ -30,7 +30,6 @@ class QuantParamParser {
   static int ParseWeightQuant(const WeightQuantString &weight_quant_string, quant::WeightQuantParam *weight_quant);
   static int ParseTransformQuant(const TransformQuantString &transform_quant_string,
                                  quant::TransformQuantParam *transform_quant);
-  static int ParseAscendQuant(const AscendQuantString &ascend_quant_string, quant::AscendQuantParam *ascend_quant);
   static int ParseDynamicQuant(const DynamicQuantString &dynamic_quant_string, quant::DynamicQuantParam *dynamic_quant);
 
  private:

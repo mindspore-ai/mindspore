@@ -50,6 +50,8 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
 
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims);
 
+int GetFollowedNodePreferredDim(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &dims);
+
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data);
@@ -87,6 +89,9 @@ int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
                       std::vector<std::vector<size_t>> *buckets_data_index);
 
 bool CheckControlFlowType(const AnfNodePtr &node);
+
+bool CheckFollowedNodeInSet(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                            const std::set<PrimitivePtr> &support_primitive_types);
 
 int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                    FuncGraphPtr *func_graph_bak);

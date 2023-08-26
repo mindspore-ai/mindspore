@@ -100,6 +100,16 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
     return RET_OK;
   }
 
+  // Ascend ON_THE_FLY quant only support Gather followed by BatchMatMul or MatMul.
+  if (ascend_backend_ && dequant_strategy_ == ON_THE_FLY && opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+    auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+    if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
+      MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
+                   << cnode->fullname_with_scope() << " dont need weight quant";
+      return RET_OK;
+    }
+  }
+
   // Init weight quant index.
   std::vector<int> weight_indices;
   if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam)) {
@@ -197,7 +207,19 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
     // linear quant
-    auto preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+    int preferred_dim;
+    // For MOE Linear, the preferred dim is get by the batch_matmul node, which is followed by gather node.
+    if (ascend_backend_ && dequant_strategy_ == ON_THE_FLY && opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+      if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
+        MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
+                     << cnode->fullname_with_scope() << " dont need weight quant";
+        return RET_OK;
+      }
+      preferred_dim = GetFollowedNodePreferredDim(func_graph, cnode, ConvertShapeVectorToInt32(tensor_info->shape()));
+    } else {
+      preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+    }
     if (is_mixed_bit_) {
       status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
     } else {
@@ -339,14 +361,26 @@ int WeightQuantizer::InsertAscendDequantNode(const FuncGraphPtr &func_graph, con
     return RET_ERROR;
   } else {
     MS_LOG(INFO) << tensor_name << " insert Ascend AntiQuant node";
-    auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
+    int axis;
+    // For MOE Linear, the preferred dim is get by the batch_matmul node, which is followed by gather node.
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+      if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
+        MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
+                     << cnode->fullname_with_scope() << " dont need weight quant";
+        return RET_OK;
+      }
+      axis = GetFollowedNodePreferredDim(func_graph, cnode, ConvertShapeVectorToInt32(tensor_info->shape()));
+    } else {
+      axis = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+    }
     int status;
     if (type_id == kNumberTypeFloat32) {
       status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32,
-                                                       axis, param_->ascendQuantParam.ascend_backend);
+                                                       axis, param_->device_version);
     } else {
       status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16,
-                                                       axis, param_->ascendQuantParam.ascend_backend);
+                                                       axis, param_->device_version);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";
@@ -454,11 +488,12 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   std::set<PrimitivePtr> support_primitive_types;
   std::set<PrimitivePtr> per_layer_primitive_types;
   if (ascend_backend_) {
-    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul};
+    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimGather};
     if (per_channel_) {
       per_layer_primitive_types = {};
     } else {
-      per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul};
+      per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul,
+                                   prim::kPrimGather};
     }
   } else {
     support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,

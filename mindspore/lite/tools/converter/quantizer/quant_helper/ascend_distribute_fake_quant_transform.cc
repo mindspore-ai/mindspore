@@ -233,33 +233,48 @@ int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &
       return {};
     }
     auto quantization_param = quantization_params.front();
-    quantization_param->AddAttr(kChannelAxis, primitive->GetAttr(kChannelAxis));
+    if (primitive->HasAttr(kChannelAxis)) {
+      quantization_param->AddAttr(kChannelAxis, primitive->GetAttr(kChannelAxis));
+    } else {
+      MS_LOG(ERROR) << "fakequant node dont have kChannelAxis attr";
+      return RET_ERROR;
+    }
 
     // Remove FakeQuant Node
     for (auto &node_user : node_users) {
       manager->SetEdge(node_user.first, node_user.second, input_node);
     }
 
-    const std::set<PrimitivePtr> support_weight_quant_types = {prim::kPrimMatMul, prim::kPrimBatchMatMul};
+    const std::set<PrimitivePtr> support_weight_quant_types = {prim::kPrimMatMul, prim::kPrimBatchMatMul,
+                                                               prim::kPrimGather};
     for (auto &node_user : node_users) {
-      auto matmul_cnode = node_user.first->cast<CNodePtr>();
-      if (!CheckNodeInSet(matmul_cnode, support_weight_quant_types)) {
+      auto follow_cnode = node_user.first->cast<CNodePtr>();
+      if (!CheckNodeInSet(follow_cnode, support_weight_quant_types)) {
         MS_LOG(INFO) << cnode->fullname_with_scope() << " of type: " << primitive->name() << " dont need weight quant.";
         continue;
       }
 
-      auto idx = node_user.second;
       ParameterPtr parameter;
       tensor::TensorPtr weight;
       GetParameterAndTensor(input_node, &parameter, &weight);
-      int preferred_dim = GetPreferredDim(matmul_cnode, idx - 1, ConvertShapeVectorToInt32(weight->shape()));
+      int preferred_dim = GetValue<int64_t>(primitive->GetAttr(kChannelAxis));
+      MS_LOG(INFO) << "cnode : " << cnode->fullname_with_scope() << " preferred_dim is: " << preferred_dim;
 
       auto status = quant_node_pass.QuantFilter(parameter, weight, quant_params, preferred_dim);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "QuantFilter failed : " << status;
         return status;
       }
-      status = weight_quantizer.InsertAscendDequantNode(func_graph, matmul_cnode, parameter, idx, weight);
+
+      // insert Ascend AntiQuant Node
+      TypeId type_id;
+      if (opt::GetDataTypeFromAnfNode(follow_cnode, &type_id) != RET_OK) {
+        MS_LOG(WARNING) << follow_cnode->fullname_with_scope() << " Get data type failed.";
+        return RET_NO_CHANGE;
+      }
+      InsertQuantNodeManager quant_manager;
+      status = quant_manager.InsertAscendAntiQuantNode(func_graph, follow_cnode, node_user.second, kNumberTypeInt8,
+                                                       type_id, preferred_dim, param_->device_version);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertAscendDequantNode failed : " << status;
         return status;
@@ -441,7 +456,7 @@ int AscendDistributeFakeQuantTransform::NeedAscendDistributeFakeQuantTransform(c
   }
   return false;
 }
-int PreProcess(const FuncGraphPtr &func_graph) {
+int AscendDistributeFakeQuantTransform::PreProcess(const FuncGraphPtr &func_graph) {
   auto remove_shared_primitve = RemovePublicPrimitiveInterference();
   if (!remove_shared_primitve.Run(func_graph)) {
     MS_LOG(ERROR) << "RemovePublicPrimitiveInterference";
@@ -454,7 +469,10 @@ int PreProcess(const FuncGraphPtr &func_graph) {
   auto convert_pm = std::make_shared<opt::LitePassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::RemoveLoadPass>());
-  convert_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
+  // To adapt lite split tools, the weight quant will not do matmuladdfusion
+  if (param_->weightQuantParam.dequant_strategy != ON_THE_FLY) {
+    convert_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
+  }
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(func_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";
