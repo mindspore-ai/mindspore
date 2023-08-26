@@ -241,6 +241,7 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::v
     MS_LOG(ERROR) << "Init custom ascend kernel has been not ready.";
     return false;
   }
+  UpdateOutputKernelTensorInfo();
   if (!model_infer_->Inference(inputs_, outputs_)) {
     MS_LOG(ERROR) << "Custom kernel execute failed.";
     return false;

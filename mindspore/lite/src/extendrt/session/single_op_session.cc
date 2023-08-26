@@ -37,6 +37,7 @@
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/utils/func_graph_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "extendrt/utils/tensor_utils.h"
 
 namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
@@ -314,9 +315,21 @@ void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *o
     for (size_t i = 0; i < kernel_args_.outputs.size(); ++i) {
       ShapeVector shape = kernel_args_.outputs[i]->GetShapeVector();
       (*outputs)[i].set_shape(shape);
-      kernel::AddressPtr addr = kernel_args_.outputs[i]->GetHostData();
-      TypeId out_type = kernel_args_.outputs[i]->GetDtype();
-      (*outputs)[i] = tensor::Tensor(out_type, shape, addr->addr, addr->size);
+      kernel::AddressPtr host_addr = kernel_args_.outputs[i]->GetHostData();
+      kernel::AddressPtr device_addr = kernel_args_.outputs[i]->GetData();
+      if (device_addr != nullptr) {
+        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
+        (*outputs)[i] = tensor::Tensor(out_type, shape, nullptr, device_addr->size);
+        (*outputs)[i].set_device_address(std::make_shared<LiteDeviceAddress>(device_addr->addr, device_addr->size));
+      } else if (host_addr != nullptr) {
+        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
+        auto elem_num = kernel_args_.outputs[i]->GetSizeInBytes() / abstract::TypeIdSize(out_type);
+        auto ref_tensor_data =
+          std::make_shared<TensorRefData>(host_addr->addr, elem_num, host_addr->size, shape.size());
+        (*outputs)[i] = tensor::Tensor(out_type, shape, ref_tensor_data);
+        MS_LOG(DEBUG) << "resetting kernel tensor shape to 0 for the next prediction";
+        kernel_args_.outputs[i]->SetShapeVector({0});
+      }
     }
   }
 }
@@ -371,7 +384,11 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
       kernel_args_.outputs[i]->SetData(std::make_shared<kernel::Address>(device_ptr, output.Size()));
       kernel_args_.outputs[i]->SetHostData(nullptr);
     } else {
-      kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(output.data_c(), output.Size()));
+      if (output.Size() == 0) {
+        kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(nullptr, output.Size()));
+      } else {
+        kernel_args_.outputs[i]->SetHostData(std::make_shared<kernel::Address>(output.data_c(), output.Size()));
+      }
       kernel_args_.outputs[i]->SetData(nullptr);
     }
     kernel_args_.outputs[i]->SetDeviceId(output.device_info().device_id_);
