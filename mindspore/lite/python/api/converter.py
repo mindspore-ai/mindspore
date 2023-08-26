@@ -524,9 +524,9 @@ class Converter:
             self._converter.set_no_fusion(False)
             self.device = "Ascend"
             split_str = optimize.split(":")
-            if len(split_str) == 2:
+            if len(split_str) == 1:
                 device_version = "default"
-            elif len(split_str) == 1:
+            elif len(split_str) == 2:
                 device_version = split_str[1]
             else:
                 raise ValueError(f"device_version must be single")
