@@ -32,8 +32,8 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-context.set_context(mode=context.GRAPH_MODE)
 
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -80,6 +80,12 @@ class GradWrap(nn.Cell):
 
 
 def test_auto_parallel_arithmetic():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -97,7 +103,7 @@ def test_auto_parallel_arithmetic():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -107,6 +113,12 @@ def test_auto_parallel_arithmetic():
 
 
 def test_auto_parallel_arithmetic_model():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile and train success
+    """
+
     class NetOneHot(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -125,7 +137,7 @@ def test_auto_parallel_arithmetic_model():
 
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                      dataset_strategy="data_parallel")
+                                      search_mode="dynamic_programming",dataset_strategy="data_parallel")
     net = NetOneHot()
 
     x = Tensor(np.ones([8, 32]), dtype=ms.float32)

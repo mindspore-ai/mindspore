@@ -25,6 +25,7 @@ from parallel.utils.utils import compile_net
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 x_ = (Tensor(np.random.normal(size=[8, 8, 8])),
       Tensor(np.random.normal(size=[8, 8, 8])),
       Tensor(np.random.normal(size=[8, 8, 8])))
@@ -45,7 +46,8 @@ def test_addn_auto_parallel():
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net()
     compile_net(net, x_)
 

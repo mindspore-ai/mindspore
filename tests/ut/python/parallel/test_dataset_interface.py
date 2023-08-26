@@ -31,6 +31,7 @@ from tests.dataset_mock import MindData
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -77,8 +78,8 @@ def loss_scale_manager_common(strategy1):
     momentum = 0.9
     epoch_size = 2
 
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=8,
-                                      dataset_strategy="data_parallel")
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=8, dataset_strategy="data_parallel")
     predict = Tensor(np.ones([32, 128]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)

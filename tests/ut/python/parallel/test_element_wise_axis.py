@@ -60,4 +60,4 @@ def test_element_wise_ops_with_axis():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("Cholesky", k) is not None:
-            assert v == [[2, 4, 1, 1],]
+            assert v == [[2, 4, 1, 1], ]

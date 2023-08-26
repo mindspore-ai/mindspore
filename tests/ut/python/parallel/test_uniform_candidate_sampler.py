@@ -126,21 +126,39 @@ def test_uniform_candidate_sampler_full_1d_unqiue_false():
 
 
 def test_uniform_candidate_sampler_auto_parllel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(_w1, num_true=16, num_sampled=16, unique=False, range_max=20, seed=1,
               remove_accidential=False, strategy1=None)
     compile_net(net)
 
 
 def test_uniform_candidate_sampler_auto_parllel_unqiue_true():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(_w1, num_true=16, num_sampled=16, unique=True, range_max=20, seed=1,
               remove_accidential=False, strategy1=None)
     compile_net(net)
 
 
 def test_uniform_candidate_sampler_auto_parllel_remove_true():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(_w1, num_true=16, num_sampled=16, unique=True, range_max=20, seed=1,
               remove_accidential=True, strategy1=None)
     compile_net(net)

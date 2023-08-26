@@ -601,7 +601,6 @@ def test_stridedslice_auto_parallel():
     compile_net(net, _x1, _b1)
 
 
-
 def test_stridedslice_begin_mask_no_0_auto_parallel():
     """
     Feature: distribute operator stridedslice in auto parallel mode.

@@ -31,6 +31,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.communication.management import GlobalComm, init
 from tests.dataset_mock import MindData
+
 context.set_context(device_target="Ascend")
 GlobalComm.CHECK_ENVS = False
 init("hccl")

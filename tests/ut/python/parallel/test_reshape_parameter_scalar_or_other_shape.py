@@ -91,11 +91,11 @@ def test_reshape_parameter_first_dim_can_div_by_dev_num():
     strategy1 = ((1, 1), (1, 1))
     strategy2 = ((1, 1),)
     input_x = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    weight = Tensor(np.ones([32*64]), dtype=ms.float32)
+    weight = Tensor(np.ones([32 * 64]), dtype=ms.float32)
     dst_shape = (32, 64)
     net = ReshapeNet(weight, dst_shape, strategy1, strategy2)
 
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('Add-0', ['AllGather-0'])
-    assert validator.check_parameter_shape('w1', [4*64])
+    assert validator.check_parameter_shape('w1', [4 * 64])

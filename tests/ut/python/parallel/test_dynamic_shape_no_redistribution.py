@@ -152,7 +152,7 @@ def test_shape_sub():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy1 = ((1, 1),)         # stridedslice
+    strategy1 = ((1, 1),)  # stridedslice
     strategy2 = ((1, 1), (1, 1))  # gather
     strategy3 = ((1, 1), (1, 8))  # matmul1
     strategy4 = ((1, 8), (8, 1))  # matmul2

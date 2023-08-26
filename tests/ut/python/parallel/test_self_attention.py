@@ -144,8 +144,13 @@ def test_self_attention_dp():
 
 
 def test_self_attention_auto():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = GradWrap(NetWithLoss(
         Net(None, None, None, None, None)))
 

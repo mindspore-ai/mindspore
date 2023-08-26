@@ -27,6 +27,7 @@ from ....train_step_wrap import train_step_with_loss_warp
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class MatMulCell(nn.Cell):
     def __init__(self):
         super(MatMulCell, self).__init__()
@@ -34,11 +35,13 @@ class MatMulCell(nn.Cell):
         self.matmul0 = P.MatMul(transpose_b=True)
         self.weight = Parameter(initializer("ones", [64, 128], ms.float32), name="weight")
         self.relu = P.ReLU().shard(((1, 8),))
+
     def construct(self, x):
         x = self.matmul0(x, self.weight)
         x = self.reshape(x, (32, 128))
         x = self.relu(x)
         return x
+
 
 class DenseMutMulNet(nn.Cell):
     def __init__(self, mp_comm_recompute=True, recompute_slice_activation=False):
@@ -73,6 +76,7 @@ class DenseMutMulNet(nn.Cell):
         s = self.fc4(s)
         return s
 
+
 def compile_net(mp_comm_recompute, recompute_slice_activation):
     _Context().set_backend_policy("vm")
     context.set_context(mode=context.GRAPH_MODE)
@@ -85,6 +89,7 @@ def compile_net(mp_comm_recompute, recompute_slice_activation):
     _cell_graph_executor.compile(net, input_, label)
     _Context().set_backend_policy("ge")
 
+
 def test_dmnet_train_step_mp_recompute():
     """
     Feature: test recompute interface.
@@ -93,6 +98,7 @@ def test_dmnet_train_step_mp_recompute():
     """
     compile_net(False, False)
 
+
 def test_dmnet_train_step_recompute_activation_slice():
     """
     Feature: test recompute interface.
@@ -100,6 +106,7 @@ def test_dmnet_train_step_recompute_activation_slice():
     Expectation: compile without error.
     """
     compile_net(True, True)
+
 
 def test_dmnet_train_step_mp_recompute_recompute_activation_slice():
     """

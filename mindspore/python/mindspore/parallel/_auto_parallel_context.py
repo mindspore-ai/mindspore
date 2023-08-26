@@ -1277,8 +1277,8 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_load_file: ""
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
-    - search_mode: dynamic_programming
-    - auto_parallel_search_mode: dynamic_programming
+    - search_mode: 'recursive_programming
+    - auto_parallel_search_mode: 'recursive_programming
     - sharding_propagation: False
     - pipeline_stages: 0
     - gradient_accumulation_shard: True

@@ -29,8 +29,8 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-context.set_context(mode=context.GRAPH_MODE)
 
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -71,7 +71,7 @@ def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
     net.set_train()
     if auto:
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     _cell_graph_executor.compile(net, x, y)
@@ -146,6 +146,7 @@ def test_UnsortedSegmentMax_model_parallel_index_vector_slice_3d():
     strategy2 = (2,)
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
+
 def test_UnsortedSegmentMax_model_parallel_float16():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float16)
@@ -154,6 +155,7 @@ def test_UnsortedSegmentMax_model_parallel_float16():
     strategy1 = (2, 1, 2)
     strategy2 = (2,)
     compile_graph(x, y, num_segments, strategy1, strategy2)
+
 
 def test_UnsortedSegmentMax_model_parallel_int32():
     context.set_auto_parallel_context(device_num=4, global_rank=0)

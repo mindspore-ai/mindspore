@@ -22,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -321,9 +322,15 @@ def test_gathernd_model_parallel9():
     net = Net3(w1_shape, indices_shape, strategy1, strategy2, strategy3)
     compile_net(net)
 
+
 def test_gathernd_auto_parallel():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     w1_shape = [8, 16, 32]
     indices_shape = [8, 4, 2, 1]
     net = Net(w1_shape, indices_shape)
@@ -331,8 +338,13 @@ def test_gathernd_auto_parallel():
 
 
 def test_gathernd_auto_parallel2():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     w1_shape = [8, 16, 32]
     indices_shape = [8, 4, 2, 2]
     net = Net(w1_shape, indices_shape)
@@ -340,8 +352,13 @@ def test_gathernd_auto_parallel2():
 
 
 def test_gathernd_auto_parallel3():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     w1_shape = [8, 16, 32]
     indices_shape = [8, 4, 2, 3]
     net = Net(w1_shape, indices_shape)

@@ -29,7 +29,9 @@ from tests.dataset_mock import MindData
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 context.set_context(mode=context.GRAPH_MODE)
+
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
@@ -63,6 +65,7 @@ class PReLUNet(nn.Cell):
     def construct(self, x):
         x = self.prelu(x)
         return x
+
 
 def reshape_common(parallel_mode):
     learning_rate = 0.1

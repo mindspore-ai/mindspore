@@ -31,7 +31,7 @@ class Net(Cell):
             conv_out_channel,
             reducemin_keep_dims=False,
             reducemin_axis=-1
-        ):
+    ):
         super().__init__()
         self.conv = Conv2d(
             in_channels=conv_in_channel,

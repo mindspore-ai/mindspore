@@ -30,6 +30,7 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -52,6 +53,7 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+
 class NetWithLossTwoInput(nn.Cell):
     def __init__(self, network):
         super(NetWithLossTwoInput, self).__init__()
@@ -61,6 +63,7 @@ class NetWithLossTwoInput(nn.Cell):
     def construct(self, x, y):
         predict = self.network(x, y)
         return self.loss(predict)
+
 
 class GradWrapTwoInput(nn.Cell):
     def __init__(self, network):
@@ -92,6 +95,7 @@ def test_reshape_reshape():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -116,6 +120,7 @@ def test_reshape_auto_1():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -142,6 +147,7 @@ def test_reshape_auto_2():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -174,6 +180,7 @@ def test_reshape_auto_3():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -206,6 +213,7 @@ def test_reshape_auto_4():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -238,6 +246,7 @@ def test_reshape_auto_5():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -268,6 +277,7 @@ def test_reshape_auto_6():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -275,21 +285,21 @@ def test_reshape_auto_6():
             self.mul = P.Mul().shard(((8, 1, 1), (8, 1, 1)))
             self.reshape = P.Reshape()
             self.reduce_sum = P.ReduceSum()
-            self.wide_w = Parameter(Tensor(np.ones([8, 1024*8, 64]), dtype=ms.float32), name="weight")
+            self.wide_w = Parameter(Tensor(np.ones([8, 1024 * 8, 64]), dtype=ms.float32), name="weight")
 
         def construct(self, x, y):
-            mask = self.reshape(y, (8, 1024*8, 1))
+            mask = self.reshape(y, (8, 1024 * 8, 1))
             w_id = self.relu(x)
             wx = self.mul(w_id, mask)
             wide_out = self.reshape(self.reduce_sum(wx, 1), (-1, 1))
             deep_id = x + self.wide_w
             vx = self.mul(deep_id, mask)
-            deep_in = self.reshape(vx, (-1, 1024*8*64))
+            deep_in = self.reshape(vx, (-1, 1024 * 8 * 64))
             out = wide_out + deep_in
             return out
 
-    x = Tensor(np.ones([8, 1024*device_num, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([8, 1024*device_num]), dtype=ms.float32)
+    x = Tensor(np.ones([8, 1024 * device_num, 1]), dtype=ms.float32)
+    y = Tensor(np.ones([8, 1024 * device_num]), dtype=ms.float32)
     net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
     compile_graph_two_input(net, device_num, x, y)
 
@@ -301,6 +311,7 @@ def test_reshape_depend_reshape():
     Expectation: compile with error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -337,6 +348,7 @@ def test_reshape_depend_reshape():
     with pytest.raises(RuntimeError):
         compile_graph_two_input(net, device_num, x, y)
 
+
 def test_reshape_auto_8():
     """
     Feature: Sharding propagation for common parameter being used by multiple ops.
@@ -344,6 +356,7 @@ def test_reshape_auto_8():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -364,6 +377,7 @@ def test_reshape_auto_8():
     with pytest.raises(RuntimeError):
         compile_graph(net, device_num, x)
 
+
 def test_reshape_auto_9():
     """
     Feature: Sharding propagation for common parameter being used by multiple ops.
@@ -371,6 +385,7 @@ def test_reshape_auto_9():
     Expectation: compile done without error.
     """
     device_num = 8
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()

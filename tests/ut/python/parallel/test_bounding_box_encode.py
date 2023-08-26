@@ -34,6 +34,7 @@ class Net(Cell):
     """
     Create the test net.
     """
+
     def __init__(self, strategy=None):
         super(Net, self).__init__()
         self.bbox_encode = P.BoundingBoxEncode().shard(strategy)
@@ -67,7 +68,8 @@ def test_bounding_box_encode_auto_parallel():
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net()
     compile_net(net, _anchor_box, _gt_boxes)
 

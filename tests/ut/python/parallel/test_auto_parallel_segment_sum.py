@@ -52,6 +52,12 @@ class GradWrap(nn.Cell):
 
 
 def test_auto_parallel_unsortedsegmentsum():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self, num_segments):
             super().__init__()
@@ -64,7 +70,7 @@ def test_auto_parallel_unsortedsegmentsum():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
     x = Tensor(np.random.rand(16, 16, 32, 64), dtype=ms.float32)
     indices = Tensor(np.random.randint(16, size=(16, 16)))

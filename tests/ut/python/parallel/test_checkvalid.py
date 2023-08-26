@@ -111,7 +111,8 @@ def test_check_valid_auto_parallel():
     Description:
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      full_batch=True)
     strategy = None
     net = Net(_w, strategy)
     compile_net(net)

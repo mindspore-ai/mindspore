@@ -39,6 +39,7 @@ GlobalComm.CHECK_ENVS = False
 init()
 GlobalComm.CHECK_ENVS = True
 
+
 def weight_variable():
     return TruncatedNormal(0.02)
 
@@ -287,8 +288,15 @@ class DatasetLenet():
 
 
 def test_train_32k_8p(batch_size=32, num_classes=32768):
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     dev_num = 8
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=dev_num)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)
@@ -662,8 +670,15 @@ def train_32k_8p_fusion2(batch_size=32, num_classes=32768):  # 1048576 #131072 #
 
 
 def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #32768 #8192
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     dev_num = 8
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=dev_num)
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
@@ -689,11 +704,18 @@ def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #327
 
 
 def test_train_8k_8p_gpu(batch_size=32, num_classes=8192):
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     dev_num = 8
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=dev_num)
     set_algo_parameters(elementwise_op_strategy_follow=True)
-    #set_algo_parameters(enable_algo_approxi=True)
+    # set_algo_parameters(enable_algo_approxi=True)
     resset_op_id()
     np.random.seed(6)
     input_np = np.ones([batch_size, 3, 224, 224]).astype(np.float32)
@@ -715,10 +737,18 @@ def test_train_8k_8p_gpu(batch_size=32, num_classes=8192):
         elif re.search('ReduceSum-op', k) is not None:
             assert v == [[1, dev_num]]
 
+
 def test_train_8k_8p_gpu_approxi(batch_size=32, num_classes=8192):
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     dev_num = 8
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=dev_num)
     set_algo_parameters(enable_algo_approxi=True)
     resset_op_id()
     np.random.seed(6)
@@ -741,10 +771,18 @@ def test_train_8k_8p_gpu_approxi(batch_size=32, num_classes=8192):
         elif re.search('ReduceSum-op', k) is not None:
             assert v == [[1, dev_num]]
 
+
 def test_train_4k_8p_gpu(batch_size=32, num_classes=4096):
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     dev_num = 8
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming", 
+                                      device_num=dev_num)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)

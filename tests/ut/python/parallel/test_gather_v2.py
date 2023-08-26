@@ -49,6 +49,7 @@ class GradWrap(nn.Cell):
     def construct(self, x, y):
         return grad_all(self.network)(x, y)
 
+
 class Net(nn.Cell):
     def __init__(self, axis=0, strategy1=None, strategy2=None, shape=None, target="", gather_out_strategy=None):
         super().__init__()
@@ -64,10 +65,13 @@ class Net(nn.Cell):
         out = self.mul(out, y)
         return out
 
-def compile_graph(net, device_num, parallel_mode, x, y):
-    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+
+def compile_graph(net, device_num, parallel_mode, x, y, search_mode="dynamic_programming"):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode,
+                                      search_mode=search_mode)
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
+
 
 def test_gatherv2_semi_auto0():
     """
@@ -124,6 +128,7 @@ def test_gatherv2_semi_auto3():
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     compile_graph(net, 8, "semi_auto_parallel", x, y)
 
+
 def test_gatherv2_semi_auto4():
     """
     Feature: distribute operator gather in auto parallel.
@@ -136,6 +141,7 @@ def test_gatherv2_semi_auto4():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     compile_graph(net, 8, "semi_auto_parallel", x, y)
+
 
 def test_gatherv2_semi_auto5():
     """

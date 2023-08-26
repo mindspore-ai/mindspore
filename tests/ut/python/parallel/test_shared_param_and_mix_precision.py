@@ -31,6 +31,7 @@ def setup_function():
 
 class Net1(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2):
         super(Net1, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -47,6 +48,7 @@ class Net1(nn.Cell):
 
 class Net2(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2):
         super(Net2, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -62,11 +64,11 @@ class Net2(nn.Cell):
 
 
 def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None, enable_parallel_optimizer=False,
-                              gradient_fp32_sync=True):
+                              gradient_fp32_sync=True, search_mode="dynamic_programming"):
     context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num,
                                       enable_parallel_optimizer=enable_parallel_optimizer,
-                                      gradient_fp32_sync=gradient_fp32_sync)
+                                      gradient_fp32_sync=gradient_fp32_sync, search_mode=search_mode)
     inputs = Tensor(np.ones([32, 48]).astype(np.float32))
     label = Tensor(np.zeros([32, 64]).astype(np.float32))
     net = net(strategy1, strategy2)

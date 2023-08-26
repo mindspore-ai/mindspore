@@ -786,7 +786,7 @@ def test_assign_sub():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x,)
+            predict = self.network(x, )
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):
@@ -839,7 +839,7 @@ def test_assign_add():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x,)
+            predict = self.network(x, )
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):
@@ -892,7 +892,7 @@ def test_assign():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x,)
+            predict = self.network(x, )
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):

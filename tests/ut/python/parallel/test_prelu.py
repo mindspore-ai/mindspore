@@ -30,6 +30,7 @@ def setup_function():
 
 grad_all = C.GradOperation(get_all=True)
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -40,6 +41,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -47,6 +49,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y):
         return grad_all(self.network)(x, y)
+
 
 class Net(nn.Cell):
     def __init__(self, strategy=None):
@@ -57,9 +60,11 @@ class Net(nn.Cell):
         out = self.prelu(x, y)
         return out
 
+
 def compile_net(net, x, y):
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
+
 
 def common_train_compile(input1_shape, input2_shape, strategy=None):
     x = Tensor(np.random.rand(*input1_shape), dtype=ms.float32)
@@ -67,6 +72,7 @@ def common_train_compile(input1_shape, input2_shape, strategy=None):
     net = GradWrap(NetWithLoss(Net(strategy)))
     compile_net(net, x, w)
     context.reset_auto_parallel_context()
+
 
 def test_prelu_parallel_success1():
     """
@@ -89,6 +95,7 @@ def test_prelu_parallel_success2():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     common_train_compile((4, 4, 32, 64), (4,), ((2, 1, 4, 8), (1,)))
 
+
 def test_prelu_parallel_success3():
     """
     Feature: distribute operator prelu in auto parallel.
@@ -110,12 +117,14 @@ def test_prelu_parallel_success4():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     common_train_compile((4, 16, 32, 64), (1,), ((2, 4, 4, 2), (1,)))
 
+
 def test_matmul_prelu_parallel_success():
     """
     Feature: distribute operator prelu in auto parallel.
     Description: matmul-prelu net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class NetWithLoss3(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss3, self).__init__()

@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -167,15 +168,25 @@ def test_concat_no_strategy():
 
 
 def test_concat_auto_parallel():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     net = Net2(_w2)
     compile_net(net)
 
 
 def test_concat_auto_parallel2():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     strategy1 = None
     strategy2 = None
     net = Net2(_w3, strategy1, strategy2, axis=1)
@@ -183,7 +194,12 @@ def test_concat_auto_parallel2():
 
 
 def test_concat_auto_parallel_3_tensor():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=8, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8, global_rank=0)
     net = Net3(w1, w2, w3)
     compile_net(net)

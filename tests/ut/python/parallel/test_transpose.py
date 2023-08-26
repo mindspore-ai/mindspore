@@ -25,6 +25,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)

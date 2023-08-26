@@ -98,7 +98,8 @@ def test_batch_matmul_auto_parallel():
     Description: mul-batch_matmul net in auto parallel.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16,
+                                      global_rank=0)
     net = Net(_w1, _w2, False)
     compile_net(net)
 

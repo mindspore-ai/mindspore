@@ -23,6 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -49,7 +50,7 @@ class SubNet(Cell):
         super().__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
-        self.weight = Parameter(Tensor(np.ones([128, 128]), dtype=ms.float32), "matmul_w"+str(index))
+        self.weight = Parameter(Tensor(np.ones([128, 128]), dtype=ms.float32), "matmul_w" + str(index))
 
     def construct(self, x):
         out = self.matmul(x, self.weight)
@@ -94,6 +95,12 @@ def compile_net(net):
 
 
 def test_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16,
+                                      global_rank=0)
     net = Net(_w1, 3)
     compile_net(net)

@@ -84,6 +84,7 @@ def test_slice_no_fully_fetch_split_error():
     with pytest.raises(RuntimeError):
         compile_net(net)
 
+
 def test_slice_parameter():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 4, 1), (1, 4, 2))
@@ -133,6 +134,12 @@ def test_stridedslice_no_strategy():
 
 
 def test_slice_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net2(_w2, (0, 0, 0), (32, 64, 1))
     compile_net(net)

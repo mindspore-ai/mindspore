@@ -25,6 +25,7 @@ from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell
 import mindspore.common.lazy_inline as lazy_inline
 
+
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data

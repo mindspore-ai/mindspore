@@ -37,7 +37,8 @@ if __name__ == "__main__":
     full_batch = False
     if os.getenv("MS_ROLE") == "MS_WORKER":
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                          full_batch=True, gradients_mean=True)
+                                          full_batch=True, gradients_mean=True,
+                                          search_mode="dynamic_programming")
         full_batch = True
 
     dataset = create_dataset(batch_size=8, resize_height=32, resize_width=32, scale=30.0, full_batch=full_batch,

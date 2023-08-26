@@ -41,6 +41,7 @@ class NetMatMul(nn.Cell):
     def construct(self, x, y):
         return self.matmul(x, y)
 
+
 class NetRecursive(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -51,6 +52,7 @@ class NetRecursive(nn.Cell):
         out1 = self.matmul_net(x, y)
         out2 = self.matmul_net(x, y)
         return self.mul_net(out1, out2)
+
 
 def compile_net(net, x, y):
     net.set_train()
@@ -64,7 +66,7 @@ def test_batch_parallel_matmul():
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = NetMatMul()
     net.set_data_parallel()
 
@@ -81,7 +83,7 @@ def test_batch_parallel_mul():
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = NetMatMul()
     net.set_data_parallel()
 
@@ -98,7 +100,7 @@ def test_batch_parallel_recursive():
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = NetRecursive()
     net.set_data_parallel()
 
@@ -116,7 +118,7 @@ def test_batch_parallel_with_user_strategy():
                  for those who do not, using batch parallel mode to generate strategies
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = NetMatMul(strategy=((1, 8), (8, 1)))
     net.set_data_parallel()
 

@@ -37,7 +37,7 @@ class SubNet(nn.Cell):
         super().__init__()
         self.matmul = P.BatchMatMul()
         self.relu = P.ReLU()
-        self.weight = Parameter(Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32), "matmul_w"+str(index))
+        self.weight = Parameter(Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32), "matmul_w" + str(index))
 
     def construct(self, x):
         out = self.matmul(x, self.weight)
@@ -128,7 +128,13 @@ class TrainStepWarp(nn.Cell):
 
 
 def test_double_subgraphs():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     _set_algo_single_loop(True)
     net = TrainStepWarp(NetWithLoss(Net()))
     _set_multi_subgraphs()

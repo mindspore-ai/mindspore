@@ -1,4 +1,3 @@
-
 # Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -201,7 +200,7 @@ def test_softmax_auto_parallel():
     Expectation: compile done without error.
     """
     context.set_auto_parallel_context(
-        parallel_mode="auto_parallel", device_num=16, global_rank=0)
+        parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16, global_rank=0)
     net = Net(_w)
     compile_net(net)
 

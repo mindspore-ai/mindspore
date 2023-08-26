@@ -25,6 +25,7 @@ from mindspore.ops import operations as P
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class Net(nn.Cell):
     def __init__(self, wi, wo, stra1=None, stra2=None, stra3=None, stra4=None,
                  stra5=None, stra6=None):
@@ -44,13 +45,14 @@ class Net(nn.Cell):
         output = self.relu(x)
         trans_out = self.transpose(output, (2, 0, 3, 1))
         output = self.reshape(trans_out,
-                              (trans_out.shape[0], trans_out.shape[1]*trans_out.shape[2], trans_out.shape[3]))
+                              (trans_out.shape[0], trans_out.shape[1] * trans_out.shape[2], trans_out.shape[3]))
         output = self.batch_mm(output, self.wi)
         output = self.batch_mm2(output, self.wo)
         output = self.reshape2(output, trans_out.shape)
         output = self.transpose2(output, (1, 3, 0, 2))
         output = self.relu2(output)
         return output
+
 
 _x = Tensor(np.ones([32, 16, 48, 128]), dtype=ms.float32)
 _wi = Tensor(np.ones([48, 16, 64]), dtype=ms.float32)

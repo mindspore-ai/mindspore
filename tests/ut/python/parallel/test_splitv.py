@@ -66,7 +66,8 @@ def test_splitv_auto_parallel():
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(SIZE_SPLIT, 0, NUM_SPLIT)
     compile_net(net, input_x_tensor_)
 
@@ -77,7 +78,8 @@ def test_splitv_auto_parallel_with_parameter():
     Description: auto parallel with parameter input
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = NetWithParameter(SIZE_SPLIT, 2, NUM_SPLIT)
     x = Tensor(np.ones([8, 8, 3]), ms.float32)
     compile_net(net, x)

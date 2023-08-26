@@ -26,6 +26,7 @@ from parallel.utils.utils import compile_net
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 B = 8
 P = 8
 R = 8
@@ -53,7 +54,8 @@ def test_cdist_2d_auto_parallel():
     Description: auto parallel with 2d inputs
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net()
     compile_net(net, input_x_2d_, input_y_2d_)
 
@@ -101,7 +103,8 @@ def test_cdist_3d_auto_parallel():
     Description: auto parallel with 3d inputs
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net()
     compile_net(net, input_x_3d_, input_y_3d_)
 

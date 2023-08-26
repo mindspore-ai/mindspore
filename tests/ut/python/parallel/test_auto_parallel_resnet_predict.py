@@ -27,9 +27,17 @@ GlobalComm.CHECK_ENVS = False
 init()
 GlobalComm.CHECK_ENVS = True
 
+
 def test_train_32k_8p(batch_size=32, num_classes=32768):
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile and predict success
+    """
+
     dev_num = 8
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                                      search_mode="dynamic_programming", device_num=dev_num, full_batch=True)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     np.random.seed(6)
     input_np = Tensor(np.ones([batch_size, 3, 224, 224]).astype(np.float32))

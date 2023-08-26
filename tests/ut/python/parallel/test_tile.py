@@ -56,6 +56,7 @@ class Net2(Cell):
         out = self.tile(out, (8, 8, 4, 2))
         return out
 
+
 class Net3(Cell):
     def __init__(self, weight, strategy1=None, strategy2=None, is_parameter=True):
         super().__init__()
@@ -154,7 +155,13 @@ def test_tile_no_strategy():
 
 
 def test_tile_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net2(_w2)
     compile_net(net)
 

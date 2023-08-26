@@ -61,6 +61,7 @@ class GradWrap3(nn.Cell):
     def construct(self, x, y, bias):
         return grad_all(self.network)(x, y, bias)
 
+
 class GradWrap4(nn.Cell):
     def __init__(self, network):
         super(GradWrap4, self).__init__()
@@ -69,13 +70,16 @@ class GradWrap4(nn.Cell):
     def construct(self, x, y):
         return grad_all(self.network)(x, y)
 
+
 def compile_net(net, x, y, b):
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
 
+
 def compile_net_no_bias(net, x, y):
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
+
 
 def test_no_grad():
     class Net(nn.Cell):

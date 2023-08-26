@@ -39,8 +39,13 @@ class Net(nn.Cell):
 
 
 def test_inference_phase():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     set_cost_model_context(run_phase=1)
 
     net = Net(512, 128)

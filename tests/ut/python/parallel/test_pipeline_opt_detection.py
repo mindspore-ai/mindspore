@@ -23,6 +23,7 @@ from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved
 
+
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data

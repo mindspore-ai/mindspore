@@ -32,6 +32,7 @@ def setup_function():
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.fc1 = nn.Dense(128, 768, activation='relu')
@@ -57,6 +58,7 @@ class Net(nn.Cell):
 
 class Net2(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2):
         super(Net2, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -72,6 +74,7 @@ class Net2(nn.Cell):
 
 class Net3(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2):
         super(Net3, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -87,6 +90,7 @@ class Net3(nn.Cell):
 
 class Net4(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2):
         super(Net4, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -100,9 +104,10 @@ class Net4(nn.Cell):
         return x - y
 
 
-def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None):
+def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None, search_mode="dynamic_programming"):
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num, enable_parallel_optimizer=True,
+                                      search_mode=search_mode)
     inputs = Tensor(np.ones([32, 48]).astype(np.float32))
     label = Tensor(np.zeros([32, 16]).astype(np.float32))
     net = net(strategy1, strategy2)
@@ -164,6 +169,7 @@ def test_auto_parallel_momentum_6():
     assert param_dict["weight1"][5].startswith(str(param_shard_group_size))
     assert param_dict["weight2"][5].startswith(str(param_shard_group_size))
 
+
 def test_default_threshold():
     """
     Feature: auto-parallel-optimizer(I4S85V)
@@ -175,6 +181,7 @@ def test_default_threshold():
     param_dict = train_network.parameter_layout_dict
     # validate opt_shard_group
     assert param_dict["weight2"][5]
+
 
 def test_user_define_threshold():
     """

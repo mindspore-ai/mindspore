@@ -100,6 +100,12 @@ def test_range2():
 
 
 def test_range3():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=dev_num, global_rank=2)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming",
+                                      device_num=dev_num, global_rank=2)
     net = Net(_w1, 0.0, 4.0, 0.5)
     compile_net(net)

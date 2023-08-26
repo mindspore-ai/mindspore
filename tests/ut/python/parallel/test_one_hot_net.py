@@ -39,7 +39,6 @@ def setup_function():
 
 grad_all = C.GradOperation(get_all=True)
 
-
 device_num = 16
 device_id = 2
 

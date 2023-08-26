@@ -135,6 +135,7 @@ def test_matmul_log():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
+
 def test_matmul_abs():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -159,6 +160,7 @@ def test_matmul_abs():
     y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
     b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
     compile_net(net, x, y, b)
+
 
 def test_matmul_sign():
     class Net(nn.Cell):
@@ -210,6 +212,7 @@ def test_matmul_floor():
     y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
     b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
     compile_net(net, x, y, b)
+
 
 def test_matmul_round():
     class Net(nn.Cell):
@@ -469,6 +472,7 @@ def test_matmul_cosh():
     y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
     b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
     compile_net(net, x, y, b)
+
 
 def test_matmul_erf():
     class Net(nn.Cell):
@@ -967,6 +971,7 @@ def test_matmul_hshrink():
     Description: matmul-hshrink-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -998,6 +1003,7 @@ def test_matmul_hsigmoid():
     Description: matmul-hsigmoid-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1029,6 +1035,7 @@ def test_matmul_is_finite():
     Description: matmul-is_finite-cast-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1062,6 +1069,7 @@ def test_matmul_mish():
     Description: matmul-mish-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1093,6 +1101,7 @@ def test_matmul_rint():
     Description: matmul-rint-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1124,6 +1133,7 @@ def test_selu_mish():
     Description: matmul-selu-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1155,6 +1165,7 @@ def test_matmul_soft_shrink():
     Description: matmul-soft_shrink-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1186,6 +1197,7 @@ def test_matmul_erfinv():
     Description: matmul-squared_difference-matmul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1217,6 +1229,7 @@ def test_Bessel_ops():
     Description: sharding propagation for bessel ops
     Expectation: run successfully
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
@@ -1241,8 +1254,8 @@ def test_Bessel_ops():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("BesselI1", k) is not None:
-            assert v == [[4, 2],]
+            assert v == [[4, 2], ]
         elif re.search("BesselJ0", k) is not None:
-            assert v == [[4, 2],]
+            assert v == [[4, 2], ]
         elif re.search("BesselJ1", k) is not None:
-            assert v == [[4, 2],]
+            assert v == [[4, 2], ]

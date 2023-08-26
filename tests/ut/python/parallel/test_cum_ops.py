@@ -70,14 +70,14 @@ def test_cum_ops():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("CumProd", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
         elif re.search("Cummax", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
         elif re.search("Cummin", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
         elif re.search("ReverseV2", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
         elif re.search("Lgamma", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
         elif re.search("Trunc", k) is not None:
-            assert v == [[2, 2, 1, 2],]
+            assert v == [[2, 2, 1, 2], ]
