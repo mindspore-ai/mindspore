@@ -1326,7 +1326,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
 
   ret = aclrtSetDevice(UintToInt(device_id));
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
+    MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
   (void)initialized_device_set_.insert(device_id);
 }
@@ -1377,9 +1377,9 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   communication_stream_ = nullptr;
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
-    auto ret = rtDeviceReset(UintToInt(device_id));
+    auto ret = aclrtResetDevice(UintToInt(device_id));
     if (ret != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
+      MS_EXCEPTION(DeviceProcessError) << "Call aclrtResetDevice, ret[" << ret << "]";
     }
     (void)initialized_device_set_.erase(device_id);
   }
