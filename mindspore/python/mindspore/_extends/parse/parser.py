@@ -944,9 +944,13 @@ class ThirdPartyLibraryChecker:
         if inspect.ismodule(value):
             module = value
         elif inspect.isfunction(value) or inspect.ismethod(value):
+            if hasattr(value, "__jit_function__"):
+                return False
             if value in _convert_map():
                 return False
             module = inspect.getmodule(value)
+            if module is None:
+                return False
         else:
             return False
         return self.get_module_source_location(module) == MODULE_FROM_THIRDPARTY
