@@ -27,7 +27,7 @@ class CeluTEST(nn.Cell):
         return self.celu(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
@@ -45,7 +45,7 @@ def test_celu_op_cpu(data_type):
     assert output is None
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
