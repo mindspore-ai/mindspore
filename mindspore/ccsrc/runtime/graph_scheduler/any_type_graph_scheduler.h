@@ -40,11 +40,28 @@ class AnyTypeGraphScheduler {
                                           const std::vector<AnfNodePtr> &front_parameters);
 
  private:
-  void TransArrowInDSActorToAnyTypeKernelActor(AnyTypeKernelActor *const any_type_kernel_actor,
-                                               const DataSourceActorPtr &data_source_actor,
-                                               const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph);
   void TransArrowInActorSetToAnyTypeKernelActor(const ActorSet *const actor_set, const KernelGraphPtr &model_graph,
                                                 const KernelGraphPtr &real_graph);
+
+  void TransArrowInDataSourceActorToAnyTypeKernelActor(AnyTypeKernelActor *const any_type_kernel_actor,
+                                                       const DataSourceActorPtr &data_source_actor,
+                                                       const KernelGraphPtr &model_graph,
+                                                       const KernelGraphPtr &real_graph);
+
+  void TransArrowInDataPrepareActorToAnyTypeKernelActor(AnyTypeKernelActor *const any_type_kernel_actor,
+                                                        const DataPrepareActorPtr &data_prepare_actor);
+
+  void TransArrowInLoopCountActorToAnyTypeKernelActor(AnyTypeKernelActor *const any_type_kernel_actor,
+                                                      const LoopCountActorPtr &loop_count_actor);
+
+  void TransArrowInOutputActorToAnyTypeKernelActor(AnyTypeKernelActor *const any_type_kernel_actor,
+                                                   const OutputActorPtr &output_actor);
+  void CollectBackendParameterForDynamicShape(AnyTypeKernelActor *const any_type_kernel_actor,
+                                              const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph);
+  void FixDeviceTensorStoreKeyInActor(const std::vector<AbstractActorPtr> &actors,
+                                      AnyTypeKernelActor *const any_type_kernel_actor,
+                                      const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph,
+                                      const std::vector<AnfNodePtr> &front_parameters);
 };
 }  // namespace runtime
 }  // namespace mindspore
