@@ -100,7 +100,7 @@ struct ConverterPara {
   AscendGeOptionCfg ascendGeOptionCfg;
   std::string device;
   std::string provider;
-  std::string device_version;
+  std::string chip_name;
   CpuOptionCfg cpuOptionCfgParam;
   lite::quant::TransformQuantParam transformQuantParam;
   lite::quant::DynamicQuantParam dynamicQuantParam;

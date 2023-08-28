@@ -68,8 +68,8 @@ void ConverterPyBind(const py::module &m) {
     .def("get_no_fusion", &Converter::GetNoFusion)
     .def("set_device", py::overload_cast<const std::string &>(&Converter::SetDevice))
     .def("get_device", &Converter::GetDevice)
-    .def("set_device_version", py::overload_cast<const std::string &>(&Converter::SetDeviceVersion))
-    .def("get_device_version", &Converter::GetDeviceVersion)
+    .def("set_chip_name", py::overload_cast<const std::string &>(&Converter::SetChipName))
+    .def("get_chip_name", &Converter::GetChipName)
     .def("convert",
          py::overload_cast<converter::FmkType, const std::string &, const std::string &, const std::string &>(
            &Converter::Convert),

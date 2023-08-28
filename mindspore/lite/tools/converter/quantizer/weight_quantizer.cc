@@ -377,10 +377,10 @@ int WeightQuantizer::InsertAscendDequantNode(const FuncGraphPtr &func_graph, con
     int status;
     if (type_id == kNumberTypeFloat32) {
       status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32,
-                                                       axis, param_->device_version);
+                                                       axis, param_->chip_name);
     } else {
       status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16,
-                                                       axis, param_->device_version);
+                                                       axis, param_->chip_name);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";

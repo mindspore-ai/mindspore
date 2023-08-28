@@ -290,9 +290,9 @@ int Flags::InitOptimize() {
     this->device = "Ascend";
     auto string_split = lite::StrSplit(this->optimizeStr, std::string(":"));
     if (string_split.size() == 1) {
-      this->device_version = "default";
+      this->chip_name = "default";
     } else if (string_split.size() == 2) {
-      this->device_version = string_split[1];
+      this->chip_name = string_split[1];
     } else {
       MS_LOG(ERROR) << "not support ascend_oriented has more than one device model";
       return lite::RET_ERROR;
