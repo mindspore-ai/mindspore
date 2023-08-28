@@ -953,8 +953,8 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   }
   bool bool_result = IsParallelCareNode(cnode) && !IsSplittableOperator(prim->name());
   if (bool_result) {
-    MS_LOG(WARNING) << "For 'auto_parallel', missing the splitable implementation of OperatorInfo for: " << prim->name()
-                    << ", default strategy will be assigned. Network training may deteriorate or malfunction";
+    MS_LOG(INFO) << "For 'auto_parallel', missing the splitable implementation of OperatorInfo for: " << prim->name()
+                 << ", default strategy will be assigned. Network training may deteriorate or malfunction";
   } else if (prim->name() == CAST) {
     if (cnode->fullname_with_scope().find(OPTIMIZER_SUB_STRING) != std::string::npos) {
       // Do not care CASTs from optimizer

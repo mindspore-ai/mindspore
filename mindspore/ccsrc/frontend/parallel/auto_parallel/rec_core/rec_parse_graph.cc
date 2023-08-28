@@ -93,7 +93,8 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
     input_tensor_size = 1;
   }
   if (input_tensor_size > MAX_INPUT_NUM) {
-    MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " input tensor num exceeds limit.";
+    MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " input tensor " << input_tensor_size << " num exceeds limit("
+                      << MAX_INPUT_NUM << ").";
   }
 
   for (size_t iter_input_tensors = 0; iter_input_tensors < input_tensor_size; iter_input_tensors++) {
