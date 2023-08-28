@@ -67,8 +67,10 @@ class AnyTypeKernelActor : public SuperKernelActor {
   // 3. compile the corresponding kernel_graph according to the type and generate the corresponding actor_set
   // 4. send graph inputs to kernel actor of current graph
   void RunForGraphInput(OpContext<DeviceTensor> *const context);
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) override;
   void UpdataDynamicShapeParameter(OpContext<DeviceTensor> *const context);
   void SendOutput(OpContext<DeviceTensor> *const context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   // Handle the graph output.
   bool CheckGraphOutputRunningCondition(const OpContext<DeviceTensor> *context);

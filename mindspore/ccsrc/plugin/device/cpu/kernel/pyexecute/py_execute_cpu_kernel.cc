@@ -147,9 +147,9 @@ void SequenceToWholeRawMemory(const py::sequence &obj, const std::vector<Address
   for (size_t i = 0; i < obj_len; ++i) {
     auto element_obj = obj[i];
     if (py::isinstance<tensor::Tensor>(element_obj)) {
-      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[i], i);
+      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[0], i);
     } else {
-      ScalarToRawMemory(element_obj, outputs[i], i);
+      ScalarToRawMemory(element_obj, outputs[0], i);
     }
   }
 }
