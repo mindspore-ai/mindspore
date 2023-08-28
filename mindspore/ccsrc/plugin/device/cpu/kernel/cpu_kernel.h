@@ -268,10 +268,9 @@ class CpuKernelFunc {
   CpuKernelFunc() = default;
   virtual ~CpuKernelFunc() = default;
   ///////////// new func ///////////////
+  virtual void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
   virtual void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
                         const std::vector<KernelTensor *> &outputs) {}
-  virtual void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                        const std::vector<KernelTensorPtr> &outputs) {}
   virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     return KRET_OK;
   }
@@ -280,7 +279,8 @@ class CpuKernelFunc {
     return true;
   }
   ///////////// old func ///////////////
-  virtual void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
+  virtual void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                        const std::vector<KernelTensorPtr> &outputs) {}
   virtual int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,

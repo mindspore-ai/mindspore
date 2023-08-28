@@ -37,7 +37,6 @@
 #include "abstract/ops/infer_functions.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
-#include "ops/log.h"
 #include "ops/real_div.h"
 #include "ops/arg_min.h"
 #include "ops/greater_equal.h"

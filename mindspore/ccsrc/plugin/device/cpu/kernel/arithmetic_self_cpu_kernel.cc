@@ -86,13 +86,11 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
+  void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
-
-  BaseOperatorPtr base_op{nullptr};
-  KernelTensorPtr input1{nullptr};
+  std::vector<KernelTensor *> attr_inputs;
 
  private:
   template <typename T>
@@ -693,7 +691,7 @@ void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 
 template <typename T>
 void Elu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto alpha = content->input1->GetValueWithCheck<float>();
+  auto alpha = content->attr_inputs[kIndex0]->GetValueWithCheck<float>();
   auto task = [in, out, alpha](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
       (void)::Elu(in + start, SizeToInt(end - start), out + start, alpha);
@@ -757,13 +755,13 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
 
-void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &) {
-  kernel_name_ = base_operator->name();
+void ArithmeticSelfCpuKernelFunc::InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &) {
+  kernel_name_ = kernel_name;
   dtype_ = inputs.at(kIndex0)->dtype_id();
-  base_op = base_operator;
-  input1 = inputs.at(kIndex1);
+  if (inputs.size() > 1) {
+    attr_inputs = std::vector<KernelTensor *>(inputs.begin() + 1, inputs.end());
+  }
 }
 
 bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
@@ -1158,10 +1156,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
 }  // namespace
 
-bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ArithmeticSelfCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
     MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in "
@@ -1177,18 +1173,17 @@ bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   func_obj_ = arith_kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(kernel_name_, inputs, outputs);
   return true;
 }
 
-int ArithmeticSelfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticSelfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Note: This is to call the Resize of SqrtMKLKernelFunc.
-  if (int ret = func_obj_->Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = func_obj_->Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
