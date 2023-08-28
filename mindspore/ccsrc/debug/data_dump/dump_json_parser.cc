@@ -319,7 +319,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     fout << mapped_name_str << "," << origin_name_str << "\n";
     fout.close();
     ChangeFileMode(mapping_file_str, S_IRUSR);
-    origin_file_path = prefix_path.value() + "/" + mapped_name_str;
+    final_file_path = prefix_path.value() + "/" + mapped_name_str;
   }
   auto file_path = Common::CreatePrefixPath(final_file_path);
   if (!file_path.has_value()) {
