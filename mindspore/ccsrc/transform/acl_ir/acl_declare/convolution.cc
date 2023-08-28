@@ -15,26 +15,29 @@
  */
 
 #include "transform/acl_ir/acl_adapter_info.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(Conv2D).Input(0, {"NCHW"}, {"NC1HWC0"}).Input(1, {"NCHW"}, {"FRACTAL_Z"}).Input(2, {"NCHW"}, {});
+std::string CheckConvNdSupported(TypeId data_type, const std::vector<ShapeVector> &) {
+  if (data_type != kNumberTypeFloat16) {
+    return kOpFormat_DEFAULT;
+  }
+  return kOpFormat_NC1HWC0;
+}
 
-REGISTER_ACL_OP(Conv3D).Input(0, {"NCHW"}, {"NDC1HWC0"}).Input(1, {"NCHW"}, {"FRACTAL_Z_3D"}).Input(2, {"NCHW"}, {});
+REGISTER_ACL_OP(Conv2D).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"}).OutputSelector(&CheckConvNdSupported);
+
+REGISTER_ACL_OP(Conv3D).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
 
 REGISTER_ACL_OP(Conv2DBackpropInput)
-  .Input(0, {"NCHW"}, {})
-  .Input(1, {"NCHW"}, {"FRACTAL_Z"})
-  .Input(2, {"NCHW"}, {"NC1HWC0"});
+  .Input(0, {"NCHW"})
+  .Input(1, {"NCHW"})
+  .Input(2, {"NCHW"})
+  .OutputSelector(&CheckConvNdSupported);
 
-REGISTER_ACL_OP(Conv3DBackpropInput)
-  .Input(0, {"NCHW"}, {})
-  .Input(1, {"NCHW"}, {"FRACTAL_Z_3D"})
-  .Input(2, {"NCHW"}, {"NDC1HWC0"});
+REGISTER_ACL_OP(Conv3DBackpropInput).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
 
-REGISTER_ACL_OP(Conv2DBackpropFilter)
-  .Input(0, {"NCHW"}, {"NC1HWC0"})
-  .Input(1, {"NCHW"}, {"NC1HWC0"})
-  .Input(2, {"NCHW"}, {"NC1HWC0"});
+REGISTER_ACL_OP(Conv2DBackpropFilter).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
 }  // namespace transform
 }  // namespace mindspore

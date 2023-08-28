@@ -19,6 +19,7 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(WKV).set_run_mode(false);
+
 REGISTER_ACL_OP(WKVGrad).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore
