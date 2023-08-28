@@ -448,6 +448,11 @@ class _MindsporeFunctionExecutor:
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
+
+        ignore_dirs = ["mindspore/ops", "mindspore/nn"]
+        if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
+            return phase
+
         function_phases[full_function_name].append((create_time, key))
         logger.info(f"Compile the function '{full_function_name}' create time={create_time} ,key={key}")
         return phase
