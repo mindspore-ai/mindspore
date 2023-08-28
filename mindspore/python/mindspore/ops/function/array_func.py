@@ -2282,7 +2282,8 @@ def unbind(input, dim=0):
 
 def expand_dims(input_x, axis):
     """
-    Adds an additional dimension to `input_x` at the given axis.
+    Adds an additional dimension to `input_x` at the given axis, the dimension
+    of `input_x` should be greater than or equal to 1.
 
     Note:
         If the specified axis is a negative number, the index is counted

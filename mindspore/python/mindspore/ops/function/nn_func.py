@@ -3458,7 +3458,9 @@ def relu6(x):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Args:
-        x (Tensor): Input Tensor of float16 or float32 data type.
+        x (Tensor): Tensor of shape :math:`(N, *)`,
+            where :math:`*` means any number of additional dimensions.
+            Data type must be float16, float32.
 
     Returns:
         Tensor, with the same dtype and shape as the `x`.

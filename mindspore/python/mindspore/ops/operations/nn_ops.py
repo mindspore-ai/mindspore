@@ -745,7 +745,9 @@ class ReLU6(PrimitiveWithCheck):
     Refer to :func:`mindspore.ops.relu6` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Input Tensor of float16 or float32 data type.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`,
+          where :math:`*` means any number of additional dimensions.
+          Data type must be float16, float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
