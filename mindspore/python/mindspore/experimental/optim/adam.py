@@ -29,9 +29,7 @@ _adam_opt = C.MultitypeFuncGraph("adam_opt")
 def _run_adam_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2):
     """Apply adam optimizer to the weight parameter."""
     success = True
-    if param.requires_grad:
-        success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                        eps, gradient))
+    success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient))
     return success
 
 
@@ -39,8 +37,7 @@ def _run_adam_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient
 def _run_adam_with_amsgrad_opt(opt, beta1_power, beta2_power, lr, gradient, param, moment1, moment2, vhat):
     """Apply adam optimizer to the weight parameter with amsgrad."""
     success = True
-    if param.requires_grad:
-        success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
+    success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
     return success
 
 

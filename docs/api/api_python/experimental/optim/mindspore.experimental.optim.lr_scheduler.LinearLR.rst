@@ -3,10 +3,10 @@ mindspore.experimental.optim.lr_scheduler.LinearLR
 
 .. py:class:: mindspore.experimental.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1, verbose=False)
 
-    .. warning::
-      线性改变用于衰减参数组学习率的乘法因子，直到 `last_epoch` 数达到预定义的阈值 `total_iters`。 `LinearLR` 对于学习率的衰减可能与外部对于学习率的改变同时发生。
+    线性减小学习率乘法因子 ，并将每个参数组的学习率按照此乘法因子进行衰减，直到epoch/step数达到 `total_iters`。注意，这种衰减可能与外部对于学习率的改变同时发生。
 
-      这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim` 下的接口配合使用。
+    .. warning::
+        这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim` 下的接口配合使用。
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。

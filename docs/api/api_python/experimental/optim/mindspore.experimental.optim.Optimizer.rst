@@ -6,11 +6,11 @@ mindspore.experimental.optim.Optimizer
     用于参数更新的优化器基类。
 
     .. warning::
-        这是一个实验性的优化器模块，需要和 `mindspore.experimental.optim.lr_scheduler` 下的动态学习率接口配合使用。
+        这是一个实验性的优化器模块，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
-        - **defaults** (dict)- 一个包含了优化器参数默认值的字典（当参数组未指定参数值时使用此默认值）。
+        - **defaults** (dict) - 一个包含了优化器参数默认值的字典（当参数组未指定参数值时使用此默认值）。
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor。
@@ -21,7 +21,7 @@ mindspore.experimental.optim.Optimizer
 
     .. py:method:: add_param_group(group_id, param_group)
 
-        为 `Optimizer.param_groups` 添加一个参数组。
+        为 `Optimizer.param_groups` 属性添加一个参数组。
 
         参数：
             - **group_id** (int) - group的id。

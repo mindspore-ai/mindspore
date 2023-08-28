@@ -55,12 +55,12 @@ LRScheduler类
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.experimental.optim.lr_scheduler.LRScheduler
     mindspore.experimental.optim.lr_scheduler.ChainedScheduler
     mindspore.experimental.optim.lr_scheduler.ConstantLR
     mindspore.experimental.optim.lr_scheduler.ExponentialLR
     mindspore.experimental.optim.lr_scheduler.LambdaLR
     mindspore.experimental.optim.lr_scheduler.LinearLR
-    mindspore.experimental.optim.lr_scheduler.LRScheduler
     mindspore.experimental.optim.lr_scheduler.MultiplicativeLR
     mindspore.experimental.optim.lr_scheduler.MultiStepLR
     mindspore.experimental.optim.lr_scheduler.PolynomialLR

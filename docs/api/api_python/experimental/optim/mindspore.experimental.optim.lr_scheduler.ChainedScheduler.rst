@@ -3,7 +3,7 @@ mindspore.experimental.optim.lr_scheduler.ChainedScheduler
 
 .. py:class:: mindspore.experimental.optim.lr_scheduler.ChainedScheduler(schedulers)
 
-    保存多个学习率调度器的链表，调用step()函数可以执行每一个学习率调度器的step()函数。
+    保存多个学习率调度器的链表，调用 `ChainedScheduler.step()` 可以执行 `schedulers` 中每一个学习率调度器的 `step()` 函数。
 
     .. warning::
         这是一个实验性的动态学习率接口，需要和 `mindspore.experimental.optim` 下的接口配合使用。

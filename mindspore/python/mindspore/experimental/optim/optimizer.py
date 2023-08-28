@@ -41,7 +41,7 @@ class Optimizer(Cell):
     Args:
         params (Union[list(Parameter), list(dict)]): an iterable of :class:`mindspore.Parameter` or
             dict. Specifies what Tensors should be optimized.
-        defaults: (dict): a dict containing default values of optimization
+        defaults (dict): a dict containing default values of optimization
             options (used when a parameter group doesn't specify them).
 
     Raises:
