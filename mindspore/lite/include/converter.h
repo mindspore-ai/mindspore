@@ -95,8 +95,8 @@ class MS_API Converter {
   inline void SetProvider(const std::string &provider);
   inline std::string GetProvider();
 
-  inline void SetDeviceVersion(const std::string &device);
-  inline std::string GetDeviceVersion();
+  inline void SetChipName(const std::string &device);
+  inline std::string GetChipName();
 
   /// \brief Convert model and save .ms format model into `output_file` that passed in constructor.
   Status Convert();
@@ -131,8 +131,8 @@ class MS_API Converter {
   std::vector<char> GetDeviceChar();
   void SetProvider(const std::vector<char> &provider);
   std::vector<char> GetProviderChar();
-  void SetDeviceVersion(const std::vector<char> &device_version);
-  std::vector<char> GetDeviceVersionChar();
+  void SetChipName(const std::vector<char> &chip_name);
+  std::vector<char> GetChipNameChar();
   Status Convert(converter::FmkType fmk_type, const std::vector<char> &model_file, const std::vector<char> &output_file,
                  const std::vector<char> &weight_file);
   std::shared_ptr<ConverterPara> data_;
@@ -182,9 +182,9 @@ void Converter::SetProvider(const std::string &provider) { SetProvider(StringToC
 
 std::string Converter::GetProvider() { return CharToString(GetProviderChar()); }
 
-void Converter::SetDeviceVersion(const std::string &device_version) { SetDeviceVersion(StringToChar(device_version)); }
+void Converter::SetChipName(const std::string &chip_name) { SetChipName(StringToChar(chip_name)); }
 
-std::string Converter::GetDeviceVersion() { return CharToString(GetDeviceVersionChar()); }
+std::string Converter::GetChipName() { return CharToString(GetChipNameChar()); }
 
 Status Converter::Convert(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
                           const std::string &weight_file) {
