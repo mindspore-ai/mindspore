@@ -50,7 +50,7 @@ constexpr size_t PADDING_SHAPE_1 = 2;
 ShapeVector SpaceToBatchNDInferShapeImpl(const string &kernel_name_, const std::vector<int64_t> &block_size_,
                                          const std::vector<std::vector<int64_t>> &paddings_,
                                          const ShapeVector &input_shape_) {
-  if (input_shape_.size() < block_size_.size()) {
+  if (input_shape_.size() <= block_size_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the input size should be no less than the block size, but get input size: "
                       << input_shape_.size() << " block size: " << block_size_.size();
