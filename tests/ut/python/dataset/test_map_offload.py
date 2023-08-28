@@ -117,11 +117,11 @@ def test_offload_column_validation():
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="fake_column", offload=True)
     dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
-    error_msg = "The following input column(s) for an offloaded map operation do not exist: [\'fake_column\']"
+    error_msg = "Invalid parameter, input column name: fake_column doesn't exist in the dataset columns"
     with pytest.raises(RuntimeError) as excinfo:
         for (_, _) in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
             continue
-    assert str(excinfo.value) == error_msg
+    assert error_msg in str(excinfo.value)
 
 
 def test_offload_multi_column():

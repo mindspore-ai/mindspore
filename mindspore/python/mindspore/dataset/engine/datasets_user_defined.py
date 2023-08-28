@@ -786,38 +786,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
             return memodict[id(self)]
-        new_op = self.__safe_deepcopy__(memodict, exclude=("source", "__transfer_dataset__"))
-
-        sample_fn = None
-        if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
-            # The reason why there is a try catch here is because when the new op is being constructed with shared
-            # memory enabled, there will be an exception thrown if there is not enough shared memory available
-            if self.source_len == -1:
-                raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
-
-            if new_op.num_parallel_workers > 1:
-                self.__validate_memory_usage()
-
-                sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
-                                      self.max_rowsize)
-                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
-            else:
-                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
-            new_op.sample_fn = sample_fn
-        else:
-            new_op.sampler = None
-            new_op.sample_fn = sample_fn
-            new_op.source_len = min(new_op.source_len,
-                                    new_op.num_samples) if new_op.num_samples != 0 else new_op.source_len
-            if not hasattr(self.source, "__iter__"):
-                # Use generator function if input callable
-                new_op.prepared_source = (lambda: _generator_fn(self.source, new_op.num_samples))
-            else:
-                # Use iterator function if input is iterable
-                # Random accessible input is also iterable
-                new_op.prepared_source = (lambda: _iter_fn(self.source, new_op.num_samples))
-
-        return new_op
+        return self.__safe_deepcopy__(memodict, exclude=("source", "__transfer_dataset__"))
 
     def is_shuffled(self):
         if self.sampler:
@@ -836,7 +805,38 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             return super().split(sizes, randomize)
         return super(MappableDataset, self).split(sizes, randomize)
 
+    def prepare_multiprocessing(self):
+        """Preprocessing of prepared_source."""
+        sample_fn = None
+        if self.sampler is not None and hasattr(self.source, "__getitem__"):
+            # The reason why there is a try catch here is because when the new op is being constructed with shared
+            # memory enabled, there will be an exception thrown if there is not enough shared memory available
+            if self.source_len == -1:
+                raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
+
+            if self.num_parallel_workers > 1:
+                self.__validate_memory_usage()
+
+                sample_fn = SamplerFn(self.source, self.num_parallel_workers, self.python_multiprocessing,
+                                      self.max_rowsize)
+                self.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
+            else:
+                self.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
+            self.sample_fn = sample_fn
+        else:
+            self.sampler = None
+            self.sample_fn = sample_fn
+            self.source_len = min(self.source_len, self.num_samples) if self.num_samples != 0 else self.source_len
+            if not hasattr(self.source, "__iter__"):
+                # Use generator function if input callable
+                self.prepared_source = (lambda: _generator_fn(self.source, self.num_samples))
+            else:
+                # Use iterator function if input is iterable
+                # Random accessible input is also iterable
+                self.prepared_source = (lambda: _iter_fn(self.source, self.num_samples))
+
     def parse(self, children=None):
+        self.prepare_multiprocessing()
         if self.schema is None:
             return cde.GeneratorNode(self.prepared_source, self.column_names, self.column_types, self.source_len,
                                      self.sampler, self.num_parallel_workers)

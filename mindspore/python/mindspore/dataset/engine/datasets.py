@@ -388,7 +388,7 @@ class Dataset:
             _OP_PROCESS.update(generator_process)
         return op_name
 
-    def create_ir_tree(self):
+    def create_ir_tree(self, no_python_multiprocessing=False):
         """
         Internal method to build an IR tree.
 
@@ -401,12 +401,12 @@ class Dataset:
         dataset = copy.deepcopy(self)
         global _OP_NAME
         _OP_NAME = Dataset._get_operator_id(dataset)
-        ir_tree = dataset.parse_tree()
+        ir_tree = dataset.parse_tree(no_python_multiprocessing)
         self.parent = parent
         _init_device_info()
         return ir_tree, dataset
 
-    def parse_tree(self):
+    def parse_tree(self, no_python_multiprocessing=False):
         """
         Internal method to parse the API tree into an IR tree.
 
@@ -415,10 +415,11 @@ class Dataset:
         """
         if len(self.parent) > 1:
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
-        ir_children = [d.parse_tree() for d in self.children]
+        ir_children = [d.parse_tree(no_python_multiprocessing) for d in self.children]
         # Bootstrap can only be performed on a copy of the original dataset node.
         # Bootstrap on original dataset node will make all iterators share the same process pool
         self.iterator_bootstrap()
+        self.pre_parse(no_python_multiprocessing)
         ir_node = self.parse(ir_children)
         ir_node = self.post_parse(ir_node)
         return ir_node
@@ -1645,11 +1646,11 @@ class Dataset:
     def copy_batch_size(self, value):
         self._batch_size = value
 
-    def _init_tree_getters(self):
+    def _init_tree_getters(self, no_python_multiprocessing=True):
         """
         Get pipeline information.
         """
-        ir_tree, api_tree = self.create_ir_tree()
+        ir_tree, api_tree = self.create_ir_tree(no_python_multiprocessing)
 
         runtime_context = cde.PythonRuntimeContext()
         runtime_context.Init()
@@ -2026,6 +2027,13 @@ class Dataset:
             num_shards = worker_num
             shard_id = 0
         return num_shards, shard_id
+
+    def pre_parse(self, no_python_multiprocessing):
+        if no_python_multiprocessing:
+            if hasattr(self, "python_multiprocessing"):
+                self.python_multiprocessing = False
+            if hasattr(self, "num_parallel_workers"):
+                self.num_parallel_workers = 1
 
     def post_parse(self, ir_node):
         if self.cache:

@@ -78,10 +78,51 @@ class PullBasedIteratorConsumer : public TreeConsumer {
   /// Method to return the name of the consumer
   /// \return string
   std::string Name() override { return "PullBasedIteratorConsumer"; }
+  std::unique_ptr<TreeAdapterLite> tree_adapter_lite_;
 
  private:
-  std::unique_ptr<TreeAdapterLite> tree_adapter_lite_;
   std::vector<std::pair<std::string, int32_t>> column_order_;  // key: column name, val: column id
+};
+
+/// Consumer that is used to get some pipeline information
+class TreeGetters : public PullBasedIteratorConsumer {
+ public:
+  TreeGetters();
+
+  ~TreeGetters() = default;
+
+  Status Init(std::shared_ptr<DatasetNode> root) override;
+
+  Status GetOutputTypes(std::vector<DataType> *types);
+
+  Status GetOutputShapes(std::vector<TensorShape> *shapes, bool estimate = false);
+
+  Status GetBatchSize(int64_t *batch_size);
+
+  Status GetRepeatCount(int64_t *repeat_count);
+
+  Status GetNumClasses(int64_t *num_classes);
+
+  Status GetColumnNames(std::vector<std::string> *output);
+
+  Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
+
+  std::string Name() override { return "TreeGetters"; }
+
+  virtual Status GetRow(TensorRow *row);
+
+ private:
+  Status GetFirstRowShapeAndType();
+
+  std::shared_ptr<DatasetNode> root_;
+  int64_t dataset_size_;
+  std::vector<DataType> first_row_type_;
+  std::vector<TensorShape> first_row_shape_;
+  std::vector<TensorShape> estimated_row_shape_;
+  bool first_row_obtained_;  // whether first row (which could be empty) is obtained by TreeGetter
+  bool init_flag_;           // indicate whether the tree has initialized
+
+  Status InternalInit();
 };
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PULL_BASED_TREE_CONSUMER_H_
