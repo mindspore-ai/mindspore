@@ -132,7 +132,13 @@ std::string TbeUtils::GetOpDebugLevel() {
   std::string op_debug_level = std::to_string(OP_DEBUG_LEVEL_3);
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
-    if (!TbeUtils::IsOneOf(value_ranges, std::stoul(env_level.c_str()))) {
+    uint64_t num_env_level;
+    try {
+      num_env_level = std::stoul(env_level.c_str());
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << e.what() << " when parse " << env_level;
+    }
+    if (!TbeUtils::IsOneOf(value_ranges, num_env_level)) {
       MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
                       << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
                          "Get more detail info at https://www.mindspore.cn/docs/zh-CN/master/note/env_var_list.html";

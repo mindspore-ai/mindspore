@@ -162,7 +162,11 @@ void ProfilerAnalyzer::Initialize() {
   profiler_enable_ = true;
   auto top_num_env = common::GetEnv(kRuntimeProfilerTopNum);
   if (top_num_env != std::string()) {
-    show_top_num_ = stoi(top_num_env);
+    try {
+      show_top_num_ = stoi(top_num_env);
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << e.what() << " when parse " << top_num_env;
+    }
   }
 
   auto now_time = std::to_string(GetTimeStamp());

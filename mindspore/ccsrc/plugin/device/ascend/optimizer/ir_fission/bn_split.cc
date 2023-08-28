@@ -243,7 +243,14 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
     MS_LOG(INTERNAL_EXCEPTION) << "Op[" << sync_bn_cnode->DebugString() << "] has no opid."
                                << trace::DumpSourceLines(sync_bn_cnode);
   }
-  int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + kPositionOffset));
+  auto opid_str = sync_bn_opname.substr(opid_pos + kPositionOffset);
+  int64_t opid = 0;
+  try {
+    opid = std::stol(opid_str);
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Invalid argument: " << e.what() << " when parse " << opid_str;
+  }
+
   // user defined fusion should be greater than 1
   if (opid < kFusionNumThreshold) {
     opid = opid - kFusionNumThreshold + std::numeric_limits<int64_t>::max();
