@@ -376,40 +376,9 @@ Status ArgMaxWithValueInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Dimensions ReduceMethod::InferOutputStrategy() {
-  std::vector<int64_t> dim_list = reduce_dim();
-  Dimensions output_strategy;
-  auto strategies = strategy_->GetInputDim();
-  Dimensions stra = strategies.at(0);
-  // if keepdims_ is true,then output strategy is same with input.
-  for (size_t i = 0; i < stra.size(); ++i) {
-    if (find(dim_list.begin(), dim_list.end(), SizeToLong(i)) != dim_list.end()) {
-      if (keepdims_) {
-        output_strategy.push_back(1);
-      }
-    } else {
-      output_strategy.push_back(stra[i]);
-    }
-  }
-  return output_strategy;
-}
-
 Status ReduceMethod::InferTensorInfo() {
-  // infer tensor shape
   Shape input_shape = inputs_shape_.at(0);
   Shape output_shape = outputs_shape_.at(0);
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategies inputs_strategy = strategy_->GetInputDim();
-  Dimensions output_strategy = InferOutputStrategy();
-
-  Strategies outputs_strategy = {output_strategy};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  Shape output_slice_shape = outputs_slice_shape.at(0);
 
   TensorLayout input_tensor_layout, output_tensor_layout;
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
@@ -418,8 +387,8 @@ Status ReduceMethod::InferTensorInfo() {
   }
 
   std::vector<int64_t> dim_list = reduce_dim();
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
+  TensorInfo input_tensor_info(input_tensor_layout);
+  TensorInfo output_tensor_info(output_tensor_layout);
   input_tensor_info.set_reduce_dim(dim_list);
 
   inputs_tensor_info_.push_back(input_tensor_info);
@@ -505,21 +474,8 @@ Status ArgMaxWithValueInfo::InferTensorMap() {
 }
 
 Status ArgMaxWithValueInfo::InferTensorInfo() {
-  // infer tensor shape
   Shape input_shape = inputs_shape_.at(0);
   Shape output_shape = outputs_shape_.at(0);
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategies inputs_strategy = strategy_->GetInputDim();
-  Dimensions output_strategy = InferOutputStrategy();
-
-  Strategies outputs_strategy = {output_strategy, output_strategy};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  Shape output_slice_shape = outputs_slice_shape.at(0);
 
   TensorLayout input_tensor_layout, output_tensor_layout;
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
@@ -528,8 +484,8 @@ Status ArgMaxWithValueInfo::InferTensorInfo() {
   }
 
   std::vector<int64_t> dim_list = reduce_dim();
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
+  TensorInfo input_tensor_info(input_tensor_layout);
+  TensorInfo output_tensor_info(output_tensor_layout);
   input_tensor_info.set_reduce_dim(dim_list);
 
   inputs_tensor_info_.push_back(input_tensor_info);
@@ -731,21 +687,8 @@ Status SquareSumAllInfo::InferTensorMap() {
 }
 
 Status SquareSumAllInfo::InferTensorInfo() {
-  // infer tensor shape
   Shape input_shape = inputs_shape_.at(0);
   Shape output_shape = outputs_shape_.at(0);
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategies inputs_strategy = strategy_->GetInputDim();
-  Dimensions output_strategy = InferOutputStrategy();
-
-  Strategies outputs_strategy = {output_strategy, output_strategy};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  Shape output_slice_shape = outputs_slice_shape.at(0);
 
   TensorLayout input_tensor_layout, output_tensor_layout;
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
@@ -754,8 +697,8 @@ Status SquareSumAllInfo::InferTensorInfo() {
   }
 
   std::vector<int64_t> dim_list = reduce_dim();
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
+  TensorInfo input_tensor_info(input_tensor_layout);
+  TensorInfo output_tensor_info(output_tensor_layout);
   input_tensor_info.set_reduce_dim(dim_list);
 
   inputs_tensor_info_.push_back(input_tensor_info);

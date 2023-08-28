@@ -1313,13 +1313,18 @@ void ExtendInputArgsAbstractShape(const AbstractBasePtr &args_abstract_item, siz
 }
 
 ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index) {
+  if (input_shape.empty()) {
+    return input_shape;
+  }
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   if (ParallelContext::GetInstance()->dataset_strategy().empty()) {
     auto shape_value = input_shape;
     if (!parallel::ParallelContext::GetInstance()->full_batch()) {
       auto comm_info = parallel::GetCommInfo();
       auto world_rank_size = comm_info.device_num / ParallelContext::GetInstance()->pipeline_stage_split_num();
-      shape_value[0] = shape_value[0] * SizeToLong(world_rank_size);
+      if (shape_value[0] > 0) {
+        shape_value[0] = shape_value[0] * SizeToLong(world_rank_size);  // only for static shape
+      }
     }
     return shape_value;
   }
@@ -1334,7 +1339,11 @@ ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index) {
   }
   ShapeVector shape_value;
   for (size_t i = 0; i < dataset_strategy_item.size(); ++i) {
-    shape_value.push_back(input_shape[i] * dataset_strategy_item[i]);
+    if (input_shape[i] > 0) {
+      shape_value.push_back(input_shape[i] * dataset_strategy_item[i]);
+    } else {
+      shape_value.push_back(input_shape[i]);  // dynamic shape, shape is still -1
+    }
   }
   return shape_value;
 }
