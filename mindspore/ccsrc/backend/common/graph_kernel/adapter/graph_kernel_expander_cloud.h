@@ -24,11 +24,11 @@
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {
-class GraphKernelExpanderWithPy : public GraphKernelExpander {
+class GraphKernelExpanderCloud : public GraphKernelExpander {
  public:
-  GraphKernelExpanderWithPy() : GraphKernelExpander() {}
-  explicit GraphKernelExpanderWithPy(const std::string &name) : GraphKernelExpander(name) {}
-  ~GraphKernelExpanderWithPy() override = default;
+  GraphKernelExpanderCloud() : GraphKernelExpander() {}
+  explicit GraphKernelExpanderCloud(const std::string &name) : GraphKernelExpander(name) {}
+  ~GraphKernelExpanderCloud() override = default;
   static std::vector<PrimitivePtr> GetExpanderOps();
 
  protected:

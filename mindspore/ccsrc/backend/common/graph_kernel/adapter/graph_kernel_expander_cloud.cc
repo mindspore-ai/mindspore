@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/graph_kernel/adapter/graph_kernel_expander_with_py.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_expander_cloud.h"
 
 #include <string>
 #include <utility>
@@ -34,7 +34,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 namespace mindspore::graphkernel {
-std::vector<PrimitivePtr> GraphKernelExpanderWithPy::GetExpanderOps() {
+std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
     {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
@@ -100,11 +100,9 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::GetExpanderOps() {
   return GkUtils::FilterExcludedOps(ops);
 }
 
-std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
-  return GraphKernelExpanderWithPy::GetExpanderOps();
-}
+std::vector<PrimitivePtr> GraphKernelExpanderCloud::InitOpList() { return GraphKernelExpanderCloud::GetExpanderOps(); }
 
-ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) {
+ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {
   auto e = GetExpander(node, false);
   return e;
 }
