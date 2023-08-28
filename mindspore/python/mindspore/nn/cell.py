@@ -1363,6 +1363,7 @@ class Cell(Cell_):
         Returns an iterator over cell parameters.
 
         Yields parameters of this cell. If `expand` is ``true`` , yield parameters of this cell and all subcells.
+        For more details about subcells, please see the example below.
 
         Args:
             expand (bool): If ``true`` , yields parameters of this cell and all subcells. Otherwise, only yield
@@ -1372,11 +1373,34 @@ class Cell(Cell_):
             Iteration, all parameters at the cell.
 
         Examples:
-            >>> from mindspore import nn
-            >>> net = nn.Dense(3, 4)
-            >>> parameters = []
-            >>> for item in net.get_parameters():
-            ...     parameters.append(item)
+            >>> import mindspore as ms
+            >>> from mindspore import nn, ops, Tensor
+            >>> import numpy as np
+            >>> class TestNet(nn.Cell):
+            ...     def __init__(self):
+            ...         super().__init__()
+            ...         self.my_w1 = ms.Parameter(Tensor(np.ones([4, 4]), ms.float32))
+            ...         self.my_w2 = ms.Parameter(Tensor(np.ones([16]), ms.float32))
+            ...     def construct(self, x):
+            ...         x += self.my_w1
+            ...         x = ops.reshape(x, (16,)) - self.my_w2
+            ...         return x
+            >>> class TestNet2(nn.Cell):
+            ...     def __init__(self):
+            ...         super().__init__()
+            ...         self.my_t1 = ms.Parameter(Tensor(np.ones([4, 4]), ms.float32))
+            ...         # self.subcell is a subcell of TestNet2, when using expand=True, the parameters of TestNet will
+            ...         # also be gathered.
+            ...         self.subcell = TestNet()
+            ...     def construct(self, x):
+            ...         x += self.my_w1
+            ...         x = ops.reshape(x, (16,)) - self.my_w2
+            ...         return x
+            >>> net = TestNet2()
+            >>> print([p for p in net.get_parameters(expand=True)])
+            [Parameter (name=my_t1, shape=(4, 4), dtype=Float32, requires_grad=True), Parameter (name=subcell.my_w1,
+            shape=(4, 4), dtype=Float32, requires_grad=True), Parameter (name=subcell.my_w2, shape=(16,), dtype=Float32,
+            requires_grad=True)]
         """
         for _, param in self.parameters_and_names(expand=expand):
             yield param

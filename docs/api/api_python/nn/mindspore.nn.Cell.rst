@@ -185,7 +185,7 @@
 
         返回Cell中parameter的迭代器。
 
-        获取Cell的参数。如果 `expand` 为 ``true`` ，获取此cell和所有subcells的参数。
+        获取Cell的参数。如果 `expand` 为 ``true`` ，获取此cell和所有subcells的参数。关于subcell，请看下面的示例。
 
         参数：
             - **expand** (bool) - 如果为 ``True`` ，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值： ``True`` 。
