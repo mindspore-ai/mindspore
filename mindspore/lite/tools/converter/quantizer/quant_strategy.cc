@@ -111,7 +111,9 @@ bool QuantStrategy::CheckAscendSpec(const FuncGraphManagerPtr &manager, const CN
   if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
     auto prim_ptr = GetCNodePrimitive(cnode);
     // Don't support transpose.
-    CHECK_NULL_RETURN(prim_ptr);
+    if (prim_ptr == nullptr) {
+      return false;
+    }
     auto transpose_a = prim_ptr->GetAttr(mindspore::ops::kTransposeA);
     auto transpose_b = prim_ptr->GetAttr(mindspore::ops::kTransposeB);
     if (transpose_a != nullptr && GetValue<bool>(transpose_a)) {

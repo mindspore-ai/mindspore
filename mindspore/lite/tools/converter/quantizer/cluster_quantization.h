@@ -37,7 +37,6 @@ class ClusterQuantization {
   void SelectClusterCentroid(const float *data, size_t elem_count, const std::vector<float> &clusters,
                              std::vector<int8_t> *clusters_index, std::vector<std::vector<float>> *clusters_data);
 
- private:
   size_t k_ = 256;
   size_t max_epochs_ = 64;
   double tol_error_ = 0.000;

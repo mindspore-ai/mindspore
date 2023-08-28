@@ -159,7 +159,7 @@ int ClusterQuantization::KMeans(const float *data, size_t elem_count, size_t k, 
       break;
     }
 
-    if (cur_error == min_error) {
+    if (cur_error - min_error == 0) {
       MS_LOG(INFO) << "The cluster center has not changed, stop the iteration.";
       break;
     }
@@ -199,7 +199,11 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
       return ret;
     }
 
-    UpdateTensorDataAndSize(parameter, tensor_info, clusters.data(), clusters.size(), kNumberTypeInt8);
+    ret = UpdateTensorDataAndSize(parameter, tensor_info, clusters.data(), clusters.size(), kNumberTypeInt8);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << input->fullname_with_scope() << " update tensor data failed.";
+      return ret;
+    }
     // Optimize with Share Weight
     auto quant_param_holder = GetCNodeQuantHolder(cnode);
     CHECK_NULL_RETURN(quant_param_holder);

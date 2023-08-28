@@ -63,7 +63,7 @@ class InsertQuantNodeManager {
   int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
   int InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                                TypeId src_dtype, TypeId dst_dtype, int axis, std::string ascend_backend);
+                                TypeId src_dtype, TypeId dst_dtype, int axis, const std::string &ascend_backend);
   int InsertTransposeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index);
 
   int AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph);
@@ -130,7 +130,7 @@ class InsertQuantNodeManager {
 
   CNodePtr NewAscendAntiQuantCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
 
-  int SetParallelStrategy(const CNodePtr &cnode, std::vector<std::vector<int64_t>> in_strategy);
+  int SetParallelStrategy(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &in_strategy);
 
   std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra);
 
@@ -159,7 +159,7 @@ class InsertQuantNodeManager {
       MS_LOG(ERROR) << "shape size is " << tensor_info->shape_c().size();
       return RET_ERROR;
     }
-    T *out_data = new T[tensor_info->DataSize()];
+    T *out_data = new (std::nothrow) T[tensor_info->DataSize()];
     CHECK_NULL_RETURN(out_data);
 
     int strides[2] = {static_cast<int>(tensor_info->shape_c().at(1)), 1};

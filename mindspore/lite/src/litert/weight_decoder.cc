@@ -85,7 +85,11 @@ int WeightDecoder::DecodeKMeansWeight(lite::Tensor *tensor, TypeId dst_data_type
   void *dequant_data = nullptr;
   if (dst_data_type == kNumberTypeFloat32) {
     auto dequant_data_ptr = static_cast<float *>(dequant_data);
-    DecodeKMeansData(tensor, &dequant_data_ptr);
+    auto ret = DecodeKMeansData(tensor, &dequant_data_ptr);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Decode Kmeans data failed.";
+      return RET_ERROR;
+    }
     dequant_data = dequant_data_ptr;
   } else if (dst_data_type == kNumberTypeFloat16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)

@@ -109,7 +109,6 @@ int PropagateQuantParamPass::ForwardTupleGetItem(const CNodePtr &cnode) {
 
 int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) {
   for (const auto &cnode : nodes) {
-    auto inputs = cnode->inputs();
     if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
       if (ForwardTupleGetItem(cnode) != RET_OK) {
         MS_LOG(ERROR) << "Forward TupleGetItem " << cnode->fullname_with_scope() << " failed.";
@@ -181,7 +180,7 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
     MS_LOG(ERROR) << "Find node depends failed.";
     return ret;
   }
-  for (auto iter = nodes.rbegin(); iter != nodes.rend(); iter++) {
+  for (auto iter = nodes.rbegin(); iter != nodes.rend(); ++iter) {
     auto cnode = *iter;
     if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;

@@ -430,8 +430,8 @@ void GetParameterAndTensor(const AnfNodePtr &node, ParameterPtr *param_node, ten
   }
 }
 
-int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, size_t new_size,
-                            TypeId new_data_type) {
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, const void *quant_datas,
+                            size_t new_size, TypeId new_data_type) {
   CHECK_NULL_RETURN(quant_datas);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(new_size > 0, RET_NULL_PTR);
@@ -791,7 +791,11 @@ int ConvertCNodeFp32ToFp16(const CNodePtr &cnode) {
 int ConvertFp32ToFp16(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    ConvertCNodeFp32ToFp16(cnode);
+    auto ret = ConvertCNodeFp32ToFp16(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " convert cnode fp32 to fp16.";
+      return ret;
+    }
   }
   return RET_OK;
 }
