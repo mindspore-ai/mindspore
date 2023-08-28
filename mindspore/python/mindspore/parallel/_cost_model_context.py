@@ -475,7 +475,7 @@ class _CostModelContext:
         """
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
-        return self._context_handle.rp_matmul_mem_coef()
+        return self._context_handle.get_rp_matmul_mem_coef()
 
     def set_costmodel_allreduce_fusion_computation_time_parameter(self, computation_time_parameter):
         """
@@ -693,7 +693,7 @@ def _set_rp_matmul_mem_coef(coef):
     cost_model_context().set_rp_matmul_mem_coef(coef)
 
 
-def _get_rp_matmul_mem_coef(self):
+def _get_rp_matmul_mem_coef():
     """
     Get the matmul memory coef which is used in the RP algorithm.
     """
