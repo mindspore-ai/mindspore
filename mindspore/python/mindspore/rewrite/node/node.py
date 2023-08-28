@@ -29,7 +29,6 @@ from ..namespace import is_subtree
 from ..ast_helpers.ast_replacer import AstReplacer
 from ..ast_creator_register import ast_creator_registry
 
-
 PASS_THROUGH_METHOD = ScopedValue.create_naming_value("PassThrough")
 
 
@@ -159,7 +158,8 @@ class Node:
         return cls(NodeType.Python, ast_node, None, None, [], {}, name, instance)
 
     @classmethod
-    def create_input_node(cls, ast_node: ast.AST, arg_name: str, default: Optional[ScopedValue] = None, name: str = ""):
+    def create_input_node(cls, ast_node: Optional[ast.AST], arg_name: str, default: Optional[ScopedValue] = None,
+                          name: str = ""):
         """
         Class method of Node. Instantiate an instance of node whose type is Input. An Input node represents input of
         SymbolTree which is corresponding to parameters of forward function.
@@ -176,6 +176,8 @@ class Node:
             args = []
         else:
             args = [default]
+        if ast_node is None:
+            ast_node = ast.arg(arg_name)
         return cls(NodeType.Input, ast_node, [target], None, args, {}, name, None)
 
     @classmethod
@@ -335,7 +337,6 @@ class Node:
             return TreeNode.create_tree_node(stree, ast_node, new_targets, func_name, args, kwargs, node_name, op)
 
         return Node.create_call_buildin_op(op, ast_node, new_targets, func_name, args, kwargs, node_name)
-
 
     @classmethod
     def create_call_buildin_op(cls, op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [ScopedValue],
@@ -1092,9 +1093,9 @@ class Node:
                 self._normalized_args_keys.append(arg_key)
         return normalized_args
 
-##########################################################################################################
-# Synchronize rewrite node args to ast node
-##########################################################################################################
+    ##########################################################################################################
+    # Synchronize rewrite node args to ast node
+    ##########################################################################################################
 
     def _sync_assign_func_to_ast(self):
         """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
@@ -1323,7 +1324,7 @@ class Node:
 
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
-        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree,\
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree, \
                                NodeType.CellContainer, NodeType.CallFunction):
             self._sync_call_cell_args_to_ast()
         elif self._node_type == NodeType.Output:
@@ -1332,6 +1333,7 @@ class Node:
             self._sync_call_method_args_to_ast()
         elif self._node_type == NodeType.MathOps:
             self._sync_mathops_node_args_to_ast()
+
 
 ##########################################################################################################
 # Child classes

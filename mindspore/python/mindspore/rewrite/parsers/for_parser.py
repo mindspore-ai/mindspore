@@ -35,7 +35,7 @@ class ForParser(Parser):
     @staticmethod
     def modify_init_ast(stree, i, obj, iter_var_name):
         """Modify the ast node in init function."""
-        target = f"{iter_var_name.strip()}_{str(i)}"
+        target = f"{iter_var_name.strip()}{str(i)}"
         setattr(stree.get_origin_network(), target, obj)
         stree.get_origin_network().insert_child_to_cell(target, obj)
         AstModifier.insert_assign_to_function(stree.get_init_func_ast(),
@@ -82,7 +82,7 @@ class ForParser(Parser):
             raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
                                "when parsing 'for' statement.")
         index = ast_functiondef.body.index(node) + 1
-        if isinstance(iter_obj, list):
+        if isinstance(iter_obj, (list, nn.CellList)):
             for obj in iter_obj:
                 if not isinstance(obj, nn.Cell):
                     stree.try_append_python_node(node, node, node_manager)
@@ -90,13 +90,17 @@ class ForParser(Parser):
             for i, obj in enumerate(iter_obj):
                 ForParser.modify_init_ast(stree, i, obj, iter_var_name)
                 for body in node.body:
-                    new_func_name = f"self.{iter_var_name.strip()}_{str(i)}".strip()
+                    new_func_name = f"self.{iter_var_name.strip()}{str(i)}".strip()
                     new_node = ForParser.modify_construct_ast(stree, body, targets, new_func_name)
                     ast_functiondef.body.insert(index, new_node)
                     index += 1
+            # Expand "for" statement and replace the body with Pass
+            for body in node.body:
+                node.body.remove(body)
+            node.body.append(ast.Pass())
+
             if stree.get_ori_cls_name() == "SequentialCell":
                 stree.on_change(Event.CodeChangeEvent)
-            ast_functiondef.body.remove(node)
             return
         if isinstance(iter_obj, range):
             logger.warning("For MindSpore Rewrite, range not support.")

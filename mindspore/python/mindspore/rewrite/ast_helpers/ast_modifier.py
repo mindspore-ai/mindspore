@@ -218,6 +218,31 @@ class AstModifier(ast.NodeTransformer):
         raise RuntimeError("insert position is not contained in ast_func")
 
     @staticmethod
+    def append_arg_to_function(ast_func: ast.FunctionDef, ast_arg: ast.arg) -> ast.AST:
+        """
+        Append an ast.arg to an ast.FunctionDef (e.g. self.construct).
+
+        Args:
+            ast_func (ast.FunctionDef): An instance of ast.FunctionDef which is "construct" function of network.
+            ast_arg (ast.arg): An instance of ast.arg to be inserted in.
+
+        Returns:
+            An instance of ast.arg which has been appended to 'ast_func'.
+
+        Raises:
+            RuntimeError: If 'ast_arg' is not an instance of ast_arg.
+        """
+        if not isinstance(ast_arg, ast.arg):
+            raise RuntimeError("ast_arg should be an instance of ast.arg.")
+        arguments: ast.arguments = ast_func.args
+        args: [ast.arg] = arguments.args
+        args.append(ast_arg)
+        defaults = arguments.defaults
+        arg_default = ast.Constant(value=None, kind=None)
+        defaults.append(arg_default)
+        return ast_arg
+
+    @staticmethod
     def append_global_vars_expr_to_init(init_func: ast.FunctionDef, targets: [ScopedValue],
                                         field: str) -> ast.AST:
         """
@@ -261,18 +286,25 @@ class AstModifier(ast.NodeTransformer):
             RuntimeError: If 'targets' is None.
             RuntimeError: If value_type of element of 'targets' is not ValueType.NamingValue.
 
-            RuntimeError: If length of 'targets' is not 1. Multi-targets will be support in the future.
         """
-        if targets is None or len(targets) != 1:
-            raise RuntimeError("Only support one target in insert_cell_to_init now")
-        if targets[0].type != ValueType.NamingValue:
-            raise RuntimeError("Target must be a right-value, got: ", targets[0])
-        if targets[0].scope:
-            ast_target = ast.Attribute(ast.Name(targets[0].scope, ast.Load()), targets[0].value, ast.Store())
-        else:
-            ast_target = ast.Name(targets[0].value, ast.Store())
+        if targets is None:
+            raise RuntimeError("'Targets should not be None.")
+        targets_list = []
+        for target in targets:
+            if target.type != ValueType.NamingValue:
+                raise RuntimeError("Target must be a right-value, got: ", target)
+            if target.scope:
+                ast_target = ast.Attribute(ast.Name(target.scope, ast.Load()), target.value, ast.Store())
+            else:
+                ast_target = ast.Name(target.value, ast.Store())
+            targets_list.append(ast_target)
         call = AstModifier.create_call(expr, args, kwargs)
-        result = ast.Assign(targets=[ast_target], value=call)
+
+        if len(targets) == 1:
+            result = ast.Assign(targets=[targets_list[0]], value=call)
+        elif len(targets) > 1:
+            ast_targets = ast.Tuple(elts=targets_list, ctx=ast.Store())
+            result = ast.Assign(targets=[ast_targets], value=call)
         ast.fix_missing_locations(result)
         return result
 

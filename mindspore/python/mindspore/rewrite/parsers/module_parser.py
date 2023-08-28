@@ -30,6 +30,10 @@ from ..node.node_manager import NodeManager
 
 class ModuleParser(Parser):
     """Parse ast.Module to SymbolTrees."""
+
+    # a denied_class_decorator_list represents the decorators should be banned, which is registered by user
+    denied_class_decorator_list = []
+
     @staticmethod
     def _find_class(ast_node: ast.Module) -> ast.ClassDef:
         """Find all ast.ClassDef in ast.Module, only support one ast.ClassDef in ast.Module now."""
@@ -45,18 +49,27 @@ class ModuleParser(Parser):
     def _get_import_node(ast_root):
         """Iterate over ast_root and return all ast.Import nodes or ast.ImportFrom nodes in ast_root."""
         import_nodes = []
+        try_nodes = []
+        imports_str = []
 
         class GetImportNode(ast.NodeVisitor):
             """Find all import nodes from input ast node."""
 
+            def visit_Try(self, node: ast.Try) -> Any:
+                if isinstance(node.body[0], (ast.Import, ast.ImportFrom)):
+                    try_nodes.append(copy.deepcopy(node))
+                return node
+
             def visit_Import(self, node: ast.Import) -> Any:
                 """Iterate over all nodes and save ast.Import nodes."""
                 import_nodes.append(copy.deepcopy(node))
+                imports_str.append(astunparse.unparse(node))
                 return node
 
             def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
                 """Iterate over all nodes and save ast.ImportFrom nodes."""
                 import_nodes.append(copy.deepcopy(node))
+                imports_str.append(astunparse.unparse(node))
                 return node
 
             def get_node(self, input_ast):
@@ -64,8 +77,20 @@ class ModuleParser(Parser):
                 self.generic_visit(input_ast)
                 return True
 
+        def _remove_duplicated_import_in_try(node: [ast.Import, ast.ImportFrom]):
+            import_str = astunparse.unparse(node)
+            if import_str in imports_str:
+                import_nodes.remove(import_nodes[imports_str.index(import_str)])
+
         get_node_handler = GetImportNode()
         get_node_handler.get_node(ast_root)
+        for Try in try_nodes:
+            for body in Try.body:
+                _remove_duplicated_import_in_try(body)
+            for handler in Try.handlers:
+                for body in handler.body:
+                    _remove_duplicated_import_in_try(body)
+        import_nodes.extend(try_nodes)
         return import_nodes
 
     @staticmethod
@@ -102,22 +127,31 @@ class ModuleParser(Parser):
 
     @staticmethod
     def get_valid_import_info(import_node, file_path):
-        """Get valid import info while import_node.module is None"""
+        """Get valid import info while import_node.module is at form of relative path"""
         # copy to a new node to avoid origin import_node being modified.
         import_node_test = copy.deepcopy(import_node)
         file_path = os.path.dirname(os.path.abspath(file_path))
         # get real path from import_node.level
-        # from . import xxx: current path
-        # from .. import xxx: last level path
-        if import_node.level > 1:
-            for _ in range(import_node.level - 1):
+        # from .(A) import xxx: current path
+        # from ..(A) import xxx: last level path
+        import_node_module_name = import_node.module
+        level = import_node.level
+        # from A import xxx: it does not need to pad, directly return the module name
+        if level == 0:
+            return import_node_module_name, None
+        if level > 1:
+            for _ in range(level - 1):
                 file_path = os.path.dirname(file_path)
         file_path_tmp = file_path[:]
         max_level_count = file_path.count('/') + file_path.count('\\') - 1
         level_count = 0
+        # suffix is the module_name, e.g. 'A' in 'from ..(A) import xxx'
+        suffix = ''
+        if import_node_module_name:
+            suffix = '.' + import_node_module_name
         while level_count < max_level_count:
             file_path_tmp = os.path.dirname(file_path_tmp)
-            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace('/', '.')
+            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace('/', '.') + suffix
             import_node_test.level = 0
             import_code = astunparse.unparse(import_node_test).strip()
             test_code = f"import sys\nsys.path.insert(0, r'{file_path_tmp}')\n{import_code}"
@@ -130,8 +164,8 @@ class ModuleParser(Parser):
                 level_count += 1
                 continue
             except Exception as e: # pylint: disable=W0703
-                logger.error(f"For MindSpore Rewrite, in module parser, process import code: "
-                             f"{import_code} failed: {e}. Ignore this import code.")
+                logger.warning(f"For MindSpore Rewrite, in module parser, process import code: "
+                               f"{import_code} failed: {e}. Ignore this import code.")
                 return None, None
             else:
                 # try test code success
@@ -155,19 +189,80 @@ class ModuleParser(Parser):
         if not import_nodes:
             return
         for import_node in import_nodes:
-            if isinstance(import_node, ast.ImportFrom):
-                if import_node.module is None:
-                    import_module, import_path = ModuleParser.get_valid_import_info(import_node, file_path)
-                    if not import_module:
-                        continue
-                    ModuleParser.save_file_path_to_sys(stree, 0, import_path)
-                    import_node.module = import_module
-                elif import_node.level > 1:
-                    # For ImportFrom with dots(e.g. from ..file import abc), dot will be removed.
-                    # The corresponding path will be saved into sys.path according to `import_node.level`.
-                    ModuleParser.save_file_path_to_sys(stree, import_node.level, file_path)
-                import_node.level = 0
-            stree.get_import_asts().append(import_node)
+            import_node = ModuleParser._process_relative_import(stree, import_node, file_path)
+            if import_node:
+                stree.get_import_asts().append(import_node)
+
+    @staticmethod
+    def _process_relative_import(stree, import_node, file_path):
+        """Process relative imports"""
+        if isinstance(import_node, ast.ImportFrom):
+            # pad the ImportFrom with parent path
+            # e.g. from ..C import xxx -> from A.B.C import xxx
+            import_module, import_path = ModuleParser.get_valid_import_info(import_node, file_path)
+            if import_path:
+                ModuleParser.save_file_path_to_sys(stree, 0, import_path)
+            module_name_list = [alias.name.strip() for alias in import_node.names]
+            # add the module into _import_modules_dict to direct the class
+            stree.extend_import_module(import_module, module_name_list)
+            import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
+        elif isinstance(import_node, ast.Import):
+            for alias in import_node.names:
+                name = alias.name
+                stree.extend_import_module(name.strip(), [])
+        return import_node
+
+    @staticmethod
+    def _add_decorator_to_class(class_ast: ast.ClassDef, origin_net):
+        """Add decorators to class"""
+        origin_net_source_code_file = inspect.getfile(type(origin_net))
+        if not os.path.exists(origin_net_source_code_file):
+            raise RuntimeError("For MindSpore Rewrite, in module parser, File ", origin_net_source_code_file,
+                               " not exist")
+        try:
+            with open(origin_net_source_code_file, "r", encoding="utf-8") as f:
+                source_code = f.read()
+                decorators = ModuleParser._get_decorator(ast.parse(source_code), origin_net)
+        except RuntimeError:
+            raise RuntimeError("For MindSpore Rewrite, in module parser, get decorators error")
+        if decorators:
+            for decorator_index, decorator_node in enumerate(decorators):
+                class_ast.decorator_list.insert(decorator_index, decorator_node)
+        ast.fix_missing_locations(class_ast)
+
+    @staticmethod
+    def _get_decorator(ast_root, origin_net):
+        """Get the decorators of function"""
+        net_name = type(origin_net).__name__
+        decorators = []
+
+        class GetClassNode(ast.NodeVisitor):
+            """Find the class node from input ast node."""
+            def visit_ClassDef(self, node: ast.ClassDef) -> Any:
+                """Visit the class node and add the decorators to class node"""
+                if node.name == net_name:
+                    for decorator in node.decorator_list[:]:
+                        decorator_name = ""
+                        if isinstance(decorator, ast.Call):
+                            func = decorator.func
+                            if isinstance(func, ast.Name):
+                                decorator_name = func.id
+                        elif isinstance(decorator, ast.Name):
+                            decorator_name = decorator.id
+                        # User should set the denied class_decorator,
+                        # because the symbol_tree cant pass the correct parameters to decorators but the instance "obj".
+                        if decorator_name not in ModuleParser.denied_class_decorator_list:
+                            decorators.append(decorator)
+                return node
+
+            def get_node(self, input_ast):
+                """Interface of GetClassNode."""
+                self.generic_visit(input_ast)
+                return True
+
+        get_node_handler = GetClassNode()
+        get_node_handler.get_node(ast_root)
+        return decorators
 
     def target(self):
         """Parse target type"""
@@ -177,6 +272,7 @@ class ModuleParser(Parser):
         """Process ast.ClassDef nodes in ast.Module."""
         ModuleParser._save_imports(stree)
         class_ast = ModuleParser._find_class(node)
+        ModuleParser._add_decorator_to_class(class_ast, stree.get_origin_network())
         stree.set_class_ast(class_ast)
         for body in node.body:
             if isinstance(body, ast.ClassDef):

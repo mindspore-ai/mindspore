@@ -44,7 +44,7 @@ class IfParser(Parser):
         """
 
         test_code = astunparse.unparse(node.test)
-        test_code = test_code.replace("self", "stree.get_origin_network()")
+        test_code = test_code.replace("self.", "stree.get_origin_network().")
         bodies = None
         try:
             test_value = eval(test_code)

@@ -160,6 +160,13 @@ class Node:
             Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "create_call_function")
         return Node(NodeImpl._create_call_function(function, targets, args, kwargs))
 
+    @staticmethod
+    def create_input(param_name: str, default: Optional[ScopedValue] = None) -> 'Node':  # pylint: disable=C0111
+        Validator.check_value_type("param_name", param_name, [str], "Node")
+        if default is not None:
+            Validator.check_value_type("default", default, [ScopedValue], "Node")
+        return Node(NodeImpl.create_input_node(None, param_name, default, name=f"input_{param_name}"))
+
     def get_handler(self) -> NodeImpl:
         return self._node
 
