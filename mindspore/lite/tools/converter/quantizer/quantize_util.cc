@@ -705,6 +705,9 @@ int MarkOriginDataType(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     TypeId type_id = kTypeUnknown;
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
+      continue;
+    }
     auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
     if (ret != RET_OK) {
       MS_LOG(INFO) << "CNode data type is unknown.";
