@@ -23,25 +23,23 @@ from mindspore.nn import MultiheadAttention, TransformerEncoderLayer, \
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [ms.float32, ms.float32])
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32, ms.float64])
 @pytest.mark.parametrize('jit', [False, True])
-def test_multihead_attention_pynative(dtype, jit):
+def test_multihead_attention_pynative_cpu_gpu(dtype, jit):
     """
     Feature: MultiheadAttention
-    Description: Verify the result of AMultiheadAttentionvgPool3d
+    Description: Verify the result of MultiheadAttention
     Expectation: success
     """
     embed_dim = 128
     num_heads = 8
     sl = 10
     bs = 8
-    model = MultiheadAttention(embed_dim, num_heads).to_float(dtype)
+    model = MultiheadAttention(embed_dim, num_heads, dtype=dtype)
     q = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
     k = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
     v = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
@@ -57,16 +55,46 @@ def test_multihead_attention_pynative(dtype, jit):
     assert q.shape == out[0].shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('jit', [False, True])
+def test_multihead_attention_pynative_ascend(dtype, jit):
+    """
+    Feature: MultiheadAttention
+    Description: Verify the result of MultiheadAttention
+    Expectation: success
+    """
+    embed_dim = 128
+    num_heads = 8
+    sl = 10
+    bs = 8
+    model = MultiheadAttention(embed_dim, num_heads, dtype=dtype)
+    q = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
+    k = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
+    v = Tensor(np.random.randn(sl, bs, embed_dim), dtype)
+
+    def forward(q, k, v):
+        out = model(q, k, v)
+        return out
+
+    if jit:
+        forward = ms.jit(forward)
+
+    out = forward(q, k, v)
+    assert q.shape == out[0].shape
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32, ms.float64])
 @pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
-def test_transformerencoder_square_input(training, jit):
+def test_transformerencoder_square_input_cpu(dtype, training, jit):
     """
     Feature: TransformerEncoder
     Description: Test for edge cases when input of shape (batch size, sequence length, embedding dimension) has
@@ -74,7 +102,7 @@ def test_transformerencoder_square_input(training, jit):
     Expectation: success
     """
     model = TransformerEncoder(
-        TransformerEncoderLayer(d_model=4, nhead=2, dim_feedforward=16, dropout=0.0, batch_first=True),
+        TransformerEncoderLayer(d_model=4, nhead=2, dim_feedforward=16, dropout=0.0, batch_first=True, dtype=dtype),
         num_layers=2)
 
     # set constant weights of the model
@@ -82,14 +110,14 @@ def test_transformerencoder_square_input(training, jit):
         x = p.data
         sz = x.view(-1).shape[0]
         shape = x.shape
-        x = ops.cos(ops.arange(0, sz).astype(ms.float32).view(shape))
-        p.set_data(x)
+        x = ops.cos(ops.arange(0, sz).astype(dtype).view(shape))
+        p.set_dtype(dtype)
 
     if training:
         model = model.set_train()
     else:
         model = model.set_train(False)
-    x = ops.arange(0, 16).reshape(2, 2, 4).astype(ms.float32)
+    x = ops.arange(0, 16).reshape(2, 2, 4).astype(dtype)
     src_mask = Tensor([[0, 1], [0, 0]]).to(ms.bool_)
 
     def forward(x, mask):
@@ -104,30 +132,160 @@ def test_transformerencoder_square_input(training, jit):
                              [2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351]],
                             [[2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689],
                              [2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689]]],
-                           ms.float32)
+                           dtype)
     assert tuple(result.shape) == tuple(ref_output.shape)
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
 @pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
-def test_transformerdecoder(training, jit):
+def test_transformerencoder_square_input_ascend(dtype, training, jit):
+    """
+    Feature: TransformerEncoder
+    Description: Test for edge cases when input of shape (batch size, sequence length, embedding dimension) has
+    batch size == sequence length
+    Expectation: success
+    """
+    model = TransformerEncoder(
+        TransformerEncoderLayer(d_model=4, nhead=2, dim_feedforward=16, dropout=0.0, batch_first=True, dtype=dtype),
+        num_layers=2)
+
+    # set constant weights of the model
+    for _, p in model.parameters_and_names():
+        x = p.data
+        sz = x.view(-1).shape[0]
+        shape = x.shape
+        x = ops.cos(ops.arange(0, sz).astype(dtype).view(shape))
+        p.set_dtype(dtype)
+
+    if training:
+        model = model.set_train()
+    else:
+        model = model.set_train(False)
+    x = ops.arange(0, 16).reshape(2, 2, 4).astype(dtype)
+    src_mask = Tensor([[0, 1], [0, 0]]).to(ms.bool_)
+
+    def forward(x, mask):
+        result = model(x, src_mask=mask)
+        return result
+
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(x, src_mask)
+    ref_output = ms.Tensor([[[2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351],
+                             [2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351]],
+                            [[2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689],
+                             [2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689]]],
+                           dtype)
+    assert tuple(result.shape) == tuple(ref_output.shape)
+    np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformerencoder_square_input_gpu(dtype, training, jit):
+    """
+    Feature: TransformerEncoder
+    Description: Test for edge cases when input of shape (batch size, sequence length, embedding dimension) has
+    batch size == sequence length
+    Expectation: success
+    """
+    model = TransformerEncoder(
+        TransformerEncoderLayer(d_model=4, nhead=2, dim_feedforward=16, dropout=0.0, batch_first=True, dtype=dtype),
+        num_layers=2)
+
+    # set constant weights of the model
+    for _, p in model.parameters_and_names():
+        x = p.data
+        sz = x.view(-1).shape[0]
+        shape = x.shape
+        x = ops.cos(ops.arange(0, sz).astype(dtype).view(shape))
+        p.set_dtype(dtype)
+
+    if training:
+        model = model.set_train()
+    else:
+        model = model.set_train(False)
+    x = ops.arange(0, 16).reshape(2, 2, 4).astype(dtype)
+    src_mask = Tensor([[0, 1], [0, 0]]).to(ms.bool_)
+
+    def forward(x, mask):
+        result = model(x, src_mask=mask)
+        return result
+
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(x, src_mask)
+    ref_output = ms.Tensor([[[2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351],
+                             [2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351]],
+                            [[2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689],
+                             [2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689]]],
+                           dtype)
+    assert tuple(result.shape) == tuple(ref_output.shape)
+    np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformerdecoder_gpu(dtype, training, jit):
     """
     Feature: TransformerDecoder
     Description: Test shape (batch size, sequence length, embedding dimension)
     Expectation: success
     """
-    decoder_layer = TransformerDecoderLayer(d_model=512, nhead=8)
+    decoder_layer = TransformerDecoderLayer(d_model=512, nhead=8, dtype=dtype)
     transformer_decoder = TransformerDecoder(decoder_layer, num_layers=6)
-    memory = Tensor(np.random.rand(10, 32, 512), ms.float32)
-    tgt = Tensor(np.random.rand(20, 32, 512), ms.float32)
+    memory = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
+
+    if training:
+        transformer_decoder.set_train()
+    else:
+        transformer_decoder.set_train(False)
+
+    def forward(tgt, memory):
+        out = transformer_decoder(tgt, memory)
+        return out
+
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(tgt, memory)
+    assert result.shape == tgt.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32, ms.float64])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformerdecoder_cpu(dtype, training, jit):
+    """
+    Feature: TransformerDecoder
+    Description: Test shape (batch size, sequence length, embedding dimension)
+    Expectation: success
+    """
+    decoder_layer = TransformerDecoderLayer(d_model=512, nhead=8, dtype=dtype)
+    transformer_decoder = TransformerDecoder(decoder_layer, num_layers=6)
+    memory = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
 
     if training:
         transformer_decoder.set_train()
@@ -148,21 +306,117 @@ def test_transformerdecoder(training, jit):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformerdecoder_ascend(dtype, training, jit):
+    """
+    Feature: TransformerDecoder
+    Description: Test shape (batch size, sequence length, embedding dimension)
+    Expectation: success
+    """
+    decoder_layer = TransformerDecoderLayer(d_model=512, nhead=8, dtype=dtype)
+    transformer_decoder = TransformerDecoder(decoder_layer, num_layers=6)
+    memory = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
+
+    if training:
+        transformer_decoder.set_train()
+    else:
+        transformer_decoder.set_train(False)
+
+    def forward(tgt, memory):
+        out = transformer_decoder(tgt, memory)
+        return out
+
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(tgt, memory)
+    assert result.shape == tgt.shape
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32, ms.float64])
 @pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
-def test_transformer(training, jit):
+def test_transformer_cpu(dtype, training, jit):
     """
     Feature: Transformer
     Description: Test shape (batch size, sequence length, embedding dimension)
     Expectation: success
     """
-    transformer_model = Transformer(nhead=16, num_encoder_layers=12)
-    src = Tensor(np.random.rand(10, 32, 512), ms.float32)
-    tgt = Tensor(np.random.rand(20, 32, 512), ms.float32)
+    transformer_model = Transformer(nhead=16, num_encoder_layers=12, dtype=dtype)
+    src = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
+
+    if training:
+        transformer_model.set_train()
+    else:
+        transformer_model.set_train(False)
+
+    def forward(src, tgt):
+        out = transformer_model(src, tgt)
+        return out
+
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(src, tgt)
+    assert result.shape == tgt.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformer_gpu(dtype, training, jit):
+    """
+    Feature: Transformer
+    Description: Test shape (batch size, sequence length, embedding dimension)
+    Expectation: success
+    """
+    transformer_model = Transformer(nhead=16, num_encoder_layers=12, dtype=dtype)
+    src = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
+
+    if training:
+        transformer_model.set_train()
+    else:
+        transformer_model.set_train(False)
+
+    def forward(src, tgt):
+        out = transformer_model(src, tgt)
+        return out
+    if jit:
+        forward = ms.jit(forward)
+
+    result = forward(src, tgt)
+    assert result.shape == tgt.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('training', [True, False])
+@pytest.mark.parametrize('jit', [False, True])
+def test_transformer_ascend(dtype, training, jit):
+    """
+    Feature: Transformer
+    Description: Test shape (batch size, sequence length, embedding dimension)
+    Expectation: success
+    """
+    transformer_model = Transformer(nhead=16, num_encoder_layers=12, dtype=dtype)
+    src = Tensor(np.random.rand(10, 32, 512), dtype)
+    tgt = Tensor(np.random.rand(20, 32, 512), dtype)
 
     if training:
         transformer_model.set_train()

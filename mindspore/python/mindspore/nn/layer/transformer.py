@@ -39,11 +39,11 @@ __all__ = ['MultiheadAttention', 'TransformerEncoderLayer', 'TransformerDecoderL
 class MultiheadAttention(Cell):
     r"""
     This is an implementation of multihead attention in the paper `Attention is all you need
-    <https://arxiv.org/pdf/1706.03762v5.pdf>`_. Given the query vector with source length, and the
-    key and value vector with target length, the attention will be performed as the following
+    <https://arxiv.org/pdf/1706.03762v5.pdf>`_. Given the query vector, the key vector and value vector,
+    the attention will be performed as the following:
 
     .. math::
-        MultiHeadAttention(query, key, vector) = Concat(head_1, \dots, head_h)W^O
+        MultiHeadAttention(query, key, value) = Concat(head_1, \dots, head_h)W^O
 
     where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
 
@@ -67,33 +67,32 @@ class MultiheadAttention(Cell):
     Inputs:
         - **query** (Tensor): The query embeddings. If `query` is unbatched, the shape is :math:`(L, E_q)`,
           otherwise the shape is :math:`(L, N, E_q)` when `batch_first=False` or :math:`(N, L, E_q)` when
-          `batch_first=True`, where :math:`L`is the target sequence length, :math:`N` is the batch size,
+          `batch_first=True` , where :math:`L`is the target sequence length, :math:`N` is the batch size,
           and :math:`E_q` is the query embedding dimension `embed_dim`. Supported types: float16, float32,
           float64. Queries are compared against key-value pairs to produce the output.
         - **key** (Tensor): The key embeddings. If `key` is unbatched, the shape is :math:`(S, E_k)`, otherwise
           the shape is :math:`(S, N, E_k)` when `batch_first=False` or :math:`(N, S, E_k)` when
-          `batch_first=True`, where :math:`S` is the source sequence length, :math:`N` is the batch size,
+          `batch_first=True` , where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_k` is the key embedding dimension `kdim`. Supported types: float16, float32, float64.
         - **value** (Tensor): The value embeddings. If `value` is unbatched, the shape is :math:`(S, E_v)`,
           otherwise the shape is :math:`(S, N, E_v)` when `batch_first=False` or :math:`(N, S, E_v)` when
-          `batch_first=True`, where :math:`S` is the source sequence length, :math:`N` is the batch size,
+          `batch_first=True` , where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_v` is the value embedding dimension `vdim`. Supported types: float16, float32, float64.
         - **key_padding_mask** (Tensor, optional): If specified, a mask of shape :math:`(N, S)` indicating which
           elements within `key` to ignore for the purpose of attention (i.e. treat as "padding").
-          For unbatched `query`, shape should be :math:`(S)`. Binary and byte masks are supported.
+          For unbatched `query`, shape should be :math:`(S)`. Binary and float masks are supported.
           For a binary mask, a ``True`` value indicates that the corresponding `key` value will be ignored for
           the purpose of attention. For a float mask, it will be directly added to the corresponding `key` value.
-          Supported float types: float16, float32, float64.
+          Supported float types: float16, float32, float64. Default: ``None``.
         - **need_weights** (bool): Whether returns `attn_output_weights` in addition to `attn_outputs`.
           Default: ``True``.
         - **attn_mask** (Tensor, optional): If specified, a 2D or 3D mask preventing attention to certain positions.
           Must be of shape :math:`(L, S)` or :math:`(N\cdot\text{num_heads}, L, S)`, where :math:`N` is the
           batch size, :math:`L` is the target sequence length, and :math:`S` is the source sequence length.
           A 2D mask will be broadcasted across the batch while a 3D mask allows for a different mask for each entry
-          in the batch. Binary, byte, and float masks are supported. For a binary mask, a ``True`` value indicates
-          that the corresponding position is not allowed to attend. For a byte mask, a non-zero value indicates that
-          the corresponding position is not allowed to attend. For a float mask, the mask values will be added to
-          the attention weight. Supported float types: float16, float32, float64.
+          in the batch. For a binary mask, a ``True`` value indicates that the corresponding position is not allowed
+          to attend. For a float mask, the mask values will be added to the attention weight.
+          Supported float types: float16, float32, float64. Default: ``None``.
         - **average_attn_weights** (bool): If true, indicates that the returned `attn_weights` should be averaged
           across heads. Otherwise, `attn_weights` are provided separately per head. Note that this flag only
           has an effect when `need_weights=True`. Default: ``True`` (i.e. average weights across heads)
@@ -103,7 +102,7 @@ class MultiheadAttention(Cell):
 
         - **attn_output** - Attention outputs. If input is unbatched, the output shape is :math:`(L, E)`, otherwise
           the output shape is :math:`(L, N, E)` when `batch_first=False` or :math:`(N, L, E)` when
-          `batch_first=True`, where :math:`L` is the target sequence length, :math:`N` is the batch size,
+          `batch_first=True` , where :math:`L` is the target sequence length, :math:`N` is the batch size,
           and :math:`E` is the embedding dimension `embed_dim`.
         - **attn_output_weights** - Only returned when `need_weights=True`. If `average_attn_weights=True`,
           returns attention weights averaged across heads with shape :math:`(L, S)` when input is unbatched or
@@ -134,7 +133,7 @@ class MultiheadAttention(Cell):
         (10, 8, 128)
     """
 
-    def __init__(self, embed_dim, num_heads, dropout=0., has_bias=True, add_bias_kv=False,
+    def __init__(self, embed_dim, num_heads, dropout=0.0, has_bias=True, add_bias_kv=False,
                  add_zero_attn=False, kdim=None, vdim=None, batch_first=False, dtype=mstype.float32):
         super().__init__()
         self.embed_dim = embed_dim
@@ -252,27 +251,29 @@ class TransformerEncoderLayer(Cell):
         dim_feedforward (int): The dimension of the feedforward layer. Default: ``2048``.
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
-            can be a string (``"relu"`` or ``"gelu"``), Cell instance (``nn.ReLU()`` or ``nn.GELU()``) or
-            a callable (``ops.relu`` or ``ops.gelu``). Default: ``"relu"``.
+            can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
+             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
-        batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
+        batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
-            operations, respectively. Default: ``False``.
+        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+            operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **src** (Tensor): the sequence to the encoder layer. For unbatched input, the shape is
-          :math:`(S, E)` ; otherwise if batch_first=False, the shape is :math:`(S, N, E)` and if
-          batch_first=True, the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
+          :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
+          `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): the mask for the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*num\_heads, S, S)`. Supported types: float16, float32, float64. Default: ``None``.
+          or :math:`(N*nheads, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): the mask for the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
 
     Outputs:
         Tensor.
@@ -281,7 +282,7 @@ class TransformerEncoderLayer(Cell):
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
         ValueError: If the init argument `activation` is not :class:`mindspore.nn.ReLU`,
             :class:`mindspore.nn.GELU` instance, :func:`mindspore.ops.relu`,
-            :func:`mindspore.ops.gelu` instance, "relu" or "gelu" .
+            :func:`mindspore.ops.gelu`, "relu" or "gelu" .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -292,6 +293,8 @@ class TransformerEncoderLayer(Cell):
         >>> encoder_layer = ms.nn.TransformerEncoderLayer(d_model=512, nhead=8)
         >>> src = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
         >>> out = encoder_layer(src)
+        >>> print(out.shape)
+        (10, 32, 512)
         >>> # Alternatively, when batch_first=True:
         >>> encoder_layer = ms.nn.TransformerEncoderLayer(d_model=512, nhead=8, batch_first=True)
         >>> src = ms.Tensor(np.random.rand(32, 10, 512), ms.float32)
@@ -317,8 +320,8 @@ class TransformerEncoderLayer(Cell):
                             bias_init=Uniform(bound1), dtype=dtype)
 
         self.norm_first = norm_first
-        self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps)
-        self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps)
+        self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
+        self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
         self.dropout1 = Dropout(p=dropout)
         self.dropout2 = Dropout(p=dropout)
         self.activation1 = activation
@@ -327,11 +330,11 @@ class TransformerEncoderLayer(Cell):
             and not callable(activation):
             raise ValueError(f"The argument 'activation' must be str, callable or Cell instance,"
                              f" but get {activation}.")
-        if isinstance(activation, Cell) and (not isinstance(activation, ReLU) or \
+        if isinstance(activation, Cell) and (not isinstance(activation, ReLU) and \
                                              not isinstance(activation, GELU)):
             raise ValueError(f"The argument 'activation' must be nn.ReLU or nn.GELU instance,"
                              f" but get {activation}.")
-        if callable(activation) and (activation is not ops.relu or \
+        if callable(activation) and (activation is not ops.relu and \
                                      activation is not ops.gelu):
             raise ValueError(f"The argument 'activation' must be ops.relu or ops.gelu instance,"
                              f" but get {activation}.")
@@ -389,33 +392,35 @@ class TransformerDecoderLayer(Cell):
         dim_feedforward (int): The dimension of the feedforward layer. Default: ``2048``.
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
-            can be a string (`"relu"` or `"gelu"`), Cell instance (`nn.ReLU()` or `nn.GELU()`) or
-            a callable (`ops.relu` or `ops.gelu`). Default: ``"relu"``
+            can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
+             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
-        batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
+        batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)`.
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
-            operations, respectively. Default: ``False``.
+        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+            operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder layer. For unbatched input, the shape is
-          :math:`(T, E)` ; otherwise if batch_first=False, the shape is :math:`(T, N, E)` and if
-          batch_first=True, the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
+          :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
+          `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*num\_heads, T, T)`. Supported types: float16, float32, float64. Default: ``None``.
+          or :math:`(N*nheads, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): The mask of the memory sequence. The shape is
-          :math:`(T, S)` . Supported types: float16, float32, float64. Default: ``None``.
+          :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
         - **tgt_key_padding_mask** (Tensor, optional): The mask of the tgt keys per batch. The shape is
           :math:`(T)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
         - **memory_key_padding_mask** (Tensor, optional): The mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
 
     Outputs:
         Tensor.
@@ -424,7 +429,7 @@ class TransformerDecoderLayer(Cell):
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
         ValueError: If the init argument `activation` is not :class:`mindspore.nn.ReLU`,
             :class:`mindspore.nn.GELU` instance, :func:`mindspore.ops.relu`,
-            :func:`mindspore.ops.gelu` instance, "relu" or "gelu" .
+            :func:`mindspore.ops.gelu` , "relu" or "gelu" .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -436,6 +441,8 @@ class TransformerDecoderLayer(Cell):
         >>> memory = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
         >>> tgt = ms.Tensor(np.random.rand(20, 32, 512), ms.float32)
         >>> out = decoder_layer(tgt, memory)
+        >>> print(out.shape)
+        (20, 32, 512)
         >>> # Alternatively, when `batch_first` is ``True``:
         >>> decoder_layer = ms.nn.TransformerDecoderLayer(d_model=512, nhead=8, batch_first=True)
         >>> memory = ms.Tensor(np.random.rand(32, 10, 512), ms.float32)
@@ -463,9 +470,9 @@ class TransformerDecoderLayer(Cell):
                             bias_init=Uniform(bound1), dtype=dtype)
 
         self.norm_first = norm_first
-        self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps)
-        self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps)
-        self.norm3 = LayerNorm((d_model,), epsilon=layer_norm_eps)
+        self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
+        self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
+        self.norm3 = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
         self.dropout1 = Dropout(p=dropout)
         self.dropout2 = Dropout(p=dropout)
         self.dropout3 = Dropout(p=dropout)
@@ -475,11 +482,11 @@ class TransformerDecoderLayer(Cell):
             and not callable(activation):
             raise ValueError(f"The argument 'activation' must be str, callable or Cell instance,"
                              f" but get {activation}.")
-        if isinstance(activation, Cell) and (not isinstance(activation, ReLU) or \
+        if isinstance(activation, Cell) and (not isinstance(activation, ReLU) and \
                                              not isinstance(activation, GELU)):
             raise ValueError(f"The argument 'activation' must be nn.ReLU or nn.GELU instance,"
                              f" but get {activation}.")
-        if callable(activation) and (activation is not ops.relu or \
+        if callable(activation) and (activation is not ops.relu and \
                                      activation is not ops.gelu):
             raise ValueError(f"The argument 'activation' must be ops.relu or ops.gelu instance,"
                              f" but get {activation}.")
@@ -532,26 +539,27 @@ class TransformerDecoderLayer(Cell):
 
 class TransformerEncoder(Cell):
     r"""
-    Transformer Encoder module with multi-layer stacked of `TransformerEncoderLayer`, including multihead self
+    Transformer Encoder module with multi-layer stacked of `TransformerEncoderLayer`, including multihead
     attention and feedforward layer. Users can build the
     BERT(https://arxiv.org/abs/1810.04805) model with corresponding parameters.
 
     Args:
-        encoder_layer (Cell): An instance of the TransformerEncoderLayer() class.
+        encoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerEncoderLayer` class.
         num_layers (int): The number of encoder-layers in the encoder.
         norm (Cell, optional): The layer normalization module. Default: ``None``.
 
     Inputs:
         - **src** (Tensor): The sequence to the encoder. For unbatched input, the shape is
-          :math:`(S, E)` ; otherwise if batch_first=False, the shape is :math:`(S, N, E)` and if
-          batch_first=True, the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
-          length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
+          :math:`(S, E)` ; otherwise if `batch_first=False` in TransformerEncoderLayer, the shape is
+          :math:`(S, N, E)` and if `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the
+          source sequence length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*num\_heads, S, S)`. Default: ``None``.
+          or :math:`(N*nheads, S, S)` , where `nheads` is the arguent in TransformerDecoderLayer.
+          Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): the mask of the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64.  Default: ``None``.
+          float64, bool.  Default: ``None``.
 
     Outputs:
         Tensor.
@@ -612,20 +620,21 @@ class TransformerDecoder(Cell):
 
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder. For unbatched input, the shape is
-          :math:`(T, E)` ; otherwise if batch_first=False, the shape is :math:`(T, N, E)` and if
-          batch_first=True, the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
-          length. Supported types: float16, float32, float64.
+          :math:`(T, E)` ; otherwise if `batch_first=False` in TransformerDecoderLayer, the shape is
+          :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the
+          target sequence length. Supported types: float16, float32, float64.
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional): the mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*num\_heads, T, T)`. Supported types: float16, float32, float64. Default: ``None``.
+          or :math:`(N*nheads, T, T)` , where `nheads` is the arguent in TransformerDecoderLayer.
+          Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): the mask of the memory sequence. The shape is
-          :math:`(T, S)` . Supported types: float16, float32, float64. Default: ``None``.
+          :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
         - **tgt_key_padding_mask** (Tensor, optional): the mask of the tgt keys per batch. Supported
-          types: float16, float32, float64. Default: ``None``.
+          types: float16, float32, float64, bool. Default: ``None``.
         - **memory_key_padding_mask** (Tensor, optional): the mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
 
     Outputs:
         Tensor.
@@ -674,57 +683,60 @@ class TransformerDecoder(Cell):
 class Transformer(Cell):
     r"""
     Transformer module including encoder and decoder. The difference with the original implements is the module use
-    the residual addition before the layer normalization. And the default hidden act is `gelu`.
+    the residual addition before the layer normalization. And the default hidden activation is `gelu`.
     The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
     Args:
-        d_model (int): The number of expected features in the inputs tensor. Default: ``512``.
+        d_model (int): The number of expected features in the inputs tensor for Encoder and Decoder. Default: ``512``.
         nhead (int): The number of heads in the MultiheadAttention modules. Default: ``8``.
         num_encoder_layers (int): The number of encoder-layers in the encoder. Default: ``6``.
         num_decoder_layers (int): The number of decoder-layers in the decoder. Default: ``6``.
         dim_feedforward (int): The dimension of the feedforward layer. Default: ``2048``.
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
-            can be a string (`"relu"` or `"gelu"`), Cell instance (`nn.ReLU()` or `nn.GELU()`) or
-            a callable (`ops.relu` or `ops.gelu`). Default: ``"relu"``
+            can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
+             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         custom_encoder (Cell): Custom encoder. Default: ``None``.
         custom_decoder (Cell): Custom decoder. Default: ``None``.
         layer_norm_eps (float): the epsilion value in layer normalization module. Default: ``1e-5``.
-        batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
+        batch_first (bool): If `batch_first=True`, then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
-            operations, respectively. Default: ``False``.
+        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+            operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **src** (Tensor): The source sequence to the encoder. For unbatched input, the shape is
-          :math:`(S, E)` ; otherwise if batch_first=False, the shape is :math:`(S, N, E)` and if
-          batch_first=True, the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
+          :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
+          `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number. Supported
           types: float16, float32, float64.
         - **tgt** (Tensor): The target sequence to the decoder. For unbatched input, the shape is
-          :math:`(T, E)` ; otherwise if batch_first=False, the shape is :math:`(T, N, E)` and if
-          batch_first=True, the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
+          :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
+          `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*num\_heads, S, S)`. Supported types: float16, float32, float64. Default: ``None``.
+          or :math:`(N*nheads, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*num\_heads, T, T)`. Supported types: float16, float32, float64. Default: ``None``.
+          or :math:`(N*nheads, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): The additive mask of the encoder output. The shape is
-          :math:`(T, S)` . Supported types: float16, float32, float64. Default: ``None``.
+          :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): The mask of src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
         - **tgt_key_padding_mask** (Tensor, optional): The mask of tgt keys per batch. The shape is
           :math:`(T)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
-          float64. Default: ``None``.
+          float64, bool. Default: ``None``.
         - **memory_key_padding_mask** (Tensor, optional): The mask of memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16,
-          float32, float64. Default: ``None``.
+          float32, float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor.
+        Tensor. The shape is :math:`(T, E)` for unbatched input, otherwise if `batch_first=False` , the shape is
+        :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(N, T, E)`.
 
     Raises:
         ValueError: If the batch sizes of the init argument `src` and `tgt` are not equal.
@@ -756,7 +768,7 @@ class Transformer(Cell):
         else:
             encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout,
                                                     activation, layer_norm_eps, batch_first, norm_first, dtype=dtype)
-            encoder_norm = LayerNorm((d_model,), epsilon=layer_norm_eps)
+            encoder_norm = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
             self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
 
         if custom_decoder is not None:
@@ -764,7 +776,7 @@ class Transformer(Cell):
         else:
             decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward, dropout,
                                                     activation, layer_norm_eps, batch_first, norm_first, dtype=dtype)
-            decoder_norm = LayerNorm((d_model,), epsilon=layer_norm_eps)
+            decoder_norm = LayerNorm((d_model,), epsilon=layer_norm_eps, dtype=dtype)
             self.decoder = TransformerDecoder(decoder_layer, num_decoder_layers, decoder_norm)
 
         for _, p in self.parameters_and_names():

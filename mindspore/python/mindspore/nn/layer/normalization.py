@@ -706,7 +706,8 @@ class LayerNorm(Cell):
                  begin_params_axis=-1,
                  gamma_init='ones',
                  beta_init='zeros',
-                 epsilon=1e-7
+                 epsilon=1e-7,
+                 dtype=mstype.float32
                  ):
         """Initialize LayerNorm."""
         super(LayerNorm, self).__init__()
@@ -718,9 +719,9 @@ class LayerNorm(Cell):
         self.begin_params_axis = begin_params_axis
         self.epsilon = epsilon
         self.gamma = Parameter(initializer(
-            gamma_init, normalized_shape), name="gamma")
+            gamma_init, normalized_shape, dtype=dtype), name="gamma")
         self.beta = Parameter(initializer(
-            beta_init, normalized_shape), name="beta")
+            beta_init, normalized_shape, dtype=dtype), name="beta")
         self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis,
                                       begin_params_axis=self.begin_params_axis,
                                       epsilon=self.epsilon)

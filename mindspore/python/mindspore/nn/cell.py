@@ -1423,9 +1423,6 @@ class Cell(Cell_):
 
     # pylint: disable=missing-docstring
     def check_names_and_refresh_name(self):
-        """
-        Check the names of cell parameters and update parameters' name.
-        """
         if not hasattr(self, "_params"):
             return
         all_name = [i.name for i in dict(self.parameters_and_names()).values()]
