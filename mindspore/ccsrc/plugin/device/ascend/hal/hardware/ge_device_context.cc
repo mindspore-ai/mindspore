@@ -319,7 +319,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   // enable overflow detection
   (*ge_options)["ge.exec.overflow"] = "1";
-
+  // enable deterministic
+  (*ge_options)[::ge::DETERMINISTIC] = ms_context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? "1" : "0";
   UseOpDebugConfig(ge_options);
 }
 
