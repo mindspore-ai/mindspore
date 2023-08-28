@@ -342,6 +342,8 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       *slice_value = CheckAndConvertUtils::CheckTupleInt(arg_name, input_value, "StridedSlice");
       *slice_len = (*slice_value).size();
     } else {
+      // slice is ValueAny
+      is_dynamic = true;
       auto tuple_arg = input_arg->cast<abstract::AbstractTuplePtr>();
       if (tuple_arg->dynamic_len()) {
         *dyn_tuple = true;
@@ -352,16 +354,22 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
   } else if (input_arg->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt32, kInt64},
                                                      "StridedSlice");
+    auto slice_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
+    auto slice_shape = slice_shape_ptr->shape();
+    if (slice_shape.size() != kInputIndex1) {
+      MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got" << slice_shape.size()
+                               << "-D.";
+    }
     if (input_value->isa<tensor::Tensor>()) {
       *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice");
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny
       is_dynamic = true;
-      auto slice_shape = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
-      if (slice_shape->shape().size() != 1) {
-        MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got"
-                                 << slice_shape->shape().size() << "-D.";
+      if (IsDynamic(slice_shape)) {
+        *dyn_tuple = true;
+      } else {
+        *slice_len = slice_shape[kInputIndex0];
       }
     }
   } else {
@@ -401,8 +409,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len, &end_dyn_tuple);
   bool stride_dynamic =
     CheckAndGetDynamicSlice(input_args[stride_index], "strides", &strides_v, &stride_len, &stride_dyn_tuple);
-  std::vector<bool> check_vec = {IsDynamicRank(x_shape), begin_dyn_tuple, end_dyn_tuple, stride_dyn_tuple,
-                                 begin_dynamic,          end_dynamic,     stride_dynamic};
+  std::vector<bool> check_vec = {IsDynamicRank(x_shape), begin_dyn_tuple, end_dyn_tuple, stride_dyn_tuple};
   if (std::any_of(check_vec.begin(), check_vec.end(), [](const bool &flag) { return flag; })) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
