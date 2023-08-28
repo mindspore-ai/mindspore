@@ -104,7 +104,6 @@ message NodeProto {
   repeated AttributeProto primal_attr = 9;
 }
 
-
 message ModelProto {
   optional string ir_version = 1;
   optional string producer_name = 2;
@@ -119,6 +118,7 @@ message ModelProto {
   optional ParallelProto parallel = 11; // information for parallel.
   repeated PrimitiveProto primitives = 12; // all the primitives of the model.
   optional int64 mind_ir_version = 13;
+  map<string,string> user_info = 14; // data for custom
 }
 
 

@@ -30,6 +30,7 @@ from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTens
 from mindspore.common.mutable import mutable
 from mindspore.common.jit_config import JitConfig
 from mindspore.common.lazy_inline import lazy_inline
+from mindspore.common.mindir_util import load_mindir, save_mindir
 
 # symbols from dtype
 __all__ = [
@@ -68,5 +69,5 @@ __all__.extend([
     "set_dump",
     "ms_memory_recycle",
     "mutable", "JitConfig",
-    "lazy_inline"
+    "lazy_inline", "load_mindir", "save_mindir"
 ])
