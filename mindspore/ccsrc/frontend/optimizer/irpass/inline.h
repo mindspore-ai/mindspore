@@ -74,7 +74,7 @@ class ReplaceApplicator : public AnfVisitor {
 
   bool NoInline(const FuncGraphPtr &fg) const {
     if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
-        fg->stub() || *(fg->switch_input()) || *(fg->switch_layer_input())) {
+        fg->stub() || *(fg->indirect())) {
       return true;
     }
     // Defer inlining in the case of pipeline.

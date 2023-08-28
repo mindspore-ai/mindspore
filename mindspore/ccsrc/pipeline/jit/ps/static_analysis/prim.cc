@@ -154,35 +154,36 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
-static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_abs_list, bool need_unpack) {
-  // arg[0] is the func graph to unpack, ignore it
-  AbstractBasePtrList specialize_args_before_unpack(args_abs_list.begin() + 1, args_abs_list.end());
+static AbstractBasePtrList GetUnpackGraphSpecArgsList(const AbstractBasePtrList &args_abs_list, bool need_unpack) {
+  if (!need_unpack) {
+    // arg[0] is the func graph to unpack, ignore it
+    AbstractBasePtrList specialize_args_before_unpack(args_abs_list.begin() + 1, args_abs_list.end());
+    return specialize_args_before_unpack;
+  }
+
   AbstractBasePtrList graph_specialize_args;
-  if (need_unpack) {
-    for (size_t index = 0; index < specialize_args_before_unpack.size(); index++) {
-      MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
-      if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
-        auto arg_tuple = specialize_args_before_unpack[index]->cast_ptr<AbstractTuple>();
-        (void)std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
-                             std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
-      } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
-        auto arg_dict = specialize_args_before_unpack[index]->cast_ptr<AbstractDictionary>();
-        MS_EXCEPTION_IF_NULL(arg_dict);
-        auto dict_elems = arg_dict->elements();
-        (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
-                             [](const AbstractElementPair &item) {
-                               MS_EXCEPTION_IF_NULL(item.first);
-                               // Dict_elems's first element represents parameter names, which should be string type.
-                               return std::make_shared<AbstractKeywordArg>(
-                                 GetValue<std::string>(item.first->BuildValue()), item.second);
-                             });
-      } else {
-        MS_LOG(INTERNAL_EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
-                                   << specialize_args_before_unpack[index]->ToString();
-      }
+  // arg[0] is the func graph to unpack, ignore it
+  for (size_t index = 1; index < args_abs_list.size(); index++) {
+    MS_EXCEPTION_IF_NULL(args_abs_list[index]);
+    if (args_abs_list[index]->isa<AbstractTuple>()) {
+      auto arg_tuple = args_abs_list[index]->cast_ptr<AbstractTuple>();
+      (void)std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
+                           std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
+    } else if (args_abs_list[index]->isa<AbstractDictionary>()) {
+      auto arg_dict = args_abs_list[index]->cast_ptr<AbstractDictionary>();
+      MS_EXCEPTION_IF_NULL(arg_dict);
+      auto dict_elems = arg_dict->elements();
+      (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
+                           [](const AbstractElementPair &item) {
+                             MS_EXCEPTION_IF_NULL(item.first);
+                             // Dict_elems's first element represents parameter names, which should be string type.
+                             return std::make_shared<AbstractKeywordArg>(
+                               GetValue<std::string>(item.first->BuildValue()), item.second);
+                           });
+    } else {
+      MS_LOG(INTERNAL_EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
+                                 << args_abs_list[index]->ToString();
     }
-  } else {
-    graph_specialize_args = specialize_args_before_unpack;
   }
   return graph_specialize_args;
 }
@@ -226,7 +227,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   }
   AbstractBasePtrList graph_specialize_args_without_sens;
   FuncGraphAbstractClosure *real_fn = nullptr;
-  // If it's Partial closure.
+  // If it's Partial closure, fetch the func graph from it.
   const auto &partial_fn_abs = fn->cast_ptr<PartialAbstractClosure>();
   if (partial_fn_abs != nullptr) {
     const auto &partial_fn = partial_fn_abs->fn();
@@ -243,10 +244,17 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   if (unpack_graph->with_sens_in_args() && graph_specialize_args.empty()) {
     MS_EXCEPTION(ValueError) << "Grad with sens, but the sens is not provided.";
   }
+  // If it's Partial closure, copy the arg list in advance.
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (enable_pre_lift && partial_fn_abs != nullptr) {
+    (void)std::copy(partial_fn_abs->args().begin(), partial_fn_abs->args().end(),
+                    std::back_inserter(graph_specialize_args_without_sens));
+  }
   (void)std::transform(graph_specialize_args.begin(),
                        graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
                        std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
-  MS_LOG(DEBUG) << "graph_specialize_args_without_sens size: " << graph_specialize_args_without_sens.size();
+  MS_LOG(DEBUG) << "forward_graph: " << forward_graph->ToString()
+                << ", graph_specialize_args_without_sens size: " << graph_specialize_args_without_sens.size();
   auto new_forward_graph = forward_graph->GenerateFuncGraph(graph_specialize_args_without_sens);
   MS_EXCEPTION_IF_NULL(engine->func_graph_manager());
   engine->func_graph_manager()->AddFuncGraph(new_forward_graph);

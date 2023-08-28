@@ -154,6 +154,9 @@ class OptimizeIRPassLib {
   // Value_Based Eliminate
   SubstitutionPtr value_based_eliminate_;
 
+  // Partial defer inline
+  SubstitutionPtr partial_defer_inline_;
+
   // Switch defer inline
   SubstitutionPtr switch_defer_inline_;
 

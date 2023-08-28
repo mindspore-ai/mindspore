@@ -311,12 +311,13 @@ AbstractFunctionPtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFun
   return nullptr;
 }
 
-AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func) {
+AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func,
+                                                                          const AnfNodePtr &new_node) {
   MS_EXCEPTION_IF_NULL(old_abs_func);
   AbstractFunctionPtr new_abs = nullptr;
   if (old_abs_func->isa<AbstractFuncUnion>()) {
     AbstractFuncAtomPtrList func_atoms;
-    auto build_new_abs = [this, &func_atoms](const AbstractFuncAtomPtr &poss) {
+    auto build_new_abs = [this, &func_atoms, &new_node](const AbstractFuncAtomPtr &poss) {
       MS_EXCEPTION_IF_NULL(poss);
       auto resolved_atom = poss;
       if (poss->isa<AsyncAbstractFuncAtom>()) {
@@ -327,7 +328,7 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
         MS_EXCEPTION_IF_NULL(resolved_atom);
         MS_LOG(DEBUG) << "Resolved AsyncAbstractFuncAtom is: " << resolved_atom->ToString();
       }
-      auto specialized_abs = this->SpecializeAbstractFuncRecursively(resolved_atom);
+      auto specialized_abs = this->SpecializeAbstractFuncRecursively(resolved_atom, new_node);
       AbstractFuncAtomPtr new_abs_atom = nullptr;
       if (specialized_abs == nullptr) {
         MS_LOG(DEBUG) << "Cannot resolve old_abs: " << resolved_atom->ToString()
@@ -360,8 +361,7 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
     auto new_abs_fn = GetSpecializedAbstract(old_abs_fn);
     if (new_abs_fn != nullptr && new_abs_fn->isa<AbstractFuncAtom>()) {
       auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
-      new_abs =
-        std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), old_partial_abs->node());
+      new_abs = std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), new_node);
       MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
                     << ", specialized_abstract: " << new_abs->ToString();
     } else {
@@ -396,7 +396,7 @@ void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
       continue;
     }
     auto old_abs_func = old_abs->cast<AbstractFunctionPtr>();
-    auto new_abs_func = SpecializeAbstractFuncRecursively(old_abs_func);
+    auto new_abs_func = SpecializeAbstractFuncRecursively(old_abs_func, input0);
     if (new_abs_func != nullptr) {
       input0->set_abstract(new_abs_func);
       MS_LOG(DEBUG) << "Find specialized abstract for node: " << input0->DebugString()
@@ -942,7 +942,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     if (new_inputs[i] != replace_node) {
       new_inputs[i] = replace_node;
       MS_EXCEPTION_IF_NULL(replace_node);
-      MS_LOG(DEBUG) << "Set new_input[" << i << "] = " << replace_node->DebugString();
+      MS_LOG(DEBUG) << "Set new_input[" << i << "]: " << replace_node->DebugString();
     }
   }
   c_new->set_inputs(new_inputs);
@@ -1070,7 +1070,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   eval->set_bound_node(cnode);
   AbstractBasePtrList args_abs_list = eval->NormalizeArgs(args);
   std::pair<AbstractBasePtrList, AbstractBasePtr> result;
-  SpecializeStatusCode status = AcquireUniqueEvalVal(func_abs, eval, args_abs_list, &result);
+  SpecializeStatusCode status = AcquireUniqueEvalResult(func_abs, eval, args_abs_list, &result);
   if (status != kSpecializeSuccess) {
     *errcode = status;
     return nullptr;
@@ -1143,7 +1143,9 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   return BuildValueNode(func_graph, cnode, new_abs_func);
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildSpecializedPartialAppCNode(const CNodePtr &cnode) {
+// The CNode function is Parameter.
+// If the Parameter is PartialApp, unpack it and rebuild a new one.
+AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_inputs = cnode->inputs();
   if (new_inputs.empty()) {
@@ -1151,14 +1153,14 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedPartialAppCNode(const CNodePtr 
   }
   AnfNodePtr func = new_inputs[0];
   MS_EXCEPTION_IF_NULL(func);
-  AbstractBasePtr fnval = func->abstract();
+  AbstractBasePtr func_abs = func->abstract();
 
   AbstractBasePtrList args;
-  auto real_fnval = fnval;
-  MS_EXCEPTION_IF_NULL(fnval);
-  if (fnval->isa<PartialAbstractClosure>()) {
-    auto partial_closure = dyn_cast_ptr<PartialAbstractClosure>(fnval);
-    real_fnval = partial_closure->fn();
+  auto real_func_abs = func_abs;
+  MS_EXCEPTION_IF_NULL(func_abs);
+  if (func_abs->isa<PartialAbstractClosure>()) {
+    auto partial_closure = dyn_cast_ptr<PartialAbstractClosure>(func_abs);
+    real_func_abs = partial_closure->fn();
     args = partial_closure->args();
   }
   (void)std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args), [](const AnfNodePtr &inp) {
@@ -1167,23 +1169,31 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedPartialAppCNode(const CNodePtr 
   });
 
   ScopeGuard scope_guard(cnode->scope());
-  auto specialized_node = BuildSpecializedNode(cnode, func, real_fnval, args);
+  auto specialized_node = BuildSpecializedNode(cnode, func, real_func_abs, args);
   if (specialized_node == nullptr) {
     return nullptr;
   }
-  if (!fnval->isa<PartialAbstractClosure>()) {
+
+  // Built for Non-Partial parameter function.
+  if (!func_abs->isa<PartialAbstractClosure>()) {
+    MS_LOG(DEBUG) << "cnode: " << cnode->DebugString() << ", func_abs: " << func_abs->ToString()
+                  << ", specialized_node: " << specialized_node->DebugString();
     return specialized_node;
   }
 
-  auto partial_closure = dyn_cast<PartialAbstractClosure>(fnval);
+  // To build for Partial parameter function.
+  auto partial_closure = dyn_cast<PartialAbstractClosure>(func_abs);
   AnfNodePtrList partial_node_list = {BuildValueNode(prim::kPrimPartial, cnode, FromValueInside(prim::kPrimPartial)),
                                       specialized_node};
-  auto anf_node = partial_closure->node();
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (!anf_node->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Must be cnode, but " << anf_node->DebugString();
+  auto partial_node = partial_closure->node();
+  if (partial_node == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Partial node is null, cnode: " << cnode->DebugString()
+                               << ", func_abs: " << func_abs->ToString();
   }
-  auto partial_cnode = anf_node->cast<CNodePtr>();
+  if (!partial_node->isa<CNode>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Must be cnode, but " << partial_node->DebugString();
+  }
+  auto partial_cnode = partial_node->cast<CNodePtr>();
   constexpr auto extra_args_size = 2;
   if (partial_cnode->size() != partial_closure->args().size() + extra_args_size) {
     MS_LOG(INTERNAL_EXCEPTION) << "Size of cnode: " << partial_cnode->DebugString()
@@ -1207,6 +1217,8 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedPartialAppCNode(const CNodePtr 
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   auto wrapped_node = cnode->func_graph()->NewCNode(std::move(partial_node_list));
   wrapped_node->set_abstract(partial_closure);
+  MS_LOG(DEBUG) << "cnode: " << cnode->DebugString() << ", func_abs: " << func_abs->ToString()
+                << ", wrapped_node: " << wrapped_node->DebugString();
   return wrapped_node;
 }
 
@@ -1220,12 +1232,11 @@ const EvaluatorCacheMgrPtr FuncGraphSpecializer::GetEvalCache(const EvaluatorPtr
   return cache_iter->second;
 }
 
-std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromBroadedArgsVal(
-  const EvaluatorPtr &eval) {
+std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromBroadedArgs(const EvaluatorPtr &eval) {
   MS_EXCEPTION_IF_NULL(eval);
   std::unordered_set<AbstractBasePtrList, AbstractBasePtrListHasher, AbstractBasePtrListEqual> choices;
   EvalResultPtr res = nullptr;
-  AbstractBasePtrList broaded_argvals;
+  AbstractBasePtrList broaded_args_list;
   std::vector<AbstractBasePtrList> args_vector;
   auto eval_cache_iter = eval_cache_.find(eval);
   if (eval_cache_iter == eval_cache_.end()) {
@@ -1233,54 +1244,56 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   }
   MS_EXCEPTION_IF_NULL(eval_cache_iter->second);
   auto &origin_eval_cache = eval_cache_iter->second->GetCache();
-  for (auto &argvals_map : origin_eval_cache) {
-    auto argvals = argvals_map.first;
-    args_vector.push_back(argvals);
+  for (auto &args_map : origin_eval_cache) {
+    auto args = args_map.first;
+    args_vector.push_back(args);
   }
   // If joinable, maybe choices size is 1 or dynamic shape.
   constexpr auto args_size = 2;
   if (args_vector.size() < args_size) {
     MS_LOG(INTERNAL_EXCEPTION) << "Should have " << args_size << " or more choices, but: " << args_vector.size();
   }
-  AbstractBasePtrList joined_argvals = args_vector[0];
+  AbstractBasePtrList joined_args = args_vector[0];
   for (size_t i = 1; i < args_vector.size(); ++i) {
     // The args may be not joinable (AbstractScalar join with AbstractTensor), just ignore that case.
     try {
       MS_LOG_TRY_CATCH_SCOPE;
-      joined_argvals = abstract::AbstractJoin(joined_argvals, args_vector[i]);
+      joined_args = abstract::AbstractJoin(joined_args, args_vector[i]);
     } catch (const std::exception &e) {
-      MS_LOG(DEBUG) << "Cannot join, args1: " << ::mindspore::ToString(joined_argvals)
+      MS_LOG(DEBUG) << "Cannot join, args1: " << ::mindspore::ToString(joined_args)
                     << ", args2: " << ::mindspore::ToString(args_vector[i]);
       return std::make_pair(AbstractBasePtrList(), nullptr);
     }
   }
-  MS_LOG(DEBUG) << "Joined argvals: " << joined_argvals.size() << ", " << ::mindspore::ToString(joined_argvals);
+  MS_LOG(DEBUG) << "Joined args list: " << joined_args.size() << ", " << ::mindspore::ToString(joined_args);
 
   EvaluatorCacheMgrPtr real = std::make_shared<EvaluatorCacheMgr>();
-  const auto joined_eval_result = origin_eval_cache.get(joined_argvals);
+  const auto joined_eval_result = origin_eval_cache.get(joined_args);
   if (joined_eval_result != nullptr) {
-    MS_LOG(DEBUG) << "Find unique choice in original eval cache for joined argvals: " << joined_eval_result->ToString();
-    real->SetValue(joined_argvals, joined_eval_result);
+    MS_LOG(DEBUG) << "Find unique choice in original eval cache for joined args list: "
+                  << joined_eval_result->abstract()->ToString();
+    real->SetValue(joined_args, joined_eval_result);
     eval_cache_[eval] = real;
-    return std::make_pair(joined_argvals, joined_eval_result->abstract());
+    return std::make_pair(joined_args, joined_eval_result->abstract());
   }
-  for (const auto &argvals : args_vector) {
-    broaded_argvals.clear();
-    BroadenArgs(argvals, &broaded_argvals);
-    (void)choices.insert(broaded_argvals);
-    MS_LOG(DEBUG) << "Broaded_argvals: " << broaded_argvals.size() << ", " << ::mindspore::ToString(broaded_argvals);
+  for (const auto &args : args_vector) {
+    broaded_args_list.clear();
+    BroadenArgs(args, &broaded_args_list);
+    (void)choices.insert(broaded_args_list);
+    MS_LOG(DEBUG) << "Broaded args list: " << broaded_args_list.size() << ", "
+                  << ::mindspore::ToString(broaded_args_list);
   }
   if (choices.size() == 1) {
     ConfigPtrList args_conf_list;
-    (void)std::transform(broaded_argvals.cbegin(), broaded_argvals.cend(), std ::back_inserter(args_conf_list),
+    (void)std::transform(broaded_args_list.cbegin(), broaded_args_list.cend(), std ::back_inserter(args_conf_list),
                          [](const AbstractBasePtr &v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
-    MS_LOG(DEBUG) << "Cannot find joined argvals in cache, run with broaded argsvals: " << broaded_argvals.size()
-                  << ", " << ::mindspore::ToString(broaded_argvals);
+    MS_LOG(DEBUG) << "Cannot find joined args in cache, run with broaded args list: " << broaded_args_list.size()
+                  << ", " << ::mindspore::ToString(broaded_args_list);
     res = eval->SingleRun(engine_, args_conf_list, nullptr);
     MS_EXCEPTION_IF_NULL(res);
-    real->SetValue(broaded_argvals, res);
+    real->SetValue(broaded_args_list, res);
     eval_cache_[eval] = real;
-    return std::make_pair(broaded_argvals, res->abstract());
+    return std::make_pair(broaded_args_list, res->abstract());
   }
   MS_LOG(DEBUG) << "Choices.size: " << choices.size();
   return std::make_pair(AbstractBasePtrList(), nullptr);
@@ -1523,7 +1536,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
     EvaluatorPtr eval = engine_->GetEvaluatorFor(func_abs);
     std::pair<AbstractBasePtrList, AbstractBasePtr> result;
     AbstractBasePtrList empty_args;
-    auto status = AcquireUniqueEvalVal(func_abs, eval, empty_args, &result);
+    auto status = AcquireUniqueEvalResult(func_abs, eval, empty_args, &result);
     MS_EXCEPTION_IF_NULL(func->func_graph());
     MS_LOG(DEBUG) << "POLY: " << (status == kSpecializePoly) << ", func: " << func->ToString()
                   << ", abstract: " << func_abs->ToString() << ", "
@@ -1531,11 +1544,12 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
     // If a node is a poly node, or an input parameter is a PartialAbstractClosure, expand it early.
     if (status == kSpecializePoly ||
         (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
-      auto wrapped_node = BuildSpecializedPartialAppCNode(cnode);
+      auto wrapped_node = BuildSpecializedParameterCNode(cnode);
       if (wrapped_node == nullptr) {
         return false;
       }
-      MS_LOG(DEBUG) << "Partial closure is handled, wrapped_node: " << wrapped_node->DebugString(recursive_level);
+      MS_LOG(DEBUG) << "Partial closure or parameter call is handled, wrapped_node: "
+                    << wrapped_node->DebugString(recursive_level);
       new_inputs[0] = wrapped_node;
     }
   }
@@ -1630,10 +1644,9 @@ bool IsPolyFunc(const AbstractFunctionPtr &func, const AbstractBasePtrList &args
 }
 }  // namespace
 
-SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalVal(const AbstractFunctionPtr &func,
-                                                                const EvaluatorPtr &eval,
-                                                                const AbstractBasePtrList &args_abs_list,
-                                                                std::pair<AbstractBasePtrList, AbstractBasePtr> *res) {
+SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalResult(
+  const AbstractFunctionPtr &func, const EvaluatorPtr &eval, const AbstractBasePtrList &args_abs_list,
+  std::pair<AbstractBasePtrList, AbstractBasePtr> *res) {
   MS_EXCEPTION_IF_NULL(func);
   MS_EXCEPTION_IF_NULL(eval);
   MS_EXCEPTION_IF_NULL(res);
@@ -1667,7 +1680,7 @@ SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalVal(const AbstractFu
     if (IsPolyFunc(func, args_abs_list)) {
       return kSpecializePoly;
     }
-    *res = BuildFromBroadedArgsVal(eval);
+    *res = BuildFromBroadedArgs(eval);
     if (!res->first.empty()) {
       MS_LOG(DEBUG) << "Build for generalized args_abs_list successfully.";
       // Synchronize the new evaluated abstract with the abstract from common evaluating routine.

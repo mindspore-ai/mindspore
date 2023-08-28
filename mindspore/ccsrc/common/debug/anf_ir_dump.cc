@@ -928,11 +928,8 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   }
   for (const auto &sg : *sub_graphs) {
     MS_EXCEPTION_IF_NULL(sg.first);
-    if (*(sg.first->switch_input())) {
-      oss << "switch_input: " << *(sg.first->switch_input()) << "\n";
-    }
-    if (*(sg.first->switch_layer_input())) {
-      oss << "switch_layer_input: " << *(sg.first->switch_layer_input()) << "\n";
+    if (*(sg.first->indirect())) {
+      oss << "indirect: " << *(sg.first->indirect()) << "\n";
     }
     oss << "subgraph attr:" << std::endl;
     for (const auto &attr : sg.first->attrs()) {

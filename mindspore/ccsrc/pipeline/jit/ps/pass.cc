@@ -324,6 +324,7 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
 
 opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
   return opt::OptPassConfig({
+    irpass.partial_defer_inline_,
     irpass.switch_defer_inline_,
     irpass.switch_layer_defer_inline_,
     irpass.switch_simplify_,

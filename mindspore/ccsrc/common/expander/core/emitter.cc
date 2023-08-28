@@ -553,7 +553,7 @@ class Emitter::CtrlFlowBlock {
   NodePtr BuildSubgraph(const BlockFunc &func) {
     auto fg = std::make_shared<FuncGraph>();
     MS_EXCEPTION_IF_NULL(fg);
-    fg->set_switch_input(std::make_shared<bool>(true));
+    fg->set_indirect(std::make_shared<bool>(true));
     auto e = std::make_unique<Emitter>(fg, emitter_->infer());
     auto outputs = func(e.get());
     if (outputs.empty()) {
@@ -582,7 +582,7 @@ class Emitter::CtrlFlowBlock {
   NodePtrList BuildSubgraphOfPartial(const BlockFunc &func) {
     auto fg = std::make_shared<FuncGraph>();
     MS_EXCEPTION_IF_NULL(fg);
-    fg->set_switch_input(std::make_shared<bool>(true));
+    fg->set_indirect(std::make_shared<bool>(true));
     auto sub_emitter = std::make_unique<Emitter>(fg, emitter_->infer());
     auto output = func(sub_emitter.get());
     if (output.empty()) {

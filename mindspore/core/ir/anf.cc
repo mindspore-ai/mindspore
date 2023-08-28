@@ -428,7 +428,7 @@ std::string Parameter::DebugString(int recursive_level) const {
       buffer << "@" << func_graph()->ToString() << ":";
     }
   }
-  buffer << ToString();
+  buffer << "param_" << ToString();
   return buffer.str();
 }
 

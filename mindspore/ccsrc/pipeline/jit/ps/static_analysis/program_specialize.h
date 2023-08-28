@@ -133,7 +133,8 @@ class ProgramSpecializer {
   // This is the remedial action to find the specialized abstract function for func_graph if the abstract is unique.
   mindspore::HashMap<FuncGraphPtr, std::pair<bool, AbstractFunctionPtr>> func_graph_to_abstract_map_;
 
-  AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
+  AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func,
+                                                        const AnfNodePtr &new_node);
 
   std::stack<std::shared_ptr<FuncGraphSpecializer>> func_graph_todo_items_;
 };
@@ -195,7 +196,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   AnfNodePtr ReplicateDisconnectedNode(const AnfNodePtr &node);
 
   // Build a value node from parameter if the function graph has special flag to hint it can be done.
-  AnfNodePtr BuildSpecializedPartialAppCNode(const CNodePtr &cnode);
+  AnfNodePtr BuildSpecializedParameterCNode(const CNodePtr &cnode);
   // Build a value node if ival is a function.
   AnfNodePtr BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                                const AttrValueMapPtr &attrs, const AnfNodePtr &cnode,
@@ -214,13 +215,13 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
                                        SpecializeStatusCode *errcode);
 
   // Find the unique argument values which can be used to specialize a primitive or graph function.
-  SpecializeStatusCode AcquireUniqueEvalVal(const AbstractFunctionPtr &func, const EvaluatorPtr &eval,
-                                            const AbstractBasePtrList &argvals,
-                                            std::pair<AbstractBasePtrList, AbstractBasePtr> *res);
+  SpecializeStatusCode AcquireUniqueEvalResult(const AbstractFunctionPtr &func, const EvaluatorPtr &eval,
+                                               const AbstractBasePtrList &argvals,
+                                               std::pair<AbstractBasePtrList, AbstractBasePtr> *res);
   // Get cache, it may be eval's cache or cache built from broaded argument values.
   const EvaluatorCacheMgrPtr GetEvalCache(const EvaluatorPtr &eval);
   // Try to build unique argvals from the broaded arg vals if it is unique.
-  std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgsVal(const EvaluatorPtr &eval);
+  std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgs(const EvaluatorPtr &eval);
   void UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node);
 };
 using FuncGraphSpecializerPtr = std::shared_ptr<FuncGraphSpecializer>;

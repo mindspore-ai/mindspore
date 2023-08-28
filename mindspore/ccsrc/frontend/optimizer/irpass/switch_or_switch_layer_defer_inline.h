@@ -29,6 +29,23 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+// {prim::kPrimPartial, func_graph, ...}
+class PartialDeferInline : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    if (!enable_pre_lift) {
+      return nullptr;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto real_func = dyn_cast<abstract::FuncGraphAbstractClosure>(cnode->input(1)->abstract());
+    if (real_func != nullptr) {
+      *(real_func->func_graph()->indirect()) = true;
+    }
+    return nullptr;
+  }
+};
+
 // {prim::kPrimSwitch, cond, true_branch, false_branch}
 class SwitchDeferInline : public AnfVisitor {
  public:
@@ -36,11 +53,11 @@ class SwitchDeferInline : public AnfVisitor {
     auto cnode = node->cast<CNodePtr>();
     auto true_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(cnode->input(2)->abstract());
     if (true_abstract != nullptr) {
-      *(true_abstract->func_graph()->switch_input()) = true;
+      *(true_abstract->func_graph()->indirect()) = true;
     }
     auto false_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(cnode->input(3)->abstract());
     if (false_abstract != nullptr) {
-      *(false_abstract->func_graph()->switch_input()) = true;
+      *(false_abstract->func_graph()->indirect()) = true;
     }
     return nullptr;
   }
@@ -58,7 +75,7 @@ class SwitchLayerDeferInline : public AnfVisitor {
     for (auto elem : tuple->elements()) {
       auto abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(elem);
       if (abstract != nullptr) {
-        *(abstract->func_graph()->switch_layer_input()) = true;
+        *(abstract->func_graph()->indirect()) = true;
       }
     }
     return nullptr;

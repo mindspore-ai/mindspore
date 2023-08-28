@@ -53,20 +53,20 @@ AnfNodePtr Map::FullMakeLeaf(const FuncGraphPtr &func_graph, const AnfNodePtr &f
 
 FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
   // Generate func for leaf nodes
-  FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
-  ptrGraph->debug_info()->set_name("map");
-  AnfNodePtr ptrFnArg = nullptr;
+  FuncGraphPtr res_fg = std::make_shared<FuncGraph>();
+  res_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  res_fg->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  res_fg->debug_info()->set_name("map");
+  AnfNodePtr fn_param = nullptr;
   if (fn_leaf_ == nullptr) {
-    ptrFnArg = ptrGraph->add_parameter();
+    fn_param = res_fg->add_parameter();
   }
   AnfNodePtrList args;
   for (size_t i = 0; i < args_size; ++i) {
-    args.emplace_back(ptrGraph->add_parameter());
+    args.emplace_back(res_fg->add_parameter());
   }
-  ptrGraph->set_output(FullMakeLeaf(ptrGraph, ptrFnArg, args));
-  return ptrGraph;
+  res_fg->set_output(FullMakeLeaf(res_fg, fn_param, args));
+  return res_fg;
 }
 
 std::pair<std::string, std::string> Map::GetMapInputIndex(size_t num) const {
@@ -119,15 +119,15 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
     MS_LOG(EXCEPTION) << "For 'Map', the length of lists must be the same. " << oss.str();
   }
 
-  constexpr size_t kPrimHoldLen = 1;
+  constexpr size_t prim_hold_len = 1;
   std::vector<AnfNodePtr> inputs;
-  inputs.reserve(size + kPrimHoldLen);
+  inputs.reserve(size + prim_hold_len);
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
   for (size_t i = 0; i < size; i++) {
     MS_LOG(DEBUG) << "FullMakeList for the " << i << "th arg of the target, reverse_: " << reverse_ << ".";
-    auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
-    auto fn = NewValueNode(ptrGraph);
+    auto res_fg = GenerateLeafFunc(arg_pairs.size());
+    auto fn = NewValueNode(res_fg);
 
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn);
@@ -183,15 +183,15 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
     MS_LOG(EXCEPTION) << "For 'Map', the length of tuples must be the same. " << oss.str();
   }
 
-  constexpr size_t kPrimHoldLen = 1;
+  constexpr size_t prim_hold_len = 1;
   std::vector<AnfNodePtr> inputs;
-  inputs.reserve(size + kPrimHoldLen);
+  inputs.reserve(size + prim_hold_len);
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
   for (size_t i = 0; i < size; i++) {
     MS_LOG(DEBUG) << "FullMakeTuple for the " << i << "th arg of the tuple inputs, reverse_: " << reverse_ << ".";
-    auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
-    auto fn = NewValueNode(ptrGraph);
+    auto res_fg = GenerateLeafFunc(arg_pairs.size());
+    auto fn = NewValueNode(res_fg);
 
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn);
@@ -297,26 +297,26 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
     func_graph->set_output(ret_node);
     return func_graph;
   }
-  FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
-  ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
-  ptrGraph->debug_info()->set_name("map");
+  FuncGraphPtr res_fg = std::make_shared<FuncGraph>();
+  res_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  res_fg->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
+  res_fg->debug_info()->set_name("map");
 
-  AnfNodePtr ptrFnArg = nullptr;
+  AnfNodePtr fn_param = nullptr;
   std::size_t i = 0;
   if (fn_leaf_ == nullptr) {
-    ptrFnArg = ptrGraph->add_parameter();
+    fn_param = res_fg->add_parameter();
     i = 1;
   }
   ArgsPairList arg_pairs;
   std::size_t size = args_abs_list.size();
   for (; i < size; ++i) {
     MS_LOG(DEBUG) << "GenerateFromTypes for elements from " << args_abs_list[i]->ToString() << ".";
-    arg_pairs.push_back(std::make_pair(ptrGraph->add_parameter(), args_abs_list[i]));
+    arg_pairs.push_back(std::make_pair(res_fg->add_parameter(), args_abs_list[i]));
   }
 
-  ptrGraph->set_output(Make(ptrGraph, ptrFnArg, arg_pairs));
-  return ptrGraph;
+  res_fg->set_output(Make(res_fg, fn_param, arg_pairs));
+  return res_fg;
 }
 
 abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {
