@@ -341,16 +341,7 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";
-  // List/tuple object should be saved in user_data
-  if (py::isinstance<py::list>(py_obj) || py::isinstance<py::tuple>(py_obj)) {
-    MS_LOG(DEBUG) << "The global object is list/tuple, attach the object to node. The resolved node is: "
-                  << resolved_node->DebugString() << ", list/tuple python id: " << fallback::GetPyObjectPtrStr(py_obj);
-    if (py::isinstance<py::list>(py_obj)) {
-      fallback::SetPySeqObject<AnfNode, py::list>(resolved_node, std::make_shared<py::list>(py::list(py_obj)));
-    } else {
-      fallback::SetPySeqObject<AnfNode, py::tuple>(resolved_node, std::make_shared<py::tuple>(py::tuple(py_obj)));
-    }
-  }
+  fallback::SetPyObjectToNode(resolved_node, py_obj);
   return resolved_node;
 }
 

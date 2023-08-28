@@ -16,7 +16,9 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, jit, context
+import mindspore.nn as nn
+from mindspore import context
+from mindspore import Tensor, jit, jit_class
 from mindspore.common import mutable
 from mindspore.ops.operations import _sequence_ops as seq
 
@@ -1104,3 +1106,199 @@ def test_list_inplace_with_graph_input_6():
     ret = foo(x)
     assert id(x[0]) == id(ret)
     assert x == ([4, 3, 2, 1], 2, 3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            return self.x
+
+    x = [1, 2, 3, 4]
+    net = Net(x)
+    ret = net()
+    assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_2():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x.reverse()
+            return self.x
+
+    x = [1, 2, 3, 4]
+    net = Net(x)
+    ret = net()
+    assert ret == [4, 3, 2, 1]
+    assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_3():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            return self.x[0]
+
+    x = ([1, 2, 3, 4], 5, 6)
+    net = Net(x)
+    ret = net()
+    assert id(x[0]) == id(ret)
+
+
+@pytest.mark.skip(reason="Parse assign subscript is wrong")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_4():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x[0].reverse()
+            return self.x[0]
+
+    x = ([1, 2, 3, 4], 5, 6)
+    net = Net(x)
+    ret = net()
+    assert id(x[0]) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_of_jit_class():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit_class
+    class AttrClass():
+        def __init__(self, x):
+            self.attr = x
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            return self.x.attr
+
+    x = [1, 2, 3, 4]
+    obj = AttrClass(x)
+    net = Net(obj)
+    ret = net()
+    assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_of_jit_class_2():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit_class
+    class AttrClass():
+        def __init__(self, x):
+            self.attr = x
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x.attr.reverse()
+
+    x = [1, 2, 3, 4]
+    obj = AttrClass(x)
+    net = Net(obj)
+    net()
+    assert x == [4, 3, 2, 1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_of_jit_class_3():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit_class
+    class AttrClass():
+        def __init__(self, x):
+            self.attr = x
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x.attr.reverse()
+            return self.x.attr
+
+    x = [1, 2, 3, 4]
+    obj = AttrClass(x)
+    net = Net(obj)
+    ret = net()
+    assert ret == [4, 3, 2, 1]
+    assert id(x) == id(ret)
