@@ -192,15 +192,24 @@ bool HasRecomputedInput(const CNodePtr &k_fg_caller_cnode) {
   return false;
 }
 
+bool IsForwardGetterTupleGetItem(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return false;
+  }
+  auto idx = GetValueNode<Int64ImmPtr>(node->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
+  if (idx != nullptr && idx->value() == 0) {
+    return true;
+  }
+  return false;
+}
+
 AnfNodePtr GetForwardGetter(const FuncGraphManagerPtr &manager, const CNodePtr &node) {
   const auto &user_nodes = manager->node_users()[node];
-  for (const auto &iter : user_nodes) {
-    if (IsPrimitiveCNode(iter.first, prim::kPrimTupleGetItem)) {
-      auto idx = GetValueNode<Int64ImmPtr>(iter.first->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
-      if (idx != nullptr && idx->value() == 0) {
-        return iter.first;
-      }
-    }
+  auto iter = std::find_if(user_nodes.begin(), user_nodes.end(), [](const auto &node_and_idx) -> bool {
+    return IsForwardGetterTupleGetItem(node_and_idx.first);
+  });
+  if (iter != user_nodes.end()) {
+    return iter->first;
   }
   return nullptr;
 }
@@ -228,19 +237,20 @@ bool HasRecomputedOutput(const FuncGraphManagerPtr &manager, const AnfNodePtr &n
   return IsRecomputeKGraphCaller(node);
 }
 
-void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, std::vector<AnfNodePtr> *grad_users) {
+void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, const CNodePtr &pre_node,
+                  std::vector<AnfNodePtr> *grad_users) {
   // The forward part may have multiple outputs.
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     const auto &user_nodes = manager->node_users()[node];
     for (const auto &iter : user_nodes) {
-      GetGradUsers(manager, iter.first->cast<CNodePtr>(), grad_users);
+      GetGradUsers(manager, iter.first->cast<CNodePtr>(), node, grad_users);
     }
     return;
   }
   if (IsGradNode(node)) {
     const auto &inputs = node->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      if (IsGradNode(inputs[i])) {
+      if (inputs[i] != pre_node && IsGradNode(inputs[i])) {
         (void)grad_users->emplace_back(inputs[i]);
       }
     }
@@ -274,7 +284,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
     if (!HasRecomputedOutput(manager, forward_getter)) {
       std::vector<AnfNodePtr> grad_users;
       // Add the other inputs of the grad node to the dependencies.
-      GetGradUsers(manager, forward_getter->cast<CNodePtr>(), &grad_users);
+      GetGradUsers(manager, forward_getter->cast<CNodePtr>(), k_fg_caller, &grad_users);
       if (!grad_users.empty()) {
         for (auto &user : grad_users) {
           (void)final_nodes->emplace(k_fg_caller);
@@ -367,6 +377,13 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
   if (!IsOneOfPrimitiveCNode(
         node, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimDepend, prim::kPrimUpdateState})) {
     return node;
+  }
+  // If the other branch has not been handle, it should not create new forward getter.
+  if (IsForwardGetterTupleGetItem(node)) {
+    auto real_node = node->cast<CNodePtr>()->input(1);
+    if (IsRecomputeKGraphCaller(real_node) && !real_node->cast<CNodePtr>()->HasAttr(kAttrReplacedWithPrimal)) {
+      return node;
+    }
   }
   for (auto &input : node->inputs()) {
     if (!input->isa<CNode>()) {
@@ -610,8 +627,8 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
 
     MS_LOG(DEBUG) << "Not has recomputed input k_fg_caller_cnode: " << k_fg_caller_cnode->DebugString();
     AddDependNodes(manager, fg, k_fg_caller_cnode);
-    AddCseAttr(root, changed);
   }
+  AddCseAttr(root, changed);
 #ifdef ENABLE_DUMP_IR
   if (enable_save_graphs) {
     DumpIR("after_recompute_root.ir", root);
