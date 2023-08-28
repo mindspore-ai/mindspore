@@ -68,6 +68,8 @@ class InsertQuantNodeManager {
 
   CNodePtr NewMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
+  CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
+
  private:
   int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index);
 
@@ -121,8 +123,6 @@ class InsertQuantNodeManager {
                                      int64_t curr_bit_count, int64_t table_log);
 
   CNodePtr NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
-
-  CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
   CNodePtr NewAscendAntiQuantCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
 

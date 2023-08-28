@@ -25,10 +25,10 @@ class SmoothQuant {
 
   ~SmoothQuant() = default;
 
-  int Run(const FuncGraphPtr &func_graph, double smooth_alpha);
+  int Run(const FuncGraphPtr &func_graph, double smooth_alpha, bool enable_shift);
 
  private:
-  int LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cnode, double alpha);
+  int LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cnode, double alpha, bool enable_shift);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_SMOOTH_QUANT_H

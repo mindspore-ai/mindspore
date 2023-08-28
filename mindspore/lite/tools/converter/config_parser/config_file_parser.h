@@ -71,6 +71,7 @@ struct FullQuantString {
   std::string target_device;
   std::string per_channel;
   std::string smooth_alpha;
+  std::string enable_smooth_shift;
 };
 
 struct RegistryInfoString {
