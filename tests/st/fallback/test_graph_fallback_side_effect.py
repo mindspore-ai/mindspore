@@ -224,7 +224,8 @@ def test_fallback_side_effect_asnumpy():
         unscaled_grads = loss_scaler.unscale(grads)
         is_finite = amp.all_finite(unscaled_grads)
         loss_scaler.adjust(is_finite)
-        return loss_scaler.scale_value.asnumpy()
+        param_value = loss_scaler.scale_value * 1
+        return param_value.asnumpy()
 
     out = loss_scale()
     assert out == 512
@@ -248,7 +249,8 @@ def test_fallback_side_effect_assign_1():
         def construct(self, x):
             out = x * self.para
             self.para = 2 * x
-            return out, self.para.asnumpy()
+            param_value = self.para * 1
+            return out, param_value.asnumpy()
 
     net = Net()
     x = np.array(10, np.float64)
@@ -274,7 +276,8 @@ def test_fallback_side_effect_assign_2():
 
         def construct(self, x):
             self.para = 2 * x
-            return self.para.asnumpy()
+            param_value = self.para * 1
+            return param_value.asnumpy()
 
     net = Net()
     x = np.array(10, np.float64)

@@ -961,12 +961,12 @@ def is_from_third_party_library(value):
 
 
 def get_const_abs(obj):
-    """get absolute value of const object."""
+    """Get absolute value of const object."""
     return abs(obj)
 
 
 def get_const_round(obj):
-    """get round value of const object."""
+    """Get round value of const object."""
     if isinstance(obj, tuple):
         val = obj[0]
         point_num = obj[1]
@@ -975,7 +975,7 @@ def get_const_round(obj):
 
 
 def get_const_len(obj):
-    """get the length of const object."""
+    """Get the length of const object."""
     return len(obj)
 
 
