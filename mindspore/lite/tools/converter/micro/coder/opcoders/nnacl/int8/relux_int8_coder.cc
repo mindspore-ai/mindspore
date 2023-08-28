@@ -49,7 +49,7 @@ int ReluxInt8Coder::DoCode(CoderContext *const context) {
 
   NNaclInt8Serializer code;
 
-  int length = input_tensor_->ElementsNum();
+  int length = static_cast<int>(input_tensor_->ElementsNum());
 
   code.CodeStruct("quant_arg", quant_arg_);
   code.CodeFunction("ReluXInt8", input_tensor_, length, output_tensor_, "&quant_arg");

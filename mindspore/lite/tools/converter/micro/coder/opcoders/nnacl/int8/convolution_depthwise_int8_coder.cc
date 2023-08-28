@@ -34,7 +34,8 @@ int ConvolutionDepthwiseINT8Coder::Prepare(CoderContext *const context) {
 
 int ConvolutionDepthwiseINT8Coder::InitBuffer(CoderContext *const context) {
   // malloc pack input and output buffer
-  row_buffer_size_ = thread_num_ * conv_param_->output_w_ * conv_param_->output_channel_ * sizeof(int32_t);
+  row_buffer_size_ =
+    static_cast<int>(thread_num_ * conv_param_->output_w_ * conv_param_->output_channel_ * sizeof(int32_t));
   row_buffer_ = reinterpret_cast<int32_t *>(allocator_->Malloc(kNumberTypeInt32, row_buffer_size_, kWorkspace));
   MS_CHECK_PTR(row_buffer_);
   return RET_OK;

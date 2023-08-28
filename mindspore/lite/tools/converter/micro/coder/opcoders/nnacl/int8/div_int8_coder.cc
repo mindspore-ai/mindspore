@@ -60,7 +60,7 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
             "div_int8.c",
           });
   NNaclInt8Serializer code;
-  int element_num = output_tensor_->ElementsNum();
+  int element_num = static_cast<int>(output_tensor_->ElementsNum());
   code.CodeStruct("param", param_);
   if (broadcast_) {
     ArithmeticParameter tile_para = {0};

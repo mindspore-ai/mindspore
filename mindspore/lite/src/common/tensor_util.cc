@@ -57,7 +57,7 @@ void FreeOutTensorC(std::vector<TensorC *> *tensors_out, const std::shared_ptr<A
     if (i == nullptr) {
       continue;
     }
-    if (i->data_type_ == kObjectTypeTensorType) {
+    if (i->data_type_ == static_cast<int>(kObjectTypeTensorType)) {
       auto *tensorListC = reinterpret_cast<TensorListC *>(i);
       if (tensorListC->tensors_ != nullptr) {
         for (size_t j = 0; j < tensorListC->element_num_; ++j) {
