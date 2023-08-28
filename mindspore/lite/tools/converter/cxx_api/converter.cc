@@ -325,18 +325,18 @@ std::vector<char> Converter::GetProviderChar() {
   return StringToChar(provider);
 }
 
-void Converter::SetDeviceVersion(const std::vector<char> &device_version) {
+void Converter::SetChipName(const std::vector<char> &chip_name) {
   if (data_ != nullptr) {
-    data_->device_version = CharToString(device_version);
+    data_->chip_name = CharToString(chip_name);
   }
 }
 
-std::vector<char> Converter::GetDeviceVersionChar() {
-  std::string device_version = "";
+std::vector<char> Converter::GetChipNameChar() {
+  std::string chip_name = "";
   if (data_ != nullptr) {
-    device_version = data_->device_version;
+    chip_name = data_->chip_name;
   }
-  return StringToChar(device_version);
+  return StringToChar(chip_name);
 }
 
 Status Converter::Convert() {

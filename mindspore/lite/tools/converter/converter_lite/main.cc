@@ -97,7 +97,7 @@ int main(int argc, const char **argv) {
       converter.SetNoFusion(flags.disableFusion);
       converter.SetDevice(flags.device);
       converter.SetOptimizeTransformer(flags.optimizeTransformer);
-      converter.SetDeviceVersion(flags.device_version);
+      converter.SetChipName(flags.chip_name);
 
       auto status = converter.Convert();
       if (status != mindspore::kSuccess) {

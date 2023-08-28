@@ -525,15 +525,15 @@ class Converter:
             self.device = "Ascend"
             split_str = optimize.split(":")
             if len(split_str) == 1:
-                device_version = "default"
+                chip_name = "default"
             elif len(split_str) == 2:
-                device_version = split_str[1]
+                chip_name = split_str[1]
             else:
-                raise ValueError(f"device_version must be single")
-            check_isinstance("device_version", device_version, str)
-            if device_version not in ["default", "910b"]:
-                raise ValueError(f"device_version must be in [default, 910b], but got {device_version}.")
-            self._converter.set_device_version(device_version)
+                raise ValueError(f"chip_name must be single")
+            check_isinstance("chip_name", chip_name, str)
+            if chip_name not in ["default", "910b"]:
+                raise ValueError(f"chip_name must be in [default, 910b], but got {chip_name}.")
+            self._converter.set_chip_name(chip_name)
             self.optimize_user_defined = "ascend_oriented"
         else:
             raise ValueError(
