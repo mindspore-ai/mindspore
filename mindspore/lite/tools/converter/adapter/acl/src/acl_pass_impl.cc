@@ -90,6 +90,28 @@ constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
+constexpr auto kOpsTransPose = "Transpose";
+
+STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
+  MS_ASSERT(func_graph != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "current node's prim is nullptr, " << cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    if (prim->name() == kOpsTransPose) {
+      continue;
+    }
+    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format));
+  }
+  return kSuccess;
+}
 
 STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) {
   auto value = func_graph->get_attr(ops::kFormat);
@@ -162,6 +184,13 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
+
+  // this pass should in to_format_base_pass, but current some network is not correct for some reason
+  if (ModifyCNodeFormat(func_graph, NCHW)) {
+    MS_LOG(ERROR) << "Modify cnode format failed.";
+    return lite::RET_ERROR;
+  }
+
   return lite::RET_OK;
 }
 }  // namespace
