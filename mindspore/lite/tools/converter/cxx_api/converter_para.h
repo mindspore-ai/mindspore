@@ -102,9 +102,9 @@ struct ConverterPara {
   AscendGeOptionCfg ascendGeOptionCfg;
   std::string device;
   std::string provider;
+  std::string device_version;
   CpuOptionCfg cpuOptionCfgParam;
   lite::quant::TransformQuantParam transformQuantParam;
-  lite::quant::AscendQuantParam ascendQuantParam;
   lite::quant::DynamicQuantParam dynamicQuantParam;
   GraphKernelCfg graphKernelParam;
   // configs parse from config_file

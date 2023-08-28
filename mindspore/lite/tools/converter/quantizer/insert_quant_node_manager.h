@@ -63,7 +63,7 @@ class InsertQuantNodeManager {
   int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
   int InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                                TypeId src_dtype, TypeId dst_dtype, int axis, AscendBackend ascend_backend);
+                                TypeId src_dtype, TypeId dst_dtype, int axis, std::string ascend_backend);
   int InsertTransposeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index);
 
   int AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph);

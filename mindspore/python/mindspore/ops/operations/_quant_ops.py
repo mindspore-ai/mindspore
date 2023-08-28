@@ -975,7 +975,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 7, 8]
-    ascend_support_x_rank = [2, 4]
+    ascend_support_x_rank = [2, 3, 4]
 
     @prim_attr_register
     def __init__(self,
@@ -1008,11 +1008,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         self.ema_decay = validator.check_float_range(ema_decay, 0, 1, validator.INC_BOTH, 'ema_decay', self.name)
         self.num_bits = validator.check_positive_int(num_bits, 'num_bits', self.name)
         self.quant_delay = validator.check_non_negative_int(quant_delay, 'quant_delay', self.name)
-        if self.is_ascend:
-            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, validator.INC_BOTH,
-                                                          'channel_axis', self.name)
-        else:
-            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
         self.init_prim_io_names(inputs=['x', 'min', 'max'], outputs=['out'])
 
     def infer_shape(self, x_shape, min_shape, max_shape):

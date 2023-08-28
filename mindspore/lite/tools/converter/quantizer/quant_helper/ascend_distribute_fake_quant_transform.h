@@ -56,6 +56,8 @@ class AscendDistributeFakeQuantTransform {
 
   int FetchWeightQuantParamFromFakeQuant(const FuncGraphPtr &func_graph);
 
+  int PreProcess(const FuncGraphPtr &func_graph);
+
  private:
   FuncGraphPtr func_graph_{nullptr};
   const std::shared_ptr<mindspore::ConverterPara> param_{nullptr};

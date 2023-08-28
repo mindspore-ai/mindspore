@@ -387,20 +387,6 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     return RET_ERROR;
   }
 
-  if (param->ascendQuantParam.mode == lite::quant::GE) {
-    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
-    if (acl_pass_ptr == nullptr) {
-      MS_LOG(ERROR) << "Failed to create acl pass";
-      return RET_ERROR;
-    }
-    if (!acl_pass_ptr->Run(func_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
-      return RET_ERROR;
-    }
-    MS_LOG(INFO) << "GE offline";
-    return RET_OK;
-  }
-
   bool is_optimized = IsOptimizedFuncGraph(func_graph);
   if (is_optimized) {
     auto status = Quantize(param, func_graph);
@@ -413,6 +399,16 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   }
 
   if (param->provider == "ge") {
+    MS_LOG(INFO) << "It will run ge optimize";
+    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+    if (acl_pass_ptr == nullptr) {
+      MS_LOG(ERROR) << "Failed to create acl pass";
+      return RET_ERROR;
+    }
+    if (!acl_pass_ptr->Run(func_graph)) {
+      MS_LOG(ERROR) << "Acl pass failed.";
+      return RET_ERROR;
+    }
     return OptimizeForGE(param, func_graph);
   }
   std::vector<std::string> output_names;
