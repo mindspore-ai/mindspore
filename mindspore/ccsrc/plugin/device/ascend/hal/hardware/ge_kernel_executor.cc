@@ -231,6 +231,16 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   }
   return true;
 }
+
+bool GraphWithNoRealKernel(const KernelGraphPtr &kernel_graph) {
+  const auto &nodes = kernel_graph->execution_order();
+  for (auto &node : nodes) {
+    if (AnfUtils::IsRealKernel(node)) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace
 
 void GeKernelExecutor::Initialize() {
@@ -344,6 +354,9 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
   // use GE
   if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+    if (GraphWithNoRealKernel(kernel_graph)) {
+      return;
+    }
     MS_EXCEPTION_IF_NULL(graph_executor_);
     graph_executor_->PreprocessBeforeRun(kernel_graph);
     profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
