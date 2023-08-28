@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "adaptive_max_pool_2d_grad.h"
+#include "cpu_kernel/ms_kernel/adaptive_max_pool_2d_grad.h"
 
 #include <cmath>
-
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -68,7 +68,7 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T, 
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-void AdaptiveMaxPool2dGradSingleOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
+void AdaptiveMaxPool2dGradSingleOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
   auto data_num = ctx.Input(0)->GetTensorShape()->NumElements();
   if (data_num >= kParallelDataNumCHW) {
     uint32_t min_core_num = 1;
@@ -87,7 +87,7 @@ void AdaptiveMaxPool2dGradSingleOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-void AdaptiveMaxPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
+void AdaptiveMaxPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
   auto data_num = ctx.Input(0)->GetTensorShape()->NumElements();
   if (data_num >= kParallelDataNumNCHW) {
     uint32_t min_core_num = 1;
@@ -127,7 +127,7 @@ void AdaptiveMaxPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALA
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
   int64_t dim_w = 2;
   int64_t dim_h = 1;
   int64_t size_b = 1;
@@ -165,7 +165,7 @@ uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveMaxPool2dGrad::DoCompute(CpuKernelContext &ctx, DataType indices_type) {
+uint32_t AdaptiveMaxPool2dGrad::DoCompute(const CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:

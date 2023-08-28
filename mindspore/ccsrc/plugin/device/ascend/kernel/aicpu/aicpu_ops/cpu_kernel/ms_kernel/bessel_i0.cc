@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bessel_i0.h"
+#include "cpu_kernel/ms_kernel/bessel_i0.h"
 
 #include <cstdint>
+#include <algorithm>
 
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
+#include "common/kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -67,7 +68,7 @@ uint32_t BesselI0CpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-uint32_t BesselI0CpuKernel::ParallelForCompute(CpuKernelContext &ctx) {
+uint32_t BesselI0CpuKernel::ParallelForCompute(const CpuKernelContext &ctx) {
   int64_t data_num = ctx.Output(0)->NumElements();
   auto data_type = ctx.Input(0)->GetDataType();
 
@@ -116,7 +117,7 @@ uint32_t BesselI0CpuKernel::ParallelForCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, CpuKernelContext &ctx) {
+void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -165,7 +166,7 @@ void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, CpuKernelCon
   }
 }
 
-void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, CpuKernelContext &ctx) {
+void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Eigen::half *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<Eigen::half *>(ctx.Output(0)->GetData());
 

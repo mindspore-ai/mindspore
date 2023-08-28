@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include "adjust_contrastv2.h"
-
+#include "cpu_kernel/ms_kernel/adjust_contrastv2.h"
+#include <algorithm>
+#include <vector>
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace {
 const std::uint32_t kAdjustContrastv2InputNum{2u};
@@ -116,9 +118,11 @@ inline std::uint32_t ExtraCheckAdjustContrastv2(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustContrastv2(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
-  return NormalCheck(ctx, kAdjustContrastv2InputNum, kAdjustContrastv2OutputNum) ? KERNEL_STATUS_PARAM_INVALID
-                                                                                 : ExtraCheckAdjustContrastv2(ctx);
+inline std::uint32_t CheckAdjustContrastv2(const CpuKernelContext &ctx, std::uint32_t inputs_num,
+                                           std::uint32_t outputs_num) {
+  return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAdjustContrastv2InputNum, kAdjustContrastv2OutputNum)
+           ? KERNEL_STATUS_PARAM_INVALID
+           : ExtraCheckAdjustContrastv2(ctx);
 }
 
 inline std::uint32_t ComputeAdjustContrastv2(const CpuKernelContext &ctx) {

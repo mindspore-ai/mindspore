@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "adaptive_max_pool_3d.h"
+#include "cpu_kernel/ms_kernel/adaptive_max_pool_3d.h"
 
 #include <algorithm>
 #include <iostream>
 #include <limits>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace {
 constexpr char const *kAdaptiveMaxPool3d = "AdaptiveMaxPool3d";
@@ -65,12 +66,13 @@ uint32_t AdaptiveMaxPool3dCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCheckAndSetShape(CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCheckAndSetShape(const CpuKernelContext &ctx) {
   auto x = ctx.Input(0);
   auto output_size = ctx.Input(1);
   auto y = ctx.Output(0);
   auto argmax = ctx.Output(1);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, input_num, output_num), "AdaptiveMaxPool3d check params failed.");
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), input_num, output_num),
+                      "AdaptiveMaxPool3d check params failed.");
   const std::vector<int64_t> input_shape = x->GetTensorShape()->GetDimSizes();
   const size_t input_num_dims = input_shape.size();
   KERNEL_CHECK_FALSE(input_num_dims == 4 || input_num_dims == 5, KERNEL_STATUS_PARAM_INVALID,
@@ -113,10 +115,10 @@ int64_t AdaptiveMaxPool3dCpuKernel::ComputeStride(const std::vector<int64_t> &sh
     result *= shape[i];
   }
   return result;
-};
+}
 
 template <typename T>
-uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(const CpuKernelContext &ctx) {
   auto input_data = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto indices_data = reinterpret_cast<int32_t *>(ctx.Output(1)->GetData());
@@ -228,9 +230,7 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(CpuKernelContext &
   const bool enable_parallel = (sizeB * sizeD * osizeT * osizeH * osizeW) > kParallelDataNums;
   if (enable_parallel == false) {
     ComputeKernel(0, sizeB, 0, sizeD, 0, osizeT, 0, osizeH, 0, osizeW);
-  }
-
-  else {
+  } else {
     switch (max_index) {
       case 0: {
         auto shard_adaptive_max_pool_3d = [&](int64_t start, int64_t end) {

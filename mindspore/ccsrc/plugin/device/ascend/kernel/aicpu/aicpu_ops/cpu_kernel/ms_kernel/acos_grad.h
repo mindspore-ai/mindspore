@@ -17,7 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ACOS_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_ACOS_GRAD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include <limits>
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,13 +31,13 @@ class AcosGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t AcosGradParamCheck(CpuKernelContext &ctx);
+  static uint32_t AcosGradParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AcosGradComputeRealType(CpuKernelContext &ctx);
+  static uint32_t AcosGradComputeRealType(const CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AcosGradComputeFP16(CpuKernelContext &ctx);
+  static uint32_t AcosGradComputeFP16(const CpuKernelContext &ctx);
 
   template <typename T>
   static void SpecialCompute(int64_t start, int64_t end, const T *input1, const T *input2, T *output);

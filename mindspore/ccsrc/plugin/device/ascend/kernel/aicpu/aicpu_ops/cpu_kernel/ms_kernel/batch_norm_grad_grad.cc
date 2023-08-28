@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "batch_norm_grad_grad.h"
-
+#include "cpu_kernel/ms_kernel/batch_norm_grad_grad.h"
+#include <string>
+#include <algorithm>
 #include <cmath>
 #include <numeric>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-using namespace std;
 
 namespace {
 const uint32_t kInputNum = 8;
@@ -64,7 +64,7 @@ uint32_t BatchNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
+uint32_t BatchNormGradGradCpuKernel::ParallelCompute(const CpuKernelContext &ctx) {
   // handle attr
   AttrValue *Attr_data_format = ctx.GetAttr("data_format");
   std::string data_format = (Attr_data_format == nullptr) ? "NHWC" : Attr_data_format->GetString();
@@ -85,7 +85,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
   if (data_format == "NCHW") {
     if (is_training) {
       TrainingComputeNCHW<T>(ctx);
-    } else if (!is_training) {
+    } else {
       InferenceComputeNCHW<T>(ctx);
     }
   } else if (data_format == "NHWC") {
@@ -105,7 +105,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
       auto sharder_BNGG = [&](int start, int end) {
         if (is_training) {
           TrainingComputeNHWC<T>(ctx, start, end);
-        } else if (!is_training) {
+        } else {
           InferenceComputeNHWC<T>(ctx, start, end);
         }
       };
@@ -115,7 +115,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
     } else {
       if (is_training) {
         TrainingComputeNHWC<T>(ctx, 0, C_num);
-      } else if (!is_training) {
+      } else {
         InferenceComputeNHWC<T>(ctx, 0, C_num);
       }
     }
@@ -125,7 +125,7 @@ uint32_t BatchNormGradGradCpuKernel::ParallelCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::TrainingComputeNHWC(CpuKernelContext &ctx, int start, int end) {
+void BatchNormGradGradCpuKernel::TrainingComputeNHWC(const CpuKernelContext &ctx, int start, int end) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -165,7 +165,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNHWC(CpuKernelContext &ctx, int 
 
   float num_1 = 1.0;
   float num_3 = 3.0;
-  float M = float(NHW_num);
+  float M = static_cast<float>((NHW_num));
 
   // create intermediate variables
   float *inv_std = new float[C_num];
@@ -307,7 +307,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNHWC(CpuKernelContext &ctx, int 
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::InferenceComputeNHWC(CpuKernelContext &ctx, int start, int end) {
+void BatchNormGradGradCpuKernel::InferenceComputeNHWC(const CpuKernelContext &ctx, int start, int end) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -392,7 +392,7 @@ void BatchNormGradGradCpuKernel::InferenceComputeNHWC(CpuKernelContext &ctx, int
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::TrainingComputeNCHW(CpuKernelContext &ctx) {
+void BatchNormGradGradCpuKernel::TrainingComputeNCHW(const CpuKernelContext &ctx) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32
@@ -433,7 +433,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNCHW(CpuKernelContext &ctx) {
 
   float num_1 = 1.0;
   float num_3 = 3.0;
-  float M = float(NHW_num);
+  float M = static_cast<float>((NHW_num));
 
   // create intermediate variables
   float *inv_std = new float[C_num];
@@ -575,7 +575,7 @@ void BatchNormGradGradCpuKernel::TrainingComputeNCHW(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void BatchNormGradGradCpuKernel::InferenceComputeNCHW(CpuKernelContext &ctx) {
+void BatchNormGradGradCpuKernel::InferenceComputeNCHW(const CpuKernelContext &ctx) {
   auto x_ori = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto dy_ori = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());            // fp32

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "batchmatmul.h"
+#include "cpu_kernel/ms_kernel/batchmatmul.h"
 
 #include <complex>
-#include "unsupported/Eigen/CXX11/Tensor"
-
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include <algorithm>
 #include <iostream>
 
-using namespace std;
+#include "unsupported/Eigen/CXX11/Tensor"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/kernel_util.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const char *kBatchMatmul = "BatchMatMul";
@@ -35,7 +35,7 @@ const int64_t kParallelDataNum = 1024;
 
 namespace aicpu {
 template <typename T>
-uint32_t BatchMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t BatchMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
   int32_t input0_tensor_dims = input0_tensor_shape->GetDims();
@@ -126,41 +126,41 @@ uint32_t BatchMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
     if (max_core_num > num_batches) {
       max_core_num = num_batches;
     }
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map1[num_batches];
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map2[num_batches];
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map_output[num_batches];
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map1_batches[num_batches];
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map2_batches[num_batches];
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> map_output_batches[num_batches];
     auto shared_batchmatmul = [&](int64_t start, int64_t end) {
       for (int64_t batch = start; batch < end; ++batch) {
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix1(map1_l, map1_r);
-        map1[batch].resize(map1_l, map1_r);
+        map1_batches[batch].resize(map1_l, map1_r);
         for (int64_t i = 0; i < map1_l; i++) {
           for (int64_t j = 0; j < map1_r; j++) {
-            map1[batch](i, j) = input0_data[batch * map1_l * map1_r + i * map1_r + j];
+            map1_batches[batch](i, j) = input0_data[batch * map1_l * map1_r + i * map1_r + j];
           }
         }
-        map2[batch].resize(map2_l, map2_r);
+        map2_batches[batch].resize(map2_l, map2_r);
         for (int64_t i = 0; i < map2_l; i++) {
           for (int64_t j = 0; j < map2_r; j++) {
-            map2[batch](i, j) = input1_data[batch * map2_l * map2_r + i * map2_r + j];
+            map2_batches[batch](i, j) = input1_data[batch * map2_l * map2_r + i * map2_r + j];
           }
         }
         if (adj_x) {
           if (adj_y) {
-            map_output[batch] = map1[batch].adjoint() * map2[batch].adjoint();
+            map_output_batches[batch] = map1_batches[batch].adjoint() * map2_batches[batch].adjoint();
           } else {
-            map_output[batch] = map1[batch].adjoint() * map2[batch];
+            map_output_batches[batch] = map1_batches[batch].adjoint() * map2_batches[batch];
           }
         } else {
           if (adj_y) {
-            map_output[batch] = map1[batch] * map2[batch].adjoint();
+            map_output_batches[batch] = map1_batches[batch] * map2_batches[batch].adjoint();
           } else {
-            map_output[batch] = map1[batch] * map2[batch];
+            map_output_batches[batch] = map1_batches[batch] * map2_batches[batch];
           }
         }
-        map_output[batch].resize(num_rows, num_cols);
+        map_output_batches[batch].resize(num_rows, num_cols);
         for (int64_t i = 0; i < num_rows; ++i) {
           for (int64_t j = 0; j < num_cols; ++j) {
-            output_data[batch * num_rows * num_cols + i * num_cols + j] = map_output[batch](i, j);
+            output_data[batch * num_rows * num_cols + i * num_cols + j] = map_output_batches[batch](i, j);
           }
         }
       }

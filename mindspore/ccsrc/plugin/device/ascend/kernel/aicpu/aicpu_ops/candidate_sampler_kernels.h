@@ -19,6 +19,9 @@
 
 #include <random>
 #include <utility>
+#include <string>
+#include <vector>
+#include <memory>
 #include "common/kernel_base.h"
 #include "common/kernel_errcode.h"
 #include "common/range_sampler.h"
@@ -68,7 +71,7 @@ class CandidateSamplerKernel : public KernelBase {
 
 class LogUniformCandidateSamplerKernel : public CandidateSamplerKernel {
  public:
-  explicit LogUniformCandidateSamplerKernel() : CandidateSamplerKernel("LogUniformCandidateSampler"){};
+  LogUniformCandidateSamplerKernel() : CandidateSamplerKernel("LogUniformCandidateSampler"){};
   ~LogUniformCandidateSamplerKernel() = default;
 
  protected:
@@ -77,7 +80,7 @@ class LogUniformCandidateSamplerKernel : public CandidateSamplerKernel {
 
 class UniformCandidateSamplerKernel : public CandidateSamplerKernel {
  public:
-  explicit UniformCandidateSamplerKernel() : CandidateSamplerKernel("UniformCandidateSampler"){};
+  UniformCandidateSamplerKernel() : CandidateSamplerKernel("UniformCandidateSampler"){};
   ~UniformCandidateSamplerKernel() = default;
 
  protected:

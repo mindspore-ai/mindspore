@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "adaptive_avg_pool_3d_grad.h"
+#include "cpu_kernel/ms_kernel/adaptive_avg_pool_3d_grad.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace {
 const char *kAdaptiveAvgPool3dGrad = "AdaptiveAvgPool3dGrad";
@@ -66,7 +65,7 @@ inline int EndIndex(int offset, int out_size, int in_size) {
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool3dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) {
     for (auto d = start; d < end; d++) {
       double *grad_input_p_d = args.input_data + d * args.in_size_t * args.in_size_w * args.in_size_h;
@@ -116,7 +115,7 @@ uint32_t AdaptiveAvgPool3dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dGradOutTemplate(CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool3dGradOutTemplate(const CpuKernelContext &ctx) {
   Tensor &orig_input_shape = *(ctx.Input(kSecondInputIndex));
 
   auto orig_input_shape_shape = orig_input_shape.GetTensorShape();

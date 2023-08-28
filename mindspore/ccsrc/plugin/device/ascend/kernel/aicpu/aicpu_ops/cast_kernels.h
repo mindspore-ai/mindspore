@@ -22,7 +22,7 @@
 namespace aicpu {
 class CastKernel : public KernelBase {
  public:
-  explicit CastKernel() : KernelBase("Cast") {}
+  CastKernel() : KernelBase("Cast") {}
   ~CastKernel() = default;
 
   ::aicpuops::DataType input_type_;

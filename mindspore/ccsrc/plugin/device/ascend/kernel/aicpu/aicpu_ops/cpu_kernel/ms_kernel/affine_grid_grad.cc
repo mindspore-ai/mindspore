@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "affine_grid_grad.h"
+#include "cpu_kernel/ms_kernel/affine_grid_grad.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -113,9 +112,9 @@ uint32_t AffineGridGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(CpuKernelContext &ctx) {
-  std::vector<long int> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  std::vector<long int> input0 = ctx.Input(0)->GetTensorShape()->GetDimSizes();
+uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(const CpuKernelContext &ctx) {
+  std::vector<int64_t> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> input0 = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input1 = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
 
   if (outputsize[0] == len_x_size_4D) {
@@ -136,13 +135,13 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(CpuKernelContext &ctx) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(const CpuKernelContext &ctx) {
   bool align_corners = false;
   AttrValue *align_corners_attr_ptr = ctx.GetAttr("align_corners");
   if (align_corners_attr_ptr) {
     align_corners = ctx.GetAttr("align_corners")->GetBool();
   }
-  std::vector<long int> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   if (outputsize[0] == len_x_size_4D) {
     AffineGridGradCompute_4D<T, T0>(ctx, align_corners);
   } else if (outputsize[0] == len_x_size_5D) {
@@ -152,7 +151,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(CpuKernelContext &ctx, bool align_corners) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(const CpuKernelContext &ctx, bool align_corners) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto D = *(data_out_size + x_size_D_5D);
   auto H = *(data_out_size + x_size_H_5D);
@@ -175,9 +174,9 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(CpuKernelContext &ctx
   double y_ = 1;
   double z_ = 1;
   if (align_corners == 0) {
-    x_ = double((W - 1)) / double(W);
-    y_ = double((H - 1)) / double(H);
-    z_ = double((D - 1)) / double(D);
+    x_ = static_cast<double>(W - 1) / static_cast<double>(W);
+    y_ = static_cast<double>(H - 1) / static_cast<double>(H);
+    z_ = static_cast<double>(D - 1) / static_cast<double>(D);
   }
   for (int64_t i = 0; i < W; i++) {
     vecX[i] = vecX[i] * x_;
@@ -196,7 +195,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(CpuKernelContext &ctx
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(CpuKernelContext &ctx, Eigen::VectorXd vecX,
+Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(const CpuKernelContext &ctx, Eigen::VectorXd vecX,
                                                            Eigen::VectorXd vecY, Eigen::VectorXd vecZ) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto D = *(data_out_size + x_size_D_5D);
@@ -244,7 +243,7 @@ Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_5D(CpuKernelContext &ctx
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::DoCompute_5D(CpuKernelContext &ctx, Eigen::MatrixXf all) {
+uint32_t AffineGridGradCpuKernel::DoCompute_5D(const CpuKernelContext &ctx, Eigen::MatrixXf all) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto N = data_out_size[0];
   auto D = *(data_out_size + x_size_D_5D);
@@ -255,24 +254,22 @@ uint32_t AffineGridGradCpuKernel::DoCompute_5D(CpuKernelContext &ctx, Eigen::Mat
 
   Eigen::MatrixXf y_grad(D * H * W, col_num_3);
   Eigen::MatrixXf result(row_num_4, col_num_3);
-  float result_0 = 0.0;
-  float result_1 = 0.0;
-  float result_2 = 0.0;
-  float result_3 = 0.0;
   int64_t k_num = 0;
 
   for (int64_t n = 0; n < N; n++) {
     for (int64_t k = 0; k < D * H * W; k++) {
-      y_grad(k, 0) = float(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + 0));
-      y_grad(k, col_num_1) = float(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + col_num_1));
-      y_grad(k, col_num_2) = float(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + col_num_2));
+      y_grad(k, 0) = static_cast<float>(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + 0));
+      y_grad(k, col_num_1) =
+        static_cast<float>(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + col_num_1));
+      y_grad(k, col_num_2) =
+        static_cast<float>(*(data_y_grad + (n * D * H * W * col_num_3 + k * col_num_3) + col_num_2));
     }
     result = all * y_grad;
     for (int64_t k = 0; k < col_num_3; k++) {
-      result_0 = result(0, k);
-      result_1 = result(row_num_1, k);
-      result_2 = result(row_num_2, k);
-      result_3 = result(row_num_3, k);
+      float result_0 = result(0, k);
+      float result_1 = result(row_num_1, k);
+      float result_2 = result(row_num_2, k);
+      float result_3 = result(row_num_3, k);
       *(output + k_num) = static_cast<T>(result_0);
       *(output + k_num + col_num_1) = static_cast<T>(result_1);
       *(output + k_num + col_num_2) = static_cast<T>(result_2);
@@ -284,7 +281,7 @@ uint32_t AffineGridGradCpuKernel::DoCompute_5D(CpuKernelContext &ctx, Eigen::Mat
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(CpuKernelContext &ctx, bool align_corners) {
+uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(const CpuKernelContext &ctx, bool align_corners) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto H = *(data_out_size + x_size_H_4D);
   auto W = *(data_out_size + x_size_W_4D);
@@ -301,8 +298,8 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(CpuKernelContext &ctx
   double x_ = 1;
   double y_ = 1;
   if (align_corners == 0) {
-    x_ = double((W - 1)) / double(W);
-    y_ = double((H - 1)) / double(H);
+    x_ = static_cast<double>((W - 1)) / double(W);
+    y_ = static_cast<double>((H - 1)) / double(H);
   }
   for (int64_t i = 0; i < W; i++) {
     vecX[i] = vecX[i] * x_;
@@ -318,7 +315,7 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(CpuKernelContext &ctx
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(CpuKernelContext &ctx, Eigen::VectorXd vecX,
+Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(const CpuKernelContext &ctx, Eigen::VectorXd vecX,
                                                            Eigen::VectorXd vecY) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto H = *(data_out_size + x_size_H_4D);
@@ -358,7 +355,7 @@ Eigen::MatrixXf AffineGridGradCpuKernel::make_base_grid_4D(CpuKernelContext &ctx
 }
 
 template <typename T, typename T0>
-uint32_t AffineGridGradCpuKernel::DoCompute_4D(CpuKernelContext &ctx, Eigen::MatrixXf all) {
+uint32_t AffineGridGradCpuKernel::DoCompute_4D(const CpuKernelContext &ctx, Eigen::MatrixXf all) {
   auto *data_out_size = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
   auto N = data_out_size[0];
   auto H = *(data_out_size + x_size_H_4D);
@@ -368,22 +365,19 @@ uint32_t AffineGridGradCpuKernel::DoCompute_4D(CpuKernelContext &ctx, Eigen::Mat
 
   Eigen::MatrixXf y_grad(H * W, col_num_2);
   Eigen::MatrixXf result(row_num_3, col_num_2);
-  float result_0 = 0.0;
-  float result_1 = 0.0;
-  float result_2 = 0.0;
   int64_t k_num = 0;
 
   for (int64_t n = 0; n < N; n++) {
     for (int64_t k = 0; k < H * W; k++) {
-      y_grad(k, 0) = float(*(data_y_grad + (n * H * W * col_num_2 + k * col_num_2)));
-      y_grad(k, col_num_1) = float(*(data_y_grad + (n * H * W * col_num_2 + k * col_num_2) + col_num_1));
+      y_grad(k, 0) = static_cast<float>(*(data_y_grad + (n * H * W * col_num_2 + k * col_num_2)));
+      y_grad(k, col_num_1) = static_cast<float>(*(data_y_grad + (n * H * W * col_num_2 + k * col_num_2) + col_num_1));
     }
     result = all * y_grad;
 
     for (int64_t k = 0; k < col_num_2; k++) {
-      result_0 = result(0, k);
-      result_1 = result(row_num_1, k);
-      result_2 = result(row_num_2, k);
+      float result_0 = result(0, k);
+      float result_1 = result(row_num_1, k);
+      float result_2 = result(row_num_2, k);
       *(output + k_num) = static_cast<T>(result_0);
       *(output + k_num + col_num_1) = static_cast<T>(result_1);
       *(output + k_num + col_num_2) = static_cast<T>(result_2);

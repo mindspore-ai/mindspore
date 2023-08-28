@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
-#include "adjust_saturation.h"
+#include "cpu_kernel/ms_kernel/adjust_saturation.h"
 
 #include <unsupported/Eigen/CXX11/Tensor>
-
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace {
 const std::uint32_t kAdjustSaturationInputNum{2u};
@@ -103,7 +104,7 @@ inline Rgb<T> Hsv2Rgb(Hsv<T> in) {
     h = static_cast<T>(0.0);
   }
   h *= static_cast<T>(6.0);
-  auto i{static_cast<long>(h)};
+  auto i{static_cast<int64_t>(h)};
   auto f{static_cast<T>(h - static_cast<T>(i))};
   T p{in.v * (static_cast<T>(1.0) - in.s)};
   T q{in.v * (static_cast<T>(1.0) - (in.s * f))};
@@ -204,9 +205,11 @@ inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustSaturation(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
-  return NormalCheck(ctx, kAdjustSaturationInputNum, kAdjustSaturationOutputNum) ? KERNEL_STATUS_PARAM_INVALID
-                                                                                 : ExtraCheckAdjustSaturation(ctx);
+inline std::uint32_t CheckAdjustSaturation(const CpuKernelContext &ctx, std::uint32_t inputs_num,
+                                           std::uint32_t outputs_num) {
+  return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAdjustSaturationInputNum, kAdjustSaturationOutputNum)
+           ? KERNEL_STATUS_PARAM_INVALID
+           : ExtraCheckAdjustSaturation(ctx);
 }
 
 inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx) {

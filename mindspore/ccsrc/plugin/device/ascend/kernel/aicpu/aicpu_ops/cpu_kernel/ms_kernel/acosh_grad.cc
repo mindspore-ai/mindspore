@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "acosh_grad.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/acosh_grad.h"
+#include <limits>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -66,7 +67,7 @@ uint32_t AcoshGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AcoshGradCpuKernel::AcoshGradParamCheck(CpuKernelContext &ctx) {
+uint32_t AcoshGradCpuKernel::AcoshGradParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_y = ctx.Input(0);
   Tensor *input_dy = ctx.Input(1);
@@ -99,7 +100,7 @@ void AcoshGradCpuKernel::SpecialComputeComplex(int64_t start, int64_t end, const
 }
 
 template <typename T>
-uint32_t AcoshGradCpuKernel::AcoshGradComputeComplex(CpuKernelContext &ctx) {
+uint32_t AcoshGradCpuKernel::AcoshGradComputeComplex(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -139,7 +140,7 @@ void AcoshGradCpuKernel::SpecialComputeFP16(int64_t start, int64_t end, const T 
 }
 
 template <typename T>
-uint32_t AcoshGradCpuKernel::AcoshGradComputeFP16(CpuKernelContext &ctx) {
+uint32_t AcoshGradCpuKernel::AcoshGradComputeFP16(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -179,7 +180,7 @@ void AcoshGradCpuKernel::SpecialCompute(int64_t start, int64_t end, const T *inp
 }
 
 template <typename T>
-uint32_t AcoshGradCpuKernel::AcoshGradCompute(CpuKernelContext &ctx) {
+uint32_t AcoshGradCpuKernel::AcoshGradCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());

@@ -1,10 +1,25 @@
-#include "avgpool.h"
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/avgpool.h"
+#include <vector>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -13,7 +28,7 @@ const char *kAvgPool = "AvgPool";
 // when input data size is more than kParallelDataNum, use Parallel func
 const int64_t kParallelDataNum = 2 * 1024;
 const int64_t kParallelDataNumMid = 16 * 1024;
-const string defaultDataFormat = "NHWC";
+const char *defaultDataFormat = "NCHW";
 
 #define AVGPOOL_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
   case (DTYPE): {                                         \
@@ -45,7 +60,7 @@ uint32_t AvgPoolCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AvgPoolCpuKernel::AvgPoolParamCheck(CpuKernelContext &ctx) {
+uint32_t AvgPoolCpuKernel::AvgPoolParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *output = ctx.Output(0);
@@ -61,7 +76,7 @@ uint32_t AvgPoolCpuKernel::AvgPoolParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t AvgPoolCpuKernel::AvgPoolProcess(CpuKernelContext &ctx, AvgPoolCalcArgs args) {
+uint32_t AvgPoolCpuKernel::AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCalcArgs args) {
   // NCHW
   auto input0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output0 = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -115,9 +130,9 @@ uint32_t AvgPoolCpuKernel::RealCompute(int64_t start, int64_t end, AvgPoolCalcAr
             int64_t ih = 0;
             int64_t iw = 0;
             T avg_val = static_cast<T>(0);
-            T window_element_num =
-              static_cast<T>((min(in_end_h, args.in_size_h + args.pad_top) - max(in_start_h, args.pad_top)) *
-                             (min(in_end_w, args.in_size_w + args.pad_left) - max(in_start_w, args.pad_left)));
+            T window_element_num = static_cast<T>(
+              (std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
+              (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
             for (ih = in_start_h; ih < in_end_h; ih++) {
               for (iw = in_start_w; iw < in_end_w; iw++) {
                 if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
@@ -154,9 +169,9 @@ uint32_t AvgPoolCpuKernel::RealCompute(int64_t start, int64_t end, AvgPoolCalcAr
             int64_t ih = 0;
             int64_t iw = 0;
             T avg_val = static_cast<T>(0);
-            T window_element_num =
-              static_cast<T>((min(in_end_h, args.in_size_h + args.pad_top) - max(in_start_h, args.pad_top)) *
-                             (min(in_end_w, args.in_size_w + args.pad_left) - max(in_start_w, args.pad_left)));
+            T window_element_num = static_cast<T>(
+              (std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
+              (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
             for (ih = in_start_h; ih < in_end_h; ih++) {
               for (iw = in_start_w; iw < in_end_w; iw++) {
                 if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
@@ -179,17 +194,17 @@ uint32_t AvgPoolCpuKernel::RealCompute(int64_t start, int64_t end, AvgPoolCalcAr
 }
 
 template <typename T>
-uint32_t AvgPoolCpuKernel::AvgPoolCompute(CpuKernelContext &ctx) {
+uint32_t AvgPoolCpuKernel::AvgPoolCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
 
   Tensor *output0_tensor = ctx.Output(0);
   auto output0_shape = output0_tensor->GetTensorShape()->GetDimSizes();
 
-  vector<int64_t> strides = ctx.GetAttr("strides")->GetListInt();
-  vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt();
-  string padding = ctx.GetAttr("padding")->GetString();
-  string data_format =
+  std::vector<int64_t> strides = ctx.GetAttr("strides")->GetListInt();
+  std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt();
+  std::string padding = ctx.GetAttr("padding")->GetString();
+  std::string data_format =
     ctx.GetAttr("data_format") == nullptr ? defaultDataFormat : ctx.GetAttr("data_format")->GetString();
 
   int32_t n_position = data_format.find("N");
@@ -217,10 +232,10 @@ uint32_t AvgPoolCpuKernel::AvgPoolCompute(CpuKernelContext &ctx) {
   args.data_format = data_format;
 
   if (padding == "SAME") {
-    args.pad_h = max((args.out_size_h - 1) * args.stride_h + args.window_h - args.in_size_h, 0L);
+    args.pad_h = std::max((args.out_size_h - 1) * args.stride_h + args.window_h - args.in_size_h, 0L);
     args.pad_top = floor(args.pad_h / 2);
     args.pad_bottom = args.pad_h - args.pad_top;
-    args.pad_w = max((args.out_size_w - 1) * args.stride_w + args.window_w - args.in_size_w, 0L);
+    args.pad_w = std::max((args.out_size_w - 1) * args.stride_w + args.window_w - args.in_size_w, 0L);
     args.pad_left = floor(args.pad_w / 2);
     args.pad_right = args.pad_w - args.pad_left;
   }

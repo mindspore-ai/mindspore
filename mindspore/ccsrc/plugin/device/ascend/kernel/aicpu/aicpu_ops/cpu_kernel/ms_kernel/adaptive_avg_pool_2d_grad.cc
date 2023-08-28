@@ -15,6 +15,8 @@
  */
 #include "cpu_kernel/ms_kernel/adaptive_avg_pool_2d_grad.h"
 #include <cmath>
+#include <vector>
+#include <algorithm>
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
@@ -44,18 +46,18 @@ struct AdaptiveCalcArgs {
 
 // out_size is not be zero
 inline int StartIndex(int offset, int out_size, int in_size) {
-  return (int)std::floor((float)(offset * in_size) / out_size);
+  return static_cast<int>(std::floor((float)(offset * in_size) / out_size));
 }
 
 // out_size is not be zero
 inline int EndIndex(int offset, int out_size, int in_size) {
-  return (int)std::ceil((float)((offset + 1) * in_size) / out_size);
+  return static_cast<int>(std::ceil((float)((offset + 1) * in_size) / out_size));
 }
 }  // namespace
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args) {
+uint32_t AdaptiveAvgPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args) {
   uint32_t min_core_num = 1;
   int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
 
@@ -111,7 +113,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
 
   auto input_shape_ptr = input.GetTensorShape();
@@ -127,17 +129,6 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   }
 
   AdaptiveCalcArgs<SCALAR_T> args;
-  args.in_size_b = 1;
-  args.in_size_d = 0;
-  args.in_size_h = 0;
-  args.in_size_w = 0;
-  args.out_size_h = 0;
-  args.out_size_w = 0;
-  args.out_stride_d = 1;
-  args.in_stride_d = 1;
-  args.out_stride_h = 1;
-  args.in_stride_h = 1;
-
   auto orig_input_shape_data = reinterpret_cast<int64_t *>(ctx.Input(1)->GetData());
   auto orig_input_shape_rank = ctx.Input(1)->NumElements();
   std::vector<int64_t> orig_input_size(orig_input_shape_data, orig_input_shape_data + orig_input_shape_rank);

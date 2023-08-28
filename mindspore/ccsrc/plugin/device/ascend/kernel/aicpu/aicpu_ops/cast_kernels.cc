@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.h"
 #include <map>
 #include <complex>
-#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.h"
 #include <vector>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
@@ -28,7 +28,7 @@
 namespace aicpu {
 
 template <typename T, typename S>
-uint32_t CastTask(std::vector<uintptr_t> &ioAddrs, size_t &input_size) {
+uint32_t CastTask(const std::vector<uintptr_t> &ioAddrs, const size_t &input_size) {
   if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
     for (size_t i = 0; i < input_size; i++) {
       auto *input_addr = reinterpret_cast<T *>(ioAddrs[0]);
@@ -37,10 +37,10 @@ uint32_t CastTask(std::vector<uintptr_t> &ioAddrs, size_t &input_size) {
     }
     return kAicpuKernelStateSucess;
   } else {
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> input_map((T *)ioAddrs[0], 1, input_size);
+    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> input_map(reinterpret_cast<T *>(ioAddrs[0]), 1, input_size);
     const auto &input = Eigen::Tensor<T, 2, Eigen::RowMajor>(input_map);
-    Eigen::TensorMap<Eigen::Tensor<S, 2, Eigen::RowMajor>> output((S *)ioAddrs[1], 1, input_size);
-    output = input.template cast<S>();
+    Eigen::TensorMap<Eigen::Tensor<S, 2, Eigen::RowMajor>>(reinterpret_cast<S *>(ioAddrs[1]), 1, input_size) =
+      input.template cast<S>();
     return kAicpuKernelStateSucess;
   }
 }
