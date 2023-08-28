@@ -166,13 +166,13 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(const AbstractBasePtrList 
   for (size_t index = 1; index < args_abs_list.size(); index++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[index]);
     if (args_abs_list[index]->isa<AbstractTuple>()) {
-      auto arg_tuple = args_abs_list[index]->cast_ptr<AbstractTuple>();
+      const auto &arg_tuple = args_abs_list[index]->cast_ptr<AbstractTuple>();
       (void)std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
                            std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
     } else if (args_abs_list[index]->isa<AbstractDictionary>()) {
       auto arg_dict = args_abs_list[index]->cast_ptr<AbstractDictionary>();
       MS_EXCEPTION_IF_NULL(arg_dict);
-      auto dict_elems = arg_dict->elements();
+      const auto &dict_elems = arg_dict->elements();
       (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
                            [](const AbstractElementPair &item) {
                              MS_EXCEPTION_IF_NULL(item.first);
@@ -245,8 +245,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     MS_EXCEPTION(ValueError) << "Grad with sens, but the sens is not provided.";
   }
   // If it's Partial closure, copy the arg list in advance.
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
-  if (enable_pre_lift && partial_fn_abs != nullptr) {
+  if (partial_fn_abs != nullptr) {
     (void)std::copy(partial_fn_abs->args().begin(), partial_fn_abs->args().end(),
                     std::back_inserter(graph_specialize_args_without_sens));
   }

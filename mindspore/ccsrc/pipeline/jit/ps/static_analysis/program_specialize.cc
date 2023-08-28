@@ -317,7 +317,8 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
   AbstractFunctionPtr new_abs = nullptr;
   if (old_abs_func->isa<AbstractFuncUnion>()) {
     AbstractFuncAtomPtrList func_atoms;
-    auto build_new_abs = [this, &func_atoms, &new_node](const AbstractFuncAtomPtr &poss) {
+    size_t index = 0;
+    auto build_new_abs = [this, &func_atoms, &new_node, &index](const AbstractFuncAtomPtr &poss) {
       MS_EXCEPTION_IF_NULL(poss);
       auto resolved_atom = poss;
       if (poss->isa<AsyncAbstractFuncAtom>()) {
@@ -328,7 +329,43 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
         MS_EXCEPTION_IF_NULL(resolved_atom);
         MS_LOG(DEBUG) << "Resolved AsyncAbstractFuncAtom is: " << resolved_atom->ToString();
       }
-      auto specialized_abs = this->SpecializeAbstractFuncRecursively(resolved_atom, new_node);
+
+      // Get the func graph input from Switch CNode or SwitchLayer CNode.
+      AnfNodePtr partial_input_node = nullptr;
+      if (IsPrimitiveCNode(new_node, prim::kPrimSwitch)) {
+        auto new_cnode = dyn_cast<CNode>(new_node);
+        MS_EXCEPTION_IF_NULL(new_cnode);
+        constexpr auto switch_input_size = 4;
+        constexpr auto ignore_switch_cond_count = 2;
+        MS_EXCEPTION_IF_CHECK_FAIL(new_cnode->size() == switch_input_size, "Switch inputs size is wrong.");
+        MS_EXCEPTION_IF_CHECK_FAIL(index + ignore_switch_cond_count < new_cnode->size(),
+                                   "Switch inputs size is wrong.");
+        partial_input_node = new_cnode->input(index + ignore_switch_cond_count);
+      } else if (IsPrimitiveCNode(new_node, prim::kPrimSwitchLayer)) {
+        auto new_cnode = dyn_cast<CNode>(new_node);
+        MS_EXCEPTION_IF_NULL(new_cnode);
+        constexpr auto switch_layer_input_size = 3;
+        constexpr auto ignore_switch_layer_index_count = 2;
+        MS_EXCEPTION_IF_CHECK_FAIL(new_cnode->size() == switch_layer_input_size, "SwitchLayer inputs size is wrong.");
+        const auto &input_tuple_node = new_cnode->input(ignore_switch_layer_index_count);
+        auto input_tuple_cnode = dyn_cast<CNode>(input_tuple_node);
+        if (input_tuple_cnode != nullptr) {
+          constexpr auto ignore_make_tuple_count = 1;
+          partial_input_node = input_tuple_cnode->input(index + ignore_make_tuple_count);
+        } else if (IsValueNode<ValueTuple>(input_tuple_node)) {
+          // Not a Partial CNode input, ignore.
+          MS_LOG(DEBUG) << "Ignore since the input is not a Partial CNode for SwitchLayer, " << new_node->DebugString();
+        } else {
+          MS_LOG(INTERNAL_EXCEPTION) << "Invalid SwitchLayer CNode, " << new_node->DebugString();
+        }
+      } else {
+        MS_LOG(DEBUG) << "Not Switch or SwitchLayer, but got " << new_node->DebugString();
+      }
+      if (resolved_atom->isa<PartialAbstractClosure>() && partial_input_node == nullptr) {
+        MS_LOG(DEBUG) << "Maybe invalid Switch or SwitchLayer, node: " << new_node->DebugString();
+      }
+
+      auto specialized_abs = this->SpecializeAbstractFuncRecursively(resolved_atom, partial_input_node);
       AbstractFuncAtomPtr new_abs_atom = nullptr;
       if (specialized_abs == nullptr) {
         MS_LOG(DEBUG) << "Cannot resolve old_abs: " << resolved_atom->ToString()
@@ -344,6 +381,7 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
         new_abs_atom = resolved_atom;
       }
       func_atoms.push_back(new_abs_atom);
+      ++index;
     };
     old_abs_func->Visit(build_new_abs);
     new_abs = std::make_shared<AbstractFuncUnion>(func_atoms);
@@ -361,7 +399,8 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
     auto new_abs_fn = GetSpecializedAbstract(old_abs_fn);
     if (new_abs_fn != nullptr && new_abs_fn->isa<AbstractFuncAtom>()) {
       auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
-      new_abs = std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), new_node);
+      new_abs = std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(),
+                                                         (new_node != nullptr ? new_node : old_partial_abs->node()));
       MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
                     << ", specialized_abstract: " << new_abs->ToString();
     } else {
