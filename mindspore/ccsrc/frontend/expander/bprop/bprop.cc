@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <unordered_map>
 
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
@@ -30,6 +31,8 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+using BpropGraphCacheMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
+                                              abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 using KernelGraph = session::KernelGraph;
 
 bool HasBpropExpander(const std::string &prim_name) {
@@ -51,6 +54,9 @@ class PynativeIRBuilder : public BpropIRBuilder {
   }
   ~PynativeIRBuilder() = default;
 
+  inline static std::unordered_map<PrimitivePtr, BpropGraphCacheMap, PrimitiveHasher, PrimitiveTotalEqual>
+    bprop_op_graph_map;
+
   NodePtr OutZeros(const NodePtr &node) override {
     need_infer_ = false;
     auto ret = Emit(kZerosLikeOpName, {node});
@@ -58,7 +64,112 @@ class PynativeIRBuilder : public BpropIRBuilder {
     return ret;
   }
 
+  NodePtrList Build(const std::vector<NodePtr> &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
+                    const BpropHandle &handle, const std::string &instance_name) {
+    auto output_nodes = Run(input_nodes, attrs, handle, instance_name);
+    for (size_t i = 0; i < output_nodes.size(); i++) {
+      auto &node = output_nodes[i];
+      // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
+      if (node->isa<ValueNode>() || IsPrimitiveCNode(node->get(), prim::kPrimZerosLike)) {
+        if (node->isa<ValueNode>()) {
+          auto abs = node->abstract();
+          MS_EXCEPTION_IF_NULL(abs);
+          if (abs->isa<abstract::AbstractScalar>()) {
+            node = OutZeros(Tensor(0, abs->BuildType()));
+          } else {
+            node = OutZeros(node);
+          }
+        }
+        node->get()->set_abstract(input_nodes[i]->abstract()->Broaden());
+      }
+    }
+    return output_nodes;
+  }
+
+  NodePtrList BuildWithCache(const NodePtrList &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
+                             const BpropHandle &handle, const std::string &instance_name, const PrimitivePtr &prim) {
+    BpropGraphCacheMap &bprop_map = PynativeIRBuilder::bprop_op_graph_map[prim];
+    AbstractBasePtrList abs_list;
+    abs_list.reserve(input_nodes.size());
+    (void)std::transform(input_nodes.cbegin(), input_nodes.cend(), std::back_insert_iterator(abs_list),
+                         [](const NodePtr &no) { return no->abstract(); });
+    FuncGraphPtr &graph = bprop_map[abs_list];
+    if (graph == nullptr) {
+      graph = BuildBpropOpGraph(input_nodes, attrs, handle, instance_name);
+    }
+
+    need_infer_ = false;
+    std::unordered_map<AnfNodePtr, NodePtr> node_map;
+    auto parm = graph->parameters();
+    auto output = graph->output();
+    bool is_multi_outputs = graph->has_flag("multi");
+    auto nodes = TopoSort(graph->get_return(), SuccIncoming,
+                          [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
+    nodes.pop_back();
+    for (size_t i = 0; i < input_nodes.size(); i++) {
+      node_map[parm[i]] = input_nodes[i];
+    }
+    for (auto &node : nodes) {
+      auto cnode = node->cast<CNodePtr>();
+      NodePtrList cnode_list;
+      if (node == output && is_multi_outputs) {
+        (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(cnode_list),
+                             [&node_map](const AnfNodePtr &no) { return node_map.at(no); });
+        return cnode_list;
+      }
+      PrimitivePtr primitive = nullptr;
+      for (auto &no : cnode->inputs()) {
+        if (no->isa<ValueNode>()) {
+          auto value = no->cast<ValueNodePtr>()->value();
+          if (value->isa<Primitive>()) {
+            primitive = value->cast<PrimitivePtr>()->Clone();
+          } else {
+            auto value_node = NewValueNode(value);
+            value_node->set_abstract(value->ToAbstract());
+            cnode_list.emplace_back(NewNode(value_node));
+          }
+        } else {
+          cnode_list.emplace_back(node_map.at(no));
+        }
+      }
+      auto new_node = EmitOp(primitive, cnode_list);
+      new_node->get()->set_abstract(node->abstract()->Clone());
+      node_map[node] = new_node;
+    }
+    return NodePtrList{node_map.at(output)};
+  }
+
  protected:
+  FuncGraphPtr BuildBpropOpGraph(const NodePtrList &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
+                                 const BpropHandle &handle, const std::string &instance_name) {
+    // This section of code can have a very long runtime with certain operations, such as the MaskedSelect operator.
+    auto graph = std::make_shared<FuncGraph>();
+    NodePtrList inputs;
+    inputs.reserve(input_nodes.size());
+    for (auto &inp : input_nodes) {
+      auto p = inputs.emplace_back(NewNode(graph->add_parameter()));
+      p->get()->set_abstract(inp->abstract()->Clone());
+    }
+
+    std::swap(graph, func_graph_);
+    need_record_users_ = false;
+    auto output_nodes = Build(inputs, attrs, handle, instance_name);
+    need_record_users_ = true;
+    std::swap(graph, func_graph_);
+
+    if (output_nodes.size() == 1) {
+      graph->set_output(output_nodes[0]->get());
+    } else {
+      AnfNodePtrList new_outputs{NewValueNode(prim::kPrimMakeTuple)};
+      (void)std::transform(output_nodes.cbegin(), output_nodes.cend(), std::back_inserter(new_outputs),
+                           [](const NodePtr &node) { return node->get(); });
+      auto mt = graph->NewCNode(new_outputs);
+      graph->set_output(mt);
+      graph->set_flag("multi", true);
+    }
+    return graph;
+  }
+
   NodePtr EmitGetItemValue(const NodePtrList &inputs) {
     auto real_input = inputs[0]->get<ValueNodePtr>();
     if (real_input != nullptr) {
@@ -100,6 +211,9 @@ class PynativeIRBuilder : public BpropIRBuilder {
     if (need_infer_) {
       infer_->Infer(node);
     }
+    if (!need_record_users_) {
+      return node;
+    }
     // record the users
     for (size_t i = 1; i < cnode_inputs.size(); i++) {
       auto &inp = cnode_inputs[i];
@@ -120,7 +234,10 @@ class PynativeIRBuilder : public BpropIRBuilder {
   UserMap *users_;
   AnfNodePtr dout_;
   bool need_infer_{true};
+  bool need_record_users_{true};
 };
+
+void ClearBpropOpGraphMap() { PynativeIRBuilder::bprop_op_graph_map.clear(); }
 
 bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -164,7 +281,8 @@ const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &o
 }
 
 bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
-  auto name = AnfUtils::GetCNodeName(cnode);
+  const auto prim = GetCNodePrimitive(cnode);
+  auto name = prim->name();
   PynativeIRBuilder ir_builder(name, cnode->func_graph(), std::make_shared<CppInfer>(), users_, cnode->inputs().back());
   input_nodes_.reserve(cnode->size());
   (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
@@ -176,7 +294,6 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
   }
   mindspore::HashMap<std::string, ValuePtr> attrs;
   {
-    const auto prim = GetCNodePrimitive(cnode);
     PrimitiveReadLock read_lock(prim->shared_mutex());
     attrs = prim->attrs();
   }
@@ -185,22 +302,15 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  output_nodes_ = ir_builder.Run(input_nodes_, attrs, *handle, GetCNodePrimitive(cnode)->instance_name());
+  static const bool cache_env = (common::GetEnv("MS_DEV_BPROP_EXPANDER_CACHE") == "on");
+  if (cache_env) {
+    output_nodes_ = ir_builder.BuildWithCache(input_nodes_, attrs, *handle, prim->instance_name(), prim);
+  } else {
+    output_nodes_ = ir_builder.Build(input_nodes_, attrs, *handle, prim->instance_name());
+  }
   if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
-  }
-  for (auto &node : output_nodes_) {
-    // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
-    if (node->isa<ValueNode>()) {
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      if (abs->isa<abstract::AbstractScalar>()) {
-        node = ir_builder.OutZeros(ir_builder.Tensor(0, abs->BuildType()));
-      } else {
-        node = ir_builder.OutZeros(node);
-      }
-    }
   }
   PostProcess(cnode);
   DumpResult(name);
@@ -212,15 +322,11 @@ void BpropExpander::PostProcess(const CNodePtr &cnode) const {
   constexpr const size_t num_out_and_dout = 2;
   if (output_nodes_.size() + num_out_and_dout != input_nodes_.size()) {
     MS_LOG(EXCEPTION) << "For bprop [" << AnfUtils::GetCNodeName(cnode)
-                      << ", the output size should be equal to input size (exclude out and dout), but got "
+                      << "], the output size should be equal to input size (exclude out and dout), but got "
                       << output_nodes_.size() << " vs " << (input_nodes_.size() - num_out_and_dout);
   }
   for (size_t i = 0; i < output_nodes_.size(); i++) {
-    auto out = outputs_->emplace_back(output_nodes_[i]->get<CNodePtr>());
-    MS_EXCEPTION_IF_NULL(out);
-    if (IsPrimitiveCNode(out, prim::kPrimZerosLike)) {
-      out->set_abstract(input_nodes_[i]->get()->abstract()->Broaden());
-    }
+    (void)outputs_->emplace_back(output_nodes_[i]->get<CNodePtr>());
   }
 }
 

@@ -869,7 +869,7 @@ REG_BPROP_BUILDER("Eye").SetUnusedInputs({i0, i1, i3, i4}).SetBody(BODYFUNC(ib) 
   auto n = ib->GetInput(kIndex0);
   auto m = ib->GetInput(kIndex1);
   auto t = ib->GetInput(kIndex2);
-  return {ib->OutZeros(n), ib->OutZeros(m), t};
+  return {ib->OutZeros(n), ib->OutZeros(m), ib->OutZeros(t)};
 });
 
 REG_BPROP_BUILDER("Select").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {

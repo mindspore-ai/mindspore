@@ -27,6 +27,7 @@ namespace expander {
 AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node);
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph);
 ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc);
+void ClearAllCache();
 }  // namespace expander
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_UTILS_H
