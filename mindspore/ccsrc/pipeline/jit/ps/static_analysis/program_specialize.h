@@ -69,8 +69,8 @@ class ProgramSpecializer {
   FuncGraphManagerPtr manager() { return manager_; }
 
   const AnalysisContextPtr &top_context() const { return top_context_; }
-  void PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractFunctionPtr &old_abs_func,
-                              const AbstractFunctionPtr &new_abs_func);
+  void SetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func, const AbstractFunctionPtr &new_abs_func,
+                              const CNodePtr &cnode, const AnfNodePtr &func);
   AbstractFunctionPtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
   void SpecializeCNodeInput0FuncGraph();
 
@@ -88,7 +88,7 @@ class ProgramSpecializer {
     (void)defer_specialize_nodes_.erase(std::forward<Iter>(iter));
   }
 
-  void PutSpecializedFuncGraphToAbstract(const FuncGraphPtr &before_specialized_fg,
+  void SetSpecializedFuncGraphToAbstract(const FuncGraphPtr &before_specialized_fg,
                                          const AbstractFunctionPtr &specialized_abs) {
     auto iter = func_graph_to_abstract_map_.find(before_specialized_fg);
     if (iter != func_graph_to_abstract_map_.end()) {
@@ -133,8 +133,7 @@ class ProgramSpecializer {
   // This is the remedial action to find the specialized abstract function for func_graph if the abstract is unique.
   mindspore::HashMap<FuncGraphPtr, std::pair<bool, AbstractFunctionPtr>> func_graph_to_abstract_map_;
 
-  AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func,
-                                                        const AnfNodePtr &new_node);
+  AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
 
   std::stack<std::shared_ptr<FuncGraphSpecializer>> func_graph_todo_items_;
 };
