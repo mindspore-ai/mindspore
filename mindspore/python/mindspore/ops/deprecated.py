@@ -188,6 +188,19 @@ class DynamicShape(Primitive):
         self.add_prim_attr('is_dynamic_shape', True)
 
 
+class GatherV2(Primitive):
+    """
+    Please use Gather instead.
+    """
+    @deprecated("1.1", "Gather", True)
+    @prim_attr_register
+    def __init__(self):
+        """Initialize GatherV2"""
+        super().__init__(name="GatherV2")
+        self.add_prim_attr("batch_dims", 0)
+        self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
+
+
 class ScalarToArray(Primitive):
     """
     Please use scalar_to_tensor instead.

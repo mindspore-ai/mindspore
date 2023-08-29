@@ -61,7 +61,7 @@ class Net(nn.Cell):
         self.matmul = P.MatMul(transpose_b=True)
         self.cast = P.Cast()
         self.add = P.Add()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.dtype = compute_type
         self.width = width
 

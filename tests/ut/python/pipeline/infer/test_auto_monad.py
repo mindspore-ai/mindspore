@@ -109,7 +109,7 @@ def test_insert_gradient_of():
     class InsertGradientNet(nn.Cell):
         def __init__(self):
             super(InsertGradientNet, self).__init__()
-            self.gather = P.GatherV2()
+            self.gather = P.Gather()
             self.damping = Tensor(np.array([0.03, 0.03], np.float32))
             self.cov_step = Parameter(0, name="cov_step", requires_grad=False)
             self.freq = Tensor(278, ms.int32)
@@ -323,7 +323,7 @@ def test_grad_fv_and_insert_gradient_of():
     class FvAndInsertGradientNet(nn.Cell):
         def __init__(self):
             super(FvAndInsertGradientNet, self).__init__()
-            self.gather = P.GatherV2()
+            self.gather = P.Gather()
             self.damping = Tensor(np.array([0.03, 0.03], np.float32))
             self.cov_step = Parameter(0, name="cov_step", requires_grad=False)
             self.freq = Tensor(278, ms.int32)

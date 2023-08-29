@@ -32,7 +32,7 @@ from ._ms_kernel import (ms_kernel, kernel)
 from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchToSpace,
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
-                        Eye, Fill, Gather, GatherD, GatherNd, GatherV2, Identity, Im2Col, InvertPermutation,
+                        Eye, Fill, Gather, GatherD, GatherNd, Identity, Im2Col, InvertPermutation,
                         LowerBound, Lstsq, MaskedFill, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
                         Padding, ParallelConcat, PopulationCount, Range, Rank, Reshape, ResizeNearestNeighbor,
                         ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
@@ -135,7 +135,7 @@ from .spectral_ops import (BartlettWindow, BlackmanWindow)
 from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BNTrainingReduce, BNTrainingUpdate, DropoutGenMask, Gelu, FastGelu,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
-                          BatchToSpaceND, Unpack, DynamicShape, ScalarToArray, Pack)
+                          BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 
 __all__ = [
     'HSVToRGB',
