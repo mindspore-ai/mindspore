@@ -762,23 +762,6 @@ class Unsqueeze(PrimitiveWithCheck):
         self.axis = axis
 
 
-class DynamicShape(Primitive):
-    """
-    Same as operator TensorShape. DynamicShape will be deprecated in the future.
-    Please use TensorShape instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("1.7", "TensorShape", True)
-    @prim_attr_register
-    def __init__(self, dtype=9):
-        """init Shape"""
-        self.init_prim_io_names(inputs=['tensor'], outputs=['output'])
-        self.add_prim_attr('is_dynamic_shape', True)
-
-
 class Squeeze(Primitive):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
@@ -2016,24 +1999,6 @@ class TupleToArray(PrimitiveWithInfer):
         return _run_op(self, self.name, args)
 
 
-class ScalarToArray(PrimitiveWithInfer):
-    """
-    The `ScalarToArray` primitive  is deprecated. Please use the :class:`mindspore.ops.ScalarToTensor` instead.
-    """
-    @deprecated("2.0", "ops.scalar_to_tensor", False)
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-    def infer_value(self, x):
-        validator.check_value_type("x", x, [int, float], self.name)
-        if isinstance(x, int):
-            ret = np.array(x, np.int32)
-        else:
-            ret = np.array(x, np.float32)
-        return Tensor(ret)
-
-
 class ScalarToTensor(PrimitiveWithInfer):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
@@ -3048,30 +3013,6 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     return out_shape
 
 
-class Pack(PrimitiveWithInfer):
-    """
-    Same as operator Stack. Pack will be deprecated in the future.
-    Please use Stack instead.
-    """
-
-    @deprecated("1.1", "Stack", True)
-    @prim_attr_register
-    def __init__(self, axis=0):
-        """Initialize Pack"""
-        validator.check_value_type("axis", axis, [int], self.name)
-        self.axis = axis
-
-    def __infer__(self, value):
-        x_shape = value['shape']
-        x_type = value['dtype']
-        self.add_prim_attr('num', len(x_shape))
-        all_shape = _get_stack_shape(value, x_shape, x_type, self.axis, self.name)
-        out = {'shape': all_shape,
-               'dtype': x_type[0],
-               'value': None}
-        return out
-
-
 class Stack(PrimitiveWithInfer):
     r"""
     Stacks a list of tensors in specified axis.
@@ -3145,47 +3086,6 @@ class Stack(PrimitiveWithInfer):
             infered_shape_value = np.stack(input_shape_value, axis=self.axis)
             infered_shape_value = tuple(infered_shape_value.tolist())
             out['shape_value'] = infered_shape_value
-        return out
-
-
-class Unpack(PrimitiveWithInfer):
-    """
-    Same as operator Unstack. Unpack will be deprecated in the future.
-    Please use Unstack instead.
-    """
-
-    @deprecated("1.1", "Unstack", True)
-    @prim_attr_register
-    def __init__(self, axis=0):
-        """Initialize Unpack"""
-        validator.check_value_type("axis", axis, [int], self.name)
-        self.axis = axis
-
-    def __infer__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor_type, self.name)
-        x_shape = list(x['shape'])
-        dim = len(x_shape)
-        validator.check_int_range(self.axis, -dim, dim, validator.INC_LEFT, 'axis value', self.name)
-        if self.axis < 0:
-            self.axis = self.axis + dim
-        output_num = x_shape[self.axis]
-        validator.check_value_type("num", output_num, [int], self.name)
-        validator.check_positive_int(output_num, "output_num", self.name)
-        self.add_prim_attr('num', output_num)
-        output_valid_check = x_shape[self.axis] - output_num
-        validator.check_int(output_valid_check, 0, validator.EQ,
-                            "The dimension which to unstack divides output_num", self.name)
-        out_shapes = []
-        out_dtypes = []
-        out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]
-        for _ in range(output_num):
-            out_shapes.append(tuple(out_shape))
-            out_dtypes.append(x['dtype'])
-        out_shapes = tuple(out_shapes)
-        out_dtypes = tuple(out_dtypes)
-        out = {'shape': out_shapes,
-               'dtype': out_dtypes,
-               'value': None}
         return out
 
 
@@ -5637,67 +5537,6 @@ class ScatterNdMin(_ScatterNdOp):
         super().__init__(use_locking)
 
 
-class ScatterNonAliasingAdd(Primitive):
-    """
-    The ScatterNonAliasingAdd Interface is deprecated from version 2.1.
-    Please use :class:`mindspore.ops.TensorScatterAdd` instead.
-    This interface may has precision error on Ascend and will be removed in a future version.
-
-    Applies sparse addition to the input using individual values or slices.
-
-    Using given values to update tensor value through the add operation, along with the input indices.
-    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-
-    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Inputs:
-        - **input_x** (Parameter) - The target parameter. The data type must be float16, float32 or int32.
-        - **indices** (Tensor) - The index to perform the addition operation whose data type must be mindspore.int32.
-        - **updates** (Tensor) - The tensor that performs the addition operation with `input_x`,
-          the data type is the same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-
-    Outputs:
-        Parameter, the updated `input_x`.
-
-    Raises:
-        TypeError: If dtype of `indices` is not int32.
-        TypeError: If dtype of `input_x` is not one of float16, float32, int32.
-        ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
-
-    Supported Platforms:
-            Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops, Parameter
-        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
-        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_non_aliasing_add = ops.ScatterNonAliasingAdd()
-        >>> output = scatter_non_aliasing_add(input_x, indices, updates)
-        >>> print(output)
-        [ 1. 10.  9.  4. 12.  6.  7. 17.]
-    """
-
-    __mindspore_signature__ = (
-        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
-        sig.make_sig('updates', dtype=sig.sig_dtype.T)
-    )
-
-    @deprecated("2.1", "ops.ScatterNonAliasingAdd", False)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ScatterNonAliasingAdd"""
-        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
-        self.add_prim_attr('side_effect_mem', True)
-
-
 class SpaceToDepth(Primitive):
     r"""
     Rearrange blocks of spatial data into depth.
@@ -6058,54 +5897,6 @@ class SpaceToBatchND(Primitive):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
-
-
-class BatchToSpaceND(Primitive):
-    r"""
-    :class:`mindspore.ops.BatchToSpaceND` is deprecated from version 2.0 and will be removed in a future version,
-    use :func:`mindspore.ops.batch_to_space_nd` instead.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> block_size = 2
-        >>> crops = [[0, 0], [0, 0]]
-        >>> batch_to_space = ops.BatchToSpaceND(block_size, crops)
-        >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
-        >>> output = batch_to_space(input_x)
-        >>> print(output)
-        [[[[1.  2.]
-           [3.  4.]]]]
-    """
-
-    @deprecated("2.0", "ops.batch_to_space_nd", False)
-    @prim_attr_register
-    def __init__(self, block_shape, crops):
-        """Initialize BatchToSpaceND"""
-        if isinstance(block_shape, int):
-            block_shape = (block_shape,) * np.array(crops).shape[0]
-        self.add_prim_attr("block_shape", block_shape)
-        validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
-        validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, validator.EQ, self.name)
-        block_rank = len(block_shape)
-        if context.get_context("device_target") == "Ascend":
-            validator.check('block_shape length', block_rank, '', 2, validator.EQ, self.name)
-        for elem in block_shape:
-            validator.check('block_shape element', elem, '', 1, validator.GE, self.name)
-            validator.check_value_type('block_shape element', elem, [int], self.name)
-        self.block_shape = block_shape
-
-        validator.check_value_type('crops type', crops, [list, tuple], self.name)
-        validator.check('crops length', len(crops), '', 1, validator.GE, self.name)
-        validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), validator.EQ, self.name)
-        for elem in itertools.chain(*crops):
-            validator.check_non_negative_int(elem, 'crops element', self.name)
-            validator.check_value_type('crops element', elem, [int], self.name)
-        self.crops = crops
 
 
 class BatchToSpaceNDV2(Primitive):

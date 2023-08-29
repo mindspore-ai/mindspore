@@ -25,7 +25,6 @@ from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore.common._decorator import deprecated
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
@@ -436,28 +435,6 @@ class AddV2(Primitive):
     def __init__(self):
         """Initialize AddV2"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
-
-
-class TensorAdd(_MathBinaryOp):
-    """
-    Same as operator Add. TensorAdd will be deprecated in the future.
-    Please use Add instead.
-    """
-
-    @deprecated("1.1", "Add", True)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize TensorAdd."""
-        _MathBinaryOp.__init__(self)
-
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = x + y
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
 
 
 class AssignAdd(Primitive):
@@ -2012,27 +1989,6 @@ class InplaceUpdateV2(Primitive):
         args = [x, indices, v]
         output = _run_op(self, self.name, args)
         return output
-
-
-class InplaceUpdate(Primitive):
-    r"""
-    The InplaceUpdate interface is deprecated. Please use the :class:`mindspore.ops.InplaceUpdateV2` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("2.0", "ops.InplaceUpdateV2", False)
-    @prim_attr_register
-    def __init__(self, indices):
-        """Initialize InplaceUpdate"""
-        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
-        self.indices = indices
-        validator.check_value_type("indices", indices, [int, tuple], self.name)
-        if isinstance(indices, int):
-            self.indices = (indices,)
-        for item in self.indices:
-            validator.check_value_type("item of indices", item, [int], self.name)
 
 
 class InplaceAdd(Primitive):
