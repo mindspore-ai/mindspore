@@ -277,7 +277,7 @@ class AstModifier(ast.NodeTransformer):
         return result
 
     @staticmethod
-    def _create_arg_by_single_value(value: ScopedValue):
+    def _create_arg_by_constant_value(value: ScopedValue):
         """
         Create an instance of ast.Constant.
 
@@ -286,17 +286,16 @@ class AstModifier(ast.NodeTransformer):
 
         Raises:
             RuntimeError: if scope of value is not empty.
-            TypeError: type of arg not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue]
+            TypeError: type of arg is not ValueType.ConstantValue
 
         Returns:
             ast.Constant: An instance of ast.Constant
         """
-        if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+        if value.type == ValueType.ConstantValue:
             if value.scope:
                 raise RuntimeError("For arg the scope should be empty")
             return ast.Constant(value=value.value, kind=None)
-        raise TypeError("Type of arg only support [ValueType.IntValue, ValueType.FloatValue,"
-                        f" ValueType.StringValue], but got {type(value)}")
+        raise TypeError("Type of arg only support ValueType.ConstantValue, but got {type(value)}")
 
     @staticmethod
     def _create_list_or_tuple(value: ScopedValue):
@@ -311,7 +310,7 @@ class AstModifier(ast.NodeTransformer):
         """
         elts = []
         for v in value.value:
-            elts.append(AstModifier._create_arg_by_single_value(v))
+            elts.append(AstModifier._create_arg_by_constant_value(v))
         if isinstance(value, list):
             return ast.List(elts=elts)
         return ast.Tuple(elts=elts)
@@ -327,22 +326,20 @@ class AstModifier(ast.NodeTransformer):
 
         Raises:
             RuntimeError:  if scope of value is not empty.
-            TypeError: type of arg not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue,
-            ValueType.ListValue, ValueType.TupleValue]
+            TypeError: type of arg is not ValueType.ConstantValue
 
         Returns:
             ast.keyword: a instance of ast.keyword.
         """
         if value.scope:
             raise RuntimeError("value.scope should be empty")
-        if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+        if value.type == ValueType.ConstantValue:
             v = ast.Constant(value=value.value, kind=None)
         elif value.type in (ValueType.ListValue, ValueType.TupleValue):
             v = AstModifier._create_list_or_tuple(value)
         else:
-            raise TypeError("Type of keyword value only support [ValueType.IntValue, ValueType.FloatValue,"
-                            "ValueType.StringValue, ValueType.ListValue, ValueType.TupleValue],"
-                            f"but got {type(value)}")
+            raise TypeError("Type of keyword value only support [ValueType.ConstantValue, ValueType.ListValue, "
+                            f"ValueType.TupleValue], but got {type(value)}")
         return ast.keyword(arg=arg, value=v)
 
     @staticmethod
@@ -367,8 +364,8 @@ class AstModifier(ast.NodeTransformer):
         for arg in args:
             if not isinstance(arg, ScopedValue):
                 raise TypeError("arg should be ScopedValue, got: ", type(arg))
-            if arg.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                results.append(AstModifier._create_arg_by_single_value(arg))
+            if arg.type == ValueType.ConstantValue:
+                results.append(AstModifier._create_arg_by_constant_value(arg))
             elif arg.type == ValueType.NamingValue:
                 if arg.scope:
                     results.append(ast.Attribute(ast.Name(arg.scope, ast.Load()), arg.value, ast.Store()))
@@ -402,8 +399,7 @@ class AstModifier(ast.NodeTransformer):
         for arg, value in kwargs.items():
             if not isinstance(value, ScopedValue):
                 raise TypeError("value should be ScopedValue, got: ", type(value))
-            if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue,
-                              ValueType.ListValue, ValueType.TupleValue):
+            if value.type in (ValueType.ConstantValue, ValueType.ListValue, ValueType.TupleValue):
                 results.append(AstModifier._create_keyword(arg, value))
             elif value.type == ValueType.NamingValue:
                 if value.scope:
@@ -462,7 +458,7 @@ class AstModifier(ast.NodeTransformer):
         Raises:
             TypeError: Input src_argument is not a ScopedValue
             RuntimeError: If 'dst_ast' is an instance of ast.Constant but type of 'src_argument' is not
-                ValueType.IntValue, ValueType.FloatValue or ValueType.StringValue.
+                ValueType.ConstantValue.
             RuntimeError: If 'dst_ast' is an instance of ast.Name or ast.Attribute but type of 'src_argument' is not
                 ValueType.NamingValue.
             RuntimeError: When 'dst_ast' is an instance of ast.Name, scope of 'src_argument' is not empty.
@@ -476,27 +472,14 @@ class AstModifier(ast.NodeTransformer):
         """
         if not isinstance(src_argument, ScopedValue):
             raise TypeError("src_argument should be ScopedValue, got: ", type(src_argument))
-        if isinstance(dst_ast, ast.Constant):
-            if src_argument.type not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue]:
-                raise RuntimeError("src_argument should be a IntValue, FloatValue or StringValue, got:",
-                                   str(src_argument.type))
-            dst_ast.value = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Num):
-            if src_argument.type not in [ValueType.IntValue, ValueType.FloatValue]:
-                raise RuntimeError("src_argument should be a IntValue or FloatValue, but got:",
-                                   str(src_argument.type))
-            dst_ast.n = src_argument.value
-            return
-        if isinstance(dst_ast, ast.Str):
-            if src_argument.type not in [ValueType.StringValue]:
-                raise RuntimeError("src_argument should be a StringValue, but got:",
-                                   str(src_argument.type))
-            dst_ast.s = src_argument.value
+        if isinstance(dst_ast, (ast.Constant, ast.Num, ast.Str)):
+            AstModifier.update_arg_value_constant(src_argument, dst_ast)
             return
         if isinstance(dst_ast, ast.Name):
-            if src_argument.type not in [ValueType.NamingValue, ValueType.StringValue]:
-                raise RuntimeError("src_argument.type should be ValueType.NamingValue or ValueType.StringValue.")
+            if src_argument.type not in [ValueType.NamingValue, ValueType.ConstantValue]\
+                or not isinstance(src_argument.value, str):
+                raise RuntimeError("src_argument.type should be ValueType.NamingValue or ValueType.ConstantValue, "
+                                   "but got:", type(src_argument.value).__name__)
             if src_argument.scope:
                 raise RuntimeError("src_argument.scope should be empty")
             dst_ast.id = src_argument.value
@@ -519,3 +502,23 @@ class AstModifier(ast.NodeTransformer):
                 AstModifier.update_arg_value(src_argument.value[elt_index], elt)
             return
         raise RuntimeError("keyword value type is not supported", type(dst_ast))
+
+    @staticmethod
+    def update_arg_value_constant(src_argument: ScopedValue, dst_ast: ast.AST):
+        """Update 'arg_value' of type constant by 'input_argument'"""
+        if src_argument.type != ValueType.ConstantValue:
+            raise RuntimeError("src_argument should be a ConstantValue, got:", str(src_argument.type))
+        if isinstance(dst_ast, ast.Constant):
+            dst_ast.value = src_argument.value
+            return
+        if isinstance(dst_ast, ast.Num):
+            if not isinstance(src_argument.value, (int, float)):
+                raise RuntimeError("Type of src_argument should be int or float, but got:",
+                                   type(src_argument.value).__name__)
+            dst_ast.n = src_argument.value
+            return
+        if isinstance(dst_ast, ast.Str):
+            if not isinstance(src_argument.value, str):
+                raise RuntimeError("Type of src_argument should be str, but got:", type(src_argument.value).__name__)
+            dst_ast.s = src_argument.value
+            return

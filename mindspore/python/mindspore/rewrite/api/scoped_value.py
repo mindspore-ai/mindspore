@@ -28,10 +28,7 @@ class ValueType(Enum):
     """
 
     # base type
-    StringValue = 0
-    IntValue = 1
-    FloatValue = 2
-    NoneValue = 3
+    ConstantValue = 0
     # container type
     TupleValue = 20
     ListValue = 21
@@ -82,14 +79,8 @@ class ScopedValue:
             >>> print(variable)
             2
         """
-        if value is None:
-            return cls(ValueType.NoneValue, "", value)
-        if isinstance(value, int):
-            return cls(ValueType.IntValue, "", value)
-        if isinstance(value, float):
-            return cls(ValueType.FloatValue, "", value)
-        if isinstance(value, str):
-            return cls(ValueType.StringValue, "", value)
+        if isinstance(value, (type(None), int, float, str, bool)):
+            return cls(ValueType.ConstantValue, "", value)
         if isinstance(value, tuple):
             return cls(ValueType.TupleValue, "",
                        tuple(cls.create_variable_value(single_value) for single_value in value))
@@ -168,7 +159,7 @@ class ScopedValue:
         return result
 
     def __str__(self):
-        if self.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+        if self.type == ValueType.ConstantValue:
             return str(self.value)
         if self.type == ValueType.NamingValue:
             return f"{self.scope}.{self.value}" if self.scope else str(self.value)

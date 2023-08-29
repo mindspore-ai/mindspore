@@ -236,7 +236,7 @@ class AssignParser(Parser):
                 if not isinstance(single_target, ScopedValue) and not isinstance(single_target.value, str):
                     raise RuntimeError(f"For MindSpore Rewrite, only support str target in tuple, but got type "
                                        f"{type(single_target).__name__}")
-                if single_target.type == ValueType.StringValue:
+                if single_target.type == ValueType.ConstantValue and isinstance(single_target.value, str):
                     single_target.type = ValueType.NamingValue
                 targets.append(single_target)
         else:
