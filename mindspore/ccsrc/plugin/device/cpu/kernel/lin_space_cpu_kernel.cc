@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/linspace_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/lin_space_cpu_kernel.h"
 #include <algorithm>
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -137,25 +137,25 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &LinSpaceCpuKernelMod::G
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat32),
      &LinSpaceCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat64),
      &LinSpaceCpuKernelMod::LaunchKernel<double>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeFloat32),
      &LinSpaceCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeFloat64),
      &LinSpaceCpuKernelMod::LaunchKernel<double>}};
   return func_list;

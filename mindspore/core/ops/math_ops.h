@@ -114,7 +114,6 @@ GVAR_DEF(PrimitivePtr, kPrimTruncateMod, std::make_shared<Primitive>("TruncateMo
 GVAR_DEF(PrimitivePtr, kPrimInv, std::make_shared<Primitive>(kInvOpName));
 GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimLogGrad, std::make_shared<Primitive>(kLogGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimLinSpace, std::make_shared<Primitive>("LinSpace"));
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppression, std::make_shared<Primitive>("NonMaxSuppression"));
 GVAR_DEF(PrimitivePtr, kPrimSign, std::make_shared<Primitive>(kSignOpName));
 GVAR_DEF(PrimitivePtr, kPrimACos, std::make_shared<Primitive>(kACosOpName));

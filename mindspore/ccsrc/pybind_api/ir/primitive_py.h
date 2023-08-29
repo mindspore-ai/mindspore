@@ -28,6 +28,7 @@
 #include "ir/primitive.h"
 #include "ir/signature.h"
 #include "pybind11/pybind11.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -197,6 +198,12 @@ class PrimitiveFunctionAdapter {
   }
   PrimitiveFunctionPtr attached_primitive_function() { return attached_primitive_function_.lock(); }
   py::object name() { return py::str(attached_primitive_function_.lock()->name()); }
+  py::object has_label(const std::string &label) {
+    return py::bool_(attached_primitive_function_.lock()->HasAttr(label));
+  }
+  py::object get_label(const std::string &label) {
+    return ValueToPyData(attached_primitive_function_.lock()->GetAttr(label));
+  }
 
   const bool parse_info_ = true;
 

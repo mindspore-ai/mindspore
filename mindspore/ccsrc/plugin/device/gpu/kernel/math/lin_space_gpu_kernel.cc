@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/math/linspace.h"
-#include "mindspore/core/ops/lin_space.h"
+#include "plugin/device/gpu/kernel/math/lin_space_gpu_kernel.h"
+#include "mindspore/core/ops/ops_func_impl/lin_space.h"
 
 namespace mindspore {
 namespace kernel {
@@ -76,19 +76,19 @@ std::vector<std::pair<KernelAttr, LinSpaceGpuKernelMod::LinSpaceFunc>> LinSpaceG
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
    &LinSpaceGpuKernelMod::LaunchKernel<float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeFloat32),
    &LinSpaceGpuKernelMod::LaunchKernel<float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64),
    &LinSpaceGpuKernelMod::LaunchKernel<double>}};
 

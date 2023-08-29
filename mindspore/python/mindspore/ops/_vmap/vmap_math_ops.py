@@ -648,11 +648,10 @@ def get_renorm_rule(prim, axis_size):
 @vmap_rules_getters.register(P.LinSpace)
 def get_linspace_rule(prim, axis_size):
     """VmapRule for `LinSpace` operation."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
     else:
         batch_rank = 1
-
     batch_linspace = P.LinSpace()
     batch_linspace.add_prim_attr('batch_rank', batch_rank)
     prim_name = batch_linspace.name

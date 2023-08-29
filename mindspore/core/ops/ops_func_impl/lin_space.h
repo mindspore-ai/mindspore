@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_LIN_SPACE_H_
-#define MINDSPORE_CORE_OPS_LIN_SPACE_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LIN_SPACE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LIN_SPACE_H_
+
 #include <memory>
 #include <vector>
-
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLinSpace = "LinSpace";
-/// \brief Returns a Tensor whose value is evenly spaced in the interval start and stop (including start and stop).
-/// Refer to Python API @ref mindspore.ops.LinSpace for more details.
-class MIND_API LinSpace : public BaseOperator {
+class MIND_API LinSpaceFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(LinSpace);
-  /// \brief Constructor.
-  LinSpace() : BaseOperator(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
