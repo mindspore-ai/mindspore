@@ -50,7 +50,12 @@ bool UnsortedSegmentSumGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
   }
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+
+  auto batch_rank_ptr = primitive_->GetAttr(ops::kBatchRank);
+  if (batch_rank_ptr != nullptr) {
+    batch_rank_ = GetValue<int64_t>(batch_rank_ptr);
+  }
+
   data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {

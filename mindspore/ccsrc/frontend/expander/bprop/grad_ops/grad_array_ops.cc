@@ -412,13 +412,13 @@ bool IsMutable(const NodePtr &node) {
 
 DEF_PURE_SHAPE_CALC(g_regenerate_output).SetCalc(RegenerateOutputShapeFunc).SetInfer(RegenerateOutputInferFunc);
 DEF_PURE_SHAPE_CALC(g_perms).SetCalc(PermsShapeFunc).SetInfer(PermsInferFunc);
-NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
-  auto batch_dims = ib->GetAttr<int64_t>(kAttrBatchDims);
+NodePtrList BinopGather(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto ori_indices = indices;  // indices may be changed latter.
   auto axis = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
+  auto batch_dims_ptr = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shp = ib->GetShape(x);
   auto out_shp = ib->GetShape(dout);
   auto ind_shp = ib->GetShape(indices);
@@ -427,19 +427,8 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
     dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
   }
 
-  int64_t axis_v = 0;
-  MS_EXCEPTION_IF_NULL(axis);
-  MS_EXCEPTION_IF_NULL(axis->abstract());
-  auto axis_tmp = axis->BuildValue();
-  MS_EXCEPTION_IF_NULL(axis_tmp);
-  if (axis_tmp->isa<tensor::Tensor>()) {
-    axis_v = CheckAndConvertUtils::CheckTensorIntValue("axis value", axis_tmp, "Gather")[0];
-  } else {
-    axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
-  }
-  if (batch_dims < 0) {
-    batch_dims += SizeToLong(ind_shp.size());
-  }
+  int64_t axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
+  int64_t batch_dims = CheckRange(GetIntValue(batch_dims_ptr), SizeToLong(ind_shp.size()));
 
   auto is_axis_mutable = IsMutable(axis);
   if ((!is_axis_mutable && (IsDynamicRank(x_shp) || IsDynamicRank(ind_shp) || IsDynamicRank(out_shp))) ||
@@ -466,7 +455,7 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
       x_grad = ib->UnsortedSegmentSum(values_transpose, indices, num_segment);
     }
     x_grad = ib->Transpose(x_grad, perm_2);
-    return {x_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+    return {x_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis), ib->OutZeros(batch_dims_ptr)};
   }
 
   if (ind_shp.empty()) {
@@ -488,7 +477,7 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
   }
   auto perm_2 = GenerateInverseIndex(x_shp, axis_v, batch_dims);
   auto params_grad = ib->Transpose(x_grad, perm_2);
-  return {params_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+  return {params_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis), ib->OutZeros(batch_dims_ptr)};
 }
 
 ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
@@ -1456,8 +1445,7 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(input_multiples)};
 });
 
-REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon);
-REG_BPROP_BUILDER("GatherV2").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon);
+REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i4}).SetBody(BinopGather);
 
 REG_BPROP_BUILDER("Fill").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {

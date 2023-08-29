@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/unsorted_segment_arithmetic_cpu_kernel.h"
 #include <complex>
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -122,24 +123,22 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
   return true;
 }
 
-bool UnsortedSegmentArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool UnsortedSegmentArithmeticCpuKernelMod::Init(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto batch_rank_ptr = primitive_->GetAttr(ops::kBatchRank);
+  if (batch_rank_ptr != nullptr) {
+    batch_rank_ = GetValue<int64_t>(batch_rank_ptr);
+  }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int UnsortedSegmentArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int UnsortedSegmentArithmeticCpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

@@ -122,15 +122,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
          .AddOutputAttr(kNumberTypeUInt64),
        &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
 
-bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
-  }
-
+bool BroadcastToCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  kernel_type_ = kernel_name_;
   auto iter = func_list_.find(kernel_type_);
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "BroadcastTo cpu does not support " << kernel_type_;
@@ -146,9 +140,8 @@ bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int BroadcastToCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int BroadcastToCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
 
@@ -168,7 +161,7 @@ int BroadcastToCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
   shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   return ret;
 }
 

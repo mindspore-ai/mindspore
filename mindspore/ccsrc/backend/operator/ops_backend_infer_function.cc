@@ -64,7 +64,6 @@ std::optional<StandardPrimitiveImplReg> GetBackendPrimitiveInferImpl(const Primi
     // {prim::kPrimCeluV2, R{ops::CeLUInfer, nullptr, true}},
     {prim::kPrimCumsum, R{ops::CumSumInfer, nullptr, true}},
     {prim::kPrimDropOutDoMask, R{ops::DropoutDoMaskInfer, nullptr, true}},
-    {prim::kPrimGatherV2, R{ops::GatherInfer, nullptr, true}},
     {prim::kPrimHardSwishGrad, R{ops::HSwishGradInfer, nullptr, true}},
     {prim::kPrimReduceSumD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},
     {prim::kPrimReduceMeanD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},

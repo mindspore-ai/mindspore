@@ -36,7 +36,6 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "ops/gather_comm.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -45,12 +44,6 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kBatchDims = "batch_dims";
-
-void Gather::set_batch_dims(int64_t batch_dims) { (void)this->AddAttr(kBatchDims, api::MakeValue(batch_dims)); }
-
-int64_t Gather::get_batch_dims() const { return GetValue<int64_t>(GetAttr(kBatchDims)); }
-
 void CheckBatchDims(int64_t batch_dims, int64_t axis_val, const ShapeVector &params_shp, const ShapeVector &indices_shp,
                     const std::string &op_name) {
   int64_t params_rank = static_cast<int64_t>(params_shp.size());
@@ -206,29 +199,5 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_shape = GatherInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-
-MIND_API_OPERATOR_IMPL(Gather, BaseOperator);
-
-// AG means auto generated
-class MIND_API AGGatherInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return GatherInferShape(primitive, input_args);
-  }
-
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return GatherInfer(engine, primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GatherInferType(primitive, input_args);
-  }
-
-  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Gather, prim::kPrimGather, AGGatherInfer, false);
 }  // namespace ops
 }  // namespace mindspore

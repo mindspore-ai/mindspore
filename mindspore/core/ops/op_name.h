@@ -275,6 +275,7 @@ constexpr auto kBase = "base";
 constexpr auto kConstantValue = "constant_value";
 constexpr auto kSizeSplits = "size_splits";
 constexpr auto kDims = "dims";
+constexpr auto kBatchDims = "batch_dims";
 constexpr auto kPaddingMode = "padding_mode";
 constexpr auto kLargest = "largest";
 constexpr auto kElementwiseAffine = "elementwise_affine";

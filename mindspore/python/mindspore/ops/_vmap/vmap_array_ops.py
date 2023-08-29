@@ -1557,7 +1557,7 @@ def get_gather_vmap_rule(prim, axis_size):
         prim_name = prim
         prim = P.Gather()
     else:
-        prim_name = prim.name
+        prim_name = prim.name()
 
     @_primexpr
     def process_axis(axis, x_shape_size, has_xdim: bool, has_idim: bool):
@@ -1581,30 +1581,35 @@ def get_gather_vmap_rule(prim, axis_size):
 
         return target_axis_size, x_dst_shape, max_axis_size
 
-    def vmap_rule(x_bdim, indices_bdim, axis_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim)
+    def vmap_rule(x_bdim, indices_bdim, axis_bdim, batch_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim, batch_dims_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         indices, indices_dim = indices_bdim
         axis, axis_dim = axis_bdim
+        batch_dims, batch_dims_dim = batch_dims_bdim
 
         if axis_dim is not None:
             _raise_value_error("The source axis of `axis` in {} must be None, but got {}.".format(prim_name, axis_dim))
+
+        if batch_dims_dim is not None:
+            _raise_value_error("The source batch_dims of `batch_dims` in {} must be None, but got {}."
+                               .format(prim_name, batch_dims_dim))
 
         x_shape_len = len(x.shape)
 
         if x_dim is not None and indices_dim is None:
             x = _bdim_at_front(x, x_dim, axis_size)
             axis = process_axis(axis, x_shape_len, True, False)
-            output = prim(x, indices, axis)
+            output = prim(x, indices, axis, batch_dims)
             return output, 0
 
         if x_dim is None and indices_dim is not None:
             indices = _bdim_at_front(indices, indices_dim, axis_size)
             axis = process_axis(axis, x_shape_len, False, True)
-            output = prim(x, indices, axis)
+            output = prim(x, indices, axis, batch_dims)
             return output, axis
 
         x = _bdim_at_front(x, x_dim, axis_size)
@@ -1630,7 +1635,7 @@ def get_gather_vmap_rule(prim, axis_size):
         indices = F.add(indices, counts)
         indices = F.add(indices, indices_out_of_bound)
 
-        output = prim(x, indices, axis)
+        output = prim(x, indices, axis, batch_dims)
 
         return output, axis
 

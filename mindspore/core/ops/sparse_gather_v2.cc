@@ -25,7 +25,6 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/gather.h"
-#include "ops/gather_comm.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 
