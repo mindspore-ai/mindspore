@@ -137,7 +137,7 @@ def test_ascend_config():
         context.set_context(ascend_config={"matmul_allow_hf32": 2})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"conv_allow_hf32": 2})
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         context.set_context(ascend_config={"op_precision_mode": 2})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"op_precision_mode": "./invalid_path"})
