@@ -1020,10 +1020,15 @@ class AfterOptARewriter : public BaseRewriter {
 
     auto list_node_input = GenerateTupleInput(node);
 
-    if (!fallback::HasPySeqObject(node->abstract())) {
+    if (!fallback::HasObjInExtraInfoHolder(node->abstract())) {
       MS_LOG(EXCEPTION) << "MakeList node: " << node->DebugString() << " do not have python list object.";
     }
-    py::list list_object = *fallback::GetPySeqObject<AbstractBase, py::list>(node->abstract());
+    auto object = fallback::GetObjFromExtraInfoHolder(node->abstract());
+    if (!py::isinstance<py::list>(object)) {
+      MS_INTERNAL_EXCEPTION(TypeError) << "For MakeList node: " << node->DebugString()
+                                       << ", the corresponding python object should be list but got: " << object;
+    }
+    py::list list_object = py::list(object);
     const std::string list_obj_str_prefix = "__list_py_object_";
     auto list_obj_id = fallback::GetPyObjectPtrStr(list_object);
     MS_LOG(DEBUG) << "Current python object id: " << list_obj_id;
@@ -1372,10 +1377,6 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(abs);
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
-
-    if (!list_abs->has_list_py_obj()) {
-      MS_LOG(ERROR) << "ListInplaceAppend abstract has no python object.";
-    }
 
     static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
     if (!allow_runtime_compile) {
@@ -1930,14 +1931,14 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(abs);
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
-    if (!list_abs->has_list_py_obj()) {
+    if (!fallback::HasObjInExtraInfoHolder(list_abs)) {
       return false;
     }
-    py::list list_object = *(list_abs->list_py_obj<py::list>());
+    py::list list_object = fallback::GetObjFromExtraInfoHolder(list_abs);
     // The value list  do not need to convert to PyExecute if:
     //   1. The list is created within graph.
     //   2. The list and its elements do not perform any inplace operation.
-    if (list_abs->create_in_graph() && !CheckSeqWithInplace(list_object)) {
+    if (fallback::GetCreateInGraphFromExtraInfoHolder(list_abs) && !CheckSeqWithInplace(list_object)) {
       return false;
     }
     return true;
@@ -2204,7 +2205,8 @@ class AfterOptARewriter : public BaseRewriter {
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
 
-    py::list list_object = list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(value);
+    bool has_object = fallback::HasObjInExtraInfoHolder(list_abs);
+    py::list list_object = has_object ? fallback::GetObjFromExtraInfoHolder(list_abs) : ValueToPyData(value);
 
     // Generate PyExecute node: __list_object__
     const std::string list_obj_str_prefix = "__list_py_object_";
@@ -2328,7 +2330,7 @@ void FindValueWithInplaceInner(const FuncGraphPtr &graph, const StringSetPtr &va
       continue;
     }
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    auto list_py_object = *abs_list->list_py_obj<py::list>();
+    auto list_py_object = fallback::GetObjFromExtraInfoHolder(abs_list);
     MS_LOG(DEBUG) << "Found list python object in inplace: " << py::str(list_py_object);
     const auto &list_py_object_str = fallback::GetPyObjectPtrStr(list_py_object);
     (void)value_with_inplace->insert(list_py_object_str);

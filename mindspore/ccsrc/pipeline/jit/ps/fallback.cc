@@ -613,8 +613,8 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    if (abs_list->has_list_py_obj()) {
-      return *abs_list->list_py_obj<py::list>();
+    if (HasObjInExtraInfoHolder(abs_list)) {
+      return GetObjFromExtraInfoHolder(abs_list);
     }
     py::list ret = py::list(abs_list->size());
     const auto &elements = abs_list->elements();
@@ -640,7 +640,50 @@ bool EnableFallbackList() {
   return allow_fallback_runtime && allow_inplace_ops;
 }
 
-void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
+void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    constexpr auto py_object_key = "py_obj_key";
+    abs_list->SetData<py::object>(py_object_key, std::make_shared<py::object>(obj));
+    constexpr auto create_in_graph_key = "create_in_graph_key";
+    abs_list->SetData<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
+    return;
+  }
+  MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
+}
+
+py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    constexpr auto py_object_key = "py_obj_key";
+    return *abs_list->GetData<py::object>(py_object_key);
+  }
+  MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
+}
+
+bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    constexpr auto create_in_graph_key = "create_in_graph_key";
+    return *abs_list->GetData<bool>(create_in_graph_key);
+  }
+  MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
+}
+
+bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    constexpr auto py_object_key = "py_obj_key";
+    return abs_list->HasData(py_object_key);
+  }
+  return false;
+}
+
+void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
   if (!EnableFallbackList()) {
     return;
   }
@@ -658,12 +701,12 @@ void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool 
     if (!py::isinstance<py::list>(obj)) {
       MS_INTERNAL_EXCEPTION(TypeError) << "Object should be list but got: " << py::str(obj);
     }
+    AttachPyObjToExtraInfoHolder(abs_list, obj, create_in_graph);
     auto list_obj = py::list(obj);
-    abs_list->set_list_py_obj<py::list>(std::make_shared<py::list>(list_obj), create_in_graph);
     for (size_t i = 0; i < abs_list->size(); ++i) {
       auto element_abs = abs_list->elements()[i];
       auto element_obj = list_obj[i];
-      AttachListObjToAbs(element_abs, element_obj, create_in_graph);
+      AttachPyObjToAbs(element_abs, element_obj, create_in_graph);
     }
     return;
   }
@@ -675,7 +718,7 @@ void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool 
   for (size_t i = 0; i < abs_tuple->size(); ++i) {
     auto element_abs = abs_tuple->elements()[i];
     auto element_obj = tuple_obj[i];
-    AttachListObjToAbs(element_abs, element_obj, create_in_graph);
+    AttachPyObjToAbs(element_abs, element_obj, create_in_graph);
   }
 }
 
@@ -686,14 +729,29 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
 }
 
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!EnableFallbackList()) {
     return;
   }
   if (py::isinstance<py::list>(obj)) {
-    SetPySeqObject<AnfNode, py::list>(node, std::make_shared<py::list>(py::list(obj)));
+    constexpr auto py_list_obj_str = "__py_object__";
+    node->set_user_data<py::list>(py_list_obj_str, std::make_shared<py::list>(py::list(obj)));
   } else if (py::isinstance<py::tuple>(obj)) {
-    SetPySeqObject<AnfNode, py::tuple>(node, std::make_shared<py::tuple>(py::tuple(obj)));
+    constexpr auto py_list_obj_str = "__py_object__";
+    node->set_user_data<py::tuple>(py_list_obj_str, std::make_shared<py::tuple>(py::list(obj)));
   }
+}
+
+bool HasPyObjectInNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  constexpr auto py_list_obj_str = "__py_object__";
+  return node->has_user_data(py_list_obj_str);
+}
+
+py::object GetPyObjectFromNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  constexpr auto py_list_obj_str = "__py_object__";
+  return *node->user_data<py::object>(py_list_obj_str);
 }
 
 // Convert some CNode to PyExectue, eg:

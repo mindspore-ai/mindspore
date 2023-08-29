@@ -58,10 +58,8 @@ AbstractBasePtr ListInplaceAppendInfer(const abstract::AnalysisEnginePtr &, cons
   (void)new_elements.emplace_back(target_abs);
   ret = std::make_shared<abstract::AbstractList>(new_elements);
 
-  if (data_abs->has_list_py_obj()) {
-    ret = AbstractBroaden(ret)->cast<abstract::AbstractListPtr>();
-    ret->set_list_user_data(data_abs->list_user_data());
-  }
+  ret = AbstractBroaden(ret)->cast<abstract::AbstractListPtr>();
+  ret->set_extra_info(data_abs->extra_info());
 
   return ret;
 }

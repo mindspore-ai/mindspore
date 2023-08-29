@@ -366,9 +366,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   if (ret->isa<AbstractList>()) {
     // Dynamic length list should not attach python object.
     auto ret_list = ret->cast<abstract::AbstractListPtr>();
-    if (ret_list->has_list_py_obj()) {
-      ret_list->ClearListUserData();
-    }
+    ret_list->ClearExtraInfo();
   }
   return ret;
 }

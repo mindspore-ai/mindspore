@@ -1467,7 +1467,7 @@ AbstractBasePtr AbstractList::Clone() const {
   ret->dyn_len_arg_ = dyn_len_arg_;
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
-  ret->set_list_user_data(list_user_data_);
+  ret->set_extra_info(extra_info_);
   return ret;
 }
 
@@ -1475,7 +1475,7 @@ AbstractBasePtr AbstractList::Broaden() const {
   auto ret = std::make_shared<AbstractList>(ElementsBroaden(), sequence_nodes());
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
-  ret->set_list_user_data(list_user_data_);
+  ret->set_extra_info(extra_info_);
   return ret;
 }
 
@@ -1483,7 +1483,7 @@ AbstractBasePtr AbstractList::PartialBroaden() const {
   auto ret = std::make_shared<AbstractList>(ElementsPartialBroaden(), sequence_nodes());
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
-  ret->set_list_user_data(list_user_data_);
+  ret->set_extra_info(extra_info_);
   return ret;
 }
 
@@ -1496,7 +1496,7 @@ ValuePtr AbstractList::RealBuildValue() const {
 
 void AbstractList::CheckAndConvertToDynamicLenSequence(bool raise_exception) {
   AbstractSequence::CheckAndConvertToDynamicLenSequence(raise_exception);
-  ClearListUserData();
+  ClearExtraInfo();
 }
 
 std::shared_ptr<AbstractSequence> AbstractSequence::DynamicLenSequenceJoin(const AbstractSequencePtr &other) {

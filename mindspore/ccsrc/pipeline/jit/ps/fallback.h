@@ -69,8 +69,23 @@ bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node);
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
+
+std::string GetPyObjectPtrStr(const py::object &obj);
+bool EnableFallbackList();
+
+// Generate python object according to abstract.
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
-void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
+// Handle python object for abstract using ExtraInfoHolder.
+void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
+py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+// Handle python object for AnfNode.
+void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
+void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
+bool HasPyObjectInNode(const AnfNodePtr &node);
+py::object GetPyObjectFromNode(const AnfNodePtr &node);
+
 AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
 
 template <typename T>
@@ -102,51 +117,6 @@ template <typename T, typename U>
 std::shared_ptr<U> GetRealShape(const std::shared_ptr<T> &owner) {
   return owner->template user_data<U>("__py_execute_real_shape__");
 }
-
-template <typename T>
-bool HasPySeqObject(const std::shared_ptr<T> &owner) {
-  if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
-    auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
-    if (owner_abs_list == nullptr) {
-      return false;
-    }
-    return owner_abs_list->has_list_py_obj();
-  }
-  constexpr auto py_list_obj_str = "__py_list_object__";
-  return owner->has_user_data(py_list_obj_str);
-}
-
-template <typename T, typename U>
-void SetPySeqObject(const std::shared_ptr<T> &owner, const std::shared_ptr<U> &data) {
-  if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
-    auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
-    if (owner_abs_list == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Abstract: " << owner->ToString() << " can not attach list object.";
-    }
-    owner_abs_list->set_list_py_obj(data, false);
-  }
-  constexpr auto py_list_obj_str = "__py_list_object__";
-  owner->template set_user_data<U>(py_list_obj_str, data);
-}
-
-template <typename T, typename U>
-std::shared_ptr<U> GetPySeqObject(const std::shared_ptr<T> &owner) {
-  if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
-    auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
-    if (owner_abs_list == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Abstract: " << owner->ToString() << " can not get list object.";
-    }
-    return owner_abs_list->template list_py_obj<U>();
-  }
-  constexpr auto py_list_obj_str = "__py_list_object__";
-  return owner->template user_data<U>(py_list_obj_str);
-}
-
-void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
-
-std::string GetPyObjectPtrStr(const py::object &obj);
-
-bool EnableFallbackList();
 
 AnfNodePtr GenerateOnesOrZerosLikeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                        const std::string &type);
