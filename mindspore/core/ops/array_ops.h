@@ -68,7 +68,6 @@ GVAR_DEF(PrimitivePtr, kPrimGatherDGrad, std::make_shared<Primitive>(kGatherDGra
 GVAR_DEF(PrimitivePtr, kPrimGatherDGradV2, std::make_shared<Primitive>(kGatherDGradV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimGather, std::make_shared<Primitive>("Gather"));
 GVAR_DEF(PrimitivePtr, kPrimSelectView, std::make_shared<Primitive>("SelectView"));
-GVAR_DEF(PrimitivePtr, kPrimGatherNd, std::make_shared<Primitive>("GatherNd"));
 GVAR_DEF(PrimitivePtr, kPrimSparseGatherV2, std::make_shared<Primitive>("SparseGatherV2"));
 GVAR_DEF(PrimitivePtr, kPrimCoalesce, std::make_shared<Primitive>(kCoalesceOpName));
 GVAR_DEF(PrimitivePtr, kPrimShapeCalc, std::make_shared<Primitive>("ShapeCalc"));

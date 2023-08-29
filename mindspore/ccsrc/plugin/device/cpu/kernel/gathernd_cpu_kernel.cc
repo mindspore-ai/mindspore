@@ -24,7 +24,6 @@ namespace kernel {
 namespace {
 #define MAX_INT ((static_cast<unsigned int>(-1)) >> 1)
 
-constexpr auto kGatherNd = "GatherNd";
 constexpr size_t kGatherNdInputsNum = 2;
 constexpr size_t kGatherNdOutputsNum = 1;
 using complex64 = std::complex<float>;

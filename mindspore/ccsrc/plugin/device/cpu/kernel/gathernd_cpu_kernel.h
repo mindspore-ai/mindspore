@@ -24,7 +24,6 @@
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/gather_nd.h"
 
 namespace mindspore {
 namespace kernel {

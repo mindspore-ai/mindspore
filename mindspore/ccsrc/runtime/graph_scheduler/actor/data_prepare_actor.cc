@@ -597,8 +597,8 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
         const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
         MS_EXCEPTION_IF_NULL(front_node);
         MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
-                      << ", debug name:" << value_node->DebugString()
-                      << ", front node:" << front_node->fullname_with_scope() << " for graph:" << graph->ToString();
+                      << ", debug name:" << value_node->DebugString() << ", front node:" << front_node->DebugString()
+                      << " for graph:" << graph->ToString();
         const auto &device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
         const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
         MS_EXCEPTION_IF_NULL(device_tensor);
