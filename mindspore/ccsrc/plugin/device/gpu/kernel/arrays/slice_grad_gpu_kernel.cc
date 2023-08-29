@@ -145,6 +145,13 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
       TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
     ProccessAttr(inputs);
   }
+
+  for (auto s : size_) {
+    if (s < 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of size can not be negative.";
+    }
+  }
+
   helper_ptr_->SetKernelParam(attr_ptr_);
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
