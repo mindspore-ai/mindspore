@@ -815,7 +815,7 @@ def test_raise_with_variable_dic():
             x = Tensor(1)
             y = Tensor(2)
             z = {"x": x, "y": y}
-            if z > 10:
+            if z["x"] > 10:
                 raise ValueError(z)
 
     with pytest.raises(ValueError) as raise_info_list:
@@ -1199,7 +1199,6 @@ def test_raise_constant_folding():
     assert "The input can not be 11." in str(raise_info_constant.value)
 
 
-@pytest.mark.skip(reason='Not support int64 yet')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

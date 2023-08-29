@@ -114,7 +114,6 @@ def test_fallback_np_asnumpy():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Cast fail from F.zeros_like")
 def test_fallback_np_asnumpy_grad():
     """
     Feature: Support JIT Fallback runtime feature.

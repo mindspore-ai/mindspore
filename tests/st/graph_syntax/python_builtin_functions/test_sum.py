@@ -148,7 +148,6 @@ def test_fallback_sum_with_tensor_0d(mode):
         net()
 
 
-@pytest.mark.skip(reason="do not support += operation yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -169,7 +168,6 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_1():
     assert "unsupported operand type" in str(ex.value)
 
 
-@pytest.mark.skip(reason="do not support += operation yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

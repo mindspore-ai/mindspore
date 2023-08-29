@@ -43,7 +43,11 @@ def test_fallback_all_tensor():
     assert (not out1) and out2
 
 
-@pytest.mark.skip(reason='Not support yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_all_list_hybrid():
     """
     Feature: JIT Fallback

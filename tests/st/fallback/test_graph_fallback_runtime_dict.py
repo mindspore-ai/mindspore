@@ -509,7 +509,6 @@ def test_return_nested_dict1():
     assert out == {'a': None, 'b': {'a': {'c': 1}}}
 
 
-@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -562,7 +561,6 @@ def test_return_nested_dict3():
     assert out == {'a': None, 'b': (1, 2, {'a': 1})}
 
 
-@pytest.mark.skip('Not support list to PyExecute yet.')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
