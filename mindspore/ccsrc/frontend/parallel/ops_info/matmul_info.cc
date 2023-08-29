@@ -482,13 +482,13 @@ Status MatMulBase::InferTensorMap() {
 
   // handle broadcast
   for (size_t i = 0; i < mat_a_tensor_map.size(); ++i) {
-    if (inputs_shape_[0][i] <= 1) {
+    if (inputs_shape_[0][i] == 1) {
       mat_a_tensor_map[i] = MAP_NONE;
     }
   }
 
   for (size_t j = 0; j < mat_b_tensor_map.size(); ++j) {
-    if (inputs_shape_[1][j] <= 1) {
+    if (inputs_shape_[1][j] == 1) {
       mat_b_tensor_map[j] = MAP_NONE;
     }
   }
