@@ -464,12 +464,8 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "ParseDynamicQuantString failed.";
     return ret;
   }
-  ret = ParseGraphKernelString(*maps);
+  (void)ParseGraphKernelString(*maps);
   (void)maps->erase(kGraphKernelParam);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ParseGraphKernelString failed.";
-    return ret;
-  }
   return RET_OK;
 }
 
@@ -681,7 +677,7 @@ int ConfigFileParser::ParseGraphKernelString(const std::map<std::string, std::ma
     for (const auto &item : map) {
       std::stringstream oss;
       oss << "--" << item.first << "=" << item.second;
-      graph_kernel_string_.emplace_back(oss.str());
+      (void)graph_kernel_string_.emplace_back(oss.str());
     }
   }
   return RET_OK;

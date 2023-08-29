@@ -137,13 +137,13 @@ GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
 std::unordered_set<std::string> CheckSupport() {
   std::unordered_set<std::string> support_backend;
 #ifdef AKG_USE_LLVM
-  support_backend.emplace("CPU");
+  (void)support_backend.emplace("CPU");
 #endif
 #if defined(AKG_USE_LLVM) && defined(AKG_USE_CUDA)
-  support_backend.emplace("GPU");
+  (void)support_backend.emplace("GPU");
 #endif
 #ifdef AKG_ENABLE_D
-  support_backend.emplace("Ascend");
+  (void)support_backend.emplace("Ascend");
 #endif
   return support_backend;
 }

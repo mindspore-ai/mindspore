@@ -191,7 +191,7 @@ void ModelImpl::SetMsContext() {
   if (MsContext::GetInstance() != nullptr) {
     auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
     if (back_policy_env != nullptr) {
-      MsContext::GetInstance()->set_backend_policy(std::string(back_policy_env));
+      (void)MsContext::GetInstance()->set_backend_policy(std::string(back_policy_env));
     }
   }
 }
