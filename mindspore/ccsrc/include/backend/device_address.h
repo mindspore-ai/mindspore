@@ -200,7 +200,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
-  void set_type_id(TypeId type_id) { type_id_ = type_id; }
+  void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
   ShapeVector host_shape() const { return host_shape_; }
   void set_device_shape(const ShapeVector &shape) { device_shape_ = shape; }
   const ShapeVector &device_shape() const { return device_shape_; }
