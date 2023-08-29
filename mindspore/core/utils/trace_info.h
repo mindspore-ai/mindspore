@@ -430,7 +430,7 @@ class TraceOpt : public TraceInfo {
  public:
   explicit TraceOpt(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceOpt() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("opt", "opt_");
+  MS_DECLARE_TRACE_NAME_SYMBOL("opt", "");
   TraceInfoPtr clone() override { return std::make_shared<TraceOpt>(*this); }
 };
 
