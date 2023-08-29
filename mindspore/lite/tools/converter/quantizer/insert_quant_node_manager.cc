@@ -125,7 +125,11 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " set new dtype failed.";
     return ret;
   }
-  MarkDynamicQuantize(dynamic_quant_cnode);
+  ret = MarkDynamicQuantize(dynamic_quant_cnode);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " mark quant type failed.";
+    return ret;
+  }
   cnode->set_input(index, dynamic_quant_cnode);
   return RET_OK;
 }
@@ -776,7 +780,8 @@ int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph,
   return RET_OK;
 }
 
-int InsertQuantNodeManager::SetParallelStrategy(const CNodePtr &cnode, std::vector<std::vector<int64_t>> in_strategy) {
+int InsertQuantNodeManager::SetParallelStrategy(const CNodePtr &cnode,
+                                                const std::vector<std::vector<int64_t>> &in_strategy) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   CHECK_NULL_RETURN(primitive);
   primitive->AddAttr(IN_STRATEGY, MakeValue(in_strategy));
@@ -844,7 +849,7 @@ std::vector<std::vector<int64_t>> InsertQuantNodeManager::GetAddMulNodeParallelS
 
 int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                       size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis,
-                                                      std::string ascend_backend) {
+                                                      const std::string &ascend_backend) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
   CHECK_NULL_RETURN(primitive);
   MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
@@ -996,8 +1001,8 @@ int InsertQuantNodeManager::InsertFSEDecodeNode(const FuncGraphPtr &func_graph, 
 
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
-  ret = manager->Replace(input_node, fse_decode_cnode);
-  if (!ret) {
+  auto ret_bool = manager->Replace(input_node, fse_decode_cnode);
+  if (!ret_bool) {
     MS_LOG(ERROR) << "Replace QuantDtypeCast failed.";
     return RET_ERROR;
   }

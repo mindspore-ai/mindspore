@@ -533,7 +533,11 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   auto manager = Manage(func_graph, true);
   MS_ASSERT(manager != nullptr);
   if (!is_train_model_) {
-    RemoveUmonad(func_graph, manager);
+    auto ret = RemoveUmonad(func_graph, manager);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "remove umonad.";
+      return false;
+    }
   }
 
   auto node_list = TopoSort(func_graph->get_return());

@@ -45,8 +45,8 @@
 #include "ops/quant_dtype_cast.h"
 
 namespace mindspore::lite::quant {
-int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, size_t new_size,
-                            TypeId new_data_type);
+int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, const void *quant_datas,
+                            size_t new_size, TypeId new_data_type);
 
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims);
 

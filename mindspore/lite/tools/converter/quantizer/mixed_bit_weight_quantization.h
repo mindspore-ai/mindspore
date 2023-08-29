@@ -53,9 +53,9 @@ class MixedBitWeightQuantization {
   BinarySearchResult BinarySearchForQuantizationScale(float *weights, int *shape, int dims, int preferred_dim,
                                                       int max_iters, float target_err, float rel_tol);
 
-  float GetDx(float *weights, const int *shape, int dims, const std::string &node_name);
+  float GetDx(const float *weights, const int *shape, int dims, const std::string &node_name);
 
-  void CalculateBiasCorrection(float *weights, int element_num, float scale, float *origin_dequant_datas);
+  void CalculateBiasCorrection(const float *weights, int element_num, float scale, float *origin_dequant_datas);
 
   float CalculateMeanError(std::vector<float> norms2, std::vector<float> dnorms2);
 

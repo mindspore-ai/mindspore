@@ -35,7 +35,6 @@ class QuantTypeDeterminer {
 
   bool DetermineQuantWeight(const CNodePtr &cnode);
 
- private:
   FuncGraphPtr func_graph_ = nullptr;
 };
 }  // namespace mindspore::lite::quant

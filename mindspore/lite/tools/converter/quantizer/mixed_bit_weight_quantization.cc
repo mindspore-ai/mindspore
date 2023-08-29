@@ -25,7 +25,7 @@
 namespace mindspore::lite::quant {
 constexpr float kTwentyFour = 24.0f;
 
-void MixedBitWeightQuantization::CalculateBiasCorrection(float *weights, int element_num, float scale,
+void MixedBitWeightQuantization::CalculateBiasCorrection(const float *weights, int element_num, float scale,
                                                          float *origin_dequant_datas) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(origin_dequant_datas != nullptr);
@@ -195,7 +195,8 @@ BinarySearchResult MixedBitWeightQuantization::BinarySearchForQuantizationScale(
   }
 }
 
-float MixedBitWeightQuantization::GetDx(float *weights, const int *shape, int dims, const std::string &node_name) {
+float MixedBitWeightQuantization::GetDx(const float *weights, const int *shape, int dims,
+                                        const std::string &node_name) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   static std::map<std::string, LayerParam> param_map;
