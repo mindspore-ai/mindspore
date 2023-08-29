@@ -21,6 +21,7 @@
 "mindspore/mindspore/python/mindspore/context.py"                                                                        "protected-access"
 "mindspore/mindspore/python/mindspore/ops/function/clip_func.py"                                                         "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/deprecated.py"                                                                 "super-init-not-called"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/__init__.py"                                                     "import-self"
 "mindspore/mindspore/python/mindspore/ops/operations"                                                                    "super-init-not-called"
 "mindspore/mindspore/python/mindspore/ops/operations/_quant_ops.py"                                                      "unused-import"
 "mindspore/mindspore/python/mindspore/ops/operations/nn_ops.py"                                                          "redefined-builtin"

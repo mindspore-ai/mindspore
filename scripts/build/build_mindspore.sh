@@ -20,6 +20,8 @@ set -e
 build_mindspore()
 {
     echo "start build mindspore project."
+    python mindspore/python/mindspore/ops_generate/gen_ops.py
+    python mindspore/python/mindspore/ops_generate/gen_enum.py
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
     CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH"

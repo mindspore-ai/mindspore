@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.ops import operations as P
+from mindspore.ops import auto_generate as P
 
 class CeluTEST(nn.Cell):
     def __init__(self, alpha):

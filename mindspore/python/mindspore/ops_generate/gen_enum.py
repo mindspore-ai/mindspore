@@ -33,7 +33,7 @@ def generate_py_enum(yaml_data):
 class {class_name}(Enum):
 """
         enum_func_code = f"""
-def get_{enum_name}({enum_name}_str):
+def {enum_name}_to_enum({enum_name}_str):
 """
         for enum_key, enum_value in enum_data.items():
             enum_keys.append(enum_key)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     current_path = os.path.dirname(os.path.abspath(__file__))
     work_path = os.path.join(current_path, '../../../../')
     yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
-    enum_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/gen_enum_def.py')
+    enum_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py')
 
     yaml_str = None
     with open(yaml_path, 'r') as yaml_file:

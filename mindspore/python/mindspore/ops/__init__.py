@@ -28,7 +28,7 @@ from mindspore.ops.vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from mindspore.ops.op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, \
     AiCPURegOp, TBERegOp, CpuRegOp, CustomRegOp, DataType
 from mindspore.ops.primitive import constexpr
-from mindspore.ops import composite, operations, functional, function
+from mindspore.ops import composite, operations, functional, function, auto_generate
 from mindspore.ops import signature
 from mindspore.ops.composite import *
 from mindspore.ops.operations import *
@@ -48,3 +48,4 @@ __all__.extend(composite.__all__)
 __all__.extend(operations.__all__)
 __all__.extend(functional.__all__)
 __all__.extend(function.__all__)
+__all__.extend(auto_generate.__all__)

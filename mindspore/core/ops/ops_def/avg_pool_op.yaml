@@ -13,12 +13,12 @@ avg_pool:
       arg_handler: to_strides
     pad_mode:
       dtype: int
-      init: "valid"
-      arg_handler: str_to_enum
+      init: "'VALID'"
+      arg_handler: pad_mode_to_enum
     data_format:
-      dtype: str
-      init: "NCHW"
-      arg_handler: str_to_enum
+      dtype: int
+      init: "'NCHW'"
+      arg_handler: format_to_enum
   returns:
     output:
       dtype: tensor

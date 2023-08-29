@@ -2,3 +2,9 @@
 format:
   NCHW: 0
   NHWC: 1
+
+# enum pad_mode
+pad_mode:
+  PAD: 0
+  SAME: 1
+  VALID: 2
