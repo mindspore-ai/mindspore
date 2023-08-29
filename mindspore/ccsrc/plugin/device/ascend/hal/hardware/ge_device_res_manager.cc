@@ -113,17 +113,19 @@ void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &m
   }
   if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
     (*options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
-    MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) << ".";
+    MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE)
+                 << " by user.";
   } else if (is_training) {
     auto soc_version = device::ascend::GetSocVersion();
     if (kAscend910BVersions.count(soc_version) != 0) {
-      MS_LOG(INFO) << "The default value of precision_mode is set by CANN. soc_version is " << soc_version;
+      MS_LOG(INFO) << "The default value of precision_mode is set by CANN, soc_version is " << soc_version << ".";
     } else {
       (*options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
-      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16. soc_version is " << soc_version;
+      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
     }
   } else {
     (*options)["ge.exec.precision_mode"] = "force_fp16";
+    MS_LOG(INFO) << "Set precision_mode force_fp16.";
   }
 }
 
