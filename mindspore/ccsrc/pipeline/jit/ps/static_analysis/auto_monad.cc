@@ -380,10 +380,7 @@ class SideEffectFinder {
     // Check SwitchLayer calls, add monad arguments if need.
     HandleSwitchLayerCalls();
     // Check Partial CNode calls, add monad arguments if need.
-    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
-    if (enable_pre_lift) {
-      HandlePartialCNodeCalls();
-    }
+    HandlePartialCNodeCalls();
   }
 
   void UpdateOrderLists() const {
@@ -1327,8 +1324,7 @@ class SideEffectFinder {
     if (func_para != nullptr) {
       auto effect_info = TraceEffectInfoForParameter(func_para);
       // Retry for Partial CNode call.
-      static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
-      if (enable_pre_lift && !effect_info.memory && !effect_info.io && !effect_info.load) {
+      if (!effect_info.memory && !effect_info.io && !effect_info.load) {
         return TracePartialCNodeCallEffectInfo(cnode);
       }
       return effect_info;
