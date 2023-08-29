@@ -92,7 +92,7 @@ REG_ADPT_DESC(Dropout, kDropoutOpName, ADPT_DESC(Dropout))
 // RandomUniformInt
 INPUT_MAP(RandomUniformInt) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
 ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                              {"seed2", ATTR_DESC(seed, AnyTraits<int64_t>())}};
+                              {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, ADPT_DESC(RandomUniformInt))
 

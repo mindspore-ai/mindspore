@@ -863,12 +863,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  bool enable_ge = ms_context->backend_policy() == "ge";
-  if (enable_ge) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
@@ -878,6 +873,8 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   } else {
     // Add PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR pass first to avoid the backward loss function
     // from the python frontend matching the pattern defined in PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR.
+    // TODO(hbhu_bin): In mindspore, SparseSoftmaxCrossEntropyWithLogits has different outputs based on the "is_grad"
+    // attribute, but it has two outputs in CANN. These pass cann be removed when convert "is_grad" attribute to input.
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
