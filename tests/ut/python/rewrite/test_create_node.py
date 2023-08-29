@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-import mindspore
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.rewrite import SymbolTree
+from mindspore.rewrite import SymbolTree, ScopedValue, Node
 import mindspore.nn as nn
 import pytest
 
@@ -46,16 +44,20 @@ def test_create_call_function_ok():
     net = SimpleNet()
     stree = SymbolTree.create(net)
 
-    new_node = stree.create_call_function(F.abs, ["x"], "abc")
+    new_node = Node.create_call_function(F.abs, ["x"], [ScopedValue.create_variable_value("abc")])
     for node in stree.nodes():
         if node.get_instance_type() == P.ReduceMean:
             pos = stree.after(node)
             stree.insert(pos, new_node)
-            new_node_1 = stree.create_call_function(F.abs, ["x"], node)
+            new_node_1 = Node.create_call_function(F.abs, ["x"], node.get_targets())
             stree.insert(pos, new_node_1)
-            new_node_2 = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, dtype=mindspore.float16)
+            new_node_2 = Node.create_call_function(F.scalar_to_tensor, ["x"],
+                                                   [ScopedValue.create_variable_value("abc")],
+                                                   {"dtype": ScopedValue.create_naming_value("float16", "mindspore")})
             stree.insert(pos, new_node_2)
-            new_node_3 = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, mindspore.float16)
+            new_node_3 = Node.create_call_function(F.scalar_to_tensor, ["x"],
+                                                   [ScopedValue.create_variable_value(2)],
+                                                   {"dtype": ScopedValue.create_naming_value("float16", "mindspore")})
             stree.insert(pos, new_node_3)
 
 
@@ -65,45 +67,15 @@ def test_create_call_function_fail():
     Description: Call create_call_function to create a call function node.
     Expectation: raise TypeError.
     """
-    net = SimpleNet()
-    stree = SymbolTree.create(net)
-
-    for node in stree.nodes():
-        if node.get_instance_type() == P.ReduceMean:
-            with pytest.raises(TypeError):
-                _ = stree.create_call_function(F.cast, ["x"], node, mindspore.float16)
-
-
-def test_create_call_function_fail_0():
-    """
-    Feature: Create a call function node.
-    Description: Call create_call_function to create a call function node.
-    Expectation: raise TypeError.
-    """
-    net = SimpleNet()
-    stree = SymbolTree.create(net)
-
-    for node in stree.nodes():
-        if node.get_instance_type() == P.ReduceMean:
-            with pytest.raises(TypeError):
-                _ = stree.create_call_function(F.scalar_to_tensor, ["x"], 2, dtype=mindspore.int32)
-
-
-def test_create_call_function_fail_1():
-    """
-    Feature: Create a call function node.
-    Description: Call create_call_function to create a call function node.
-    Expectation: raise TypeError.
-    """
-    net = SimpleNet()
-    stree = SymbolTree.create(net)
-
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.abs, ["x"], "abc", [1, 2])
+        _ = Node.create_call_function(F.cast(), ["x"], [ScopedValue.create_variable_value("abc")])
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.abs, "x")
+        _ = Node.create_call_function(F.cast, [2], [ScopedValue.create_variable_value("abc")])
     with pytest.raises(TypeError):
-        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], "2", dtype=mindspore.int32)
+        _ = Node.create_call_function(F.cast, ["x"], [2])
     with pytest.raises(TypeError):
-        t = mindspore.Tensor(1, mindspore.int32)
-        _ = stree.create_call_function(F.scalar_to_tensor, ["x"], t, mindspore.float16)
+        _ = Node.create_call_function(F.cast, ["x"], [ScopedValue.create_variable_value("abc")],
+                                      {2: ScopedValue.create_naming_value("float16", "mindspore")})
+    with pytest.raises(TypeError):
+        _ = Node.create_call_function(F.cast, ["x"], [ScopedValue.create_variable_value("abc")],
+                                      {"dtype": 2})

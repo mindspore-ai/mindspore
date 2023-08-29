@@ -15,6 +15,7 @@
 """Rewrite module api: Node."""
 
 from typing import Union, Optional
+from types import FunctionType
 
 from mindspore.nn import Cell
 from mindspore.ops.primitive import Primitive
@@ -109,6 +110,55 @@ class Node:
         if kwargs is not None:
             Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         return Node(NodeImpl.create_call_op(cell, None, targets, args, kwargs, name, is_sub_net))
+
+    @staticmethod
+    def create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
+                             kwargs: {str: ScopedValue}=None) -> 'Node':
+        """
+        Create a node that corresponds to a function call. The `function` object is saved into network, and used via
+        getting object from `self` .
+
+        Args:
+            function (FunctionType): The function to be called.
+            targets (list[str]): indicates output names. Used as targets of an assign statement in source code.
+            args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
+                source code. Default: ``None`` , which indicates the `function` has no args inputs.
+            kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
+                Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
+                code. Default: ``None`` , which indicates the `function` has no kwargs inputs.
+
+        Returns:
+            An instance of `Node`.
+
+        Raises:
+            TypeError: If `function` is not a `FunctionType`.
+            TypeError: If `targets` is not `list`.
+            TypeError: If the type of `targets` is not in `[ScopedValue, str]`.
+            TypeError: If arg in `args` is not a `ScopedValue`.
+            TypeError: If key of `kwarg` is not a str or value of kwarg in `kwargs` is not a `ScopedValue`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree, ScopedValue
+            >>> import mindspore.nn as nn
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> position = stree.after(node)
+            >>> new_node = node.create_call_function(function=ops.abs, targets=['x'],
+            ...                                      args=[ScopedValue.create_naming_value('x')])
+            >>> stree.insert(position, new_node)
+            >>> print(new_node.get_node_type())
+            NodeType.CallFunction
+        """
+        Validator.check_value_type("function", function, [FunctionType, type], "create_call_function")
+        Validator.check_element_type_of_iterable("targets", targets, [ScopedValue, str], "create_call_function")
+        if args is not None:
+            Validator.check_element_type_of_iterable("args", args, [ScopedValue], "create_call_function")
+        if kwargs is not None:
+            Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "create_call_function")
+        return Node(NodeImpl._create_call_function(function, targets, args, kwargs))
 
     def get_handler(self) -> NodeImpl:
         return self._node

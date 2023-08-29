@@ -15,6 +15,8 @@
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore.rewrite import SymbolTree, NodeType, Node, ScopedValue
+from mindspore import Tensor
+import mindspore.common.dtype as mstype # pylint:disable=unused-import
 
 
 def external_func(x):
@@ -136,3 +138,84 @@ def test_call_function():
 
     codes = stree.get_code()
     assert codes.count("abs = self.abs(x)") == 0
+
+
+def test_create_call_function():
+    """
+    Feature: Python Rewrite api.
+    Description: Test rewrite create CallFunction nodes.
+    Expectation: Success.
+    """
+    net = MyNet()
+    stree = SymbolTree.create(net)
+    # insert to construct function
+    new_node = Node.create_call_function(function=ops.abs, targets=['x'],
+                                         args=[ScopedValue.create_naming_value('x')])
+    stree.insert(stree.after(stree.get_node('relu')), new_node)
+    assert len(list(stree.nodes())) == 6
+    codes = stree.get_code()
+    assert codes.count("self.abs_1 = obj.abs_1") == 1
+    assert codes.count("x = self.abs_1(x)") == 1
+    # insert to class internal function
+    internal_func_node = stree.get_node('internal_func')
+    internal_abs_node = Node(internal_func_node.get_handler().get_node('abs'))
+    new_node = Node.create_call_function(function=ops.abs, targets=['x'],
+                                         args=[ScopedValue.create_naming_value('x')])
+    stree.insert(stree.after(internal_abs_node), new_node)
+    assert len(list(internal_func_node.get_handler().nodes())) == 5
+    codes = stree.get_code()
+    assert codes.count("self.abs_2 = obj.abs_2") == 1
+    assert codes.count("x = self.abs_2(x)") == 1
+    # insert to sub symbol tree in internal function
+    subtree = SymbolTree(internal_func_node.get_handler().get_node("sub_net").symbol_tree)
+    new_node = Node.create_call_function(function=ops.abs, targets=['x'],
+                                         args=[ScopedValue.create_naming_value('x')])
+    subtree.insert(subtree.after(subtree.get_node('relu')), new_node)
+    assert len(list(subtree.nodes())) == 6
+    codes = stree.get_code()
+    assert codes.count("self.abs_1 = obj.abs_1") == 2
+    assert codes.count("x = self.abs_1(x)") == 2
+    # insert to internal function of sub symbol tree
+    subnet_internal_func_node = subtree.get_node('subnet_internal_func')
+    subnet_internal_abs_node = Node(subnet_internal_func_node.get_handler().get_node('abs'))
+    new_node = Node.create_call_function(function=ops.abs, targets=['x'],
+                                         args=[ScopedValue.create_naming_value('x')])
+    subtree.insert(subtree.after(subnet_internal_abs_node), new_node)
+    assert len(list(subnet_internal_func_node.get_handler().nodes())) == 5
+    codes = stree.get_code()
+    assert codes.count("self.abs_2 = obj.abs_2") == 2
+    assert codes.count("x = self.abs_2(x)") == 2
+
+
+class TensorAddNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+def test_create_call_function_tensor():
+    """
+    Feature: Python Rewrite api.
+    Description: Test rewrite create tensor CallFunction nodes.
+    Expectation: Success.
+    """
+    net = TensorAddNet()
+    stree = SymbolTree.create(net)
+    # insert tensor and add nodes to construct function
+    relu_node = stree.get_node("relu")
+    tensor_node = Node.create_call_function(function=Tensor, targets=['a'],
+                                            args=[ScopedValue.create_variable_value(1.0),
+                                                  ScopedValue.create_naming_value("float32", "mstype")])
+    add_node = Node.create_call_function(function=ops.add, targets=['x'], args=[relu_node.get_targets()[0],
+                                                                                tensor_node.get_targets()[0]])
+    stree.insert(stree.after(relu_node), tensor_node)
+    stree.insert(stree.after(tensor_node), add_node)
+    # code check
+    codes = stree.get_code()
+    assert codes.count('self.Tensor = obj.Tensor') == 1
+    assert codes.count('self.add = obj.add') == 1
+    assert codes.count('a = self.Tensor(1.0, mstype.float32)') == 1
+    assert codes.count('x = self.add(x, a)') == 1
