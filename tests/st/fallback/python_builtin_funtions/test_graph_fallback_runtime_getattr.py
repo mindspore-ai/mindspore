@@ -15,7 +15,11 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, jit, context, nn
+import mindspore as ms
+from mindspore import Tensor, jit, context, nn, Parameter
+from mindspore import dtype as mstype
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -94,3 +98,73 @@ def test_getattr_numpy_array_2():
 
     out = foo()
     assert (out == np.array([0, 1, 2, 3, 4])).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_get_attr_form_param():
+    """
+    Feature: Graph mode do not support getattr on Parameter.
+    Description: Graph mode do not support getattr on Parameter.
+    Expectation: success.
+    """
+
+    param_attr_fg = C.MultitypeFuncGraph("param_attr_fg")
+
+    @param_attr_fg.register("Tensor", "Tensor")
+    def param_attr_fg_for_tensor(x, param):  # pylint: disable=unused-variable
+        if param.requires_grad:
+            return P.Square()(x * 2)
+        return P.Square()(x)
+
+    class HyperMapNet(nn.Cell):
+        def __init__(self, fg):
+            super(HyperMapNet, self).__init__()
+            self.hyper_map = C.HyperMap()
+            self.parameter = Parameter(Tensor([1], ms.float32), name="name_a")
+            self.fg = fg
+
+        def construct(self, x):
+            return self.hyper_map(self.fg, x, self.parameter)
+
+    with pytest.raises(RuntimeError) as ex:
+        x = Tensor(np.array([1]), mstype.float32)
+        net = HyperMapNet(param_attr_fg)
+        output = net(x)
+        print("output:", output)
+    assert "Failed to compile in GRAPH_MODE" in str(ex.value)
+
+
+def test_get_attr_form_param_2():
+    """
+    Feature: Graph mode do not support getattr on Parameter.
+    Description: Graph mode do not support getattr on Parameter.
+    Expectation: success.
+    """
+
+    param_attr_fg = C.MultitypeFuncGraph("param_attr_fg")
+
+    @param_attr_fg.register("Tensor", "Bool")
+    def param_attr_fg_for_tensor_2(x, requires_grad):  # pylint: disable=unused-variable
+        if requires_grad:
+            return P.Square()(x * 2)
+        return P.Square()(x)
+
+    class HyperMapNet(nn.Cell):
+        def __init__(self, fg):
+            super(HyperMapNet, self).__init__()
+            self.hyper_map = C.HyperMap()
+            self.parameter = Parameter(Tensor([1], ms.float32), name="name_a")
+            self.fg = fg
+            self.requires_grad = self.parameter.requires_grad
+
+        def construct(self, x):
+            return self.hyper_map(self.fg, x, self.requires_grad)
+
+    x = Tensor(np.array([1]), mstype.float32)
+    net = HyperMapNet(param_attr_fg)
+    output = net(x)
+    assert output == 4

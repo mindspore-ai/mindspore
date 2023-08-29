@@ -1478,6 +1478,42 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
 
 enum class REQUIRE_TYPE { ATTR, METHOD };
 
+bool IsPyExecuteData(const AbstractBasePtr &data_abstract) {
+  MS_EXCEPTION_IF_NULL(data_abstract);
+  if (data_abstract->isa<abstract::AbstractAny>()) {
+    return true;
+  }
+  return false;
+}
+
+void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
+  MS_EXCEPTION_IF_NULL(data_type);
+  MS_EXCEPTION_IF_NULL(data_args);
+  // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
+  std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
+  if (data_args->isa<AbstractRefTensor>()) {
+    data_type_str = "Parameter";
+  } else if (data_args->isa<AbstractNamedTuple>()) {
+    data_type_str = "NamedTuple";
+  }
+  py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
+  if (py::isinstance<py::none>(obj_define)) {
+    return;
+  }
+  py::module mod2 = python_adapter::GetPyModule(parse::PYTHON_MOD_MODULE);
+  auto is_jit_forbidden_method =
+    python_adapter::CallPyModFn(mod2, parse::PYTHON_MOD_IS_INVALID_METHOD, obj_define, data_type_str, item_name);
+  if (py::cast<bool>(is_jit_forbidden_method) || data_args->isa<AbstractRefTensor>()) {
+    MS_LOG(EXCEPTION) << "Failed to compile in GRAPH_MODE because the '" << data_type_str << "' object's method '"
+                      << item_name << "' is not supported in 'construct' or function with @jit decorator. "
+                      << "Try to use the '" << data_type_str << "." << item_name << "' externally "
+                      << "such as initialized in the method '__init__' before assigning"
+                      << ".\nFor more details, please refer to "
+                      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
+  }
+}
+
 EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
@@ -1485,6 +1521,21 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   const auto cnode = dyn_cast<CNode>(out_node);
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = cnode->func_graph();
+
+  auto data_args = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(data_args);
+  // Not check if the data is from PyExecute CNode.
+  if (!IsPyExecuteData(data_args)) {
+    TypePtr data_type = data_args->BuildType();
+    MS_EXCEPTION_IF_NULL(data_type);
+    auto item_args = args_abs_list[1];
+    MS_EXCEPTION_IF_NULL(item_args);
+    ValuePtr item_value = item_args->BuildValue();
+    auto item_str = item_value->cast_ptr<StringImm>();
+    MS_EXCEPTION_IF_NULL(item_str);
+    std::string item_name = item_str->value();
+    CheckObjAttrValid(data_type, item_name, data_args);
+  }
 
   constexpr auto debug_recursive_level = 2;
   const auto &debug_info = trace::GetSourceCodeDebugInfo(out_node->debug_info());
@@ -1845,42 +1896,6 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-bool IsPyExecuteData(const AbstractBasePtr &data_abstract) {
-  MS_EXCEPTION_IF_NULL(data_abstract);
-  if (data_abstract->isa<abstract::AbstractAny>()) {
-    return true;
-  }
-  return false;
-}
-
-void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
-  MS_EXCEPTION_IF_NULL(data_type);
-  MS_EXCEPTION_IF_NULL(data_args);
-  // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
-  std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
-  if (data_args->isa<AbstractRefTensor>()) {
-    data_type_str = "Parameter";
-  } else if (data_args->isa<AbstractNamedTuple>()) {
-    data_type_str = "NamedTuple";
-  }
-  py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
-  if (py::isinstance<py::none>(obj_define)) {
-    return;
-  }
-  py::module mod2 = python_adapter::GetPyModule(parse::PYTHON_MOD_MODULE);
-  auto is_jit_forbidden_method =
-    python_adapter::CallPyModFn(mod2, parse::PYTHON_MOD_IS_INVALID_METHOD, obj_define, data_type_str, item_name);
-  if (py::cast<bool>(is_jit_forbidden_method)) {
-    MS_LOG(EXCEPTION) << "Failed to compile in GRAPH_MODE because the '" << data_type_str << "' object's method '"
-                      << item_name << "' is not supported in 'construct' or function with @jit decorator. "
-                      << "Try to use the '" << data_type_str << "." << item_name << "' externally "
-                      << "such as initialized in the method '__init__' before assigning"
-                      << ".\nFor more details, please refer to "
-                      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
-  }
-}
-
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -1937,9 +1952,6 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());
-        if (!IsPyExecuteData(data_args)) {  // Not check if the data is from PyExecute CNode.
-          CheckObjAttrValid(data_type, item_name, data_args);
-        }
         auto res = InterpretGetAttrNode(args_abs_list, out_conf);
         if (res == nullptr) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
