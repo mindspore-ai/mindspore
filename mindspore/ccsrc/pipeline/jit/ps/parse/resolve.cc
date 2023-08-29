@@ -399,6 +399,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
       resolved_node = new_node;
     }
   }
+  fallback::SetPyObjectToNode(resolved_node, obj);
   return resolved_node;
 }
 }  // namespace
@@ -514,6 +515,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   auto obj = GetSymbolObject(name_space, symbol, node);
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
+  fallback::SetPyObjectToNode(resolved_node, obj);
   return resolved_node;
 }
 

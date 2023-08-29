@@ -142,6 +142,8 @@ std::shared_ptr<U> GetPySeqObject(const std::shared_ptr<T> &owner) {
   return owner->template user_data<U>(py_list_obj_str);
 }
 
+void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
+
 std::string GetPyObjectPtrStr(const py::object &obj);
 
 bool EnableFallbackList();

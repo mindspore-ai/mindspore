@@ -634,10 +634,23 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
   return ValueToPyData(abs->BuildValue());
 }
 
+bool EnableFallbackList() {
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+  return allow_fallback_runtime && allow_inplace_ops;
+}
+
 void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
+  if (!EnableFallbackList()) {
+    return;
+  }
   // Nested attach list object to corresponding abstract list.
   // Do not consider dictionary yet.
   if (!abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractNamedTuple>()) {
+    return;
+  }
+  constexpr auto cell_list_attr = "__cell_as_list__";
+  if (py::hasattr(obj, cell_list_attr)) {
     return;
   }
   if (abs->isa<abstract::AbstractList>()) {
@@ -672,10 +685,15 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
   return ss.str();
 }
 
-bool EnableFallbackList() {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-  return allow_fallback_runtime && allow_inplace_ops;
+void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
+  if (!EnableFallbackList()) {
+    return;
+  }
+  if (py::isinstance<py::list>(obj)) {
+    SetPySeqObject<AnfNode, py::list>(node, std::make_shared<py::list>(py::list(obj)));
+  } else if (py::isinstance<py::tuple>(obj)) {
+    SetPySeqObject<AnfNode, py::tuple>(node, std::make_shared<py::tuple>(py::tuple(obj)));
+  }
 }
 
 // Convert some CNode to PyExectue, eg:
