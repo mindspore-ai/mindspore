@@ -260,37 +260,42 @@ bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nl
   }
   (*attr_obj)[kJDtype] = dtype_string->second;
 
-  switch (result->second) {
-    case ATTR_DTYPE::ATTR_INT32:
-      (*attr_obj)[kJValue] = std::stoi(value);
-      break;
-    case ATTR_DTYPE::ATTR_INT64:
-      (*attr_obj)[kJValue] = std::stoll(value);
-      break;
-    case ATTR_DTYPE::ATTR_STR:
-      (*attr_obj)[kJValue] = value;
-      break;
-    case ATTR_DTYPE::ATTR_BOOL: {
-      bool attr_value = false;
-      std::istringstream(value) >> std::boolalpha >> attr_value;
-      (*attr_obj)[kJValue] = attr_value;
-      break;
+  try {
+    switch (result->second) {
+      case ATTR_DTYPE::ATTR_INT32:
+        (*attr_obj)[kJValue] = std::stoi(value);
+        break;
+      case ATTR_DTYPE::ATTR_INT64:
+        (*attr_obj)[kJValue] = std::stoll(value);
+        break;
+      case ATTR_DTYPE::ATTR_STR:
+        (*attr_obj)[kJValue] = value;
+        break;
+      case ATTR_DTYPE::ATTR_BOOL: {
+        bool attr_value = false;
+        std::istringstream(value) >> std::boolalpha >> attr_value;
+        (*attr_obj)[kJValue] = attr_value;
+        break;
+      }
+      case ATTR_DTYPE::ATTR_FLOAT32:
+        (*attr_obj)[kJValue] = std::stof(value);
+        break;
+      case ATTR_DTYPE::ATTR_LIST_INT32:
+      case ATTR_DTYPE::ATTR_LIST_INT64: {
+        (*attr_obj)[kJValue] = ParseListIntDefaultValue(value);
+        break;
+      }
+      case ATTR_DTYPE::ATTR_LIST_LIST_INT64: {
+        (*attr_obj)[kJValue] = ParseListListDefaultValue(value);
+        break;
+      }
+      default:
+        MS_LOG(ERROR) << "Type: " << type << "not support";
+        return false;
     }
-    case ATTR_DTYPE::ATTR_FLOAT32:
-      (*attr_obj)[kJValue] = std::stof(value);
-      break;
-    case ATTR_DTYPE::ATTR_LIST_INT32:
-    case ATTR_DTYPE::ATTR_LIST_INT64: {
-      (*attr_obj)[kJValue] = ParseListIntDefaultValue(value);
-      break;
-    }
-    case ATTR_DTYPE::ATTR_LIST_LIST_INT64: {
-      (*attr_obj)[kJValue] = ParseListListDefaultValue(value);
-      break;
-    }
-    default:
-      MS_LOG(ERROR) << "Type: " << type << "not support";
-      return false;
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Parse attr default value failed, type: " << type << ", value: " << value
+                      << " error message: " << e.what();
   }
   return true;
 }

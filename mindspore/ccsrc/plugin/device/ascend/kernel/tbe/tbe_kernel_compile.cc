@@ -198,7 +198,13 @@ uint32_t GetProcessNum() {
       MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_BUILD_PROCESS_NUM
                         << "', it should be a digit, but got: " << env_process_num;
     }
-    process_num = UlongToUint(std::stoul(env_process_num));
+    uint64_t process_num_ulong = 0;
+    try {
+      process_num_ulong = std::stoul(env_process_num);
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid argument: " << e.what() << " when parse " << env_process_num;
+    }
+    process_num = UlongToUint(process_num_ulong);
     if (process_num < IntToUint(1) || process_num > kDEFAULT_PROCESS_NUM) {
       MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_BUILD_PROCESS_NUM
                         << "', the value should be in [1, 24], but got: " << process_num;
