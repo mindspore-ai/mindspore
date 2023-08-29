@@ -6,7 +6,7 @@
     计算方块矩阵或批量方块矩阵的对数行列式。
 
     参数：
-        - **input** (Tensor) - 任意维度的Tensor。
+        - **input** (Tensor) - shape为:math:`(*, n, n)` 的Tensor，其中:math:`*` 代表着0或多个batch维。
 
     返回：
         Tensor，`input` 的对数行列式。如果行列式小于0，则返回nan。如果行列式等于0，则返回-inf。

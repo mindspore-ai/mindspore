@@ -1438,7 +1438,7 @@ def logdet(input):
     Calculates log determinant of one or a batch of square matrices.
 
     Args:
-        input (Tensor): Input Tensor of any dimension.
+        input (Tensor): Tensor of shape :math:`(*, n, n)` where :math:`*` means zero or more batch dimensions.
 
     Returns:
         Tensor, the log determinant of `input`. If the matrix determinant is smaller than 0, nan will be returned. If
