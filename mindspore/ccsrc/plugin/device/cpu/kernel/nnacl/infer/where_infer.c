@@ -56,7 +56,10 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   const TensorC *input0 = inputs[0];
   const TensorC *input1 = inputs[1];
   const TensorC *input2 = inputs[2];
-
+  SetDataTypeFormat(output, input1);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
   int in_shape0[MAX_SHAPE_SIZE] = {0};
   int in_shape1[MAX_SHAPE_SIZE] = {0};
   int in_shape2[MAX_SHAPE_SIZE] = {0};
@@ -79,10 +82,6 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_ERR;
   }
 
-  SetDataTypeFormat(output, input1);
-  if (!InferFlag(inputs, inputs_size)) {
-    return NNACL_INFER_INVALID;
-  }
   ShapeSet(output->shape_, &output->shape_size_, output_shape, ndim);
 
   return NNACL_OK;
