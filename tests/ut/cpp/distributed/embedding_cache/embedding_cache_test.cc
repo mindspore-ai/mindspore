@@ -91,10 +91,12 @@ TEST_F(TestEmbeddingCache, test_embedding_cache) {
   // Embedding host cache not use first position.
   size_t host_length = (host_cache_size + 2) * embedding_size;
   auto host_hash_table_addr = std::make_unique<float[]>(host_length);
-  host_address = std::shared_ptr<float>(host_hash_table_addr.release(), std::default_delete<float[]>());
-  memset(host_address.get(), 0, host_length * sizeof(float));
-  auto embedding_host_cache = std::make_shared<EmbeddingHostCache>(vocab_cache_size, host_cache_size + 2);
-  embedding_cache_manager.set_embedding_host_cache(embedding_host_cache);
+  host_address = host_hash_table_addr.get();
+  auto ret = memset_s(host_address, host_length * sizeof(float), 0, host_length * sizeof(float));
+  EXPECT_EQ(ret, EOK);
+
+  auto host_hash_map = std::make_shared<EmbeddingHashMap>(host_cache_size + 2);
+  embedding_cache_manager.set_host_hash_map(host_hash_map);
 
   // Prepare tensors.
   const int key_size = host_cache_size;
@@ -110,7 +112,7 @@ TEST_F(TestEmbeddingCache, test_embedding_cache) {
   embedding_cache_manager.StoreWarmUpPtr(param_key, key_tensor_ptr, value_tensor_ptr, key_tensor_ptr);
   auto host_cache_ptrs = embedding_cache_manager.host_cache_ptrs();
   EXPECT_EQ(1, host_cache_ptrs.size());
-  int *host_address_ptr = reinterpret_cast<int *>(host_address.get());
+  int *host_address_ptr = reinterpret_cast<int *>(host_address);
   for (int i = 0; i != host_length; i++) {
     EXPECT_EQ(0, *(host_address_ptr + i));
   }

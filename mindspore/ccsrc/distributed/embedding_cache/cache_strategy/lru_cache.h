@@ -69,17 +69,34 @@ class LRUCache : public Cache<KeyType, ValueType> {
   }
 
   // Query the corresponding Value from the cache according to the Key. If the element exists, the corresponding Value
-  // is returned. If the element does not exist, an exception is thrown.
+  // is assigned to parameter value and return true. If the element does not exist, return false.
   // The newly accessed element is moved to the head of the list, indicating that it was recently accessed.
-  const ValueType &Get(const KeyType &key) override {
+  bool Get(const KeyType &key, ValueType *value) override {
     const auto &iter = element_keys_to_iters_.find(key);
-    if (iter == element_keys_to_iters_.end()) {
-      MS_LOG(EXCEPTION) << "Key[" << key << "] does not exists in lru cache.";
+    if (iter != element_keys_to_iters_.end()) {
+      // For performance, no element was constructed or destroyed.
+      elements_.splice(elements_.begin(), elements_, iter->second);
+      MS_EXCEPTION_IF_NULL(value);
+      *value = iter->second->second;
+      return true;
     }
+    return false;
+  }
 
-    // For performance, no element was constructed or destroyed.
-    elements_.splice(elements_.begin(), elements_, iter->second);
-    return elements_.begin()->second;
+  // Get the most recently used element.
+  const Element &Front() const override {
+    if (elements_.empty()) {
+      MS_LOG(EXCEPTION) << "There is no element in lru cache.";
+    }
+    return elements_.front();
+  }
+
+  // Get the least recently used element.
+  const Element &Back() const override {
+    if (elements_.empty()) {
+      MS_LOG(EXCEPTION) << "There is no element in lru cache.";
+    }
+    return elements_.back();
   }
 
   // Query whether the element corresponding to a particular key exists in the cache.
@@ -116,7 +133,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
   size_t size() const override { return element_keys_to_iters_.size(); }
 
   // Dump all elements in the lru cache.
-  const std::list<Element> &Dump() const { return elements_; }
+  const std::list<Element> &Export() const override { return elements_; }
 
  private:
   // The linked list used to hold elements.

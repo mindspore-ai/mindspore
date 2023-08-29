@@ -287,7 +287,6 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
   auto out_tensor = std::make_shared<tensor::Tensor>(data_type, shapes);
   MS_EXCEPTION_IF_NULL(out_tensor);
   out_tensor->set_device_address(output_addr, false);
-  out_tensor->data_sync();
 
   auto real_abs = real_input->abstract();
   MS_EXCEPTION_IF_NULL(real_abs);

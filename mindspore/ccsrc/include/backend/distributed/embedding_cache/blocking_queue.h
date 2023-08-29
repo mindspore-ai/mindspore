@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace distributed {
@@ -102,6 +103,8 @@ class BlockingQueue {
   }
 
  private:
+  DISABLE_COPY_AND_ASSIGN(BlockingQueue);
+
   // The maximum capacity of queue.
   size_t capacity_;
   // The element number in queue.

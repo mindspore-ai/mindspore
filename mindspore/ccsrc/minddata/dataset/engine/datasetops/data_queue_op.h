@@ -130,6 +130,20 @@ class DataQueueOp : public PipelineOp {
   Status SendDataToAscend();
   Status SendEpochEndToAscend(const TensorRow &curr_row, const bool &is_profiling_enable, int32_t *tdt_cost,
                               bool *is_break_loop);
+  // Queue control logic for mbuf in host, to prevent from hang/exit abnormally
+  Status WaitForAscendQueue(size_t batch_data_len);
+
+  // After multi-stage pipeline cache prefetch is enabled, data is not directly pushed to the device queue but to the
+  // cache queue first, and then pushed to the device queue after the cache analysis is complete. Push prefetch cache
+  // data to Ascend device queue.
+  Status PushPrefetchDataToAscend();
+  // Push origin data to Ascend cache queue.
+  Status PushDataToAscendCacheQueue(const TensorRow &curr_row);
+  // Push prefetch cache data to GPU device queue.
+  Status PushPrefetchDataToGPU();
+  // Push origin data to GPU cache queue.
+  Status PushDataToGPUCacheQueue(std::vector<device::DataQueueItem> &&data_items);
+
   void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, const std::shared_ptr<ConfigManager> &cfg) const;
   Status SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost);
   // check status that push data into device
@@ -188,6 +202,9 @@ class DataQueueOp : public PipelineOp {
 #ifdef ENABLE_DUMP_IR
   std::shared_ptr<MDChannelInfo> md_channel_info_;
 #endif
+
+  // Whether to enable the cache prefetch multilevel pipeline, used in ps cache mode.
+  bool enable_prefetch_cache_pipeline_{false};
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -34,13 +34,38 @@ EmbeddingCacheTableManager &EmbeddingCacheTableManager::GetInstance() {
   return instance;
 }
 
-void EmbeddingCacheTableManager::Initialize() { GetEmbeddingTableSliceBound(); }
+void EmbeddingCacheTableManager::Initialize() {
+  auto worker_num = ps::PSContext::instance()->worker_num();
+  multi_batch_threshold_ = worker_num > 1 ? 1 : kMultiBatchThreshold;
+  GetEmbeddingTableSliceBound();
 
-void EmbeddingCacheTableManager::Finalize() {
+  device::DeviceContextKey host_key = {"CPU", 0};
+  cpu_device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  cpu_device_context_->Initialize();
+}
+
+void EmbeddingCacheTableManager::Finalize(const device::DeviceContext *device_context) {
   hash_tables_.clear();
 
-  embedding_device_cache_ = nullptr;
-  embedding_host_cache_ = nullptr;
+  device_hash_map_ = nullptr;
+  host_hash_map_ = nullptr;
+
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  if (hash_swap_index_addr_) {
+    device_context->device_res_manager_->FreeMemory(hash_swap_index_addr_);
+  }
+  if (hash_swap_value_addr_) {
+    device_context->device_res_manager_->FreeMemory(hash_swap_value_addr_);
+  }
+  for (auto &item : hash_tables_) {
+    if (item.second.host_address) {
+      MS_EXCEPTION_IF_NULL(cpu_device_context_);
+      MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
+      cpu_device_context_->device_res_manager_->FreeMemory(item.second.host_address);
+    }
+  }
 }
 
 void EmbeddingCacheTableManager::InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size,
@@ -153,25 +178,24 @@ void EmbeddingCacheTableManager::AllocMemForEmbedding(const device::DeviceContex
 
     size_t embedding_size = item.second.embedding_size;
     auto &host_address = item.second.host_address;
-    auto host_hash_table_addr = std::make_unique<float[]>(host_cache_size_ * embedding_size);
-    MS_EXCEPTION_IF_NULL(host_hash_table_addr);
-    host_address = std::shared_ptr<float>(host_hash_table_addr.release(), std::default_delete<float[]>());
+    host_address = reinterpret_cast<float *>(
+      cpu_device_context_->device_res_manager_->AllocateMemory(host_cache_size_ * embedding_size * sizeof(float)));
     MS_EXCEPTION_IF_NULL(host_address);
 
     max_embedding_size = (embedding_size > max_embedding_size) ? embedding_size : max_embedding_size;
   }
 
-  embedding_device_cache_ = std::make_shared<EmbeddingDeviceCache>(batch_ids_num_, device_cache_size_);
-  MS_EXCEPTION_IF_NULL(embedding_device_cache_);
-  embedding_host_cache_ = std::make_shared<EmbeddingHostCache>(batch_ids_num_, host_cache_size_);
-  MS_EXCEPTION_IF_NULL(embedding_host_cache_);
+  device_hash_map_ = std::make_shared<EmbeddingHashMap>(device_cache_size_);
+  MS_EXCEPTION_IF_NULL(device_hash_map_);
+  host_hash_map_ = std::make_shared<EmbeddingHashMap>(host_cache_size_);
+  MS_EXCEPTION_IF_NULL(host_hash_map_);
 
-  embedding_device_cache_->hash_swap_index_addr_ =
-    reinterpret_cast<int *>(device_context->device_res_manager_->AllocateMemory(batch_ids_num_ * sizeof(int)));
-  MS_EXCEPTION_IF_NULL(embedding_device_cache_->hash_swap_index_addr_);
-  embedding_device_cache_->hash_swap_value_addr_ = reinterpret_cast<float *>(
-    device_context->device_res_manager_->AllocateMemory(max_embedding_size * batch_ids_num_ * sizeof(float)));
-  MS_EXCEPTION_IF_NULL(embedding_device_cache_->hash_swap_value_addr_);
+  hash_swap_index_addr_ = reinterpret_cast<int *>(
+    device_context->device_res_manager_->AllocateMemory(batch_ids_num_ * sizeof(int) * multi_batch_threshold_));
+  MS_EXCEPTION_IF_NULL(hash_swap_index_addr_);
+  hash_swap_value_addr_ = reinterpret_cast<float *>(device_context->device_res_manager_->AllocateMemory(
+    max_embedding_size * batch_ids_num_ * sizeof(float) * multi_batch_threshold_));
+  MS_EXCEPTION_IF_NULL(hash_swap_value_addr_);
 }
 
 void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
@@ -192,7 +216,10 @@ void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
 #endif
 
   if (!is_sparse_format()) {
-    auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
+    int local_shard_size = UintToInt(SizeToUint(vocab_size_) / worker_num);
+    if (vocab_size_ % worker_num != 0) {
+      local_shard_size += 1;
+    }
     local_embedding_slice_bounds_.first = local_shard_size * UintToInt(rank_id);
     local_embedding_slice_bounds_.second =
       std::min(local_embedding_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
@@ -206,13 +233,13 @@ void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
                << ", id begin:" << local_embedding_slice_bounds_.first
                << ", id end:" << local_embedding_slice_bounds_.second
                << ", cache indices begin: " << local_device_cache_bounds_.first
-               << ", cache indices end: " << local_device_cache_bounds_.second;
+               << ", cache indices end: " << local_device_cache_bounds_.second << ", vocab_size: " << vocab_size_
+               << ", device cache size: " << device_cache_size_;
 }
 
 int EmbeddingCacheTableManager::cache_indices_lower_bound() const { return local_device_cache_bounds_.first; }
 
 void EmbeddingCacheTableManager::DumpHashTables() const {
-  MS_EXCEPTION_IF_NULL(embedding_device_cache_);
   for (const auto &item : hash_tables_) {
     const auto &param_name = item.first;
     size_t cache_vocab_size = item.second.cache_vocab_size;
@@ -225,8 +252,12 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << ", vocab size:" << vocab_size << ", embedding size:" << embedding_size
                  << ", device cache size:" << cache_vocab_size << ", host cache size:" << host_cache_vocab_size
                  << ", device cache address:" << item.second.address.addr
-                 << ", host cache address:" << item.second.host_address.get();
+                 << ", host cache address:" << item.second.host_address;
   }
+}
+
+bool EmbeddingCacheTableManager::enable_pipeline() const {
+  return ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable();
 }
 
 int32_t EmbeddingCacheTableManager::StoreWarmUpPtr(const int32_t param_key, const tensor::TensorPtr &tensor_ptr) {
@@ -262,7 +293,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheSync(const int32_t batch_count) 
   if (cache_ptr_size != hash_table_size) {
     MS_LOG(WARNING) << "Host cache ptrs size : " << cache_ptr_size
                     << " is not equal to hash table size : " << hash_table_size
-                    << ", will skip wam up host cache sync.";
+                    << ", will skip warm up host cache sync.";
     std::unique_lock<std::mutex> lock(host_cache_mutex_);
     host_cache_promise_->set_value(false);
     lock.unlock();
@@ -339,13 +370,8 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItemBatch(const int32_t batch_co
   if (l_len % validate_batch_count != 0) {
     batch_size++;
   }
-  if (embedding_host_cache_ == nullptr) {
-    MS_LOG(WARNING) << "Embedding host cache of manager is nullptr, will skip warm up.";
-    return;
-  }
 
-  auto embedding_hash_map = embedding_host_cache_->host_hash_map_;
-  if (embedding_hash_map == nullptr) {
+  if (host_hash_map_ == nullptr) {
     MS_LOG(WARNING) << "Embedding hash map of embedding host cache is nullptr, will skip warm up.";
     return;
   }
@@ -366,7 +392,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItemBatch(const int32_t batch_co
   MS_EXCEPTION_IF_CHECK_FAIL(value_expected_len <= host_length, "Size of value tensor is overflow.");
 
   for (int i = 0; i < l_len; i += batch_size) {
-    WarmUpHostCacheItem(embedding_hash_map, hash_table_info_ptr, entry, i, std::min(i + batch_size, l_len), value_len);
+    WarmUpHostCacheItem(host_hash_map_, hash_table_info_ptr, entry, i, std::min(i + batch_size, l_len), value_len);
   }
   MS_LOG(DEBUG) << "Exit warm up host cache item batch.";
 }
@@ -405,14 +431,13 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
     }
 
     int id = embedding_hash_map->GetOrInsertDataUnsafe(static_cast<int>(key));
-    if (id == INVALID_INDEX_VALUE) {
+    if (id == kInvalidIndexValue) {
       MS_LOG(WARNING) << "Embedding hash map is full, exit warm up process.";
       break;
     }
 
     size_t offset = id * value_len;
-    // size_t host_length = hash_table_info_ptr->host_length << shift_bit_num;
-    auto host_address = hash_table_info_ptr->host_address.get();
+    auto host_address = hash_table_info_ptr->host_address;
     auto des_ptr = reinterpret_cast<uint8_t *>(host_address);
     auto value_data_ptr = std::get<1>(entry.second)->data_c();
     auto src_ptr = reinterpret_cast<uint8_t *>(value_data_ptr);
@@ -491,16 +516,14 @@ void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t e
   iter->second(embedding_key, embedding_dim, capacity);
 }
 
-EmbeddingDeviceCache::EmbeddingDeviceCache(size_t batch_ids_num, size_t cache_vocab_size)
-    : hash_swap_index_addr_(nullptr), hash_swap_value_addr_(nullptr) {
+EmbeddingDeviceCache::EmbeddingDeviceCache(size_t batch_ids_num) {
   device_to_host_index = std::make_unique<int[]>(batch_ids_num);
   device_to_host_ids = std::make_unique<int[]>(batch_ids_num);
   host_to_device_index = std::make_unique<int[]>(batch_ids_num);
   host_to_device_ids = std::make_unique<int[]>(batch_ids_num);
-  device_hash_map_ = std::make_shared<EmbeddingHashMap>(0, cache_vocab_size);
 }
 
-EmbeddingHostCache::EmbeddingHostCache(size_t batch_ids_num, size_t host_cache_vocab_size) {
+EmbeddingHostCache::EmbeddingHostCache(size_t batch_ids_num) {
   host_to_server_index = std::make_unique<int[]>(batch_ids_num);
   host_to_server_ids = std::make_unique<int[]>(batch_ids_num);
   server_to_host_index = std::make_unique<int[]>(batch_ids_num);
@@ -508,7 +531,6 @@ EmbeddingHostCache::EmbeddingHostCache(size_t batch_ids_num, size_t host_cache_v
   new_id_index = std::make_unique<int[]>(batch_ids_num);
   host_to_device_index = std::make_unique<int[]>(batch_ids_num);
   device_to_host_index = std::make_unique<int[]>(batch_ids_num);
-  host_hash_map_ = std::make_shared<EmbeddingHashMap>(0, host_cache_vocab_size);
 }
 
 void EmbeddingStorageManager::Add(int32_t param_key,

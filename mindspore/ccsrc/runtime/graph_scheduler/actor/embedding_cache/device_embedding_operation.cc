@@ -29,32 +29,46 @@ bool DeviceEmbeddingOperation::Initialize() {
   return true;
 }
 
-bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step,
-                                                         bool *host_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  int *host_to_device_index = embedding_cache_table_manager.embedding_host_cache_->host_to_device_index.get();
+bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_step, size_t *cur_graph_running_step,
+                                                         const std::atomic_ulong *latest_graph_running_step,
+                                                         bool *host_cache_need_wait_graph,
+                                                         EmbeddingHostCache *embedding_host_cache,
+                                                         EmbeddingCacheStatisticsInfo *statistics_info) {
+  MS_ERROR_IF_NULL(cur_graph_running_step);
+  MS_ERROR_IF_NULL(latest_graph_running_step);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+  MS_ERROR_IF_NULL(statistics_info);
+  int *host_to_device_index = embedding_host_cache->host_to_device_index.get();
   MS_ERROR_IF_NULL(host_to_device_index);
-  auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
+  auto &host_hash_map = embedding_cache_table_manager.host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
 
-  const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
-  const auto &iter = hash_id_to_index.find(id);
-  if (iter != hash_id_to_index.end()) {
-    auto index = iter->second;
+  int index;
+  if (host_hash_map->GetIndex(id, &index)) {
     if (host_hash_map->hash_step(index) != data_step) {
       host_hash_map->set_hash_step(index, data_step);
     }
-    host_to_device_index[statistics_info_->host_to_device_size_ - 1] = index;
+    host_to_device_index[statistics_info->host_to_device_size_ - 1] = index;
   } else {
-    int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
-    int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
+    int *host_to_server_index = embedding_host_cache->host_to_server_index.get();
+    int *host_to_server_ids = embedding_host_cache->host_to_server_ids.get();
     auto tmp_host_to_server_size = statistics_info_->host_to_server_size_;
+    size_t retry_count = 0;
     while (true) {
       // Calculate the mapping of id to index.
-      auto index = host_hash_map->ParseData(id, host_to_server_index, host_to_server_ids, data_step, graph_running_step,
-                                            &(statistics_info_->host_to_server_size_), host_cache_need_wait_graph);
-      if (index == INVALID_INDEX_VALUE) {
-        RETURN_IF_FALSE_WITH_LOG(actor_->WaitGraphRun(), "Wait graph run failed.");
+      index = host_hash_map->ParseData(id, host_to_server_index, host_to_server_ids, data_step, *cur_graph_running_step,
+                                       &(statistics_info->host_to_server_size_), host_cache_need_wait_graph);
+      if (index == kInvalidIndexValue) {
+        const int64_t wait_interval = 10000;
+        *cur_graph_running_step = latest_graph_running_step->load();
+        std::this_thread::sleep_for(std::chrono::microseconds(wait_interval));
+        ++retry_count;
+        if (retry_count > kMaxRetryNum) {
+          MS_LOG(ERROR) << "Prefetch embedding cache timeout, please enlarge the vocab cache size.";
+          return false;
+        }
+        MS_LOG(DEBUG) << "There is no space in local host cache, wait and retrying, current graph running step: "
+                      << *cur_graph_running_step << ", data step: " << data_step;
         continue;
       }
 
@@ -64,24 +78,25 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
           statistics_info_->host_to_server_size_ = tmp_host_to_server_size;
         }
       }
-      host_to_device_index[statistics_info_->host_to_device_size_ - 1] = index;
+
+      host_to_device_index[statistics_info->host_to_device_size_ - 1] = index;
 
       // This feature id has never been seen before, so it's value is initialized using the local random generator.
       // Initialize with random value when checkpoint has not been loaded.
       if (!embedding_cache_table_manager.checkpoint_load_status() &&
           initialized_ids_.find(id) == initialized_ids_.end()) {
-        int *new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
+        int *new_id_index = embedding_host_cache->new_id_index.get();
         MS_ERROR_IF_NULL(new_id_index);
-        new_id_index[statistics_info_->new_id_size_++] = index;
+        new_id_index[statistics_info->new_id_size_++] = index;
         (void)initialized_ids_.insert(id);
         // This feature id has been initialized already, so it's latest value has been kept in the remote server.
       } else {
-        int *server_to_host_index = embedding_cache_table_manager.embedding_host_cache_->server_to_host_index.get();
-        int *server_to_host_ids = embedding_cache_table_manager.embedding_host_cache_->server_to_host_ids.get();
+        int *server_to_host_index = embedding_host_cache->server_to_host_index.get();
+        int *server_to_host_ids = embedding_host_cache->server_to_host_ids.get();
         MS_ERROR_IF_NULL(server_to_host_index);
         MS_ERROR_IF_NULL(server_to_host_ids);
-        server_to_host_index[statistics_info_->server_to_host_size_] = index;
-        server_to_host_ids[statistics_info_->server_to_host_size_++] = id;
+        server_to_host_index[statistics_info->server_to_host_size_] = index;
+        server_to_host_ids[statistics_info->server_to_host_size_++] = id;
       }
       break;
     }
@@ -90,37 +105,53 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
   return true;
 }
 
-bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step,
-                                                         bool *host_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  int *device_to_host_ids = embedding_cache_table_manager.embedding_device_cache_->device_to_host_ids.get();
-  int *device_to_host_index = embedding_cache_table_manager.embedding_host_cache_->device_to_host_index.get();
+bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_t *cur_graph_running_step,
+                                                         const std::atomic_ulong *latest_graph_running_step,
+                                                         bool *host_cache_need_wait_graph,
+                                                         EmbeddingDeviceCache *embedding_device_cache,
+                                                         EmbeddingHostCache *embedding_host_cache,
+                                                         EmbeddingCacheStatisticsInfo *statistics_info) {
+  MS_ERROR_IF_NULL(cur_graph_running_step);
+  MS_ERROR_IF_NULL(latest_graph_running_step);
+  MS_ERROR_IF_NULL(embedding_device_cache);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+  MS_ERROR_IF_NULL(statistics_info);
+
+  int *device_to_host_ids = embedding_device_cache->device_to_host_ids.get();
+  int *device_to_host_index = embedding_host_cache->device_to_host_index.get();
   MS_ERROR_IF_NULL(device_to_host_ids);
   MS_ERROR_IF_NULL(device_to_host_index);
 
-  auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
+  auto &host_hash_map = embedding_cache_table_manager.host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
-  int swap_device_to_host_id = device_to_host_ids[statistics_info_->device_to_host_size_ - 1];
-  const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
-  const auto &iter = hash_id_to_index.find(swap_device_to_host_id);
-  if (iter != hash_id_to_index.end()) {
-    auto index = iter->second;
+  int swap_device_to_host_id = device_to_host_ids[statistics_info->device_to_host_size_ - 1];
+  int index;
+  if (host_hash_map->GetIndex(swap_device_to_host_id, &index)) {
     if (host_hash_map->hash_step(index) != data_step) {
       host_hash_map->set_hash_step(index, data_step);
     }
-    device_to_host_index[statistics_info_->device_to_host_size_ - 1] = index;
+    device_to_host_index[statistics_info->device_to_host_size_ - 1] = index;
   } else {
-    int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
-    int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
+    int *host_to_server_index = embedding_host_cache->host_to_server_index.get();
+    int *host_to_server_ids = embedding_host_cache->host_to_server_ids.get();
     auto tmp_host_to_server_size = statistics_info_->host_to_server_size_;
+    size_t retry_count = 0;
     while (true) {
       // Calculate the mapping of id to index.
-      auto index = host_hash_map->ParseData(swap_device_to_host_id, host_to_server_index, host_to_server_ids, data_step,
-                                            graph_running_step, &statistics_info_->host_to_server_size_,
-                                            host_cache_need_wait_graph);
-      if (index == INVALID_INDEX_VALUE) {
-        RETURN_IF_FALSE_WITH_LOG(actor_->WaitGraphRun(), "Wait graph run");
+      index = host_hash_map->ParseData(swap_device_to_host_id, host_to_server_index, host_to_server_ids, data_step,
+                                       *cur_graph_running_step, &statistics_info->host_to_server_size_,
+                                       host_cache_need_wait_graph);
+      if (index == kInvalidIndexValue) {
+        const int64_t wait_interval = 10000;
+        *cur_graph_running_step = latest_graph_running_step->load();
+        std::this_thread::sleep_for(std::chrono::microseconds(wait_interval));
+        ++retry_count;
+        if (retry_count > kMaxRetryNum) {
+          MS_LOG(ERROR) << "Prefetch embedding cache timeout, please enlarge the vocab cache size.";
+          return false;
+        }
+        MS_LOG(DEBUG) << "There is no space in local host cache, wait and retrying, current graph running step: "
+                      << *cur_graph_running_step << ", data step: " << data_step;
         continue;
       }
 
@@ -131,13 +162,14 @@ bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_
         }
       }
 
-      device_to_host_index[statistics_info_->device_to_host_size_ - 1] = index;
+      device_to_host_index[statistics_info->device_to_host_size_ - 1] = index;
       break;
     }
   }
 
   return true;
 }
+
 bool DeviceEmbeddingOperation::MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size,
                                                        const DeviceContext *device_context, size_t stream_id) {
   MS_ERROR_IF_NULL(dst);

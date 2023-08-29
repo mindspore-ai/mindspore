@@ -100,6 +100,7 @@
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #include "include/backend/distributed/ps/ps_context.h"
+#include "include/backend/distributed/embedding_cache/data_queue_manager.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"
@@ -1775,7 +1776,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
 #if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
-      ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
+      distributed::DataQueueManager::GetInstance().CreateDataQueue(queue_name, size, 128);
     }
 #endif
 
@@ -1799,13 +1800,6 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   auto segment = std::make_shared<GraphSegment>(std::vector<AnfNodePtr>{app_init}, false);
   auto runner = convert_fn(segment, "");
   ConfigManager::GetInstance().set_iter_num(queue_name, size);
-  // PS cache does not support loop sink.
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
-    ConfigManager::GetInstance().set_iter_num(queue_name, 1);
-  }
-#endif
 
   if (!(*runner.run)) {
     // empty function

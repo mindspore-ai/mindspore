@@ -28,15 +28,18 @@
 #include "minddata/dataset/util/task_manager.h"
 #ifdef WITH_BACKEND
 #include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
-#endif
-#ifndef _WIN32
-#include "mindspore/ccsrc/include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
-#endif
-#ifdef WITH_BACKEND
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/data_queue_manager.h"
 #include "utils/ms_context.h"
 #endif
 namespace mindspore {
 namespace dataset {
+#ifdef WITH_BACKEND
+using distributed::DataQueueManager;
+using distributed::IdDataInfo;
+using distributed::IndexDataInfo;
+#endif
+
 namespace {
 std::vector<DataQueueItem> ConvertTensorRowToDataQueueItem(const TensorRow &row) {
   std::vector<device::DataQueueItem> items;
@@ -49,6 +52,49 @@ std::vector<DataQueueItem> ConvertTensorRowToDataQueueItem(const TensorRow &row)
     items.emplace_back(std::move(data_item));
   }
   return items;
+}
+
+#ifdef WITH_BACKEND
+std::vector<DataQueueItem> DeepCopyConvertTensorRowToDataQueueItem(const TensorRow &row) {
+  std::vector<device::DataQueueItem> items;
+  for (auto &i : row) {
+    device::DataQueueItem data_item;
+    data_item.data_len = static_cast<size_t>(i->SizeInBytes());
+    data_item.shapes = i->shape().AsVector();
+    data_item.data_ptr = malloc(data_item.data_len);
+    MS_EXCEPTION_IF_NULL(data_item.data_ptr);
+    auto ret = memcpy_s(data_item.data_ptr, data_item.data_len, i->GetBuffer(), data_item.data_len);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for data queue item failed, errno[" << ret << "]";
+    }
+    data_item.data_type = i->type().ToString();
+
+    items.emplace_back(std::move(data_item));
+  }
+  return items;
+}
+#endif
+
+void PushEpochEndToQueue(const std::string &channel_name) {
+#ifdef WITH_BACKEND
+  const auto &id_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name).first;
+  MS_EXCEPTION_IF_NULL(id_data_queue);
+  IdDataInfo *data = new IdDataInfo();
+  MS_EXCEPTION_IF_NULL(data);
+  data->end_of_epoch_ = true;
+  id_data_queue->Push(data);
+#endif
+}
+
+void PushFileEndToQueue(const std::string &channel_name) {
+#ifdef WITH_BACKEND
+  const auto &id_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name).first;
+  MS_EXCEPTION_IF_NULL(id_data_queue);
+  IdDataInfo *data = new IdDataInfo();
+  MS_EXCEPTION_IF_NULL(data);
+  data->end_of_file_ = true;
+  id_data_queue->Push(data);
+#endif
 }
 }  // namespace
 DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
@@ -81,6 +127,7 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
     ascend_data_queue_ =
       device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_, 0, {});
   }
+  enable_prefetch_cache_pipeline_ = distributed::EmbeddingCacheTableManager::GetInstance().enable_pipeline();
 #endif
 #ifdef ENABLE_DUMP_IR
   md_channel_info_ = std::make_shared<MDChannelInfo>(channel_name_);
@@ -216,8 +263,200 @@ Status DataQueueOp::operator()() {
   return Status::OK();
 }
 
+Status DataQueueOp::PushPrefetchDataToGPU() {
+#ifdef WITH_BACKEND
+  TaskManager::FindMe()->Post();
+  const auto &index_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name_).second;
+  MS_EXCEPTION_IF_NULL(index_data_queue);
+  bool eof_flag = false;
+  int64_t send_batch = 0;
+
+  bool is_profiling_enable = GlobalContext::profiling_manager()->IsProfilingEnable(tree_);
+  uint64_t push_cost;
+
+  while (!eof_flag && !DataQueueManager::GetInstance().IsClosed() && !device::DataQueueMgr::GetInstance().IsClosed() &&
+         !TaskManager::FindMe()->Interrupted()) {
+    IndexDataInfo *data = index_data_queue->Pop();
+    if (DataQueueManager::GetInstance().IsClosed() || device::DataQueueMgr::GetInstance().IsClosed()) {
+      // Terminate abnormally.
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(data);
+
+    eof_flag = data->end_of_file_;
+    if (data->data_ != nullptr) {
+      MS_EXCEPTION_IF_NULL(data->items_);
+
+      auto status = RetryPushData(*(data->items_), is_profiling_enable, &push_cost);
+      delete data->items_;
+      delete data;
+
+      RETURN_IF_NOT_OK(status);
+
+      ++send_batch;
+      if (total_batch_ > 0 && send_batch >= total_batch_) {
+        break;
+      }
+    } else {
+      delete data;
+    }
+  }
+#endif
+  return Status::OK();
+}
+
+Status DataQueueOp::PushDataToGPUCacheQueue(std::vector<device::DataQueueItem> &&data_items) {
+#ifdef WITH_BACKEND
+  std::vector<device::DataQueueItem> *items = new std::vector<device::DataQueueItem>(std::move(data_items));
+  MS_EXCEPTION_IF_NULL(items);
+  if (items->empty()) {
+    MS_LOG(EXCEPTION) << "The data queue item is empty.";
+  }
+  const auto &id_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name_).first;
+  MS_EXCEPTION_IF_NULL(id_data_queue);
+  IdDataInfo *data = new IdDataInfo(items->at(0).data_ptr, items->at(0).data_len, items, false, false);
+
+  MS_EXCEPTION_IF_NULL(data);
+  id_data_queue->Push(data);
+#endif
+
+  return Status::OK();
+}
+
+Status DataQueueOp::PushPrefetchDataToAscend() {
+#ifdef WITH_BACKEND
+  TaskManager::FindMe()->Post();
+  const auto &index_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name_).second;
+  MS_EXCEPTION_IF_NULL(index_data_queue);
+  MS_EXCEPTION_IF_NULL(ascend_data_queue_);
+  bool eof_flag = false;
+  int64_t send_batch = 0;
+  while (!eof_flag && !DataQueueManager::GetInstance().IsClosed() && ascend_data_queue_->IsOpen()) {
+    IndexDataInfo *data = index_data_queue->Pop();
+    if (DataQueueManager::GetInstance().IsClosed() || !ascend_data_queue_->IsOpen()) {
+      // Terminate abnormally.
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(data);
+    device::DataQueueStatus status;
+
+    bool eoe_flag = data->end_of_epoch_;
+    eof_flag = data->end_of_file_;
+    if (data->data_ != nullptr) {
+      MS_EXCEPTION_IF_NULL(data->items_);
+
+      if (ascend_data_queue_->QueueType() == "Ascend_MBUF") {
+        size_t batch_data_len =
+          std::accumulate(data->items_->begin(), data->items_->end(), static_cast<size_t>(0),
+                          [](size_t acc, const DataQueueItem &item) { return acc + item.data_len; });
+        RETURN_IF_NOT_OK(WaitForAscendQueue(batch_data_len));
+      }
+
+      status = ascend_data_queue_->Push(*(data->items_));
+      for (auto &item : *(data->items_)) {
+        MS_EXCEPTION_IF_NULL(item.data_ptr);
+        free(item.data_ptr);
+      }
+      delete data->items_;
+      delete data;
+      if (status != device::DataQueueStatus::SUCCESS) {
+        if (stop_send_) {
+          MS_LOG(INFO) << "stop_send received";
+          return Status::OK();
+        }
+        RETURN_STATUS_ERROR(
+          StatusCode::kMDTDTPushFailure,
+          "TDT Push data into device Failed, check the first error or TraceBack first, more checking advises are: "
+          "1) if training is not ready, error might raised by network computing operator or environment configuration. "
+          "2) other cases, checking info level log or search this error in mindspore's FAQ for detail solution.");
+      }
+      ++send_batch;
+      if (total_batch_ > 0 && send_batch >= total_batch_) {
+        break;
+      }
+    } else {
+      delete data;
+      if (send_epoch_end_ && eoe_flag) {
+        // empty data
+        status = ascend_data_queue_->Push({});
+        bool break_loop = false;
+        RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, &break_loop));
+        if (break_loop) {
+          break;
+        }
+      }
+    }
+  }
+#endif
+
+  return Status::OK();
+}
+
+Status DataQueueOp::PushDataToAscendCacheQueue(const TensorRow &curr_row) {
+#ifdef WITH_BACKEND
+  std::vector<device::DataQueueItem> *items =
+    new std::vector<device::DataQueueItem>(DeepCopyConvertTensorRowToDataQueueItem(curr_row));
+  MS_EXCEPTION_IF_NULL(items);
+  if (items->empty()) {
+    MS_LOG(EXCEPTION) << "The data queue item is empty.";
+  }
+  const auto &id_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name_).first;
+  MS_EXCEPTION_IF_NULL(id_data_queue);
+  IdDataInfo *data =
+    new IdDataInfo(items->at(0).data_ptr, items->at(0).data_len, items, curr_row.eoe(), curr_row.eof());
+
+  MS_EXCEPTION_IF_NULL(data);
+  id_data_queue->Push(data);
+
+  if (create_data_info_queue_) {
+    DATA_INFO data_info;
+    (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
+                         [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
+    RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+  }
+#endif
+  return Status::OK();
+}
+
+Status DataQueueOp::WaitForAscendQueue(size_t batch_data_len) {
+  // Queue control logic for mbuf in host, to prevent from hang/exit abnormally
+  // case 1: If mbuf queue memory + next row memory < 2G then continue send, else suspend;
+  // case 2: Based on case 1, if element nums in mbuf < max_queue_size then continue send, else suspend;
+  // case 3: If row memory >= 1G, can only send 1 row each time, queue_size will always in [0, 1];
+  // note:
+  // why need queue control: acltdtSendTensor will hang when queue is full, need to break this thread by ourselves
+  // how about dynamic shape: yes, memory_per_batch_ collect memory of rows in different shapes.
+  // how about row too large(>2G): we can promise the first row will be sent and hang in this while, but we dont
+  //     know if the device will out of memory. If not oom, send next row, otherwise device returns error.
+
+  // Calculate the memory of next row before sending
+  size_t queue_size = ascend_data_queue_->QueryQueueSize();
+  double row_memory = batch_data_len / 1024. / 1024. / 1024.;
+  memory_per_batch_.push_back(row_memory);
+
+  const double max_queue_memory = 2.;
+  const size_t max_queue_size = 100;
+  const int64_t send_interval = 1000;
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WaitForAscend"));
+  while ((row_memory + CalMbufQueueMemory(queue_size) >= max_queue_memory || queue_size >= max_queue_size) &&
+         queue_size != 0) {
+    RETURN_IF_INTERRUPTED();
+    MS_LOG(DEBUG) << "Mbuf queue size: " << queue_size << ", max queue limit: " << max_queue_size << ". "
+                  << "Next row memory: " << row_memory << ", Mbuf memory: " << CalMbufQueueMemory(queue_size);
+
+    queue_size = ascend_data_queue_->QueryQueueSize();
+    std::this_thread::sleep_for(std::chrono::microseconds(send_interval));
+  }
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WaitForAscend"));
+  return Status::OK();
+}
+
 Status DataQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
+  if (enable_prefetch_cache_pipeline_) {
+    RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+      "Push prefetch data to ascend queue", std::bind(&DataQueueOp::PushPrefetchDataToAscend, this), nullptr, id()));
+  }
 #ifndef ENABLE_SECURITY
   uint64_t batch_start_time = 0;
   uint64_t end_time = 0;
@@ -282,7 +521,11 @@ Status DataQueueOp::SendDataToAscend() {
         continue;
       }
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
-      RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
+      if (!enable_prefetch_cache_pipeline_) {
+        RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
+      } else {
+        RETURN_IF_NOT_OK(PushDataToAscendCacheQueue(curr_row));
+      }
       RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"TensorRowFlags", curr_row.FlagName()}}));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
@@ -314,35 +557,9 @@ Status DataQueueOp::SendDataToAscend() {
       uint64_t batch_fetch_end = ProfilingTime::GetCurMilliSecond();
 #endif
       if (ascend_data_queue_->QueueType() == "Ascend_MBUF") {
-        // Queue control logic for mbuf in host, to prevent from hang/exit abnormally
-        // case 1: If mbuf queue memory + next row memory < 2G then continue send, else suspend;
-        // case 2: Based on case 1, if element nums in mbuf < max_queue_size then continue send, else suspend;
-        // case 3: If row memory >= 1G, can only send 1 row each time, queue_size will always in [0, 1];
-        // note:
-        // why need queue control: acltdtSendTensor will hang when queue is full, need to break this thread by ourselves
-        // how about dynamic shape: yes, memory_per_batch_ collect memory of rows in different shapes.
-        // how about row too large(>2G): we can promise the first row will be sent and hang in this while, but we dont
-        //     know if the device will out of memory. If not oom, send next row, otherwise device returns error.
-
-        // Calculate the memory of next row before sending
-        size_t queue_size = ascend_data_queue_->QueryQueueSize();
-        double row_memory = curr_row.SizeInBytes() / 1024. / 1024. / 1024.;
-        memory_per_batch_.push_back(row_memory);
-
-        const double max_queue_memory = 2.;
-        const size_t max_queue_size = 100;
-        const int64_t send_interval = 1000;
-        RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WaitForAscend"));
-        while ((row_memory + CalMbufQueueMemory(queue_size) >= max_queue_memory || queue_size >= max_queue_size) &&
-               queue_size != 0) {
-          RETURN_IF_INTERRUPTED();
-          MS_LOG(DEBUG) << "Mbuf queue size: " << queue_size << ", max queue limit: " << max_queue_size << ". "
-                        << "Next row memory: " << row_memory << ", Mbuf memory: " << CalMbufQueueMemory(queue_size);
-
-          queue_size = ascend_data_queue_->QueryQueueSize();
-          std::this_thread::sleep_for(std::chrono::microseconds(send_interval));
+        if (!enable_prefetch_cache_pipeline_) {
+          RETURN_IF_NOT_OK(WaitForAscendQueue(static_cast<size_t>(curr_row.SizeInBytes())));
         }
-        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WaitForAscend"));
       }
 #ifndef ENABLE_SECURITY
       uint64_t queue_wait_end = ProfilingTime::GetCurMilliSecond();
@@ -361,6 +578,10 @@ Status DataQueueOp::SendDataToAscend() {
     RecordProfilingData(is_profiling_enable, true, &connector_size, &connector_capacity, &send_batch);
 #endif
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
+  }
+
+  if (enable_prefetch_cache_pipeline_) {
+    PushFileEndToQueue(channel_name_);
   }
 
   // now we use this flag to judge whether exception raised.
@@ -398,23 +619,27 @@ Status DataQueueOp::SendEpochEndToAscend(const TensorRow &curr_row, const bool &
   RETURN_UNEXPECTED_IF_NULL(is_break_loop);
   if (curr_row.eoe() && send_epoch_end_ && ascend_data_queue_->IsOpen()) {
     TensorRow dummy_row;
+    if (!enable_prefetch_cache_pipeline_) {
 #ifndef ENABLE_SECURITY
-    double start_time = 0;
-    if (is_profiling_enable) {
-      start_time = ProfilingTime::GetCurMilliSecond();
-    }
+      double start_time = 0;
+      if (is_profiling_enable) {
+        start_time = ProfilingTime::GetCurMilliSecond();
+      }
 #endif
-    auto status = ascend_data_queue_->Push({});
+      auto status = ascend_data_queue_->Push({});
 #ifndef ENABLE_SECURITY
-    if (is_profiling_enable) {
-      double end_time = ProfilingTime::GetCurMilliSecond();
-      RETURN_UNEXPECTED_IF_NULL(tdt_cost);
-      *tdt_cost = static_cast<int32_t>(end_time - start_time);
-    }
+      if (is_profiling_enable) {
+        double end_time = ProfilingTime::GetCurMilliSecond();
+        RETURN_UNEXPECTED_IF_NULL(tdt_cost);
+        *tdt_cost = static_cast<int32_t>(end_time - start_time);
+      }
 #endif
 
-    RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, is_break_loop));
-    MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
+      RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, is_break_loop));
+      MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
+    } else {
+      PushEpochEndToQueue(channel_name_);
+    }
     stop_send_ = true;
   }
   return Status::OK();
@@ -558,6 +783,11 @@ Status DataQueueOp::LaunchParallelCopyThread() {
                                         std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
                                                       std::bind(&DataQueueOp::PushDataToGPU, this), nullptr, id()));
+  if (enable_prefetch_cache_pipeline_) {
+    RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+      "Push prefetch data to GPU queue", std::bind(&DataQueueOp::PushPrefetchDataToGPU, this), nullptr, id()));
+  }
+
 #endif
   return Status::OK();
 }
@@ -612,15 +842,12 @@ Status DataQueueOp::PushDataToGPU() {
       md_channel_info_->RecordPushStartTime();
 #endif
       // Data prefetch only when PS mode enables cache.
-#ifndef _WIN32
-      if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr, items[0].data_len,
-                                                          items[0].data_type)) {
-        RETURN_STATUS_ERROR(StatusCode::kMDTimeOut,
-                            "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
-      }
-#endif
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToGPU"));
-      RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
+      if (!enable_prefetch_cache_pipeline_) {
+        RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
+      } else {
+        PushDataToGPUCacheQueue(std::move(items));
+      }
       RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToGPU", {{"TensorRowFlags", "Data"}}));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
@@ -657,6 +884,11 @@ Status DataQueueOp::PushDataToGPU() {
     } else {
       break;
     }
+  }
+
+  if (enable_prefetch_cache_pipeline_) {
+    // Send eof to cache queue
+    PushFileEndToQueue(channel_name_);
   }
 
   // now we use this flag to judge whether exception raised.

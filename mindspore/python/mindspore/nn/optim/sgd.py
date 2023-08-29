@@ -198,8 +198,22 @@ class SGD(Optimizer):
             self.opt = tuple([P.SGD(dampening, float(weight_decay), nesterov)] * len(self._parameters))
 
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
+
+        if not momentum > 0.0:
+            enable_cache_param_list = []
+            for param in self._parameters:
+                if param.cache_enable:
+                    enable_cache_param_list.append(param)
+                    param.cache_enable = False
+
         self.accum = self._parameters.clone(prefix="accum", init='zeros')
         self.stat = self._parameters.clone(prefix="stat", init='ones')
+
+
+        if not momentum > 0.0:
+            for param in enable_cache_param_list:
+                param.cache_enable = True
+
 
     @jit
     def construct(self, gradients):

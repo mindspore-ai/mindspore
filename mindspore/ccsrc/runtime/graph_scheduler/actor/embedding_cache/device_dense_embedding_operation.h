@@ -35,14 +35,16 @@ class DeviceDenseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   ~DeviceDenseEmbeddingOperation() override = default;
 
-  bool CountCacheMissIds(int *batch_ids, const size_t batch_ids_num, size_t data_step, size_t graph_running_step,
-                         bool *device_cache_need_wait_graph, bool *host_cache_need_wait_graph) override;
+  bool AnalyseCache(int *batch_ids, const size_t batch_ids_num, size_t data_step,
+                    const std::atomic_ulong *graph_running_step, bool *device_cache_need_wait_graph,
+                    bool *host_cache_need_wait_graph, int *indices, EmbeddingDeviceCache *embedding_device_cache,
+                    EmbeddingHostCache *embedding_host_cache, EmbeddingCacheStatisticsInfo *statistics_info) override;
 
   // Push non-hotspot embeddings on the device cache to the local host cache.
-  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) override;
+  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) override;
 
   // Pull missing embeddings on the device cache from the local host.
-  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) override;
+  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) override;
 
   // Get the id range of each server's embedding table slice.
   void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
@@ -73,16 +75,18 @@ class DeviceDenseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
   // slice corresponding to the process.
-  bool CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
-                               bool *out_range, size_t data_step);
+  bool CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *out_range,
+                               size_t data_step);
 
   // Thread execution function of method 'CheckCacheHitOrOutRange'.
-  bool CheckCacheHitOrOutRangeFunc(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
-                                   bool *out_range, size_t *hash_hit_count, size_t data_step);
+  bool CheckCacheHitOrOutRangeFunc(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *out_range,
+                                   size_t *hash_hit_count, size_t data_step);
 
   // Parse the hit and swap information of the currently preprocessed id in the device cache.
   bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index,
-                       size_t data_step, size_t graph_running_step, bool *device_cache_need_wait_graph);
+                       size_t data_step, size_t *cur_graph_running_step,
+                       const std::atomic_ulong *latest_graph_running_step, bool *device_cache_need_wait_graph,
+                       EmbeddingDeviceCache *embedding_device_cache, EmbeddingCacheStatisticsInfo *statistics_info);
 
   DISABLE_COPY_AND_ASSIGN(DeviceDenseEmbeddingOperation);
 };

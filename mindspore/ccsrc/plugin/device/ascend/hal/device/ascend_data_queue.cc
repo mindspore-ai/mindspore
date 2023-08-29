@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -297,11 +298,6 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
     acltdtDataItem *item0 = acltdtGetDataItem(acl_dataset, 0);
     std::string item_type;
     ParseType(acltdtGetDataTypeFromItem(item0), &item_type);
-    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, acltdtGetDataAddrFromItem(item0),
-                                                        acltdtGetDataSizeFromItem(item0), item_type)) {
-      MS_LOG(ERROR) << "PrefetchData failed in when pre-processing sending data.";
-      return DataQueueStatus::INTERNAL_ERROR;
-    }
   }
   auto status = acltdtSendTensor(acl_handle_, acl_dataset, -1);
   DestroyAclDataset(acl_dataset);

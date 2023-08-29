@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <vector>
 #include <tuple>
 #include <utility>
 #include "kernel/kernel.h"
@@ -28,6 +29,8 @@
 #include "include/backend/visible.h"
 #include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "include/backend/distributed/embedding_cache/embedding_hash_map.h"
+#include "include/backend/distributed/embedding_cache/blocking_queue.h"
+#include "include/backend/data_queue/data_queue.h"
 
 namespace mindspore {
 namespace runtime {
@@ -44,6 +47,9 @@ static constexpr size_t kHostCacheScaleFactor = 10;
 static constexpr size_t kMaxThreadNum = 16;
 // Maximum number of feature ids processed per thread.
 static constexpr size_t kMaxIdsPerThread = 10000;
+
+// Prefetch 16 batchs data once.
+static constexpr size_t kMultiBatchThreshold = 16;
 
 using mindspore::device::DeviceAddress;
 using mindspore::kernel::Address;
@@ -70,7 +76,7 @@ struct HashTableInfo {
   // For performance, set address the snapshot of device_address.
   Address address{nullptr, 0};
   DeviceAddress *device_address{nullptr};
-  std::shared_ptr<float> host_address{nullptr};
+  float *host_address{nullptr};
   ParamInitInfo param_init_info_;
   int32_t param_key_{-1};
 };
@@ -80,15 +86,12 @@ struct HashTableInfo {
 // all embedding cache tables on the device side is same: hash mapping, and feature ids of feature vectors that need
 // to be swapped with the local host cache.
 struct EmbeddingDeviceCache {
-  EmbeddingDeviceCache(size_t batch_ids_num, size_t cache_vocab_size);
+  explicit EmbeddingDeviceCache(size_t batch_ids_num);
 
   std::unique_ptr<int[]> device_to_host_index;
   std::unique_ptr<int[]> device_to_host_ids;
   std::unique_ptr<int[]> host_to_device_index;
   std::unique_ptr<int[]> host_to_device_ids;
-  int *hash_swap_index_addr_;
-  float *hash_swap_value_addr_;
-  std::shared_ptr<EmbeddingHashMap> device_hash_map_;
 };
 
 // Record the hash mapping relationship of all embedding tables with cache enabled on the local host side, and the
@@ -96,7 +99,7 @@ struct EmbeddingDeviceCache {
 // all embedding cache tables on the local host side is same: hash mapping, and feature ids of feature vectors that need
 // to be swapped with the remote cache and device cache.
 struct EmbeddingHostCache {
-  EmbeddingHostCache(size_t batch_ids_num, size_t host_cache_vocab_size);
+  explicit EmbeddingHostCache(size_t batch_ids_num);
 
   std::unique_ptr<int[]> host_to_server_index;
   std::unique_ptr<int[]> host_to_server_ids;
@@ -105,7 +108,6 @@ struct EmbeddingHostCache {
   std::unique_ptr<int[]> new_id_index;
   std::unique_ptr<int[]> host_to_device_index;
   std::unique_ptr<int[]> device_to_host_index;
-  std::shared_ptr<EmbeddingHashMap> host_hash_map_;
 };
 
 struct EmbeddingCacheStatisticsInfo {
@@ -122,6 +124,83 @@ struct EmbeddingCacheStatisticsInfo {
   size_t mem_cache_hit_count_{0};
 };
 
+// Origin id data item recorder.
+struct IdDataInfo {
+  IdDataInfo() = default;
+  IdDataInfo(void *data, size_t size, std::vector<device::DataQueueItem> *items, bool end_of_epoch, bool end_of_file)
+      : data_(data), size_(size), items_(items), end_of_epoch_(end_of_epoch), end_of_file_(end_of_file) {}
+
+  void *data_{nullptr};
+  size_t size_{0};
+  std::vector<device::DataQueueItem> *items_{nullptr};
+  bool end_of_epoch_{false};
+  bool end_of_file_{false};
+};
+
+// The indexes data after cache prefetch.
+struct IndexDataInfo {
+  IndexDataInfo() = default;
+  IndexDataInfo(void *data, std::vector<device::DataQueueItem> *items, bool end_of_epoch, bool end_of_file)
+      : data_(data), items_(items), end_of_epoch_(end_of_epoch), end_of_file_(end_of_file) {}
+
+  void *data_{nullptr};
+  std::vector<device::DataQueueItem> *items_{nullptr};
+  bool end_of_epoch_{false};
+  bool end_of_file_{false};
+};
+
+// The origin unique data recorder.
+struct UniqueIds {
+  UniqueIds() = default;
+
+  size_t data_step_{0};
+  std::vector<void *> multi_batch_data_;
+  std::vector<size_t> multi_batch_size_;
+  std::vector<std::vector<device::DataQueueItem> *> multi_batch_items_;
+  int *ids_{nullptr};
+  size_t ids_num_{0};
+
+  bool end_of_epoch_{false};
+  bool end_of_file_{false};
+};
+
+// Record all information used to analyse cache.
+struct CacheAnalysis {
+  CacheAnalysis() = default;
+  CacheAnalysis(EmbeddingDeviceCache *embedding_device_cache, EmbeddingHostCache *embedding_host_cache,
+                EmbeddingCacheStatisticsInfo *statistics_info, UniqueIds *unique_ids, int *indices, bool end_of_epoch,
+                bool end_of_file)
+      : embedding_device_cache_(embedding_device_cache),
+        embedding_host_cache_(embedding_host_cache),
+        statistics_info_(statistics_info),
+        unique_ids_(unique_ids),
+        indices_(indices),
+        end_of_epoch_(end_of_epoch),
+        end_of_file_(end_of_file) {}
+
+  // Record the ids information that needs to be exchanged with the local host cache.
+  EmbeddingDeviceCache *embedding_device_cache_{nullptr};
+  // Record the information that needs to be exchanged with the remote cache and device cache.
+  EmbeddingHostCache *embedding_host_cache_{nullptr};
+  EmbeddingCacheStatisticsInfo *statistics_info_{nullptr};
+  UniqueIds *unique_ids_{nullptr};
+  int *indices_{nullptr};
+  bool end_of_epoch_{false};
+  bool end_of_file_{false};
+};
+
+// Record all ids(after unique) and indices(after cache analysis)
+struct IdsAndIndices {
+  IdsAndIndices() = default;
+  IdsAndIndices(UniqueIds *unique_ids, int *indices, bool end_of_epoch, bool end_of_file)
+      : unique_ids_(unique_ids), indices_(indices), end_of_epoch_(end_of_epoch), end_of_file_(end_of_file) {}
+
+  UniqueIds *unique_ids_{nullptr};
+  int *indices_{nullptr};
+  bool end_of_epoch_{false};
+  bool end_of_file_{false};
+};
+
 // The EmbeddingCacheTableManager class is used to save all Parameter information for enabling cache, such as device
 // cache size, host cache size, etc., and can allocate memory for the embedding cache table.
 class BACKEND_EXPORT EmbeddingCacheTableManager {
@@ -134,7 +213,7 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   // Initialize the EmbeddingCacheTableManager.
   void Initialize();
   // Finalize the EmbeddingCacheTableManager and release all resource.
-  void Finalize();
+  void Finalize(const device::DeviceContext *device_context);
 
   // Insert and save dimension information of the embedding cache table.
   void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
@@ -184,6 +263,9 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   bool is_sparse_format() { return sparse_format_; }
 
+  // Get whether multi-stage pipeline cache prefetch is enabled.
+  bool enable_pipeline() const;
+
   void DumpHashTables() const;
 
   bool checkpoint_load_status() const { return checkpoint_load_status_; }
@@ -207,11 +289,7 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   std::map<std::string, HashTableInfo> &hash_tables() { return hash_tables_; }
 
-  std::shared_ptr<EmbeddingHostCache> &embedding_host_cache() { return embedding_host_cache_; }
-
-  void set_embedding_host_cache(std::shared_ptr<EmbeddingHostCache> embedding_host_cache_ptr) {
-    embedding_host_cache_ = embedding_host_cache_ptr;
-  }
+  void set_host_hash_map(const std::shared_ptr<EmbeddingHashMap> &host_hash_map) { host_hash_map_ = host_hash_map; }
 
  private:
   EmbeddingCacheTableManager() = default;
@@ -241,13 +319,12 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   // with the embedding cache enabled.
   std::map<std::string, HashTableInfo> hash_tables_;
 
-  // Record the hash mapping relationship of all embedding tables with cache enabled on the device side, and the
-  // ids information that needs to be exchanged with the local host cache.
-  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_;
+  std::shared_ptr<EmbeddingHashMap> device_hash_map_;
 
-  // Record the hash mapping relationship of all embedding tables with cache enabled on the local host side, and the
-  // information that needs to be exchanged with the remote cache and device cache.
-  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_;
+  std::shared_ptr<EmbeddingHashMap> host_hash_map_;
+
+  int *hash_swap_index_addr_;
+  float *hash_swap_value_addr_;
 
   // Model parallelism is used between multiple workers, and local_embedding_slice_bounds_ records the feature range
   // corresponding to the embedding table slice of the process.
@@ -268,6 +345,14 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   // If the storage format is sparse or dense, the default format is dense.
   bool sparse_format_{false};
+
+  // The batch number once cache prefetch.
+  size_t multi_batch_threshold_;
+
+  // Record whether multi-stage pipeline cache prefetch is enabled.
+  bool enable_pipeline_{false};
+
+  device::DeviceContext *cpu_device_context_{nullptr};
 
   friend class mindspore::runtime::EmbeddingCachePrefetchActor;
   friend class mindspore::runtime::DeviceEmbeddingOperation;
