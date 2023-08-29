@@ -34,6 +34,7 @@ tensor_scatter_ops_map = {"Add": P.TensorScatterAdd(), "Update": P.TensorScatter
 # The shape of output:  [A, B, C, D], the strategy of output: (a, b, c, d)
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
         super(Net, self).__init__()
         self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
@@ -52,6 +53,7 @@ class Net(nn.Cell):
 
 class Net1(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
         super(Net1, self).__init__()
         self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
@@ -70,6 +72,7 @@ class Net1(nn.Cell):
 
 class Net2(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
         super(Net2, self).__init__()
         self.indices = Tensor(np.ones([4, 3]).astype(np.int32))
@@ -88,6 +91,7 @@ class Net2(nn.Cell):
 
 class Net3(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
         super(Net3, self).__init__()
         self.inputs = Parameter(Tensor(np.ones([8, 8, 64]).astype(np.float32)), "input")
@@ -271,7 +275,8 @@ def test_tensor_scatter_mul_auto_parallel():
     Expectation: assert ok.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      full_batch=True)
     input1 = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     input2 = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     strategy1 = ((2, 2, 2), (1, 1), (1,))

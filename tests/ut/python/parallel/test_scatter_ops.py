@@ -27,6 +27,7 @@ scatter_ops_dict = {"Add": P.ScatterAdd(), "Mul": P.ScatterMul(), "Div": P.Scatt
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self, input_shape, indices_shape, updates_shape, strategy1=None, strategy2=None, ops="Add"):
         super(Net, self).__init__()
         self.inputs = Parameter(Tensor(np.ones(input_shape).astype(np.float32)), "input")
@@ -218,7 +219,8 @@ def test_scatter_mul_mix_split_auto_parallel():
     Expectation: compile success
     """
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=64, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=64,
+                                      full_batch=True)
     inputs = Tensor(np.ones([32 * 4, 64]).astype(np.float32))
     input_shape = [32 * 4, 64]
     indices_shape = [4]

@@ -44,6 +44,7 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+
 def test_bprop_with_sparse_feature_allreduce(test_context):
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="hybrid_parallel")
 

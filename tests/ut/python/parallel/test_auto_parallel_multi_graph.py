@@ -58,6 +58,8 @@ class ParallelFloorDivBpropNet(Cell):
 
 inputs_ = Tensor(np.random.randn(128, 96).astype(np.float32), dtype=ms.float32)
 label_ = Tensor(np.random.randn(128, 96).astype(np.float32), dtype=ms.float32)
+
+
 def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)

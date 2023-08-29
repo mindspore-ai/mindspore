@@ -29,8 +29,8 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-context.set_context(mode=context.GRAPH_MODE)
 
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -66,6 +66,7 @@ def test_auto_parallel_arithmetic():
     Description: search strategies
     Expectation: Generated strategies matching expectations
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -79,7 +80,7 @@ def test_auto_parallel_arithmetic():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -102,6 +103,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     Description: search strategies for broadcast
     Expectation: Generated strategies matching expectations
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -116,7 +118,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -137,6 +139,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
     Description: search strategies for right broadcast
     Expectation: Generated strategies matching expectations
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -150,7 +153,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -173,6 +176,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
     Description: search strategies for left broadcast
     Expectation: Generated strategies matching expectations
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -186,7 +190,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)

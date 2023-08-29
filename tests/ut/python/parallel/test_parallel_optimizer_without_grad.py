@@ -62,6 +62,7 @@ def test_opt_parallel_without_grad():
     Description: Need insert AllGather.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -74,6 +75,7 @@ def test_opt_parallel_without_grad():
             x = self.fc1(x, self.p1)
             x = self.fc2(x, self.p2)
             return x - y
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, enable_parallel_optimizer=True)
     net = GradWrap(NetWithLoss(Net()))
@@ -94,6 +96,7 @@ def test_opt_parallel_without_grad_pipeline():
     Description: Need insert AllGather.
     Expectation: Successful graph compilation.
     """
+
     class MatMulNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -120,6 +123,7 @@ def test_opt_parallel_without_grad_pipeline():
             for i in range(2):
                 x = self.block[i](x)
             return x
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=16, global_rank=0, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", pipeline_stages=2)

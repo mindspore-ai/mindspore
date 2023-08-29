@@ -54,6 +54,12 @@ class GradWrap(nn.Cell):
 
 
 def test_four_matmul_linear():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
@@ -73,6 +79,6 @@ def test_four_matmul_linear():
     y = Tensor(np.ones([16, 512]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net(strategy1)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net.set_train()
     _cell_graph_executor.compile(net, x, y)

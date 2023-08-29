@@ -131,7 +131,13 @@ _w1 = Tensor(np.ones([512, 128, 1]), dtype=ms.float32)
 
 
 def test_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16,
+                                      global_rank=0)
     _set_algo_single_loop(True)
     net = Full(_w1, 3)
     net.set_train()

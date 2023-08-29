@@ -66,12 +66,16 @@ class Net(nn.Cell):
         out = self.mul(out, y)
         return out
 
-def compile_net(net, index_shape, emb_shape, device_num=8, parallel_mode="semi_auto_parallel"):
-    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+
+def compile_net(net, index_shape, emb_shape, device_num=8, parallel_mode="semi_auto_parallel",
+                search_mode="dynamic_programming"):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode,
+                                      search_mode=search_mode)
     x = Tensor(np.ones(index_shape), dtype=ms.float32)
     y = Tensor(np.ones(emb_shape), dtype=ms.float32)
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
+
 
 def test_gatherv2_semi_auto0():
     """
@@ -153,7 +157,7 @@ def test_gatherv2_auto0():
     """
     context.set_auto_parallel_context(dataset_strategy="full_batch")
     net = GradWrap(NetWithLoss(Net(0)))
-    compile_net(net, [64, 32], [64, 64, 32], parallel_mode="auto_parallel")
+    compile_net(net, [64, 32], [64, 64, 32], parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
 
 def test_gatherv2_auto1():
@@ -163,7 +167,7 @@ def test_gatherv2_auto1():
     Expectation: compile done without error.
     """
     net = GradWrap(NetWithLoss(Net(1)))
-    compile_net(net, [64, 32], [64, 64, 64], parallel_mode="auto_parallel")
+    compile_net(net, [64, 32], [64, 64, 64], parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
 
 def test_gatherv2_cpu0():

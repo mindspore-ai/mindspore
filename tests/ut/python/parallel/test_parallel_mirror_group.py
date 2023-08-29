@@ -21,7 +21,7 @@ from mindspore import Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
-from mindspore.nn.optim import  Momentum
+from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.train.serialization import restore_group_info_list
@@ -30,8 +30,10 @@ from mindspore.train.serialization import restore_group_info_list
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class Net3(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1, strategy2, strategy3):
         super(Net3, self).__init__()
         self.fc1 = P.MatMul().shard(strategy1)
@@ -63,7 +65,6 @@ def auto_parallel_compile_net(strategy1=None, strategy2=None, strategy3=None):
     _cell_graph_executor.compile(train_network, inputs, label, phase="train")
 
 
-
 def test_mirror_group():
     """
     Feature: save and load mirror group
@@ -79,6 +80,7 @@ def test_mirror_group():
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
 
+
 def test_mirror_group_auto_parallel():
     """
     Feature: save and load mirror group
@@ -86,13 +88,14 @@ def test_mirror_group_auto_parallel():
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_auto_parallel.pb"
-    context.set_auto_parallel_context(parallel_mode="auto_parallel",
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming",
                                       device_num=32, enable_parallel_optimizer=False)
     auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
     group_info_list = restore_group_info_list("./test_mirror_group_auto_parallel.pb")
     assert group_info_list == [0, 4, 8, 12, 16, 20, 24, 28]
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
+
 
 def test_data_parallel_group():
     """
@@ -110,6 +113,7 @@ def test_data_parallel_group():
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
 
+
 def test_mirror_group_parallel_optimizer():
     """
     Feature: save and load mirror group
@@ -126,6 +130,7 @@ def test_mirror_group_parallel_optimizer():
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
 
+
 def test_mirror_group_parallel_optimizer_not_full_shard():
     """
     Feature: save and load mirror group
@@ -141,6 +146,7 @@ def test_mirror_group_parallel_optimizer_not_full_shard():
     assert group_info_list == [0, 8, 16, 24]
     context.reset_auto_parallel_context()
     del os.environ['GROUP_INFO_FILE']
+
 
 def test_pipeline_split_stage0_mirror_group():
     """
@@ -167,6 +173,7 @@ def test_pipeline_split_stage0_mirror_group():
     group_info_list = restore_group_info_list("./test_pipeline_split_stage0_mirror_group.pb")
     assert group_info_list == [0, 8, 16, 24]
     del os.environ['GROUP_INFO_FILE']
+
 
 def test_pipeline_split_stage1_mirror_group():
     """

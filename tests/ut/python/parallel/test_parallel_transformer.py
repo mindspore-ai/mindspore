@@ -24,8 +24,9 @@ from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 import mindspore.ops as P
-from mindspore.parallel._transformer import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
-    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention,\
+from mindspore.parallel._transformer import TransformerEncoder, TransformerDecoder, Transformer, \
+    TransformerOpParallelConfig, \
+    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention, \
     TransformerRecomputeConfig
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
@@ -37,6 +38,7 @@ from mindspore.parallel import set_algo_parameters
 from parallel.utils.utils import BasicValidator
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -151,17 +153,16 @@ def run_network_function(dataset, pipeline_net):
     model.train(2, dataset, dataset_sink_mode=False)
 
 
-def run_total_transformer_model_head(e_layer,
-                                     d_layer,
-                                     arg_parallel_config,
-                                     mode=ParallelMode.SEMI_AUTO_PARALLEL):
+def run_total_transformer_model_head(e_layer, d_layer, arg_parallel_config, mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                     search_mode="dynamic_programming"):
     dp = arg_parallel_config.data_parallel
     mp = arg_parallel_config.model_parallel
     pp = arg_parallel_config.pipeline_stage
     if dp * mp * pp != 1:
         set_auto_parallel_context(device_num=8,
                                   full_batch=True,
-                                  global_rank=0, parallel_mode=mode)
+                                  global_rank=0, parallel_mode=mode,
+                                  search_mode=search_mode)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
@@ -644,6 +645,7 @@ def test_encoder():
     Description: Test encoder layers
     Expectation: Compile ok.
     """
+
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -685,6 +687,7 @@ def test_encoder_recompute_slice():
     Description: Test encoder layers with slice recompute activation
     Expectation: Compile ok.
     """
+
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -726,6 +729,7 @@ def test_decoder():
     Description: Test decoder layers
     Expectation: Compile ok.
     """
+
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -769,6 +773,7 @@ def test_decoder_parallel_opt_recompute():
     Description: Test decoder layers with parallel optimizer recompute
     Expectation: Compile ok.
     """
+
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -868,7 +873,8 @@ def test_sparse_attention_parallel_mp():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                              search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(model_parallel=8)
     net = FixedSparseAttention(batch_size=16,
@@ -892,7 +898,8 @@ def test_sparse_attention_parallel_mix():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                              search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=2, model_parallel=4)
     net = FixedSparseAttention(batch_size=16,
@@ -916,7 +923,8 @@ def test_sparse_attention_parallel_mix1():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                              search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=4, model_parallel=2)
     net = FixedSparseAttention(batch_size=16,
@@ -940,7 +948,8 @@ def test_sparse_attention_parallel_dp():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                              search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=8, model_parallel=1)
     net = FixedSparseAttention(batch_size=16,
@@ -1091,7 +1100,8 @@ class TestCrossEntropyLoss(BasicValidator):
                  be used for each subgraph. And there should be only one Virtual dataset.
         Expectation: When there are many virtual datasets, or there are no forward operators.
         """
-        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+                                  search_mode="dynamic_programming")
         net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
         net = NetWithLossThreeInputs(net, config.dp_mp_config)
         embed_ids = Tensor(np.ones((2, 64)), mstype.int32)

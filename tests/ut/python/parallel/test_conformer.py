@@ -31,8 +31,10 @@ from mindspore.nn.loss.loss import LossBase
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 mindspore.set_seed(0)
 np.random.seed(0)
+
 
 def flatten(input_tensor, start_dim):
     shape = input_tensor.shape
@@ -40,7 +42,8 @@ def flatten(input_tensor, start_dim):
     dims = 1
     for i in range(start_dim, len(shape)):
         dims = dims * shape[i]
-    return input_tensor.reshape(new_shape+(dims,))
+    return input_tensor.reshape(new_shape + (dims,))
+
 
 def one_hot_int(label, num_classes):
     num_elements = label.size
@@ -50,8 +53,10 @@ def one_hot_int(label, num_classes):
         one_hot_label[index][label[index]] = 1
     return Tensor(one_hot_label, mindspore.float32)
 
+
 class CrossEntropySmooth(LossBase):
     """CrossEntropy"""
+
     def __init__(self, reduction='mean', is_auto_parallel=False):
         super(CrossEntropySmooth, self).__init__()
         self.ce = nn.SoftmaxCrossEntropyWithLogits(reduction=reduction)
@@ -67,8 +72,10 @@ class CrossEntropySmooth(LossBase):
             idx = idx + 1
         return loss
 
+
 class NetWithLossCell(nn.Cell):
     """Metwithlosscell"""
+
     def __init__(self, backbone, loss_fn):
         super(NetWithLossCell, self).__init__(auto_prefix=False)
         self._backbone = backbone
@@ -79,13 +86,15 @@ class NetWithLossCell(nn.Cell):
         loss = self._loss_fn(output, label)
         return loss
 
+
 class DropPath(nn.Cell):
     """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
     """
+
     def __init__(self, drop_prob=None, num_dimension=4, dp=1):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
-        strategy_feat = (dp,) + (1,)*(num_dimension-1)
+        strategy_feat = (dp,) + (1,) * (num_dimension - 1)
         self.uniformreal = P.UniformReal().shard((strategy_feat,))
         self.floor = P.Floor().shard((strategy_feat,))
         self.div = P.Div().shard((strategy_feat, ()))
@@ -109,10 +118,11 @@ class DropPath(nn.Cell):
         random_tensor = self.add(keep_prob, F.cast(self.uniformreal(shape), mindspore.float32))
         random_tensor = self.floor(random_tensor)
         output = self.mul(self.div(x, keep_prob), random_tensor)
-        return output # fp32
+        return output  # fp32
 
     def construct(self, x):
         return self.drop_path(x, self.drop_prob, self.training)
+
 
 class Norm(nn.Cell):
     r"""
@@ -128,6 +138,7 @@ class Norm(nn.Cell):
         Outputs:
             Tensor of shape :math:`(batch, seq_length, hidden_size)`.
     """
+
     def __init__(self, normalized_shape, axes=-1,
                  num_dimension=3, affine=True,
                  dp=1, eps=1e-5, is_gn=False, num_groups=1):
@@ -144,7 +155,7 @@ class Norm(nn.Cell):
         strategy = [dp if i == 0 else 1 for i in range(num_dimension)]
         strategy = tuple(strategy)
         if is_gn:
-            strategy1 = [dp if i == 0 else 1 for i in range(num_dimension-1)]
+            strategy1 = [dp if i == 0 else 1 for i in range(num_dimension - 1)]
             strategy1 = tuple(strategy1)
         else:
             strategy1 = strategy
@@ -190,6 +201,7 @@ class Mlp(nn.Cell):
     r"""
         MPL block
     """
+
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0., dp=1, mp=1):
         super(Mlp, self).__init__()
         out_features = out_features or in_features
@@ -222,8 +234,9 @@ class Mlp(nn.Cell):
         x = self.drop2(x)
         x = self.fc2(F.cast(x, mindspore.float16))
         x = self.drop(F.cast(x, mindspore.float32))
-        x = x.view(origin_shape[:-1]+(-1,))
+        x = x.view(origin_shape[:-1] + (-1,))
         return x
+
 
 class Attention(nn.Cell):
     """Multi-head Attention"""
@@ -279,9 +292,9 @@ class Attention(nn.Cell):
 
     def construct(self, x):
         """Multi-head Attention"""
-        b_size, n_channel, _ = x.shape # fp32
+        b_size, n_channel, _ = x.shape  # fp32
         x = F.cast(x, mindspore.float16)
-        x = x.view(b_size*n_channel, -1)
+        x = x.view(b_size * n_channel, -1)
         q = self.q(x)
         k = self.k(x)
         v = self.v(x)
@@ -302,13 +315,15 @@ class Attention(nn.Cell):
         attn = self.softmax(F.cast(self.batmatmul_trans_b(self.mul(q, self.scale), k), mindspore.float32))
         attn = self.attn_drop(attn)
         x = self.reshape(self.transpose2(self.batmatmul_trans_b(F.cast(attn, mindspore.float16), v),
-                                         (0, 2, 1, 3)), (b_size*n_channel, -1))
+                                         (0, 2, 1, 3)), (b_size * n_channel, -1))
         x = self.proj(x)
-        x = self.proj_drop(x) # fp16
+        x = self.proj_drop(x)  # fp16
         return x.view(b_size, n_channel, -1)
+
 
 class Block(nn.Cell):
     """Block."""
+
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,
                  dp=1, mp=1):
@@ -329,13 +344,14 @@ class Block(nn.Cell):
 
     def construct(self, x):
         # x fp32
-        x = self.add(x, self.drop_path(self.attn(self.norm1(x)))) # output x fp32
-        x = self.add(x, self.drop_path(self.mlp(self.norm2(x)))) # output x fp32
+        x = self.add(x, self.drop_path(self.attn(self.norm1(x))))  # output x fp32
+        x = self.add(x, self.drop_path(self.mlp(self.norm2(x))))  # output x fp32
         return x
 
 
 class ConvBlock(nn.Cell):
     """ConvBlock"""
+
     def __init__(self, inplanes, outplanes, stride=1,
                  res_conv=False, act_layer=nn.ReLU, groups=1,
                  norm_layer=nn.BatchNorm2d, drop_block=None,
@@ -406,19 +422,19 @@ class ConvBlock(nn.Cell):
         """ConvBlock construct"""
         residual = x
 
-        x = self.conv1(x) # fp16
+        x = self.conv1(x)  # fp16
         x = self.bn1(F.cast(x, mindspore.float32))
         x = F.cast(x, mindspore.float16)
         if self.drop_block is not None:
             x = self.drop_block(x)
-        x = self.act1(x) # fp16
+        x = self.act1(x)  # fp16
 
         if x_t is None:
             x = self.conv2(x)
         else:
             if self.weighted_fusion:
                 c = self.div(1.0, self.add1(1.0, self.exp(self.neg(self.c))))
-                x = self.conv2(self.add(self.mul(c, x), self.mul(1.0-c, F.cast(x_t, mindspore.float16))))
+                x = self.conv2(self.add(self.mul(c, x), self.mul(1.0 - c, F.cast(x_t, mindspore.float16))))
             else:
                 x = self.conv2(self.add(x, F.cast(x_t, mindspore.float16)))
 
@@ -495,6 +511,7 @@ class FCUDown(nn.Cell):
             x = self.concat([tmp2, x])
         return x
 
+
 class FCUUp(nn.Cell):
     """ Transformer patch embeddings -> CNN feature maps
     """
@@ -533,9 +550,9 @@ class FCUUp(nn.Cell):
         b_size, t_num, channel = F.shape(x)
         x = self.ln(x)
         if self.cls_token:
-            x_r = self.reshape(self.transpose(\
-                  self.slice(x, (0, 1, 0), (b_size, t_num, channel),\
-                  (1, 1, 1)), (0, 2, 1)), (b_size, channel, height, weight))
+            x_r = self.reshape(self.transpose( \
+                self.slice(x, (0, 1, 0), (b_size, t_num, channel), \
+                           (1, 1, 1)), (0, 2, 1)), (b_size, channel, height, weight))
         else:
             x_r = self.reshape(self.transpose(x, (0, 2, 1)), (b_size, channel, height, weight))
         # x_r fp32
@@ -601,23 +618,24 @@ class ConvTransBlock(nn.Cell):
     def construct(self, x, x_t):
         """ConvTransBlock construct"""
         # x fp16, x_t fp32
-        x, x2 = self.cnn_block(x) # both fp16
+        x, x2 = self.cnn_block(x)  # both fp16
 
         _, _, height, weight = x2.shape
 
-        x_st = self.squeeze_block(x2, x_t) # x_st fp32
+        x_st = self.squeeze_block(x2, x_t)  # x_st fp32
         if self.weighted_fusion:
             c = self.div(1.0, self.add1(1.0, self.exp(self.neg(self.c))))
             x_t = self.trans_block(self.add(self.mul(c, x_st), self.mul(self.sub(1.0, c), x_t)))
         else:
-            x_t = self.trans_block(self.add(x_st, x_t)) # x_t fp32
-        x_t_r = self.expand_block(x_t, height // self.dw_stride, weight // self.dw_stride) # x_t_r fp16
+            x_t = self.trans_block(self.add(x_st, x_t))  # x_t fp32
+        x_t_r = self.expand_block(x_t, height // self.dw_stride, weight // self.dw_stride)  # x_t_r fp16
         x = self.fusion_block(x, x_t_r)
         return x, x_t
 
 
 class ConformerOverflow(nn.Cell):
     """Conformeroverflow"""
+
     def __init__(self, patch_size=16, in_chans=3, num_classes=1000,
                  base_channel=64, channel_ratio=4, embed_dim=768,
                  stage_point=None, num_heads=12, mlp_ratio=4.,
@@ -702,7 +720,7 @@ class ConformerOverflow(nn.Cell):
 
         # 2~4 stage
         init_stage = 2
-        fin_stage = stage_point[1] + 1 # fin_stage = depth // 3 + 1
+        fin_stage = stage_point[1] + 1  # fin_stage = depth // 3 + 1
         for i in range(init_stage, fin_stage):
             self.conv_trans_list.append(
                 ConvTransBlock(stage_1_channel, stage_1_channel, False, 1,
@@ -723,7 +741,7 @@ class ConformerOverflow(nn.Cell):
         fin_stage = stage_point[1] + 1
         # 5~8 stage
         init_stage = fin_stage  # 5
-        fin_stage = stage_point[2] + 1 # fin_stage = fin_stage + depth // 3  # 9
+        fin_stage = stage_point[2] + 1  # fin_stage = fin_stage + depth // 3  # 9
         for i in range(init_stage, fin_stage):
             s = 2 if i == init_stage else 1
             in_channel = stage_1_channel if i == init_stage else stage_2_channel
@@ -740,7 +758,7 @@ class ConformerOverflow(nn.Cell):
         stage_3_channel = int(base_channel * channel_ratio * 2 * 2)
         # 9~12 stage
         init_stage = fin_stage  # 9
-        fin_stage = stage_point[3] + 1 # fin_stage = fin_stage + depth // 3  # 13
+        fin_stage = stage_point[3] + 1  # fin_stage = fin_stage + depth // 3  # 13
         for i in range(init_stage, fin_stage):
             s = 2 if i == init_stage else 1
             in_channel = stage_2_channel if i == init_stage else stage_3_channel
@@ -767,32 +785,32 @@ class ConformerOverflow(nn.Cell):
         # x fp32
         cls_tokens = None
         if self.cls_token_flag:
-            cls_tokens = self.broadcastto(self.cls_token) # fp32
+            cls_tokens = self.broadcastto(self.cls_token)  # fp32
 
         # stem stage [N, 3, 224, 224] -> [N, 64, 56, 56]
         x_fp32 = F.cast(self.conv1(F.cast(x, mindspore.float16)), mindspore.float32)
         x_fp16 = F.cast(self.bn1(x_fp32), mindspore.float16)
-        x_base = self.maxpool(self.act1(x_fp16)) # fp16
+        x_base = self.maxpool(self.act1(x_fp16))  # fp16
 
         # 1 stage
-        x = self.conv_1(x_base) # fp16
+        x = self.conv_1(x_base)  # fp16
 
         tmp = self.trans_patch_conv(x_base)
         tmp1 = flatten(tmp, 2)
 
-        x_t = F.cast(tmp1.transpose((0, 2, 1)), mindspore.float32) # fp32
+        x_t = F.cast(tmp1.transpose((0, 2, 1)), mindspore.float32)  # fp32
         if self.cls_token_flag:
             x_t = self.concat([cls_tokens, x_t])
-        x_t = self.trans_1(x_t) # fp32
+        x_t = self.trans_1(x_t)  # fp32
 
         # 2 ~ final
         for blk in self.conv_trans_blks:
-            x, x_t = blk(x, x_t) # x fp16, x_t fp32
+            x, x_t = blk(x, x_t)  # x fp16, x_t fp32
 
         # conv classification
         tmp2 = self.pooling(x)
         x_p = flatten(tmp2, 1)
-        conv_cls = self.conv_cls_head(x_p) # conv_cls fp16
+        conv_cls = self.conv_cls_head(x_p)  # conv_cls fp16
 
         # trans classification
         x_t = self.trans_norm(x_t)

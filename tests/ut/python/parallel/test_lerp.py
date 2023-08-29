@@ -56,7 +56,8 @@ def test_lerp_auto_parallel_with_weight_tensor():
     Description: auto parallel when 'weight' is tensor
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net()
     compile_net(net, input_start_, input_end_, input_weight_tensor_)
 
@@ -67,7 +68,8 @@ def test_lerp_auto_parallel_with_weight_float():
     Description: auto parallel when 'weight' is float
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = NetWithWeightFloat(input_weight_float_)
     compile_net(net, input_start_, input_end_)
 

@@ -53,6 +53,12 @@ class GradWrap(nn.Cell):
 
 # model_parallel test
 def test_two_matmul_dropout():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -68,7 +74,7 @@ def test_two_matmul_dropout():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)

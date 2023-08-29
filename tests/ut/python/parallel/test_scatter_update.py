@@ -27,6 +27,7 @@ def setup_function():
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self, strategy1=None, strategy2=None):
         super(Net, self).__init__()
         self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
@@ -71,8 +72,14 @@ def test_scatter_update_wrong_strategy():
 
 
 def test_distribute_predict_auto_parallel():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      full_batch=True)
     inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     net = Net()
     model = Model(net)

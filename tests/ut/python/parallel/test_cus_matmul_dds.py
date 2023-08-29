@@ -30,9 +30,11 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
+
 
 # q: (num_heads * size_per_head // 16, bs * seq_len // 16, 16, 16)
 # k: (num_heads * size_per_head // 16, bs * seq_len // 16, 16, 16)
@@ -67,7 +69,6 @@ class Net(nn.Cell):
             self.dense1.matmul.shard(((dp, 1), (mp, 1)))
             self.dense2.matmul.shard(((dp, 1), (mp, 1)))
             self.transpose.shard(((dp, 1, mp, 1),))
-
 
     def construct(self, x):
         q = self.dense1(x)
@@ -105,13 +106,14 @@ class NetWithLoss(nn.Cell):
 
 def compile_graph(batch_size, num_heads, dp, mp, auto=False, shard=True):
     if auto:
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     x = Tensor(np.ones((batch_size * 1024, num_heads * 128)), ms.float32)
     net = GradWrap(NetWithLoss(Net(batch_size, num_heads, dp, mp, shard=shard)))
     net.set_train()
     _cell_graph_executor.compile(net, x)
+
 
 def test_cus_matmul_dds_model_parallel_mix():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -121,6 +123,7 @@ def test_cus_matmul_dds_model_parallel_mix():
     mp = 8
     compile_graph(batch_size, num_heads, dp, mp)
 
+
 def test_cus_matmul_dds_model_parallel_dp():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     batch_size = 128
@@ -129,6 +132,7 @@ def test_cus_matmul_dds_model_parallel_dp():
     mp = 1
     compile_graph(batch_size, num_heads, dp, mp)
 
+
 def test_cus_matmul_dds_model_parallel_mp():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     batch_size = 128
@@ -136,6 +140,7 @@ def test_cus_matmul_dds_model_parallel_mp():
     dp = 1
     mp = 16
     compile_graph(batch_size, num_heads, dp, mp)
+
 
 def test_cus_matmul_dds_model_parallel_mix_auto():
     set_algo_parameters(fully_use_devices=False)
@@ -146,6 +151,7 @@ def test_cus_matmul_dds_model_parallel_mix_auto():
     mp = 8
     compile_graph(batch_size, num_heads, dp, mp, auto=True)
 
+
 def test_cus_matmul_dds_model_parallel_dp_auto():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     batch_size = 128
@@ -154,6 +160,7 @@ def test_cus_matmul_dds_model_parallel_dp_auto():
     mp = 1
     compile_graph(batch_size, num_heads, dp, mp, auto=True)
 
+
 def test_cus_matmul_dds_model_parallel_mp_auto():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     batch_size = 128
@@ -161,6 +168,7 @@ def test_cus_matmul_dds_model_parallel_mp_auto():
     dp = 1
     mp = 16
     compile_graph(batch_size, num_heads, dp, mp, auto=True)
+
 
 def test_cus_matmul_dds_model_parallel_auto():
     set_algo_parameters(fully_use_devices=False)
@@ -171,6 +179,7 @@ def test_cus_matmul_dds_model_parallel_auto():
     mp = 16
     compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)
 
+
 def test_cus_matmul_dds_repeat_cal_auto():
     set_algo_parameters(fully_use_devices=False)
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -179,6 +188,7 @@ def test_cus_matmul_dds_repeat_cal_auto():
     dp = 1
     mp = 2
     compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)
+
 
 def test_cus_matmul_dds_repeat1_cal_auto():
     set_algo_parameters(fully_use_devices=False)

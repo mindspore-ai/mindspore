@@ -27,6 +27,7 @@ from mindspore.ops.operations.comm_ops import NeighborExchange
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
 _x1 = Tensor(np.ones([32, 16]), dtype=ms.float32)
 _x2 = Tensor(np.ones([16, 32]), dtype=ms.float32)

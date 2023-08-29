@@ -63,6 +63,7 @@ def test_auto_parallel_activation1():
     net = Net(_w1, strategy1, strategy2, strategy3)
     compile_net(net)
 
+
 def test_auto_parallel_activation2():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
                                       search_mode="sharding_propagation")

@@ -22,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from parallel.utils.utils import ParallelValidator
 
+
 class Net(Cell):
     def __init__(self, strategy1, strategy2, split_tuple, param_shape, mul_weight_shape):
         super().__init__()

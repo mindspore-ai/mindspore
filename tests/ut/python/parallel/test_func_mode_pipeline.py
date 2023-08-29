@@ -22,7 +22,6 @@ from mindspore.common.jit_config import JitConfig
 from mindspore.common.initializer import initializer
 from mindspore.ops import functional as F
 
-
 context.set_context(mode=ms.GRAPH_MODE)
 context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
 
@@ -101,6 +100,7 @@ def funcs(in_dim, hidden_dim, out_dim):
 
     grad_net = ms.value_and_grad(net_forward, grad_position=None, weights=net.trainable_params())
     enable_opt_shard = context.get_auto_parallel_context("enable_parallel_optimizer")
+
     @ms_function
     def train_one_step(x, y):
         loss, grads = grad_net(x, y)
@@ -110,6 +110,7 @@ def funcs(in_dim, hidden_dim, out_dim):
             opt(accu_grads)
         status = hyper_map(pipeline_clear_grad, accu_grads, grads)
         return F.depend(loss, status)
+
     return train_one_step
 
 

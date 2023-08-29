@@ -101,6 +101,7 @@ def test_two_matmul():
     Description: In SemiAuto mode, if there is no strategy and can't use BatchParallelInfo, use StandAloneInfo
     Expectation: success
     '''
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()

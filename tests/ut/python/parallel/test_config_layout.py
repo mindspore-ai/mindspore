@@ -61,7 +61,7 @@ class Net(Cell):
         self.reshape = P.Reshape()
         self.reshape.add_prim_attr("skip_redistribution", True)
 
-        self.linear = P.MatMul().shard(((dp*sp, mp), (mp, 1)))
+        self.linear = P.MatMul().shard(((dp * sp, mp), (mp, 1)))
         self.param = Parameter(Tensor(np.ones([5120, 5120]), dtype=ms.float16), "w1")
 
     def construct(self, q, k, v, x):

@@ -32,6 +32,7 @@ from tests.dataset_mock import MindData
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -65,8 +66,10 @@ class AllToAllNet(nn.Cell):
         x = self.transpose1(x, (1, 0))
         return x
 
+
 def all_to_all_net(strategy1):
     return AllToAllNet(strategy1=strategy1)
+
 
 def all_to_all_common(strategy1):
     learning_rate = 0.1
@@ -90,10 +93,12 @@ def all_to_all_common(strategy1):
 
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
+
 def test_all_to_all():
     strategy1 = ((8, 1),)
     _reset_op_id()
     all_to_all_common(strategy1)
+
 
 def test_data_parallel_mode():
     _reset_op_id()

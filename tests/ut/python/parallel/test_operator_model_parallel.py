@@ -32,6 +32,7 @@ from mindspore.ops.operations import Add
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
+
 dev_num = 8
 strategy_no_weight = ((dev_num, 1, 1, 1),)
 strategy_weight = ((dev_num, 1, 1, 1), (1, 1, 1, 1))

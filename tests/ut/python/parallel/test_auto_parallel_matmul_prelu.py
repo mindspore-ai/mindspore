@@ -56,6 +56,12 @@ class GradWrap(nn.Cell):
 
 
 def test_matmul_prelu():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -75,7 +81,7 @@ def test_matmul_prelu():
     b = Tensor(np.array([0.01, 0.02, 0.03]), dtype=ms.float32)
 
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     net.set_train()

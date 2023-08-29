@@ -110,9 +110,14 @@ class TrainStepWarp(nn.Cell):
 
 
 def test_double_subgraphs():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     _set_multi_subgraphs()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = TrainStepWarp(NetWithLoss(Net()))
 
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
@@ -159,9 +164,16 @@ class DatasetLenet():
     def create_tuple_iterator(self, num_epochs=-1, do_copy=True):
         return self
 
+
 def test_double_subgraphs_train():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(device_num=1, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", dataset_strategy="data_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming",
+                                      dataset_strategy="data_parallel")
     net = TrainStepWarp(NetWithLoss(Net()))
 
     batch_ids = np.ones([8, 8, 8, 8]).astype(np.int32)

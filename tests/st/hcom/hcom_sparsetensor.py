@@ -161,7 +161,8 @@ class NetWithSparseGatherV2(nn.Cell):
 def test_allreduce_sparsegatherv2_adam_auto_parallel():
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     init(backend_name='hccl')
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=8, gradients_mean=True)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=8, gradients_mean=True,
+                                      search_mode="dynamic_programming")
     indices = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]).astype(np.int32))
     epoch = 3
     batch_size = 1

@@ -102,7 +102,13 @@ def test_BroadcastTo_parameter_no_full():
 
 
 def test_BroadcastTo_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(_w1)
     compile_net(net)
 

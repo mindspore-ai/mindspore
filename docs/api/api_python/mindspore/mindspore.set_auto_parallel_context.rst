@@ -40,7 +40,7 @@ mindspore.set_auto_parallel_context
           - semi_auto_parallel：半自动并行模式。
           - auto_parallel：自动并行模式。
 
-        - **search_mode** (str) - 表示有三种策略搜索模式，分别是 ``recursive_programming`` ， ``dynamic_programming`` 和 ``sharding_propagation`` 。默认值： ``dynamic_programming`` 。
+        - **search_mode** (str) - 表示有三种策略搜索模式，分别是 ``recursive_programming`` ， ``dynamic_programming`` 和 ``sharding_propagation`` 。默认值： ``recursive_programming`` 。
 
           - recursive_programming：表示双递归搜索模式。为了获取最优性能，建议用户设置batch size大于等于设备数与多副本并行数的乘积。
           - dynamic_programming：表示动态规划搜索模式。

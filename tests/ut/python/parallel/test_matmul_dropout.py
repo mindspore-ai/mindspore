@@ -61,6 +61,7 @@ def _is_float_dtype(dtype):
         return True
     return False
 
+
 class Dropout(nn.Cell):
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
         super(Dropout, self).__init__()
@@ -102,6 +103,7 @@ class Dropout(nn.Cell):
 
     def extend_repr(self):
         return 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
+
 
 # model_parallel test
 def test_two_matmul_dropout():

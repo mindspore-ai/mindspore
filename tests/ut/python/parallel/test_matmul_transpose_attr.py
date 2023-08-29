@@ -170,7 +170,8 @@ def test_matmul_transpose_a_auto_parallel():
     Description: transpose a, auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     x = Tensor(np.ones([16, 8]), dtype=ms.float32)
     w = Tensor(np.ones([8, 32]), dtype=ms.float32)
     net = MatMulNet(w, a=True)
@@ -186,7 +187,8 @@ def test_matmul_transpose_a_b_auto_parallel():
     Description: transpose a and b, auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     x = Tensor(np.ones([16, 8]), dtype=ms.float32)
     w = Tensor(np.ones([32, 8]), dtype=ms.float32)
     net = MatMulNet(w, a=True, b=True)
@@ -336,7 +338,8 @@ def test_batch_matmul_transpose_a_auto():
     Description: transpose a, auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     x = Tensor(np.ones([8, 4, 8, 16]), dtype=ms.float32)
     w = Tensor(np.ones([8, 1, 16, 32]), dtype=ms.float32)
     net = BatchMatMulNet(w, a=True)
@@ -352,7 +355,8 @@ def test_batch_matmul_transpose_a_b_auto():
     Description: transpose a and b, auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     x = Tensor(np.ones([8, 4, 8, 16]), dtype=ms.float32)
     w = Tensor(np.ones([8, 1, 32, 16]), dtype=ms.float32)
     net = BatchMatMulNet(w, a=True, b=True)

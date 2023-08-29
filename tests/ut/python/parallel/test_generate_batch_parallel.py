@@ -60,6 +60,7 @@ def test_concat():
     Description: axis=0, batch parallel strategy must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -68,6 +69,7 @@ def test_concat():
         def construct(self, x, y):
             out = self.concat((x, y))
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
@@ -88,6 +90,7 @@ def test_batch_matmul():
     Description: batch parallel strategy of weight must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -96,6 +99,7 @@ def test_batch_matmul():
         def construct(self, x, y):
             out = self.batch_matmul(x, y)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
@@ -116,6 +120,7 @@ def test_onehot():
     Description: batch parallel strategy must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -126,6 +131,7 @@ def test_onehot():
         def construct(self, x, y):
             out = self.ont_hot(x, 1, self.on, self.off)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
@@ -146,6 +152,7 @@ def test_slice():
     Description: batch parallel strategy must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -154,6 +161,7 @@ def test_slice():
         def construct(self, x, y):
             out = self.slice(x, (0, 0), (64, 128))
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, full_batch=True)
     net = GradWrap(NetWithLoss(Net()))
@@ -174,6 +182,7 @@ def test_strided_slice():
     Description: batch parallel strategy must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -182,6 +191,7 @@ def test_strided_slice():
         def construct(self, x, y):
             out = self.slice(x, (0, 0), (64, 128), (1, 1))
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, full_batch=True)
     net = GradWrap(NetWithLoss(Net()))
@@ -202,6 +212,7 @@ def test_split():
     Description: batch parallel strategy must be full one.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -210,6 +221,7 @@ def test_split():
         def construct(self, x, y):
             out, _ = self.split(x)
             return out
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, full_batch=True)
     net = GradWrap(NetWithLoss(Net()))
@@ -230,6 +242,7 @@ def test_virtual_output():
     Description: No need to insert virtualoutput.
     Expectation: Successful graph compilation.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -237,6 +250,7 @@ def test_virtual_output():
 
         def construct(self):
             return self.param
+
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, full_batch=True)
     net = Net()

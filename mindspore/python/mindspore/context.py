@@ -727,7 +727,7 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
-                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"dynamic_programming"`` .
+                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"recursive_programming"`` .
 
                      - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
                        it is recommended that users set the batch size to be greater than or equal to the product of
@@ -892,8 +892,8 @@ def reset_auto_parallel_context():
     - gradients_mean: False.
     - gradient_fp32_sync: True.
     - parallel_mode: 'stand_alone'.
-    - search_mode: 'dynamic_programming'.
-    - auto_parallel_search_mode: 'dynamic_programming'.
+    - search_mode: 'recursive_programming'.
+    - auto_parallel_search_mode: ''recursive_programming'.
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: ''.
     - strategy_ckpt_save_file: ''.

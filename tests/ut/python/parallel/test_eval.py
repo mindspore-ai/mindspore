@@ -54,10 +54,12 @@ _x = Tensor(np.ones([64, 64]), dtype=ms.float32)
 _w1 = Tensor(np.ones([64, 64]), dtype=ms.float32)
 _b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
+
 def compile_net(net, input_data, label, is_train=True):
     net.set_train(mode=is_train)
     phase = "train" if is_train else "eval"
     _cell_graph_executor.compile(net, input_data, label, phase=phase)
+
 
 def test_train_and_eval():
     """
@@ -74,13 +76,14 @@ def test_train_and_eval():
     compile_net(eval_net, _x, _b, is_train=False)
     context.reset_auto_parallel_context()
 
+
 def test_train_and_eval_auto():
     """
     Feature: test train and eval in semi auto parallel.
     Description: train and eval net in auto parallel.
     Expectation: compile done without error.
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16)
     strategy1 = ((4, 4), (4, 4))
     strategy2 = ((4, 4),)
     net = Net(_w1, strategy1, strategy2)

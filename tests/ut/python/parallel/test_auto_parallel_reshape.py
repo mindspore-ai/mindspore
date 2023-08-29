@@ -51,6 +51,7 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+
 class NetWithLossTwoInput(nn.Cell):
     def __init__(self, network):
         super(NetWithLossTwoInput, self).__init__()
@@ -60,6 +61,7 @@ class NetWithLossTwoInput(nn.Cell):
     def construct(self, x, y):
         predict = self.network(x, y)
         return self.loss(predict)
+
 
 class NetWithReduceLoss(nn.Cell):
     def __init__(self, network):
@@ -71,6 +73,7 @@ class NetWithReduceLoss(nn.Cell):
         predict = self.network(x, y)
         return self.mean(predict, ())
 
+
 class GradWrapTwoInput(nn.Cell):
     def __init__(self, network):
         super(GradWrapTwoInput, self).__init__()
@@ -80,13 +83,16 @@ class GradWrapTwoInput(nn.Cell):
         return grad_all(self.network)(x, y)
 
 
-def compile_graph(net, parallel_mode, device_num, x):
-    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+def compile_graph(net, parallel_mode, device_num, x, search_mode="dynamic_programming"):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode,
+                                      search_mode=search_mode)
     net.set_train()
     _cell_graph_executor.compile(net, x)
 
-def compile_graph_two_input(net, parallel_mode, device_num, x, y):
-    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+
+def compile_graph_two_input(net, parallel_mode, device_num, x, y, search_mode="dynamic_programming"):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode,
+                                      search_mode=search_mode)
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
 
@@ -97,6 +103,7 @@ def test_reshape_matmul():
     Description: reshape - matmul net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -114,12 +121,14 @@ def test_reshape_matmul():
     net = GradWrap(NetWithLoss(Net()))
     compile_graph(net, "auto_parallel", size, x)
 
+
 def test_reshape_reshape():
     """
     Feature: distribute operator reshape in auto parallel.
     Description: reshape - reshape net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -144,6 +153,7 @@ def test_reshape_auto_1():
     Description: relu - reshape - matmul net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -170,6 +180,7 @@ def test_reshape_auto_2():
     Description: reshape - matmul -reshape net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -199,6 +210,7 @@ def test_reshape_auto_3():
     Description: reshape as last node net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -225,6 +237,7 @@ def test_reshape_auto_4():
     Description: reshape - reshape net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -252,6 +265,7 @@ def test_reshape_auto_5():
     Description: modify wide&deep small net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -275,9 +289,10 @@ def test_reshape_auto_5():
     size = 8
     context.set_auto_parallel_context(dataset_strategy="full_batch")
     x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024 * size,]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024 * size, ]), dtype=ms.float32)
     net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
     compile_graph_two_input(net, "auto_parallel", size, x, y)
+
 
 def test_reshape_auto_6():
     """
@@ -285,6 +300,7 @@ def test_reshape_auto_6():
     Description: modify wide&deep small net in auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -306,9 +322,10 @@ def test_reshape_auto_6():
     size = 8
     context.set_auto_parallel_context(dataset_strategy="full_batch")
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024, ]), dtype=ms.float32)
     net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
     compile_graph_two_input(net, "auto_parallel", size, x, y)
+
 
 def test_reshape_auto_7():
     """
@@ -316,6 +333,7 @@ def test_reshape_auto_7():
     Description: reshape weight net in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -333,12 +351,14 @@ def test_reshape_auto_7():
     net = GradWrap(NetWithLoss(Net()))
     compile_graph(net, "semi_auto_parallel", size, x)
 
+
 def test_reshape_depend_reshape():
     """
     Feature: distribute operator reshape in auto parallel.
     Description: reshape - depend -reshape net in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -367,12 +387,14 @@ def test_reshape_depend_reshape():
     net_auto = GradWrapTwoInput(NetWithReduceLoss(Net()))
     compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
 
+
 def test_appeq_reshape():
     """
     Feature: distribute operator reshape in auto parallel.
     Description: app_eq - reshape - cast - relu net in semi auto parallel / auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()

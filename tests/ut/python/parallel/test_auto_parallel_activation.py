@@ -52,7 +52,13 @@ def compile_net(net):
 
 
 def test_auto_parallel_activation():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
+    """
+    Feature: test activation auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=16,
+                                      global_rank=0)
     strategy1 = ((4, 4), (4, 4))
     strategy2 = None
     net = Net(_w1, strategy1, strategy2)

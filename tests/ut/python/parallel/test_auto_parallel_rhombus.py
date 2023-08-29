@@ -57,6 +57,12 @@ def compile_net(net, x, y, b):
 
 
 def test_rhombus1():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -78,11 +84,17 @@ def test_rhombus1():
     b = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, b)
 
 
 def test_rhombus2():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -109,11 +121,17 @@ def test_rhombus2():
     b = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, b)
 
 
 def test_rhombus3():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -140,5 +158,5 @@ def test_rhombus3():
     z = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, z)

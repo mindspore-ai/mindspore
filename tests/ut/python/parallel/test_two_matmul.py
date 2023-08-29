@@ -90,6 +90,7 @@ def test_two_matmul_both_a_b_strategy():
     Description: transpose_b is false, input dimension 2
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -120,6 +121,7 @@ def test_two_matmul_no_need_gather():
     Description: transpose_b is false, input dimension 2.
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -198,6 +200,7 @@ def test_matmul_output_strategy_reduce_scatter():
     Description: transpose_b is false, set output strategy and use reduce scatter
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -227,6 +230,7 @@ def test_matmul_output_strategy_reduce_scatter_transpose():
     Description: transpose_b is true, set output strategy and use reduce scatter
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -256,6 +260,7 @@ def test_matmul_output_strategy_all_reduce():
     Description: transpose_b is false, set output strategy and use all reduce
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -285,6 +290,7 @@ def test_matmul_output_strategy_all_reduce_transpose():
     Description: transpose_b is true, set output strategy and use all reduce
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -314,6 +320,7 @@ def test_matmul_output_strategy_reduce_scatter_repeat_calc():
     Description: transpose_b is false, set output strategy use reduce scatter and repeated calculation
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -343,6 +350,7 @@ def test_matmul_output_strategy_reduce_scatter_transpose_repeat_calc():
     Description: transpose_b is true, set output strategy use reduce scatter and repeated calculation
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -372,6 +380,7 @@ def test_matmul_output_strategy_all_reduce_repeat_calc():
     Description: transpose_b is false, set output strategy use all reduce and repeated calculation
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -401,6 +410,7 @@ def test_matmul_output_strategy_all_reduce_transpose_repeat_calc():
     Description: transpose_b is true, set output strategy use all reduce and repeated calculation
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -430,6 +440,7 @@ def test_matmul_in_strategy_not_int():
     Description:
     Expectation: rasise TypeError
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -456,6 +467,7 @@ def test_matmul_out_strategy_not_int():
     Description:
     Expectation: rasise TypeError
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()
@@ -482,6 +494,7 @@ def test_matmul_in_strategy_is_none_and_out_strategy_is_not_none():
     Description:
     Expectation: rasise ValueError
     """
+
     class Net(nn.Cell):
         def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
             super().__init__()

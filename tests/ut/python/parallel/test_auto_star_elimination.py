@@ -85,12 +85,17 @@ class MarginCE(LossBase):
 
 
 def test_marin_loss():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=0)
 
     x = Tensor(np.ones([512, 512]), dtype=ms.float32)
     y = Tensor(np.ones([512, 512]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(MarginCE()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net.set_train()
     _cell_graph_executor.compile(net, x, y)

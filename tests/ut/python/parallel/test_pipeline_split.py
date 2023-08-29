@@ -28,6 +28,7 @@ from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved, _MicroBatch, Cell
 
+
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data
@@ -507,6 +508,7 @@ class TestPipelineSplitWithNoOptimizer:
                               target_count=2)
         self.cat_fp16_from_ir(pattern='Cast(',
                               target_count=42)
+
 
 def test_pipeline_split_stage0_device_num_48():
     """

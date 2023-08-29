@@ -25,6 +25,7 @@ from mindspore.ops import operations as P
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class Net(nn.Cell):
     def __init__(self, wi, stra1=None, stra2=None, stra3=None):
         super(Net, self).__init__()
@@ -43,6 +44,7 @@ class Net(nn.Cell):
         output = self.onehot(output, self.depth, self.on_value, self.off_value)
         output = self.mul(output, output)
         return output
+
 
 _x = Tensor(np.ones([16, 48]), dtype=ms.float32)
 _wi = Tensor(np.ones([48, 16]), dtype=ms.float32)

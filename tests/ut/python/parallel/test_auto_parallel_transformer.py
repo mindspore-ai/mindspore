@@ -114,12 +114,17 @@ class MultiTransformer(nn.Cell):
 
 
 def test_dmnet_train_step():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
 
     input_ = Tensor(np.ones([4096, 4096]).astype(np.float32) * 0.01)
     net = GradWrap(NetWithLoss(MultiTransformer()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net.set_train()
     _cell_graph_executor.compile(net, input_)
 

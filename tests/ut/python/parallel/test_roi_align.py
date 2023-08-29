@@ -26,6 +26,7 @@ from parallel.utils.utils import ParallelValidator
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 POOLED_HEIGHT = 2
 POOLED_WIDTH = 2
 SPATIAL_SCALE = 0.5
@@ -63,7 +64,8 @@ def test_roi_align_auto_parallel():
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(POOLED_HEIGHT, POOLED_WIDTH, SPATIAL_SCALE)
     compile_net(net, _features, _rois)
 

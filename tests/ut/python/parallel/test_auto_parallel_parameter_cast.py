@@ -48,6 +48,7 @@ def test_common_parameter():
     Description: search strategies for cast parameter
     Expectation: Generated strategies matching expectations
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -73,7 +74,7 @@ def test_common_parameter():
     y = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     net.set_train()

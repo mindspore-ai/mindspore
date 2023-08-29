@@ -30,6 +30,7 @@ from mindspore.nn.layer.activation import get_activation
 from mindspore.train import Model
 from mindspore.common.api import _cell_graph_executor
 from tests.dataset_mock import MindData
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 

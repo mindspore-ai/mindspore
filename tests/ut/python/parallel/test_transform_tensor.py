@@ -336,7 +336,6 @@ def test_construct_from_to_tensor_layout():
 def conver_tensor_by_layout(from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size,
                             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size,
                             tensor_dict, rank_id):
-
     device_num = np.prod(from_dev_matrix)
     tensor_shape = tensor_dict[rank_id % device_num].shape
     param_strategy = _get_tensor_strategy(from_dev_matrix, from_tensor_map)

@@ -260,7 +260,7 @@ class ParallelMultiHotFactory:
         return load_checkpoint(newest_ckpt_file)
 
     def mindspore_auto_parallel_impl(self, dataset, epoch, device_num):
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, search_mode="dynamic_programming",
                                           device_num=device_num)
         parallel_mode_net = MultiHotNet(vocab_size=self.vocab_size, embedding_size=self.embedding_size,
                                         field_size=self.field_size, param_init=self.param_init, target=self.target,

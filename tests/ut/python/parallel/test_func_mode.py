@@ -20,7 +20,6 @@ from mindspore import dataset as ds
 from mindspore.ops import operations as P
 from mindspore.common.jit_config import JitConfig
 
-
 context.set_context(mode=ms.GRAPH_MODE)
 context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
 
@@ -45,6 +44,7 @@ class Attention(nn.Cell):
         v = self.fc_c(x)
         return q, k, v
 
+
 attention = Attention()
 relu = nn.ReLU()
 
@@ -52,11 +52,12 @@ relu = nn.ReLU()
 @jit
 def dense_func(x, label):
     q, k, v = attention(x)
-    k = P.Transpose()(k, (1, 0)) # (728, 32)
-    c = relu(P.MatMul()(q, k)) # (32, 32)
-    s = relu(P.MatMul()(c, v)) # (32, 768)
+    k = P.Transpose()(k, (1, 0))  # (728, 32)
+    c = relu(P.MatMul()(q, k))  # (32, 32)
+    s = relu(P.MatMul()(c, v))  # (32, 768)
     s = s - label
     return P.ReduceMean()(s * s)
+
 
 optimizer_adam = nn.Adam(attention.trainable_params(), learning_rate=0.001)
 attention.set_train()

@@ -87,6 +87,7 @@ def test_sum_mul():
     Description: partition the non-reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -119,6 +120,7 @@ def test_sum_mul2():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -151,6 +153,7 @@ def test_sum_mul3():
     Description: partition the non-reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -183,6 +186,7 @@ def test_sum_mul4():
     Description: partition the reduced axes, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -215,6 +219,7 @@ def test_sum_mul5():
     Description: partition the reduced axes, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -243,6 +248,7 @@ def test_sum_mul6():
     Description: partition the non-reduced axes, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -271,6 +277,7 @@ def test_sum_mul7():
     Description: partition the reduced axes, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -299,6 +306,7 @@ def test_max_mul():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -331,6 +339,7 @@ def test_min_mul():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -363,6 +372,7 @@ def test_reduce_mean_mul_float32():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -416,6 +426,7 @@ class ArgMinWithValueNet(nn.Cell):
         _, out = self.arg_min_with_value(out)
         out = self.mul2(out, b)
         return out
+
 
 class ArgMaxNet(nn.Cell):
     def __init__(self, strategy1, strategy2):
@@ -490,7 +501,7 @@ def test_arg_max_with_value_mul_auto():
     strategy2 = None
     strategy3 = None
     net = GradWrap(NetWithLoss(ArgMaxWithValueNet(strategy1, strategy2, strategy3)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net(net)
 
 
@@ -535,7 +546,7 @@ def test_arg_min_with_value_mul_auto():
     strategy2 = None
     strategy3 = None
     net = GradWrap(NetWithLoss(ArgMinWithValueNet(strategy1, strategy2, strategy3)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net(net)
 
 
@@ -577,7 +588,7 @@ def test_arg_max_mul_auto():
     strategy1 = None
     strategy2 = None
     net = GradWrapNoBias(NetWithLossNoBias(ArgMaxNet(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net_no_bias(net)
 
 
@@ -619,7 +630,7 @@ def test_arg_min_mul_auto():
     strategy1 = None
     strategy2 = None
     net = GradWrapNoBias(NetWithLossNoBias(ArgMinNet(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net_no_bias(net)
 
 
@@ -673,7 +684,7 @@ def test_arg_min_with_value_mul_auto2():
     strategy2 = None
     strategy3 = None
     net = GradWrapNoBias(NetWithLossNoBias(ArgMinWithValueNet2(strategy1, strategy2, strategy3)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net_no_bias(net)
 
 
@@ -683,13 +694,14 @@ def test_cross_batch():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
             self.mul1 = P.Mul().shard(strategy1)
             self.reduce_sum = P.ReduceSum(keep_dims=False).shard(strategy2)
             self.reduce_mean = P.ReduceMean(keep_dims=False).shard(strategy3) \
-                                .add_prim_attr("cross_batch", True)
+                .add_prim_attr("cross_batch", True)
 
         def construct(self, x, y):
             out = self.mul1(x, y)
@@ -715,13 +727,14 @@ def test_cross_batch2():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
             self.mul1 = P.Mul().shard(strategy1)
             self.reduce_mean = P.ReduceMean(keep_dims=False).shard(strategy2)
             self.reduce_sum = P.ReduceSum(keep_dims=False).shard(strategy3) \
-                               .add_prim_attr("cross_batch", True)
+                .add_prim_attr("cross_batch", True)
 
         def construct(self, x, y):
             out = self.mul1(x, y)
@@ -747,6 +760,7 @@ def test_cross_batch_auto():
     Description: don't set the strategy, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -762,7 +776,7 @@ def test_cross_batch_auto():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrapNoBias(NetWithLossNoBias(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
 
     x = Tensor(np.ones([32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -775,6 +789,7 @@ def test_max_empty_tuple():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super(Net, self).__init__()
@@ -808,6 +823,7 @@ def test_any_mul():
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -838,6 +854,7 @@ def test_any_mul2():
     Description: partition the non-reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -861,12 +878,14 @@ def test_any_mul2():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     compile_net_no_bias(net, x, y)
 
+
 def test_all_mul():
     """
     Feature: test ReduceAll semi parallel strategy
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -897,6 +916,7 @@ def test_all_mul2():
     Description: partition the non-reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -920,12 +940,14 @@ def test_all_mul2():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     compile_net_no_bias(net, x, y)
 
+
 def test_prod_mul():
     """
     Feature: test ReduceProd model parallel strategy
     Description: partition the reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -947,12 +969,14 @@ def test_prod_mul():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     compile_net_no_bias(net, x, y)
 
+
 def test_prod_mul2():
     """
     Feature: test ReduceProd model parallel strategy
     Description: partition the non-reduced axes, keep_dims is False
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -974,12 +998,14 @@ def test_prod_mul2():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     compile_net_no_bias(net, x, y)
 
+
 def test_prod_mul3():
     """
     Feature: test ReduceProd model parallel strategy
     Description: partition the reduced axes, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, stra_mul, stra_prod):
             super(Net, self).__init__()
@@ -1001,12 +1027,14 @@ def test_prod_mul3():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     compile_net_no_bias(net, x, y)
 
+
 def test_prod_mul_auto():
     """
     Feature: test ReduceProd auto parallel strategy
     Description: don't set the strategy, keep_dims is True
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -1022,7 +1050,7 @@ def test_prod_mul_auto():
     strategy1 = None
     strategy2 = None
     net = GradWrapNoBias(NetWithLossNoBias(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     gen_inputs_and_compile_net_no_bias(net)
 
 
@@ -1032,6 +1060,7 @@ def test_square_sum_all_mul():
     Description: partition the reduced axes
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super(Net, self).__init__()
@@ -1060,6 +1089,7 @@ def test_square_sum_all_mul2():
     Description: partition the reduced axes
     Expectation: compile success
     """
+
     class Net(nn.Cell):
         def __init__(self, stra_mul, stra_prod):
             super(Net, self).__init__()

@@ -56,6 +56,12 @@ def get_block():
 
 
 def test_two_bn():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -73,7 +79,7 @@ def test_two_bn():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net = NetWithLoss(Net())
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     net.set_train()

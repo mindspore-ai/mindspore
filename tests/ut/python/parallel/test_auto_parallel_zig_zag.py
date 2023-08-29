@@ -54,6 +54,12 @@ class GradWrap(nn.Cell):
 
 
 def test_zig_zag_graph():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -79,6 +85,6 @@ def test_zig_zag_graph():
     a = Tensor(np.ones([32, 23]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     net.set_train()
     _cell_graph_executor.compile(net, x, y, z, w, a)

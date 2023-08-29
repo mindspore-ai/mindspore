@@ -78,6 +78,7 @@ _x1 = Tensor(np.ones([48, 64, 32]), dtype=ms.float32)
 
 _w2 = Tensor(np.ones([48, 64, 32]), dtype=ms.float32)
 
+
 def compile_net(net):
     context.set_context(mode=context.GRAPH_MODE)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -146,6 +147,12 @@ def test_split_no_strategy():
 
 
 def test_split_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net2(_w2, 0, 2)
     compile_net1(net)

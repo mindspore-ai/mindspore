@@ -64,7 +64,7 @@ void ParallelContext::Reset() {
   enable_parallel_optimizer_ = false;
   all_reduce_fusion_split_indices_.clear();
   all_reduce_fusion_split_sizes_.clear();
-  strategy_search_mode_ = kDynamicProgramming;
+  strategy_search_mode_ = kRecursiveProgramming;
   pipeline_stage_split_num_ = 1;
   grad_accumulation_step_ = 1;
   communi_parallel_mode_ = kAllGroupParallel;

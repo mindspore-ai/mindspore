@@ -228,7 +228,7 @@ class LossFactory():
         onehot_stra = ((1, device_num), (), ())
         loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra,
                           sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
         net = MatmulNet(matmul_stra=matmul_stra, loss_stra_list=loss_stra_list)
         optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         model = Model(net, optimizer=optimizer)
@@ -254,7 +254,7 @@ class LossFactory():
         onehot_stra = ((1, device_num), (), ())
         loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra,
                           sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
         net = MatmulNet(matmul_stra=matmul_stra, loss_stra_list=loss_stra_list)
         optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         model = Model(net, optimizer=optimizer)

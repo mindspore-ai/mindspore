@@ -53,7 +53,14 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+
 def test_unique_column_split():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -78,13 +85,15 @@ def test_unique_column_split():
             return vx
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0, parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(device_num=size, global_rank=0, parallel_mode="auto_parallel",
+                                      search_mode="dynamic_programming")
     x = Tensor(np.ones([32, 64]), dtype=ms.int32)
     net = Net()
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_train()
     _cell_graph_executor.compile(train_net, x)
+
 
 def test_unique_row_split():
     class Net(nn.Cell):

@@ -33,6 +33,7 @@ class GradWrap(nn.Cell):
     def construct(self, x, y):
         return grad_all(self.network)(x, y)
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -42,6 +43,7 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, y):
         predict = self.network(x, y)
         return self.loss(predict)
+
 
 class Net(nn.Cell):
     def __init__(self, shape, offset, strategy1=None, strategy2=None, target="Device"):

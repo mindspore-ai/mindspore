@@ -28,6 +28,7 @@ from hccl_test.manage.api import Hccl
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 class Net(nn.Cell):
     def __init__(self, strategy1, strategy2, weight1, weight2):
         super().__init__()
@@ -140,7 +141,8 @@ def test_wrong_order_set_same_parallel_mode_with_initializer():
     net = Net(strategy1, strategy2, weight1, weight2)
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     exe.compile(net, x, phase='train')
 
 

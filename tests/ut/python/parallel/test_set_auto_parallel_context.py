@@ -24,8 +24,14 @@ def setup_function():
 
 
 def test_set_auto_parallel_context():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(device_num=4, global_rank=3, gradients_mean=True, gradient_fp32_sync=False,
-                                      parallel_mode="auto_parallel", parameter_broadcast=False,
+                                      parallel_mode="auto_parallel", search_mode="dynamic_programming",
+                                      parameter_broadcast=False,
                                       communi_parallel_mode="same_server_group_parallel")
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
@@ -95,11 +101,13 @@ def test_set_auto_parallel_context():
     assert context.get_auto_parallel_context("enable_parallel_optimizer")
     assert not auto_parallel_context().get_all_reduce_fusion_split_indices()
 
+
 def test_pipeline_parallel_context():
     context.set_auto_parallel_context(device_num=8, global_rank=4,
                                       parallel_mode="semi_auto_parallel", pipeline_stages=2)
     stage = auto_parallel_context().get_pipeline_stages()
     assert stage == 2
+
 
 def test_reset_auto_parallel_context():
     context.reset_auto_parallel_context()

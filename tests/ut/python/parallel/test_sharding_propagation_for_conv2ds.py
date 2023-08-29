@@ -40,7 +40,6 @@ class Net(Cell):
         self.conv2d_weight = Parameter(conv2d_weight, "w1")
         self.conv2d_transpose_weight = Parameter(conv2d_transpose_weight, "w2")
 
-
     def construct(self, x, b):
         out = self.relu(x)  # (32, 16, 64, 64)
         out = self.conv2d(out, self.conv2d_weight)  # (32, 8, 64, 64)
@@ -83,7 +82,7 @@ def test_sharding_propagation_8x1x1x1():
         elif re.search("BatchNorm", k) is not None:
             assert v == [[8, 1, 1, 1], [1], [1], [1], [1]]
         elif re.search("MaxPool", k) is not None:
-            assert v == [[8, 1, 1, 1],]
+            assert v == [[8, 1, 1, 1], ]
         elif re.search("Conv2DTranspose", k) is not None:
             assert v == [[8, 1, 1, 1], [1, 1, 1, 1]]
     context.reset_auto_parallel_context()
@@ -106,7 +105,7 @@ def test_sharding_propagation_1x1x1x8():
         elif re.search("BatchNorm", k) is not None:
             assert v == [[1, 1, 1, 8], [1], [1], [1], [1]]
         elif re.search("MaxPool", k) is not None:
-            assert v == [[1, 1, 1, 8],]
+            assert v == [[1, 1, 1, 8], ]
         elif re.search("Conv2DTranspose", k) is not None:
             assert v == [[1, 1, 1, 8], [1, 1, 1, 1]]
     context.reset_auto_parallel_context()
@@ -129,7 +128,7 @@ def test_dynamic_programming_1x1x1x8():
         elif re.search("BatchNorm", k) is not None:
             assert v == [[8, 1, 1, 1], [1], [1], [1], [1]]
         elif re.search("MaxPool", k) is not None:
-            assert v == [[8, 1, 1, 1],]
+            assert v == [[8, 1, 1, 1], ]
         elif re.search("Conv2DTranspose", k) is not None:
             assert v == [[8, 1, 1, 1], [1, 1, 1, 1]]
     context.reset_auto_parallel_context()

@@ -72,6 +72,7 @@ def test_auto_parallel_adasum1():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
 
+
 def test_auto_parallel_adasum2():
     """
     Feature: adasum in auto parallel.
@@ -85,6 +86,7 @@ def test_auto_parallel_adasum2():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net, by_grad=False)
 
+
 def test_auto_parallel_adasum3():
     """
     Feature: adasum in auto parallel.
@@ -97,6 +99,7 @@ def test_auto_parallel_adasum3():
     gather_strategy3 = ((32, 1), (1,))
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
+
 
 @pytest.mark.skip(reason="crashed while running coverage test")
 def test_auto_parallel_adasum4():
@@ -112,6 +115,7 @@ def test_auto_parallel_adasum4():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net, by_grad=False)
 
+
 @pytest.mark.skip(reason="crashed while running coverage test")
 def test_auto_parallel_adasum5():
     """
@@ -125,6 +129,7 @@ def test_auto_parallel_adasum5():
     gather_strategy3 = ((1, 1), (32,))
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
+
 
 def test_auto_parallel_adasum6():
     """

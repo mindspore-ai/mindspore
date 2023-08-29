@@ -112,14 +112,26 @@ def test_normal_split_with_offset():
 
 
 def test_auto_parallel_error():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: error
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=2,
+                                      global_rank=0)
     net = Net()
     with pytest.raises(RuntimeError):
         compile_net(net)
 
 
 def test_auto_parallel():
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=2,
+                                      global_rank=0)
     net = Net(split_string="fake")
     compile_net(net)
 

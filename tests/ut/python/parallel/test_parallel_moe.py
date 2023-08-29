@@ -28,6 +28,7 @@ from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell, _VirtualDatasetCell
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -189,6 +190,7 @@ def test_transformer_model_2d_sp():
 
 class TransformerNet(nn.Cell):
     """Transformer with loss"""
+
     def __init__(self, en_layer, de_layer, parallel_config):
         super(TransformerNet, self).__init__()
         self.network = Transformer(encoder_layers=en_layer,

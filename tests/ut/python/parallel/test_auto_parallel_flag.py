@@ -100,7 +100,7 @@ def test_auto_parallel_flag():
     Description:
     Expectation: the network has not auto_parallel flag
     '''
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=1)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=1)
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
 

@@ -115,6 +115,7 @@ def test_grad_accumulation_opt_shard():
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
 
+
 def test_grad_accumulation_opt_shard_not_full():
     '''
     Feature: grad_accumulation + opt_shard_not_full
@@ -134,6 +135,7 @@ def test_grad_accumulation_opt_shard_not_full():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
+
 
 def test_grad_accumulation_opt_shard_with_no_data_parallel():
     '''

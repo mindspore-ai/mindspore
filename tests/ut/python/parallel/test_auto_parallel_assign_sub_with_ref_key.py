@@ -55,6 +55,11 @@ class GradWrap(nn.Cell):
 
 
 def test_auto_parallel_assign_sub_with_ref_key():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
     size = 8
     context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=size, global_rank=0)
@@ -62,7 +67,7 @@ def test_auto_parallel_assign_sub_with_ref_key():
     x = Tensor(np.random.rand(4, 4, 32, 64), dtype=ms.float32)
 
     net = NetWithLoss(nn.PReLU(4))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     net.set_train()

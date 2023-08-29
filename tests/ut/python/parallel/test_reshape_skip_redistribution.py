@@ -46,6 +46,7 @@ _w1 = Tensor(np.ones([4096, 32]), dtype=ms.float32)
 _x = Tensor(np.ones([64, 64]), dtype=ms.float32)
 _b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 
+
 def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)

@@ -31,8 +31,10 @@ from tests.dataset_mock import MindData
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
+
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.fc1 = nn.Dense(128, 768, activation='relu')
@@ -55,6 +57,7 @@ class Net(nn.Cell):
         s = self.fc4(s)
         return s
 
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -75,6 +78,7 @@ class Dataset(MindData):
     def reset(self):
         self.index = 0
 
+
 class DenseNet1(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
         super(DenseNet1, self).__init__()
@@ -89,6 +93,7 @@ class DenseNet1(nn.Cell):
         v = self.fc3(k)
         s = self.fc4(v)
         return s
+
 
 class DenseNet2(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
@@ -113,6 +118,7 @@ class DenseNet2(nn.Cell):
         z = self.fc8(w)
         return z
 
+
 class DenseNet3(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
         super(DenseNet3, self).__init__()
@@ -121,6 +127,7 @@ class DenseNet3(nn.Cell):
     def construct(self, x):
         q = self.fc1(x)
         return q
+
 
 class SimpleDMLNet(nn.Cell):
     def __init__(self, net1, net2):
@@ -132,6 +139,7 @@ class SimpleDMLNet(nn.Cell):
         x1 = self.backbone1(x)
         x2 = self.backbone2(x)
         return x1 + x2
+
 
 def train_common(net):
     batch_size = 32
@@ -154,6 +162,7 @@ def train_common(net):
     allreduce_fusion_dict = _cell_graph_executor._get_allreduce_fusion(model._train_network)
     print(allreduce_fusion_dict)
     return allreduce_fusion_dict
+
 
 def test_allreduce_fusion_auto():
     """
@@ -178,6 +187,7 @@ def test_allreduce_fusion_auto():
                    'backbone2.fc1.weight': 1,
                    'backbone1.fc1.weight': 1}
     assert allreduce_fusion_dict == expect_dict
+
 
 def test_allreduce_fusion_size():
     """
@@ -226,6 +236,7 @@ def test_lamb_split_fusion_in_index():
     _cell_graph_executor.compile(train_network, inputs, label)
     context.reset_auto_parallel_context()
 
+
 def test_allreduce_fusion_size_priority():
     """
     Feature: test priority of "enable_all_reduce_fusion" and "comm_fusion"
@@ -255,6 +266,7 @@ def test_allreduce_fusion_size_priority():
                    'backbone1.fc1.weight': 1}
     assert allreduce_fusion_dict == expect_dict
 
+
 def test_allreduce_fusion_size_one_tensor():
     """
     Feature: test_allreduce_fusion in size mode with one tensor
@@ -267,6 +279,7 @@ def test_allreduce_fusion_size_one_tensor():
     allreduce_fusion_dict = train_common(net)
     expect_dict = {'fc1.weight': 1}
     assert allreduce_fusion_dict == expect_dict
+
 
 def test_fusion_invalid_value_failed():
     """

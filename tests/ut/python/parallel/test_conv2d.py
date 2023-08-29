@@ -266,7 +266,8 @@ def test_conv2d_auto_parallel():
     Description: generate data parallel strategy
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1)
     compile_net(net)
 
@@ -532,4 +533,4 @@ def test_conv2d_kernel_size_smaller_than_stride_and_split_hw():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("ReLU", k) is not None:
-            assert v == [[1, 1, 4, 4],]
+            assert v == [[1, 1, 4, 4], ]

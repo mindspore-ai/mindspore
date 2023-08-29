@@ -41,7 +41,8 @@ def test_lin_space_loss_auto_parallel():
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+                                      global_rank=0)
     start = Tensor(1, mstype.float32)
     end = Tensor(10, mstype.float32)
     x = 8

@@ -27,8 +27,8 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-context.set_context(mode=context.GRAPH_MODE)
 
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -66,7 +66,7 @@ class NetWithLoss(nn.Cell):
 
 def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
     if auto:
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))

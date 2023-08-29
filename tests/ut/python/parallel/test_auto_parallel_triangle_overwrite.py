@@ -26,7 +26,9 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
+
 grad_all = C.GradOperation(get_all=True)
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -38,6 +40,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict)
 
+
 class GradWarp(nn.Cell):
     def __init__(self, network):
         super(GradWarp, self).__init__()
@@ -46,7 +49,14 @@ class GradWarp(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+
 def test_triangle_strategy_consistency():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -70,7 +80,7 @@ def test_triangle_strategy_consistency():
     context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 1000]), dtype=ms.float32)
     net = NetWithLoss(Net())
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     reset_op_id()
 
     net.set_train()

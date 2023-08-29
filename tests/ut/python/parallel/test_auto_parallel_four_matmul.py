@@ -83,7 +83,12 @@ def test_four_matmul_linear():
     b = Tensor(np.ones([32, 256]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, z, w, b)
 
 
@@ -109,7 +114,7 @@ def test_four_matmul1():
     b = Tensor(np.ones([32, 256]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, z, w, b)
 
 
@@ -136,5 +141,5 @@ def test_four_matmul2():
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
     compile_net(net, x, y, z, w, b)

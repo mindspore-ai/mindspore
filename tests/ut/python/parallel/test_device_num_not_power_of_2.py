@@ -66,11 +66,13 @@ class Net1(Cell):
         out = self.mul(out, b)
         return self.reduce_sum(out)
 
+
 _x = Tensor(np.ones([3 * 64]), dtype=ms.int32)
 _b = Tensor(np.ones([64 * 3, 32 * 3]), dtype=ms.float32)
 
 _x1 = Tensor(np.ones([3 * 32, 3 * 32]), dtype=ms.float32)
 _b1 = Tensor(np.ones([32 * 3]), dtype=ms.float32)
+
 
 def compile_net(net, change_input=False):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -97,6 +99,7 @@ def test_auto_parallel_device_num_24():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
 
+
 def test_auto_parallel_device_num_24_1():
     """
     Feature: device num 24 in auto parallel.
@@ -110,6 +113,7 @@ def test_auto_parallel_device_num_24_1():
     gather_strategy3 = ((24, 1), (1,))
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
+
 
 def test_auto_parallel_device_num_24_2():
     """
@@ -126,6 +130,7 @@ def test_auto_parallel_device_num_24_2():
     with pytest.raises(RuntimeError):
         compile_net(net)
 
+
 def test_auto_parallel_device_num_24_3():
     """
     Feature: device num 24 in auto parallel.
@@ -140,6 +145,7 @@ def test_auto_parallel_device_num_24_3():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
 
 def test_auto_parallel_device_num_24_dyn_search():
     """
@@ -156,6 +162,7 @@ def test_auto_parallel_device_num_24_dyn_search():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
 
+
 def test_auto_parallel_device_num_24_prop_search():
     """
     Feature: device num 24 in auto parallel.
@@ -170,6 +177,7 @@ def test_auto_parallel_device_num_24_prop_search():
     gather_strategy3 = None
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
+
 
 def test_auto_parallel_device_num_24_dyn_search_1():
     """
