@@ -31,8 +31,8 @@ COMMON_EXPORT void PushPyExecuteOutput(const py::object &output);
 COMMON_EXPORT int GetJitSyntaxLevel();
 COMMON_EXPORT bool CheckListValid(const py::list &obj, bool to_raw_memory);
 COMMON_EXPORT bool CheckSequenceToMemory(const py::sequence &obj);
-COMMON_EXPORT abstract::AbstractListPtr GenerateAbstractList(const BaseShapePtr &base_shape, const TypePtr &type,
-                                                             bool is_dyn_shape);
+COMMON_EXPORT abstract::AbstractSequencePtr GenerateAbstractSequence(const BaseShapePtr &base_shape,
+                                                                     const TypePtr &type, bool is_dyn_shape);
 }  // namespace fallback
 }  // namespace mindspore
 

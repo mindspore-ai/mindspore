@@ -1780,7 +1780,7 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abs);
   if (!tuple_abs->dynamic_len()) {
-    const auto elements = tuple_abs->elements();
+    const auto &elements = tuple_abs->elements();
     if (std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &e) {
           MS_EXCEPTION_IF_NULL(e);
           return e->isa<abstract::FuncGraphAbstractClosure>() || e->isa<abstract::PartialAbstractClosure>();
