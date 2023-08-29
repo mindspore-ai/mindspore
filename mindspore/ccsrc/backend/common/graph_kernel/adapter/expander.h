@@ -22,17 +22,6 @@
 #include <nlohmann/json.hpp>
 
 namespace mindspore::graphkernel {
-class PyExpander : public LitegraphExpander {
- public:
-  explicit PyExpander(const CallbackPtr &cb) : LitegraphExpander(cb) {}
-  ~PyExpander() override = default;
-
- protected:
-  virtual bool CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
-  FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
-  FuncGraphPtr ExpandToGraphByCallPyFn(const CNodePtr &node);
-};
-
 class ComplexOpDecorator : public ExpanderDecorator {
  public:
   explicit ComplexOpDecorator(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}

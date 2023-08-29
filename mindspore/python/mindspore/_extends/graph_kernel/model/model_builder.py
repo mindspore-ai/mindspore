@@ -15,7 +15,6 @@
 """GraphKernel model builder"""
 
 import copy
-from . import op_infer
 from .model import Tensor, Value, Operator, Graph, AlignShape
 
 
@@ -94,18 +93,6 @@ class GraphBuilder:
         node = Operator(prim, tensor_inputs, output, attrs)
         node.all_inputs = inputs
         self.current.graph.add(node)
-
-    def emit(self, prim, inputs, name=None, attrs=None):
-        """Emit a new operation"""
-        if attrs is None:
-            attrs = {}
-        if isinstance(inputs, (Tensor, Value)):
-            inputs = [inputs]
-        tensor_inputs = [t for t in inputs if isinstance(t, (Tensor, Value))]
-        out_shape, out_dtype, out_format = op_infer.infer(prim, tensor_inputs, attrs)
-        output = self.tensor(out_shape, out_dtype, out_format, name)
-        self.op(prim, output, inputs, attrs)
-        return output
 
     def get(self):
         """Get graphs"""

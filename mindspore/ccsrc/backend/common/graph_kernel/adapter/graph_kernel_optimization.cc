@@ -31,7 +31,7 @@
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/common/graph_kernel/insert_pad.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_splitter_with_py.h"
-#include "backend/common/graph_kernel/adapter/graph_kernel_expander_with_py.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_expander_cloud.h"
 #include "backend/common/graph_kernel/adapter/callback_impl.h"
 #include "backend/common/graph_kernel/cast_matmul_fusion.h"
 #include "backend/common/graph_kernel/raise_reduction_precision.h"
@@ -109,7 +109,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu);
 
   // Expand complex basic kernels to composite kernels
-  pm->Add(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelExpanderCloud>(), OptLevel_1);
 
   // Combine supported parallel ops that with common inputs
   pm->Add(std::make_shared<GraphKernelOpCombiner>(),
@@ -300,7 +300,7 @@ void GraphKernelOptimize(const KernelGraphPtr &kernel_graph) {
 bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes) {
   static std::vector<PrimitivePtr> supported_nodes;
   if (supported_nodes.empty()) {
-    supported_nodes = GraphKernelExpanderWithPy::GetExpanderOps();
+    supported_nodes = GraphKernelExpanderCloud::GetExpanderOps();
     auto cluster_nodes = GraphKernelCluster::GetClusterOps();
     (void)std::copy(cluster_nodes.begin(), cluster_nodes.end(), std::back_inserter(supported_nodes));
   }
