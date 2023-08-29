@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -816,7 +817,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
   }
   auto obj_id = GetPyObjId(obj);
-  static std::vector<std::string> param_obj_ids;
+  static std::unordered_map<std::string, std::string> param_obj_ids;  // param_name : obj_id
   auto param_name = py::cast<std::string>(name_attr);
   auto top_func_graph = Parser::GetTopFuncGraph();
   // If the parameter node has been created , return it.
@@ -834,7 +835,8 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
                       << ", input: " << param_node->DebugString();
       } else {
         // Exist two parameter object which name is the same.
-        if (std::find(param_obj_ids.begin(), param_obj_ids.end(), obj_id) == param_obj_ids.end()) {
+        auto iter = param_obj_ids.find(param_name);
+        if (iter != param_obj_ids.end() && iter->second != obj_id) {
           MS_LOG(EXCEPTION)
             << "The parameter " << param_node->DebugString() << " , its name '" << param_name
             << "' already exists. Please set a unique name for the parameter."
@@ -851,7 +853,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   if (para_node == nullptr) {
     auto value = GetParameterValue(obj);
     para_node = top_func_graph->AddFvParameter(param_name, value);
-    (void)param_obj_ids.emplace_back(obj_id);
+    param_obj_ids[param_name] = obj_id;
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
   }
