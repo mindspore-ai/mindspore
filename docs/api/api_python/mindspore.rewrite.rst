@@ -4,165 +4,6 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
 如何快速使用ReWrite，请参考 `使用ReWrite修改网络 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/rewrite/rewrite_tutorial.html>`_ 。
 
-.. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
-
-    SymbolTree保存了一个网络的信息，包括网络前向计算过程的语句，和语句输入输出之间的拓扑关系。
-
-    网络里的语句以节点的形式保存在SymbolTree中，通过对SymbolTree里的节点进行处理，可以实现网络代码的删除、插入、替换等操作，
-    并得到修改后的网络代码及网络实例。
-
-    参数：
-        - **handler** (SymbolTreeImpl) - SymbolTree内部实现实例。建议调用SymbolTree下的 `create` 方法来创建SymbolTree，而不直接
-          调用SymbolTree的构造函数。不需关心SymbolTreeImpl是什么，只需作为句柄看待。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.after(node: Union[Node, str])
-
-        返回一个位置信息，位置为 `node` 之后。该接口的返回值作为插入操作的参数使用。
-
-        参数：
-            - **node** (Union[Node, str]) - 指定插入位置在哪个节点之后，可以是Node或者Node的名称。
-
-        返回：
-            Position，指定插入节点的位置。
-
-        异常：
-            - **TypeError** - 参数不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.before(node: Union[Node, str])
-
-        返回一个位置信息，位置为 `node` 之前。该接口的返回值作为插入操作的参数使用。
-
-        参数：
-            - **node** (Union[Node, str]) - 指定插入位置在哪个节点之前，可以是Node或者Node的名称。
-
-        返回：
-            Position，指定插入节点的位置。
-
-        异常：
-            - **TypeError** - 参数不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.create(network)
-
-        通过传入网络实例 `network` ，创建一个SymbolTree对象。
-
-        该接口会解析传入的网络实例，将前向计算过程的每一条源码语句展开，并解析为节点，存储在SymbolTree中。
-
-        参数：
-            - **network** (Cell) - 待修改的网络实例。
-
-        返回：
-            SymbolTree，基于 `network` 创建的SymbolTree。
-
-        异常：
-            - **TypeError** - 参数 `network` 不是Cell类型对象。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.erase(node: Union[Node, str])
-
-        删除SymbolTree中的一个节点。
-
-        参数：
-            - **node** (Union[Node, str]) - 被删除的节点。可以是Node或者Node的名称。
-
-        返回：
-            如果 `node` 属于当前的SymbolTree则返回被删除节点。否则返回None。
-
-        异常：
-            - **TypeError** - 参数不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_code()
-
-        获取SymbolTree里的网络信息所对应的源码。如果网络已经被修改过，则返回的是修改后的源码。
-
-        返回：
-            str，SymbolTree对应的源码字符串。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_network()
-
-        获取基于SymbolTree生成的网络对象。源码会保存到文件中，文件保存在当前目录的 `rewritten_network` 文件夹里。
-
-        返回：
-            根据SymbolTree生成的网络对象。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name: str)
-
-        获取SymbolTree里名称为 `node_name` 的节点。
-
-        参数：
-            - **node_name** (str) - 节点名称。
-
-        返回：
-            名称为 `node_name` 的节点。如果SymbolTree里没有名称为 `node_name` 的节点，则返回 ``None`` 。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
-
-        在SymbolTree的 `position` 位置插入一个节点。 `position` 通过 `before` 或 `after` 来获得。
-
-        参数：
-            - **position** (Position) - 插入位置。
-            - **node** (Node) - 要插入的节点。
-
-        返回：
-            `Node`，被插入的节点。
-
-        异常：
-            - **RuntimeError** - 如果 `position` 指定的不是该SymbolTree内的位置。
-            - **TypeError** - 如果参数 `position` 不是Position类型。
-            - **TypeError** - 如果参数 `node` 不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.nodes()
-
-        返回当前SymbolTree里节点的生成器，该接口用于遍历SymbolTree里的节点。
-
-        返回：
-            当前SymbolTree中节点的生成器。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes: bool = False)
-
-        打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
-        信息通过print接口输出到屏幕上。
-
-        .. warning::
-            - 这是一个实验性API，后续可能修改或删除。
-
-        参数：
-            - **all_nodes** (bool) - 打印所有节点的信息，包括在CallFunction节点、CellContainer节点和
-              子符号树里面的节点。默认值： ``False`` 。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
-
-        使用 `new_nodes` 列表里的节点来替代旧节点 `old_node` 。
-
-        该接口会将 `new_nodes` 里的节点按顺序插入到SymbolTree中，然后删除旧节点 `old_node` 。
-
-        .. note::
-            - 仅支持一对一更换或一对多替换。如果需要多对多替换，请参考PatternEngine。
-            - 调用者应维护好 `new_nodes` 里每个节点间的拓扑关系，以及 `new_nodes` 里的节点与原始树中节点的拓扑关系。
-
-        参数：
-            - **old_node** (Node) - 被替换节点。
-            - **new_nodes** (list[Node]) - 要替换进SymbolTree的节点列表。
-
-        返回：
-            替换到SymbolTree的节点列表的根节点。
-
-        异常：
-            - **RuntimeError** - 如果 `old_node` 仍然被其他节点依赖。
-            - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
-            - **TypeError** - 如果参数 `old_node` 不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name: str = "output")
-
-        基于给定 `name` ，返回一个SymbolTree内唯一的新的名称。当需要一个不冲突的变量名时，可以使用该接口。
-
-        参数：
-            - **name** (str, 可选) - 名称前缀。默认值： ``"output"`` 。
-
-        返回：
-            str，一个SymbolTree内唯一的新的名称，名称格式为 `name_n` ，其中 `n` 为数字下标。如果输入 `name` 没有名称冲突，则没有数字下标。
-
-        异常：
-            - **TypeError** - 如果参数 `name` 不是str类型。
-
 .. py:class:: mindspore.rewrite.Node(node: NodeImpl)
 
     节点是表达网络中源码语句的一种数据结构。
@@ -184,7 +25,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **cell** (Cell) - 该节点对应的前向计算的Cell对象。
-            - **targets** (list[ScopedValue]) - 表示输出名称。在源代码中作为节点的输出变量名。
+            - **targets** (list[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
             - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `cell` 没有参数输入。
             - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `cell` 没有 `kwargs` 输入。
             - **name** (str) - 表示节点的名称。用作源代码中的字段名称。当未提供名称时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。默认值： ``""`` 。
@@ -195,6 +36,27 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         异常：
             - **TypeError** - 如果参数 `cell` 不是Cell类型。
+            - **TypeError** - 如果参数 `targets` 不是list类型。
+            - **TypeError** - 如果参数 `targets` 的成员不是str或者ScopedValue类型。
+            - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
+            - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ScopedValue类型。
+
+    .. py:method:: create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None):
+        :staticmethod:
+
+        通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
+
+        参数：
+            - **function** (FunctionType) - 该节点对应的前向计算的Cell对象。
+            - **targets** (list[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
+            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `function` 没有参数输入。
+            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `function` 没有 `kwargs` 输入。
+
+        返回：
+            Node实例。
+
+        异常：
+            - **TypeError** - 如果参数 `function` 不是FunctionType类型。
             - **TypeError** - 如果参数 `targets` 不是list类型。
             - **TypeError** - 如果参数 `targets` 的成员不是str或者ScopedValue类型。
             - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
@@ -239,6 +101,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         返回：
             NodeType，当前节点的类型。
+
+    .. py:method:: mindspore.rewrite.Node.get_symbol_tree()
+
+        获取当前节点所属的SymbolTree。
+
+        返回：
+            SymbolTree，如果当前节点不属于任何SymbolTree，则返回 ``None`` .
 
     .. py:method:: mindspore.rewrite.Node.get_targets()
 
@@ -352,6 +221,172 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         返回：
             ScopedValue的实例。
+
+.. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
+
+    SymbolTree保存了一个网络的信息，包括网络前向计算过程的语句，和语句输入输出之间的拓扑关系。
+
+    网络里的语句以节点的形式保存在SymbolTree中，通过对SymbolTree里的节点进行处理，可以实现网络代码的删除、插入、替换等操作，
+    并得到修改后的网络代码及网络实例。
+
+    参数：
+        - **handler** (SymbolTreeImpl) - SymbolTree内部实现实例。建议调用SymbolTree下的 `create` 方法来创建SymbolTree，而不直接
+          调用SymbolTree的构造函数。不需关心SymbolTreeImpl是什么，只需作为句柄看待。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.after(node: Union[Node, str])
+
+        返回一个位置信息，位置为 `node` 之后。该接口的返回值作为插入操作的参数使用。
+
+        参数：
+            - **node** (Union[Node, str]) - 指定插入位置在哪个节点之后，可以是Node或者Node的名称。
+
+        返回：
+            Position，指定插入节点的位置。
+
+        异常：
+            - **TypeError** - 参数不是Node类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.before(node: Union[Node, str])
+
+        返回一个位置信息，位置为 `node` 之前。该接口的返回值作为插入操作的参数使用。
+
+        参数：
+            - **node** (Union[Node, str]) - 指定插入位置在哪个节点之前，可以是Node或者Node的名称。
+
+        返回：
+            Position，指定插入节点的位置。
+
+        异常：
+            - **TypeError** - 参数不是Node类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.create(network)
+
+        通过传入网络实例 `network` ，创建一个SymbolTree对象。
+
+        该接口会解析传入的网络实例，将前向计算过程的每一条源码语句展开，并解析为节点，存储在SymbolTree中。
+
+        参数：
+            - **network** (Cell) - 待修改的网络实例。
+
+        返回：
+            SymbolTree，基于 `network` 创建的SymbolTree。
+
+        异常：
+            - **TypeError** - 参数 `network` 不是Cell类型对象。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.erase(node: Union[Node, str])
+
+        删除SymbolTree中的一个节点。
+
+        参数：
+            - **node** (Union[Node, str]) - 被删除的节点。可以是Node或者Node的名称。
+
+        返回：
+            如果 `node` 属于当前的SymbolTree则返回被删除节点。否则返回None。
+
+        异常：
+            - **TypeError** - 参数不是Node类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.get_code()
+
+        获取SymbolTree里的网络信息所对应的源码。如果网络已经被修改过，则返回的是修改后的源码。
+
+        返回：
+            str，SymbolTree对应的源码字符串。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.get_network()
+
+        获取基于SymbolTree生成的网络对象。源码会保存到文件中，文件保存在当前目录的 `rewritten_network` 文件夹里。
+
+        返回：
+            根据SymbolTree生成的网络对象。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name: str)
+
+        获取SymbolTree里名称为 `node_name` 的节点。
+
+        参数：
+            - **node_name** (str) - 节点名称。
+
+        返回：
+            名称为 `node_name` 的节点。如果SymbolTree里没有名称为 `node_name` 的节点，则返回 ``None`` 。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
+
+        在SymbolTree的 `position` 位置插入一个节点。 `position` 通过 `before` 或 `after` 来获得。
+
+        参数：
+            - **position** (Position) - 插入位置。
+            - **node** (Node) - 要插入的节点。
+
+        返回：
+            `Node`，被插入的节点。
+
+        异常：
+            - **RuntimeError** - 如果 `position` 指定的不是该SymbolTree内的位置。
+            - **TypeError** - 如果参数 `position` 不是Position类型。
+            - **TypeError** - 如果参数 `node` 不是Node类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.nodes(all_nodes: bool = False)
+
+        返回当前SymbolTree里节点的生成器，该接口用于遍历SymbolTree里的节点。
+
+        参数：
+            - **all_nodes** (bool) - 获取所有节点，包括在 `CallFunction` 节点、 `CellContainer` 节点和
+              子SymbolTree里面的节点。默认值： ``False`` 。
+
+        返回：
+            SymbolTree中节点的生成器。
+
+        异常：
+            - **TypeError** - 如果参数 `all_nodes` 不是bool类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes: bool = False)
+
+        打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
+        信息通过print接口输出到屏幕上。
+
+        参数：
+            - **all_nodes** (bool) - 打印所有节点的信息，包括在 `CallFunction` 节点、 `CellContainer` 节点和
+              子SymbolTree里面的节点。默认值： ``False`` 。
+
+        异常：
+            - **TypeError** - 如果参数 `all_nodes` 不是bool类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
+
+        使用 `new_nodes` 列表里的节点来替代旧节点 `old_node` 。
+
+        该接口会将 `new_nodes` 里的节点按顺序插入到SymbolTree中，然后删除旧节点 `old_node` 。
+
+        .. note::
+            - 仅支持一对一更换或一对多替换。如果需要多对多替换，请参考PatternEngine。
+            - 调用者应维护好 `new_nodes` 里每个节点间的拓扑关系，以及 `new_nodes` 里的节点与原始树中节点的拓扑关系。
+
+        参数：
+            - **old_node** (Node) - 被替换节点。
+            - **new_nodes** (list[Node]) - 要替换进SymbolTree的节点列表。
+
+        返回：
+            替换到SymbolTree的节点列表的根节点。
+
+        异常：
+            - **RuntimeError** - 如果 `old_node` 仍然被其他节点依赖。
+            - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
+            - **TypeError** - 如果参数 `old_node` 不是Node类型。
+
+    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name: str = "output")
+
+        基于给定 `name` ，返回一个SymbolTree内唯一的新的名称。当需要一个不冲突的变量名时，可以使用该接口。
+
+        参数：
+            - **name** (str, 可选) - 名称前缀。默认值： ``"output"`` 。
+
+        返回：
+            str，一个SymbolTree内唯一的新的名称，名称格式为 `name_n` ，其中 `n` 为数字下标。如果输入 `name` 没有名称冲突，则没有数字下标。
+
+        异常：
+            - **TypeError** - 如果参数 `name` 不是str类型。
 
 .. py:class:: mindspore.rewrite.ValueType
 

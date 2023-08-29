@@ -818,6 +818,47 @@ class SymbolTree(Observer, Observable, NodeManager):
         node.set_targets(targets)
         self._topo_mgr.on_update_target(node, index, old_target, target)
 
+    def all_nodes(self):
+        """
+        Get all nodes including nodes in CallFunction node, CellContainer node and sub symbol tree.
+
+        Returns:
+            A list of nodes.
+        """
+        nodes = []
+        node_managers = [self]
+        while node_managers:
+            node_manager = node_managers.pop()
+            nodes.extend(node_manager.nodes())
+            for node in node_manager.nodes():
+                if isinstance(node, NodeManager):
+                    node_managers.append(node)
+        for tree_node in self.get_tree_nodes():
+            stree = tree_node.symbol_tree
+            nodes.extend(stree.all_nodes())
+        return nodes
+
+    def get_node_from_name(self, node_name: str):
+        """
+        Get node from all NodeManagers in current symbol tree by `node_name`.
+
+        Args:
+            node_name (str): A str represents name of node as key of query.
+
+        Returns:
+            An instance of Node if found else None.
+        """
+        node_managers = [self]
+        while node_managers:
+            node_manager = node_managers.pop()
+            node = node_manager.get_node(node_name)
+            if node:
+                return node
+            for node in node_manager.nodes():
+                if isinstance(node, NodeManager):
+                    node_managers.append(node)
+        return None
+
     def print_node_tabulate(self, all_nodes: bool = False):
         """
         Print nodes information and nodes' topological relations.
@@ -826,6 +867,13 @@ class SymbolTree(Observer, Observable, NodeManager):
             all_nodes (bool): Print nodes out of construct functions, such as nodes in CallFunction
                 nodes, CellContainer nodes and sub symbol trees.
         """
+        try:
+            from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
+        except ImportError:
+            logger.warning("Print nodes' topological relation relies on the library `tabulate`, "
+                           "which could not be found on this machine. Run `pip "
+                           "install tabulate` to install the library.")
+            return ""
         print(NodeManager.dump(self, self.get_manager_name()))
         if all_nodes:
             node_managers = [self]
