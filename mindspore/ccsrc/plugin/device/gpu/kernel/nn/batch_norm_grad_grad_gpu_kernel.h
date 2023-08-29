@@ -23,7 +23,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batch_norm_grad_grad_impl.cuh"
-#include "ops/grad/batch_norm_grad_grad.h"
 
 namespace mindspore {
 namespace kernel {

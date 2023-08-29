@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include "ops/grad/batch_norm_grad.h"
 #include "ops/nn_op_name.h"
 #include "ops/op_name.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
@@ -34,11 +33,6 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BatchNormGrad failed!";
-    return false;
-  }
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
@@ -64,11 +58,6 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
 
   InitResource();
-  epsilon_ = kernel_ptr->get_epsilon();
-  is_train_ = kernel_ptr->get_is_training();
-  format_ = kernel_ptr->get_format();
-  beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
-
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   size_t input_num = inputs.size();
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {

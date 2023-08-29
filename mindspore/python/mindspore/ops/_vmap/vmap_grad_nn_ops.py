@@ -282,14 +282,18 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.BatchNormGradGrad)
 def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNormGradGrad` operation."""
-    data_format = prim.format
-
     def vmap_rule(x_bdim, dy_bdim, scale_bdim, mean_bdim, variance_bdim, dout_dx_bdim,
-                  dout_dscale_bdim, dout_dbias_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, scale_bdim, mean_bdim, variance_bdim,
-                                                      dout_dx_bdim, dout_dscale_bdim, dout_dbias_bdim)
+                  dout_dscale_bdim, dout_dbias_bdim, is_training_bdim, epsilon_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, scale_bdim, mean_bdim,
+                                                      variance_bdim, dout_dx_bdim, dout_dscale_bdim,
+                                                      dout_dbias_bdim, is_training_bdim, epsilon_bdim,
+                                                      data_format_bdim)
         if is_all_none:
             return result
+
+        is_training, _ = is_training_bdim
+        epsilon, _ = epsilon_bdim
+        data_format, _ = data_format_bdim
 
         dst_dim = 1 if data_format == "NCHW" else 3
         x = _bdim_at_any(*x_bdim, dst_dim, axis_size)
@@ -307,7 +311,7 @@ def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
         shape = (x_shape[0], -1,) + x_shape[3:] if data_format == "NCHW" else x_shape[:-2] + (-1,)
         dx, ddy, dscale = prim(x.reshape(shape), dy.reshape(shape), scale.flatten(), mean.flatten(),
                                variance.flatten(), dout_dx.reshape(shape), dout_dscale.flatten(),
-                               dout_dbias.flatten())
+                               dout_dbias.flatten(), is_training, epsilon, data_format)
         pos = 1 if data_format == "NCHW" else 3
         return (dx.reshape(x_shape), pos), (ddy.reshape(x_shape), pos), (dscale.reshape(scale_shape), 0)
     return vmap_rule
@@ -353,25 +357,28 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNormGrad` operation."""
     bn_min_dim = 3
     bn_max_dim = 5
-    data_format = prim.data_format
     prim_name = prim.name
-    if data_format == "NHWC":
-        batchnorm_grad_nhwc_vmap = _VmapGeneralRule(prim, axis_size)
 
-    def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim):
-        is_all_none, result = \
-            vmap_general_preprocess(prim, grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
+    def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim,
+                  rsv_3_bdim, training_bdim, epsilon_bdim, format_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim,
+            rsv_3_bdim, training_bdim, epsilon_bdim, format_bdim)
         if is_all_none:
             return result
-        if data_format == "NHWC":
-            # BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
-            return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
         grad, grad_dim = grad_bdim
         input_x, input_x_dim = x_bdim
         scale, scale_dim = scale_bdim
         rsv_1, rsv_1_dim = rsv_1_bdim
         rsv_2, rsv_2_dim = rsv_2_bdim
         rsv_3, rsv_3_dim = rsv_3_bdim
+        training, _ = training_bdim
+        epsilon, _ = epsilon_bdim
+        data_format, _ = format_bdim
+        if data_format == "NHWC":
+            batchnorm_grad_nhwc_vmap = _VmapGeneralRule(prim, axis_size)
+            # BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
+            return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
         x_ndim = F.rank(input_x)
         if x_ndim not in (bn_min_dim, bn_max_dim):
             raise ValueError("The dim of `input_x` in `{}` must be equal to {} or {}, "
@@ -393,7 +400,8 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
         rsv_1 = rsv_1.flatten()
         rsv_2 = rsv_2.flatten()
         rsv_3 = rsv_3.flatten()
-        grad_x, grad_scale, grad_offset = prim(grad, input_x, scale, rsv_1, rsv_2, rsv_3)
+        grad_x, grad_scale, grad_offset =\
+            prim(grad, input_x, scale, rsv_1, rsv_2, rsv_3, training, epsilon, data_format)
         grad_x = F.reshape(grad_x, x_shape)
         grad_scale = F.reshape(grad_scale, other_shape)
         grad_offset = F.reshape(grad_offset, other_shape)

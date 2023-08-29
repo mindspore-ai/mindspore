@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
-#define MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
-#include <map>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_MANUAL_DEFINED_LITE_OPS_H_
+#define MINDSPORE_CORE_OPS_MANUAL_DEFINED_LITE_OPS_H_
+
 #include <string>
-#include <vector>
 #include "mindapi/base/format.h"
 #include "ops/base_operator.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBatchNorm = "BatchNorm";
-constexpr auto kNameBatchNormWithActivation = "BatchNormWithActivation";
-constexpr auto kNameBatchNormWithAddAndActivation = "BatchNormWithAddAndActivation";
 /// \brief Batch Normalization for input data and updated parameters.
 /// Refer to Python API @ref mindspore.ops.BatchNorm for more details.
 class MIND_API BatchNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchNorm);
   /// \brief Constructor.
-  BatchNorm() : BaseOperator(kNameBatchNorm) {
+  BatchNorm() : BaseOperator(kBatchNormOpName) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
@@ -75,7 +71,7 @@ class MIND_API BatchNormWithActivation : public BatchNorm {
  public:
   MIND_API_BASE_MEMBER(BatchNormWithActivation);
   /// \brief Constructor.
-  BatchNormWithActivation() : BatchNorm(kNameBatchNormWithActivation) {
+  BatchNormWithActivation() : BatchNorm(kBatchNormWithActivationOpName) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
@@ -85,16 +81,41 @@ class MIND_API BatchNormWithAddAndActivation : public BatchNorm {
  public:
   MIND_API_BASE_MEMBER(BatchNormWithAddAndActivation);
   /// \brief Constructor.
-  BatchNormWithAddAndActivation() : BatchNorm(kNameBatchNormWithAddAndActivation) {
+  BatchNormWithAddAndActivation() : BatchNorm(kBatchNormWithAddAndActivationOpName) {
     InitIOName({"x", "scale", "offset", "mean", "variance", "z"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
 };
 
-MIND_API abstract::AbstractBasePtr BatchNormInferFunc(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+class MIND_API BatchNormGrad : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormGrad);
+  BatchNormGrad() : BaseOperator(kBatchNormGradOpName) {}
+  explicit BatchNormGrad(const std::string kernel_name) : BaseOperator(kernel_name) {}
+  void Init(const bool is_training = false, const float epsilon = 1e-05, const Format &format = NCHW,
+            const std::string &inplace_algo = "cover");
+  void set_is_training(const bool is_training);
+  void set_epsilon(const float epsilon);
+  void set_format(const Format &format);
+  bool get_is_training() const;
+  float get_epsilon() const;
+  Format get_format() const;
+  std::string get_inplace_algo() const;
+  void set_inplace_algo(const std::string &inplace_algo);
+};
+
+class MIND_API BatchNormGradWithActivation : public BatchNormGrad {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormGradWithActivation);
+  BatchNormGradWithActivation() : BatchNormGrad(kBatchNormGradWithActivationOpName) {}
+};
+
+class MIND_API BatchNormGradWithAddAndActivation : public BatchNormGrad {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormGradWithAddAndActivation);
+  BatchNormGradWithAddAndActivation() : BatchNormGrad(kBatchNormGradWithAddAndActivationOpName) {}
+};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_BatchNorm_H_
+#endif  // MINDSPORE_CORE_OPS_MANUAL_DEFINED_LITE_OPS_H_

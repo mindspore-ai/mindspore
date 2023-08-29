@@ -15,13 +15,12 @@
  */
 
 #include "plugin/device/cpu/kernel/batch_norm_grad_grad_cpu_kernel.h"
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <numeric>
 #include <vector>
-#include <functional>
-#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/batch_norm_grad_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,16 +35,12 @@ bool BatchNormGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto op = std::dynamic_pointer_cast<ops::BatchNormGradGrad>(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
-  is_training_ = op->get_is_training();
-  epsilon_ = op->get_epsilon();
-  data_format_ = op->get_format();
   if (epsilon_ <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'epsilon' must be greater than 0.";
   }

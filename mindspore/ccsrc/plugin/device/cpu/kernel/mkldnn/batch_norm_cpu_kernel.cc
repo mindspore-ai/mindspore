@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/batch_norm_cpu_kernel.h"
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/batch_norm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,22 +29,12 @@ constexpr size_t kBatchNormInputShapeMaxSize = 4;
 bool BatchNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNorm>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast BatchNorm ops failed!";
-    return false;
-  }
-
-  kernel_name_ = kernel_ptr->GetPrim()->name();
+  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-
-  is_train_ = kernel_ptr->get_is_training();
-  momentum_ = kernel_ptr->get_momentum();
-  epsilon_ = kernel_ptr->get_epsilon();
   return true;
 }
 

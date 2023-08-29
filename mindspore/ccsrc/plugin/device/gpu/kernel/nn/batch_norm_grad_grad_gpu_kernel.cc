@@ -31,17 +31,13 @@ constexpr size_t kBatchNormGradGradOutputsNum = 3;
 bool BatchNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto op = std::dynamic_pointer_cast<ops::BatchNormGradGrad>(base_operator);
-  kernel_name_ = op->name();
+  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   execute_func_ = func_list_[index].second;
-  is_training_ = op->get_is_training();
-  epsilon_ = op->get_epsilon();
-  format_ = op->get_format() == kOpFormat_NCHW ? DataFormat::NCHW : DataFormat::NHWC;
   return true;
 }
 

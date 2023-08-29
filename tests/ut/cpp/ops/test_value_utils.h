@@ -19,8 +19,8 @@
 
 #include <utility>
 #include <vector>
-#include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 namespace ops {
@@ -66,6 +66,15 @@ static inline ValuePtr CreateList(const std::vector<NumberContainer> &values) {
     value_vec.push_back(v.value_);
   }
   return std::make_shared<ValueList>(value_vec);
+}
+
+static inline bool CmpTupleShape(const std::vector<ShapeVector> &shapes, const abstract::BaseShapePtr &out) {
+  std::vector<abstract::BaseShapePtr> vec;
+  for (auto &shape : shapes) {
+    vec.emplace_back(std::make_shared<abstract::TensorShape>(shape));
+  }
+  auto expect = std::make_shared<abstract::TupleShape>(vec);
+  return ((*expect) == (*out));
 }
 }  // namespace ops
 }  // namespace mindspore

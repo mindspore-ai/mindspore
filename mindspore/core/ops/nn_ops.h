@@ -21,6 +21,7 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ops/nn_op_name.h"
+#include "ops/manually_defined_ops_primitive.h"
 #include "utils/hash_map.h"
 #include "ops/gen_ops_primitive.h"
 
@@ -90,17 +91,8 @@ GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackprop, std::make_shared<Primitive>("Lay
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackpropV2, std::make_shared<Primitive>("LayerNormXBackpropV2"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackprop, std::make_shared<Primitive>("LayerNormBetaGammaBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackpropV2, std::make_shared<Primitive>("LayerNormBetaGammaBackpropV2"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>("BatchNorm"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>(kBatchNormWithActivationOpName));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
-         std::make_shared<Primitive>("BatchNormWithAddAndActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBNInfer, std::make_shared<Primitive>("BNInfer"));
 GVAR_DEF(PrimitivePtr, kPrimBNInferGrad, std::make_shared<Primitive>("BNInferGrad"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGrad, std::make_shared<Primitive>("BatchNormGrad"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithActivation, std::make_shared<Primitive>("BatchNormGradWithActivation"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithAddAndActivation,
-         std::make_shared<Primitive>("BatchNormGradWithAddAndActivation"));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGradGrad, std::make_shared<Primitive>("BatchNormGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimInstanceNorm, std::make_shared<Primitive>("InstanceNorm"));
 GVAR_DEF(PrimitivePtr, kPrimInstanceNormGrad, std::make_shared<Primitive>("InstanceNormGrad"));
 GVAR_DEF(PrimitivePtr, kPrimInstanceNormV2, std::make_shared<Primitive>("InstanceNormV2"));

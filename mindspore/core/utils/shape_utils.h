@@ -18,8 +18,8 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include <algorithm>
-#include <vector>
 #include <string>
+#include <vector>
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 

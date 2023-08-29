@@ -1214,29 +1214,26 @@ def get_batchnorm_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNorm` operation."""
     bn_min_dim = 3
     bn_max_dim = 5
-    is_training = prim.is_training
     prim_name = prim.name
-    data_format = prim.data_format
 
     def vmap_rule(*inputs):
-        x_bdim = inputs[0]
-        scale_bdim = inputs[1]
-        offset_bdim = inputs[2]
-        mean_bdim = inputs[3]
-        var_bdim = inputs[4]
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, scale_bdim, offset_bdim, mean_bdim, var_bdim)
+        is_all_none, result = vmap_general_preprocess(prim, *inputs)
         if is_all_none:
             return result
+        input_x, input_x_dim = inputs[0]
+        scale, scale_dim = inputs[1]
+        offset, offset_dim = inputs[2]
+        mean, mean_dim = inputs[3]
+        var, var_dim = inputs[4]
+        is_training, _ = inputs[5]
+        epsilon, _ = inputs[6]
+        momentum, _ = inputs[7]
+        data_format, _ = inputs[8]
         if is_training:
             raise ValueError("Operator {} does not support Vmap during training, since the input `scale, offset, mean, "
                              "var of BatchNorm are parameters when is_training = true. If multiple batches of input "
                              "data share the same parameters, please stack batches to the N dimension manually."
                              .format(prim_name))
-        input_x, input_x_dim = x_bdim
-        scale, scale_dim = scale_bdim
-        offset, offset_dim = offset_bdim
-        mean, mean_dim = mean_bdim
-        var, var_dim = var_bdim
         x_ndim = F.rank(input_x)
         if x_ndim < bn_min_dim or x_ndim > bn_max_dim:
             raise ValueError("The dim of `input_x` in `{}` must be larger than {} and less than {}, "
@@ -1256,7 +1253,8 @@ def get_batchnorm_vmap_rule(prim, axis_size):
         offset = offset.flatten()
         mean = mean.flatten()
         var = var.flatten()
-        out, batch_mean, batch_var, rsv_1, rsv_2 = prim(input_x, scale, offset, mean, var)
+        out, batch_mean, batch_var, rsv_1, rsv_2 =\
+            prim(input_x, scale, offset, mean, var, is_training, epsilon, momentum, data_format)
         out = F.reshape(out, x_shape)
         batch_mean = F.reshape(batch_mean, other_shape)
         batch_var = F.reshape(batch_var, other_shape)

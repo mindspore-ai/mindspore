@@ -1267,50 +1267,69 @@ REG_BPROP_BUILDER("InstanceNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC
 });
 
 REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto is_training = GetValue<bool>(ib->GetAttr("is_training"));
   auto x = ib->GetInput(kIndex0);
   auto scale = ib->GetInput(kIndex1);
   auto mean = ib->GetInput(kIndex3);
   auto variance = ib->GetInput(kIndex4);
-  auto out = ib->GetInput(kIndex5);
-  auto dout = ib->GetInput(kIndex6);
-  NodePtr saved_mean, saved_variance, reserve;
-  if (is_training) {
-    saved_mean = ib->TupleGetItem(out, 3);
-    saved_variance = ib->TupleGetItem(out, 4);
-    reserve = ib->TupleGetItem(out, 2);
-  } else {
-    saved_mean = mean;
-    saved_variance = variance;
-    reserve = ib->TupleGetItem(out, 2);
-  }
-  out = ib->Emit(
-    "BatchNormGrad", {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve},
-    {{"is_training", MakeValue(is_training)}, {"epsilon", ib->GetAttr("epsilon")}, {"format", ib->GetAttr("format")}});
+  auto is_training = ib->GetInput(kIndex5);
+  auto epsilon = ib->GetInput(kIndex6);
+  auto momentum = ib->GetInput(kIndex7);
+  auto data_format = ib->GetInput(kIndex8);
+  auto out = ib->GetInput(kIndex9);
+  auto dout = ib->GetInput(kIndex10);
+  auto cond_out = ib->Conditional(
+    is_training,
+    [&](Emitter *e) -> NodePtrList {
+      return {e->TupleGetItem(out, 3), e->TupleGetItem(out, 4), e->TupleGetItem(out, 2)};
+    },
+    [&](Emitter *e) -> NodePtrList {
+      return {mean, variance, e->TupleGetItem(out, 2)};
+    });
+  auto saved_mean = ib->TensorGetItem(cond_out, 0);
+  auto saved_variance = ib->TensorGetItem(cond_out, 1);
+  auto reserve = ib->TensorGetItem(cond_out, 2);
+  out = ib->Emit("BatchNormGrad", {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve,
+                                   is_training, epsilon, data_format});
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);
-  return {dx, dscale, dbias, ib->OutZeros(mean), ib->OutZeros(variance)};
+  return {dx,
+          dscale,
+          dbias,
+          ib->OutZeros(mean),
+          ib->OutZeros(variance),
+          ib->OutZeros(is_training),
+          ib->OutZeros(epsilon),
+          ib->OutZeros(momentum),
+          ib->OutZeros(data_format)};
 });
 
-REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i6}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i9}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto scale = ib->GetInput(kIndex2);
   auto mean = ib->GetInput(kIndex3);
   auto variance = ib->GetInput(kIndex4);
   auto reserve = ib->GetInput(kIndex5);
-  auto dout = ib->GetInput(kIndex7);
-  auto tmp = ib->Emit(
-    "BatchNormGradGrad",
-    {x, dy, scale, mean, variance, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1), ib->TupleGetItem(dout, 2)},
-    {{"is_training", ib->GetAttr("is_training")},
-     {"epsilon", ib->GetAttr("epsilon")},
-     {"format", ib->GetAttr("format")}});
+  auto is_training = ib->GetInput(kIndex6);
+  auto epsilon = ib->GetInput(kIndex7);
+  auto data_format = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex10);
+  auto tmp =
+    ib->Emit("BatchNormGradGrad", {x, dy, scale, mean, variance, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1),
+                                   ib->TupleGetItem(dout, 2), is_training, epsilon, data_format});
   auto dx = ib->TupleGetItem(tmp, 0);
   auto ddy = ib->TupleGetItem(tmp, 1);
   auto dscale = ib->TupleGetItem(tmp, 2);
-  return {ddy, dx, dscale, ib->OutZeros(mean), ib->OutZeros(variance), ib->OutZeros(reserve)};
+  return {ddy,
+          dx,
+          dscale,
+          ib->OutZeros(mean),
+          ib->OutZeros(variance),
+          ib->OutZeros(reserve),
+          ib->OutZeros(is_training),
+          ib->OutZeros(epsilon),
+          ib->OutZeros(data_format)};
 });
 
 REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {

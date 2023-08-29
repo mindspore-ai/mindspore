@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include "ops/batch_norm.h"
 #include "ops/math_op_name.h"
 #include "ops/nn_op_name.h"
 #include "ops/op_name.h"
@@ -82,15 +81,8 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
 bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
   auto kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNorm>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BatchNorm failed!";
-    return false;
-  }
-  auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
+  auto activation_type_attr = base_operator->GetAttr(mindspore::ops::kActivationType);
   if (activation_type_attr != nullptr) {
     activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
   }
@@ -129,11 +121,6 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   InitResource();
-  is_train_ = kernel_ptr->get_is_training();
-  epsilon_ = kernel_ptr->get_epsilon();
-  format_ = kernel_ptr->get_format();
-  exp_avg_factor_ = kernel_ptr->get_momentum();
-
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   size_t input_num = inputs.size();
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {

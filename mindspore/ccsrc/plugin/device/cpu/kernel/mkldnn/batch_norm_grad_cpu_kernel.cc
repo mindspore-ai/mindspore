@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/batch_norm_grad_cpu_kernel.h"
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/batch_norm_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,15 +30,7 @@ constexpr size_t kScaleShiftNum = 2;
 bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast BatchNormGrad ops failed!";
-    return false;
-  }
-  is_train_ = kernel_ptr->get_is_training();
-  epsilon_ = kernel_ptr->get_epsilon();
-  kernel_name_ = kernel_ptr->GetPrim()->name();
-
+  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
