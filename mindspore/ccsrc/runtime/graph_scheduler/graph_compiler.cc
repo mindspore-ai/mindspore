@@ -316,7 +316,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     auto contain_bprop_cut = common::AnfAlgo::IsBpropCutOpExecInBackend(node);
     if (enable || contain_bprop_cut) {
       MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: NeedSkipResize:" << enable
-                   << "     BpGraph contain bprop_cut node:" << contain_bprop_cut;
+                   << ", BpGraph contain bprop_cut node:" << contain_bprop_cut;
       graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       break;
     }
@@ -434,83 +434,93 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment,
                                     const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
-  MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
   auto device_target = device_context->GetDeviceType();
-  const auto &outputs = io_nodes.second;
   // Generate kernel graph.
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 0);
-  KernelGraphPtr graph =
-    session_->ConstructKernelGraph(nodes, outputs, device_target, true, IsEnableZeroCopy(run_in_pynative));
+  auto kernel_graph =
+    session_->ConstructKernelGraph(nodes, io_nodes.second, device_target, true, IsEnableZeroCopy(run_in_pynative));
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 1);
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &inputs = io_nodes.first;
-  if (!run_in_pynative && common::GetEnv("MS_RUNTIME_COMPILE") == "1" && common::AnfAlgo::IsAnyTypeInput(inputs)) {
-    return CompileAnyTypeInputGraph(graph, outputs, device_context);
+  SetGraphDependency(kernel_graph, segment);
+  return CompileGraph(kernel_graph, io_nodes, device_context, run_mode, run_in_pynative);
+}
+
+GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
+                                    const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
+                                    const DeviceContext *device_context, device::RunMode run_mode,
+                                    bool run_in_pynative) {
+  MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  const auto &outputs = io_nodes.second;
+  if (!run_in_pynative && common::GetEnv("MS_RUNTIME_COMPILE") == "1" &&
+      common::AnfAlgo::IsAnyTypeInput(io_nodes.first)) {
+    return CompileAnyTypeInputGraph(kernel_graph, outputs, device_context);
   }
-  SetRunGraphBySingleOpFlag(graph);
-  SetGraphDependency(graph, segment);
-  graph->UpdateGraphAquireGilAttr();
-  opt::OptimizationWithoutBackend(graph);
-  // Unify the MindIR, must be before of the graph optimization.
+  kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
+  SetRunGraphBySingleOpFlag(kernel_graph);
+  kernel_graph->UpdateGraphAquireGilAttr();
+  opt::OptimizationWithoutBackend(kernel_graph);
+  // Unify the MindIR, must be before of the kernel_graph optimization.
   auto kernel_executor = device_context->GetKernelExecutor(false);
   if (kernel_executor != nullptr) {
-    kernel_executor->AddMindIRPass(graph);
+    kernel_executor->AddMindIRPass(kernel_graph);
   }
-  graph->SetInputNodes();
-  auto manager = MakeManager({graph});
+  kernel_graph->SetInputNodes();
+  auto manager = MakeManager({kernel_graph});
   if (manager) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
+    manager->AddFuncGraph(kernel_graph);
+    kernel_graph->set_manager(manager);
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->backend_policy() == "ge" && device_target == device::DeviceType::kAscend &&
+  if (context_ptr->backend_policy() == "ge" && device_context->GetDeviceType() == device::DeviceType::kAscend &&
       !common::IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
-    if (!device_context->graph_executor_->CompileGraph(graph, {})) {
-      MS_LOG(EXCEPTION) << "Compile graph failed: " << graph->graph_id();
+    if (!device_context->graph_executor_->CompileGraph(kernel_graph, {})) {
+      MS_LOG(EXCEPTION) << "Compile kernel_graph failed: " << kernel_graph->graph_id();
     }
-    graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, outputs);
-    graph->set_front_outputs(outputs);
-    return graph->graph_id();
+    kernel_graph->CacheGraphOutputToFrontNodeWithIndex({kernel_graph->output()}, outputs);
+    kernel_graph->set_front_outputs(outputs);
+    return kernel_graph->graph_id();
   }
-  session_->SetInputNodeUsage(graph, manager);
-  graph->SetOptimizerFlag();
+  session_->SetInputNodeUsage(kernel_graph, manager);
+  kernel_graph->SetOptimizerFlag();
 
   if (run_mode == device::RunMode::kUnknown) {
-    graph->set_run_mode(device_context->GetRunMode(graph));
+    kernel_graph->set_run_mode(device_context->GetRunMode(kernel_graph));
   } else {
-    graph->set_run_mode(run_mode);
+    kernel_graph->set_run_mode(run_mode);
   }
 
   GraphId graph_id = 0;
   if (run_in_pynative) {
     MS_EXCEPTION_IF_NULL(session_);
-    // Graph kernel does not support pynative mode now, print a warning here.
+    // kernel_graph kernel does not support pynative mode now, print a warning here.
     graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
-    graph_id = graph->graph_id();
+    graph_id = kernel_graph->graph_id();
   } else {
-    graph_id = CompileGraphImpl(graph, device_context, run_in_pynative);
+    graph_id = CompileGraphImpl(kernel_graph, device_context, run_in_pynative);
   }
 
-  graph->set_front_outputs(outputs);
+  kernel_graph->set_front_outputs(outputs);
 
-  graph->set_root_graph_id(graph_id);
-  session_->DumpGraphs({graph});
+  kernel_graph->set_root_graph_id(graph_id);
+  session_->DumpGraphs({kernel_graph});
 
-  // The graph is not compiled yet in PyNative Mode.
-  // Need to cache output latter when the graph is compiled.
+  // The kernel_graph is not compiled yet in PyNative Mode.
+  // Need to cache output latter when the kernel_graph is compiled.
   if (!run_in_pynative) {
-    // Cache the backend graph output nodes to front nodes with output index.
-    auto backend_node = graph->output();
+    // Cache the backend kernel_graph output nodes to front nodes with output index.
+    auto backend_node = kernel_graph->output();
     MS_EXCEPTION_IF_NULL(backend_node);
-    graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
+    kernel_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
   }
-  AnfAlgo::UpdateGraphValidRefPair(graph);
+  AnfAlgo::UpdateGraphValidRefPair(kernel_graph);
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
@@ -522,51 +532,55 @@ GraphCompilerInfo::~GraphCompilerInfo() {
 
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                            const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
+
   auto nodes = segment->nodes_;
   auto device_target = device_context->GetDeviceType();
   // Generate kernel graph.
-  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_target, true, false);
-  MS_EXCEPTION_IF_NULL(graph);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 0);
+  const auto &kernel_graph = session_->ConstructKernelGraph(nodes, outputs, device_target, true, false);
+  return CompileDynamicGraph(kernel_graph, device_context);
+}
 
+GraphId GraphCompiler::CompileDynamicGraph(const KernelGraphPtr &kernel_graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(device_context);
   // Dynamic shape or dynamic graph structure flag.
-  graph->set_flag(kAttrMutableKernel, true);
+  kernel_graph->set_flag(kAttrMutableKernel, true);
   MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
-  graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
+  kernel_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
   auto kernel_executor = device_context->GetKernelExecutor(true);
   if (kernel_executor != nullptr) {
-    kernel_executor->AddMindIRPass(graph);
+    kernel_executor->AddMindIRPass(kernel_graph);
   }
-  graph->SetExecOrderByDefault();
 
-  graph->UpdateGraphAquireGilAttr();
-  graph->SetInputNodes();
-  auto manager = Manage(graph);
+  kernel_graph->UpdateGraphAquireGilAttr();
+  kernel_graph->SetInputNodes();
+  auto manager = Manage(kernel_graph);
   if (manager) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
+    manager->AddFuncGraph(kernel_graph);
+    kernel_graph->set_manager(manager);
   }
-  session_->SetInputNodeUsage(graph, manager);
-  graph->SetOptimizerFlag();
-  graph->set_run_mode(device::RunMode::kKernelMode);
+  session_->SetInputNodeUsage(kernel_graph, manager);
+  kernel_graph->SetOptimizerFlag();
+  kernel_graph->set_run_mode(device::RunMode::kKernelMode);
 
-  // Graph kernel does not support pynative mode now, print a warning here.
+  // kernel_graph kernel does not support pynative mode now, print a warning here.
   graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
 
-  GraphId graph_id = graph->graph_id();
-  graph->set_root_graph_id(graph_id);
-  session_->DumpGraphs({graph});
+  GraphId graph_id = kernel_graph->graph_id();
+  kernel_graph->set_root_graph_id(graph_id);
+  session_->DumpGraphs({kernel_graph});
 
-  auto &exec_nodes = graph->execution_order();
+  auto &exec_nodes = kernel_graph->execution_order();
   (void)std::for_each(exec_nodes.begin(), exec_nodes.end(), [](const CNodePtr &node) {
     common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
   });
 
-  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
+  MS_LOG(INFO) << "Status record: end compile kernel_graph. kernel_graph id: " << graph_id;
   return graph_id;
 }
 

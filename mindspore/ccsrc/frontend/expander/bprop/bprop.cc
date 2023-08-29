@@ -22,6 +22,7 @@
 #include "ops/array_ops.h"
 #include "include/common/expander/core/infer.h"
 #include "include/common/profiler.h"
+#include "include/backend/kernel_graph.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/expander/utils.h"
@@ -29,6 +30,8 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+using KernelGraph = session::KernelGraph;
+
 bool HasBpropExpander(const std::string &prim_name) {
   const BpropHandle *handle = BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
   return (handle != nullptr);
@@ -86,7 +89,10 @@ class PynativeIRBuilder : public BpropIRBuilder {
     cnode_inputs.reserve(inputs.size() + 1);
     (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs),
                          [](const NodePtr &inp) { return inp->get(); });
-    auto cnode = func_graph_->NewCNode(cnode_inputs);
+    // PyNative use kernel graph construct bprop graph, which indicate func_graph_ here is kernel graph;
+    // And, use kernel graph create cnode will do PostNewCNode which is not necessary
+    auto cnode = func_graph_->isa<KernelGraph>() ? func_graph_->FuncGraph::NewCNode(cnode_inputs)
+                                                 : func_graph_->NewCNode(cnode_inputs);
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
     }
@@ -355,7 +361,9 @@ class GraphModeBuilder : public BpropIRBuilder {
       MS_EXCEPTION_IF_NULL(no);
       return no->get();
     });
-    auto cnode = func_graph_->NewCNode(cnode_inputs);
+    // PyNative use kernel graph construct bprop graph
+    auto cnode = func_graph_->isa<KernelGraph>() ? func_graph_->FuncGraph::NewCNode(cnode_inputs)
+                                                 : func_graph_->NewCNode(cnode_inputs);
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
     }

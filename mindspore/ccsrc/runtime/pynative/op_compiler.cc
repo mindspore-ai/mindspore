@@ -27,14 +27,15 @@
 #ifdef ENABLE_D
 #include "transform/acl_ir/acl_adapter_info.h"
 #endif
-#include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
-static std::vector<std::string> kNumStrCache;
+mindspore::HashSet<std::string> kExcludedAttr = {"input_names", "output_names", "IsFeatureMapOutput",
+                                                 "IsFeatureMapInputList", "pri_format"};
+std::vector<std::string> kNumStrCache;
 
 inline std::string GetNumString(int n) {
   if (n >= static_cast<int>(kNumStrCache.size())) {
@@ -438,14 +439,13 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
     // The value of the attribute affects the operator selection
     const auto &attr_map = op_prim->attrs();
     (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
-      if (element.first == kAttrInputNames || element.first == kAttrOutputNames) {
+      if (kExcludedAttr.find(element.first) != kExcludedAttr.end()) {
         return;
       }
       MS_EXCEPTION_IF_NULL(element.second);
       graph_info.append(element.second->ToString());
     });
   }
-  auto depend_list = GetInputDependValueList(op_prim);
   for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
     const auto &input_tensor = op_info.input_tensor[index];
     MS_EXCEPTION_IF_NULL(input_tensor);
@@ -475,6 +475,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       graph_info += p_address->format();
     }
     // For constant input or op depend input value
+    const auto &depend_list = GetInputDependValueList(op_prim);
     if (op_info.input_mask[index] == kValueNodeTensorMask ||
         (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
       graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);

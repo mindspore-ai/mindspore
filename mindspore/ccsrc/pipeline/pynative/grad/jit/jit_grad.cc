@@ -463,7 +463,7 @@ bool Jit::GetJitGradGraph(const pipeline::ResourcePtr &resource) {
   // Control flow not eliminate forward
   auto is_control_flow = PyNativeAlgo::Common::IsControlFlowGraph(jit_forward_graph);
   set_eliminate_forward(!is_control_flow);
-  MS_LOG(DEBUG) << "Run ad grad " << eliminate_forward_;
+  MS_LOG(DEBUG) << "Run ad grad eliminate_forward " << eliminate_forward_;
   auto grad_graph = ad::Grad(is_control_flow ? BasicClone(jit_forward_graph) : jit_forward_graph,
                              opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);

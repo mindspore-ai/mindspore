@@ -49,7 +49,7 @@ class BACKEND_EXPORT MsBackend : public Backend {
   virtual VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g);
-  GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
+  GraphId CompileGraph(const NotNull<FuncGraphPtr> &fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
   void ClearSessionGraphs();
   void CreateOtherSession(const std::string &target);

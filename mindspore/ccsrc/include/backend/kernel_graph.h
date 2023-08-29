@@ -190,7 +190,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // add value node tensor relation map
   void TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node);
   // get all value nodes of graph
-  const mindspore::HashSet<ValueNodePtr> graph_value_nodes() const { return graph_value_nodes_; }
+  const mindspore::HashSet<ValueNodePtr> &graph_value_nodes() const { return graph_value_nodes_; }
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   // ref output is in map
@@ -206,7 +206,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // Replace ref pair
   void ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithOutIndex &new_pair);
   // get map
-  std::map<AnfWithOutIndex, AnfWithOutIndex> GetRefMap() const { return ref_out_in_map_; }
+  const std::map<AnfWithOutIndex, AnfWithOutIndex> &GetRefMap() const { return ref_out_in_map_; }
   // update ref map
   void set_ref_out_in_map(const std::map<AnfWithOutIndex, AnfWithOutIndex> &ref_out_in_map) {
     ref_out_in_map_ = ref_out_in_map;
@@ -247,12 +247,14 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_device_loop_ctrl_tensors(const std::map<std::string, tensor::TensorPtr> &device_loop_ctrl_tensors) {
     device_loop_ctrl_tensors_ = device_loop_ctrl_tensors;
   }
-  std::map<std::string, tensor::TensorPtr> device_loop_control_tensors() const { return device_loop_ctrl_tensors_; }
+  const std::map<std::string, tensor::TensorPtr> &device_loop_control_tensors() const {
+    return device_loop_ctrl_tensors_;
+  }
 
   void set_device_loop_ctrl_params(const std::map<std::string, mindspore::ParameterPtr> &device_loop_ctrl_params) {
     device_loop_ctrl_params_ = device_loop_ctrl_params;
   }
-  const std::map<std::string, mindspore::ParameterPtr> device_loop_control_params() const {
+  const std::map<std::string, mindspore::ParameterPtr> &device_loop_control_params() const {
     return device_loop_ctrl_params_;
   }
 
@@ -369,13 +371,17 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     }
   }
 
-  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> get_pre_graphs() const { return pre_graphs_; }
+  const mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> &get_pre_graphs() const {
+    return pre_graphs_;
+  }
   void AddPostGraph(const std::shared_ptr<session::KernelGraph> &graph) {
     if (graph != nullptr) {
       post_graphs_[graph->graph_id()] = graph;
     }
   }
-  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> GetPostGraphs() const { return post_graphs_; }
+  const mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> &GetPostGraphs() const {
+    return post_graphs_;
+  }
 
   bool IsPreGraphFinished() const { return pre_graphs_.size() == pre_graph_finished_count_; }
   bool IsPostGraphFinished() const {
@@ -395,13 +401,13 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     pre_graph_finished_count_ = 0;
   }
   void OnRunGraphFinished() const {
-    for (auto post_graph : post_graphs_) {
+    for (const auto &post_graph : post_graphs_) {
       auto post_graph_ptr = post_graph.second.lock();
       if (post_graph_ptr != nullptr) {
         post_graph_ptr->IncPreGraphFinishedCount();
       }
     }
-    for (auto pre_graph : pre_graphs_) {
+    for (const auto &pre_graph : pre_graphs_) {
       auto pre_graph_ptr = pre_graph.second.lock();
       if (pre_graph_ptr != nullptr) {
         pre_graph_ptr->IncPostGraphFinishedCount();
@@ -451,8 +457,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // set flag to indicate whether has multi-call.
   void set_subgraph_multi_call(bool flag) { has_subgraph_multicall_ = flag; }
 
-  std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_map() { return graph_output_to_front_node_map_; }
-  std::map<AnfWithOutIndex, AnfWithOutIndex> front_node_to_graph_output_map() {
+  const std::map<AnfWithOutIndex, AnfWithOutIndex> &graph_output_map() const { return graph_output_to_front_node_map_; }
+  const std::map<AnfWithOutIndex, AnfWithOutIndex> &front_node_to_graph_output_map() const {
     return front_node_to_graph_output_map_;
   }
 
@@ -482,22 +488,22 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   AnfWithOutIndex GetElementInTupleBackendFrontIndexMap(const AnfNodePtr &back_node) const {
     auto iter = tuple_backend_front_anf_index_map_.find(back_node);
     if (iter == tuple_backend_front_anf_index_map_.end()) {
-      return AnfWithOutIndex(nullptr, 0);
+      return AnfWithOutIndex{nullptr, 0};
     }
     return iter->second;
   }
-  HashMap<AnfNodePtr, AnfWithOutIndex> InternalParameterToFrontNodeMap() const {
+  const HashMap<AnfNodePtr, AnfWithOutIndex> &InternalParameterToFrontNodeMap() const {
     return internal_parameter_to_front_node_map_;
   }
   void SetInternalParameterToFrontNodeMap(const HashMap<AnfNodePtr, AnfWithOutIndex> &ipf_map) {
     internal_parameter_to_front_node_map_ = ipf_map;
   }
 
-  AnfNodePtrList front_outputs() const { return front_outputs_; }
+  const AnfNodePtrList &front_outputs() const { return front_outputs_; }
   void set_front_outputs(const AnfNodePtrList &outputs) { front_outputs_ = outputs; }
   bool IsCommSubGraph(uint32_t id) const { return comm_sub_graph_ids_.find(id) != comm_sub_graph_ids_.end(); }
   void RecordNewCommSubGraphId(uint32_t id) { comm_sub_graph_ids_.insert(id); }
-  std::set<uint32_t> CommSubGraphIds() const { return comm_sub_graph_ids_; }
+  const std::set<uint32_t> &CommSubGraphIds() const { return comm_sub_graph_ids_; }
 
   // somas total memory size
   SomasInfo *MutableSomasInfo() const { return somas_info_.get(); }
@@ -507,11 +513,12 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_graph_info(const std::string &graph_info) { graph_info_ = graph_info; }
   // Infer cnode abstract by parameter.
   void InferType();
+  void PostNewCNode(const CNodePtr &cnode) const;
+  void SetKernelInfoForNode(const AnfNodePtr &node) const;
 
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
-  void SetKernelInfoForNode(const AnfNodePtr &node) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
 
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value);
@@ -519,7 +526,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
   AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
   std::vector<CNodePtr> SortStartLabelAndEndGoto();
-  void PostNewCNode(const CNodePtr &cnode) const;
 
   // members
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;

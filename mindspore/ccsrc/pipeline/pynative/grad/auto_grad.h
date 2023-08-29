@@ -26,10 +26,13 @@
 #include "ir/func_graph.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/base.h"
+#include "mindspore/ccsrc/include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace pynative {
 namespace autograd {
+using KernelGraph = session::KernelGraph;
+
 struct GradAttr {
   GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position, bool weight_param_is_tuple)
       : grad_all_inputs(get_all),
@@ -82,12 +85,12 @@ using GradParamPtr = std::shared_ptr<GradParam>;
 class VariableAdjoint;
 class FunctionNode {
  public:
-  FunctionNode(const FuncGraphPtr &tape, const AnfNodePtr &dout)
-      : tape_(tape), accumulate_dout_(dout), fake_dout_(dout) {}
+  FunctionNode(KernelGraphPtr tape, const AnfNodePtr &dout)
+      : tape_(std::move(tape)), accumulate_dout_(dout), fake_dout_(dout) {}
   void AddNextEdge(const std::shared_ptr<VariableAdjoint> &next_variable, const AnfNodePtr &din);
   void UpdateAccumulativeDout(const AnfNodePtr &new_dout);
   const std::vector<std::pair<std::shared_ptr<VariableAdjoint>, AnfNodePtr>> &next_edges() const { return next_edges_; }
-  const FuncGraphPtr &tape() { return tape_; }
+  const KernelGraphPtr &tape() { return tape_; }
   const AnfNodePtr &accumulate_dout() const { return accumulate_dout_; }
   void set_accumulate_dout(const AnfNodePtr &accumulate_dout) { accumulate_dout_ = accumulate_dout; }
   void ReplaceEdges();
@@ -96,7 +99,7 @@ class FunctionNode {
  private:
   AnfNodePtr HyperAdd(const AnfNodePtr &left_node, const AnfNodePtr &right_node);
   // Bprop func graph
-  const FuncGraphPtr tape_;
+  const KernelGraphPtr tape_;
   // Input of dout for this bprop function
   AnfNodePtr accumulate_dout_;
   // First we generate a fake dout
@@ -112,8 +115,8 @@ using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 class VariableAdjoint {
  public:
   VariableAdjoint() = default;
-  VariableAdjoint(const FunctionNodePtr &fn, const ValuePtr &out_value, bool is_leaf = false)
-      : fn_(fn), out_value_(out_value), is_leaf_(is_leaf) {}
+  VariableAdjoint(FunctionNodePtr fn, ValuePtr out_value, bool is_leaf = false)
+      : fn_(std::move(fn)), out_value_(std::move(out_value)), is_leaf_(is_leaf) {}
 
   ValuePtr out_value() const { return out_value_; }
   FunctionNodePtr fn() const { return fn_; }
@@ -155,9 +158,9 @@ using VariableAdjointWeakPtr = std::weak_ptr<VariableAdjoint>;
 using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
 
 struct AdParam {
-  AdParam() : tape_(std::make_shared<FuncGraph>()), fg_(std::make_shared<FuncGraph>()) {}
+  AdParam() : tape_(std::make_shared<KernelGraph>()), fg_(std::make_shared<FuncGraph>()) {}
   // Bprop funcgraph
-  FuncGraphPtr tape_;
+  KernelGraphPtr tape_;
   FuncGraphPtr fg_;
   VariableAdjointPtr last_variable_{nullptr};
   // Just for ad graph

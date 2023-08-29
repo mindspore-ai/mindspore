@@ -59,7 +59,7 @@ class BACKEND_EXPORT Backend {
   std::string name() { return name_; }
   virtual bool GetCond(const BaseRef &c, bool *value);
   virtual bool GetIndex(const BaseRef &c, int64_t *value);
-  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
+  virtual GraphId CompileGraph(const NotNull<FuncGraphPtr> &fg) { return kInvalidGraphId; }
   virtual void SetDebugger() {}
 
   bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
@@ -111,7 +111,14 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   void CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode);
 
   // Compile the kernel graph by the segment which is from the function graph partition.
-  void CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode);
+  void CompileGraphFromSegment(const GraphSegmentPtr &segment, device::RunMode run_mode);
+
+  // Compile the kernel graph which generated directly from front end(PyNative), and no need do graph partition.
+  void CompileKernelGraph(const KernelGraphPtr &kernel_graph, const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
+                          DeviceContext *device_context, device::RunMode run_mode);
+
+  void CacheFuncGraphWithKernelGraphId(const FuncGraphPtr &func_graph, const GraphId &graph_id,
+                                       DeviceContext *device_context);
 
   void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph);
 
@@ -131,6 +138,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
   void UpdateGraphCompilerInfo(const ActorInfo &actor_info);
+
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.
@@ -145,6 +153,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
   // Save the mapping between cell id and actor info.
   FuncGraphPtr root_graph_;
+  AnfNodePtr output_node_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;

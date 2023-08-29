@@ -30,6 +30,7 @@
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/sparse_tensor_ops.h"
+#include "ops/nn_ops.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
 #include "utils/log_adapter.h"
@@ -207,6 +208,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
     std::vector<tensor::TensorPtr> input_tensors;
     MS_EXCEPTION_IF_NULL(kernel_graph);
+    bool is_pynative_bprop_kernel_graph = kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
       auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
       if (element_pair.first) {
@@ -214,6 +216,11 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
                         &input_tensors);
       } else {
         const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
+        // Use kernel graph in compile
+        if (front_node == nullptr && is_pynative_bprop_kernel_graph) {
+          PushTensor(args, origin_parameters, input_node, &input_tensors);
+          continue;
+        }
         PushTensor(args, origin_parameters, front_node, &input_tensors);
       }
     }
@@ -347,9 +354,7 @@ KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t in
 }
 
 bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::GetCNodeName(cnode) != mindspore::kTupleGetItemOpName ||
-      cnode->inputs().size() != kTupleGetItemInputSize) {
+  if (cnode->inputs().size() != kTupleGetItemInputSize) {
     return false;
   }
   if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>() || GetTupleGetItemOutIndex(cnode) < 0) {
@@ -438,6 +443,59 @@ void CheckNodeValid(const AnfNodePtr &node) {
     }
   }
 }
+
+void AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session::SessionPtr &session_ptr) {
+  // Just have a return node or empty graph
+  if (kernel_graph->nodes().size() < kIndex2) {
+    return;
+  }
+  bool run_by_single_op = kernel_graph->has_flag(kFlagEnableRunGraphBySingleOp);
+  const auto &nodes = TopoSort(kernel_graph->get_return());
+  for (const auto &node : nodes) {
+    if (node->isa<Parameter>()) {
+      (void)session_ptr->CreateNewParameterFromParameter(node, kernel_graph.get());
+    }
+    // Run by single op will create kernel info in single op graph, so no need do this here;
+    // Run by Actor need kernel info, so do this here
+    if (!run_by_single_op) {
+      if (node->isa<CNode>()) {
+        const auto &cnode = node->cast<CNodePtr>();
+        if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0)); prim != nullptr) {
+          // Bprop cut use prim_py
+          if (!IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
+            auto new_prim = std::make_shared<Primitive>(*prim);
+            cnode->set_input(kIndex0, NewValueNode(new_prim));
+          }
+        }
+        kernel_graph->PostNewCNode(cnode);
+      } else {
+        if (node->isa<ValueNode>()) {
+          session_ptr->CreateNewValueNode(node, kernel_graph.get());
+        }
+        // Kernel graph new value node will create kernel info
+        if (node->kernel_info() == nullptr) {
+          kernel_graph->SetKernelInfoForNode(node);
+        }
+      }
+    }
+  }
+  auto output_node = kernel_graph->NewCNode({NewValueNode(prim::kPrimMakeTuple), kernel_graph->output()});
+  AbstractBasePtrList output_abs_list{kernel_graph->output()->abstract()};
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(output_abs_list);
+  output_node->set_abstract(abstract_tuple);
+  kernel_graph->set_output(output_node);
+  MS_LOG(INFO) << "Insert make tuple for output";
+}
+
+bool NeedCheckMultiTarget(const FuncGraphPtr &func_graph, int ms_execution_mode) {
+  if (ms_execution_mode == kGraphMode) {
+    return true;
+  }
+  bool run_in_dynamic = ms_execution_mode == kPynativeMode && func_graph->has_flag(kFlagEnableRunGraphBySingleOp);
+  bool is_call_graph = func_graph->has_flag(kFlagJitCallGraph);
+  bool is_control_flow = !func_graph->func_graphs_used_total().empty();
+  return (run_in_dynamic && is_call_graph) || is_control_flow;
+}
 }  // namespace
 
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
@@ -455,6 +513,10 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
     UnifyMindIR(root_graph);
   }
   root_graph_ = root_graph;
+  // Use kernel graph, which output maybe change by backed pass, so backup output
+  if (root_graph_->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    output_node_ = root_graph_->output();
+  }
 
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
@@ -473,6 +535,8 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
+
+  // Current only ascend do need do checkout in PartitionGraph
   bool all_support = device_context->PartitionGraph(func_graph);
   if (all_support) {
     auto run_mode = device_context->GetRunMode(func_graph);
@@ -483,7 +547,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
       CompileSubGraph(func_graph, device::RunMode::kKernelMode);
     }
   } else {
-    if (!pynative_with_jit_call_graph) {
+    if (NeedCheckMultiTarget(func_graph, ms_execution_mode_)) {
       ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
     }
     CompileSubGraph(func_graph);
@@ -513,7 +577,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
-  const std::map<std::string, std::string> kOpListToTupleNames = {
+  static const std::map<std::string, std::string> kOpListToTupleNames = {
     {mindspore::kMakeListNewOpName, mindspore::kMakeTupleOpName},
     {mindspore::kListGetItemOpName, mindspore::kTupleGetItemOpName},
     {mindspore::kListSetItemOpName, mindspore::kTupleSetItemOpName}};
@@ -525,16 +589,16 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
     if (abs != nullptr && abs->isa<abstract::AbstractSequence>()) {
       const auto &sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);
-      if ((!sequence_abs->dynamic_len()) && sequence_abs->size() == 0) {
+      if ((!sequence_abs->dynamic_len()) && sequence_abs->empty()) {
         MS_LOG(INFO) << "Set dynamic len flag for empty sequence input:" << parameter->DebugString();
         sequence_abs->set_dynamic_len(true);
       }
     }
   }
-  FuncGraphSet graphs = root_graph->manager()->func_graphs();
+  const auto &graphs = root_graph->manager()->func_graphs();
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
-    auto nodes = TopoSort(graph->get_return());
+    const auto &nodes = TopoSort(graph->get_return());
     for (const auto &node : nodes) {
       if (node == nullptr || (!node->isa<CNode>())) {
         continue;
@@ -545,7 +609,8 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       // List name --> tuple name.
-      auto iter = kOpListToTupleNames.find(common::AnfAlgo::GetCNodeName(cnode));
+      const auto &op_name = common::AnfAlgo::GetCNodeName(cnode);
+      auto iter = kOpListToTupleNames.find(op_name);
       if (iter != kOpListToTupleNames.end()) {
         common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
         cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(iter->second)));
@@ -556,7 +621,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
 
       // TupleGetItem --> RealTupleGetItem.
-      if (NeedConvertToRealTupleGetItem(cnode)) {
+      if (op_name == mindspore::kTupleGetItemOpName && NeedConvertToRealTupleGetItem(cnode)) {
         common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
         cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealTupleGetItemOpName)));
         // Reset full scope name.
@@ -566,8 +631,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
 
       // MakeTuple --> RealMakeTuple
-      if (common::AnfAlgo::GetCNodeName(cnode) == mindspore::kMakeTupleOpName &&
-          common::AnfAlgo::IsDynamicSequence(cnode)) {
+      if (op_name == mindspore::kMakeTupleOpName && common::AnfAlgo::IsDynamicSequence(cnode)) {
         common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
         cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealMakeTupleOpName)));
         // Reset full scope name.
@@ -584,12 +648,16 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
 }
 
 void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
-  auto root_graph = WrapPrimitives(func_graph);
+  auto root_graph = func_graph;
+  if (!func_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    root_graph = WrapPrimitives(func_graph);
+  }
   MS_EXCEPTION_IF_NULL(root_graph);
+  auto manager = root_graph->manager();
   CompileGraph(root_graph, run_mode);
 
-  MS_EXCEPTION_IF_NULL(root_graph->manager());
-  const auto &sub_graphs = root_graph->manager()->func_graphs();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &sub_graphs = manager->func_graphs();
   std::vector<FuncGraphPtr> cand_graph(sub_graphs.begin(), sub_graphs.end());
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
@@ -603,26 +671,42 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
 
 void MindRTBackendBase::CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(graph_partition_);
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  if (!func_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 0);
+    // Split graph to segments.
+    MS_EXCEPTION_IF_NULL(graph_partition_);
+    const auto &segments = graph_partition_->Partition(func_graph);
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 1);
+    MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size: " << segments.size();
 
-  bool contain_multi_target = false;
-  // Split graph to segments.
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 0);
-  const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 1);
-  MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size: " << segments.size();
-
-  // Foreach the segments to compile graph.
-  for (const auto &segment : segments) {
-    CompileGraph(segment, run_mode);
+    // Foreach the segments to compile graph.
+    for (const auto &segment : segments) {
+      CompileGraphFromSegment(segment, run_mode);
+    }
+  } else {
+    auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    const auto &session = graph_compiler_->session_ptr();
+    MS_EXCEPTION_IF_NULL(session);
+    session->SetKernelGraphId(kernel_graph);
+    MS_LOG(INFO) << "Compile graph: " << kernel_graph->ToString() << ", kernel graph";
+    AddKernelGraphCompileInfo(kernel_graph, session);
+    kernel_graph->SetExecOrderByDefault();
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), device_id_});
+    MS_EXCEPTION_IF_NULL(device_context);
+    device_context->Initialize();
+    CompileKernelGraph(kernel_graph, std::make_pair(kernel_graph->inputs(), kernel_graph->outputs()), device_context,
+                       run_mode);
   }
 }
 
-void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode) {
+void MindRTBackendBase::CompileGraphFromSegment(const GraphSegmentPtr &segment, device::RunMode run_mode) {
   MS_EXCEPTION_IF_NULL(segment);
   // Compile the normal nodes, which doesn't contain the cut node.
-  if (segment->nodes_.size() == 0) {
+  if (segment->nodes_.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The segments size is 0.";
   }
   if (!segment->is_cut_) {
@@ -631,7 +715,7 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
 
     // Get the device context.
     const auto &cur_device_name = GetCNodeTarget(segment->nodes_[0]);
-    const auto &device_context =
+    auto device_context =
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
     MS_EXCEPTION_IF_NULL(device_context);
     device_context->Initialize();
@@ -642,8 +726,6 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
 
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
     GraphId graph_id;
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
       graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
@@ -656,16 +738,7 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
         root_graph_->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }
-
-    graph_id_to_device_context_[graph_id] = device_context;
-
-    const auto &func_graph = segment->nodes_[0]->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    if (func_graph_to_kernel_graph_ids_.find(func_graph) == func_graph_to_kernel_graph_ids_.end()) {
-      (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>{graph_id});
-    } else {
-      (void)func_graph_to_kernel_graph_ids_[func_graph].back().emplace_back(graph_id);
-    }
+    CacheFuncGraphWithKernelGraphId(segment->nodes_[0]->func_graph(), graph_id, device_context);
   } else {
     // Compile the cut node.
     auto cut_node = segment->nodes_[0];
@@ -678,6 +751,35 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
       MS_EXCEPTION_IF_NULL(func_graph);
       (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
     }
+  }
+}
+
+void MindRTBackendBase::CompileKernelGraph(const KernelGraphPtr &kernel_graph,
+                                           const std::pair<AnfNodePtrList, AnfNodePtrList> &io_nodes,
+                                           DeviceContext *device_context, device::RunMode run_mode) {
+  GraphId graph_id;
+  if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
+    graph_id = graph_compiler_->CompileDynamicGraph(kernel_graph, device_context);
+  } else {
+    graph_id =
+      graph_compiler_->CompileGraph(kernel_graph, std::make_pair(kernel_graph->inputs(), kernel_graph->outputs()),
+                                    device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+    if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
+      MS_LOG(INFO)
+        << "Set kFlagEnableRunGraphBySingleOp: require the root_graph and subgraph to have the same markings ";
+      root_graph_->set_flag(kFlagEnableRunGraphBySingleOp, true);
+    }
+  }
+  CacheFuncGraphWithKernelGraphId(kernel_graph, graph_id, device_context);
+}
+
+void MindRTBackendBase::CacheFuncGraphWithKernelGraphId(const FuncGraphPtr &func_graph, const GraphId &graph_id,
+                                                        DeviceContext *device_context) {
+  graph_id_to_device_context_[graph_id] = device_context;
+  if (func_graph_to_kernel_graph_ids_.find(func_graph) == func_graph_to_kernel_graph_ids_.end()) {
+    (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>{graph_id});
+  } else {
+    (void)func_graph_to_kernel_graph_ids_[func_graph].back().emplace_back(graph_id);
   }
 }
 
@@ -813,7 +915,6 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   // Open abstract_lock for dynamic_shape
   AnfUtils::OpenAbstractLock();
 
-  MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   // Fetch the graph compiler info.
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
   if (graph_iter == actor_to_graph_compiler_info_.end()) {
@@ -832,6 +933,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     return;
   }
 
+  MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 0);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 0);
   auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
@@ -1033,7 +1135,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(output_position);
   MS_EXCEPTION_IF_NULL(tuple_tensors);
-  const PrimitiveSet expand_prims{
+  static const PrimitiveSet expand_prims{
     prim::kPrimMakeTuple,
     prim::kPrimMakeCSRTensor,
     prim::kPrimMakeCOOTensor,

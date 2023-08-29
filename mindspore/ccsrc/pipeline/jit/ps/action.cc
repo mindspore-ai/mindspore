@@ -1129,14 +1129,17 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
   graphkernel::GraphKernelFlags::SaveJitConfig(PhaseManager::GetInstance().jit_config());
 
+  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+  const auto &device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (pynative_mode && device_target != kAscendDevice) {
+    return;
+  }
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
-
   // GPU/CPU no need set any context.
   if (!ExistTarget(all_nodes, kAscendDevice)) {
     return;
   }
 
-  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   const bool enable_memory_offload = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
   const bool pynative_not_sink = pynative_mode && (jit_level != "O2") && (context_ptr->backend_policy() != "ge");
   // GRAPH | Single Op : KernelByKernel path in MindRT.
@@ -1244,9 +1247,14 @@ bool TaskEmitAction(const ResourcePtr &resource) {
     return true;
   }
 
-  func_graph->SetMultiTarget();
-  if (func_graph->exist_multi_target() && DumpJsonParser::GetInstance().IsDumpEnabled()) {
-    MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
+  // In PyNative mode, multi target will generate in -1 shape in jit. But, jit in -1 shape will run as a call graph;
+  // control flow not has flag kFlagJitCallGraph
+  bool is_control_flow = !func_graph->func_graphs_used_total().empty();
+  if (mode == kGraphMode || (mode == kPynativeMode && (func_graph->has_flag(kFlagJitCallGraph) || is_control_flow))) {
+    func_graph->SetMultiTarget();
+    if (func_graph->exist_multi_target() && DumpJsonParser::GetInstance().IsDumpEnabled()) {
+      MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
+    }
   }
   DisableMindRT(resource);
 
