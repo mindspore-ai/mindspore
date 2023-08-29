@@ -11,7 +11,7 @@ mindspore.reset_auto_parallel_context
     - gradient_fp32_sync：True。
     - parallel_mode： 'stand_alone'。
     - search_mode： 'recursive_programming'。
-    - auto_parallel_search_mode： 'dynamic_programming'。
+    - auto_parallel_search_mode： 'recursive_programming'。
     - parameter_broadcast：False。
     - strategy_ckpt_load_file： ''。
     - strategy_ckpt_save_file： ''。
