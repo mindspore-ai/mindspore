@@ -517,7 +517,11 @@ class Softplus(Primitive):
         \text{output} = \log(1 + \exp(\text{x}))
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, with float16, float32 or float64(CPU, GPU) data type.
+        - **input_x** (Tensor) - Tensor of any dimension.
+          Supported dtypes:
+
+          - GPU/CPU: float16, float32, float64.
+          - Ascend: float16, float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -659,7 +663,11 @@ class Mish(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.mish` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor with float16, float32 or float64 data type.
+        - **x** (Tensor) - The input Tensor.
+          Supported dtypes:
+
+          - GPU/CPU: float16, float32, float64.
+          - Ascend: float16, float32.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -1848,7 +1856,10 @@ class MaxPool(_Pool):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-          Supported dtypes: float16, float32, float64.
+          Supported dtypes:
+
+          - CPU: float16, float32, float64.
+          - GPU/Ascend: float16, float32.
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.

@@ -3,16 +3,4 @@
 
 .. py:class:: mindspore.ops.Expand
 
-    将输入Tensor的单例维度（维度size为1）进行扩展，以匹配给定的目标shape。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
-
-    更多细节请参考 :func:`mindspore.ops.expand`。
-
-    输入：
-        - **x** (Tensor) - 输入Tensor。
-        - **shape** (Tensor) - `x` 扩展后的shape。
-
-    输出：
-        扩展后的Tensor，其shape由 `shape` 决定。
+    :class: `mindspore.ops.Expand` 将在未来版本弃用。请使用 :class:`mindspore.ops.BroadcastTo` 代替。

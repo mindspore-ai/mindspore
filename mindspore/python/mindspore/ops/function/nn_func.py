@@ -2780,7 +2780,12 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     to ensure numerical stability.
 
     Args:
-        input (Tensor) - Tensor of any dimension, with float16, float32 or float64(CPU, GPU) data type.
+        input (Tensor) - Tensor of any dimension.
+            Supported dtypes:
+
+            - GPU/CPU: float16, float32, float64.
+            - Ascend: float16, float32.
+
         beta (int, optional) - The :math:`\beta` value in softplus function. Default: ``1`` .
         threshold (int, optional) - When :math:`input * beta > threshold`, converting softplus to a linear function.
             Default: ``20`` .
@@ -4303,7 +4308,11 @@ def mish(x):
     <https://arxiv.org/abs/1908.08681>`_.
 
     Args:
-        x (Tensor): The input Tensor with float16, float32 or float64 data type.
+        x (Tensor): The input Tensor.
+            Supported dtypes:
+
+            - GPU/CPU: float16, float32, float64.
+            - Ascend: float16, float32.
 
     Returns:
         Tensor, with the same type and shape as the `x`.

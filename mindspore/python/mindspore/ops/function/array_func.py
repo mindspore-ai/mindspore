@@ -6583,50 +6583,8 @@ def topk(input, k, dim=None, largest=True, sorted=True):
 
 def expand(input_x, size):
     r"""
-    Returns a new tensor where the dimension of size is expanded to a larger size.
-
-    Note:
-        - If the `size` for a dimension is -1, it means no change for the size of that dimension.
-        - When a Tensor is expanded to a larger number of dimensions, the new ones will be appended at
-          the front, and for the new dimensions, the `size` can not be -1.
-
-    Args:
-        input_x (Tensor): A Tensor to be expanded.
-        size (Tensor): The expanded shape of `input_x`.
-
-    Returns:
-        y (Tensor) - Tensor after expansion whose shape is `size`.
-
-    Raises:
-        TypeError: If `input_x` or `size` is not Tensor.
-        TypeError: If the type of `size` is not one of the following dtype: int16, int32, int64.
-        ValueError: If the size of `size` is less than the size of `input_x.shape`.
-        ValueError: If `size` is not a 1-D tensor.
-        ValueError: If the expanded `size` is not equal to the existing shape of `input_x` at a dimension
-            that is not 1.
-        ValueError: If the expanded `size` < 0 and it is in a leading position, corresponding to
-            a non-existing dimension in `input_x`.
-        ValueError: If the number of elements of output is more than 1000000.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[2], [3], [4]]), mindspore.float32)
-        >>> size = Tensor(np.array([3,4]), mindspore.int32)
-        >>> y = ops.expand(input_x, size)
-        >>> print(y)
-        [[2. 2. 2. 2.]
-         [3. 3. 3. 3.]
-         [4. 4. 4. 4.]]
-        >>> input_x = Tensor(2, mindspore.int16)
-        >>> size = Tensor(np.array([1, 1]), mindspore.int32)
-        >>> y = ops.expand(input_x, size)
-        >>> print(y)
-        [[2]]
+    :func:`mindspore.ops.expand` will be deprecated in the future.
+    Please use :func:`mindspore.ops.broadcast_to` instead.
     """
     expand_op = _get_cache_prim(Expand)()
     return expand_op(input_x, size)
