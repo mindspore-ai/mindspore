@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/ops_func_impl/reciprocal.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Reciprocal, EltwiseOpParams);
+BaseShapePtr ReciprocalFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) const {
+  auto x_shape = input_args[kIndex0]->GetShape();
+  MS_EXCEPTION_IF_NULL(x_shape);
+  return x_shape->Clone();
+}
 
-OP_FUNC_IMPL_TEST_CASES(Reciprocal, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                                    EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                                    EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+TypePtr ReciprocalFuncImpl::InferType(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
+  auto x_type = input_args[kIndex0]->GetType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  return x_type->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -138,8 +138,6 @@ GVAR_DEF(PrimitivePtr, kPrimTruncateDiv, std::make_shared<Primitive>("TruncateDi
 GVAR_DEF(PrimitivePtr, kPrimSqrt, std::make_shared<Primitive>("Sqrt"));
 GVAR_DEF(PrimitivePtr, kPrimTruncateMod, std::make_shared<Primitive>("TruncateMod"));
 GVAR_DEF(PrimitivePtr, kPrimSqrtGrad, std::make_shared<Primitive>(kSqrtGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimReciprocal, std::make_shared<Primitive>(kReciprocalOpName));
-GVAR_DEF(PrimitivePtr, kPrimReciprocalGrad, std::make_shared<Primitive>(kReciprocalGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimInv, std::make_shared<Primitive>(kInvOpName));
 GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimRound, std::make_shared<Primitive>("Round"));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RECIPROCAL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RECIPROCAL_H_
 
-#ifndef MINDSPORE_CORE_OPS_RECIPROCAL_GRAD_H_
-#define MINDSPORE_CORE_OPS_RECIPROCAL_GRAD_H_
-#include <map>
-#include <memory>
-#include <string>
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReciprocalGrad = "ReciprocalGrad";
-class MIND_API ReciprocalGrad : public BaseOperator {
+class MIND_API ReciprocalFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(ReciprocalGrad);
-  ReciprocalGrad() : BaseOperator(kNameReciprocalGrad) {}
+  ReciprocalFuncImpl() = default;
+  ~ReciprocalFuncImpl() = default;
+
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_RECIPROCAL_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RECIPROCAL_H_
