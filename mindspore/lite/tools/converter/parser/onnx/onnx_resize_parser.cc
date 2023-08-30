@@ -54,11 +54,11 @@ PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const 
     } else if (attribute_name == "extrapolation_value") {
       prim->set_extrapolation_value(onnx_node_attr.f());
     } else if (attribute_name == "mode") {
-      std::map<std::string, mindspore::ResizeMethod> resize_mode = {
-        {"nearest", mindspore::ResizeMethod::NEAREST},
-        {"linear", mindspore::ResizeMethod::LINEAR},
-        {"cubic", mindspore::ResizeMethod::CUBIC},
-      };
+      std::map<std::string, mindspore::ResizeMethod> resize_mode = {{"nearest", mindspore::ResizeMethod::NEAREST},
+                                                                    {"linear", mindspore::ResizeMethod::LINEAR},
+                                                                    {"cubic", mindspore::ResizeMethod::CUBIC},
+                                                                    {"area", mindspore::ResizeMethod::AREA},
+                                                                    {"bicubic", mindspore::ResizeMethod::CUBIC}};
       if (resize_mode.find(onnx_node_attr.s()) != resize_mode.end()) {
         prim->set_method(resize_mode[onnx_node_attr.s()]);
       } else {
