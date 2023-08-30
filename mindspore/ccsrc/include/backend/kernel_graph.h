@@ -193,6 +193,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   const mindspore::HashSet<ValueNodePtr> &graph_value_nodes() const { return graph_value_nodes_; }
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
+  void ClearAllValueNode() { graph_value_nodes_.clear(); }
   // ref output is in map
   bool IsInRefOutputMap(const AnfWithOutIndex &pair) const;
   // Whether the value corresponds to ref output.

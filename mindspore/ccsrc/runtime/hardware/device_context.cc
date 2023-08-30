@@ -43,7 +43,7 @@ bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() == nullptr) {
-    MS_LOG(EXCEPTION) << "Device ptr is null in device address to release!";
+    MS_LOG(EXCEPTION) << "Device ptr is null in device address:" << address << " to release!";
   }
 
   if (!address->from_mem_pool()) {

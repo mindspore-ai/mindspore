@@ -587,6 +587,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     const auto &graph = graph_compiler_info_->graphs_[i];
     const auto &device_context = graph_compiler_info_->device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
+    MS_LOG(DEBUG) << "prepare data for graph:" << graph->ToString();
     // Prepare the data of device tensor store(value nodes of graph).
     for (const auto &value_node : graph->graph_value_nodes()) {
       MS_EXCEPTION_IF_NULL(value_node);
@@ -594,8 +595,8 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
         const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
         MS_EXCEPTION_IF_NULL(front_node);
         MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
-                      << ", debug name:" << value_node->DebugString()
-                      << ", front node:" << front_node->fullname_with_scope() << " for graph:" << graph->ToString();
+                      << ", debug name:" << value_node->DebugString() << ", front node:" << front_node->DebugString()
+                      << " for graph:" << graph->ToString();
         PrepareDataForValueNode(value_node, front_node, device_context, context);
       }
     }
@@ -721,6 +722,8 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     UpdateRefCount(device_tensor.get(), true);
 
     SyncTensorData(tensor, device_tensor, node, device_context, context, real_strategy_);
+    MS_LOG(DEBUG) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << i
+                  << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr();
     CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
   }
 }

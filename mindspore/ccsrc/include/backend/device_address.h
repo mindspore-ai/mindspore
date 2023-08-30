@@ -221,7 +221,20 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 
   // Return the valid device ptr.
-  virtual void *GetValidPtr(size_t) { return ptr_; }
+  virtual void *GetValidPtr(size_t) {
+    if (user_data_ == nullptr || need_sync_user_data_ == false) {
+      return ptr_;
+    }
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    if (need_sync_user_data_ == false) {
+      return ptr_;
+    }
+    if (sync_user_data_handler_ != nullptr) {
+      sync_user_data_handler_(this);
+    }
+    need_sync_user_data_ = true;
+    return ptr_;
+  }
 
   // Offload data from device to host and free device memory
   virtual bool Offload(size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
@@ -251,6 +264,8 @@ class DeviceAddress : public mindspore::DeviceSync {
     other->ptr_ = ptr_;
     other->from_mem_pool_ = from_mem_pool_;
     other->set_deleter(deleter());
+    other->set_sync_user_data_handler(sync_user_data_handler_);
+    other->set_need_sync_user_data(need_sync_user_data_);
     ptr_ = nullptr;
     from_mem_pool_ = false;
     deleter_ = nullptr;
@@ -271,6 +286,12 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::pair<AnfNodeWeakPtr, size_t> node_index() const { return node_index_; }
   void set_deleter(const std::function<void(uint8_t *)> &deleter) { deleter_ = deleter; }
   std::function<void(uint8_t *)> deleter() const { return deleter_; }
+
+  using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
+  SyncUserDataHandler sync_user_data_handler() { return sync_user_data_handler_; }
+  void set_sync_user_data_handler(SyncUserDataHandler handler) { sync_user_data_handler_ = handler; }
+  bool need_sync_user_data() { return need_sync_user_data_; }
+  void set_need_sync_user_data(bool need_sync_user_data) { need_sync_user_data_ = need_sync_user_data; }
 
  protected:
   const void *ptr() const { return ptr_; }
@@ -308,7 +329,9 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // The flag identify where data is stored
   mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
-
+  // Handler for sync data from user data.
+  SyncUserDataHandler sync_user_data_handler_{nullptr};
+  bool need_sync_user_data_{false};
   // The specified deleter to release memory
   std::function<void(uint8_t *)> deleter_;
   friend class KernelRuntime;

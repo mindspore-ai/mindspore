@@ -2522,6 +2522,10 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
         common::AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
         backend_to_front.second.first->isa<ValueNode>()) {
       if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first)) {
+        MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString() << " add monad output node:"
+                      << (backend_to_front.second.first != nullptr ? backend_to_front.second.first->DebugString()
+                                                                   : "null")
+                      << " index:" << backend_to_front.second.second;
         (void)monad_outputs->emplace(backend_to_front.second);
       }
       continue;

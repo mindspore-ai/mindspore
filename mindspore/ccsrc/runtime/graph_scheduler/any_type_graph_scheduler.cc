@@ -327,24 +327,87 @@ void AnyTypeGraphScheduler::TransArrowInActorSetToAnyTypeKernelActor(const Actor
   CollectBackendParameterForDynamicShape(any_type_kernel_actor, model_graph, real_graph);
 }
 
+void PrepareDataForValueNode(const AnfNodePtr &node, DeviceContext *const device_context) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (!node->isa<ValueNode>()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Prepare data for value node:" << node->DebugString() << " node addr:" << node;
+  auto device_tensor = DeviceTensorStore::GetInstance().Fetch(node.get(), device_context->GetDeviceType());
+  if (device_tensor != nullptr) {
+    if (device_tensor->GetPtr() == nullptr) {
+      if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+        MS_LOG(EXCEPTION) << "Failed to allocate memory for device tensor store:" << device_tensor;
+      }
+      MS_LOG(DEBUG) << "Device address:" << device_tensor << " allocate ptr:" << device_tensor->GetPtr()
+                    << " for value node:" << node->DebugString();
+    } else {
+      MS_LOG(DEBUG) << "Device address:" << device_tensor << " already has ptr:" << device_tensor->GetPtr()
+                    << " for value node:" << node->DebugString();
+    }
+    const auto &value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    const auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    tensor::TensorPtr tensor = nullptr;
+    if (value->isa<tensor::Tensor>()) {
+      tensor = value->cast<TensorPtr>();
+    } else if (value->isa<Scalar>()) {
+      tensor = ScalarToTensor(value->cast<ScalarPtr>());
+    } else if (value->isa<StringImm>()) {
+      auto string_value = GetValue<std::string>(value);
+      size_t tensor_size = string_value.size();
+      ShapeVector shape = {1, SizeToLong(tensor_size)};
+      if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, string_value.data())) {
+        MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
+      }
+      MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
+                    << " for value node:" << node->DebugString();
+      return;
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
+    }
+
+    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), tensor->data_c())) {
+      MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
+    }
+    MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
+                  << " for value node:" << node->DebugString();
+  } else {
+    MS_LOG(EXCEPTION) << "Failed to get device address by node:" << node->DebugString();
+  }
+}
+
 void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<AbstractActorPtr> &actors,
                                                            AnyTypeKernelActor *const any_type_kernel_actor,
                                                            const KernelGraphPtr &model_graph,
-                                                           const KernelGraphPtr &real_graph,
+                                                           const GraphCompilerInfo &graph_compiler_info,
                                                            const std::vector<AnfNodePtr> &front_parameters) {
   MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
   MS_EXCEPTION_IF_NULL(model_graph);
+  if (graph_compiler_info.graphs_.empty() || graph_compiler_info.device_contexts_.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid graph compiler info for any type actor:" << any_type_kernel_actor->GetAID();
+  }
+  auto real_graph = graph_compiler_info.graphs_[0];
+  auto device_context = graph_compiler_info.device_contexts_[0];
   MS_EXCEPTION_IF_NULL(real_graph);
+  MS_EXCEPTION_IF_NULL(device_context);
   const auto &id = any_type_kernel_actor->current_data_type_;
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
     std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys;
     for (auto &pair : actor->device_tensor_store_keys_) {
+      MS_EXCEPTION_IF_NULL(pair.second);
       const auto &front_node = model_graph->GetFrontAnfByBackendAnf(pair.second);
       if (front_node == nullptr) {
         MS_LOG(DEBUG) << "Failed to fetch front node for device tensor store key node:" << pair.second->DebugString()
                       << " node addr:" << pair.second << " index:" << pair.first << " for actor:" << actor->GetAID();
         device_tensor_store_keys.emplace_back(pair);
+        if (pair.second->isa<ValueNode>() && real_graph->graph_value_nodes().find(pair.second->cast<ValueNodePtr>()) !=
+                                               real_graph->graph_value_nodes().end()) {
+          PrepareDataForValueNode(pair.second, device_context);
+        }
         continue;
       }
       MS_LOG(DEBUG) << "Fix device tensor store key node from:" << pair.second->DebugString()
@@ -391,8 +454,6 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   MS_LOG(INFO) << "End transform for model graph:" << model_graph->ToString()
                << " and real graph:" << real_graph->ToString();
 
-  // Prevent the device address in the graph from being freed.
-  graph_compiler_info->graphs_.clear();
   TransArrowInActorSetToAnyTypeKernelActor(actor_set, model_graph, real_graph);
   // Collect actors.
   std::for_each(actor_set->custom_actors_.begin(), actor_set->custom_actors_.end(),
@@ -408,7 +469,9 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   auto base_actor = FetchActor(any_type_kernel_actor_name);
   MS_EXCEPTION_IF_NULL(base_actor);
   auto any_type_kernel_actor = dynamic_cast<AnyTypeKernelActor *>(base_actor);
-  FixDeviceTensorStoreKeyInActor(actors, any_type_kernel_actor, model_graph, real_graph, front_parameters);
+  FixDeviceTensorStoreKeyInActor(actors, any_type_kernel_actor, model_graph, *graph_compiler_info, front_parameters);
+  // Prevent the device address in the graph from being freed.
+  graph_compiler_info->graphs_.clear();
   return actors;
 }
 }  // namespace runtime

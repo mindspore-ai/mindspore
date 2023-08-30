@@ -228,6 +228,12 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
     if (!allow_runtime_compile) {
       PyExecuteOutputToRawMemory(output, outputs);
+    } else {
+      MS_EXCEPTION_IF_NULL(kernel_node_);
+      const auto &device_address = AnfAlgo::GetMutableOutputAddr(kernel_node_, 0);
+      MS_EXCEPTION_IF_NULL(device_address);
+      MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
+      device_address->set_need_sync_user_data(true);
     }
     AttachPyOutputData(output);
     return true;

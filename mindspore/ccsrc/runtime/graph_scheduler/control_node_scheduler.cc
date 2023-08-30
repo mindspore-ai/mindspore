@@ -1415,6 +1415,20 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       SchedulerHelper::AddControlArrow(super_actor.get(), to_actor);
     }
   }
+
+  // Link control arrows from no super kernel actor to the corresponding exit actor.
+  for (auto &any_type_kernel_actor : actor_set->any_type_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
+    if ((any_type_kernel_actor->output_data_arrows_.size() == 0) &&
+        (any_type_kernel_actor->output_control_arrows_.size() == 0)) {
+      auto kernel_graph = any_type_kernel_actor->graph();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto to_actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kExitActorNameSuffix;
+      auto to_actor = FetchActor(to_actor_name);
+      MS_EXCEPTION_IF_NULL(to_actor);
+      SchedulerHelper::AddControlArrow(any_type_kernel_actor.get(), to_actor);
+    }
+  }
 }
 
 void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,

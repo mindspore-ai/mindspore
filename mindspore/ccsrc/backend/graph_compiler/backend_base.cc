@@ -55,6 +55,10 @@ Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(fa
   convert_fn_ = MsVmConvert;
 }
 
+void set_infer_handler(const runtime::InferHandler &infer_handler) {
+  runtime::AnyTypeKernelActor::set_infer_handler(infer_handler);
+}
+
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {

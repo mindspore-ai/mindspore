@@ -24,6 +24,7 @@
 #include <vector>
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "include/common/utils/python_adapter.h"
 #include "ir/anf.h"
 
 namespace mindspore {
@@ -37,7 +38,7 @@ using ControlArrowGroupMap = mindspore::HashMap<std::string, std::vector<AID *>>
 using TransformFunc =
   std::function<std::vector<AbstractActorPtr>(const KernelGraphPtr &, const KernelGraphPtr &, const DeviceContext *)>;
 using ScheduleFunc = std::function<void(const std::vector<AbstractActorPtr> &)>;
-
+using InferHandler = bool (*)(const py::object &, ValuePtr *);
 // The Any Type kernel actor is used to represent the graph whose data type is uncertain and need compiler when
 // the actor run.
 // The execution is as follows:
@@ -55,6 +56,8 @@ class AnyTypeKernelActor : public SuperKernelActor {
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
   const std::string &current_data_type() const { return current_data_type_; }
+  static void set_infer_handler(const InferHandler &infer_handler) { py_data_convert_handler_ = infer_handler; }
+  inline static InferHandler py_data_convert_handler_{nullptr};
 
  protected:
   void Init() override;

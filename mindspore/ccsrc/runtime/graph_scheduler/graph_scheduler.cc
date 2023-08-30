@@ -859,8 +859,10 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       (void)graph_output_to_actor_.emplace(origin_output_with_index,
                                            GraphOutputPair(output_actor, {output_kernel, output_index}));
       MS_LOG(INFO) << "Cache graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
+                   << " debug string:" << output_with_index.first->DebugString()
                    << " with index:" << output_with_index.second << " to actor:" << output_actor_name
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
+                   << " debug string:" << origin_output_with_index.first->DebugString()
                    << " with index:" << origin_output_with_index.second;
 
       // Check the memory allocator validity of graph output.
@@ -1794,9 +1796,9 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
       copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, pre_device_tensor->GetSize(), pre_device_tensor->format(), pre_device_tensor->type_id(),
         pre_device_tensor->host_shape());
+      MS_LOG(DEBUG) << "Create device tensor:" << copy_actor->output_;
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
-    MS_LOG(DEBUG) << "Create device tensor:" << copy_actor->output_ << " type:" << copy_actor->output_->type_id();
     if (copy_actor->output_->GetDeviceType() != to_device_context->GetDeviceType()) {
       MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The device type is not equal, output device type:"
                                  << copy_actor->output_->GetDeviceType()

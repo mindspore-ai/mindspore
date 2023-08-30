@@ -124,7 +124,7 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
     auto elem_num = seq_abs->size();
     if (elem_num == 0) {
       MS_LOG(DEBUG) << "Empty sequence for node:" << real_input->fullname_with_scope();
-      return nullptr;
+      return std::make_shared<tensor::Tensor>(TypeId::kNumberTypeInt64, ShapeVector({0}));
     }
     type = GetSequenceType(seq_abs);
     shape = {SizeToLong(elem_num)};
@@ -155,6 +155,17 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        void *args) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
+  if (IsPrimitiveCNode(node, prim::kPrimPyExecute) && input_node_with_index.first->isa<ValueNode>()) {
+    const auto &value_node = input_node_with_index.first->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    const auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<tensor::Tensor>()) {
+      return value->cast<tensor::TensorPtr>();
+    } else if (value->isa<Scalar>()) {
+      return ScalarToTensor(value->cast<ScalarPtr>());
+    }
+  }
   auto depended_value = CreateTensorMem(input_node_with_index);
   MS_EXCEPTION_IF_NULL(depended_value);
   // First use the data of args.

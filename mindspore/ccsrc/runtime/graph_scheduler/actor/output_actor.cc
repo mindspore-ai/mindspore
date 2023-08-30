@@ -331,6 +331,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
                     << " to :" << tensor_device_address;
       // Move the device ptr from device_tensor to tensor_device_address.
       device_tensor->Swap(tensor_device_address.get());
+      tensor_device_address->set_user_data(device_tensor->user_data());
     }
   }
 

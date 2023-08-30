@@ -172,7 +172,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
 
 bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId type, const void *host_ptr,
                                         const std::string &) const {
-  if (user_data_ != nullptr) {
+  if (user_data_ != nullptr && user_data_->has(kUserDataType)) {
     return SyncUserDataToDevice(user_data_, host_ptr, size);
   }
 

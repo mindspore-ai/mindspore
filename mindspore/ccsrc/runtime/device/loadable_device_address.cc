@@ -427,7 +427,8 @@ void *LoadableDeviceAddress::GetValidPtr(size_t stream_id) {
     MS_LOG(ERROR) << "Move data to device failed.";
     return nullptr;
   }
-  return ptr_;
+
+  return DeviceAddress::GetValidPtr(stream_id);
 }
 }  // namespace device
 }  // namespace mindspore

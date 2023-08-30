@@ -1671,7 +1671,9 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   }
 
   auto kernel_mod = GetKernelMod(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (kernel_mod == nullptr) {
+    return true;
+  }
   return kernel_mod->IsNeedRetrieveOutputShape();
 }
 

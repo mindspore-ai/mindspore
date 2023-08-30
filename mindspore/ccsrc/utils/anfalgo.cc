@@ -923,7 +923,8 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
   MS_EXCEPTION_IF_NULL(node);
   DeleteDynamicLen(node.get());
   std::vector<abstract::AbstractBasePtr> abstract_list;
-  MS_LOG(DEBUG) << "Set scalar tuple output infer type for node:" << node->fullname_with_scope();
+  MS_LOG(DEBUG) << "Set scalar tuple output infer type for node:" << node->fullname_with_scope()
+                << " debug string:" << node->DebugString();
   if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
     const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
