@@ -163,12 +163,11 @@ static void UpdateTransformingListForIR(const AnfNodePtr &node, std::deque<AnfNo
   }
 }
 
-static void UpdateTransformingListWithUserNodes(const OptimizerPtr &optimizer, const AnfNodePtr &node,
+static void UpdateTransformingListWithUserNodes(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
                                                 std::deque<AnfNodePtr> *todo, bool change, SeenNum seen) {
   if (!change) {
     return;
   }
-  auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
   auto users_iterator = node_users.find(node);
@@ -218,7 +217,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
       }
     }
     UpdateTransformingListForSubstitutions(node, &todo, change);
-    UpdateTransformingListWithUserNodes(optimizer, node, &todo, change, seen);
+    UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
@@ -256,7 +255,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       node = res;
     }
     UpdateTransformingListForIR(node, &todo, change, substitution);
-    UpdateTransformingListWithUserNodes(optimizer, node, &todo, change, seen);
+    UpdateTransformingListWithUserNodes(manager, node, &todo, change, seen);
   }
 
 #ifdef ENABLE_PROFILE
@@ -398,6 +397,8 @@ bool SimpleRewriter::Run() {
     if (new_node != nullptr) {
       (void)manager_->Replace(node, new_node);
       changed = true;
+      // Need push the users of new_node to the deque.
+      UpdateTransformingListWithUserNodes(manager_, new_node, &todo, changed, seen);
     }
   }
   return changed;

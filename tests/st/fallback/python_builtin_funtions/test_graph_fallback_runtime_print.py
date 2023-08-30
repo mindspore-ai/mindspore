@@ -20,6 +20,8 @@ from contextlib import contextmanager
 import pytest
 import numpy as np
 from mindspore import Tensor, jit, context, nn, mutable
+import mindspore.ops as ops
+
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -215,4 +217,34 @@ def test_np_init():
         sys.stdout.flush()
         time.sleep(0.1)
     patterns = {'[1 2]\n'}
+    check_output(cap.output, patterns)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_str_format():
+    """
+    Feature: JIT Fallback
+    Description: Test print str format in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            x = ops.add(x, x)
+            print('x is {}'.format(x))
+            x = x - 1
+            return x
+
+    cap = Capture()
+    with capture(cap):
+        input_x = Tensor([[1, 2], [3, 4]])
+        net = Net()
+        res = net(input_x)
+        assert (res.asnumpy() == [[1, 3], [5, 7]]).all()
+        sys.stdout.flush()
+        time.sleep(0.1)
+    patterns = {'x is [[2 4]\n [6 8]]\n'}
     check_output(cap.output, patterns)

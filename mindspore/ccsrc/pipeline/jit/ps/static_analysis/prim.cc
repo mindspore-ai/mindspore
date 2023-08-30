@@ -1479,10 +1479,7 @@ enum class REQUIRE_TYPE { ATTR, METHOD };
 
 bool IsPyExecuteData(const AbstractBasePtr &data_abstract) {
   MS_EXCEPTION_IF_NULL(data_abstract);
-  if (data_abstract->isa<abstract::AbstractAny>()) {
-    return true;
-  }
-  return false;
+  return data_abstract->isa<abstract::AbstractAny>();
 }
 
 void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
