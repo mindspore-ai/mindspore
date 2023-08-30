@@ -171,13 +171,13 @@ class AscendMsprofDataGenerator:
 
         index = len(self.steptrace_name)
         for name in hccl_data:
+            if index >= len(header):
+                break
             name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
             self.steptrace_name[name] = {'index': index, 'dtype': (name, float)}
             index += 1
             self.steptrace_name[f'{name} duration'] = {'index': index, 'dtype': (f'{name} duration', float)}
             index += 1
-            if index >= len(header)-1:
-                break
 
         for i in range(len(self.steptrace_name), len(header), 2):
             name = f'hccl_{i}'
