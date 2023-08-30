@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
 #include "runtime/rt.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
+#include "acl/acl.h"
 #if defined(RT_MEMORY_P2PDMA)
 #include <unistd.h>
 #include <fcntl.h>
@@ -48,7 +50,7 @@ AscendDmaHandle::~AscendDmaHandle() {
 #if defined(RT_MEMORY_P2PDMA)
   munmap(buf_, hbm_alloc_size_);
   close(p2p_fd_);
-  rtFree(dargs_);
+  aclrtFree(dargs_);
 #endif
 }
 
@@ -68,23 +70,23 @@ void AscendDmaHandle::InitRuntimeInstance() {
 
 void AscendDmaHandle::InitDmaMem() {
 #if defined(RT_MEMORY_P2PDMA)
-  rtError_t ret = rtSetDevice(device_id_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtSetDevice failed:" << ret;
+  auto ret = aclrtSetDevice(device_id_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSetDevice failed:" << ret;
   }
-  ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &device_hbm_free_size_, &device_hbm_total_size_);
+  ret = aclrtGetMemInfo(ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
   MS_LOG(INFO) << "InitDmaMem device_hbm_free_size_:" << device_hbm_free_size_
                << ", device_hbm_total_size_:" << device_hbm_total_size_;
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMemGetInfo failed:" << ret;
   }
   ret = rtMalloc(&dargs_, hbm_alloc_size_, RT_MEMORY_P2PDMA, 0);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMalloc failed:" << ret;
   }
-  ret = rtMemset(dargs_, hbm_alloc_size_, 0x44, hbm_alloc_size_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtMemset failed:" << ret;
+  ret = aclrtMemset(dargs_, hbm_alloc_size_, 0x44, hbm_alloc_size_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtMemset failed:" << ret;
   }
   std::string p2p_device_name = "/dev/p2pdma" + std::to_string(device_id_);
   p2p_fd_ = open(p2p_device_name.c_str(), O_RDWR);

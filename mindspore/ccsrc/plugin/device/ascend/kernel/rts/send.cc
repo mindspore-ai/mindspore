@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/kernel/rts/send.h"
 #include "runtime/event.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -48,9 +50,9 @@ bool SendKernel::Launch(const std::vector<AddressPtr> &, const std::vector<Addre
                         const std::vector<AddressPtr> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  rtError_t status = rtEventRecord(event_, stream_ptr);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Send op rtEventRecord failed!";
+  auto status = aclrtRecordEvent(event_, stream_ptr);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Send op aclrtRecordEvent failed!";
     return false;
   }
   return true;

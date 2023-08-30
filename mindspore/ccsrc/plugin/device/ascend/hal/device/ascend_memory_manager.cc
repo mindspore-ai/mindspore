@@ -154,8 +154,8 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
-    if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
 }
@@ -163,16 +163,16 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
 void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
     auto ret_rt_memcpy = aclrtMemcpy(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpy failed.";
     }
   } else {
     auto ret_rt_memcpy = aclrtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }
-    if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
 }

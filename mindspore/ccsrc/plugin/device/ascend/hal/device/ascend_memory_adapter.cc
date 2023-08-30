@@ -51,8 +51,8 @@ bool AscendMemAdapter::Initialize() {
     return true;
   }
 
-  rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &device_hbm_free_size_, &device_hbm_total_size_);
-  if (ret != RT_ERROR_NONE || device_hbm_total_size_ == 0) {
+  auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
+  if (ret != ACL_ERROR_NONE || device_hbm_total_size_ == 0) {
     MS_LOG(EXCEPTION) << "Internal Error: Get Device HBM memory size failed, ret = " << ret
                       << ", total HBM size :" << device_hbm_total_size_;
   }
@@ -257,7 +257,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       size_t free = 0;
       size_t total = 0;
-      (void)rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free, &total);
+      (void)aclrtGetMemInfo(ACL_HBM_MEM, &free, &total);
       MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, size[" << size << "], ret["
                         << ret << "], "
                         << "Device " << device_id << " Available HBM size:" << total << " free size:" << free
@@ -275,9 +275,9 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
 
 bool AscendMemAdapter::FreeToRts(void *devPtr) const {
   if (devPtr != nullptr) {
-    auto ret = rtFree(devPtr);
+    auto ret = aclrtFree(devPtr);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree mem [" << devPtr << "] fail, ret[" << ret << "]";
+      MS_LOG(ERROR) << "aclrtFree mem [" << devPtr << "] fail, ret[" << ret << "]";
       return false;
     }
   }

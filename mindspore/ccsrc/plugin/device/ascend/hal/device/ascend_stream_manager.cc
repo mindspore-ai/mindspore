@@ -18,10 +18,12 @@
 
 #include <memory>
 
+#include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "external/acl/error_codes/rt_error_codes.h"
 #include "runtime/event.h"
 #include "runtime/stream.h"
+#include "acl/acl.h"
 #include "acl/acl_rt.h"
 
 namespace mindspore {
@@ -35,9 +37,9 @@ AscendStreamMng &AscendStreamMng::GetInstance() {
 rtEvent_t AscendStreamMng::ApplyRtEvent() {
   auto rt_resource = std::make_shared<rtEvent_t>();
   MS_EXCEPTION_IF_NULL(rt_resource);
-  auto ret = rtEventCreate(rt_resource.get());
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventCreate failed, ret:" << ret;
+  auto ret = aclrtCreateEvent(rt_resource.get());
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtCreateEvent failed, ret:" << ret;
   }
   (void)events_.emplace_back(*rt_resource);
   return *rt_resource;
@@ -45,9 +47,9 @@ rtEvent_t AscendStreamMng::ApplyRtEvent() {
 
 rtEvent_t AscendStreamMng::ApplyRtEventWithFlag(uint32_t flag) {
   rtEvent_t rt_event = nullptr;
-  auto ret = rtEventCreateWithFlag(&rt_event, flag);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtEventCreateWithFlag failed, ret:" << ret;
+  auto ret = aclrtCreateEventWithFlag(&rt_event, flag);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call aclrtCreateEventWithFlag failed, ret:" << ret;
   }
   (void)events_.emplace_back(rt_event);
   return rt_event;
@@ -65,9 +67,9 @@ uint32_t AscendStreamMng::GetRtEventId(const rtEvent_t &event) const {
 void AscendStreamMng::DestroyAllRtEvents() {
   for (size_t i = 0; i < events_.size(); ++i) {
     if (events_[i] != nullptr) {
-      auto rt_ret = rtEventDestroy(events_[i]);
-      if (rt_ret != RT_ERROR_NONE) {
-        MS_LOG(ERROR) << "Call rtEventDestroy failed, ret:" << rt_ret;
+      auto rt_ret = aclrtDestroyEvent(events_[i]);
+      if (rt_ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Call aclrtDestroyEvent failed, ret:" << rt_ret;
       }
     }
   }
@@ -99,8 +101,8 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
 
 void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = rtStreamCreate(stream, priority);
-  if (ret != RT_ERROR_NONE) {
+  auto ret = aclrtCreateStream(stream);
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   ret = rtStreamSetMode(*stream, 1);
@@ -113,8 +115,8 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
-  auto ret = rtStreamCreate(&stream, priority);
-  if (ret != RT_ERROR_NONE) {
+  auto ret = aclrtCreateStream(&stream);
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   ret = rtStreamSetMode(stream, 1);
@@ -127,8 +129,8 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
 
 void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = rtStreamCreateWithFlags(stream, priority, flags);
-  if (ret != RT_ERROR_NONE) {
+  auto ret = aclrtCreateStreamWithConfig(stream, IntToUint(priority), flags);
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   ret = rtStreamSetMode(*stream, 1);
@@ -141,8 +143,8 @@ void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
-  auto ret = rtStreamCreateWithFlags(&stream, priority, flags);
-  if (ret != RT_ERROR_NONE) {
+  auto ret = aclrtCreateStreamWithConfig(&stream, IntToUint(priority), flags);
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   ret = rtStreamSetMode(stream, 1);
@@ -205,13 +207,13 @@ bool AscendStreamMng::SyncStream(size_t stream_id) const {
 
 bool AscendStreamMng::SyncStream(rtStream_t stream) const {
   MS_EXCEPTION_IF_NULL(stream);
-  auto RET = rtStreamSynchronize(stream);
-  if (RET != RT_ERROR_NONE && RET != ACL_ERROR_RT_AICORE_OVER_FLOW) {  // o for switch stream
-    MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+  auto RET = aclrtSynchronizeStreamWithTimeout(stream, -1);
+  if (RET != ACL_ERROR_NONE && RET != ACL_ERROR_RT_AICORE_OVER_FLOW) {  // o for switch stream
+    MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     return false;
   }
   if (RET == ACL_ERROR_RT_AICORE_OVER_FLOW) {
-    MS_LOG(WARNING) << "Call runtime rtStreamSynchronize, the stream get overflow.";
+    MS_LOG(WARNING) << "Call runtime aclrtSynchronizeStreamWithTimeout, the stream get overflow.";
   }
   return true;
 }

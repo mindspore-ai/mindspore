@@ -18,6 +18,8 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 #include "common/opskernel/ops_kernel_info_store.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore::ge::model_runner {
 std::map<rtModel_t, std::map<uint32_t, std::vector<std::weak_ptr<HcclTask::StreamGuard>>>>
@@ -237,8 +239,8 @@ HcclTask::StreamGuard::~StreamGuard() {
     return;
   }
 
-  rt_ret = rtStreamDestroy(stream_);
-  if (rt_ret != RT_ERROR_NONE) {
+  rt_ret = aclrtDestroyStream(stream_);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rt api rtStreamDestroy failed, ret: " << rt_ret;
     return;
   }

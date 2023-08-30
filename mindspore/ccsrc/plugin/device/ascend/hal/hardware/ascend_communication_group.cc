@@ -19,6 +19,8 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "runtime/rt.h"
+#include "acl/acl_rt.h"
+#include "acl/acl.h"
 
 namespace mindspore {
 namespace device {
@@ -44,7 +46,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  rtSetDevice(device_id);
+  (void)aclrtSetDevice(device_id);
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
@@ -54,7 +56,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     return false;
   }
   initialized_ = true;
-  rtDeviceReset(device_id);
+  (void)aclrtResetDevice(device_id);
   return true;
 }
 
@@ -73,10 +75,10 @@ bool AscendCommunicationGroup::Finalize() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  (void)rtSetDevice(device_id);
+  (void)aclrtSetDevice(device_id);
   RETURN_IF_FALSE_WITH_LOG(HcclCommDestroy(comm_) == static_cast<int32_t>(HCCL_SUCCESS),
                            "Failed to destroy HCCL communicator.");
-  (void)rtDeviceReset(device_id);
+  (void)aclrtResetDevice(device_id);
   initialized_ = false;
   comm_ = nullptr;
   return true;

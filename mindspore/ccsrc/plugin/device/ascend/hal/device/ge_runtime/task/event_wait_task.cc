@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/hal/device/ge_runtime/task/event_wait_task.h"
 #include "runtime/kernel.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
@@ -44,14 +46,14 @@ void EventWaitTask::Distribute() {
   MS_LOG(INFO) << "EventWaitTask Distribute start, stream: " << stream_ << ", event: " << event_
                << ", stream_id: " << task_info_->stream_id() << ", event_id: " << task_info_->event_id();
 
-  rtError_t rt_ret = rtStreamWaitEvent(stream_, event_);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamWaitEvent failed, ret: " << rt_ret;
+  auto rt_ret = aclrtStreamWaitEvent(stream_, event_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api aclrtStreamWaitEvent failed, ret: " << rt_ret;
   }
 
-  rt_ret = rtEventReset(event_, stream_);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventReset failed, ret: " << rt_ret;
+  rt_ret = aclrtResetEvent(event_, stream_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api aclrtResetEvent failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "Distribute end.";
 }

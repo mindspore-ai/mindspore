@@ -21,6 +21,8 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,15 +51,15 @@ bool RecvKernel::Launch(const std::vector<AddressPtr> &, const std::vector<Addre
                         const std::vector<AddressPtr> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto status = rtStreamWaitEvent(stream_ptr, event_);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Recv rtStreamWaitEvent failed!";
+  auto status = aclrtStreamWaitEvent(stream_ptr, event_);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Recv aclrtStreamWaitEvent failed!";
     return false;
   }
 
-  status = rtEventReset(event_, stream_ptr);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventReset failed, ret:" << status;
+  status = aclrtResetEvent(event_, stream_ptr);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << status;
   }
   return true;
 }

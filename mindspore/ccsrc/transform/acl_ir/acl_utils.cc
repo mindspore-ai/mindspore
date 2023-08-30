@@ -349,7 +349,7 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {
-    bool ret = aclrtSynchronizeStream(stream_ptr);
+    bool ret = aclrtSynchronizeStreamWithTimeout(stream_ptr, -1);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl syncsteam failed, op_type_:" << op_type_;
     }

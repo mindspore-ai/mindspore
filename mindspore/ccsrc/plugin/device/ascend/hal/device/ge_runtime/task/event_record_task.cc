@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/hal/device/ge_runtime/task/event_record_task.h"
 #include "runtime/kernel.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
@@ -47,9 +49,9 @@ void EventRecordTask::Distribute() {
   MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "EventRecordTask Distribute start, stream: " << stream_ << ", event: " << event_
                << ", stream_id: " << task_info_->stream_id() << ", event_id: " << task_info_->event_id();
-  rtError_t rt_ret = rtEventRecord(event_, stream_);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << rt_ret;
+  auto rt_ret = aclrtRecordEvent(event_, stream_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api aclrtRecordEvent failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "Distribute end.";
 }

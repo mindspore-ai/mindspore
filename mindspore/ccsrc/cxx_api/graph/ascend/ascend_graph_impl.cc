@@ -25,6 +25,8 @@
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/dev.h"
+#include "acl/acl_rt.h"
+#include "acl/acl.h"
 #include "include/common/utils/python_adapter.h"
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -228,8 +230,8 @@ Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::
     MS_LOG(ERROR) << "rtCtx is nullptr";
     return kMCDeviceError;
   }
-  rtError_t rt_ret = rtCtxSetCurrent(context_);
-  if (rt_ret != RT_ERROR_NONE) {
+  auto rt_ret = aclrtSetCurrentContext(context_);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set Ascend rtCtx failed";
     return kMCDeviceError;
   }
@@ -355,8 +357,8 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
     }
 
     // save d context
-    rtError_t rt_ret = rtCtxGetCurrent(&context_);
-    if (rt_ret != RT_ERROR_NONE || context_ == nullptr) {
+    auto rt_ret = aclrtGetCurrentContext(&context_);
+    if (rt_ret != ACL_ERROR_NONE || context_ == nullptr) {
       MS_LOG(ERROR) << "the ascend device context is null";
       return kMCDeviceError;
     }
@@ -365,8 +367,8 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
     load_flag_ = true;
   }
 
-  rtError_t rt_ret = rtCtxSetCurrent(context_);
-  if (rt_ret != RT_ERROR_NONE) {
+  auto rt_ret = aclrtSetCurrentContext(context_);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
     return kMCDeviceError;
   }
@@ -447,9 +449,10 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) : device_id_(device_
       }
     }
   } else {
-    auto ret = rtSetDevice(static_cast<int32_t>(device_id_));
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Device " << device_id_ << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
+    auto ret = aclrtSetDevice(static_cast<int32_t>(device_id_));
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Device " << device_id_ << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
+                        << "]";
     }
   }
 
@@ -480,9 +483,10 @@ AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
         return;
       }
     } else {
-      auto ret = rtDeviceReset(static_cast<int32_t>(device_id_));
-      if (ret != RT_ERROR_NONE) {
-        MS_LOG(ERROR) << "Device " << device_id_ << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
+      auto ret = aclrtResetDevice(static_cast<int32_t>(device_id_));
+      if (ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Device " << device_id_ << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
+                      << "]";
         return;
       }
     }

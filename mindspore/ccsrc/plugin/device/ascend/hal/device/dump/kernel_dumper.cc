@@ -21,6 +21,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
+#include "acl/acl_rt.h"
 #include "ops/ascend_op_name.h"
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
@@ -55,30 +56,30 @@ std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 
 OpDebugTask::~OpDebugTask() {
   if (op_debug_addr != nullptr) {
-    (void)rtFree(op_debug_addr);
+    (void)aclrtFree(op_debug_addr);
     op_debug_addr = nullptr;
   }
   if (new_op_debug_addr != nullptr) {
-    (void)rtFree(new_op_debug_addr);
+    (void)aclrtFree(new_op_debug_addr);
     new_op_debug_addr = nullptr;
   }
 }
 
 KernelDumper::~KernelDumper() {
   if (proto_dev_mem_ != nullptr) {
-    (void)rtFree(proto_dev_mem_);
+    (void)aclrtFree(proto_dev_mem_);
     proto_dev_mem_ = nullptr;
   }
   if (proto_size_dev_mem_ != nullptr) {
-    (void)rtFree(proto_size_dev_mem_);
+    (void)aclrtFree(proto_size_dev_mem_);
     proto_size_dev_mem_ = nullptr;
   }
   if (p2p_debug_addr_ != nullptr) {
-    (void)rtFree(p2p_debug_addr_);
+    (void)aclrtFree(p2p_debug_addr_);
     p2p_debug_addr_ = nullptr;
   }
   if (dev_load_mem_ != nullptr) {
-    (void)rtFree(dev_load_mem_);
+    (void)aclrtFree(dev_load_mem_);
     dev_load_mem_ = nullptr;
   }
 }
@@ -90,7 +91,7 @@ void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   if (DumpJsonParser::GetInstance().op_debug_mode() > 0) {
-    auto rt_ret = rtStreamSynchronize(stream);
+    auto rt_ret = aclrtSynchronizeStreamWithTimeout(stream, -1);
     if (rt_ret != ACL_ERROR_RT_AICORE_OVER_FLOW) {
       return;
     }
@@ -258,9 +259,9 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     return;
   }
 
-  rt_ret = rtMemcpy(proto_dev_mem_, proto_size, proto_msg.c_str(), proto_size, RT_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "[KernelDumper] Call rtMemcpy failed, ret = " << rt_ret;
+  rt_ret = aclrtMemcpy(proto_dev_mem_, proto_size, proto_msg.c_str(), proto_size, ACL_MEMCPY_HOST_TO_DEVICE);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] Call aclrtMemcpy failed, ret = " << rt_ret;
     return;
   }
 
@@ -269,9 +270,9 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
   }
-  rt_ret = rtMemcpy(proto_size_dev_mem_, sizeof(size_t), &proto_size, sizeof(size_t), RT_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "[KernelDumper] Call rtMemcpy failed, ret = " << rt_ret;
+  rt_ret = aclrtMemcpy(proto_size_dev_mem_, sizeof(size_t), &proto_size, sizeof(size_t), ACL_MEMCPY_HOST_TO_DEVICE);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] Call aclrtMemcpy failed, ret = " << rt_ret;
     return;
   }
 
@@ -295,9 +296,9 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtCpuKernelLaunch Failed, rt_ret = " << rt_ret;
     return;
   }
-  auto rt_sync = rtStreamSynchronize(stream_);
-  if (rt_sync != RT_ERROR_NONE && rt_sync != ACL_ERROR_RT_AICORE_OVER_FLOW) {
-    MS_LOG(WARNING) << "[KernelDumper] Call rt api rtStreamSynchronize Failed, rt_sync = " << rt_sync;
+  auto rt_sync = aclrtSynchronizeStreamWithTimeout(stream_, -1);
+  if (rt_sync != ACL_ERROR_NONE && rt_sync != ACL_ERROR_RT_AICORE_OVER_FLOW) {
+    MS_LOG(WARNING) << "[KernelDumper] Call rt api aclrtSynchronizeStreamWithTimeout Failed, rt_sync = " << rt_sync;
   }
 }
 
@@ -473,9 +474,10 @@ void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
     MS_LOG(ERROR) << "[KernelDumper] Call rtMalloc failed, ret = " << rt_ret;
     return;
   }
-  rt_ret = rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "[KernelDumper] Call rtMemcpy failed, ret = " << rt_ret;
+  rt_ret =
+    aclrtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), ACL_MEMCPY_HOST_TO_DEVICE);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "[KernelDumper] Call aclrtMemcpy failed, ret = " << rt_ret;
   }
 }
 

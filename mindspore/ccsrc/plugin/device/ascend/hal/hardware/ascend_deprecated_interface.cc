@@ -345,12 +345,12 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
-    if (ret != RT_ERROR_NONE) {
+    if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
                         << "]. The details refer to 'Ascend Error Message'.";
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
-    MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
+    MS_LOG(INFO) << "Call aclrtResetDevice, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
     (void)DlogReportFinalize();
   } else {
     MS_LOG(DEBUG) << "Acltdt Dataset client is used, no need to close, tsd reference = "

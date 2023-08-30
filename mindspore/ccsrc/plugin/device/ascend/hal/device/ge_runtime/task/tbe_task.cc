@@ -43,9 +43,9 @@ TbeTask::TbeTask(const ModelContext &model_context, const std::shared_ptr<TbeTas
 
 TbeTask::~TbeTask() {
   if (args_ != nullptr) {
-    rtError_t rt_ret = rtFree(args_);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rt api rtFree failed, ret: " << rt_ret;
+    auto rt_ret = aclrtFree(args_);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call rt api aclrtFree failed, ret: " << rt_ret;
     }
     args_ = nullptr;
     stub_func_ = nullptr;
@@ -119,8 +119,8 @@ void TbeTask::Distribute() {
 
   rt_ret = aclrtMemcpy(args_, args_size_, static_cast<void *>(tensor_device_addrs.data()), args_size_,
                        ACL_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpy failed, ret: " << rt_ret;
   }
 
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;

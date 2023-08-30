@@ -52,9 +52,9 @@ tensor::TensorPtr GetDependValueTensor(const AddressPtr &address, const TypeId t
       MS_LOG(EXCEPTION) << "aclrtMemcpyAsync depend tensor failed! tensor size is " << tensor->Size()
                         << " and address size is " << address->size;
     }
-    auto sync_status = rtStreamSynchronize(stream_ptr);
-    if (sync_status != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamSynchronize depend tensor failed! tensor size is " << tensor->Size()
+    auto sync_status = aclrtSynchronizeStreamWithTimeout(stream_ptr, -1);
+    if (sync_status != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "aclrtSynchronizeStreamWithTimeout depend tensor failed! tensor size is " << tensor->Size()
                         << " and address size is " << address->size;
     }
     return tensor;
