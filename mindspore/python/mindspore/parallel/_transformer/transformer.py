@@ -226,7 +226,8 @@ class TransformerOpParallelConfig(_Config):
             >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, recompute=recompute_config)
     """
 
-    def __init__(self, data_parallel=1, model_parallel=1, expert_parallel=1, pipeline_stage=1, micro_batch_num=1,
+    def __init__(self, data_parallel=1, model_parallel=1, expert_parallel=1, pipeline_stage=1, pipeline_segment=1,
+                 micro_batch_num=1,
                  recompute=default_transformer_recompute_config,
                  optimizer_shard=False, gradient_aggregation_group=4, vocab_emb_dp=True):
         self.recompute = recompute
@@ -234,7 +235,8 @@ class TransformerOpParallelConfig(_Config):
         self.gradient_aggregation_group = gradient_aggregation_group
         self._embed_dp_mp_config = EmbeddingOpParallelConfig(data_parallel=data_parallel, model_parallel=model_parallel,
                                                              vocab_emb_dp=vocab_emb_dp)
-        self._pp_config = _PipeLineConfig(pipeline_stage=pipeline_stage, micro_batch_num=micro_batch_num)
+        self._pp_config = _PipeLineConfig(pipeline_stage=pipeline_stage, micro_batch_num=micro_batch_num,
+                                          pipeline_segment=pipeline_segment)
         self._moe_config = MoEParallelConfig(data_parallel=data_parallel, model_parallel=model_parallel,
                                              expert_parallel=expert_parallel)
 
@@ -308,6 +310,14 @@ class TransformerOpParallelConfig(_Config):
     @pipeline_stage.setter
     def pipeline_stage(self, value):
         self._pp_config.pipeline_stage = value
+
+    @property
+    def pipeline_segment(self):
+        return self._pp_config.pipeline_segment
+
+    @pipeline_segment.setter
+    def pipeline_segment(self, value):
+        self._pp_config.pipeline_segment = value
 
     @property
     def optimizer_shard(self):
@@ -429,6 +439,7 @@ class FeedForward(Cell):
             >>> print(output.shape)
             (2, 20, 15)
     """
+
     @_LogActionOnce(logger=logger, key='FeedForward',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
@@ -622,6 +633,7 @@ class AttentionMask(Cell):
               [1. 1. 1. 0]
               [0. 0. 0. 0]]]
     """
+
     @_LogActionOnce(logger=logger, key='AttentionMask',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(seq_length=Validator.check_positive_int,
@@ -710,6 +722,7 @@ class VocabEmbedding(Cell):
             >>> print(table.shape)
             (30, 30)
     """
+
     @_LogActionOnce(logger=logger, key='VocabEmbedding',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(vocab_size=Validator.check_positive_int,
@@ -866,6 +879,7 @@ class MultiHeadAttention(Cell):
             >>> print(past[1].shape)
             (2, 3, 20, 5)
     """
+
     @_LogActionOnce(logger=logger, key='MultiHeadAttention',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
@@ -1459,6 +1473,7 @@ class TransformerEncoderLayer(Cell):
             >>> print(past[1].shape)
             (2, 2, 16, 4)
     """
+
     @_LogActionOnce(logger=logger, key='TransformerEncoderLayer',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
@@ -1848,6 +1863,7 @@ class TransformerDecoderLayer(Cell):
             >>> print(past[3].shape)
             (2, 2, 20, 32)
     """
+
     @_LogActionOnce(logger=logger, key='TransformerDecoderLayer',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
@@ -2379,6 +2395,7 @@ class TransformerEncoder(Cell):
             >>> print(past[0][1].shape)
             (2, 2, 16, 4)
     """
+
     @_LogActionOnce(logger=logger, key='TransformerEncoder',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
@@ -2613,6 +2630,7 @@ class TransformerDecoder(Cell):
             >>> print(past[0][3].shape)
             (2, 2, 20, 32)
     """
+
     @_LogActionOnce(logger=logger, key='TransformerDecoder',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
@@ -2882,6 +2900,7 @@ class Transformer(Cell):
             >>> print(de_past[0][3].shape)
             (2, 2, 20, 32)
     """
+
     @_LogActionOnce(logger=logger, key='Transformer',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,

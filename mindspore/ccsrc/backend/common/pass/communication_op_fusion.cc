@@ -94,6 +94,38 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   if (fusion == 0) {
     return "";
   }
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  if (parallel_context->enable_fold_pipeline()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+    auto prim = GetCNodePrimitive(node);
+    if (cnode_name == kAllReduceOpName) {
+      if (prim->HasAttr(kAttrSegment)) {
+        auto segment_info = GetValue<int64_t>(prim->GetAttr(kAttrSegment));
+        MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope() << ", instance_name: " << prim->instance_name()
+                     << ", segment: " << segment_info;
+        fusion = segment_info + 2;
+        prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+        MS_LOG(INFO) << "Now cnode : " << cnode->fullname_with_scope()
+                     << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));
+      }
+    }
+    if (cnode_name == kAllGatherOpName) {
+      if (prim->HasAttr(kAttrSegment)) {
+        auto segment_info = GetValue<int64_t>(prim->GetAttr(kAttrSegment));
+        MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope() << ", instance_name: " << prim->instance_name()
+                     << ", segment: " << segment_info;
+        if (segment_info != 0) {
+          int64_t fusion_interval = 100;
+          fusion = segment_info + fusion_interval;
+          prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+        }
+        MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope()
+                     << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));
+      }
+    }
+  }
+
   std::string group = kAttrDefaultGroup;
   ValuePtr attr_group = primitive->GetAttr(kAttrGroup);
   if (attr_group != nullptr) {
@@ -399,8 +431,8 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   auto kernel_build_info = GenerateKernelBuildInfo(communication_op_info, start_index, end_index);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, fused_node.get());
   const std::vector<std::string> kHcclFusionAttrs = {
-    kAttrFusion, kAttrGroup, kAttrGroupBack, kAttrSrTag,        kAttrDestRank,          kAttrSrcRank,
-    kAttrDType,  kAttrOp,    kAttrRankSize,  kAttrGroupRankIds, kAttrReuseCommunication};
+    kAttrFusion, kAttrGroup, kAttrGroupBack, kAttrSrTag,        kAttrDestRank,           kAttrSrcRank,
+    kAttrDType,  kAttrOp,    kAttrRankSize,  kAttrGroupRankIds, kAttrReuseCommunication, kAttrSegment};
   for (const auto &attr : kHcclFusionAttrs) {
     if (common::AnfAlgo::HasNodeAttr(attr, final_node)) {
       common::AnfAlgo::CopyNodeAttr(attr, final_node, fused_node);

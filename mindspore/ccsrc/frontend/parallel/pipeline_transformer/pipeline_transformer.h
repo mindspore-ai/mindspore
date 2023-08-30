@@ -28,6 +28,7 @@
 #include "utils/hash_map.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "ops/array_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -51,17 +52,16 @@ class PipelineTransformer {
         global_rank_(global_rank),
         per_stage_rank_num_(per_stage_rank_num) {}
   virtual ~PipelineTransformer() = default;
-  void Coloring();
+  virtual void Coloring();
+  virtual void BroadCastColoring();
+  virtual void CutGraph();
   void LabelGenMaskFusion();
   bool MainGraph();
   void LabelMicroBatch();
-  void BroadCastColoring();
-  void CutGraph();
   void ParameterColoring();
   void ElimGraphStage();
   void ModifyParameterList();
 
- private:
   void CreateForwardGroup();
   AnfNodePtr GetArgumentsByParameter(const AnfNodePtr &parameter);
   void RemoveMonadNode();
@@ -69,22 +69,24 @@ class PipelineTransformer {
   std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param) const;
   AnfNodePtr ActualOp(const AnfNodePtr &node);
   bool IsParameterGraph(const AnfNodePtr &node) const;
+  virtual AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage,
+                                          int64_t user_stage, const ValuePtr &micro, size_t pos,
+                                          const std::vector<AnfNodePtr> &ops);
   AnfNodeIndexSet GetParameterLoadUsers(const AnfNodePtr &node, const NodeUsersMap &node_users_map) const;
-  AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
-                                  const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> &ops);
   ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const;
-  std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> HandleSharedParameter();
+  virtual std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> HandleSharedParameter();
   SendAttr InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage, const ValuePtr &value);
   AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
                            int64_t user_node_stage, int64_t node_stage, const ValuePtr &value,
                            const AnfNodePtr &graph_param);
-  std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> CutBorder(const FuncGraphPtr &graph);
+  virtual std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> CutBorder(const FuncGraphPtr &graph);
   void CutBorderForNode(const FuncGraphPtr &graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *send_ops,
                         std::vector<AnfNodePtr> *receive_ops);
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
                    const std::string &tag) const;
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node) const;
   std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
+  TensorInfo GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_pair, bool is_param);
   std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode, int tuple_index);
   bool LabelParameterStart(const FuncGraphPtr &graph);
@@ -94,6 +96,7 @@ class PipelineTransformer {
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
+  tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
 
   std::pair<OperatorInfoPtr, int> GetOpInfoPair(const AnfNodePtr &node, const AnfNodePtr &graph_param,
@@ -131,7 +134,13 @@ class PipelineTransformer {
   bool is_train_{true};
   std::vector<AnfNodePtr> shared_cell_users_;
   bool enable_share_cell_ = false;
+  // map<rank, tag>
+  mindspore::HashMap<int64_t, int64_t> send_tag_map_;
+  mindspore::HashMap<int64_t, int64_t> recv_tag_map_;
 };
+
+bool IsInWhiteList(const CNodePtr &cnode);
+std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape, size_t index);
 
 class NodeStageInfo {
  public:

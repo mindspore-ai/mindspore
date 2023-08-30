@@ -176,7 +176,6 @@ class _AutoParallelContext:
         if comm_type == _ParallelFusionConfig.REDUCESCATTER:
             self._context_handle.set_reducescatter_fusion_threshold_mb(fusion_threshold)
 
-
     def fusion_threshold_mb(self):
         """Get all reduce threshold."""
         self.check_context_handle()
@@ -228,6 +227,22 @@ class _AutoParallelContext:
         """Get the stages of the pipeline"""
         self.check_context_handle()
         return self._context_handle.get_pipeline_stage_split_num()
+
+    def set_pipeline_segments(self, segments):
+        """Set the segments of the pipeline"""
+        if isinstance(segments, bool) or not isinstance(segments, int):
+            raise TypeError("For 'set_auto_parallel_context', the argument 'pipeline_segments' "
+                            "must be int, but got the type : {}.".format(type(segments)))
+        if segments < 1:
+            raise ValueError("For 'set_auto_parallel_context', the argument 'pipeline_segments' "
+                             "should be greater or equal 1, but got the value of segments : {}.".format(segments))
+        self.check_context_handle()
+        self._context_handle.set_pipeline_segment_split_num(segments)
+
+    def get_pipeline_segments(self):
+        """Get the stages of the pipeline"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_segment_split_num()
 
     def set_gradients_mean(self, gradients_mean):
         """
@@ -761,6 +776,11 @@ class _AutoParallelContext:
                             .format(type(enable_parallel_optimizer)))
         self._context_handle.set_enable_parallel_optimizer(enable_parallel_optimizer)
 
+    def get_enable_fold_pipeline(self):
+        """Get parallel optimizer flag."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_fold_pipeline()
+
     def get_enable_parallel_optimizer(self):
         """Get parallel optimizer flag."""
         self.check_context_handle()
@@ -1083,6 +1103,7 @@ _set_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().set_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().set_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().set_pipeline_stages,
+    "pipeline_segments": auto_parallel_context().set_pipeline_segments,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
     "search_mode": auto_parallel_context().set_strategy_search_mode,
     "auto_parallel_search_mode": auto_parallel_context().set_auto_parallel_search_mode,
@@ -1103,7 +1124,6 @@ _set_auto_parallel_context_func_map = {
     "enable_alltoall": auto_parallel_context().set_enable_alltoall,
     "strategy_ckpt_config": auto_parallel_context().set_strategy_ckpt_config,
     "comm_fusion": auto_parallel_context().set_comm_fusion}
-
 
 _get_auto_parallel_context_func_map = {
     "device_num": auto_parallel_context().get_device_num,
@@ -1141,7 +1161,6 @@ _get_auto_parallel_context_func_map = {
                  communi_parallel_mode=str, optimizer_weight_shard_size=int, sharding_propagation=bool,
                  optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool, comm_fusion=dict,
                  strategy_ckpt_config=dict)
-
 def _set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.

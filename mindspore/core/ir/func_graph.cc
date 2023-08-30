@@ -49,6 +49,7 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       debug_info_(std::move(debug_info)),
       stub_(false),
       stage_(-1),
+      segment_(1),
       phase_(PhaseManager::GetInstance().phase()) {}
 
 FuncGraph::~FuncGraph() { subclass_destruct_flag_ = true; }

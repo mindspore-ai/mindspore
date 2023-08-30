@@ -2598,7 +2598,11 @@ void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) {
 bool AscendStreamAssign::IsHcom(const CNodePtr &cur_cnode_ptr) const {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
   auto node_name = common::AnfAlgo::GetCNodeName(cur_cnode_ptr);
-  static const auto send_recv_parallel = (common::GetEnv("SEND_RECV_PARALLEL") == "1");
+  static bool send_recv_parallel = (common::GetEnv("SEND_RECV_PARALLEL") == "1");
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  if (parallel_context->enable_fold_pipeline()) {
+    send_recv_parallel = true;
+  }
   if (cur_cnode_ptr->HasAttr(parallel::FIRST_RECEIVE)) {
     return true;
   }

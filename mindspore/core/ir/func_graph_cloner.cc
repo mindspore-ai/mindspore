@@ -239,6 +239,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   MS_EXCEPTION_IF_NULL(target_func_graph);
 
   target_func_graph->set_stage(func_graph->stage());
+  target_func_graph->set_segment(func_graph->segment());
   auto &old_return = func_graph->return_node();
   if (old_return != nullptr) {
     auto iter = replace_node_.find(old_return);
@@ -1042,6 +1043,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
     new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
   }
   new_func_graph->set_stage(func_graph->stage());
+  new_func_graph->set_segment(func_graph->segment());
   return new_func_graph;
 }
 }  // namespace mindspore

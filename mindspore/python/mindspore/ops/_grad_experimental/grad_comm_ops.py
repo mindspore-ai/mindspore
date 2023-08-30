@@ -98,6 +98,7 @@ def get_bprop_send(self):
     def bprop(x, out, dout):
         dx = send_grad(virtual_input)
         return (dx,)
+
     return bprop
 
 
@@ -117,14 +118,17 @@ def get_bprop_receive(self):
         else:
             dx = depend(cast(out_tensor, F.dtype(x)), send_out)
         return (dx,)
+
     return bprop
 
 
 @bprop_getters.register(_VirtualAdd)
 def get_bprop_virtual_add(self):
     """Generate bprop for _VirtualAdd"""
+
     def bprop(x, grad_accu, out, dout):
         return (dout + grad_accu, zeros_like(grad_accu))
+
     return bprop
 
 
@@ -181,7 +185,8 @@ def get_bprop_mirror_micro_step_operator(self):
     scale = 1 / dev_num
 
     all_reduce = AllReduce(group=group)
-
+    if "segment" in self.get_attr_dict():
+        all_reduce.add_prim_attr("segment", self.get_attr_dict()["segment"])
     fusion = self.get_attr_dict()["fusion"]
     all_reduce.add_prim_attr("fusion", fusion)
     if hasattr(self, 'parameter'):
@@ -218,6 +223,7 @@ def get_bprop_mirror_micro_step_operator(self):
                     return (real_grad, cast(out_tensor, dtype(z)))
                 return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
         return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign_out)
+
     return bprop
 
 
@@ -227,6 +233,7 @@ def get_bprop_broad_cast(self):
 
     def bprop(x, out, dout):
         return (dout,)
+
     return bprop
 
 
@@ -306,6 +313,8 @@ def get_bprop_micro_step_all_gather(self):
     if do_mirror:
         scale = 1.0 / self.rank_size
         all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+        if "segment" in self.get_attr_dict():
+            all_reduce.add_prim_attr("segment", self.get_attr_dict()["segment"])
         rank = get_rank(self.group)
         dev_num = get_group_size(self.group)
         split = P.Split(output_num=dev_num)
@@ -502,6 +511,7 @@ def get_bprop_mirror_operator(self):
                 dx = RowTensorInner(indices, grad, dout.dense_shape)
 
         return (dx,)
+
     return bprop
 
 
@@ -555,6 +565,7 @@ def get_bprop_mirror_mini_step_operator(self):
                 dx = zeros_like(x)  # The grad accumulation do not support row tensor now
 
         return (dx, zeros_like(z))
+
     return bprop
 
 
@@ -569,7 +580,7 @@ def get_bprop_virtual_div_operator(self):
     def bprop(x, out, dout):
         if issubclass_(F.typeof(dout), mstype.tensor_type):
             if issubclass_(F.dtype(dout), mstype.bool_) or issubclass_(F.dtype(dout), mstype.int32) \
-                                     or issubclass_(F.dtype(dout), mstype.int16):
+                    or issubclass_(F.dtype(dout), mstype.int16):
                 return (dout,)
             dx = op(dout, cast(F.scalar_to_tensor(divisor), dtype(dout)))
             return (dx,)
@@ -588,6 +599,7 @@ def get_bprop_virtual_div_operator(self):
             ele_grad = op(dout[i], cast(F.scalar_to_tensor(divisor), dtype(dout[i])))
             dx.append(ele_grad)
         return (dx,)
+
     return bprop
 
 
@@ -597,4 +609,5 @@ def get_bprop_get_tensor_slice_operator(self):
 
     def bprop(x, dev_mat, tensor_map, out, dout):
         return (zeros_like(x),)
+
     return bprop

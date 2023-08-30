@@ -159,7 +159,6 @@ class Cell(Cell_):
         self.ge_sync_data = False
         self._is_check_and_refresh = False
 
-
     def __getstate__(self):
         base = Cell_.__getstate__(self)
         return base, self.__dict__
@@ -325,6 +324,21 @@ class Cell(Cell_):
             item.add_pipeline_stage(value)
 
     @property
+    def pipeline_segment(self):
+        return self._pipeline_segment
+
+    @pipeline_segment.setter
+    def pipeline_segment(self, value):
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise TypeError("For 'context.set_auto_parallel_context', the argument 'pipeline_stages' "
+                            "must be int type, but got type : {}".format(type(value)))
+
+        if value < 0:
+            raise ValueError("For 'context.set_auto_parallel_context', the argument 'pipeline_stages' "
+                             "can not be less than 0, but got {}".format(value))
+        self._pipeline_segment = value
+
+    @property
     def parallel_parameter_merge_net_dict(self):
         return self._parallel_parameter_merge_net_dict
 
@@ -397,7 +411,7 @@ class Cell(Cell_):
             elif isinstance(item, float):
                 res.append(self.cast(item, dst_type))
             elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64} and \
-                item.dtype != dst_type:
+                    item.dtype != dst_type:
                 res.append(self.cast(item, dst_type))
             else:
                 res.append(item)

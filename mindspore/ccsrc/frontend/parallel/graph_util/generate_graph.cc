@@ -22,6 +22,7 @@
 
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "mindspore/ccsrc/pipeline/jit/ps/parse/parse_base.h"
 
@@ -163,6 +164,10 @@ void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerP
   virtual_end->AddPrimalAttr(end_flag, pre_cnode->GetPrimalAttr(MICRO));
   virtual_end->AddPrimalAttr(MICRO, pre_cnode->GetPrimalAttr(MICRO));
   manager->SetEdge(cnode, SizeToInt(index), virtual_end);
+  if (ParallelContext::GetInstance()->enable_fold_pipeline()) {
+    auto seg = ParallelContext::GetInstance()->pipeline_segment_split_num();
+    virtual_end->AddPrimalAttr(SEGMENT, MakeValue(seg - 1));
+  }
 }
 
 Status GenerateGraph::Init(const CNodePtr &cnode) {

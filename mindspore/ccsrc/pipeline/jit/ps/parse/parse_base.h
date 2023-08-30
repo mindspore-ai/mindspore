@@ -176,6 +176,7 @@ const char PYTHON_FUNC_GRAPH_FLAGS[] = "_func_graph_flags";
 // Define the parse constant.
 const char CUSTOM_BPROP_NAME[] = "bprop";
 const char STAGE_NAME[] = "_pipeline_stage";
+const char SEGMENT_NAME[] = "_pipeline_segment";
 
 // Define the Namespace name.
 const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // For ast type namespace.

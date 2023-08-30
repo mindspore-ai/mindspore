@@ -41,6 +41,7 @@
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
+#include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -207,6 +208,16 @@ static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, c
     new_node_prim->set_attr("recompute", MakeValue(false));
   } else if (instance_name.find(RECOMPUTE) != std::string::npos) {
     new_node_prim->set_attr("recompute", MakeValue(true));
+  }
+
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(new_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (node->HasPrimalAttr(SEGMENT)) {
+    primitive->AddAttr(SEGMENT, node->GetPrimalAttr(SEGMENT));
+    new_node->AddPrimalAttr(SEGMENT, node->GetPrimalAttr(SEGMENT));
+  }
+  if (node->HasPrimalAttr(MICRO)) {
+    new_node->AddPrimalAttr(MICRO, node->GetPrimalAttr(MICRO));
   }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
@@ -2557,8 +2568,14 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
                                     int64_t pipeline_stages) {
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
+    auto parallel_context = parallel::ParallelContext::GetInstance();
     if (IsTraining(manager)) {
-      Reorder(root);
+      if (parallel_context->enable_fold_pipeline()) {
+        MS_LOG(INFO) << "Begin Fold Pipeline Reorder. ";
+        FoldPipelineReorder(root);
+      } else {
+        Reorder(root);
+      }
     } else {
       ReorderForPredict(root, manager);
     }

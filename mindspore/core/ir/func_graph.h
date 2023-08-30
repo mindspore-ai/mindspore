@@ -362,6 +362,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_exist_multi_target(bool exist_multi_target) { exist_multi_target_ = exist_multi_target; }
   int64_t stage() const { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
+  int64_t segment() const { return segment_; }
+  void set_segment(int64_t segment) { segment_ = segment; }
 
   bool dropped() const { return dropped_; }
   void set_dropped(bool dropped) { dropped_ = dropped; }
@@ -467,6 +469,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::shared_ptr<bool> indirect_;
 
   int64_t stage_;
+  int64_t segment_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;

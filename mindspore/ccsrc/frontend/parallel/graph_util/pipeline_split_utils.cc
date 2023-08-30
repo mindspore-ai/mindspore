@@ -26,6 +26,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/value.h"
 #include "ops/array_ops.h"
@@ -53,7 +54,7 @@ std::string TagForSendRecDepend(const AnfNodePtr &prior_node, const AnfNodePtr &
 }
 }  // namespace
 
-static bool IsFirstStage() {
+bool IsFirstStage() {
   MS_EXCEPTION_IF_NULL(g_device_manager);
   auto stage_id = g_device_manager->stage_id();
   return stage_id == 0;
@@ -83,6 +84,32 @@ static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
       MS_EXCEPTION_IF_NULL(cinput);
       if (IsPrimitiveCNode(cinput, prim::kPrimReceive)) {
         return cinput->GetPrimalAttr(MICRO);
+      }
+      if (visited.find(cinput) == visited.end()) {
+        que.push(cinput);
+      }
+    }
+  }
+  return nullptr;
+}
+
+static ValuePtr GetReceiveSegment(const CNodePtr &cnode) {
+  std::queue<CNodePtr> que;
+  std::set<AnfNodePtr> visited;
+  que.push(cnode);
+  while (!que.empty()) {
+    auto front = que.front();
+    que.pop();
+    (void)(visited.insert(front));
+    for (size_t i = 1; i < front->inputs().size(); ++i) {
+      auto input = front->input(i);
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+      auto cinput = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cinput);
+      if (IsPrimitiveCNode(cinput, prim::kPrimReceive)) {
+        return cinput->GetPrimalAttr(SEGMENT);
       }
       if (visited.find(cinput) == visited.end()) {
         que.push(cinput);
@@ -182,7 +209,7 @@ static FuncGraphPtr FindGradGraph(const FuncGraphPtr &root) {
   return nullptr;
 }
 
-static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
+void SetParameterStartForCellShare(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto share_cell = EnableShareCell();
   if (!share_cell) {
@@ -239,6 +266,12 @@ static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
     has_find = true;
     node->AddPrimalAttr(MICRO, micro);
     node->AddPrimalAttr(PARAMETER_START, micro);
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    if (parallel_context->enable_fold_pipeline()) {
+      auto segment = GetReceiveSegment(node);
+      MS_EXCEPTION_IF_NULL(segment);
+      node->AddPrimalAttr(SEGMENT, segment);
+    }
   }
   if (!has_find) {
     MS_LOG(EXCEPTION) << "Stage0: The backward end flag has not been marked in lazy inline mode.";
@@ -715,11 +748,10 @@ int64_t GetMicroBatch(const AnfNodePtr &node) {
   return GetValue<int64_t>(micro_value);
 }
 
-PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncGraphPtr &root, int64_t micro_max,
-                         bool is_train) {
+void CommonDeduplicate(const std::vector<AnfNodePtr> &node_vector, std::vector<AnfNodePtr> *out_vec_begin,
+                       std::vector<AnfNodePtr> *out_vec_end, const FuncGraphPtr &root, int64_t micro_max,
+                       int64_t seg_max, int64_t h, bool is_train) {
   std::vector<AnfNodePtr> temp_vec;
-  std::vector<AnfNodePtr> out_vec_begin;
-  std::vector<AnfNodePtr> out_vec_end;
   auto manager = root->manager();
   for (int64_t i = 0; i <= micro_max; ++i) {
     temp_vec.clear();
@@ -728,13 +760,28 @@ PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncG
     } else {
       for (auto &node : node_vector) {
         auto node_micro = GetMicroBatch(node);
-        if (node_micro == i) {
-          temp_vec.push_back(node);
+        if (seg_max >= 1) {
+          auto node_seg = GetSegment(node);
+          if (node_micro == i && node_seg == h) {
+            temp_vec.push_back(node);
+          }
+        } else {
+          if (node_micro == i) {
+            temp_vec.push_back(node);
+          }
         }
       }
     }
-    if (temp_vec.size() <= 1) {
+    if (temp_vec.empty()) {
       MS_LOG(INFO) << "No Duplicate MicroBatch.";
+      continue;
+    }
+    if (temp_vec.size() == 1) {
+      if (seg_max >= 1) {
+        MS_LOG(WARNING) << "Single element, no need to deduplicate.";
+        out_vec_begin->push_back(temp_vec.front());
+        out_vec_end->push_back(temp_vec.back());
+      }
       continue;
     }
     std::sort(temp_vec.begin(), temp_vec.end(), CompFunc);
@@ -745,14 +792,53 @@ PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncG
       InsertDepend(prior_node, post_node, manager, root);
     }
     if (!temp_vec.empty()) {
-      out_vec_begin.push_back(temp_vec.front());
-      out_vec_end.push_back(temp_vec.back());
+      out_vec_begin->push_back(temp_vec.front());
+      out_vec_end->push_back(temp_vec.back());
     }
   }
-  if (out_vec_begin.empty()) {
-    return std::make_pair(node_vector, node_vector);
+}
+
+PipelinePair GetForwardEndBeforePair(const PipelinePair &forward_end_pair) {
+  PipelinePair forward_end_before_pair;
+  if (!IsLastStage()) {
+    for (auto &node : forward_end_pair.first) {
+      auto cnode = node->cast<CNodePtr>();
+      auto temp_node = GetActualOp(cnode->input(1));
+      MS_EXCEPTION_IF_NULL(temp_node);
+      forward_end_before_pair.first.push_back(temp_node);
+    }
+    for (auto &node : forward_end_pair.second) {
+      auto cnode = node->cast<CNodePtr>();
+      auto temp_node = GetActualOp(cnode->input(1));
+      MS_EXCEPTION_IF_NULL(temp_node);
+      forward_end_before_pair.second.push_back(temp_node);
+    }
+  } else {
+    forward_end_before_pair = forward_end_pair;
   }
-  return std::make_pair(out_vec_begin, out_vec_end);
+  return forward_end_before_pair;
+}
+
+int64_t GetMicroMax(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &forward_end) {
+  int64_t micro_max = 0;
+  if (forward_end.empty()) {
+    MS_LOG(EXCEPTION) << "can not find the end node of pipeline, you are advised to use 'PipelineCell' to fix it.";
+  } else {
+    auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
+    auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
+    MS_EXCEPTION_IF_NULL(micro_size);
+    micro_max = GetValue<int64_t>(micro_size);
+  }
+  return micro_max;
+}
+
+int64_t GetSegment(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto seg_value = cnode->GetPrimalAttr(SEGMENT);
+  MS_EXCEPTION_IF_NULL(seg_value);
+  return GetValue<int64_t>(seg_value);
 }
 
 void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, const ValuePtr &value, size_t max_depth) {
@@ -869,6 +955,8 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
       MS_EXCEPTION_IF_NULL(micro);
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
+      int64_t seg = 0;
+      cnode->AddPrimalAttr(SEGMENT, MakeValue(seg));
     }
   }
 }
@@ -953,33 +1041,35 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
       forward_params->push_back(node);
     }
   }
-  std::sort((*backward_start).begin(), (*backward_start).end(), CompFunc);
-  std::sort((*backward_end).begin(), (*backward_end).end(), CompFunc);
-  std::sort((*forward_start).begin(), (*forward_start).end(), CompFunc);
-  std::sort((*forward_end).begin(), (*forward_end).end(), CompFunc);
+  std::sort((*backward_start).begin(), (*backward_start).end(), CompFuncBySegDescending);
+  std::sort((*backward_end).begin(), (*backward_end).end(), CompFuncBySegDescending);
+  std::sort((*forward_start).begin(), (*forward_start).end(), CompFuncBySegAscending);
+  std::sort((*forward_end).begin(), (*forward_end).end(), CompFuncBySegAscending);
   std::sort((*backward_params).begin(), (*backward_params).end(), CompFunc);
   std::sort((*forward_params).begin(), (*forward_params).end(), CompFunc);
 }
 
 void CheckBorderNode(const PipelinePair &forward_start_pair, const PipelinePair &forward_end_pair,
                      const PipelinePair &backward_start_pair, const PipelinePair &backward_end_pair,
-                     size_t micro_size) {
-  micro_size = micro_size + 1;
-  if (forward_start_pair.first.size() != micro_size) {
+                     std::vector<int64_t> seg_micro_max) {
+  auto micro_size = LongToSize(seg_micro_max[0] + 1);
+  auto seg_size = LongToSize(seg_micro_max[1] + 1);
+  auto total_micro_size = micro_size * seg_size;
+  if (forward_start_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "forward_node's size:" << forward_start_pair.first.size()
-                      << "is not equal to micro size:" << micro_size;
+                      << "is not equal to micro size:" << total_micro_size;
   }
-  if (forward_end_pair.first.size() != micro_size) {
+  if (forward_end_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "forward_node's size:" << forward_end_pair.first.size()
-                      << "is not equal to micro size:" << micro_size;
+                      << "is not equal to micro size:" << total_micro_size;
   }
-  if (backward_start_pair.first.size() != micro_size) {
+  if (backward_start_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "backward_node's size:" << backward_start_pair.first.size()
-                      << "is not equal to micro size:" << micro_size;
+                      << "is not equal to micro size:" << total_micro_size;
   }
-  if (backward_end_pair.first.size() != micro_size) {
+  if (backward_end_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "backward_node's size:" << backward_end_pair.first.size()
-                      << "is not equal to micro size:" << micro_size;
+                      << "is not equal to micro size:" << total_micro_size;
   }
 }
 
@@ -994,40 +1084,16 @@ void Reorder(const FuncGraphPtr &root) {
   SetParameterStartForCellShare(root);
   GetBorderNode(&forward_start, &forward_end, &backward_start, &backward_end, &forward_params, &backward_params,
                 &allreduce_params, root);
-  int64_t micro_max = 0;
-  if (forward_end.empty()) {
-    MS_LOG(EXCEPTION) << "can not find the end node of pipeline, you are advised to use 'PipelineCell' to fix it.";
-  } else {
-    auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
-    auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
-    MS_EXCEPTION_IF_NULL(micro_size);
-    micro_max = GetValue<int64_t>(micro_size);
-  }
-
-  auto backward_start_pair = Deduplicate(backward_start, root, micro_max, true);
-  auto backward_end_pair = Deduplicate(backward_end, root, micro_max, true);
-  auto forward_start_pair = Deduplicate(forward_start, root, micro_max, true);
-  auto forward_end_pair = Deduplicate(forward_end, root, micro_max, true);
-  auto forward_params_pair = Deduplicate(forward_params, root, micro_max, true);
-  auto backward_params_pair = Deduplicate(backward_params, root, micro_max, true);
-  CheckBorderNode(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair, LongToSize(micro_max));
-  PipelinePair forward_end_before_pair;
-  if (!IsLastStage()) {
-    for (auto &node : forward_end_pair.first) {
-      auto cnode = node->cast<CNodePtr>();
-      auto temp_node = GetActualOp(cnode->input(1));
-      MS_EXCEPTION_IF_NULL(temp_node);
-      forward_end_before_pair.first.push_back(temp_node);
-    }
-    for (auto &node : forward_end_pair.second) {
-      auto cnode = node->cast<CNodePtr>();
-      auto temp_node = GetActualOp(cnode->input(1));
-      MS_EXCEPTION_IF_NULL(temp_node);
-      forward_end_before_pair.second.push_back(temp_node);
-    }
-  } else {
-    forward_end_before_pair = forward_end_pair;
-  }
+  int64_t micro_max = GetMicroMax(root, forward_end);
+  std::vector<int64_t> seg_micro_max{micro_max, 0};
+  auto backward_start_pair = Deduplicate(backward_start, root, micro_max, 0, true);
+  auto backward_end_pair = Deduplicate(backward_end, root, micro_max, 0, true);
+  auto forward_start_pair = Deduplicate(forward_start, root, micro_max, 0, true);
+  auto forward_end_pair = Deduplicate(forward_end, root, micro_max, 0, true);
+  auto forward_params_pair = Deduplicate(forward_params, root, micro_max, 0, true);
+  auto backward_params_pair = Deduplicate(backward_params, root, micro_max, 0, true);
+  CheckBorderNode(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair, seg_micro_max);
+  auto forward_end_before_pair = GetForwardEndBeforePair(forward_end_pair);
   auto ret_after = root->get_return();
   MS_EXCEPTION_IF_NULL(ret_after);
   auto all_nodes = DeepScopedGraphSearch(ret_after);
@@ -1070,9 +1136,9 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   std::sort(forward_start.begin(), forward_start.end(), CompFunc);
   std::sort(forward_end.begin(), forward_end.end(), CompFunc);
   std::sort(forward_params.begin(), forward_params.end(), CompFunc);
-  auto forward_start_pair = Deduplicate(forward_start, root, 0, false);
-  auto forward_end_pair = Deduplicate(forward_end, root, 0, false);
-  auto forward_params_pair = Deduplicate(forward_params, root, 0, false);
+  auto forward_start_pair = Deduplicate(forward_start, root, 0, 0, false);
+  auto forward_end_pair = Deduplicate(forward_end, root, 0, 0, false);
+  auto forward_params_pair = Deduplicate(forward_params, root, 0, 0, false);
   if (!forward_end.empty() && !forward_params.empty()) {
     InsertDepend(forward_params_pair.second[0], forward_end_pair.first[0], manager, root);
   }

@@ -419,7 +419,6 @@ class _Context:
             if aoe_config_key == 'job_type':
                 self.set_param(ms_ctx_param.aoe_job_type, aoe_config[aoe_config_key])
 
-
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"For 'context.set_context', the argument 'device_id' must be in range [0, 4095], "
@@ -675,7 +674,8 @@ def _context():
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
-                 all_reduce_fusion_config=list, pipeline_stages=int, parallel_optimizer_config=dict,
+                 all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
+                 parallel_optimizer_config=dict,
                  comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
