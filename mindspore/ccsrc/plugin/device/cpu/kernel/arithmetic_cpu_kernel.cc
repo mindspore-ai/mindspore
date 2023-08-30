@@ -875,6 +875,11 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      SpecializeArithFunc<float16>},
     {KernelAttr()
+       .AddInputAttr(kNumberTypeBFloat16)
+       .AddInputAttr(kNumberTypeBFloat16)
+       .AddOutputAttr(kNumberTypeBFloat16),
+     SpecializeArithFunc<bfloat16>},
+    {KernelAttr()
        .AddInputAttr(kNumberTypeComplex64)
        .AddInputAttr(kNumberTypeComplex64)
        .AddOutputAttr(kNumberTypeComplex64),

@@ -522,6 +522,7 @@ void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphP
 void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
   FuncGraphPtr fp16_mixed_precision_fg;
   FuncGraphPtr fp32_mixed_precision_fg;
+  FuncGraphPtr bf16_mixed_precision_fg;
   // Find the first subgraph which has mixed precision flag.
   for (auto &item : func_graph->func_graphs_used()) {
     if (item.first->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
@@ -530,7 +531,11 @@ void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
     if (item.first->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
       fp32_mixed_precision_fg = item.first;
     }
-    if ((fp32_mixed_precision_fg != nullptr) || (fp16_mixed_precision_fg != nullptr)) {
+    if (item.first->has_flag(GRAPH_FLAG_MIX_PRECISION_BF16)) {
+      bf16_mixed_precision_fg = item.first;
+    }
+    if ((fp32_mixed_precision_fg != nullptr) || (fp16_mixed_precision_fg != nullptr) ||
+        (bf16_mixed_precision_fg != nullptr)) {
       break;
     }
   }
@@ -544,6 +549,11 @@ void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
   if (fp32_mixed_precision_fg != nullptr) {
     for (auto sub_fg : fp32_mixed_precision_fg->func_graphs_used_total()) {
       sub_fg->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, true);
+    }
+  }
+  if (bf16_mixed_precision_fg != nullptr) {
+    for (auto sub_fg : bf16_mixed_precision_fg->func_graphs_used_total()) {
+      sub_fg->set_flag(GRAPH_FLAG_MIX_PRECISION_BF16, true);
     }
   }
 }

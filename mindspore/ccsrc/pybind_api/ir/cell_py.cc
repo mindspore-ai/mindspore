@@ -43,7 +43,8 @@ void RegCell(const py::module *m) {
   (void)py::enum_<MixedPrecisionType>(*m, "MixedPrecisionType", py::arithmetic())
     .value("NOTSET", MixedPrecisionType::kNotSet)
     .value("FP16", MixedPrecisionType::kFP16)
-    .value("FP32", MixedPrecisionType::kFP32);
+    .value("FP32", MixedPrecisionType::kFP32)
+    .value("BF16", MixedPrecisionType::kBF16);
   (void)py::class_<Cell, std::shared_ptr<Cell>>(*m, "Cell_", py::metaclass(reinterpret_cast<PyObject *>(&PyType_Type)))
     .def(py::init<std::string &>())
     .def("__str__", &Cell::ToString)

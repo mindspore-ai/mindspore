@@ -548,7 +548,7 @@
         .. note:: 多次调用将产生覆盖。
 
         参数：
-            - **dst_type** (mindspore.dtype) - Cell转换为 `dst_type` 类型运行。 `dst_type` 可以是 `mindspore.dtype.float16` 或者  `mindspore.dtype.float32` 。
+            - **dst_type** (mindspore.dtype) - Cell转换为 `dst_type` 类型运行。 `dst_type` 可以是 `mindspore.dtype.float16` 、  `mindspore.dtype.float32` 或者  `mindspore.dtype.bfloat16` 。
 
         返回：
             Cell类型，Cell本身。

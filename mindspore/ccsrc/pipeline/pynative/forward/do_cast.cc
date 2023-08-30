@@ -332,6 +332,8 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
     auto dst_dtype = kFloat16;
     if (op_run_info->mix_type == kFP32) {
       dst_dtype = kFloat32;
+    } else if (op_run_info->mix_type == kBF16) {
+      dst_dtype = kBFloat16;
     }
     const auto &tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);

@@ -288,6 +288,8 @@ TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph) {
     return kFloat32;
   } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
     return kFloat16;
+  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_BF16)) {
+    return kBFloat16;
   } else {
     return nullptr;
   }
@@ -322,10 +324,13 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
         auto source_tensor_type = type->cast<TensorTypePtr>();
         if (source_tensor_type != nullptr) {
           auto source_element = source_tensor_type->element();
-          if (cast_type != nullptr && IsSubType(source_element, kFloat) && *source_element != *cast_type) {
+          if (cast_type != nullptr && (IsSubType(source_element, kFloat) || IsSubType(source_element, kBFloat)) &&
+              *source_element != *cast_type) {
             auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
             param = func_graph->NewCNodeAfter(param, {NewValueNode(cast), param, NewValueNode(cast_type)});
-            type = cast_type->type_id() == kNumberTypeFloat16 ? kTensorTypeFP16 : kTensorTypeFP32;
+            type = cast_type->type_id() == kNumberTypeFloat16
+                     ? kTensorTypeFP16
+                     : (cast_type->type_id() == kNumberTypeBFloat16 ? kTensorTypeBF16 : kTensorTypeFP32);
           }
         }
       } else if (sig == SignatureEnumRW::kRWWrite) {
