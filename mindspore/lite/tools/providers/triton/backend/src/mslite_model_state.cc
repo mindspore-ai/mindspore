@@ -190,13 +190,15 @@ TRITONSERVER_Error *ModelInstanceState::ProcessInputs(TRITONBACKEND_Request **re
       need_resize_ = model_inputs.at(idx).Shape() != batched_shape;
     }
 
-    const char *input_buffer;
+    const char *input_buffer = nullptr;
     size_t input_buffer_byte_size;
     TRITONSERVER_MemoryType input_buffer_memory_type;
     int64_t input_buffer_memory_type_id;
     RETURN_IF_ERROR(collector.ProcessTensor(
       input_name, nullptr /* existing_buffer */, 0 /* existing_buffer_byte_size */, allowed_input_types, &input_buffer,
       &input_buffer_byte_size, &input_buffer_memory_type, &input_buffer_memory_type_id));
+    RETURN_ERROR_IF_TRUE(input_buffer == nullptr || input_buffer_byte_size == 0, TRITONSERVER_ERROR_INTERNAL,
+                         std::string("Process input tensor data failed."));
 
     auto input_tensor = mindspore::MSTensor(input_name, data_type, {}, nullptr, 0);
     input_tensor.SetShape(batched_shape);
@@ -208,13 +210,17 @@ TRITONSERVER_Error *ModelInstanceState::ProcessInputs(TRITONBACKEND_Request **re
     } else {
       LOG_MESSAGE(TRITONSERVER_LOG_INFO, std::string("malloc data because the data size is not equal").c_str());
       auto input_data = input_tensor.MutableData();
+      auto data_size = input_tensor.DataSize();
+      RETURN_ERROR_IF_TRUE(input_data == nullptr || input_buffer_byte_size > data_size, TRITONSERVER_ERROR_INTERNAL,
+                           std::string("Process input tensor data failed."));
+
       std::memset(input_data, 0, input_tensor.DataSize());
       std::memcpy(input_data, input_buffer, input_buffer_byte_size);
     }
     inputs_.push_back(input_tensor);
   }
   collector.Finalize();
-
+  LOG_MESSAGE(TRITONSERVER_LOG_INFO, (std::string("Process inputs tensor finished.").c_str()));
   return nullptr;  // success
 }
 
