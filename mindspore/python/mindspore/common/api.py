@@ -404,31 +404,18 @@ class _MindsporeFunctionExecutor:
             return phase
 
         if full_function_name in function_phases:
-            warning_times = 3
-            if len(function_phases[full_function_name]) % 10 == warning_times:
-                def analysize(log):
-                    time_set = set()
-                    key_set = set()
-                    tips = "For more details, get instructions about `jit` at " \
-                           "https://www.mindspore.cn/search?inputValue=jit. "
-                    for item in log:
-                        time_set.add(item[0])
-                        key_set.add(item[1])
-
-                    if len(key_set) >= warning_times:
-                        return "The args of the function ware always changed, " + \
-                               "please make sure the shape or the type of args are not variable. " + \
-                               tips
-                    if len(time_set) >= warning_times:
-                        return "If the function is @jit, try to use @jit(compile_once=True) with risk. " + \
-                               tips
-                    return tips
+            warning_times = 1
+            if len(function_phases[full_function_name]) >= warning_times:
+                tips = "Try to decorate the function with @jit(hash_args=...) " \
+                       "or @jit(compile_once=True). " \
+                       "For more details, get instructions about `jit` at " \
+                       "https://www.mindspore.cn/search?inputValue=jit."
 
                 logger.warning(f"The function '{full_function_name}' has been compiled for "
                                f"{len(function_phases[full_function_name])} times. "
-                               f"{analysize(function_phases[full_function_name])} ")
+                               f"{tips} ")
         else:
-            function_phases[full_function_name] = list()
+            function_phases[full_function_name] = set()
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -453,7 +440,7 @@ class _MindsporeFunctionExecutor:
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
             return phase
 
-        function_phases[full_function_name].append((create_time, key))
+        function_phases[full_function_name].add(create_time)
         logger.info(f"Compile the function '{full_function_name}' create time={create_time} ,key={key}")
         return phase
 
