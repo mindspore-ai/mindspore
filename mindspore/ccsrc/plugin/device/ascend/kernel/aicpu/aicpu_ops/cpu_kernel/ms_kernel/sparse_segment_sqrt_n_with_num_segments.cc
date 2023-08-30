@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_segment_sqrt_n_with_num_segments.h"
-
+#include "cpu_kernel/ms_kernel/sparse_segment_sqrt_n_with_num_segments.h"
+#include <vector>
 #include <math.h>
-
 #include "Eigen/Core"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -31,29 +30,29 @@ const char *SparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegmen
     if ((DTYPE_1) == DT_INT32) {                                      \
       if ((DTYPE_2) == DT_INT32) {                                    \
         if ((DTYPE_3) == DT_INT32) {                                  \
-          return Computekernel<TYPE, int32_t, int32_t, int32_t>(CTX); \
+          return ComputeKernel<TYPE, int32_t, int32_t, int32_t>(CTX); \
         } else {                                                      \
-          return Computekernel<TYPE, int32_t, int32_t, int64_t>(CTX); \
+          return ComputeKernel<TYPE, int32_t, int32_t, int64_t>(CTX); \
         }                                                             \
       } else {                                                        \
         if ((DTYPE_3) == DT_INT32) {                                  \
-          return Computekernel<TYPE, int32_t, int64_t, int32_t>(CTX); \
+          return ComputeKernel<TYPE, int32_t, int64_t, int32_t>(CTX); \
         } else {                                                      \
-          return Computekernel<TYPE, int32_t, int64_t, int64_t>(CTX); \
+          return ComputeKernel<TYPE, int32_t, int64_t, int64_t>(CTX); \
         }                                                             \
       }                                                               \
     } else {                                                          \
       if ((DTYPE_2) == DT_INT32) {                                    \
         if ((DTYPE_3) == DT_INT32) {                                  \
-          return Computekernel<TYPE, int64_t, int32_t, int32_t>(CTX); \
+          return ComputeKernel<TYPE, int64_t, int32_t, int32_t>(CTX); \
         } else {                                                      \
-          return Computekernel<TYPE, int64_t, int32_t, int64_t>(CTX); \
+          return ComputeKernel<TYPE, int64_t, int32_t, int64_t>(CTX); \
         }                                                             \
       } else {                                                        \
         if ((DTYPE_3) == DT_INT32) {                                  \
-          return Computekernel<TYPE, int64_t, int64_t, int32_t>(CTX); \
+          return ComputeKernel<TYPE, int64_t, int64_t, int32_t>(CTX); \
         } else {                                                      \
-          return Computekernel<TYPE, int64_t, int64_t, int64_t>(CTX); \
+          return ComputeKernel<TYPE, int64_t, int64_t, int64_t>(CTX); \
         }                                                             \
       }                                                               \
     }                                                                 \
@@ -122,7 +121,7 @@ uint32_t SparseSegmentSqrtNWithNumSegmentsCpuKernel::Compute(CpuKernelContext &c
 REGISTER_CPU_KERNEL(SparseSegmentSqrtNWithNumSegments, SparseSegmentSqrtNWithNumSegmentsCpuKernel);
 
 template <typename T1, typename T2, typename T3, typename T4>
-uint32_t SparseSegmentSqrtNWithNumSegmentsCpuKernel::Computekernel(CpuKernelContext &ctx) {
+uint32_t SparseSegmentSqrtNWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   int n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   int m = ctx.Input(2)->GetTensorShape()->NumElements();
   auto x_ptr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LESS_H_
 #define AICPU_KERNELS_NORMALIZED_LESS_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class TraceCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class TraceCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t TraceCompute(Tensor *input, Tensor *output, CpuKernelContext &ctx);
+  static uint32_t TraceCompute(Tensor *input, Tensor *output, const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

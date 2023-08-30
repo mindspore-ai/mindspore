@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cpu_kernel/ms_kernel/sparse_segment_mean_grad.h"
 #include <algorithm>
 #include <iostream>
+#include <vector>
 #include <map>
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include "sparse_segment_mean_grad.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 4;
@@ -84,6 +85,7 @@ KernelStatus SparseSegmentMeanGradCpuKernel::CheckShapePara(const CpuKernelConte
   }
   return KERNEL_STATUS_OK;
 }
+
 uint32_t SparseSegmentMeanGradCpuKernel::Compute(CpuKernelContext &ctx) {
   if ((NormalCheck(ctx, kInputNum, kOutputNum) != KERNEL_STATUS_OK) || (CheckDataPara(ctx) != KERNEL_STATUS_OK) ||
       (CheckShapePara(ctx) != KERNEL_STATUS_OK)) {
@@ -155,7 +157,7 @@ KernelStatus SparseSegmentMeanGradCpuKernel::ComputeKernelWithType(const CpuKern
     is_modified[static_cast<size_t>(output_idx)] = true;
   }
   return KERNEL_STATUS_OK;
-};
+}
 
 template <typename T>
 KernelStatus SparseSegmentMeanGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

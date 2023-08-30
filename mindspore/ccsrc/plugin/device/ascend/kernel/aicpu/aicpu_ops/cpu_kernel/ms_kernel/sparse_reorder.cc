@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_reorder.h"
+#include "cpu_kernel/ms_kernel/sparse_reorder.h"
 
 namespace {
 constexpr uint32_t kSparseReorderInputNum = 3;
@@ -22,7 +22,7 @@ constexpr const char *kSparseReorder = "SparseReorder";
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseReorderCpuKernel::SparseReorder(CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices,
+uint32_t SparseReorderCpuKernel::SparseReorder(const CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices,
                                                Tensor *y_values) {
   DataType dt = static_cast<DataType>(y_values->GetDataType());
   switch (dt) {
@@ -58,7 +58,7 @@ uint32_t SparseReorderCpuKernel::SparseReorder(CpuKernelContext &ctx, SparseTens
   }
 }
 
-uint32_t SparseReorderCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseReorderCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSparseReorderInputNum, kSparseReorderOutputNum), "[%s] check params failed.",
                       kSparseReorder);

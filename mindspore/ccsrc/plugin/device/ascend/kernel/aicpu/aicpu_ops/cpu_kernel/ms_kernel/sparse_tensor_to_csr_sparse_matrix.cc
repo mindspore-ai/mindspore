@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_tensor_to_csr_sparse_matrix.h"
-
+#include "cpu_kernel/ms_kernel/sparse_tensor_to_csr_sparse_matrix.h"
 #include <complex>
 #include <numeric>
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -126,7 +124,7 @@ uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) 
 REGISTER_CPU_KERNEL(SparseTensorToCSRSparseMatrix, SparseTensorToCSRSparseMatrixCpuKernel);
 
 template <typename indicesT, typename dataT>
-uint32_t SparseTensorToCSRSparseMatrixCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t SparseTensorToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(2);
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
   auto y_dense_shape_ptr = static_cast<indicesT *>(ctx.Output(0)->GetData());

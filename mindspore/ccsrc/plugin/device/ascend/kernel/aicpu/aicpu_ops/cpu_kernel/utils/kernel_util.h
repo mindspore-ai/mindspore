@@ -227,7 +227,7 @@ inline bool ShapeVectorIsSame(const std::vector<int64_t> &shape, const std::vect
  * @param ctx context
  * @return status code
  */
-uint32_t NormalMathCheck(CpuKernelContext &ctx);
+uint32_t NormalMathCheck(const CpuKernelContext &ctx);
 
 /**
  * @brief normal check for kernel
@@ -236,7 +236,7 @@ uint32_t NormalMathCheck(CpuKernelContext &ctx);
  * @param outputs_num num of outputs
  * @return status code
  */
-uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
+uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num);
 
 /**
  * @brief normal check for kernel
@@ -246,7 +246,7 @@ uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uin
  * @param attr_names names of attrs
  * @return status code
  */
-uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
+uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
                      const std::vector<std::string> &attr_names);
 
 bool IsScalar(const std::vector<int64_t> &shape);

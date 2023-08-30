@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparseaddmm.h"
+#include "cpu_kernel/ms_kernel/sparse_addmm.h"
+#include <vector>
+#include <algorithm>
 #include <securec.h>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -26,6 +28,7 @@
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 7;
+const uint32_t kDimsNum2 = 2;
 const char *kSparseAddmm = "SparseAddmm";
 constexpr int64_t kParallelDataNums = 16;
 
@@ -84,11 +87,10 @@ uint32_t SparseAddmmCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(CpuKernelContext &ctx) {
+uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(const CpuKernelContext &ctx) {
   Tensor *indices_tensor = ctx.Input(0);
   Tensor *values_tensor = ctx.Input(1);
   Tensor *shape_tensor = ctx.Input(2);
-  Tensor *dense_tensor = ctx.Input(3);
   Tensor *alpha_tensor = ctx.Input(5);
   Tensor *beta_tensor = ctx.Input(6);
 
@@ -111,10 +113,9 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(CpuKernelContext &ctx) {
   // valid shape nullptr
   auto sparse_shape = shape_tensor->GetTensorShape();
   auto values_shape = values_tensor->GetTensorShape();
-  auto dense_tensor_shape = dense_tensor->GetTensorShape();
   auto indices_shape = indices_tensor->GetTensorShape();
   // sparse_indices
-  if (indices_shape->GetDims() > 2) {
+  if (static_cast<uint32_t>(indices_shape->GetDims()) > kDimsNum2) {
     KERNEL_LOG_ERROR(
       "Sparse_indices should be a scalar, vector, or matrix, got dim "
       "size [%d].",
@@ -162,40 +163,15 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-template <typename T, typename T1>
-uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
+template <typename T>
+uint32_t SparseAddmmCpuKernel::ComputeRowAndCol1(
+  const CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *sparse,
+  int64_t row_x1, int64_t col_x1) {
   auto *indices_tensor = ctx.Input(0);
   auto *values_tensor = ctx.Input(1);
-  auto *shape_tensor = ctx.Input(2);
-  auto *dense_tensor = ctx.Input(3);
-  auto *x3_dense_tensor = ctx.Input(4);
-  auto *alpha_tensor = ctx.Input(5);
-  auto *beta_tensor = ctx.Input(6);
-  auto *output_tensor = ctx.Output(0);
 
-  // auto indices = reinterpret_cast<int64_t *>(indices_tensor->GetData());
   auto values = reinterpret_cast<T *>(values_tensor->GetData());
-  auto dense_data = reinterpret_cast<T *>(dense_tensor->GetData());
-  auto x3_dense_data = reinterpret_cast<T *>(x3_dense_tensor->GetData());
-  auto alpha = reinterpret_cast<T *>(alpha_tensor->GetData());
-  auto beta = reinterpret_cast<T *>(beta_tensor->GetData());
-  auto y = reinterpret_cast<T *>(output_tensor->GetData());
 
-  std::vector<int64_t> temp_shape;
-  for (int32_t index = 0; index < shape_tensor->GetTensorShape()->GetDimSize(0); ++index) {
-    if (shape_tensor->GetDataType() == DT_INT32) {
-      int32_t *temp_dim = reinterpret_cast<int32_t *>(shape_tensor->GetData());
-      temp_shape.emplace_back(static_cast<int64_t>(temp_dim[index]));
-    } else {
-      int64_t *temp_dim = reinterpret_cast<int64_t *>(shape_tensor->GetData());
-      temp_shape.emplace_back(temp_dim[index]);
-    }
-  }
-
-  const int64_t row_x1 = temp_shape[0];
-  const int64_t col_x1 = temp_shape[1];
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> sparse(row_x1, col_x1);
-  sparse.setZero(row_x1, col_x1);
   std::vector<int64_t> temp_indices;
   auto indices_one = indices_tensor->GetTensorShape()->GetDimSize(0);
   auto indices_two = indices_tensor->GetTensorShape()->GetDimSize(1);
@@ -215,7 +191,7 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
     for (int64_t i = 0; i < indices_one; i++) {
       int64_t row = temp_indices[i * indices_two + 0];
       int64_t col = temp_indices[i * indices_two + 1];
-      sparse(row, col) += *(values + i);
+      (*sparse)(row, col) += *(values + i);
     }
   } else {
     uint32_t minCoreNum = 1;
@@ -224,34 +200,24 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
       for (size_t i = start; i < end; i++) {
         int64_t row = temp_indices[i * indices_two + 0];
         int64_t col = temp_indices[i * indices_two + 1];
-        sparse(row, col) += *(values + i);
+        (*sparse)(row, col) += *(values + i);
       }
     };
     CpuKernelUtils::ParallelFor(ctx, indices_one, indices_one / maxCoreNum, shardSparse);
   }
+  return KERNEL_STATUS_OK;
+}
 
-  std::vector<int64_t> shape_x2 = dense_tensor->GetTensorShape()->GetDimSizes();
-  const int64_t row_x2 = shape_x2[0];
-  const int64_t col_x2 = shape_x2[1];
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dense(row_x2, col_x2);
-
-  std::vector<int64_t> shape_x3 = x3_dense_tensor->GetTensorShape()->GetDimSizes();
-  const int64_t row_x3 = shape_x3[0];
-  const int64_t col_x3 = shape_x3[1];
-
-  if (row_x3 != row_x1) {
-    KERNEL_LOG_ERROR("x1's row is no equal x3's row, cannot do add!");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  if (col_x3 != col_x2) {
-    KERNEL_LOG_ERROR("x2's col is no equal x3's col, cannot do add!");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-
+template <typename T>
+uint32_t SparseAddmmCpuKernel::ComputeRowAndCol2(
+  const CpuKernelContext &ctx, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> *dense, int64_t row_x2,
+  int64_t col_x2) {
+  auto *dense_tensor = ctx.Input(3);
+  auto dense_data = reinterpret_cast<T *>(dense_tensor->GetData());
   if (row_x2 <= kParallelDataNums) {
     for (int64_t i = 0; i < row_x2; i++) {
       for (int64_t j = 0; j < col_x2; j++) {
-        dense(i, j) = *(dense_data + i * col_x2 + j);
+        (*dense)(i, j) = *(dense_data + i * col_x2 + j);
       }
     }
   } else {
@@ -260,17 +226,29 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
     auto shardDense = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         for (int64_t j = 0; j < col_x2; j++) {
-          dense(i, j) = *(dense_data + i * col_x2 + j);
+          (*dense)(i, j) = *(dense_data + i * col_x2 + j);
         }
       }
     };
     CpuKernelUtils::ParallelFor(ctx, row_x2, row_x2 / maxCoreNum, shardDense);
   }
+  return KERNEL_STATUS_OK;
+}
 
-  if (col_x1 != row_x2) {
-    KERNEL_LOG_ERROR("x1's col is no equal x2's row, cannot do mat mul!");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
+template <typename T>
+uint32_t SparseAddmmCpuKernel::ComputeRowAndCol3(
+  const CpuKernelContext &ctx, const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &sparse,
+  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &dense, int64_t row_x1, int64_t col_x2) {
+  auto *x3_dense_tensor = ctx.Input(4);
+  auto *alpha_tensor = ctx.Input(5);
+  auto *beta_tensor = ctx.Input(6);
+  auto *output_tensor = ctx.Output(0);
+
+  auto x3_dense_data = reinterpret_cast<T *>(x3_dense_tensor->GetData());
+  auto alpha = reinterpret_cast<T *>(alpha_tensor->GetData());
+  auto beta = reinterpret_cast<T *>(beta_tensor->GetData());
+  auto y = reinterpret_cast<T *>(output_tensor->GetData());
+
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> temp;
   temp = sparse * dense;
 
@@ -294,6 +272,71 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
     };
     CpuKernelUtils::ParallelFor(ctx, row_x1, row_x1 / maxCoreNum, shardMatMul);
   }
+  return KERNEL_STATUS_OK;
+}
+
+template <typename T, typename T1>
+uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(const CpuKernelContext &ctx) {
+  auto *shape_tensor = ctx.Input(2);
+  auto *dense_tensor = ctx.Input(3);
+  auto *x3_dense_tensor = ctx.Input(4);
+
+  std::vector<int64_t> temp_shape;
+  for (int32_t index = 0; index < shape_tensor->GetTensorShape()->GetDimSize(0); ++index) {
+    if (shape_tensor->GetDataType() == DT_INT32) {
+      int32_t *temp_dim = reinterpret_cast<int32_t *>(shape_tensor->GetData());
+      temp_shape.emplace_back(static_cast<int64_t>(temp_dim[index]));
+    } else {
+      int64_t *temp_dim = reinterpret_cast<int64_t *>(shape_tensor->GetData());
+      temp_shape.emplace_back(temp_dim[index]);
+    }
+  }
+
+  const int64_t row_x1 = temp_shape[0];
+  const int64_t col_x1 = temp_shape[1];
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> sparse(row_x1, col_x1);
+  sparse.setZero(row_x1, col_x1);
+  uint32_t result = ComputeRowAndCol1(ctx, &sparse, row_x1, col_x1);
+  if (result != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    return result;
+  }
+
+  std::vector<int64_t> shape_x2 = dense_tensor->GetTensorShape()->GetDimSizes();
+  const int64_t row_x2 = shape_x2[0];
+  const int64_t col_x2 = shape_x2[1];
+
+  std::vector<int64_t> shape_x3 = x3_dense_tensor->GetTensorShape()->GetDimSizes();
+  const int64_t row_x3 = shape_x3[0];
+  const int64_t col_x3 = shape_x3[1];
+
+  if (row_x3 != row_x1) {
+    KERNEL_LOG_ERROR("x1's row is no equal x3's row, cannot do add!");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  if (col_x3 != col_x2) {
+    KERNEL_LOG_ERROR("x2's col is no equal x3's col, cannot do add!");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dense(row_x2, col_x2);
+  result = ComputeRowAndCol2(ctx, &dense, row_x2, col_x2);
+  if (result != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    return result;
+  }
+
+  if (col_x1 != row_x2) {
+    KERNEL_LOG_ERROR("x1's col is no equal x2's row, cannot do mat mul!");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+
+  result = ComputeRowAndCol3(ctx, sparse, dense, row_x1, col_x2);
+  if (result != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("SparseAddmm compute failed.");
+    return result;
+  }
+
   return KERNEL_STATUS_OK;
 }
 

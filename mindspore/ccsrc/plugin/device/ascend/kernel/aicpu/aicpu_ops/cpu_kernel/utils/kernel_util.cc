@@ -120,7 +120,7 @@ bool IsEmptyTensor(Tensor *tensor) {
   return false;
 }
 
-uint32_t NormalMathCheck(CpuKernelContext &ctx) {
+uint32_t NormalMathCheck(const CpuKernelContext &ctx) {
   const uint32_t kInputNum = 2;
   const uint32_t kOutputNum = 1;
 
@@ -151,7 +151,7 @@ uint32_t NormalMathCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num) {
+uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num) {
   if (inputs_num != kDynamicInput) {
     KERNEL_CHECK_FALSE((ctx.GetInputsSize() >= inputs_num), KERNEL_STATUS_PARAM_INVALID,
                        "[%s] need [%u] inputs, but got [%u].", ctx.GetOpType().c_str(), inputs_num,
@@ -191,7 +191,7 @@ uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uin
   return KERNEL_STATUS_OK;
 }
 
-uint32_t NormalCheck(CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
+uint32_t NormalCheck(const CpuKernelContext &ctx, const uint32_t inputs_num, const uint32_t outputs_num,
                      const std::vector<std::string> &attr_names) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, inputs_num, outputs_num), "Check Greater params failed.");
   for (auto const &attr_name : attr_names) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <algorithm>
 #include <iostream>
 #include <type_traits>
 #include <vector>
-
-#include "cpu_kernel_utils.h"
-#include "sparse_tensor_dense_mat_mul.h"
+#include <utility>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/sparse_tensor_dense_mat_mul.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
-using namespace std;
 namespace {
 #define COL_SHED 1024 << 1
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 4;
 const char *kSparseTensorDenseMatMul = "SparseTensorDenseMatMul";
 }  // namespace
+
 namespace aicpu {
 uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
@@ -42,70 +43,70 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t ret = KERNEL_STATUS_INNER_ERROR;
   if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
       y_data_type == DT_FLOAT)
-    ret = regular_calculate<float, int64_t, float, float>(ctx);
+    ret = RegularCalculate<float, int64_t, float, float>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<float, int64_t, complex<float>, complex<float>>(ctx);
+    ret = RegularCalculate<float, int64_t, std::complex<float>, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_FLOAT)
-    ret = regular_calculate<float, int32_t, float, float>(ctx);
+    ret = RegularCalculate<float, int32_t, float, float>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<float, int32_t, complex<float>, complex<float>>(ctx);
+    ret = RegularCalculate<float, int32_t, std::complex<float>, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_DOUBLE)
-    ret = regular_calculate<double, int64_t, double, double>(ctx);
+    ret = RegularCalculate<double, int64_t, double, double>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<double, int64_t, complex<double>, complex<double>>(ctx);
+    ret = RegularCalculate<double, int64_t, std::complex<double>, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_DOUBLE)
-    ret = regular_calculate<double, int32_t, double, double>(ctx);
+    ret = RegularCalculate<double, int32_t, double, double>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<double, int32_t, complex<double>, complex<double>>(ctx);
+    ret = RegularCalculate<double, int32_t, std::complex<double>, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT64 && dense_data_type == DT_INT64 &&
            y_data_type == DT_INT64)
-    ret = regular_calculate<int64_t, int64_t, int64_t, int64_t>(ctx);
+    ret = RegularCalculate<int64_t, int64_t, int64_t, int64_t>(ctx);
   else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT32 && dense_data_type == DT_INT64 &&
            y_data_type == DT_INT64)
-    ret = regular_calculate<int64_t, int32_t, int64_t, int64_t>(ctx);
+    ret = RegularCalculate<int64_t, int32_t, int64_t, int64_t>(ctx);
   else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT64 && dense_data_type == DT_INT32 &&
            y_data_type == DT_INT32)
-    ret = regular_calculate<int32_t, int64_t, int32_t, int32_t>(ctx);
+    ret = RegularCalculate<int32_t, int64_t, int32_t, int32_t>(ctx);
   else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT32 && dense_data_type == DT_INT32 &&
            y_data_type == DT_INT32)
-    ret = regular_calculate<int32_t, int32_t, int32_t, int32_t>(ctx);
+    ret = RegularCalculate<int32_t, int32_t, int32_t, int32_t>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<complex<float>, int64_t, float, complex<float>>(ctx);
+    ret = RegularCalculate<std::complex<float>, int64_t, float, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<complex<float>, int64_t, complex<float>, complex<float>>(ctx);
+    ret = RegularCalculate<std::complex<float>, int64_t, std::complex<float>, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<complex<float>, int32_t, float, complex<float>>(ctx);
+    ret = RegularCalculate<std::complex<float>, int32_t, float, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    ret = regular_calculate<complex<float>, int32_t, complex<float>, complex<float>>(ctx);
+    ret = RegularCalculate<std::complex<float>, int32_t, std::complex<float>, std::complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<complex<double>, int64_t, double, complex<double>>(ctx);
+    ret = RegularCalculate<std::complex<double>, int64_t, double, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<complex<double>, int64_t, complex<double>, complex<double>>(ctx);
+    ret = RegularCalculate<std::complex<double>, int64_t, std::complex<double>, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<complex<double>, int32_t, double, complex<double>>(ctx);
+    ret = RegularCalculate<std::complex<double>, int32_t, double, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    ret = regular_calculate<complex<double>, int32_t, complex<double>, complex<double>>(ctx);
+    ret = RegularCalculate<std::complex<double>, int32_t, std::complex<double>, std::complex<double>>(ctx);
   else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT16 &&
            y_data_type == DT_FLOAT16)
-    ret = regular_calculate<Eigen::half, int64_t, Eigen::half, Eigen::half>(ctx);
+    ret = RegularCalculate<Eigen::half, int64_t, Eigen::half, Eigen::half>(ctx);
   else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT16 &&
            y_data_type == DT_FLOAT16)
-    ret = regular_calculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
+    ret = RegularCalculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
 
   else {
     KERNEL_LOG_ERROR(
@@ -121,7 +122,7 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 template <class SparseType, class IndicesType, class DenseType, class OutputType>
-uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelContext &ctx) {
   Tensor *x1_indices = ctx.Input(0);
   Tensor *x1_values = ctx.Input(1);
   Tensor *x1_shape = ctx.Input(2);
@@ -130,45 +131,46 @@ uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &c
   auto x1_indices_shape = x1_indices->GetTensorShape();
   auto x2_shape = x2->GetTensorShape();
   auto y_shape = y->GetTensorShape();
-  int64_t *x1_shape_data = (int64_t *)x1_shape->GetData();
+  int64_t *x1_shape_data = reinterpret_cast<int64_t *>(x1_shape->GetData());
   uint64_t x1_row = x1_shape_data[0];
   uint64_t x1_col = x1_shape_data[1];
   uint64_t x2_row = x2_shape->GetDimSize(0);
   uint64_t x2_col = x2_shape->GetDimSize(1);
   AttrValue *adjoint_a = ctx.GetAttr("adjoint_a");
   AttrValue *adjoint_b = ctx.GetAttr("adjoint_b");
-  SparseType *x1_values_data = (SparseType *)x1_values->GetData();
-  DenseType *x2_data = (DenseType *)x2->GetData();
-  OutputType *y_data = (OutputType *)y->GetData();
+  SparseType *x1_values_data = reinterpret_cast<SparseType *>(x1_values->GetData());
+  DenseType *x2_data = reinterpret_cast<DenseType *>(x2->GetData());
+  OutputType *y_data = reinterpret_cast<OutputType *>(y->GetData());
   uint64_t y_data_len = y->NumElements();
   for (uint64_t i = 0; i < y_data_len; i++) {
     y_data[i] = static_cast<OutputType>(0);
   }
 
   if (adjoint_a->GetBool()) {
-    swap(x1_row, x1_col);
+    std::swap(x1_row, x1_col);
   }
   if (adjoint_b->GetBool()) {
-    swap(x2_row, x2_col);
+    std::swap(x2_row, x2_col);
   }
   auto same_dim = (adjoint_b->GetBool()) ? x2_row : x2_col;
   auto y_dims = y_shape->GetDimSize(0);
   uint64_t pairs = x1_indices_shape->GetDimSize(0);
-  IndicesType *x1_indices_data = (IndicesType *)x1_indices->GetData();
+  IndicesType *x1_indices_data = reinterpret_cast<IndicesType *>(x1_indices->GetData());
   for (uint64_t i = 0; i < pairs; i++) {
     uint64_t row = x1_indices_data[i << 1], col = x1_indices_data[1 + (i << 1)];
     SparseType a = x1_values_data[i];
     if (adjoint_a->GetBool()) {
-      swap(row, col);
+      std::swap(row, col);
     }
-    KERNEL_CHECK_FALSE(
-      row < static_cast<uint64_t>(y_dims) && row >= 0 && col < static_cast<uint64_t>(same_dim) && col >= 0,
-      KERNEL_STATUS_PARAM_INVALID, "For 'SparseTensorDenseMatmul', the indices including out of bounds index '");
+    KERNEL_CHECK_FALSE(row < static_cast<uint64_t>(y_dims) && col < static_cast<uint64_t>(same_dim),
+                       KERNEL_STATUS_PARAM_INVALID,
+                       "For 'SparseTensorDenseMatmul', the indices including out of bounds index '");
     if (x2_col < COL_SHED) {
       for (uint64_t j = 0; j < x2_col; j++) {
         uint64_t idx = adjoint_b->GetBool() ? (j * x2_row + col) : (col * x2_col + j);
         DenseType b = x2_data[idx];
-        if constexpr (std::is_same<DenseType, complex<double>>::value || std::is_same<DenseType, complex<float>>::value)
+        if constexpr (std::is_same<DenseType, std::complex<double>>::value ||
+                      std::is_same<DenseType, std::complex<float>>::value)
           if (adjoint_b->GetBool()) {
             b = conj(b);
           }
@@ -183,7 +185,8 @@ uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &c
       for (uint64_t j = s; j < t; j++) {
         uint64_t idx = adjoint_b->GetBool() ? (j * x2_row + col) : (col * x2_col + j);
         DenseType b = x2_data[idx];
-        if constexpr (std::is_same<DenseType, complex<double>>::value || std::is_same<DenseType, complex<float>>::value)
+        if constexpr (std::is_same<DenseType, std::complex<double>>::value ||
+                      std::is_same<DenseType, std::complex<float>>::value)
           if (adjoint_b->GetBool()) {
             b = conj(b);
           }
@@ -195,7 +198,7 @@ uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &c
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(const CpuKernelContext &ctx) {
   Tensor *x1_indices = ctx.Input(0);
   Tensor *x1_values = ctx.Input(1);
   Tensor *x1_shape = ctx.Input(2);
@@ -219,7 +222,7 @@ uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(CpuKerne
                        x1_indices->GetTensorShape()->GetDimSize(0) == x1_values->NumElements(),
                      KERNEL_STATUS_PARAM_INVALID, "sparse tensor x1 dimension error.")
   KERNEL_CHECK_FALSE(x2->GetTensorShape()->GetDims() == 2, KERNEL_STATUS_PARAM_INVALID, "matrix x2 dimension error.")
-  int64_t *x1_shape_data = (int64_t *)x1_shape->GetData();
+  int64_t *x1_shape_data = reinterpret_cast<int64_t *>(x1_shape->GetData());
   uint64_t x1_col = x1_shape_data[!adjoint_a->GetBool()];
   uint64_t x2_row = x2->GetTensorShape()->GetDimSize(adjoint_b->GetBool());
   KERNEL_CHECK_FALSE(x1_col == x2_row, KERNEL_STATUS_PARAM_INVALID, "can not do matrix multiplication.")

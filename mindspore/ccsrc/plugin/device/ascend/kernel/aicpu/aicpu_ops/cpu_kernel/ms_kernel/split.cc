@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "split.h"
+
+#include "cpu_kernel/ms_kernel/split.h"
+#include <string>
 #include "utils/kernel_util.h"
 
 namespace {
@@ -23,7 +25,7 @@ std::vector<std::string> attr_names;
 }  // namespace
 
 namespace aicpu {
-uint32_t SplitCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
+uint32_t SplitCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
   // check params
   AttrValue *num_split_ptr = ctx.GetAttr("num_split");
   num_split_ = num_split_ptr->GetInt();
@@ -70,7 +72,7 @@ uint32_t SplitCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SplitCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SplitCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   T *input_data_ptr = static_cast<T *>(value_data_ptr_);
   std::vector<T *> output_data_vec;
   output_data_vec.resize(num_split_);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_segment_mean_with_num_segments.h"
-
+#include "cpu_kernel/ms_kernel/sparse_segment_mean_with_num_segments.h"
+#include <vector>
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -116,7 +116,7 @@ uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ct
 REGISTER_CPU_KERNEL(SparseSegmentMeanWithNumSegments, SparseSegmentMeanWithNumSegmentsCpuKernel);
 
 template <typename T1, typename T2, typename T3, typename T4>
-uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   int n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   int m = ctx.Input(2)->GetTensorShape()->NumElements();
   auto x_ptr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
@@ -176,5 +176,5 @@ uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::ComputeKernel(CpuKernelConte
     }
   }
   return KERNEL_STATUS_OK;
-};
+}
 }  // namespace aicpu

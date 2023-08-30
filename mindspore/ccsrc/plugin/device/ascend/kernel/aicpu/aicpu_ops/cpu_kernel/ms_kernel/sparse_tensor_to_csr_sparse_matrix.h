@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_SparseTensorToCSRSparseMatrix_H_
-#define AICPU_KERNELS_NORMALIZED_SparseTensorToCSRSparseMatrix_H_
 
-#include "cpu_ops_kernel.h"
+#ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_TO_CSR_SPARSE_MATRIX_H_
+#define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_TO_CSR_SPARSE_MATRIX_H_
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SparseTensorToCSRSparseMatrixCpuKernel : public CpuKernel {
@@ -28,7 +29,7 @@ class SparseTensorToCSRSparseMatrixCpuKernel : public CpuKernel {
 
  private:
   template <typename indicesT, typename dataT>
-  uint32_t ComputeKernel(CpuKernelContext &ctx);
+  uint32_t ComputeKernel(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

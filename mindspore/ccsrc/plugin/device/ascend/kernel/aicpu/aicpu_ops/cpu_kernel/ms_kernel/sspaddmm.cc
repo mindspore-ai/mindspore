@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sspaddmm.h"
+
+#include "cpu_kernel/ms_kernel/sspaddmm.h"
 #include <complex>
+#include <algorithm>
 
 namespace aicpu {
 
@@ -31,7 +33,7 @@ const char *SSPADDMM = "Sspaddmm";
 
 // scalar * sparse matrix for beta * input alpha * mat1
 template <typename T>
-T *SspaddmmCpuKernel::ScalarSparseMul(CpuKernelContext &ctx, Tensor *vals, Tensor *scalar) {
+T *SspaddmmCpuKernel::ScalarSparseMul(const CpuKernelContext &ctx, Tensor *vals, Tensor *scalar) {
   T scalar_val;
   auto scalar_val_addr = scalar->GetData();
   switch (scalar->GetDataType()) {
@@ -107,7 +109,7 @@ T *SspaddmmCpuKernel::ScalarSparseMul(CpuKernelContext &ctx, Tensor *vals, Tenso
 }
 
 template <typename T>
-void SspaddmmCpuKernel::Clear(Tensor *tensor, CpuKernelContext &ctx) {
+void SspaddmmCpuKernel::Clear(Tensor *tensor, const CpuKernelContext &ctx) {
   T *addr = reinterpret_cast<T *>(tensor->GetData());
   uint32_t num = tensor->GetTensorShape()->GetDimSize(0);
   if (num >= kParallelDataNumSameShape_) {
@@ -135,7 +137,7 @@ void SspaddmmCpuKernel::Clear(Tensor *tensor, CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void SspaddmmCpuKernel::ClearIndices(Tensor *tensor, CpuKernelContext &ctx) {
+void SspaddmmCpuKernel::ClearIndices(Tensor *tensor, const CpuKernelContext &ctx) {
   T *addr = reinterpret_cast<T *>(tensor->GetData());
   uint32_t num = 2 * tensor->GetTensorShape()->GetDimSize(1);
   if (num >= kParallelDataNumSameShape_) {
@@ -163,7 +165,8 @@ void SspaddmmCpuKernel::ClearIndices(Tensor *tensor, CpuKernelContext &ctx) {
 }
 
 template <typename T1>
-uint32_t SspaddmmCpuKernel::BoundaryCheck(Tensor *tensor, Tensor *shape_tensor, int64_t nums, CpuKernelContext &ctx) {
+uint32_t SspaddmmCpuKernel::BoundaryCheck(Tensor *tensor, Tensor *shape_tensor, int64_t nums,
+                                          const CpuKernelContext &ctx) {
   int64_t row;
   int64_t col;
   if (shape_tensor->GetDataType() == DT_INT32) {
@@ -228,7 +231,7 @@ uint32_t SspaddmmCpuKernel::BoundaryCheck(Tensor *tensor, Tensor *shape_tensor, 
 
 // sparse matrix multiply dense matrix
 template <typename T_idx, typename T>
-uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_indices_tensor, T *mat1_val_addr,
+uint32_t SspaddmmCpuKernel::SparseMulDense(const CpuKernelContext &ctx, Tensor *mat1_indices_tensor, T *mat1_val_addr,
                                            Tensor *mat2_values_tensor, Tensor *output_indices_tensor,
                                            Tensor *output_values_tensor, const int64_t row, const int64_t mat2_col) {
   const int mat1_vals_num = mat1_indices_tensor->GetTensorShape()->GetDimSize(1);
@@ -316,7 +319,7 @@ uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_i
 // sparse matrix add sparse matrix
 // input + mat1 @ mat2
 template <typename T_idx, typename T>
-uint32_t SspaddmmCpuKernel::SparseAddSparse(CpuKernelContext &ctx, Tensor *input_indices_tensor, T *in_val_addr,
+uint32_t SspaddmmCpuKernel::SparseAddSparse(const CpuKernelContext &ctx, Tensor *input_indices_tensor, T *in_val_addr,
                                             Tensor *output_indices_tensor, Tensor *output_values_tensor) {
   // to implement m1[row][col] = vals
   uint32_t input_nums = input_indices_tensor->GetTensorShape()->GetDimSize(1);
@@ -378,7 +381,7 @@ int64_t SspaddmmCpuKernel::GetIndicesNum(Tensor *tensor) {
 }
 
 template <typename T>
-uint32_t SspaddmmCpuKernel::SspaddmmCompute(CpuKernelContext &ctx) {
+uint32_t SspaddmmCpuKernel::SspaddmmCompute(const CpuKernelContext &ctx) {
   Tensor *input_indices_tensor = ctx.Input(0);
   Tensor *input_values_tensor = ctx.Input(1);
   Tensor *input_shapes_tensor = ctx.Input(2);
@@ -422,7 +425,7 @@ uint32_t SspaddmmCpuKernel::SspaddmmCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SspaddmmCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   // valid input and output nullptr
   Tensor *input_indices_tensor = ctx.Input(0);
   Tensor *input_values_tensor = ctx.Input(1);
@@ -432,30 +435,23 @@ uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
   Tensor *mat1_values_tensor = ctx.Input(4);
   Tensor *mat1_shapes_tensor = ctx.Input(5);
 
-  Tensor *mat2_tensor = ctx.Input(6);
   Tensor *alpha_tensor = ctx.Input(7);
   Tensor *beta_tensor = ctx.Input(8);
 
   Tensor *output_indices_tensor = ctx.Output(0);
-  Tensor *output_values_tensor = ctx.Output(1);
   Tensor *output_shapes_tensor = ctx.Output(2);
 
   // valid shape nullptr
   auto input_values_shape = input_values_tensor->GetTensorShape();
   auto input_indices_shape = input_indices_tensor->GetTensorShape();
-  auto input_shapes_shape = input_shapes_tensor->GetTensorShape();
 
   auto mat1_indices_shape = mat1_indices_tensor->GetTensorShape();
   auto mat1_values_shape = mat1_values_tensor->GetTensorShape();
-  auto mat1_shapes_shape = mat1_shapes_tensor->GetTensorShape();
 
-  auto mat2_shapes_shape = mat2_tensor->GetTensorShape();
   auto alpha_shape = alpha_tensor->GetTensorShape();
   auto beta_shape = beta_tensor->GetTensorShape();
 
   auto output_indices_shape = output_indices_tensor->GetTensorShape();
-  auto output_values_shape = output_values_tensor->GetTensorShape();
-  auto output_shapes_shape = output_shapes_tensor->GetTensorShape();
 
   // sparse_indices
   // GetDims() will return dims number, uint32_t

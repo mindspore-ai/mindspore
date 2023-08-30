@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
+#include "cpu_kernel/ms_kernel/tile.h"
+#include "Eigen/Core"
 #include <stdint.h>
 #include <algorithm>
 #include <tuple>
-#include <utility>
-
-#include "tile.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "Eigen/Core"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -143,7 +141,7 @@ std::pair<int64_t, int64_t> TileCpuKernel::TileOneDimension(const std::vector<in
 }
 
 template <typename T, typename M>
-uint32_t TileCpuKernel::TileCompute(CpuKernelContext &ctx) {
+uint32_t TileCpuKernel::TileCompute(const CpuKernelContext &ctx) {
   auto x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto multiples = reinterpret_cast<M *>(ctx.Input(1)->GetData());
   auto y = reinterpret_cast<T *>(ctx.Output(0)->GetData());

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef AICPU_KERNELS_NORMALIZED_SPARSE_FILL_EMPTY_ROWS_GRAD_H_
+#define AICPU_KERNELS_NORMALIZED_SPARSE_FILL_EMPTY_ROWS_GRAD_H_
+
 #include <set>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/sparse_group.h"
 #include "utils/sparse_tensor.h"
-// 定义命名空间aicpu
 
 namespace aicpu {
 struct DataBank {
@@ -28,18 +30,17 @@ struct DataBank {
   Tensor *y_default_value;
 };
 
-// 算子类继承CpuKernel基类
 class SparseFillEmptyRowsGradCpuKernel : public CpuKernel {
  public:
   ~SparseFillEmptyRowsGradCpuKernel() = default;
   SparseFillEmptyRowsGradCpuKernel() = default;
-  // 声明函数Compute，且Compute函数需要重写
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
-  uint32_t ComputeSparseFillEmptyRowsGrad(CpuKernelContext &ctx, DataBank &databank);
+  uint32_t ComputeSparseFillEmptyRowsGrad(const CpuKernelContext &ctx, DataBank &databank);
 };
 }  // namespace aicpu
+#endif

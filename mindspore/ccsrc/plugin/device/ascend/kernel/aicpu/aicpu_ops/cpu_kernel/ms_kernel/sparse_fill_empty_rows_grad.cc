@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparsefillemptyrowsgrad.h"
 
+#include "cpu_kernel/ms_kernel/sparse_fill_empty_rows_grad.h"
+#include <memory>
 #include <algorithm>
 #include <atomic>
 #include <mutex>
@@ -22,12 +23,12 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const char *kSparseFillEmptyRowsGrad = "SparseFillEmptyRowsGrad";
@@ -40,7 +41,8 @@ bool isVector(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->G
 
 namespace aicpu {
 template <typename T>
-uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(const CpuKernelContext &ctx,
+                                                                          DataBank &databank) {
   EigenTensor reverse_index_map_e(databank.reverse_index_map, databank.reverse_index_map->GetData());
   EigenTensor grad_values_e(databank.grad_values, databank.grad_values->GetData());
   EigenTensor y_value_e(databank.y_value, databank.y_value->GetData());
@@ -88,7 +90,7 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(CpuKer
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseFillEmptyRowsGradCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseFillEmptyRowsGradCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
   databank.reverse_index_map = ctx.Input(0);
   databank.grad_values = ctx.Input(1);
   databank.y_value = ctx.Output(0);

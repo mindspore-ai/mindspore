@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_MAT_MUL_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_MAT_MUL_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SparseTensorDenseMatMulCpuKernel : public CpuKernel {
@@ -29,8 +30,8 @@ class SparseTensorDenseMatMulCpuKernel : public CpuKernel {
 
  private:
   template <class SparseType, class IndicesType, class DenseType, class OutputType>
-  static uint32_t regular_calculate(CpuKernelContext &ctx);
-  static uint32_t SparseTensorDenseMatMulCheck(CpuKernelContext &ctx);
+  static uint32_t RegularCalculate(const CpuKernelContext &ctx);
+  static uint32_t SparseTensorDenseMatMulCheck(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

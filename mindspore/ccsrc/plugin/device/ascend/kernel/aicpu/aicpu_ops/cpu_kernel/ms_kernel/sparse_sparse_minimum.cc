@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "sparse_sparse_minimum.h"
-
+#include "cpu_kernel/ms_kernel/sparse_sparse_minimum.h"
+#include <utility>
+#include <vector>
 #include <algorithm>
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -117,7 +118,7 @@ int SparseSparseMinimumCpuKernel::cmp(const TTypes<int64_t>::ConstMatrix &x_idx,
 }
 
 template <typename T>
-uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(CpuKernelContext &ctx) {
+uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(const CpuKernelContext &ctx) {
   const EigenTensor x1_indices_ET(ctx.Input(0), ctx.Input(0)->GetData());
   const EigenTensor x2_indices_ET(ctx.Input(3), ctx.Input(3)->GetData());
   auto x1_indices_mat = x1_indices_ET.matrix<int64_t>();
@@ -179,10 +180,10 @@ uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(CpuKernelConte
   Tensor *out_indices_t = ctx.Output(0);
   EigenTensor out_indices_ET(out_indices_t, out_indices_t->GetData());
   auto out_indices_mat = out_indices_ET.matrix<int64_t>();
-  for (int64_t i = 0; i < y_nnz; ++i) {
-    const bool from_x1 = entries_to_copy[i].first;
-    const int64_t idx = entries_to_copy[i].second;
-    out_indices_mat.chip<0>(i) = from_x1 ? x1_indices_mat.chip<0>(idx) : x2_indices_mat.chip<0>(idx);
+  for (int64_t k = 0; k < y_nnz; ++k) {
+    const bool from_x1 = entries_to_copy[k].first;
+    const int64_t idx = entries_to_copy[k].second;
+    out_indices_mat.chip<0>(k) = from_x1 ? x1_indices_mat.chip<0>(idx) : x2_indices_mat.chip<0>(idx);
   }
   std::vector<int64_t> indices_dims = {y_nnz, num_dims};
   auto out_indices_shape = out_indices_t->GetTensorShape();

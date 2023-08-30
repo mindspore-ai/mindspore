@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_softmax.h"
 
+#include "cpu_kernel/ms_kernel/sparse_softmax.h"
+#include <vector>
 #include <securec.h>
 #include <iostream>
 #include <stack>
 #include <memory>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -138,7 +139,7 @@ uint32_t SparseSoftmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCheck(CpuKernelContext &ctx) {
+uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCheck(const CpuKernelContext &ctx) {
   std::vector<int64_t> shape_indices = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_values = ctx.Input(kIndex1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_shape = ctx.Input(kIndex2)->GetTensorShape()->GetDimSizes();
@@ -165,7 +166,7 @@ uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(CpuKernelContext &ctx) {
+uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(const CpuKernelContext &ctx) {
   int64_t data_num = ctx.Input(kIndex1)->NumElements();
 
   auto *indices_t = ctx.Input(kIndex0);

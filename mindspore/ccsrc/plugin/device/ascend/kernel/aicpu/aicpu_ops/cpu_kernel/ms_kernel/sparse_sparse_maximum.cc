@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_sparse_maximum.h"
+
+#include "cpu_kernel/ms_kernel/sparse_sparse_maximum.h"
 #include <unsupported/Eigen/CXX11/Tensor>
+#include <utility>
+#include <vector>
+#include <memory>
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -31,9 +35,9 @@ constexpr int64_t kIndex5 = 5;
 bool isMatrix(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->GetDims() == 2; }
 bool isVector(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->GetDims() == 1; }
 }  // namespace
-// 定义命名空间aicpu
+
 namespace aicpu {
-uint32_t SparseMaximumCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseMaximumCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
   databank.a_indices_t = ctx.Input(kIndex0);
   databank.a_values_t = ctx.Input(kIndex1);
   databank.a_shape_t = ctx.Input(kIndex2);
@@ -126,7 +130,7 @@ void SparseMaximumCpuKernel::UnionSparseIndicesAndValues(typename TTypes<int64_t
 }
 
 template <typename T>
-uint32_t SparseMaximumCpuKernel::EigenedSparseMax(DataBank &databank) {
+uint32_t SparseMaximumCpuKernel::EigenedSparseMax(const DataBank &databank) {
   const int64_t a_nnz = databank.a_indices_t->GetTensorShape()->GetDimSize(0);
   const int64_t b_nnz = databank.b_indices_t->GetTensorShape()->GetDimSize(0);
   EigenTensor a_values_t(databank.a_values_t, databank.a_values_t->GetData());
@@ -236,6 +240,6 @@ uint32_t SparseMaximumCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-// 注册该算子实现
+
 REGISTER_CPU_KERNEL(kSparseSparseMaximum, SparseMaximumCpuKernel);
 }  // namespace aicpu

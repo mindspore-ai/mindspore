@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022-2022 Huawei Technologies Co., Ltd.  All rights reserved.
+ * Copyright (c) 2022-2022-2023 Huawei Technologies Co., Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#include "sparsefillemptyrows.h"
-
+#include "cpu_kernel/ms_kernel/sparse_fill_empty_rows.h"
 #include <securec.h>
 #include <algorithm>
 #include <atomic>
 #include <mutex>
+#include <memory>
 #include <numeric>
 #include <set>
 #include <string>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const char *kSparseFillEmptyRows = "SparseFillEmptyRows";
@@ -136,7 +136,7 @@ uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &data
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseFillEmptyRowsCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseFillEmptyRowsCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
   databank.indices = ctx.Input(kIndexZero);
   KERNEL_CHECK_NULLPTR(databank.indices, KERNEL_STATUS_PARAM_INVALID, "Get input indices failed.")
   databank.values = ctx.Input(kIndexOne);
@@ -152,7 +152,6 @@ uint32_t SparseFillEmptyRowsCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &c
   databank.empty_row_indicator = ctx.Output(kIndexTwo);
   KERNEL_CHECK_NULLPTR(databank.empty_row_indicator, KERNEL_STATUS_PARAM_INVALID,
                        "Get output empty_row_indicator failed.")
-  databank.reverse_index_map = ctx.Output(kIndexThree);
   KERNEL_CHECK_NULLPTR(databank.reverse_index_map, KERNEL_STATUS_PARAM_INVALID, "Get output reverse_index_map failed.")
   KERNEL_CHECK_FALSE(isMatrix(databank.indices->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
                      "Inputs indices should be matrix")
@@ -170,6 +169,7 @@ uint32_t SparseFillEmptyRowsCpuKernel::Compute(CpuKernelContext &ctx) {
                       "SparseFillEmptyRows check input and output number failed.");
   DataBank databank;
   KERNEL_HANDLE_ERROR(NullptrAndMatVecCheck(ctx, databank), "SparseFillEmptyRows check params failed.");
+  databank.reverse_index_map = ctx.Output(kIndexThree);
   DataType dt = static_cast<DataType>(databank.values->GetDataType());
 
   uint32_t KERNEL_STATUS;

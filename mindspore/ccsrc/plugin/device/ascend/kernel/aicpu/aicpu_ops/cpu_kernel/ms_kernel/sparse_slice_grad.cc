@@ -1,6 +1,23 @@
-#include "sparse_slice_grad.h"
+/**
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cpu_kernel/ms_kernel/sparse_slice_grad.h"
 #include <complex>
-#include "cpu_kernel_utils.h"
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -65,7 +82,7 @@ uint32_t SparseSliceGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SparseSliceGradCpuKernel::GradCompute(CpuKernelContext &ctx) {
+uint32_t SparseSliceGradCpuKernel::GradCompute(const CpuKernelContext &ctx) {
   Tensor *backprop_val_grad = ctx.Input(0);
   Tensor *indices = ctx.Input(1);
   Tensor *start = ctx.Input(2);

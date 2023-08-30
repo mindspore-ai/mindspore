@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SQRTGRAD_H_
 #define AICPU_KERNELS_NORMALIZED_SQRTGRAD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -27,7 +27,7 @@ class SqrtGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SqrtGradParamCheck(CpuKernelContext &ctx);
+  uint32_t SqrtGradParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
   void SpecialCompute(int64_t start, int64_t end, T *input1, T *input2, T *output);
@@ -35,16 +35,16 @@ class SqrtGradCpuKernel : public CpuKernel {
   void SpecialComputeComplex(int64_t start, int64_t end, T *input1, T *input2, T *output);
 
   template <typename T>
-  uint32_t NoBcastCompute(CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastComputeComplex(CpuKernelContext &ctx);
+  uint32_t NoBcastComputeComplex(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SqrtGradCompute(CpuKernelContext &ctx);
+  uint32_t SqrtGradCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SqrtGradComputeComplex(CpuKernelContext &ctx);
+  uint32_t SqrtGradComputeComplex(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

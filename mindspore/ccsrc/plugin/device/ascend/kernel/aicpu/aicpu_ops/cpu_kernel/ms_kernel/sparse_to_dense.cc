@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_to_dense.h"
-#include <securec.h>
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+
+#include "cpu_kernel/ms_kernel/sparse_to_dense.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <vector>
+#include <securec.h>
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -36,7 +39,7 @@ constexpr int32_t kRank = 2;
 }  // namespace aicpu
 
 namespace aicpu {
-uint32_t SparseToDenseCpuKernel::SparseToDense(const CpuKernelContext &ctx, SparseTensor &st, const Tensor *indices,
+uint32_t SparseToDenseCpuKernel::SparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices,
                                                Tensor *output) {
   KERNEL_LOG_INFO("Start to execute SparseToDense");
   if (indices == nullptr || output == nullptr) {
@@ -288,7 +291,7 @@ uint32_t SparseToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
-  if (SparseToDense(ctx, st, indices_tensor, output_tensor) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+  if (SparseToDense(ctx, &st, indices_tensor, output_tensor) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
     KERNEL_LOG_ERROR("Sparse_to_dense execute failed.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }

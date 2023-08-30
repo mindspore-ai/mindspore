@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_SPARSETODENSE_H_
-#define AICPU_KERNELS_NORMALIZED_SPARSETODENSE_H_
+#ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TO_DENSE_H_
+#define AICPU_KERNELS_NORMALIZED_SPARSE_TO_DENSE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/sparse_tensor.h"
 
 namespace aicpu {
@@ -41,11 +41,11 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @return uint32_t: 0->success other->failed
    */
   template <typename ValueT>
-  uint32_t EigenSparseToDense(const CpuKernelContext &ctx, SparseTensor &st, const Tensor *indices, Tensor *output) {
+  uint32_t EigenSparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output) {
     if (indices->GetDataType() == DT_INT32) {
-      return st.ToDense<int32_t, ValueT>(ctx, output);
+      return st->ToDense<int32_t, ValueT>(ctx, output);
     } else {
-      return st.ToDense<int64_t, ValueT>(ctx, output);
+      return st->ToDense<int64_t, ValueT>(ctx, output);
     }
   }
 
@@ -56,7 +56,7 @@ class SparseToDenseCpuKernel : public CpuKernel {
    * @param output: output tensor
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t SparseToDense(const CpuKernelContext &ctx, SparseTensor &st, const Tensor *indices, Tensor *output);
+  uint32_t SparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices, Tensor *output);
 
   /*
    * valid sparse to dense param

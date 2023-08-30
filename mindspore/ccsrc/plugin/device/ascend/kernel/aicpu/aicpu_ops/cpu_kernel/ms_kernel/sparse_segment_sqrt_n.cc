@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_segment_sqrt_n.h"
-
+#include "cpu_kernel/ms_kernel/sparse_segment_sqrt_n.h"
 #include <math.h>
-
+#include <vector>
 #include "Eigen/Core"
 #include "utils/kernel_util.h"
 
@@ -29,15 +28,15 @@ const char *SparseSegmentSqrtN = "SparseSegmentSqrtN";
   case (DTYPE):                                            \
     if ((DTYPE_1) == DT_INT32) {                           \
       if ((DTYPE_2) == DT_INT32) {                         \
-        return ComputeKernal<TYPE, int32_t, int32_t>(CTX); \
+        return ComputeKernel<TYPE, int32_t, int32_t>(CTX); \
       } else {                                             \
-        return ComputeKernal<TYPE, int32_t, int64_t>(CTX); \
+        return ComputeKernel<TYPE, int32_t, int64_t>(CTX); \
       }                                                    \
     } else {                                               \
       if ((DTYPE_2) == DT_INT32) {                         \
-        return ComputeKernal<TYPE, int64_t, int32_t>(CTX); \
+        return ComputeKernel<TYPE, int64_t, int32_t>(CTX); \
       } else {                                             \
-        return ComputeKernal<TYPE, int64_t, int64_t>(CTX); \
+        return ComputeKernel<TYPE, int64_t, int64_t>(CTX); \
       }                                                    \
     }                                                      \
     break;
@@ -90,7 +89,7 @@ uint32_t SparseSegmentSqrtNCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2, typename T3>
-uint32_t SparseSegmentSqrtNCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
+uint32_t SparseSegmentSqrtNCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
   size_t k = ctx.Output(0)->GetTensorShape()->NumElements();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sqrtgrad.h"
-
+#include "cpu_kernel/ms_kernel/sqrt_grad.h"
+#include "Eigen/Dense"
 #include <complex>
 #include <cstdint>
 #include <typeinfo>
-#include "Eigen/Dense"
-
+#include <algorithm>
 #include <iostream>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "utils/kernel_util.h"
-#include "kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "utils/kernel_util.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -79,7 +78,7 @@ uint32_t SqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SqrtGradCpuKernel::SqrtGradParamCheck(CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -145,7 +144,7 @@ void SqrtGradCpuKernel::SpecialComputeComplex(int64_t start, int64_t end, T *inp
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -175,7 +174,7 @@ uint32_t SqrtGradCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -205,13 +204,11 @@ uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::SqrtGradCompute(CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
-  auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
   Tensor *input1_tensor = ctx.Input(1);
-  auto input1_shape = input1_tensor->GetTensorShape()->GetDimSizes();
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
   if (input0_elements_nums != input1_elements_nums) {
@@ -225,13 +222,11 @@ uint32_t SqrtGradCpuKernel::SqrtGradCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
-  auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
   Tensor *input1_tensor = ctx.Input(1);
-  auto input1_shape = input1_tensor->GetTensorShape()->GetDimSizes();
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
   if (input0_elements_nums != input1_elements_nums) {
