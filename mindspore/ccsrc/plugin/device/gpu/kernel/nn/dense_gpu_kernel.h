@@ -58,6 +58,13 @@ class DenseGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void ResetSize();
+  void ResetWorkspace();
+  void ResetResource();
+
+  template <typename T>
+  cudaError_t FillBias(T *src, T *dst, cudaStream_t stream);
+
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
