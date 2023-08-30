@@ -130,11 +130,11 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
   ShapeValueDType out_w = abstract::Shape::kShapeDimAny;
 
   if (pad_mode == VALID) {
-    out_h = ComputeValid(in_h, kernel_size_array, strides_array, kInputIndex2);
-    out_w = ComputeValid(in_w, kernel_size_array, strides_array, kInputIndex3);
+    out_h = ComputeValid(in_h, kernel_size_array, strides_array, kInputIndex0);
+    out_w = ComputeValid(in_w, kernel_size_array, strides_array, kInputIndex1);
   } else if (pad_mode == SAME) {
-    out_h = ComputeSame(in_h, strides_array, kInputIndex2);
-    out_w = ComputeSame(in_w, strides_array, kInputIndex3);
+    out_h = ComputeSame(in_h, strides_array, kInputIndex0);
+    out_w = ComputeSame(in_w, strides_array, kInputIndex1);
   }
 
   ShapeVector out_shape;
@@ -161,7 +161,7 @@ TypePtr AvgPoolFuncImpl::InferType(const PrimitivePtr &primitive,
 // Check kernel_size and strides length and value.
 inline void CheckKernelSizeAndStrides(const PrimitivePtr &primitive, const ArrayValue<int64_t> &kernel_size_array,
                                       const ArrayValue<int64_t> &strides_array) {
-  const size_t attr_size = 4;
+  const size_t attr_size = 2;
   MS_CHECK_VALUE(kernel_size_array.size() == attr_size,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("kernel", SizeToLong(kernel_size_array.size()), kEqual,
                                                              SizeToLong(attr_size), primitive));
