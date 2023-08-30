@@ -1,7 +1,7 @@
 mindspore.nn.GRUCell
 =====================
 
-.. py:class:: mindspore.nn.GRUCell(input_size: int, hidden_size: int, has_bias: bool = True)
+.. py:class:: mindspore.nn.GRUCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype: mindspore.dtype = mstype.float32)
 
     GRU（Gate Recurrent Unit）称为门控循环单元。
 
@@ -20,6 +20,7 @@ mindspore.nn.GRUCell
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
         - **has_bias** (bool) - cell是否有偏置项 `b_in` 和 `b_hn` 。默认值： ``True`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。

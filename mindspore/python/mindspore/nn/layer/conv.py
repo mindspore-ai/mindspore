@@ -20,6 +20,7 @@ import numpy as np
 
 from mindspore import context
 from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_fan_in_and_fan_out
@@ -50,7 +51,8 @@ class _Conv(Cell):
                  weight_init,
                  bias_init,
                  data_format='NCHW',
-                 transposed=False):
+                 transposed=False,
+                 dtype=mstype.float32):
         """Initialize _Conv."""
         super(_Conv, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels, 'in_channels', self.cls_name)
@@ -97,7 +99,7 @@ class _Conv(Cell):
         if weight_init is None:
             weight_init = HeUniform(math.sqrt(5))
         self.weight_init = weight_init
-        self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
+        self.weight = Parameter(initializer(self.weight_init, shape, dtype=dtype), name='weight')
 
         self.bias_init = bias_init
         if Validator.check_bool(has_bias, "has_bias", self.cls_name):
@@ -109,7 +111,7 @@ class _Conv(Cell):
                 else:
                     bias_init = 'zeros'
                 self.bias_init = bias_init
-            self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
+            self.bias = Parameter(initializer(self.bias_init, [out_channels], dtype=dtype), name='bias')
         else:
             self.bias = None
 
@@ -244,6 +246,7 @@ class Conv2d(_Conv):
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
@@ -317,7 +320,8 @@ class Conv2d(_Conv):
                  has_bias=False,
                  weight_init=None,
                  bias_init=None,
-                 data_format='NCHW'):
+                 data_format='NCHW',
+                 dtype=mstype.float32):
         """Initialize Conv2d."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
@@ -340,7 +344,8 @@ class Conv2d(_Conv):
             has_bias,
             weight_init,
             bias_init,
-            data_format)
+            data_format,
+            dtype=dtype)
         self.conv2d = P.Conv2D(out_channel=self.out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -457,6 +462,7 @@ class Conv1d(_Conv):
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -513,7 +519,8 @@ class Conv1d(_Conv):
                  group=1,
                  has_bias=False,
                  weight_init=None,
-                 bias_init=None):
+                 bias_init=None,
+                 dtype=mstype.float32):
         """Initialize Conv1d."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)
@@ -552,7 +559,8 @@ class Conv1d(_Conv):
             group,
             has_bias,
             weight_init,
-            bias_init)
+            bias_init,
+            dtype=dtype)
         self.padding = (0, 0, padding, padding)
         Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.conv2d = P.Conv2D(out_channel=self.out_channels,
@@ -695,7 +703,9 @@ class Conv3d(_Conv):
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
-        data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'``.
+        data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -775,7 +785,8 @@ class Conv3d(_Conv):
                  has_bias=False,
                  weight_init=None,
                  bias_init=None,
-                 data_format='NCDHW'):
+                 data_format='NCDHW',
+                 dtype=mstype.float32):
         """Initialize Conv3d."""
         if not (in_channels % group == 0 and out_channels % group == 0):
             raise ValueError("The argument 'group' should be divisible by 'in_channels' " \
@@ -799,7 +810,8 @@ class Conv3d(_Conv):
             has_bias,
             weight_init,
             bias_init,
-            data_format)
+            data_format,
+            dtype=dtype)
         out_channels = self.out_channels // group
         self.conv3d = P.Conv3D(out_channel=out_channels,
                                kernel_size=self.kernel_size,
@@ -912,6 +924,7 @@ class Conv3dTranspose(_Conv):
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
             Default: ``'NCDHW'`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -994,7 +1007,8 @@ class Conv3dTranspose(_Conv):
                  has_bias=False,
                  weight_init=None,
                  bias_init=None,
-                 data_format='NCDHW'):
+                 data_format='NCDHW',
+                 dtype=mstype.float32):
         """Initialize Conv3dTranspose."""
         if not (in_channels % group == 0 and out_channels % group == 0):
             raise ValueError("The argument 'group' should be divisible by 'in_channels' " \
@@ -1021,7 +1035,8 @@ class Conv3dTranspose(_Conv):
             weight_init,
             bias_init,
             data_format,
-            transposed=True)
+            transposed=True,
+            dtype=dtype)
         self.conv3d_transpose = P.Conv3DTranspose(in_channel=self.in_channels,
                                                   out_channel=self.out_channels,
                                                   kernel_size=self.kernel_size,
@@ -1132,6 +1147,7 @@ class Conv2dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1204,7 +1220,8 @@ class Conv2dTranspose(_Conv):
                  group=1,
                  has_bias=False,
                  weight_init=None,
-                 bias_init=None):
+                 bias_init=None,
+                 dtype=mstype.float32):
         """Initialize Conv2dTranspose."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
@@ -1230,7 +1247,8 @@ class Conv2dTranspose(_Conv):
             has_bias,
             weight_init,
             bias_init,
-            transposed=True)
+            transposed=True,
+            dtype=dtype)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -1345,6 +1363,7 @@ class Conv1dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -1392,7 +1411,8 @@ class Conv1dTranspose(_Conv):
                  group=1,
                  has_bias=False,
                  weight_init=None,
-                 bias_init=None):
+                 bias_init=None,
+                 dtype=mstype.float32):
         """Initialize Conv1dTranspose."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)
@@ -1429,7 +1449,8 @@ class Conv1dTranspose(_Conv):
             has_bias,
             weight_init,
             bias_init,
-            transposed=True)
+            transposed=True,
+            dtype=dtype)
         self.padding = (0, 0, padding, padding)
         self.in_channels = in_channels
         self.out_channels = out_channels

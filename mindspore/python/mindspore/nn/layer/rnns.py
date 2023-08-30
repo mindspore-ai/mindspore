@@ -372,7 +372,7 @@ class _RNNBase(Cell):
     '''Basic class for RNN operators'''
 
     def __init__(self, mode, input_size, hidden_size, num_layers=1, has_bias=True,
-                 batch_first=False, dropout=0., bidirectional=False):
+                 batch_first=False, dropout=0., bidirectional=False, dtype=mstype.float32):
         super().__init__()
         validator.check_positive_int(hidden_size, "hidden_size", self.cls_name)
         validator.check_positive_int(input_size, "input_size", self.cls_name)
@@ -435,17 +435,17 @@ class _RNNBase(Cell):
                 suffix = '_reverse' if direction == 1 else ''
 
                 self.w_ih_list.append(Parameter(
-                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, layer_input_size)).astype(np.float32)),
-                    name='weight_ih_l{}{}'.format(layer, suffix)))
+                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, layer_input_size)).astype(np.float32),
+                           dtype=dtype), name='weight_ih_l{}{}'.format(layer, suffix)))
                 self.w_hh_list.append(Parameter(
-                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, hidden_size)).astype(np.float32)),
-                    name='weight_hh_l{}{}'.format(layer, suffix)))
+                    Tensor(np.random.uniform(-stdv, stdv, (gate_size, hidden_size)).astype(np.float32),
+                           dtype=dtype), name='weight_hh_l{}{}'.format(layer, suffix)))
                 if has_bias:
                     self.b_ih_list.append(Parameter(
-                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32), dtype=dtype),
                         name='bias_ih_l{}{}'.format(layer, suffix)))
                     self.b_hh_list.append(Parameter(
-                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32), dtype=dtype),
                         name='bias_hh_l{}{}'.format(layer, suffix)))
         self.w_ih_list = ParameterTuple(self.w_ih_list)
         self.w_hh_list = ParameterTuple(self.w_hh_list)
