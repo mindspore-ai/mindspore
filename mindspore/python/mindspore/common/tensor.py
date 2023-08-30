@@ -4180,7 +4180,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def expand(self, size):
         r"""
-        For details, please refer to :func:`mindspore.ops.expand`.
+        For details, please refer to :func:`mindspore.ops.broadcast_to`.
         """
         self._init_check()
         return tensor_operator_registry.get('expand')(self, size)

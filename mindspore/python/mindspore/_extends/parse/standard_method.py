@@ -4204,7 +4204,8 @@ def expand(input, size):
     r"""
     Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
     """
-    return F.expand(input, size)
+    size = P.TensorToTuple()(size)
+    return F.broadcast_to(input, size)
 
 
 def cumprod(input, dim, dtype=None):

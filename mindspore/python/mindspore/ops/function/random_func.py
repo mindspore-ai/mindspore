@@ -15,6 +15,7 @@
 """Defines parameter operators with functional form."""
 
 from __future__ import absolute_import
+import numpy as np
 
 from mindspore import context
 from mindspore.ops import operations as P
@@ -722,8 +723,10 @@ def normal(shape, mean, stddev, seed=None):
     """
     _check_param("normal", "mean", mean)
     _check_param("normal", "stddev", stddev)
-    mean = Tensor(mean)
-    stddev = Tensor(stddev)
+    if not isinstance(mean, Tensor):
+        mean = Tensor(mean)
+    if not isinstance(stddev, Tensor):
+        stddev = Tensor(stddev)
     seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
     stdnormal = _set_prim_op_user_data(stdnormal, "random_cache", False)
@@ -834,26 +837,24 @@ def gamma(shape, alpha, beta, seed=None):
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
         >>> beta = Tensor(np.array([1.0, 2]), mindspore.float32)
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
-        >>> result = output.shape
         >>> print(output)
-        [[[ 2.2132034  5.8855834]]
-         [ 3.3981476  7.5805717]
-        [[ 3.3981476  7.5805717]]
-         [ 3.7190282 19.941492]
-        [[ 2.9512358  2.5969937]]
+        [[[ 2.2132034  5.8855834]
+         [ 3.3981476  7.5805717]]
+        [[ 3.3981476  7.5805717]
+         [ 3.7190282 19.941492]]
+        [[ 2.9512358  2.5969937]
          [ 3.786061   5.160872 ]]]
         >>> # case 4: beta_shape is (2, 1), the output is different.
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
         >>> beta = Tensor(np.array([[1.0], [2.0]]), mindspore.float32)
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
-        >>> result = output.shape
         >>> print(output)
-        [[[ 5.6085486  7.8280783]]
-         [ 15.97684  16.116285]
-        [[ 1.8347423  1.713663]]
-         [ 3.2434065 15.667398]
-        [[ 4.2922077  7.3365674]]
+        [[[ 5.6085486  7.8280783]
+         [ 15.97684  16.116285]]
+        [[ 1.8347423  1.713663]
+         [ 3.2434065 15.667398]]
+        [[ 4.2922077  7.3365674]
          [ 5.3876944  13.159832 ]]]
     """
     seed1, seed2 = _get_seed(seed, "gamma")
@@ -1376,7 +1377,7 @@ def _check_shape(input_shape):
 
 def _check_param(op_name, param_name, param_value):
     """Check type of param_value is Tensor, int, or float."""
-    if not isinstance(param_value, (Tensor, int, float)):
+    if not isinstance(param_value, (Tensor, int, float, np.ndarray)):
         const_utils.raise_type_error("For '{}', the type of '{}' must be Tensor, int, or float, "
                                      "but got: {}".format(op_name, param_name, type(param_value)))
     return True

@@ -217,7 +217,7 @@ class ForwardValueAndGrad(Cell):
     The backward graph will be created in the gradient function to calculating gradient.
 
     Args:
-        network (Cell): The training network.
+        network (Union[Cell, Function, MethodType]): The training network.
         weights (ParameterTuple): The parameters of the training network that need to calculate the gradient.
             Default: ``None`` .
         get_all (bool): If ``True`` , get all the gradients with respect to inputs. Default: ``False`` .
@@ -300,7 +300,8 @@ class ForwardValueAndGrad(Cell):
         self.get_by_list = get_by_list
         self.sens_param = sens_param
         self.grad = C.GradOperation(get_all=self.get_all, get_by_list=self.get_by_list, sens_param=self.sens_param)
-        self._jit_config_dict = network.jit_config_dict
+        if isinstance(network, Cell) and network.jit_config_dict:
+            self._jit_config_dict = network.jit_config_dict
 
     def construct(self, *inputs):
         grad_inputs = inputs

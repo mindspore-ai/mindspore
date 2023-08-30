@@ -1515,7 +1515,7 @@ class _CellGraphExecutor:
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
             obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
 
-        if "export" in phase:
+        if "export.air" in phase:
             self._build_data_graph(obj, phase)
 
         return phase, True
