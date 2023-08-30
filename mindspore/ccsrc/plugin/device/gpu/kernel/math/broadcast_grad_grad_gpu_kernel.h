@@ -52,11 +52,12 @@ class BroadcastOpGradGradGpuKernelMod : public NativeGpuKernelMod,
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
- private:
-  bool GetOpType();
   template <typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                     const std::vector<KernelTensor *> &outputs);
+
+ private:
+  bool GetOpType();
 
   BroadcastGradGradOpType op_type_{BROADCAST_GRAD_GRAD_TYPE_INVALID};
   size_t output_num_{1};

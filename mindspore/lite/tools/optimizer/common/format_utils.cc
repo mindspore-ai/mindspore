@@ -56,7 +56,6 @@
 #include "ops/grad/resize_grad.h"
 #include "ops/instance_norm.h"
 #include "ops/lrn.h"
-#include "ops/maximum.h"
 #include "ops/op_utils.h"
 #include "ops/quant_dtype_cast.h"
 #include "ops/resize.h"

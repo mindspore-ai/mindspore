@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for math."""
+# pylint: disable=unused-import
 from __future__ import absolute_import
 from __future__ import division
 
@@ -38,7 +39,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll)
+                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -1739,45 +1740,6 @@ class Heaviside(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x', 'values'], outputs=['y'])
-
-
-class Maximum(_MathBinaryOp):
-    """
-    Computes the maximum of input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.maximum` for more details.
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case 1 : same data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> maximum = ops.Maximum()
-        >>> output = maximum(x, y)
-        >>> print(output)
-        [4. 5. 6.]
-        >>> # case 2 : different data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.int32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> output = maximum(x, y)
-        >>> print(output.dtype)
-        Float32
-    """
 
 
 class Div(_MathBinaryOp):

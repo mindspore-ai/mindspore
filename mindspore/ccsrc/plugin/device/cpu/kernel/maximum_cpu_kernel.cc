@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/maximum_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
-#include "mindspore/core/ops/maximum.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -49,8 +48,7 @@ bool MaximumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
 }
 
 int MaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_x_shape_ = inputs[0]->GetShapeVector();

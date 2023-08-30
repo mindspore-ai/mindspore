@@ -68,9 +68,7 @@ GVAR_DEF(PrimitivePtr, kPrimMatrixDiag, std::make_shared<Primitive>("MatrixDiag"
 GVAR_DEF(PrimitivePtr, kPrimBatchMatMul, std::make_shared<Primitive>("BatchMatMul"));
 GVAR_DEF(PrimitivePtr, kPrimBatchMatMulV2, std::make_shared<Primitive>("BatchMatMulV2"));
 GVAR_DEF(PrimitivePtr, kPrimFusedMatMulBiasAdd, std::make_shared<Primitive>("FusedMatMulBiasAdd"));
-GVAR_DEF(PrimitivePtr, kPrimMaximumGrad, std::make_shared<Primitive>("MaximumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMinimumGradGrad, std::make_shared<Primitive>("MinimumGradGrad"));
-GVAR_DEF(PrimitivePtr, kPrimMaximumGradGrad, std::make_shared<Primitive>("MaximumGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMedian, std::make_shared<Primitive>(kMedianOpName));
 GVAR_DEF(PrimitivePtr, kPrimMedianGrad, std::make_shared<Primitive>(kMedianGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimReduceMeanD, std::make_shared<Primitive>(kReduceMeanDOpName));
@@ -91,7 +89,6 @@ GVAR_DEF(PrimitivePtr, kPrimMod, std::make_shared<Primitive>("Mod"));
 GVAR_DEF(PrimitivePtr, kPrimInvert, std::make_shared<Primitive>("Invert"));
 GVAR_DEF(PrimitivePtr, kPrimDivNoNan, std::make_shared<Primitive>("DivNoNan"));
 GVAR_DEF(PrimitivePtr, kPrimHistogram, std::make_shared<Primitive>("Histogram"));
-GVAR_DEF(PrimitivePtr, kPrimMaximum, std::make_shared<Primitive>("Maximum"));
 GVAR_DEF(PrimitivePtr, kPrimCumSum, std::make_shared<Primitive>("CumSum"));
 GVAR_DEF(PrimitivePtr, kPrimCumulativeLogsumexp, std::make_shared<Primitive>(kCumulativeLogsumexpOpName));
 GVAR_DEF(PrimitivePtr, kPrimCumsum, std::make_shared<Primitive>("Cumsum"));

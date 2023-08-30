@@ -31,7 +31,7 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
     """VmapRule for grad of binary operations with broadcasting"""
     broadcast_binary_op_grad_map = {
         "MinimumGrad": gen.MinimumGrad,
-        "MaximumGrad": G.MaximumGrad
+        "MaximumGrad": gen.MaximumGrad
     }
 
     if isinstance(prim, str):
@@ -99,7 +99,6 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(G.MaximumGradGrad)
 @vmap_rules_getters.register(G.MinimumGradGrad)
 def get_broadcast_grad_grad_vmap_rule(prim, axis_size):
     """VmapRule for GradGrad operations with broadcasting."""
@@ -141,6 +140,55 @@ def get_broadcast_grad_grad_vmap_rule(prim, axis_size):
         dx1 = _handle_broadcasting(dx1, dx1_shape, dx2_shape)
         dx2 = _handle_broadcasting(dx2, dx2_shape, dx1_shape)
         sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
+        return (sopd_x1, 0), (sopd_x2, 0), (sopd_grad, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.MaximumGradGrad)
+def get_maximum_grad_grad_vmap_rule(prim, axis_size):
+    """VmapRule for GradGrad operations with broadcasting."""
+
+    def vmap_rule(x1_bdim, x2_bdim, dx1_bdim, dx2_bdim, grad_x_bdim, grad_y_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim, dx1_bdim, dx2_bdim, grad_x_bdim,
+                                                      grad_y_bdim)
+        if is_all_none:
+            return result
+
+        x1, x1_dim = x1_bdim
+        x2, x2_dim = x2_bdim
+        dx1, dx1_dim = dx1_bdim
+        dx2, dx2_dim = dx2_bdim
+        grad_x, _ = grad_x_bdim
+        grad_y, _ = grad_y_bdim
+        x1_shape = F.shape(x1)
+        x2_shape = F.shape(x2)
+        dx1_shape = F.shape(dx1)
+        dx2_shape = F.shape(dx2)
+
+        is_dim_ok = x1_dim == x2_dim and dx1_dim == dx2_dim and x1_dim == dx1_dim
+        is_shape_ok = x1_shape == x2_shape and dx1_shape == dx2_shape
+        if is_dim_ok and is_shape_ok:
+            sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2, grad_x, grad_y)
+            return (sopd_x1, x1_dim), (sopd_x2, x1_dim), (sopd_grad, x1_dim)
+
+        if F.rank(x1):
+            x1 = _bdim_at_front(x1, x1_dim, 1)
+        if F.rank(x2):
+            x2 = _bdim_at_front(x2, x2_dim, 1)
+        if F.rank(dx1):
+            dx1 = _bdim_at_front(dx1, dx2_dim, 1)
+        if F.rank(dx2):
+            dx2 = _bdim_at_front(dx2, dx2_dim, 1)
+        x1_shape = F.shape(x1)
+        x2_shape = F.shape(x2)
+        dx1_shape = F.shape(dx1)
+        dx2_shape = F.shape(dx2)
+        x1 = _handle_broadcasting(x1, x1_shape, x2_shape)
+        x2 = _handle_broadcasting(x2, x2_shape, x1_shape)
+        dx1 = _handle_broadcasting(dx1, dx1_shape, dx2_shape)
+        dx2 = _handle_broadcasting(dx2, dx2_shape, dx1_shape)
+        sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2, grad_x, grad_y)
         return (sopd_x1, 0), (sopd_x2, 0), (sopd_grad, 0)
 
     return vmap_rule

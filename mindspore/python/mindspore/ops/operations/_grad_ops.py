@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for gradients."""
+# pylint: disable=unused-import
 from __future__ import absolute_import
 
 from __future__ import division
@@ -22,6 +23,7 @@ from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from mindspore.ops.auto_generate import MaximumGrad, MaximumGradGrad
 import mindspore.context as context
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
@@ -1046,25 +1048,6 @@ class MaxPool3DGradGrad(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid('grad_dtype', grad_dtype, [mstype.float16, mstype.float32], self.name)
         return x_dtype
-
-
-class MaximumGrad(Primitive):
-    """Grad for maximum."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MaximumGrad"""
-        self.init_prim_io_names(inputs=['x1', 'x2', 'grads'], outputs=['y1', 'y2'])
-
-
-class MaximumGradGrad(Primitive):
-    """Grad for maximum grad."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MaximumGradGrad"""
-        super().__init__("MaximumGradGrad")
-        self.init_prim_io_names(inputs=['x1', 'x2', 'dy1', 'dy2'], outputs=['sopd_x1', 'sopd_x2', 'sopd_grad'])
 
 
 class MaxPoolGradWithArgmax(Primitive):

@@ -22,8 +22,8 @@
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/div_fusion.h"
-#include "ops/maximum.h"
 #include "ops/squared_difference.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

@@ -20,7 +20,7 @@
 #include <functional>
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/grad/maximum_grad.h"
+#include "mindspore/core/ops/ops_func_impl/maximum_grad.h"
 #include "mindspore/core/ops/ops_func_impl/minimum_grad.h"
 
 namespace mindspore {
@@ -52,13 +52,6 @@ bool BroadcastOpGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
   if (!GetOpType()) {
     return false;
   }
-  if (op_type_ == BROADCAST_GRAD_TYPE_MAXIMUM) {
-    grad_x_ = GetValue<bool>(primitive_->GetAttr(ops::kGradX));
-    grad_y_ = GetValue<bool>(primitive_->GetAttr(ops::kGradY));
-  } else {
-    grad_x_ = inputs[kIndex3]->GetValueWithCheck<bool>();
-    grad_y_ = inputs[kIndex4]->GetValueWithCheck<bool>();
-  }
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
@@ -73,6 +66,8 @@ int BroadcastOpGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   x1_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   x2_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   dy_shape_ = LongVecToSizeVec(inputs.at(kIndex2)->GetShapeVector());
+  grad_x_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  grad_y_ = inputs.at(kIndex4)->GetValueWithCheck<bool>();
   output_num_ = std::accumulate(dy_shape_.begin(), dy_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(x1_shape_, kernel_name_, "x1") || CHECK_SHAPE_NULL(x2_shape_, kernel_name_, "x2") ||
                    CHECK_SHAPE_NULL(dy_shape_, kernel_name_, "dy");

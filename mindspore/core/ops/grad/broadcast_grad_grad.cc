@@ -19,7 +19,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/grad/maximum_grad_grad.h"
 #include "ops/grad/minimum_grad_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -82,33 +81,12 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(MinimumGradGrad, BaseOperator);
-MIND_API_OPERATOR_IMPL(MaximumGradGrad, BaseOperator);
 abstract::AbstractBasePtr BroadcastGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto infer_type = BroadcastGradGradInferType(primitive, input_args);
   auto infer_shape = BroadcastGradGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
-}
-void MaximumGradGrad::Init(const bool grad_x, const bool grad_y) {
-  set_grad_x(grad_x);
-  set_grad_y(grad_y);
-}
-
-void MaximumGradGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
-
-void MaximumGradGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, api::MakeValue(grad_y)); }
-
-bool MaximumGradGrad::get_grad_x() const {
-  auto value_ptr = GetAttr(kGradX);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<bool>(value_ptr);
-}
-
-bool MaximumGradGrad::get_grad_y() const {
-  auto value_ptr = GetAttr(kGradY);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<bool>(value_ptr);
 }
 
 void MinimumGradGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
@@ -144,7 +122,6 @@ class MIND_API AGBroadcastGradGradInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, AGBroadcastGradGradInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MinimumGradGrad, prim::kPrimMinimumGradGrad, AGBroadcastGradGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMaximumGradInputsNum = 3;
+constexpr size_t kMaximumGradInputsNum = 5;
 constexpr size_t kMaximumGradOutputsNum = 2;
 
 void CheckShape(ShapeVector *shape) {

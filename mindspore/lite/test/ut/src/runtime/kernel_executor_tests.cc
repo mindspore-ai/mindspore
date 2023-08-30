@@ -34,7 +34,7 @@
 // #include "ops/flatten.h"
 // #include "ops/gather.h"
 // #include "ops/gather_nd.h"
-#include "ops/maximum.h"
+// #include "ops/maximum.h"
 #include "ops/max_pool.h"
 // #include "ops/minimum.h"
 // #include "ops/mul.h"

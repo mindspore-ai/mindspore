@@ -110,7 +110,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/lrn.h
             ${TOP_DIR}/mindspore/core/ops/lsh_projection.h
             ${TOP_DIR}/mindspore/core/ops/lstm.h
-            ${TOP_DIR}/mindspore/core/ops/maximum.h
+        #    ${TOP_DIR}/mindspore/core/ops/maximum.h
             ${TOP_DIR}/mindspore/core/ops/switch_layer.h
             ${TOP_DIR}/mindspore/core/ops/mfcc.h
         #     ${TOP_DIR}/mindspore/core/ops/minimum.h
@@ -1106,38 +1106,21 @@ endif()
 
 if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(FILES
-              ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
-              ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
-              ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
-        #     ${TOP_DIR}/mindspore/core/ops/abs.h
-        #     ${TOP_DIR}/mindspore/core/ops/batch_norm.h
-        #     ${TOP_DIR}/mindspore/core/ops/ceil.h
+            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
+            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
+            ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/concat.h
-        #     ${TOP_DIR}/mindspore/core/ops/equal.h
-        #     ${TOP_DIR}/mindspore/core/ops/flatten.h
-        #     ${TOP_DIR}/mindspore/core/ops/gather.h
-        #     ${TOP_DIR}/mindspore/core/ops/gather_nd.h
-            ${TOP_DIR}/mindspore/core/ops/maximum.h
-            ${TOP_DIR}/mindspore/core/ops/minimum.h
-        #     ${TOP_DIR}/mindspore/core/ops/reshape.h
             ${TOP_DIR}/mindspore/core/ops/softmax.h
             ${TOP_DIR}/mindspore/core/ops/strided_slice.h
-        #     ${TOP_DIR}/mindspore/core/ops/transpose.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/custom.h
-        #     ${TOP_DIR}/mindspore/core/ops/add.h
-        #     ${TOP_DIR}/mindspore/core/ops/avg_pool.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
             ${TOP_DIR}/mindspore/core/ops/div.h
             ${TOP_DIR}/mindspore/core/ops/mat_mul.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
-        #     ${TOP_DIR}/mindspore/core/ops/mul.h
             ${TOP_DIR}/mindspore/core/ops/pad.h
-        #     ${TOP_DIR}/mindspore/core/ops/prelu.h
             ${TOP_DIR}/mindspore/core/ops/topk.h
-        #     ${TOP_DIR}/mindspore/core/ops/relu.h
-        #     ${TOP_DIR}/mindspore/core/ops/sigmoid.h
             DESTINATION ${RUNTIME_INC_DIR}/ops
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES

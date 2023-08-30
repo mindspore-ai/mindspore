@@ -25,7 +25,6 @@
 #include "ops/fusion/exp_fusion.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/squared_difference.h"
-#include "ops/maximum.h"
 #include "ops/less.h"
 #include "ops/less_equal.h"
 #include "nnacl/op_base.h"

@@ -42,8 +42,8 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto tmp_mul_dout = BinopGradCommon(ib, cast_x, cast_clip_norm, mul_bc_x, mul_bc_y);
   auto mul_dout_x = tmp_mul_dout[0];
   auto mul_dout_y = tmp_mul_dout[1];
-  auto tmp_max_dout = ib->Emit("MaximumGrad", {sqrt_out, cast_clip_norm, div_dout_y},
-                               {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
+  auto tmp_max_dout =
+    ib->Emit("MaximumGrad", {sqrt_out, cast_clip_norm, div_dout_y, ib->Value<bool>(true), ib->Value<bool>(true)});
   auto max_dout_x = ib->TupleGetItem(tmp_max_dout, 0);
   auto max_dout_y = ib->TupleGetItem(tmp_max_dout, 1);
   auto sqrt_dout_x = ib->Emit("SqrtGrad", {sqrt_out, max_dout_x});
