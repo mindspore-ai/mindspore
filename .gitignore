@@ -119,4 +119,3 @@ mindspore/core/ops/gen_ops_name.h
 mindspore/core/ops/gen_ops_primitive.h
 mindspore/core/ops/gen_ops_def.cc
 mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py
-mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py
