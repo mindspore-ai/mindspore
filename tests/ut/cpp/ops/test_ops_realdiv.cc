@@ -13,44 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <memory>
 #include "common/common_test.h"
-#include "ops/real_div.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/ops_func_impl/real_div.h"
 
 namespace mindspore {
 namespace ops {
 class TestRealDiv : public TestOps, public testing::WithParamInterface<BroadcastOpParams> {};
 
-TEST_P(TestRealDiv, dyn_shape) {
+TEST_P(TestRealDiv, real_div_dyn_shape) {
+  auto primitive = std::make_shared<Primitive>("RealDiv");
+  ASSERT_NE(primitive, nullptr);
   const auto &param = GetParam();
   auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
   auto y = std::make_shared<abstract::AbstractTensor>(param.y_type, param.y_shape);
-  auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
   ASSERT_NE(x, nullptr);
-  ASSERT_NE(y, nullptr);
-  auto real_div_op = std::make_shared<RealDiv>();
-  real_div_op->Init();
-  auto prim = std::make_shared<Primitive>(kNameRealDiv);
-  auto out_abstract = opt::CppInferShapeAndType(prim, {x, y});
-  ASSERT_NE(out_abstract, nullptr);
-  ASSERT_TRUE(*out_abstract == *expect);
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(x), std::move(y)};
+  auto infer_impl = std::make_shared<RealDivFuncImpl>();
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_args);
+  ASSERT_NE(infer_shape, nullptr);
+  auto infer_type = infer_impl->InferType(primitive, input_args);
+  ASSERT_NE(infer_type, nullptr);
+
+  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  ASSERT_NE(expect_shape, nullptr);
+  auto expect_type = std::make_shared<TensorType>(param.out_type);
+  ASSERT_NE(expect_type, nullptr);
+  ASSERT_TRUE(*infer_shape == *expect_shape);
+  ASSERT_TRUE(*infer_type == *expect_type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestRealDivGroup, TestRealDiv,
-                        testing::Values(
-                          BroadcastOpParams{{1, 3}, kFloat32, {2, 1}, kFloat32, {2, 3}, kFloat32},
-                          BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
-                          BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
-                          BroadcastOpParams{{-1, 1, 3}, kFloat32, {1, -1, 3}, kFloat32, {-1, -1, 3}, kFloat32},
-                          BroadcastOpParams{{-1, 2, 3}, kFloat32, {2, -1, 3}, kFloat32, {2, 2, 3}, kFloat32},
-                          BroadcastOpParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
+INSTANTIATE_TEST_CASE_P(
+  TestRealDivGroup, TestRealDiv,
+  testing::Values(BroadcastOpParams{{1, 3}, kFloat32, {2, 1}, kFloat32, {2, 3}, kFloat32},
+                  BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
+                  BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
+                  BroadcastOpParams{{-1, 1, 3}, kFloat32, {1, -1, 3}, kFloat32, {-1, -1, 3}, kFloat32},
+                  BroadcastOpParams{{-1, 2, 3}, kFloat32, {2, -1, 3}, kFloat32, {2, 2, 3}, kFloat32},
+                  BroadcastOpParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

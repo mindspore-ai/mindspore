@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/real.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REAL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REAL_H_
+
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Real, EltwiseOpParams);
+class MIND_API RealFuncImpl : public OpFuncImpl {
+ public:
+  RealFuncImpl() = default;
+  ~RealFuncImpl() = default;
 
-OP_FUNC_IMPL_TEST_CASES(Real, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                              EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                              EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REAL_H_

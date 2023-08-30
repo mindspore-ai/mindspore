@@ -22,10 +22,9 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
-
+#include "ops/gen_ops_name.h"
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRealDiv = "RealDiv";
 /// \brief Divides the first input tensor by the second input tensor in floating-point type element-wise.
 /// Refer to Python API @ref mindspore.ops.RealDiv for more details.
 class MIND_API RealDiv : public BaseOperator {
