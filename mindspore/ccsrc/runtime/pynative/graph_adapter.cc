@@ -358,7 +358,7 @@ bool GraphAdapter::IsPynativeGeGraphSink(const FuncGraphPtr &func_graph) {
   }
 
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(kFlagEnableRunGraphBySingleOp) && !func_graph->has_flag(kFlagIsPynativeBpropGraph)) {
+  if (func_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     return false;
   }
 

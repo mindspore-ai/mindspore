@@ -1139,7 +1139,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   }
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
-  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, top_cell()->use_dynamic_shape_process());
+  if (!bprop_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
+    bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, top_cell()->use_dynamic_shape_process());
+  }
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }

@@ -1924,6 +1924,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
     }
   }
   bprop_cut_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+  ad_param()->tape_->set_flag(kFlagEnableRunGraphBySingleOp, true);
 }
 
 void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim,
