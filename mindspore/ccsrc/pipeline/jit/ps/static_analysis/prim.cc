@@ -2478,10 +2478,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     if (preset_type->isa<List>()) {
-      AbstractListPtr res_list = fallback::GenerateAbstractList(shape, preset_type, true);
-      auto list_obj = GetPySeqObjectFromNode(node);
-      res_list->set_list_py_obj<py::list>(list_obj, false);
-      res = res_list;
+      res = fallback::GenerateAbstractSequence(shape, preset_type, true);
     } else {
       res = std::make_shared<AbstractTensor>(preset_type, shape);
     }

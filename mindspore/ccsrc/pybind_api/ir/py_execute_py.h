@@ -92,6 +92,29 @@ bool ContainStubTensor(const py::object &obj) {
   return IsStubTensor(obj);
 }
 
+abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
+  // This function will be moved to runtime compile pass later.
+  if (py::isinstance<tensor::Tensor>(obj) || IsStubTensor(obj)) {
+    const auto &tensor = IsStubTensor(obj) ? ConvertStubTensor(obj) : obj.cast<tensor::TensorPtr>();
+    const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
+    return tensor->ToAbstract();
+  }
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+  if (!allow_inplace_ops) {
+    return nullptr;
+  }
+  // obj is tuple will add later.
+  if (py::isinstance<py::list>(obj)) {
+    ValuePtr converted_res = nullptr;
+    bool converted = parse::ConvertData(obj, &converted_res);
+    if (converted) {
+      auto ret_list = converted_res->ToAbstract();
+      return fallback::GenerateAbstractSequence(ret_list->BuildShape(), ret_list->BuildType(), false);
+    }
+  }
+  return nullptr;
+}
+
 class PyExecuteInitializer {
  public:
   PyExecuteInitializer() {
@@ -169,23 +192,10 @@ class PyExecuteInitializer {
       }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
       fallback::PushPyExecuteOutput(output);
-      if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
-        const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
-        const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
-        return tensor->ToAbstract();
-      }
-      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-      if (allow_inplace_ops && py::isinstance<py::list>(output)) {
-        // Tuple object will infer real abstract later.
-        // Runtime can not handle real operator with nested output.
-        // Hence, the abstract should be AbstractAny for nested sequence.
-        ValuePtr converted_res = nullptr;
-        bool converted = parse::ConvertData(output, &converted_res);
-        if (converted) {
-          auto ret_list = converted_res->ToAbstract();
-          auto filter_ret_list = fallback::GenerateAbstractList(ret_list->BuildShape(), ret_list->BuildType(), false);
-          auto ret = std::make_shared<abstract::AbstractTuple>(filter_ret_list->elements());
-          MS_LOG(DEBUG) << "Result abstract is: " << ret->ToString();
+      static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+      if (!allow_runtime_compile) {
+        auto ret = GenerateAbstractFromPyObject(output);
+        if (ret != nullptr) {
           return ret;
         }
       }

@@ -110,6 +110,7 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
+namespace {
 void Memcpy(void *addr, size_t addr_size, void *data, size_t data_size, size_t offset) {
   const auto &res = memcpy_s(reinterpret_cast<char *>(addr) + offset * data_size, addr_size, data, data_size);
   if (res != EOK) {
@@ -142,14 +143,14 @@ void ScalarToRawMemory(const py::object &obj, const AddressPtr &address, size_t 
   MS_LOG(INTERNAL_EXCEPTION) << "Scalar to raw memory failed!";
 }
 
-void SequenceToWholeRawMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
+void SequenceToWholeRawMemory(const py::sequence &obj, const AddressPtr &output) {
   size_t obj_len = py::len(obj);
   for (size_t i = 0; i < obj_len; ++i) {
     auto element_obj = obj[i];
     if (py::isinstance<tensor::Tensor>(element_obj)) {
-      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[0], i);
+      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), output, i);
     } else {
-      ScalarToRawMemory(element_obj, outputs[0], i);
+      ScalarToRawMemory(element_obj, output, i);
     }
   }
 }
@@ -172,18 +173,20 @@ void SequenceToRawMemory(const py::sequence &obj, const std::vector<AddressPtr> 
   size_t outputs_len = outputs.size();
   static const auto allow_sequence_to_whole_memory = common::GetEnv("MS_DEV_FALLBACK_SEQUENCE_TO_WHOLE_MEMORY") == "1";
   if (allow_sequence_to_whole_memory && outputs_len == 1 && fallback::CheckSequenceToMemory(obj)) {
-    SequenceToWholeRawMemory(obj, outputs);
+    SequenceToWholeRawMemory(obj, outputs[0]);
     return;
   }
   SequenceToSeparateMemory(obj, outputs);
 }
 
-void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs) {
+void PyExecuteOutputToRawMemory(const py::object &obj, const std::vector<AddressPtr> &outputs) {
+  // This function will be moved to runtime compile pass later.
   if (py::isinstance<tensor::Tensor>(obj)) {
     TensorToRawMemory(obj.cast<tensor::TensorPtr>(), outputs[0]);
     return;
-  } else if (py::isinstance<py::list>(obj)) {
-    // Tuple object will to raw memory later.
+  }
+  // Tuple object will to raw memory later.
+  if (py::isinstance<py::list>(obj)) {
     auto output_sequence = py::sequence(obj);
     static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
     if (allow_inplace_ops) {
@@ -194,8 +197,8 @@ void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs) {
     ScalarToRawMemory(obj, outputs[0]);
     return;
   }
-  MS_LOG(INFO) << "Current not support the PyExecute " << obj << " to raw memory.";
 }
+}  // namespace
 
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
@@ -222,7 +225,10 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    ToRawMemory(output, outputs);
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    if (!allow_runtime_compile) {
+      PyExecuteOutputToRawMemory(output, outputs);
+    }
     AttachPyOutputData(output);
     return true;
   }

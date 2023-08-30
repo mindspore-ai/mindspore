@@ -109,44 +109,56 @@ bool CheckSequenceToMemory(const py::sequence &obj) {
   return false;
 }
 
-abstract::AbstractListPtr GenerateAbstractList(const BaseShapePtr &base_shape, const TypePtr &type, bool is_dyn_shape) {
-  // Generate AbstractList for PyExecute node.
+TypePtrList GetTypeElements(const TypePtr &type) {
+  if (type->isa<List>()) {
+    auto type_list = type->cast_ptr<List>();
+    return type_list->elements();
+  }
+  auto type_tuple = type->cast_ptr<Tuple>();
+  MS_EXCEPTION_IF_NULL(type_tuple);
+  return type_tuple->elements();
+}
+
+abstract::AbstractSequencePtr GenerateAbstractSequence(const BaseShapePtr &base_shape, const TypePtr &type,
+                                                       bool is_frontend) {
+  // Generate AbstractSequence for PyExecute node.
   MS_EXCEPTION_IF_NULL(base_shape);
   MS_EXCEPTION_IF_NULL(type);
-  if (!base_shape->isa<abstract::ListShape>()) {
-    MS_INTERNAL_EXCEPTION(TypeError) << "For GenerateAbstractList, the shape should be list shape but got: "
-                                     << base_shape->ToString();
+  bool is_list = base_shape->isa<abstract::ListShape>() && type->isa<List>();
+  bool is_tuple = base_shape->isa<abstract::TupleShape>() && type->isa<Tuple>();
+  if (!is_list && !is_tuple) {
+    MS_INTERNAL_EXCEPTION(TypeError) << "For GenerateAbstractSequence, the input shape and type should be both "
+                                     << "list or tuple, but got shape: " << base_shape->ToString()
+                                     << " and type: " << type->ToString();
   }
-  if (!type->isa<List>()) {
-    MS_INTERNAL_EXCEPTION(TypeError) << "For GenerateAbstractList, the type should be list but got: "
-                                     << type->ToString();
-  }
-  auto shape_list = base_shape->cast_ptr<abstract::ListShape>();
-  MS_EXCEPTION_IF_NULL(shape_list);
-  auto type_list = type->cast_ptr<List>();
-  MS_EXCEPTION_IF_NULL(type_list);
-  if (shape_list->size() != type_list->size()) {
-    MS_INTERNAL_EXCEPTION(ValueError) << "For GenerateAbstractList, the shape and type size should be the same, "
-                                      << "but got shape size: " << shape_list->size()
-                                      << " and type size: " << type_list->size();
+  auto shape_seq = base_shape->cast_ptr<abstract::SequenceShape>();
+  MS_EXCEPTION_IF_NULL(shape_seq);
+  const auto &type_elements = GetTypeElements(type);
+  if (shape_seq->size() != type_elements.size()) {
+    MS_INTERNAL_EXCEPTION(ValueError) << "For GenerateAbstractSequence, the shape and type size should be the same, "
+                                      << "but got shape size: " << shape_seq->size()
+                                      << " and type size: " << type_elements.size();
   }
   AbstractBasePtrList ptr_list;
-  for (size_t it = 0; it < shape_list->size(); ++it) {
-    auto element_shape = (*shape_list)[it];
-    auto element_type = (*type_list)[it];
-    bool is_external = type->isa<External>();
+  for (size_t it = 0; it < shape_seq->size(); ++it) {
+    auto element_shape = (*shape_seq)[it];
+    auto element_type = type_elements[it];
+    bool is_external = element_type->isa<External>();
     bool is_tensor_or_scalar = element_type->isa<Number>() || element_type->isa<TensorType>();
     if (!is_external && is_tensor_or_scalar) {
       (void)ptr_list.emplace_back(abstract::MakeAbstract(element_shape, element_type));
     } else {
-      // is_dyn_shape will be deleted after list PyExecute is not run re-infer.
-      if (is_dyn_shape) {
+      if (is_frontend) {
         (void)ptr_list.emplace_back(std::make_shared<abstract::AbstractAny>());
       } else {
+        // In backend, the type is correctly fixed and the shape should be fixed.
         const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
         (void)ptr_list.emplace_back(abstract::MakeAbstract(infer_shape, kFloat64));
       }
     }
+  }
+  if (!is_frontend || is_tuple) {
+    return std::make_shared<abstract::AbstractTuple>(ptr_list);
   }
   return std::make_shared<abstract::AbstractList>(ptr_list);
 }
