@@ -71,9 +71,12 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
   std::vector<AnfNodePtr> new_inputs;
   new_inputs.insert(new_inputs.end(), cnode->inputs().begin(), cnode->inputs().end());
 
+  auto manager = Manage(func_graph);
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
+  bool is_add_input = false;
+
   // Check the input parameter kKeyBIndex. If the parameter is not input, construct one.
   if ((cnode->inputs().size() > kKeyBIndex) && (cnode->inputs().size() <= kKeyInitial_hIndex)) {
-    auto &input = cnode->inputs().at(kKeyBIndex);
     ShapeVector input_shape;
     auto abstract = opt::GetCNodeInputAbstract(cnode, kKeyBIndex);
     if (opt::FetchShapeFromAbstract(abstract, &input_shape) != RET_OK) {
@@ -84,14 +87,15 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "GRU not input B";
       std::vector<std::vector<float>> data = create2DVector(kKeyBRows, kKeyBCols, 0);
       MS_LOG(DEBUG) << "construct GRU kKeyB data" << data;
-      auto value_param = opt::BuildFloatVec2DParameterNode(func_graph, data, input->fullname_with_scope());
+      auto value_param = opt::BuildFloatVec2DParameterNode(func_graph, data, cnode->fullname_with_scope() + "B_value");
       new_inputs.insert(new_inputs.begin() + kKeyBIndex, value_param);
+      manager->AddEdge(cnode, value_param);
+      is_add_input = true;
     }
   }
 
   // Check the input parameter kKeySequence_lensIndex. If the parameter is not input, construct one.
   if ((cnode->inputs().size() > kKeySequence_lensIndex) && (cnode->inputs().size() <= kKeyInitial_hIndex)) {
-    auto &input = cnode->inputs().at(kKeySequence_lensIndex);
     ShapeVector input_shape;
     auto abstract = opt::GetCNodeInputAbstract(cnode, kKeySequence_lensIndex);
     if (opt::FetchShapeFromAbstract(abstract, &input_shape) != RET_OK) {
@@ -110,12 +114,20 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
       if (input_shape_X.size() == kKeyXShapeLength) {
         auto data = createiniVector(input_shape_X.at(1), input_shape_X.at(0));
         MS_LOG(DEBUG) << "construct GRU kKeySequence_lens data" << data;
-        auto value_param = opt::BuildIntVecParameterNode(func_graph, data, input->fullname_with_scope());
+        auto value_param =
+          opt::BuildIntVecParameterNode(func_graph, data, cnode->fullname_with_scope() + "Sequence_lens");
         new_inputs.insert(new_inputs.begin() + kKeySequence_lensIndex, value_param);
+        manager->AddEdge(cnode, value_param);
+        is_add_input = true;
       }
     }
   }
-  cnode->set_inputs(new_inputs);
+
+  if (is_add_input) {
+    for (size_t i = 1; i < new_inputs.size(); i++) {
+      manager->SetEdge(cnode, i, new_inputs[i]);
+    }
+  }
   return lite::RET_OK;
 }
 
