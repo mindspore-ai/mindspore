@@ -59,6 +59,10 @@ std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensor
     return {};
   }
   if (!outputs_ptr.empty()) {
+    for (size_t i = 0; i < outputs.size(); i++) {
+      outputs_ptr[i]->SetShape(outputs[i].Shape());
+      outputs_ptr[i]->SetDataType(outputs[i].DataType());
+    }
     return outputs_ptr;
   }
   return MSTensorToMSTensorPtr(outputs);
