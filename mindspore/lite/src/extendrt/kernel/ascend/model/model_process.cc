@@ -1059,8 +1059,15 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
     auto device_data = output->GetData();
     if (device_data && device_data->addr) {
       MS_LOG(DEBUG) << "data on device, no need to update system allocated buffer";
+      auto output_device_id = output->GetDeviceId();
       output->SetHostData(nullptr);
       output->SetData(std::make_shared<kernel::Address>(acl_device_data, output_desc_size));
+      if (output_device_id != device_id_) {
+        MS_LOG(DEBUG) << "output across device, tensor on device " << output_device_id << " with addr "
+                      << device_data->addr << ", infer on device " << device_id_ << " with addr " << acl_device_data;
+        output->SetData(std::make_shared<kernel::Address>(device_data->addr, output_desc_size));
+        output_info.cur_device_data = acl_device_data;
+      }
     } else {
       if (!user_defined_output_buf_[i]) {
         output->SetDynOutput(std::unique_ptr<uint8_t[]>(new uint8_t[output_desc_size]));
