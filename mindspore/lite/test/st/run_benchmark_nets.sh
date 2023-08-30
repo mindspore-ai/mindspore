@@ -241,3 +241,15 @@ if [[ $backend == "all" || $backend == "plugin_custom_ops" ]]; then
     fi
 fi
 
+# test graph kernel
+if [[ $backend == "all" || $backend =~ "graph_kernel" ]]; then
+  if [[ $backend =~ "cpu" ]]; then
+    device_id="null"
+  fi
+    sh $cur_path/scripts/run_benchmark_graph_kernel.sh -r $release_path -m $models_path -e $backend -l $level -d $device_id
+    graph_kernel_status=$?
+    if [[ graph_kernel_status -ne 0 ]]; then
+      echo "Run graph kernel failed"
+      exit 1
+    fi
+fi
