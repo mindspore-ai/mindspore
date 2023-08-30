@@ -52,8 +52,8 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
     auto anchor_fp32 = static_cast<float *>(
       allocator_->Malloc(kNumberTypeFloat, anchor_tensor->ElementsNum() * sizeof(float), kOfflinePackWeight));
     MS_CHECK_PTR(anchor_fp32);
-    DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
-                           anchor_tensor->ElementsNum());
+    DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, static_cast<float>(quant_param.scale), quant_param.zeroPoint,
+                           static_cast<int>(anchor_tensor->ElementsNum()));
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     MS_CHECK_TRUE(!anchor_tensor->quant_params().empty(), "anchor_tensor quant params cannot be empty.");

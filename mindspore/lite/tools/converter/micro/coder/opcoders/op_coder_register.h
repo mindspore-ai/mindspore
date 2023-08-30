@@ -54,7 +54,7 @@ class CoderKey {
  private:
   Target target_ = kTargetUnknown;
   TypeId data_type_ = kTypeUnknown;
-  int op_type_ = schema::PrimitiveType_NONE;
+  int op_type_ = static_cast<int>(schema::PrimitiveType_NONE);
   std::string builtin_custom_type_;
 };
 

@@ -57,7 +57,7 @@ int ResizeInt8Coder::Prepare(CoderContext *const context) {
 }
 
 int ResizeInt8Coder::ReSize() {
-  if (method_ == schema::ResizeMethod_LINEAR) {
+  if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
     MS_LOG(ERROR) << "unsupported resize linear currently";
     return RET_ERROR;
   }
@@ -87,7 +87,8 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
       bool same_zp = quant_in_->zp_ == quant_out_->zp_;
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
-      bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
+      bool align_corners =
+        coordinate_transform_mode_ == static_cast<int>(schema::CoordinateTransformMode_ALIGN_CORNERS);
       if (same_zp && same_scale) {
         code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "input_shape", "output_shape",
                             align_corners, gThreadNum);

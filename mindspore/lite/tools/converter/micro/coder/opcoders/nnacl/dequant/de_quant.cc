@@ -43,7 +43,7 @@ void Dequant::DeQuantFunctionPerChannel(const Tensor *quant_tensor, const std::v
                                         const std::string &de_quant_arg_base_str,
                                         NNaclFp32Serializer *const de_quant_code) {
   int quant_arg_dims = static_cast<int>(quant_tensor->quant_params().size());
-  int de_quant_nums = quant_tensor->ElementsNum();
+  int de_quant_nums = static_cast<int>(quant_tensor->ElementsNum());
   for (int i = 0; i < quant_arg_dims; ++i) {
     auto de_quant_arg = de_quant_args.at(i);
     std::string de_quant_arg_str = de_quant_arg_base_str + std::to_string(i);
@@ -56,7 +56,7 @@ void Dequant::DeQuantFunctionPerChannel(const Tensor *quant_tensor, const std::v
   }
   *de_quant_code << "&" << de_quant_arg_base_str << std::to_string(quant_arg_dims - 1);
   *de_quant_code << "};\n";
-  size_t per_batch_size = quant_tensor->shape().at(0);
+  size_t per_batch_size = static_cast<size_t>(quant_tensor->shape().at(0));
   std::string quant_tensor_addr_str = "(int8_t *)(" + quant_tensor_addr_ + ")";
   de_quant_code->CodeFunction("DequantDataPerChannel", quant_tensor_addr_str, de_quant_args_name, de_quant_nums,
                               per_batch_size, de_quant_buffer_str_);
@@ -65,7 +65,7 @@ void Dequant::DeQuantFunctionPerChannel(const Tensor *quant_tensor, const std::v
 void Dequant::DeQuantFunction(const Tensor *quant_tensor, const std::vector<DeQuantArg> &de_quant_args,
                               const std::string &de_quant_arg_base_str, NNaclFp32Serializer *const de_quant_code) {
   int quant_arg_dims = static_cast<int>(quant_tensor->quant_params().size());
-  int de_quant_nums = quant_tensor->ElementsNum();
+  int de_quant_nums = static_cast<int>(quant_tensor->ElementsNum());
   for (int i = 0; i < quant_arg_dims; ++i) {
     auto de_quant_arg = de_quant_args.at(i);
     std::string de_quant_arg_str = de_quant_arg_base_str + std::to_string(i);
@@ -87,7 +87,7 @@ void Dequant::DeQuantFunction(const Tensor *quant_tensor, const std::vector<DeQu
 void Dequant::DeQuantFunctionPerTensor(const Tensor *quant_tensor, const std::vector<DeQuantArg> &de_quant_args,
                                        const std::string &de_quant_arg_base_str,
                                        NNaclFp32Serializer *const de_quant_code) {
-  size_t de_quant_nums = quant_tensor->ElementsNum();
+  size_t de_quant_nums = static_cast<size_t>(quant_tensor->ElementsNum());
   auto de_quant_arg = de_quant_args.at(0);
   std::string de_quant_arg_str = de_quant_arg_base_str + std::to_string(0);
   de_quant_code->CodeStruct(de_quant_arg_str, de_quant_arg);
@@ -106,7 +106,7 @@ std::string Dequant::GetMicroDeQuantFunction(const Tensor *quant_tensor, const s
     return de_quant_block;
   }
   quant_tensor_addr_ = quant_tensor_addr;
-  size_t de_quant_nums = quant_tensor->ElementsNum();
+  size_t de_quant_nums = static_cast<size_t>(quant_tensor->ElementsNum());
   size_t quant_arg_dims = quant_tensor->quant_params().size();
   DequantRecordWorkspcae(static_cast<size_t>(de_quant_nums * sizeof(float)));
   NNaclFp32Serializer de_quant_code;

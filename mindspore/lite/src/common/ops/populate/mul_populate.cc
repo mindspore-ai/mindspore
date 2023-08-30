@@ -34,7 +34,7 @@ OpParameter *PopulateMulParameter(const void *prim) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  param->activation_type_ = mul_param->activation_type();
+  param->activation_type_ = static_cast<int>(mul_param->activation_type());
   return reinterpret_cast<OpParameter *>(param);
 }
 

@@ -33,7 +33,7 @@ void CalculateTableList(int8_t *table, const float input_scale, const int32_t in
   for (int i = min_value; i < max_value; ++i) {
     const float real_input_value = input_scale * (i - input_zp);
     const float sigmoid_value = 1.0f / (1.0f + std::exp(-real_input_value));
-    const int32_t quantized = std::round(sigmoid_value / output_scale) + output_zp;
+    const int32_t quantized = static_cast<const int32_t>(std::round(sigmoid_value / output_scale) + output_zp);
     auto out_value = static_cast<int8_t>(std::max(std::min(quantized, max_value), min_value));
     auto index = static_cast<uint8_t>(i);
     table[index] = out_value;
@@ -63,7 +63,7 @@ int SigmodInt8Coder::DoCode(CoderContext *const context) {
 
   NNaclInt8Serializer code;
 
-  int length = input_tensor_->ElementsNum();
+  int length = static_cast<int>(input_tensor_->ElementsNum());
   code.CodeFunction("SigmoidInt8", input_tensor_, length, output_tensor_, table_list_);
 
   context->AppendCode(code.str());
