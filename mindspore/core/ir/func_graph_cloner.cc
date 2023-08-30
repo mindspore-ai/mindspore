@@ -74,11 +74,11 @@ void Cloner::AddClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target
 
 void Cloner::CloneNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
-  if (replace_node_.find(node) != replace_node_.end()) {
+  if (replicated_node_.find(node) != replicated_node_.end()) {
     return;
   }
   if (node->isa<CNode>()) {
-    CloneCNode(node, target);
+    CloneCNodeWithoutInputs(node, target);
   } else if (node->isa<Parameter>()) {
     CloneParameter(node, target, false);
   }
@@ -103,10 +103,12 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
   new_param->set_is_top_graph_param(old_param->is_top_graph_param());
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_param->set_scope(scope);
-  replace_node_[node] = std::move(new_param);
+  replicated_node_[node] = std::move(new_param);
 }
 
-void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
+// Create a new empty CNode for old one, and bind them.
+// Also see LinkCNodeEdges().
+void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
   auto old_node = node->cast<CNodePtr>();
@@ -139,7 +141,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
     scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   }
   new_node->set_scope(scope);
-  replace_node_[node] = std::move(new_node);
+  replicated_node_[node] = new_node;
 }
 
 void Cloner::CloneValueNode(const AnfNodePtr &node) {
@@ -154,7 +156,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
     new_const->set_abstract(node->abstract());
   }
   new_const->set_has_new_value(value_node->has_new_value());
-  replace_node_[node] = std::move(new_const);
+  replicated_node_[node] = std::move(new_const);
 }
 
 void Cloner::CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
@@ -170,7 +172,7 @@ void Cloner::CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr 
     new_const->set_abstract(node->abstract());
   }
   new_const->set_has_new_value(value_node->has_new_value());
-  replace_node_[node] = std::move(new_const);
+  replicated_node_[node] = std::move(new_const);
 }
 
 void Cloner::CloneValueNodes(const FuncGraphPtr &func_graph) {
@@ -181,7 +183,7 @@ void Cloner::CloneValueNodes(const FuncGraphPtr &func_graph) {
   auto &value_nodes = func_graph->value_nodes();
   for (auto &value_node : value_nodes) {
     auto &old_node = value_node.first;
-    if (replace_node_.find(old_node) == replace_node_.end()) {
+    if (replicated_node_.find(old_node) == replicated_node_.end()) {
       CloneValueNode(old_node);
     }
   }
@@ -241,8 +243,8 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   target_func_graph->set_stage(func_graph->stage());
   auto &old_return = func_graph->return_node();
   if (old_return != nullptr) {
-    auto iter = replace_node_.find(old_return);
-    if (iter == replace_node_.end()) {
+    auto iter = replicated_node_.find(old_return);
+    if (iter == replicated_node_.end()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Can't find replicate node for return.";
     }
     MS_EXCEPTION_IF_NULL(iter->second);
@@ -270,7 +272,7 @@ void Cloner::InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNode
                                      << params.size() << "]";
   }
   for (size_t i = 0; i < old_params.size(); ++i) {
-    replace_node_[old_params[i]] = params[i];
+    replicated_node_[old_params[i]] = params[i];
   }
 }
 
@@ -296,7 +298,7 @@ void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr 
   for (auto &param : params) {
     CloneParameter(param, target_func_graph, true);
   }
-  replace_func_graph_[func_graph] = target_func_graph;
+  replicated_func_graph_[func_graph] = target_func_graph;
 }
 
 void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
@@ -324,8 +326,8 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
         continue;
       }
     }
-    auto &replace_node = replace_map_node_[func_graph];
-    if (replace_node.find(free_var_node) != replace_node.end()) {
+    auto &replicated_node = replicated_map_node_[func_graph];
+    if (replicated_node.find(free_var_node) != replicated_node.end()) {
       MS_LOG(DEBUG) << "Param exists: " << free_var_node->DebugString()
                     << " for func_graph: " << func_graph->ToString();
       continue;
@@ -334,7 +336,7 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     MS_LOG(DEBUG) << "Gen param: " << free_var_node->ToString() << " for func_graph: " << func_graph->ToString();
     auto fv_parameter = AddParameter(func_graph, free_var_node);
     fv_parameter->set_user_data<bool>("lifted_from_fv", std::make_shared<bool>(true));
-    auto &fg_params = replace_func_graph_params_[func_graph];
+    auto &fg_params = replicated_func_graph_params_[func_graph];
     (void)fg_params.emplace_back(fv_parameter);
   }
 }
@@ -369,8 +371,8 @@ ParameterPtr Cloner::AddParameter(const FuncGraphPtr &func_graph, const AnfNodeP
   if (is_add) {
     func_graph->add_parameter(param);
   }
-  replace_node_[param] = node;
-  replace_map_node_[func_graph][node] = param;
+  replicated_node_[param] = node;
+  replicated_map_node_[func_graph][node] = param;
   return param;
 }
 
@@ -435,16 +437,16 @@ void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrLis
   MS_EXCEPTION_IF_NULL(func_graph);
   mindspore::HashSet<AnfNodePtr> old_params;
   for (auto &param : func_graph->parameters()) {
-    (void)old_params.insert(replace_node_[param]);
+    (void)old_params.insert(replicated_node_[param]);
   }
   mindspore::HashSet<AnfNodePtr> new_params;
   AnfNodePtrList parameters;
   // Ignore the 1st and 2nd param of inputs(such as. partial graph)
   for (size_t i = arg_start_index; i < inputs.size(); ++i) {
     const auto &input = inputs[i];
-    const auto &param = replace_node_[input];
+    const auto &param = replicated_node_[input];
     if (old_params.find(param) != old_params.end()) {
-      auto &new_param = replace_map_node_[func_graph][param];
+      auto &new_param = replicated_map_node_[func_graph][param];
       parameters.push_back(new_param);
       (void)new_params.insert(new_param);
     }
@@ -468,12 +470,12 @@ CNodePtr Cloner::SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr 
   }
   auto graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
   MS_EXCEPTION_IF_NULL(graph);
-  auto &replace_func_graph = replace_map_func_graph_[func_graph];
-  if (replace_func_graph.find(graph) == replace_func_graph.end()) {
+  auto &replicated_func_graph = replicated_map_func_graph_[func_graph];
+  if (replicated_func_graph.find(graph) == replicated_func_graph.end()) {
     return nullptr;
   }
 
-  auto partial_node = replace_func_graph[graph];
+  auto partial_node = replicated_func_graph[graph];
   if (!IsPrimitiveCNode(partial_node, prim::kPrimPartial)) {
     return nullptr;
   }
@@ -538,15 +540,15 @@ void Cloner::SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx) 
           continue;
         }
         auto graph = GetValueNode<FuncGraphPtr>(input);
-        auto &replace_func_graph = replace_map_func_graph_[func_graph];
-        if (replace_func_graph.find(graph) != replace_func_graph.end()) {
-          auto partial_node = replace_func_graph[graph];
+        auto &replicated_func_graph = replicated_map_func_graph_[func_graph];
+        if (replicated_func_graph.find(graph) != replicated_func_graph.end()) {
+          auto partial_node = replicated_func_graph[graph];
           tx->SetEdge(cnode, static_cast<int>(i), partial_node);
         }
       } else {
-        auto &replace_node = replace_map_node_[func_graph];
-        if (replace_node.find(input) != replace_node.end()) {
-          tx->SetEdge(cnode, static_cast<int>(i), replace_node[input]);
+        auto &replicated_node = replicated_map_node_[func_graph];
+        if (replicated_node.find(input) != replicated_node.end()) {
+          tx->SetEdge(cnode, static_cast<int>(i), replicated_node[input]);
         }
       }
     }
@@ -561,8 +563,8 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
   AnfNodePtrList parameters;
   mindspore::HashSet<AnfNodePtr> old_params;
   for (auto &param : func_graph->parameters()) {
-    auto iter = replace_node_.find(param);
-    if (iter != replace_node_.end()) {
+    auto iter = replicated_node_.find(param);
+    if (iter != replicated_node_.end()) {
       (void)old_params.insert(iter->second);
       parameters.push_back(param);
     } else {
@@ -572,15 +574,15 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
   }
   AnfNodePtr new_param = nullptr;
   for (auto &param : params) {
-    auto old_param = replace_node_[param];
+    auto old_param = replicated_node_[param];
     if (old_param->isa<CNode>() && old_param->func_graph() == func_graph) {
-      replace_node_[old_param] = old_param;
-      replace_map_node_[func_graph][old_param] = old_param;
+      replicated_node_[old_param] = old_param;
+      replicated_map_node_[func_graph][old_param] = old_param;
       input_params->push_back(old_param);
       continue;
     }
     if (old_params.find(old_param) != old_params.end()) {
-      new_param = replace_map_node_[func_graph][old_param];
+      new_param = replicated_map_node_[func_graph][old_param];
       if (new_param == nullptr) {
         MS_LOG(INTERNAL_EXCEPTION) << "map_node, func_graph: " << func_graph->ToString()
                                    << ", old_param: " << old_param->DebugString() << " cannot found";
@@ -590,10 +592,10 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     }
     if (IsLiftTopFuncGraph(func_graph)) {
       // Don't lift parameter from used_graphs to my parameter if I am the top;
-      replace_node_[old_param] = old_param;
-      replace_map_node_[func_graph][old_param] = old_param;
+      replicated_node_[old_param] = old_param;
+      replicated_map_node_[func_graph][old_param] = old_param;
       MS_EXCEPTION_IF_NULL(old_param->func_graph());
-      replace_map_node_[old_param->func_graph()][old_param] = old_param;
+      replicated_map_node_[old_param->func_graph()][old_param] = old_param;
       input_params->push_back(old_param);
       MS_LOG(DEBUG) << "Bypass param: " << old_param->DebugString()
                     << " for top_func_graph: " << func_graph->ToString();
@@ -609,8 +611,8 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
 
 void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                        const AnfNodePtrList &params) {
-  auto &replace_func_graph = replace_map_func_graph_[func_graph_user];
-  auto [iter, inserted] = replace_func_graph.emplace(func_graph, nullptr);
+  auto &replicated_func_graph = replicated_map_func_graph_[func_graph_user];
+  auto [iter, inserted] = replicated_func_graph.emplace(func_graph, nullptr);
   if (inserted) {
     auto value_node = BuildPrimitiveValueNode(prim::kPrimPartial);
     AnfNodePtrList cnode_inputs{value_node, BuildFuncGraphValueNode(func_graph, preset_abstract())};
@@ -698,8 +700,8 @@ void Cloner::Lift(const std::vector<FuncGraphPtr> &sorted) {
   // lift inner graph first
   for (auto r_iter = sorted.rbegin(); r_iter != sorted.rend(); ++r_iter) {
     auto func_graph = *r_iter;
-    auto iter = replace_func_graph_params_.find(func_graph);
-    if (iter != replace_func_graph_params_.end()) {
+    auto iter = replicated_func_graph_params_.find(func_graph);
+    if (iter != replicated_func_graph_params_.end()) {
       auto &params = iter->second;
       for (auto &cnode_index : func_graph->func_graph_cnodes_index()) {
         MS_EXCEPTION_IF_NULL(cnode_index.first);
@@ -763,20 +765,20 @@ void Cloner::CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &t
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   const AnfNodeSet &nodes = func_graph->nodes();
-  replace_node_.reserve(replace_node_.size() + nodes.size());
+  replicated_node_.reserve(replicated_node_.size() + nodes.size());
   for (auto &node : nodes) {
     CloneNode(node, target_func_graph);
   }
   // Only func_graph is inlined, it cannot be found in repl;
-  if (replace_func_graph_.find(func_graph) != replace_func_graph_.end()) {
+  if (replicated_func_graph_.find(func_graph) != replicated_func_graph_.end()) {
     CloneOrderList(func_graph, target_func_graph);
   }
 }
 
 void Cloner::CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
   for (auto &cnode : func_graph->order_list()) {
-    auto it = replace_node_.find(cnode);
-    if (it == replace_node_.end()) {
+    auto it = replicated_node_.find(cnode);
+    if (it == replicated_node_.end()) {
       // For cnode which generated in Analyze phase, it cannot got from nodes API of func_graph,
       // so it cannot be cloned in normal Clone API.
       // If we ignore it, the order will be lost.
@@ -788,9 +790,9 @@ void Cloner::CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &
       target_func_graph->AppendOrderList(cnode);
       continue;
     }
-    auto replace_cnode = dyn_cast<CNode>(it->second);
-    if (replace_cnode != nullptr) {
-      target_func_graph->AppendOrderList(replace_cnode);
+    auto replicated_cnode = dyn_cast<CNode>(it->second);
+    if (replicated_cnode != nullptr) {
+      target_func_graph->AppendOrderList(replicated_cnode);
     }
   }
 }
@@ -807,7 +809,7 @@ void Cloner::Run() {
     // Basic and Inline Clone
     manager_ = Manage(func_graphs, false);
     CloneNodes();
-    LinkEdges();
+    LinkCNodeEdges();
     SetDefaults();
   } else {
     // Lifting Clone
@@ -849,8 +851,10 @@ void Cloner::CloneNodes() {
   }
 }
 
-void Cloner::LinkEdges() {
-  for (auto &repl : replace_node_) {
+// Link the CNode with its inputs.
+// Also see CloneCNodeWithoutInputs()
+void Cloner::LinkCNodeEdges() {
+  for (auto &repl : replicated_node_) {
     auto old_node = dyn_cast_ptr<CNode>(repl.first);
     if (old_node == nullptr) {
       continue;
@@ -859,8 +863,8 @@ void Cloner::LinkEdges() {
     auto new_node = repl.second->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(new_node);
     for (auto &input : old_node->inputs()) {
-      auto iter = replace_node_.find(input);
-      auto &new_input = (iter == replace_node_.end() ? input : iter->second);
+      auto iter = replicated_node_.find(input);
+      auto &new_input = (iter == replicated_node_.end() ? input : iter->second);
       new_node->add_input(new_input);
     }
   }
@@ -870,15 +874,15 @@ void Cloner::LinkEdges() {
 void Cloner::SetDefaults() {
   for (auto &old_fg : graph_set_) {
     MS_EXCEPTION_IF_NULL(old_fg);
-    auto iter = replace_func_graph_.find(old_fg);
-    if (iter == replace_func_graph_.end()) {
+    auto iter = replicated_func_graph_.find(old_fg);
+    if (iter == replicated_func_graph_.end()) {
       continue;
     }
     auto &new_fg = iter->second;
     MS_EXCEPTION_IF_NULL(new_fg);
     for (auto &param_def : old_fg->parameter_default_value()) {
-      auto replace_iter = replace_node_.find(param_def.second);
-      auto &value_node = (replace_iter == replace_node_.end() ? param_def.second : replace_iter->second);
+      auto replicated_iter = replicated_node_.find(param_def.second);
+      auto &value_node = (replicated_iter == replicated_node_.end() ? param_def.second : replicated_iter->second);
       new_fg->set_param_default_value(param_def.first, value_node);
     }
   }
@@ -886,14 +890,14 @@ void Cloner::SetDefaults() {
 
 AnfNodePtr Cloner::CloneDisconnected(const AnfNodePtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  auto fg_iter = replace_func_graph_.find(root->func_graph());
-  if (fg_iter == replace_func_graph_.end()) {
+  auto fg_iter = replicated_func_graph_.find(root->func_graph());
+  if (fg_iter == replicated_func_graph_.end()) {
     MS_EXCEPTION_IF_NULL(root->func_graph());
     MS_LOG(INTERNAL_EXCEPTION) << "Cannot find func graph " << root->func_graph()->ToString() << " in cloner.";
   }
   CloneNode(root, fg_iter->second);
-  auto iter = replace_node_.find(root);
-  if (iter == replace_node_.end()) {
+  auto iter = replicated_node_.find(root);
+  if (iter == replicated_node_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Failed in clone for node " << root->DebugString() << ".";
   }
   return iter->second;
@@ -907,8 +911,8 @@ AnfNodePtr Cloner::operator[](const AnfNodePtr &node) {
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("func_graph_cloner_run.FuncGraphClonerNode", GetTime() - time);
 #endif
-  auto iter = replace_node_.find(node);
-  return ((iter == replace_node_.end()) ? node : iter->second);
+  auto iter = replicated_node_.find(node);
+  return ((iter == replicated_node_.end()) ? node : iter->second);
 }
 
 FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
@@ -920,8 +924,8 @@ FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("func_graph_cloner_run.FuncGraphClonerGraph", GetTime() - time);
 #endif
-  auto iter = replace_func_graph_.find(func_graph);
-  auto ret = ((iter == replace_func_graph_.end()) ? func_graph : iter->second);
+  auto iter = replicated_func_graph_.find(func_graph);
+  auto ret = ((iter == replicated_func_graph_.end()) ? func_graph : iter->second);
   ret->set_python_obj(func_graph->python_obj());
   return ret;
 }
@@ -980,10 +984,10 @@ FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs) {
   cloner.Run();
 
   FuncGraphVector lifted_func_graphs;
-  const auto &replace_func_graphs = cloner.cloned_func_graphs();
+  const auto &replicated_func_graphs = cloner.cloned_func_graphs();
   for (const auto &func_graph : func_graphs) {
-    auto iter = replace_func_graphs.find(func_graph);
-    auto ret = ((iter == replace_func_graphs.end()) ? func_graph : iter->second);
+    auto iter = replicated_func_graphs.find(func_graph);
+    auto ret = ((iter == replicated_func_graphs.end()) ? func_graph : iter->second);
     MS_EXCEPTION_IF_NULL(ret);
     ret->set_python_obj(func_graph->python_obj());
     lifted_func_graphs.push_back(ret);
