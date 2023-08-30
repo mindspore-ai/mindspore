@@ -284,7 +284,7 @@ STATUS NodeInferShape::InferShapeByNNACL(const CNodePtr &cnode) {
   }
   if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
-    (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
+    (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(inputs[0]->format())));
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " set CNode abstract failed.";
       return set_status;

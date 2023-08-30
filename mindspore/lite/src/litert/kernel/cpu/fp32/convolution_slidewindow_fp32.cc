@@ -217,7 +217,7 @@ int ConvolutionSWCPUKernel::MallocWeightBiasData() {
   int oc_block_num = UP_DIV(output_channel, oc_tile_);
   int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
   if (!op_parameter_->is_train_session_) {
-    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(pack_weight_size) * sizeof(float));
     packed_weight_ = GetConvPackWeightData(pack_weight_size * sizeof(float));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -226,7 +226,7 @@ int ConvolutionSWCPUKernel::MallocWeightBiasData() {
   }
 
   if (in_tensors_.size() == kInputSize2) {
-    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, oc_block_num * oc_tile_ * sizeof(float));
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, static_cast<size_t>(oc_block_num * oc_tile_) * sizeof(float));
     bias_data_ = malloc(oc_block_num * oc_tile_ * sizeof(float));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias failed.";

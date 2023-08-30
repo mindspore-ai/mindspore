@@ -125,7 +125,7 @@ AnfNodePtr GenerateNewShapeParam(const CNodePtr &cnode, const CNodePtr &reshape_
       if (dim >= dst_shape.size() || dst_shape.at(dim) != 1) {
         return std::vector<int>();
       }
-      dst_shape.erase(dst_shape.begin() + dim);
+      (void)dst_shape.erase(dst_shape.begin() + dim);
     }
     return dst_shape;
   };
@@ -137,7 +137,7 @@ AnfNodePtr GenerateNewShapeParam(const CNodePtr &cnode, const CNodePtr &reshape_
       if (dim > in_shape.size()) {
         return std::vector<int>();
       }
-      dst_shape.insert(dst_shape.begin() + dim, 1);
+      (void)dst_shape.insert(dst_shape.begin() + dim, 1);
     }
     return dst_shape;
   };
@@ -149,13 +149,13 @@ AnfNodePtr GenerateNewShapeParam(const CNodePtr &cnode, const CNodePtr &reshape_
   auto axis_value = GetValue<std::vector<int64_t>>(axis_attr);
   std::vector<int> new_shape;
   if (axis_value.empty()) {
-    std::for_each(shape.begin(), shape.end(), [&new_shape](int ele) {
+    (void)std::for_each(shape.begin(), shape.end(), [&new_shape](int ele) {
       if (ele != 1) new_shape.push_back(ele);
     });
   } else {
     std::vector<size_t> axis;
-    std::transform(axis_value.begin(), axis_value.end(), std::back_inserter(axis),
-                   [&shape](int64_t x) { return x >= 0 ? x : x + shape.size(); });
+    (void)std::transform(axis_value.begin(), axis_value.end(), std::back_inserter(axis),
+                         [&shape](int64_t x) { return x >= 0 ? x : x + shape.size(); });
     if (CheckPrimitiveType(cnode, prim::kPrimSqueeze)) {
       new_shape = infer_squeeze(shape, axis);
     } else if (CheckPrimitiveType(cnode, prim::kPrimUnsqueeze)) {

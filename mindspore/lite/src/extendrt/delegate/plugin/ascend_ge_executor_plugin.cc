@@ -73,7 +73,7 @@ bool AscendGeExecutorPlugin::Register() {
   return true;
 }
 
-void AscendGeExecutorPlugin::AdaptGraph(FuncGraphPtr graph) {
+void AscendGeExecutorPlugin::AdaptGraph(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
 #if !defined(_WIN32)
   if (!is_registered_ || ge_plugin_impl_ == nullptr) {

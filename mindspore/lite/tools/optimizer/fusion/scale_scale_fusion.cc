@@ -247,9 +247,9 @@ ParameterPtr ScaleScaleFusion::GenerateNewBiasNode(const FuncGraphPtr &func_grap
   if (down_bias_tensor_ != nullptr) {
     auto bias_shape = down_bias_tensor_->shape_c();
     int axis_diff = down_scale_axis_ - MSMIN(up_scale_axis_, down_scale_axis_);
-    int end_idx_diff =
-      down_scale_axis_ + static_cast<int>(bias_shape.size()) -
-      MSMAX(down_scale_axis_ + bias_shape.size(), up_scale_axis_ + up_weight_tensor_->shape_c().size());
+    int end_idx_diff = static_cast<int>(down_scale_axis_ + bias_shape.size()) -
+                       static_cast<int>(MSMAX(down_scale_axis_ + bias_shape.size(),
+                                              up_scale_axis_ + up_weight_tensor_->shape_c().size()));
     size_t outer_size = axis_diff > 0 ? std::accumulate(expand_shape_.begin(), expand_shape_.begin() + axis_diff, 1,
                                                         std::multiplies<size_t>())
                                       : 1;

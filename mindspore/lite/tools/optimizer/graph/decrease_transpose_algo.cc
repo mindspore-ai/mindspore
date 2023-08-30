@@ -73,7 +73,7 @@ void DealWithInputNodes(const FuncGraphPtr &func_graph, const CNodePtr &cur_node
       continue;
     }
     if (!check_node(cur_node_input)) {
-      not_trans_in_nodes->insert(std::make_pair(cur_node, i));
+      (void)not_trans_in_nodes->insert(std::make_pair(cur_node, i));
       continue;
     }
     queue_nodes->push(cur_node_input);
@@ -89,7 +89,7 @@ STATUS DealWithOutputNodes(const FuncGraphPtr &func_graph, const CNodePtr &cur_n
   MS_ASSERT(queue_nodes != nullptr && is_pre_nodes != nullptr);
   auto cur_node_users = func_graph->manager()->node_users()[cur_node];
   if (cur_node_users.empty()) {
-    out_nodes->insert(cur_node);
+    (void)out_nodes->insert(cur_node);
     return lite::RET_OK;
   }
   for (auto &cur_node_user : cur_node_users) {
@@ -101,7 +101,7 @@ STATUS DealWithOutputNodes(const FuncGraphPtr &func_graph, const CNodePtr &cur_n
       continue;
     }
     if (!check_node(cur_node_post)) {
-      not_trans_out_nodes->insert(cur_node_user);
+      (void)not_trans_out_nodes->insert(cur_node_user);
       continue;
     }
     queue_nodes->push(cur_node_post);
@@ -128,9 +128,9 @@ STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNode
     is_pre_nodes.pop();
     if (CheckPrimitiveType(cur_node, prim::kPrimTranspose)) {
       if (is_pre_node) {
-        in_nodes->insert(cur_node);
+        (void)in_nodes->insert(cur_node);
       } else {
-        out_nodes->insert(cur_node);
+        (void)out_nodes->insert(cur_node);
         continue;
       }
     }
@@ -233,7 +233,7 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
   bool need_expand = !CheckPrimitiveType(cnode, prim::kPrimScaleFusion);
   if (need_expand && expand_shape.size() <= DIMENSION_4D) {
     ShapeVector tmp_shape(DIMENSION_4D - expand_shape.size(), 1);
-    expand_shape.insert(expand_shape.begin(), tmp_shape.begin(), tmp_shape.end());
+    (void)expand_shape.insert(expand_shape.begin(), tmp_shape.begin(), tmp_shape.end());
   }
   auto tensor = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), expand_shape,
                                                  data_info.data_.data(), data_info.data_.size());
@@ -268,7 +268,10 @@ STATUS DecreaseTransposeAlgo::PostTransposeFusion(const FuncGraphPtr &func_graph
     MS_LOG(ERROR) << "get transpose perm failed.";
     return lite::RET_ERROR;
   }
-  auto node_users = func_graph->manager()->node_users()[cnode];
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  MS_CHECK_TRUE_RET(manager->node_users().find(cnode) != manager->node_users().end(), lite::RET_ERROR);
+  auto node_users = manager->node_users()[cnode];
   for (auto &node_user : node_users) {
     auto post_node = node_user.first;
     if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
@@ -280,7 +283,7 @@ STATUS DecreaseTransposeAlgo::PostTransposeFusion(const FuncGraphPtr &func_graph
         return lite::RET_ERROR;
       }
       if ((cur_perm == kNH2NC && post_trans_perm == kNC2NH) || (cur_perm == kNC2NH && post_trans_perm == kNH2NC)) {
-        func_graph->manager()->Replace(post_node, cnode->input(1));
+        (void)manager->Replace(post_node, cnode->input(1));
       }
     }
   }
@@ -319,7 +322,7 @@ STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const 
     tr.SetEdge(cnode, index, new_input);
     tr.Commit();
   } else {
-    func_graph->manager()->Replace(cnode, new_input);
+    (void)manager->Replace(cnode, new_input);
     if (PostTransposeFusion(func_graph, new_input->cast<CNodePtr>()) != lite::RET_OK) {
       MS_LOG(ERROR) << "post transpose fusion failed.";
       return lite::RET_ERROR;
@@ -429,13 +432,18 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
 STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                   const std::vector<int> &perm) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (!cnode->abstract()->isa<abstract::AbstractTuple>()) {
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  auto abstract = cnode->abstract();
+  MS_CHECK_TRUE_RET(abstract != nullptr, lite::RET_ERROR);
+  if (!abstract->isa<abstract::AbstractTuple>()) {
     if (GenNewInput(func_graph, cnode, perm, false) != lite::RET_OK) {
       MS_LOG(ERROR) << "generate a new input failed.";
       return lite::RET_ERROR;
     }
   } else {
-    auto node_users = func_graph->manager()->node_users()[cnode];
+    MS_CHECK_TRUE_RET(manager->node_users().find(cnode) != manager->node_users().end(), lite::RET_ERROR);
+    auto node_users = manager->node_users()[cnode];
     for (auto &node_user : node_users) {
       auto post_node = node_user.first;
       CNodePtr tuple_get_item = nullptr;
@@ -447,7 +455,7 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
           tuple_get_item = GenTupleGetItemNode(func_graph, cnode, 0);
           MS_CHECK_TRUE_RET(tuple_get_item != nullptr, lite::RET_ERROR);
           post_node = tuple_get_item;
-          func_graph->manager()->Replace(cnode, tuple_get_item);
+          (void)manager->Replace(cnode, tuple_get_item);
         }
       } else {
         auto status = node_infer_shape_.InferShape(post_node->cast<CNodePtr>());
@@ -456,7 +464,8 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
           return lite::RET_ERROR;
         }
       }
-      if (func_graph->manager()->node_users()[post_node].empty()) {
+      MS_CHECK_TRUE_RET(manager->node_users().find(post_node) != manager->node_users().end(), lite::RET_ERROR);
+      if (manager->node_users()[post_node].empty()) {
         continue;
       }
       auto post_cnode = post_node->cast<CNodePtr>();
@@ -466,7 +475,7 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
         return lite::RET_ERROR;
       }
       if (tuple_get_item != nullptr) {
-        func_graph->manager()->Replace(tuple_get_item, tuple_get_item->input(1));
+        (void)manager->Replace(tuple_get_item, tuple_get_item->input(1));
       }
     }
   }
@@ -582,10 +591,10 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
       middle_nodes.erase(node->cast<CNodePtr>());
     }
   }
-  std::for_each(in_nodes.begin(), in_nodes.end(),
-                [&manager](const CNodePtr &in_cnode) { manager->Replace(in_cnode, in_cnode->input(1)); });
-  std::for_each(out_nodes.begin(), out_nodes.end(),
-                [&manager](const CNodePtr &out_node) { manager->Replace(out_node, out_node->input(1)); });
+  (void)std::for_each(in_nodes.begin(), in_nodes.end(),
+                      [&manager](const CNodePtr &in_cnode) { manager->Replace(in_cnode, in_cnode->input(1)); });
+  (void)std::for_each(out_nodes.begin(), out_nodes.end(),
+                      [&manager](const CNodePtr &out_node) { manager->Replace(out_node, out_node->input(1)); });
 
   if (InsertPreTransForNonTransInOut(func_graph, not_trans_in_nodes, not_trans_out_nodes, trans_info) != lite::RET_OK) {
     MS_LOG(ERROR) << "Insert pre transpose failed for non-transpose inputs or outputs.";
@@ -667,7 +676,7 @@ int DecreaseTransposeAlgo::ResetSubGraphInput() {
       MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "add parameter failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
-      manager->Replace(sub_input, param_node);
+      (void)manager->Replace(sub_input, param_node);
       auto sub_param_input = sub_input->cast<ParameterPtr>();
       MS_ASSERT(sub_param_input != nullptr);
       sub_param_input->set_default_param(nullptr);

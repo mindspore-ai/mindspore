@@ -43,16 +43,16 @@
 #ifdef ENABLE_MINDRT
 #include "src/litert/mindrt_executor.h"
 #endif
-#if SUPPORT_NPU
+#ifdef SUPPORT_NPU
 #include "src/litert/delegate/npu/npu_delegate.h"
 #endif
-#if GPU_OPENCL
+#ifdef GPU_OPENCL
 #include "src/litert/kernel/opencl/opencl_subgraph.h"
 #endif
-#if GPU_TENSORRT
+#ifdef GPU_TENSORRT
 #include "src/litert/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-#if SUPPORT_NNAPI
+#ifdef SUPPORT_NNAPI
 #include "src/litert/delegate/nnapi/nnapi_delegate.h"
 #endif
 #ifdef ENABLE_COREML

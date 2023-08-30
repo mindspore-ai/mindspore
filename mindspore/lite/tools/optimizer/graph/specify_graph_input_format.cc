@@ -115,7 +115,7 @@ bool CheckInputsFormatNHWC(const FuncGraphPtr &func_graph) {
   auto node_users = manager->node_users();
   std::vector<AnfNodePtr> nodes;
   auto inputs = func_graph->get_inputs();
-  std::for_each(inputs.begin(), inputs.end(), [&nodes](const AnfNodePtr &input) {
+  (void)std::for_each(inputs.begin(), inputs.end(), [&nodes](const AnfNodePtr &input) {
     if (opt::GetAnfNodeOutputShape(input, 0).size() == DIMENSION_4D) {
       nodes.push_back(input);
     }
@@ -171,7 +171,7 @@ std::vector<AnfNodePtr> GetTracedCnodes(const FuncGraphPtr &func_graph) {
         auto input_node = cnode->input(1);
         auto itr = std::find(traced_nodes.begin(), traced_nodes.end(), input_node);
         if (itr != traced_nodes.end()) {
-          traced_nodes.erase(itr + 1, traced_nodes.end());
+          (void)traced_nodes.erase(itr + 1, traced_nodes.end());
         }
       }
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
