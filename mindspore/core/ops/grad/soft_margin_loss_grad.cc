@@ -51,9 +51,11 @@ abstract::ShapePtr SoftMarginLossGradInferShape(const PrimitivePtr &primitive,
   auto predict = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto label = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto dout = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("logits shape", predict, kEqual, label, op_name, ValueError);
+  CheckAndConvertUtils::Check("logits shape", SizeToLong(predict.size()), kEqual, SizeToLong(label.size()), op_name,
+                              ValueError);
   if (dout.size() > 1) {
-    CheckAndConvertUtils::Check("logits shape", predict, kEqual, dout, op_name, ValueError);
+    CheckAndConvertUtils::Check("logits shape", SizeToLong(predict.size()), kEqual, SizeToLong(dout.size()), op_name,
+                                ValueError);
   }
   return std::make_shared<abstract::Shape>(predict);
 }
