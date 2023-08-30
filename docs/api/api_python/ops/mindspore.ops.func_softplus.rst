@@ -14,7 +14,12 @@ mindspore.ops.softplus
     当 :math:`input * beta > threshold` 时，为保证数值稳定性，softplus的实现被转换为线性函数。
 
     参数：
-        - **input** (Tensor) - 任意维度的输入Tensor，数据类型支持float16，float32或float64（CPU和GPU）。
+        - **input** (Tensor) - 任意维度的输入Tensor。
+          支持数据类型：
+
+          - GPU/CPU：float16、float32、float64。
+          - Ascend：float16、float32。
+
         - **beta** (int，可选) - softplus函数中的 :math:`\beta` 值。默认值：``1`` 。
         - **threshold** (int，可选) - 当 :math:`input * beta > threshold` 时，softplus被转换为线性函数。默认值：``20`` 。
 

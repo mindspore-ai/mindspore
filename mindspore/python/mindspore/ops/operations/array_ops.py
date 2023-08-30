@@ -174,39 +174,11 @@ def _check_infer_attr_reduce(axis, keep_dims, prim_name):
 
 class Expand(Primitive):
     """
-    Expands the Tensor along singleton dimensions(dim with size 1) to match given desired shape.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.expand` for more details.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-        - **shape** (Tensor) - The new shape of x.
-
-    Outputs:
-        Tensor after expansion, it shape is determined by `shape`.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
-        >>> shape = Tensor(np.array([3,4]), mindspore.int32)
-        >>> expand = ops.Expand()
-        >>> y = expand(x, shape)
-        >>> print(y)
-        [[1. 1. 1. 1.]
-         [2. 2. 2. 2.]
-         [3. 3. 3. 3.]]
-        >>> input_x = Tensor(2, mindspore.int16)
-        >>> size = Tensor(np.array([1, 1]), mindspore.int32)
-        >>> y = ops.Expand()(input_x, size)
-        >>> print(y)
-        [[2]]
+    :class:`mindspore.ops.Expand` will be deprecated in the future.
+    Please use :class:`mindspore.ops.BroadcastTo` instead.
     """
 
+    @deprecated("2.1", "BroadcastTo", False)
     @prim_attr_register
     def __init__(self):
         """Initialize Expand."""

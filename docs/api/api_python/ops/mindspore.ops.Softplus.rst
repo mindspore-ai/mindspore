@@ -12,7 +12,11 @@
         \text{output} = \log(1 + \exp(\text{x}))
 
     输入：
-        - **input_x** (Tensor) - 任意维度的输入Tensor，数据类型支持float16、float32或float64(CPU和GPU)。
+        - **input_x** (Tensor) - 任意维度的输入Tensor。
+          支持数据类型：
+
+          - GPU/CPU：float16、float32、float64。
+          - Ascend：float16、float32。
 
     输出：
         Tensor，与 `input_x` 的shape和数据类型相同。

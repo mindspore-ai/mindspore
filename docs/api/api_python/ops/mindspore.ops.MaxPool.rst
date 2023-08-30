@@ -25,7 +25,10 @@ mindspore.ops.MaxPool
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
-          支持的数据类型：float16、float32、float64。
+          支持数据类型：
+
+          - CPU：float16、float32、float64。
+          - GPU/Ascend：float16、float32。
 
     输出：
         Tensor，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
