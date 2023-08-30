@@ -1034,6 +1034,7 @@ bool AbstractSequence::PurifyElements() {
 
 bool AbstractCanJoin(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2) {
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     (void)abs1->Join(abs2);
   } catch (std::exception &) {
     return false;
