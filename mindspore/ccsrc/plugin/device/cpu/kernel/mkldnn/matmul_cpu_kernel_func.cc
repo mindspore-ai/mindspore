@@ -142,19 +142,19 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MatMulCpuKernelFunc::RunFunc(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   if (with_bias_add_) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulWithBiasAddInputsNum, kernel_name_);
-    SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->addr));
+    SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->device_ptr()));
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   }
-  const auto input_a = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto input_b = reinterpret_cast<float *>(inputs[1]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto input_a = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  const auto input_b = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   SetArgumentHandle(DNNL_ARG_SRC, input_a);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, input_b);
