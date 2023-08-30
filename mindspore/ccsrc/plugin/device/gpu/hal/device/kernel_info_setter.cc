@@ -412,7 +412,9 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
 void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list, input_list, output_list;
+  std::vector<AnfNodePtr> node_list;
+  std::vector<AnfNodePtr> input_list;
+  std::vector<AnfNodePtr> output_list;
   kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
 
   std::vector<std::string> graph_input_format;
