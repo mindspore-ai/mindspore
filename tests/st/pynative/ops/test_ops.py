@@ -14,10 +14,12 @@
 # ============================================================================
 import pytest
 import numpy as np
+import mindspore.nn as nn
 
 import mindspore as ms
 from mindspore import context
 from mindspore import ops, Tensor, dtype, jit
+from tests.st.pynative.utils import GradOfFirstInput
 
 
 def test_cast():
@@ -102,3 +104,29 @@ def test_primitive_user_data():
     user_data = cast.get_user_data("__user_data__")
     cast(tensor, type_dst)  # Run in PyNative.
     np.testing.assert_almost_equal(user_data.asnumpy(), tensor.asnumpy())
+
+
+class Abs(nn.Cell):
+    def __init__(self):
+        super(Abs, self).__init__()
+        self.abs = ops.Abs()
+
+    def construct(self, inputs):
+        return self.abs(inputs)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_primitive_abs():
+    """
+    Feature: Primitive abs
+    Description: Test ascend for abs grad.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    inputs = Tensor(np.random.randn(1).astype(np.float32))
+    net = Abs()
+    grad_net = GradOfFirstInput(net, sens_param=False)
+    grad_net(inputs)
