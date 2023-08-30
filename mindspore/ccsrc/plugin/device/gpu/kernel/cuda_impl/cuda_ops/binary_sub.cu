@@ -17,16 +17,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_common.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_pub_impl.cuh"
 
-template <typename T>
-struct BinaryFunc<BinaryOpType::kGreater, T, T, bool> {
+template <typename In0_t, typename In1_t, typename Out_t>
+struct BinaryFunc<BinaryOpType::kSub, In0_t, In1_t, Out_t> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs > rhs; }
+  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const { return val0 - val1; }
 };
-REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kGreater);
-
-template <typename T>
-struct BinaryFunc<BinaryOpType::kLess, T, T, bool> {
-  __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs < rhs; }
-};
-REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kLess);
+REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kSub);
+REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kSub);
+REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(BinaryOpType::kSub);

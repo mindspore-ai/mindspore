@@ -44,16 +44,16 @@ static uint64_t NextHighestPowerOf2(uint64_t n) {
   return n;
 }
 
-template <int A, typename K, typename V>
-bool SegSort(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices, int64_t key_slice_size,
-             int64_t key_slice_stride, const TensorLayoutHelper &value_info, V *value_data, int64_t value_slice_stride,
-             bool descending, cudaStream_t stream) {
+template <typename K, typename V>
+bool SegSort(const int key_dims, const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices,
+             int64_t key_slice_size, int64_t key_slice_stride, const TensorLayoutHelper &value_info, V *value_data,
+             int64_t value_slice_stride, bool descending, cudaStream_t stream) {
   int64_t ceil_power_of2 = NextHighestPowerOf2(key_slice_size);
 
 #define HANDLE_CASE(SIZE, ITEMS_PER_THREAD, STATUS)                                                                  \
-  STATUS =                                                                                                           \
-    SortFixedSize<A, SIZE, ITEMS_PER_THREAD, K, V>(key_info, key_data, key_slices, key_slice_size, key_slice_stride, \
-                                                   value_info, value_data, value_slice_stride, descending, stream);
+  STATUS = SortFixedSize<SIZE, ITEMS_PER_THREAD, K, V>(key_dims, key_info, key_data, key_slices, key_slice_size,     \
+                                                       key_slice_stride, value_info, value_data, value_slice_stride, \
+                                                       descending, stream);
   constexpr int kFixedSizeLevel3SubThreshold1 = 512;
   constexpr int kFixedSizeLevel3SubThreshold2 = 256;
   constexpr int kFixedSizeLevel4SubThreshold = 64;
@@ -190,23 +190,25 @@ bool SortKeyValueInplace(const TensorLayoutHelper &key, K *key_data, const Tenso
   int collapse_value_dim = value_info.CollapseDims(axis);
   value_info.strides_[collapse_value_dim] = stride_value;
 
-#define HANDLE_SORT_CASE(TYPE, A)                                                            \
-  return SegSort<A, K, V>(key_info, key_data, (TYPE)key_slices, (TYPE)key_slice_size,        \
-                          (TYPE)key_info.strides_[collapse_key_dim], value_info, value_data, \
-                          (TYPE)value_info.strides_[collapse_value_dim], descending, cuda_stream)
-
   if (key_info.IsContiguous()) {
-    HANDLE_SORT_CASE(int64_t, kFixedSizeSortKeyDimsLastSecond);
+    return SegSort<K, V>(kFixedSizeSortKeyDimsLastSecond, key_info, key_data, (int64_t)key_slices,
+                         (int64_t)key_slice_size, (int64_t)key_info.strides_[collapse_key_dim], value_info, value_data,
+                         (int64_t)value_info.strides_[collapse_value_dim], descending, cuda_stream);
   } else {
     constexpr int kDimSize = 2;
     switch (key_info.dim_size_) {
       case kDimSize:  // if sort dim == -1:
-        HANDLE_SORT_CASE(unsigned int, kFixedSizeSortKeyDimsSecond);
+        return SegSort<K, V>(kFixedSizeSortKeyDimsSecond, key_info, key_data, (unsigned int)key_slices,
+                             (unsigned int)key_slice_size, (unsigned int)key_info.strides_[collapse_key_dim],
+                             value_info, value_data, (unsigned int)value_info.strides_[collapse_value_dim], descending,
+                             cuda_stream);
       default:  // if sort dim != -1:
-        HANDLE_SORT_CASE(unsigned int, kFixedSizeSortKeyDimsLast);
+        return SegSort<K, V>(kFixedSizeSortKeyDimsLast, key_info, key_data, (unsigned int)key_slices,
+                             (unsigned int)key_slice_size, (unsigned int)key_info.strides_[collapse_key_dim],
+                             value_info, value_data, (unsigned int)value_info.strides_[collapse_value_dim], descending,
+                             cuda_stream);
     }
   }
-#undef HANDLE_SORT_CASE
 }
 
 #define SortKeyValueInplace(K, V)                                                                                      \

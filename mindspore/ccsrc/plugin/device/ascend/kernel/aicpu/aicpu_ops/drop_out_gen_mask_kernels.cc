@@ -400,7 +400,6 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
 
 uint32_t DropOutGenMaskKernel::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
-  AICPU_LOGI("MyPrint::DropOutGenMaskKernel::ParseKernelParam");
   AICPU_LOGEVENT("InputNum=[%zu], OutputNum=[%zu], ioAddrNum=[%zu], seed exist: %d, seed2 exist: %d.",
                  node_def_.inputs_size(), node_def_.outputs_size(), io_addrs_.size(), attrs.contains("seed"),
                  attrs.contains("seed2"));
