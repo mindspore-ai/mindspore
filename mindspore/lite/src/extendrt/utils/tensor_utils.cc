@@ -120,6 +120,9 @@ std::vector<mindspore::tensor::Tensor> TensorUtils::MSTensorToTensor(const std::
     if (device_address != nullptr) {
       auto lite_device_address = std::make_shared<LiteDeviceAddress>(device_address, ms_tensor.DataSize());
       tensor.set_device_address(lite_device_address);
+      // only use device_id now.
+      auto device_info = tensor::DeviceInfo("DefaultFormat", nullptr, "DefaultFormat", ms_tensor.GetDeviceId());
+      tensor.set_device_info(device_info);
     }
     tensors.emplace_back(std::move(tensor));
   }

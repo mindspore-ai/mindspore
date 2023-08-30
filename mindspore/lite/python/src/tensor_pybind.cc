@@ -17,18 +17,27 @@
 #include "include/api/data_type.h"
 #include "include/api/format.h"
 #include "src/common/log_adapter.h"
+#include "src/litert/cxx_api/tensor_utils.h"
 #include "third_party/securec/include/securec.h"
 #include "mindspore/lite/src/common/mutable_tensor_impl.h"
 #include "mindspore/lite/python/src/tensor_numpy_impl.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
-
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
 #include "pybind11/stl.h"
-
+#ifdef ENABLE_CLOUD_INFERENCE
+#include "extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
+#endif
 namespace mindspore::lite {
+namespace {
+bool IsCContiguous(const py::array &input) {
+  auto flags = static_cast<unsigned int>(input.flags());
+  return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
+}
+}  // namespace
+
 namespace py = pybind11;
 using MSTensorPtr = std::shared_ptr<MSTensor>;
 
@@ -94,6 +103,14 @@ void TensorPyBind(const py::module &m) {
     .def("set_data", &MSTensor::SetData)
     .def("get_data", &MSTensor::MutableData)
     .def("is_null", [](const MSTensorPtr &tensor) { return tensor == nullptr; })
+    .def("get_tensor_device_type",
+         [](const MSTensorPtr &tensor) {
+           std::string device = "None";
+           if (!tensor->GetDevice().empty()) {
+             device = tensor->GetDevice();
+           }
+           return device + ":" + std::to_string(tensor->GetDeviceId());
+         })
     .def("set_data_from_numpy",
          [](const MSTensorPtr &tensor, const py::array &input) { return SetTensorNumpyData(tensor, input); })
     .def("get_data_to_numpy", [](const MSTensorPtr &tensor) -> py::array {
@@ -107,15 +124,70 @@ void TensorPyBind(const py::module &m) {
     });
 }
 
-MSTensorPtr create_tensor(DataType data_type, const std::vector<int64_t> &shape) {
-  auto tensor = mindspore::MSTensor::CreateTensor("", data_type, shape, nullptr, 0);
+MSTensorPtr create_tensor(DataType data_type, const std::vector<int64_t> &shape, const std::string &device_type,
+                          int device_id) {
+  auto tensor = mindspore::MSTensor::CreateTensor("", data_type, shape, nullptr, 0, device_type, device_id);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "create tensor failed.";
-    return {};
+    return nullptr;
   }
   mindspore::Format data_format = NCHW;
   tensor->SetFormat(data_format);
   return MSTensorPtr(tensor);
+}
+
+MSTensorPtr create_tensor_by_tensor(const MSTensor &tensor, const std::string &device_type, int device_id) {
+  auto new_tensor = mindspore::MSTensor::CreateTensor("", tensor, device_type, device_id);
+  if (new_tensor == nullptr) {
+    MS_LOG(ERROR) << "create tensor failed.";
+    return nullptr;
+  }
+  new_tensor->SetFormat(tensor.format());
+  return MSTensorPtr(new_tensor);
+}
+
+MSTensorPtr create_tensor_by_numpy(const py::array &input, const std::string &device_type, int32_t device_id) {
+  // Check format.
+  if (!IsCContiguous(input)) {
+    MS_LOG(ERROR) << "Numpy array is not C Contiguous";
+    return nullptr;
+  }
+  auto py_buffer_info = input.request();
+  auto py_data_type = TensorNumpyImpl::GetDataType(py_buffer_info);
+  auto py_data_size = py_buffer_info.size * py_buffer_info.itemsize;
+  auto py_shape = py_buffer_info.shape;
+  auto data_size = mindspore::CalTensorDataSize(py_shape, py_data_type);
+  if (py_data_size != static_cast<int64_t>(data_size)) {
+    MS_LOG(ERROR) << "Expect data size " << data_size << ", but got " << py_data_size;
+    return nullptr;
+  }
+  auto tensor_impl = std::make_shared<TensorNumpyImpl>("", std::move(py_buffer_info), py_shape);
+  tensor_impl->SetDevice(device_type);
+  tensor_impl->SetDeviceId(device_id);
+  auto numpy_tensor = std::make_shared<MSTensor>(tensor_impl);
+  if (numpy_tensor == nullptr) {
+    MS_LOG(ERROR) << "Create numpy tensor failed.";
+    return nullptr;
+  }
+#ifdef ENABLE_CLOUD_INFERENCE
+  if (device_type == "ascend") {
+    kernel::AscendAllocatorPlugin::GetInstance().Register();
+    device_id = device_id == -1 ? kernel::AscendAllocatorPlugin::GetInstance().GetCurrentDeviceId() : device_id;
+    auto device_data = kernel::AscendAllocatorPlugin::GetInstance().Malloc(data_size, device_id);
+    if (device_data == nullptr) {
+      MS_LOG(ERROR) << "Malloc device data for numpy tensor failed.";
+      return nullptr;
+    }
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(numpy_tensor->MutableData(),
+                                                                                    device_data, data_size);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "tensor has device data, then copy host data to device failed.";
+      return nullptr;
+    }
+    numpy_tensor->SetDeviceData(device_data);
+  }
+#endif
+  return numpy_tensor;
 }
 
 std::string GetPyTypeFormat(DataType data_type) {
@@ -152,11 +224,6 @@ std::string GetPyTypeFormat(DataType data_type) {
   }
 }
 
-bool IsCContiguous(const py::array &input) {
-  auto flags = static_cast<unsigned int>(input.flags());
-  return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
-}
-
 bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
   auto &tensor = *tensor_ptr;
   // Check format.
@@ -177,9 +244,23 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
                   << tensor.Shape() << ", got shape " << py_buffer_info.shape;
     return false;
   }
-  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape(),
-                                                       static_cast<mindspore::DataType>(py_data_type));
-  tensor = MSTensor(tensor_impl);
+  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
+  tensor_impl->SetDevice(tensor.GetDevice());
+  tensor_impl->SetDeviceId(tensor.GetDeviceId());
+  auto numpy_tensor = MSTensor(tensor_impl);
+#ifdef ENABLE_CLOUD_INFERENCE
+  if (tensor.GetDeviceData() != nullptr) {
+    MS_LOG(INFO) << "device tensor data ptr is not nullptr, need copy host data to device data.";
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(
+      numpy_tensor.MutableData(), tensor.GetDeviceData(), tensor.DataSize());
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "tensor has device data, then copy host data to device failed.";
+      return false;
+    }
+    numpy_tensor.SetDeviceData(tensor.GetDeviceData());
+  }
+#endif
+  tensor = numpy_tensor;
   return true;
 }
 
@@ -195,6 +276,19 @@ py::buffer_info GetPyBufferInfo(const MSTensorPtr &tensor) {
     strides[i] = element_num * item_size;
     element_num *= shape[i];
   }
+#ifdef ENABLE_CLOUD_INFERENCE
+  auto device_data = tensor->GetDeviceData();
+  if (device_data != nullptr) {
+    MS_LOG(INFO) << "need copy host data to device.";
+    // device data is not nullptr, data in device, need copy device data to host.
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(device_data, tensor->MutableData(),
+                                                                                    tensor->DataSize());
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "tensor has device data, then copy device data to host failed.";
+      return py::buffer_info{nullptr, 0, format, 0, {}, {}};
+    }
+  }
+#endif
   return py::buffer_info{tensor->MutableData(), item_size, format, ndim, shape, strides};
 }
 }  // namespace mindspore::lite

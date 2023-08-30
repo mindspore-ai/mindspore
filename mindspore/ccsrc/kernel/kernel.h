@@ -121,6 +121,7 @@ class BACKEND_EXPORT KernelTensor {
     meta_ = copy_tensor.meta_;
     data_ = copy_tensor.data_;
     host_data_ = copy_tensor.host_data_;
+    device_id_ = copy_tensor.device_id_;
   }
   KernelTensor &operator=(const KernelTensor &copy_tensor) {
     if (&copy_tensor == this) {
@@ -130,6 +131,7 @@ class BACKEND_EXPORT KernelTensor {
     meta_ = copy_tensor.meta_;
     data_ = copy_tensor.data_;
     host_data_ = copy_tensor.host_data_;
+    device_id_ = copy_tensor.device_id_;
     dyn_output_data_ = nullptr;
     return *this;
   }
@@ -191,6 +193,8 @@ class BACKEND_EXPORT KernelTensor {
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
+  int32_t GetDeviceId() const { return device_id_; }
+  void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
   TypeId meta_type_{kObjectTypeTensorType};
@@ -200,6 +204,7 @@ class BACKEND_EXPORT KernelTensor {
   AddressPtr host_data_{nullptr};                        // Host data address.
   std::unique_ptr<uint8_t[]> dyn_output_data_{nullptr};  // Create new output memory buffer for dynamic output
   string GetAbstractName() const;
+  int32_t device_id_{0};
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 

@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import os
 import logging
 from enum import Enum
+import numpy
 
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.context import Context
@@ -233,6 +234,16 @@ class Model(BaseModel):
         if not ret.IsOk():
             raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
 
+    def get_outputs(self):
+        """
+        Obtains all output information Tensors of the model.
+
+        Returns:
+            list[TensorMeta], the output TensorMeta list of the model.
+        """
+        # pylint: disable=useless-super-delegation
+        return super(Model, self).get_outputs()
+
     def get_inputs(self):
         """
         Obtains all input Tensors of the model.
@@ -249,12 +260,14 @@ class Model(BaseModel):
         # pylint: disable=useless-super-delegation
         return super(Model, self).get_inputs()
 
-    def predict(self, inputs):
+    def predict(self, inputs, outputs=None):
         """
         Inference model.
 
         Args:
             inputs (list[Tensor]): A list that includes all input Tensors in order.
+            inputs (list[Tensor], optional): A list that includes all output Tensors in order,
+                this tensor include output data buffer.
 
         Returns:
             list[Tensor], the output Tensor list of the model.
@@ -321,7 +334,21 @@ class Model(BaseModel):
             outputs' shape:  (1,1001)
         """
         # pylint: disable=useless-super-delegation
-        return super(Model, self).predict(inputs)
+        if not isinstance(inputs, (list, tuple)):
+            raise TypeError("inputs must be list or tuple, but got {}.".format(type(inputs)))
+        model_input_tensors = self.get_inputs()
+        if len(model_input_tensors) != len(inputs):
+            raise RuntimeError(f"inputs size is wrong.")
+        inputs_tensor = []
+        for i, in_tensor in enumerate(inputs):
+            if isinstance(in_tensor, numpy.ndarray):
+                model_input_tensors[i].set_data_from_numpy(in_tensor)
+                inputs_tensor.append(model_input_tensors[i])
+            elif isinstance(in_tensor, Tensor):
+                inputs_tensor.append(in_tensor)
+            else:
+                raise TypeError("inputs element must be Tensor, of numpy.")
+        return super(Model, self).predict(inputs_tensor, outputs)
 
     def resize(self, inputs, dims):
         """

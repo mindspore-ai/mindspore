@@ -277,6 +277,14 @@ class Tensor {
 
   bool get_shape_changed() const { return tensor_c_.shape_changed_; }
 
+  int get_device_id() const { return device_id_; }
+
+  void set_device_id(int device_id) { device_id_ = device_id; }
+
+  std::string get_device() { return device_; }
+
+  void set_device(const std::string &device) { device_ = device; }
+
   TensorC *ConvertToTensorC() { return &tensor_c_; }
 
  private:
@@ -306,6 +314,8 @@ class Tensor {
   void *device_data_ = nullptr;
   CompressType compress_type_ = kNoCompression;
   size_t compressed_size_ = 0;
+  std::string device_ = "";
+  int device_id_ = -1;
 };
 }  // namespace lite
 }  // namespace mindspore

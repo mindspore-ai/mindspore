@@ -141,7 +141,8 @@ class TensorReferenceImpl : public MSTensor::Impl {
 };
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                                 const void *data, size_t data_len) noexcept {
+                                 const void *data, size_t data_len, const std::vector<char> &device,
+                                 int device_id) noexcept {
   std::string name_str = CharToString(name);
   try {
     std::shared_ptr<Impl> impl = std::make_shared<TensorDefaultImpl>(name_str, type, shape, data, data_len);
@@ -154,6 +155,12 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
     MS_LOG(ERROR) << "Unknown error occurred.";
     return nullptr;
   }
+}
+
+MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &tensor, const std::vector<char> &device,
+                                 int device_id) noexcept {
+  MS_LOG(ERROR) << "Invalid implement.";
+  return nullptr;
 }
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,

@@ -23,6 +23,7 @@
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
 #include "src/litert/kernel/ascend/src/acl_mem_manager.h"
+#include "src/extendrt/kernel/ascend/model/acl_allocator.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -914,7 +915,18 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs)
     auto device_data = input->GetData();
     auto host_data = input->GetHostData();
     if (device_data && device_data->addr) {
-      input_buffer = device_data->addr;
+      auto input_device_id = input->GetDeviceId();
+      if (input_device_id == device_id_) {
+        input_buffer = device_data->addr;
+      } else {
+        // memcpy device data from src device to current device.
+        if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
+              device_data->addr, info.device_data, info.buffer_size, input_device_id, device_id_) != kSuccess) {
+          MS_LOG(ERROR) << "Copy input data from device to current device failed.";
+          return false;
+        }
+        input_buffer = info.device_data;
+      }
     } else {
       auto data = host_data->addr;
       auto size = host_data->size;
@@ -959,7 +971,8 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &output
     void *output_buffer = nullptr;
     auto device_data = output->GetData();
     auto host_data = output->GetHostData();
-    if (device_data && device_data->addr) {
+    auto output_device_id = output->GetDeviceId();
+    if (device_data && device_data->addr && output_device_id == device_id_) {
       output_buffer = device_data->addr;
     } else if (host_data && host_data->addr && is_run_on_device_) {
       output_buffer = host_data->addr;
@@ -1099,6 +1112,7 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
       continue;
     }
     auto host_data = output->GetHostData();
+    auto output_device_id = output->GetDeviceId();
     if (host_data && host_data->addr && !is_run_on_device_) {
       if (host_data->size != output_info.buffer_size) {
         MS_LOG(ERROR) << "Specified output host data size " << host_data->size << " != execute output data size "
@@ -1110,6 +1124,14 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Memcpy input " << i << " from " << (is_run_on_device_ ? "host" : "device")
                       << " to host failed, memory size " << output_info.buffer_size << ",ret: " << ret;
+        return false;
+      }
+    } else if (output_device_id != device_id_) {
+      // memcpy output data from current device to output device.
+      if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(output_info.cur_device_data,
+                                                                      output->GetData()->addr, output_info.buffer_size,
+                                                                      device_id_, output_device_id) != kSuccess) {
+        MS_LOG(ERROR) << "Copy output data from device to current device failed.";
         return false;
       }
     }
