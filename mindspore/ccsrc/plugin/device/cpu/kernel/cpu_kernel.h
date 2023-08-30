@@ -142,6 +142,16 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
  public:
   NativeCpuKernelMod() = default;
   ~NativeCpuKernelMod() override = default;
+  ////////////////// new func ////////////////////////
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void * /*stream_ptr*/) override {
+    return Launch(inputs, workspace, outputs);
+  }
+  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
+  ////////////////// old func ////////////////////////
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
@@ -150,11 +160,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
                       const std::vector<AddressPtr> &outputs) {
     return true;
   }
-  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                      const std::vector<KernelTensor *> &outputs) {
-    return true;
-  }
-
+  /////////////////////////////////////////////////
   // Must be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
 
@@ -204,6 +210,7 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
   CNodeWeakPtr cnode_ptr_;
 
+  ///////////////////// old func ///////////////
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
@@ -217,6 +224,7 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
 
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
+  ////////////////////////////////////////////
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
@@ -259,8 +267,18 @@ class CpuKernelFunc {
  public:
   CpuKernelFunc() = default;
   virtual ~CpuKernelFunc() = default;
+  ///////////// new func ///////////////
   virtual void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                         const std::vector<KernelTensorPtr> &outputs) {}
+  virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    return KRET_OK;
+  }
+  virtual bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                       const std::vector<KernelTensor *> &outputs) {
+    return true;
+  }
+  ///////////// old func ///////////////
+  virtual void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
   virtual int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
@@ -271,10 +289,7 @@ class CpuKernelFunc {
                        const std::vector<AddressPtr> &outputs) {
     return true;
   }
-  virtual bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                       const std::vector<KernelTensor *> &outputs) {
-    return true;
-  }
+  ////////////////////////////////////
   ParallelSearchInfo parallel_search_info_;
 };
 
