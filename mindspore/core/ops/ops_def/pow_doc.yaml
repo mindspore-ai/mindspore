@@ -1,0 +1,37 @@
+pow:
+    description: |
+        Calculates the `y` power of each element in `x`.
+
+        Refer to :func:`mindspore.ops.pow` for more details.
+
+        Inputs:
+            - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+              a bool or a tensor whose data type is
+              `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+              the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+              When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+        Outputs:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> y = 3.0
+            >>> output = ops.pow(x, y)
+            >>> print(output)
+            [ 1.  8. 64.]
+            >>>
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+            >>> output = ops.pow(x, y)
+            >>> print(output)
+            [ 1. 16. 64.]
