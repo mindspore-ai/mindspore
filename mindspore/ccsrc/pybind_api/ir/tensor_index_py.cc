@@ -260,6 +260,32 @@ py::array TensorIndex::MakeNdArray(const py::object &a, int64_t dim_size) {
   return new_array;
 }
 
+namespace Convert {
+string ConvertTypeToString(const TensorIndex &index) {
+  if (index.IsNone())
+    return "None";
+  else if (index.IsEllipsis())
+    return "Ellipsis";
+  else if (index.IsInteger())
+    return "Integer";
+  else if (index.IsBoolean())
+    return "Boolean";
+  else if (index.IsSlice())
+    return "Slice";
+  else if (index.IsTensor())
+    return "Tensor";
+  else if (index.IsList())
+    return "List";
+  else if (index.IsTuple())
+    return "Tuple";
+  else if (index.IsArray())
+    return "Array";
+  else if (index.IsFloat())
+    return "Float";
+  return "Unknown";
+}
+}  // namespace Convert
+
 std::vector<TensorIndex> TensorIndex::TransformEllipsisToSlice(const ShapeVector &data_shape,
                                                                const std::vector<TensorIndex> &indices) {
   // Check if the tuple index len is longer than the data's dims and transform ellipsis in the indices
@@ -274,8 +300,8 @@ std::vector<TensorIndex> TensorIndex::TransformEllipsisToSlice(const ShapeVector
        TensorIndexType::Integer, TensorIndexType::Tensor, TensorIndexType::Slice, TensorIndexType::Boolean}));
     if (!valid) {
       MS_EXCEPTION(TypeError) << "For tuple index, the types only support 'Slice', 'Ellipsis', 'None', 'Tensor', "
-                                 "'int','List', 'Tuple', 'bool', but got "
-                              << indices;
+                                 "'int', 'List', 'Tuple', 'bool', but got type '"
+                              << Convert::ConvertTypeToString(indices[i]) << "', value: " << indices[i];
     }
     if (indices[i].IsSlice() || indices[i].IsInteger() || indices[i].IsTensor() || indices[i].IsSequence()) {
       ellipsis_occupy_dims -= 1;
