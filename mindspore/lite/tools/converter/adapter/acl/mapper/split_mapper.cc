@@ -37,9 +37,18 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   prim->AddAttr("num_split", split_num_val);
   ValuePtr axis_value = prim->GetAttr("axis");
   ValuePtr size_splits_value = prim->GetAttr("size_splits");
+
+  auto size_splits_vector = GetValue<std::vector<int64_t>>(size_splits_value);
+  // SplitV not support dynamic shape in CANN.
+  bool size_split_is_equla = true;
+  for (size_t i = 1; i < size_splits_vector.size(); i++) {
+    if (size_splits_vector[i] != size_splits_vector[0]) {
+      size_split_is_equla = false;
+    }
+  }
   PrimitivePtr dst_prim = nullptr;
-  if (cnode->size() == opt::kInputSizeThree ||
-      (cnode->size() == kNumInputSize && axis_value != nullptr && size_splits_value != nullptr)) {
+  if (cnode->size() == opt::kInputSizeThree || (cnode->size() == kNumInputSize && axis_value != nullptr &&
+                                                size_splits_value != nullptr && !size_split_is_equla)) {
     dst_prim = std::make_shared<acl::SplitV>();
     if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
       MS_LOG(ERROR) << "Split mapper failed.";
