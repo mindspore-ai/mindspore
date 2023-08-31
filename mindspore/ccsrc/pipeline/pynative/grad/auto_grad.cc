@@ -560,6 +560,31 @@ void ProcessAttrNode(const KernelGraphPtr &tape_graph, const CNodePtr &cnode, Va
   }
   RevertMakeTupleNode(tape_graph, cnode, input_value, cnode_inputs);
 }
+
+void ProcessValueNode(const ValueNodePtr &v_node) {
+  MS_EXCEPTION_IF_NULL(v_node);
+  const auto &value = v_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto type = value->type();
+  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
+      (type != nullptr && type->isa<String>())) {
+    return;
+  }
+  tensor::TensorPtr tensor_ptr = nullptr;
+  if (value->isa<Scalar>()) {
+    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
+  } else if (value->isa<ValueTuple>()) {
+    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+  } else if (value->isa<ValueList>()) {
+    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
+  } else {
+    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
+                      << ", value " << value->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  v_node->set_value(tensor_ptr);
+  v_node->set_abstract(tensor_ptr->ToAbstract());
+}
 }  // namespace
 
 AnfNodePtr FunctionNode::HyperAdd(const AnfNodePtr &left_node, const AnfNodePtr &right_node) {
@@ -1483,32 +1508,25 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
       ConvertValueNodeValueToTensor(cnode->input(kIndex1));
       return;
     }
+    mindspore::HashSet<size_t> none_inputs;
     for (size_t i = 1; i < cnode->size(); ++i) {
+      if (cnode->input(i)->isa<ValueNode>() && cnode->input(i)->cast<ValueNodePtr>()->value()->isa<None>()) {
+        (void)none_inputs.insert(i);
+        continue;
+      }
       ConvertValueNodeValueToTensor(cnode->input(i));
     }
+    if (!none_inputs.empty()) {
+      AnfNodePtrList new_inputs;
+      for (size_t i = kIndex0; i < cnode->size(); ++i) {
+        if (none_inputs.count(i) == 0) {
+          new_inputs.emplace_back(cnode->input(i));
+        }
+      }
+      cnode->set_inputs(new_inputs);
+    }
   } else if (din->isa<ValueNode>()) {
-    const auto &valuenode = din->cast<ValueNodePtr>();
-    const auto &value = valuenode->value();
-    MS_EXCEPTION_IF_NULL(value);
-    auto type = value->type();
-    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-        (type != nullptr && type->isa<String>())) {
-      return;
-    }
-    tensor::TensorPtr tensor_ptr = nullptr;
-    if (value->isa<Scalar>()) {
-      tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-    } else if (value->isa<ValueTuple>()) {
-      tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-    } else if (value->isa<ValueList>()) {
-      tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-    } else {
-      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                        << ", value " << value->ToString();
-    }
-    MS_EXCEPTION_IF_NULL(tensor_ptr);
-    valuenode->set_value(tensor_ptr);
-    valuenode->set_abstract(tensor_ptr->ToAbstract());
+    ProcessValueNode(din->cast<ValueNodePtr>());
   }
 }
 

@@ -509,7 +509,10 @@ class _MindsporeFunctionExecutor:
                                    f"be 'sens' and added it to compile args.")
                     self.input_signature.append(args_list[-1])
                 compile_args = tuple(self.input_signature)
-                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+                if self.obj is not None:
+                    _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+                else:
+                    _pynative_executor.set_dynamic_input(self.fn, *compile_args)
             else:
                 if not verify_inputs_signature(self.input_signature, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
