@@ -164,6 +164,18 @@ def generate_py_op_signature(args_signature):
     return signature_code
 
 
+def get_op_name(operator_name, class_def):
+    """
+    Get op name
+    """
+    class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+    if class_def:
+        item = class_def.get("name")
+        if item:
+            class_name = item
+    return class_name
+
+
 def generate_py_op_label(labels):
     """
     generate label init python code
@@ -205,12 +217,7 @@ def generate_py_op_func(yaml_data, doc_data):
 
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        class_def = operator_data.get('class')
-        class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
-        if class_def:
-            item = class_def.get("name")
-            if item:
-                class_name = item
+        class_name = get_op_name(operator_name, operator_data.get('class'))
         func_args = []
         init_args = []
         input_args = []
@@ -311,12 +318,7 @@ def generate_py_primitive(yaml_data):
         label_code = generate_py_op_label(operator_data.get('labels'))
 
         args = operator_data.get('args')
-        class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
-        class_def = operator_data.get('class')
-        if class_def:
-            item = class_def.get("name")
-            if item:
-                class_name = item
+        class_name = get_op_name(operator_name, operator_data.get('class'))
 
         init_args, args_assign, init_args_with_default = process_args(args)
         args_assign = '\n'.join(assign for assign in args_assign)
@@ -354,12 +356,7 @@ namespace mindspore::ops {{
     op_name_gen = ''
     op_name_gen += op_name_head
     for operator_name, operator_data in yaml_data.items():
-        k_name_op = ''.join(word.capitalize() for word in operator_name.split('_'))
-        class_def = operator_data.get('class')
-        if class_def:
-            item = class_def.get("name")
-            if item:
-                k_name_op = item
+        k_name_op = get_op_name(operator_name, operator_data.get('class'))
         op_name_gen += f"""constexpr auto kName{k_name_op} = "{k_name_op}";
 """
 
@@ -392,12 +389,7 @@ namespace mindspore::prim {{
     ops_prim_gen = ''
     ops_prim_gen += ops_prim_head
     for operator_name, operator_data in yaml_data.items():
-        k_name_op = ''.join(word.capitalize() for word in operator_name.split('_'))
-        class_def = operator_data.get('class')
-        if class_def:
-            item = class_def.get("name")
-            if item:
-                k_name_op = item
+        k_name_op = get_op_name(operator_name, operator_data.get('class'))
         ops_prim_gen += f"""GVAR_DEF(PrimitivePtr, kPrim{k_name_op}, std::make_shared<Primitive>(ops::kName{k_name_op}))
 """
     ops_prim_gen += ops_prim_end
@@ -426,7 +418,7 @@ namespace mindspore::ops {{
     lite_ops_gen = ''
     lite_ops_gen += lite_ops_head
     for operator_name, operator_data in yaml_data.items():
-        OpName = ''.join(word.capitalize() for word in operator_name.split('_'))
+        OpName = get_op_name(operator_name, operator_data.get('class'))
         lite_ops_gen += f"""class MIND_API {OpName} : public BaseOperator {{
  public:
   {OpName}() : BaseOperator(kName{OpName}) {{}}
@@ -472,12 +464,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         returns = operator_data.get('returns')
-        class_def = operator_data.get('class')
-        class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
-        if class_def:
-            item = class_def.get("name")
-            if item:
-                class_name = item
+        class_name = get_op_name(operator_name, operator_data.get('class'))
         opdef_map_str += f"""
     {{"{class_name}", &g{class_name}}},"""
         gen_include += f"""
