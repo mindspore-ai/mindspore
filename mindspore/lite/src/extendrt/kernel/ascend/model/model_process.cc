@@ -509,6 +509,7 @@ bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
     AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
     return true;
   } else if (options_->multi_model_sharing_mem) {
+    MS_LOG(INFO) << "using sharing mem by model group.";
     auto acl_ret = aclmdlQuerySizeFromMem(om_data, om_data_size, &work_size, &weight_size);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
