@@ -122,4 +122,27 @@ std::string Primitive::GetAttrsText() const {
 
   return oss.str();
 }
+
+PrimitiveFunction::PrimitiveFunction(const PrimitivePtr &prim) : Primitive(*prim) {}
+
+PrimitiveFunction::PrimitiveFunction(const std::string &name) : Primitive(name, false) {}
+
+abstract::AbstractBasePtr PrimitiveFunction::ToAbstract() {
+  return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<PrimitiveFunction>(), nullptr);
+}
+
+bool PrimitiveFunction::operator==(const Value &other) const {
+  if (other.isa<PrimitiveFunction>()) {
+    auto other_prim = static_cast<const PrimitiveFunction &>(other);
+    return *this == other_prim;
+  }
+  return false;
+}
+
+bool PrimitiveFunction::operator==(const PrimitiveFunction &other) const {
+  if (name() != other.name()) {
+    return false;
+  }
+  return common::IsAttrsEqual(attrs_, other.attrs_);
+}
 }  // namespace mindspore

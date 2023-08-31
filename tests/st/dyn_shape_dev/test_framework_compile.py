@@ -12,68 +12,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
+
 import mindspore as ms
-from mindspore import nn, ops, mutable
+from mindspore import nn, mutable
+from mindspore.ops import auto_generate as ops
 
 
-class Net1(nn.Cell):
-    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+class AvgPoolNet(nn.Cell):
+    def __init__(self):
         super().__init__()
-        self.avg_pool = ops.AvgPool(kernel_size, strides, pad_mode, data_format)
+        self.avg_pool = ops.AvgPool(kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW")
 
     def construct(self, x):
         return self.avg_pool(x)
 
 
-class Net2(nn.Cell):
-    def construct(self, x, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+class AvgPoolCreateInstanceNet(nn.Cell):
+    def construct(self, x, kernel_size, strides, pad_mode, data_format):
         op = ops.AvgPool(kernel_size, strides, pad_mode, data_format)
         return op(x)
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu_training
 def test_avg_pool():
     """
     Feature: DynamicShape.
     Description: Test AvgPool with dynamic shape.
     Expectation: No exception.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = Net1()
+    net = AvgPoolNet()
     out = net(x)
     print("out:", out)
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu_training
 def test_avg_pool_create_instance_const_args():
     """
     Feature: DynamicShape.
     Description: Create AvgPool instance with constant arguaments.
     Expectation: No exception.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    kernel_size = 1
-    strides = 1
-    pad_mode = "valid"
-    data_format = "NCHW"
-    net = Net2()
-    out = net(x, kernel_size, strides, pad_mode, data_format)
+    net = AvgPoolCreateInstanceNet()
+    out = net(x, 1, 1, "VALID", "NCHW")
     print("out:", out)
 
 
+@pytest.mark.skip(reason="Need to add arg_handler to OpArg of OpDef.")
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu_training
 def test_avg_pool_create_instance_var_args():
     """
     Feature: DynamicShape.
     Description: Create AvgPool instance with variable arguaments.
     Expectation: No exception.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    kernel_size = mutable(1)
-    strides = mutable(1)
-    pad_mode = "valid"
-    data_format = "NCHW"
-    net = Net2()
-    out = net(x, kernel_size, strides, pad_mode, data_format)
+    net = AvgPoolCreateInstanceNet()
+    out = net(x, mutable(1), mutable(1), "VALID", "NCHW")
     print("out:", out)

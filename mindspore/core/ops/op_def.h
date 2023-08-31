@@ -42,6 +42,8 @@ struct OpArg {
   std::string arg_name_;
   OP_DTYPE arg_dtype_;
   bool as_init_arg_;  // true if this is a primitive init arg.
+  std::string arg_handler_;
+  std::string type_cast_;
 };
 
 struct OpDef {

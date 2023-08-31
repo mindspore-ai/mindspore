@@ -904,6 +904,13 @@ inline StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &pri
   return nullptr;
 }
 
+bool NeedConvertPrimitiveArgs(const PrimitivePtr &prim) {
+  if (prim->isa<PrimitiveFunction>() || prim->isa<prim::DoTransPrimitiveFunction>()) {
+    return false;
+  }
+  return mindspore::ops::GetOpDef(prim->name()) != nullptr;
+}
+
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
   MS_EXCEPTION_IF_NULL(prim);
@@ -928,11 +935,12 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return GetPyEvaluator(prim, engine);
   }
 
-  // Convert PrimitivePy to PrimitiveFunction.
-  if (prim->isa<PrimitivePy>()) {
-    return std::make_shared<PrimitiveFunctionTransformEvaluator>(prim);
+  if (NeedConvertPrimitiveArgs(prim)) {
+    return std::make_shared<PrimitiveArgsToInputsEvaluator>(prim);
   }
-
+  if (prim->isa<prim::DoTransPrimitiveFunction>()) {
+    return std::make_shared<DoTransPrimitiveFunctionEvaluator>(prim);
+  }
   if (prim->isa<PrimitiveFunction>()) {
     auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
     auto op_def = mindspore::ops::GetOpDef(prim->name());
@@ -1074,8 +1082,8 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
     return iter->second;
   }
   EvaluatorPtr partial_evaluator = nullptr;
-  if (func->is_primitive_function_partial()) {
-    partial_evaluator = std::make_shared<PrimitiveFunctionPartialEvaluator>(primal_func, func->node());
+  if (func->need_append_to_end()) {
+    partial_evaluator = std::make_shared<PartialToEndEvaluator>(primal_func, func->node());
   } else {
     auto primal_evaluator = GetEvaluatorFor(primal_func);
     partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());

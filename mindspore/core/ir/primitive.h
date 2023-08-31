@@ -347,6 +347,18 @@ inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
   return os;
 }
 
+class MS_CORE_API PrimitiveFunction : public Primitive {
+ public:
+  explicit PrimitiveFunction(const PrimitivePtr &prim);
+  explicit PrimitiveFunction(const std::string &name);
+  ~PrimitiveFunction() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunction, Primitive);
+  bool operator==(const Value &other) const override;
+  bool operator==(const PrimitiveFunction &other) const;
+  abstract::AbstractBasePtr ToAbstract() override;
+};
+using PrimitiveFunctionPtr = std::shared_ptr<PrimitiveFunction>;
+
 /// \brief Equal operator for Primitive.
 struct MS_CORE_API PrimitiveEqual {
   /// \brief Implementation of Equal operation.

@@ -127,6 +127,25 @@ class DoSignaturePrimitive : public Primitive {
   ValuePtr function_;
 };
 using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
+
+class DoTransPrimitiveFunction : public Primitive {
+ public:
+  explicit DoTransPrimitiveFunction(const PrimitiveFunctionPtr &prim, bool is_prim_instance = true)
+      : Primitive("T-PrimFunc-" + prim->name()), prim_(prim), is_prim_instance_(is_prim_instance) {}
+
+  ~DoTransPrimitiveFunction() override = default;
+
+  MS_DECLARE_PARENT(DoTransPrimitiveFunction, Primitive)
+
+  const PrimitiveFunctionPtr function() const { return prim_; }
+
+  bool is_prim_instance() const { return is_prim_instance_; }
+
+ private:
+  PrimitiveFunctionPtr prim_;
+  bool is_prim_instance_;
+};
+using DoTransPrimitiveFunctionPtr = std::shared_ptr<DoTransPrimitiveFunction>;
 }  // namespace prim
 }  // namespace mindspore
 

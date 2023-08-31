@@ -315,19 +315,19 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] node The CNode this PartialAbstractClosure evaluated from.
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
 
-  /// \brief Get whether is partial primitive function.
+  /// \brief Get whether the args need to be appended to the end.
   ///
-  /// \return Whether is partial primitive function.
-  bool is_primitive_function_partial() const { return is_primitive_function_partial_; }
+  /// \return Whether the args need to be appended to the end.
+  bool need_append_to_end() const { return need_append_to_end_; }
 
-  /// \brief Set whether is partial primitive function.
+  /// \brief Set whether the args need to be appended to the end.
   ///
-  /// \param[in] flag Whether is partial primitive function.
-  void set_is_primitive_function_partial(bool flag) { is_primitive_function_partial_ = flag; }
+  /// \param[in] flag Whether the args need to be appended to the end.
+  void set_need_append_to_end(bool flag) { need_append_to_end_ = flag; }
 
   AbstractFunctionPtr Copy() const override {
     auto abs = std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
-    abs->set_is_primitive_function_partial(is_primitive_function_partial_);
+    abs->set_need_append_to_end(need_append_to_end_);
     return abs;
   }
 
@@ -347,7 +347,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   AbstractBasePtrList args_abs_list_;
   // The ANFNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
-  bool is_primitive_function_partial_{false};
+  bool need_append_to_end_{false};
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 

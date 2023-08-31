@@ -226,12 +226,12 @@ class SwitchLayerEvaluator final : public Evaluator {
   }
 };
 
-class PrimitiveFunctionTransformEvaluator : public TransitionPrimEvaluator {
+class PrimitiveArgsToInputsEvaluator : public TransitionPrimEvaluator {
  public:
-  explicit PrimitiveFunctionTransformEvaluator(const PrimitivePtr primitive)
-      : TransitionPrimEvaluator("PrimitiveFunctionTransformEvaluator"), prim_(primitive) {}
-  ~PrimitiveFunctionTransformEvaluator() override = default;
-  MS_DECLARE_PARENT(PrimitiveFunctionTransformEvaluator, TransitionPrimEvaluator)
+  explicit PrimitiveArgsToInputsEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("PrimitiveArgsToInputsEvaluator"), prim_(primitive) {}
+  ~PrimitiveArgsToInputsEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveArgsToInputsEvaluator, TransitionPrimEvaluator)
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 
@@ -239,14 +239,27 @@ class PrimitiveFunctionTransformEvaluator : public TransitionPrimEvaluator {
   PrimitivePtr prim_;
 };
 
-class PrimitiveFunctionPartialEvaluator : public TransitionPrimEvaluator {
+class DoTransPrimitiveFunctionEvaluator : public TransitionPrimEvaluator {
  public:
-  explicit PrimitiveFunctionPartialEvaluator(const AbstractFunctionPtr &primal_func, const AnfNodePtr &partial_node)
-      : TransitionPrimEvaluator("PrimitiveFunctionPartialEvaluator"),
-        primal_func_(primal_func),
-        partial_node_(partial_node) {}
-  ~PrimitiveFunctionPartialEvaluator() override = default;
-  MS_DECLARE_PARENT(PrimitiveFunctionPartialEvaluator, TransitionPrimEvaluator);
+  explicit DoTransPrimitiveFunctionEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("DoTransPrimitiveFunctionEvaluator"), prim_(primitive) {}
+  ~DoTransPrimitiveFunctionEvaluator() override = default;
+  MS_DECLARE_PARENT(DoTransPrimitiveFunctionEvaluator, TransitionPrimEvaluator)
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+  AnfNodePtr ConvertInputInPrimitive(const std::string &module_name, const std::string &op_name, const FuncGraphPtr &fg,
+                                     const AnfNodePtr &input_node);
+
+ private:
+  PrimitivePtr prim_;
+};
+
+class PartialToEndEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit PartialToEndEvaluator(const AbstractFunctionPtr &primal_func, const AnfNodePtr &partial_node)
+      : TransitionPrimEvaluator("PartialToEndEvaluator"), primal_func_(primal_func), partial_node_(partial_node) {}
+  ~PartialToEndEvaluator() override = default;
+  MS_DECLARE_PARENT(PartialToEndEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 

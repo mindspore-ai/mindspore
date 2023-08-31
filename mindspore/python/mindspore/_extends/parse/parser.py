@@ -673,13 +673,6 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
-def get_primitive_init_args(obj):
-    """Get initialization arguments of primitive instance."""
-    if obj.__class__ is ops.Primitive:
-        return []
-    sig = inspect.signature(obj.__init__)
-    return {name: getattr(obj, name) for name, _ in sig.parameters.items()}
-
 def get_ast_type(node):
     """Get the ast type."""
     ast_type = AST_SUB_TYPE_UNKNOWN
