@@ -315,23 +315,24 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-
   ofs << "# This is the analyze fail log to save the last message.\n"
       << "# ===============================================================================\n"
-      << "Catch the exception:\n"
+      << "\nCatch the exception:\n"
       << StaticAnalysisException::Instance().msg();
 
   ofs << "# ===============================================================================\n"
-      << "# 1.The rest shows the parsed IR info when graph evaluating failed to help find the problem.\n"
-      << "# 2.You can search the last `------------------------>` to the node which is inferred failed.\n"
-      << "# 3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n"
-      << "# ===============================================================================\n\n"
-      << "The entry function: " << node_config_stack.front()->func_graph()->ToString() << "\n\n";
+      << "# 1. The rest shows the parsed IR info when graph evaluating failed to help find the problem.\n"
+      << "# 2. You can search the last \"------------------------>\" to the node which is inferred failed.\n"
+      << "# 3. Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n"
+      << "# ===============================================================================\n\n";
 
   if (engine_ == nullptr) {
     engine_ = node_config_stack.front()->engine();
   }
-
+  auto top_func = node_config_stack.front()->func_graph();
+  std::ostringstream head_buffer;
+  DumpIRHead(top_func, head_buffer);
+  ofs << head_buffer.str();
   auto tagged_func_graphs = CreateTaggedNodeMap(node_config_stack);
   mindspore::HashSet<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
   // Output graph on the analysis stack
@@ -369,7 +370,6 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
 
   ofs << "\n\n#===============================================================================\n";
   ofs << "# The rest functions are the following.\n\n";
-  auto top_func = node_config_stack.front()->func_graph();
   current_context_ = nullptr;
   TaggedNodeMap empty_map;
   for (const auto &fg : top_func->func_graphs_used_total()) {
