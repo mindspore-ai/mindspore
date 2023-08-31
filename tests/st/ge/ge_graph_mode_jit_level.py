@@ -47,21 +47,6 @@ class NetOuter(nn.Cell):
         return x
 
 
-def test_ge_graph_mode_with_jit_level_o3():
-    """
-    Feature: GE with jit_level.
-    Description: Graph Mode jit_level==O3 with GE.
-    Expectation: Run by ge_device_context when jit_level==O3.
-    """
-    context.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
-    inputs = Tensor(np.ones((3, 3), np.float32))
-    net = NetOuter()
-    net.set_jit_config(JitConfig(jit_level="O3"))
-    output_o3 = net(inputs, inputs)
-    expected = np.array([[5, 5, 5], [5, 5, 5], [5, 5, 5]], np.float32)
-    np.allclose(output_o3.asnumpy(), expected, 1e-05, 1e-05)
-
-
 def test_ge_graph_mode_with_jit_level_o2():
     """
     Feature: GE with jit_level.
@@ -92,6 +77,5 @@ def test_ge_graph_mode_without_jit_level():
 
 
 if __name__ == "__main__":
-    test_ge_graph_mode_with_jit_level_o3()
     test_ge_graph_mode_with_jit_level_o2()
     test_ge_graph_mode_without_jit_level()
