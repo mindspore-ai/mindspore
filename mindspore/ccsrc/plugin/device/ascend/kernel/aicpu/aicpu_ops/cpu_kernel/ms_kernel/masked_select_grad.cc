@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "masked_select_grad.h"
+#include "cpu_kernel/ms_kernel/masked_select_grad.h"
+
+#include <vector>
 
 #include "Eigen/Core"
-#include "securec.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "securec/include/securec.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 
@@ -82,7 +84,7 @@ uint32_t MaskedSelectGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(CpuKernelContext &ctx) {
+uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelContext &ctx) {
   bool *mask = reinterpret_cast<bool *>(ctx.Input(1)->GetData());
   KERNEL_CHECK_NULLPTR(mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[1] failed.",
                        kMaskedSelectGrad);

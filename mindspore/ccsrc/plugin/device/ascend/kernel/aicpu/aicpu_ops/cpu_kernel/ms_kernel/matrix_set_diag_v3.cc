@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "matrix_set_diag_v3.h"
+#include "cpu_kernel/ms_kernel/matrix_set_diag_v3.h"
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
+#include "common/kernel_log.h"
 
 namespace {
 const uint32_t kInputNum = 3;
@@ -32,9 +32,8 @@ const int64_t kParallelDataNum = 64 * 1024;
 }  // namespace
 
 namespace aicpu {
-uint32_t MatrixSetDiagV3CpuKernel::CheckParam(CpuKernelContext &ctx) {
+uint32_t MatrixSetDiagV3CpuKernel::CheckParam(const CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "check input and output number failed.");
   Tensor *input_tensor = ctx.Input(0);
   Tensor *diagonal_tensor = ctx.Input(1);
   Tensor *output_tensor = ctx.Output(0);
@@ -65,7 +64,7 @@ uint32_t MatrixSetDiagV3CpuKernel::CheckParam(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MatrixSetDiagV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t MatrixSetDiagV3CpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   auto input_shape = input_tensor->GetTensorShape();
   int64_t input_dims = input_shape->GetDims();
@@ -101,7 +100,6 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
   }
 
   Tensor *output_tensor = ctx.Output(0);
-  auto output_shape = output_tensor->GetTensorShape();
   auto output_data = reinterpret_cast<T *>(output_tensor->GetData());
 
   const int64_t zero = 0;
@@ -163,7 +161,7 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
   } else {
     uint32_t min_core_num = 1;
-    //使用CpuKernelUtils::GetCPUNum接口获取AI CPU的核数
+    // 使用CpuKernelUtils::GetCPUNum接口获取AI CPU的核数
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
     if (max_core_num > input_numelements) {
       max_core_num = input_numelements;
@@ -210,6 +208,7 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
 
 uint32_t MatrixSetDiagV3CpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
+  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "check input and output number failed.");
   KERNEL_CHECK_FALSE((CheckParam(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                      "The params in MatrixSetDiagV3 is error, CheckParam failed.");
   uint32_t ret = KERNEL_STATUS_OK;

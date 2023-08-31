@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "maximum_grad_grad.h"
+#include "cpu_kernel/ms_kernel/maximum_grad_grad.h"
 
 #include <fstream>
 #include <iostream>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -56,7 +56,7 @@ uint32_t MaximumGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(CpuKernelContext &ctx) {
+uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(const CpuKernelContext &ctx) {
   // the non null of inputs and outputs has been verified in NormalCheck
   Tensor *x1 = ctx.Input(0);
   Tensor *x2 = ctx.Input(1);
@@ -84,7 +84,7 @@ uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(CpuKernelContext &c
 }
 
 template <typename T>
-uint32_t MaximumGradGradCpuKernel::MaximumGradGradCompute(CpuKernelContext &ctx) {
+uint32_t MaximumGradGradCpuKernel::MaximumGradGradCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   Tensor *input1_tensor = ctx.Input(1);
 
@@ -100,7 +100,7 @@ uint32_t MaximumGradGradCpuKernel::MaximumGradGradCompute(CpuKernelContext &ctx)
 }
 
 template <typename T>
-uint32_t MaximumGradGradCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t MaximumGradGradCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto in2 = reinterpret_cast<T *>(ctx.Input(2)->GetData());

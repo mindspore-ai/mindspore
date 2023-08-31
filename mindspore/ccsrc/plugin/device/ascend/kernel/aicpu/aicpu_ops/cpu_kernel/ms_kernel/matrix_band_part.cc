@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include "matrix_band_part.h"
+#include "cpu_kernel/ms_kernel/matrix_band_part.h"
 
+#include <securec.h>
 #include <algorithm>
 #include <vector>
-#include <securec.h>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const char *kMatrixBandPart = "MatrixBandPart";
@@ -116,7 +117,7 @@ uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t upper, Tensor *y, int64_t rows,
-                                              int64_t cols, CpuKernelContext &ctx) {
+                                              int64_t cols, const CpuKernelContext &ctx) {
   T *x_addrs = reinterpret_cast<T *>(x->GetData());
   KERNEL_CHECK_NULLPTR(x_addrs, KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
   T *y_addrs = reinterpret_cast<T *>(y->GetData());

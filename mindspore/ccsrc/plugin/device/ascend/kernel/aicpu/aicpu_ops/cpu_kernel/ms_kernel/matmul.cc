@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "matmul.h"
+#include "cpu_kernel/ms_kernel/matmul.h"
 
 #include <complex>
 #include "unsupported/Eigen/CXX11/Tensor"
 
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
-
-using namespace std;
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace {
 const char *kMatmul = "MatMul";
@@ -31,7 +29,7 @@ const char *kMatmul = "MatMul";
 
 namespace aicpu {
 template <typename T>
-uint32_t MatMulCpuKernel::AddCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t MatMulCpuKernel::AddCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto in2 = reinterpret_cast<T *>(ctx.Input(2)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -45,7 +43,7 @@ uint32_t MatMulCpuKernel::AddCompute(CpuKernelContext &ctx, Bcast &bcast) {
 }
 
 template <typename T>
-uint32_t MatMulCpuKernel::BiasCompute(CpuKernelContext &ctx) {
+uint32_t MatMulCpuKernel::BiasCompute(const CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input2_tensor = ctx.Input(2);
   auto input2_shape = input2_tensor->GetTensorShape()->GetDimSizes();
@@ -70,7 +68,7 @@ uint32_t MatMulCpuKernel::BiasCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MatMulCpuKernel::MatMulCompute(CpuKernelContext &ctx) {
+uint32_t MatMulCpuKernel::MatMulCompute(const CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
   KERNEL_CHECK_FALSE((IsMatrix(input0_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
@@ -104,18 +102,20 @@ uint32_t MatMulCpuKernel::MatMulCompute(CpuKernelContext &ctx) {
 
   auto output_tensor = ctx.Output(kFirstOutputIndex);
   auto output_shape = output_tensor->GetTensorShape()->GetDimSizes();
-  MatrixMap output(reinterpret_cast<T *>(output_tensor->GetData()), output_shape[0], output_shape[1]);
   if (transpose_x1) {
     if (transpose_x2) {
-      output = input0.transpose() * input1.transpose();
+      MatrixMap(reinterpret_cast<T *>(output_tensor->GetData()), output_shape[0], output_shape[1]) =
+        input0.transpose() * input1.transpose();
     } else {
-      output = input0.transpose() * input1;
+      MatrixMap(reinterpret_cast<T *>(output_tensor->GetData()), output_shape[0], output_shape[1]) =
+        input0.transpose() * input1;
     }
   } else {
     if (transpose_x2) {
-      output = input0 * input1.transpose();
+      MatrixMap(reinterpret_cast<T *>(output_tensor->GetData()), output_shape[0], output_shape[1]) =
+        input0 * input1.transpose();
     } else {
-      output = input0 * input1;
+      MatrixMap(reinterpret_cast<T *>(output_tensor->GetData()), output_shape[0], output_shape[1]) = input0 * input1;
     }
   }
   if (ctx.GetInputsSize() == 3) {

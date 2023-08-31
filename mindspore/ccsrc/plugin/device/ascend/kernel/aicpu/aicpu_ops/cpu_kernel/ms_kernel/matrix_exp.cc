@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "matrix_exp.h"
+#include "cpu_kernel/ms_kernel/matrix_exp.h"
 
+#include <algorithm>
 #include <array>
 #include <complex>
 #include <cmath>
-#include "cpu_kernel_utils.h"
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -109,7 +112,7 @@ uint32_t MatrixExpCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixExpCpuKernel::MatrixExpCheck(CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   size_t shape_size_x = shape_x.size();
@@ -124,52 +127,54 @@ uint32_t MatrixExpCpuKernel::MatrixExpCheck(CpuKernelContext &ctx) {
 }
 
 template <typename Derived1, typename Derived2, typename Derived3>
-void MatrixExpCpuKernel::MTaylorApproximant(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I, int order,
-                                            Eigen::MatrixBase<Derived3> &E) {
+void MatrixExpCpuKernel::MTaylorApproximant(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixBase<Derived2> *I, int order,
+                                            Eigen::MatrixBase<Derived3> *E) {
   constexpr int expension_order_1 = 1;
   constexpr int expension_order_2 = 2;
   constexpr int expension_order_4 = 4;
   constexpr int expension_order_8 = 8;
   constexpr int expension_order_12 = 12;
-  auto A2 = A * A;
-  auto A3 = A * A2;
+  auto &A1 = (*A);
+  auto &I1 = (*I);
+  auto A2 = A1 * A1;
+  auto A3 = A1 * A2;
   if (order == expension_order_1) {
-    E = I + A;
+    *E = I1 + A1;
   } else if (order == expension_order_2) {
     constexpr int A2_divisor = 2;
-    E = I + A + A2 / A2_divisor;
+    *E = I1 + A1 + A2 / A2_divisor;
   } else if (order == expension_order_4) {
     constexpr int I_divisor = 2;
     constexpr int A_divisor = 6;
     constexpr int A2_divisor = 24;
-    E = I + A + A2 * (I / I_divisor + A / A_divisor + A2 / A2_divisor);
+    *E = I1 + A1 + A2 * (I1 / I_divisor + A1 / A_divisor + A2 / A2_divisor);
   } else if (order == expension_order_8) {
-    auto A4 = A2 * (x1 * A + x2 * A2);
-    auto A8 = (x3 * A2 + A4) * (x4 * I + x5 * A + x6 * A2 + x7 * A4);
-    E = I + A + y2 * A2 + A8;
+    auto A4 = A2 * (x1 * A1 + x2 * A2);
+    auto A8 = (x3 * A2 + A4) * (x4 * I1 + x5 * A1 + x6 * A2 + x7 * A4);
+    *E = I1 + A1 + y2 * A2 + A8;
   } else if (order == expension_order_12) {
-    auto q31 = b12[0][0] * I + b12[0][1] * A + b12[0][2] * A2 + b12[0][3] * A3;
-    auto q32 = b12[1][0] * I + b12[1][1] * A + b12[1][2] * A2 + b12[1][3] * A3;
-    auto q33 = b12[2][0] * I + b12[2][1] * A + b12[2][2] * A2 + b12[2][3] * A3;
-    auto q34 = b12[3][0] * I + b12[3][1] * A + b12[3][2] * A2 + b12[3][3] * A3;
+    auto q31 = b12[0][0] * I1 + b12[0][1] * A1 + b12[0][2] * A2 + b12[0][3] * A3;
+    auto q32 = b12[1][0] * I1 + b12[1][1] * A1 + b12[1][2] * A2 + b12[1][3] * A3;
+    auto q33 = b12[2][0] * I1 + b12[2][1] * A1 + b12[2][2] * A2 + b12[2][3] * A3;
+    auto q34 = b12[3][0] * I1 + b12[3][1] * A1 + b12[3][2] * A2 + b12[3][3] * A3;
     auto q61 = q33 + q34 * q34;
-    E = q31 + (q32 + q61) * q61;
+    *E = q31 + (q32 + q61) * q61;
   } else {
     auto A6 = A3 * A3;
-    auto q31 = b18[0][0] * I + b18[0][1] * A + b18[0][2] * A2 + b18[0][3] * A3 + b18[0][4] * A6;
-    auto q61 = b18[1][0] * I + b18[1][1] * A + b18[1][2] * A2 + b18[1][3] * A3 + b18[1][4] * A6;
-    auto q62 = b18[2][0] * I + b18[2][1] * A + b18[2][2] * A2 + b18[2][3] * A3 + b18[2][4] * A6;
-    auto q63 = b18[3][0] * I + b18[3][1] * A + b18[3][2] * A2 + b18[3][3] * A3 + b18[3][4] * A6;
-    auto q64 = b18[4][0] * I + b18[4][1] * A + b18[4][2] * A2 + b18[4][3] * A3 + b18[4][4] * A6;
+    auto q31 = b18[0][0] * I1 + b18[0][1] * A1 + b18[0][2] * A2 + b18[0][3] * A3 + b18[0][4] * A6;
+    auto q61 = b18[1][0] * I1 + b18[1][1] * A1 + b18[1][2] * A2 + b18[1][3] * A3 + b18[1][4] * A6;
+    auto q62 = b18[2][0] * I1 + b18[2][1] * A1 + b18[2][2] * A2 + b18[2][3] * A3 + b18[2][4] * A6;
+    auto q63 = b18[3][0] * I1 + b18[3][1] * A1 + b18[3][2] * A2 + b18[3][3] * A3 + b18[3][4] * A6;
+    auto q64 = b18[4][0] * I1 + b18[4][1] * A1 + b18[4][2] * A2 + b18[4][3] * A3 + b18[4][4] * A6;
     auto q91 = q31 * q64 + q63;
-    E = q61 + (q62 + q91) * q91;
+    *E = q61 + (q62 + q91) * q91;
   }
 }
 
 template <typename Derived1, typename Derived2>
-void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixBase<Derived2> &I,
-                                  Eigen::MatrixBase<Derived1> &mexp, CpuKernelContext &ctx) {
-  const auto norm = A.cwiseAbs().colwise().sum().maxCoeff();
+void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixBase<Derived2> *I,
+                                  Eigen::MatrixBase<Derived1> *mexp, const CpuKernelContext &ctx) {
+  const auto norm = A->cwiseAbs().colwise().sum().maxCoeff();
   constexpr std::array<int, total_n_degs> m_vals = {1, 2, 4, 8, 12, 18};
   constexpr int cut_deg = 2;
   int64_t s = -1;
@@ -203,16 +208,16 @@ void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> &A, Eigen::MatrixB
   }
   if (s >= 0) {
     const auto pow2s = pow(2, s);
-    A /= pow2s;
+    (*A) /= pow2s;
     MTaylorApproximant(A, I, m_vals[total_n_degs - 1], mexp);
     for (int k = 0; k < s; k++) {
-      mexp = mexp * mexp;
+      *mexp = *mexp * *mexp;
     }
   }
 }
 
 template <typename T>
-uint32_t MatrixExpCpuKernel::MatrixExpCompute(CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -230,7 +235,7 @@ uint32_t MatrixExpCpuKernel::MatrixExpCompute(CpuKernelContext &ctx) {
       Eigen::Map<MatrixXd> matrix_x(input_x + i * m * m, m, m);
       Eigen::Map<MatrixXd> matrix_y(output_y + i * m * m, m, m);
       if (matrix_x.size() > 0) {
-        MexpImpl(matrix_x, I, matrix_y, ctx);
+        MexpImpl(&matrix_x, &I, &matrix_y, ctx);
       }
     }
   } else {
@@ -247,7 +252,7 @@ uint32_t MatrixExpCpuKernel::MatrixExpCompute(CpuKernelContext &ctx) {
         Eigen::Map<MatrixXd> matrix_x(input_x + i * m * m, m, m);
         Eigen::Map<MatrixXd> matrix_y(output_y + i * m * m, m, m);
         if (matrix_x.size() > 0) {
-          MexpImpl(matrix_x, I, matrix_y, ctx);
+          MexpImpl(&matrix_x, &I, &matrix_y, ctx);
         }
       }
     };
@@ -258,7 +263,7 @@ uint32_t MatrixExpCpuKernel::MatrixExpCompute(CpuKernelContext &ctx) {
 }
 
 void MatrixExpCpuKernel::TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *input_x, Eigen::half *output_y,
-                                           CpuKernelContext &ctx) {
+                                           const CpuKernelContext &ctx) {
   typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
   (void)I.setIdentity();
@@ -271,7 +276,7 @@ void MatrixExpCpuKernel::TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *in
     }
   }
   if (matrix_x.size() > 0) {
-    MexpImpl(matrix_x, I, matrix_y, ctx);
+    MexpImpl(&matrix_x, &I, &matrix_y, ctx);
   }
   for (int p = 0; p < m; p++) {
     for (int q = 0; q < m; q++) {
@@ -281,7 +286,7 @@ void MatrixExpCpuKernel::TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *in
 }
 
 template <typename T>
-uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(const CpuKernelContext &ctx) {
   T *input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 

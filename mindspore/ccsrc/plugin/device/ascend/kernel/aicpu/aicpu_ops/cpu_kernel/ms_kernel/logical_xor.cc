@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cpu_kernel/ms_kernel/logical_xor.h"
 
-#include "logical_xor.h"
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -43,7 +45,7 @@ uint32_t LogicalXorCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogicalXorCpuKernel::LogicalXorCheck(CpuKernelContext &ctx) {
+uint32_t LogicalXorCpuKernel::LogicalXorCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -95,7 +97,7 @@ void LogicalXorCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int
 }
 
 template <typename T>
-uint32_t LogicalXorCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t LogicalXorCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   auto input_0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
@@ -133,7 +135,7 @@ uint32_t LogicalXorCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogicalXorCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t LogicalXorCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto input_0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
@@ -169,7 +171,7 @@ uint32_t LogicalXorCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) 
 }
 
 template <typename T>
-uint32_t LogicalXorCpuKernel::LogicalXorCompute(CpuKernelContext &ctx) {
+uint32_t LogicalXorCpuKernel::LogicalXorCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();

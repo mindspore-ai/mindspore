@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lower_bound.h"
+#include "cpu_kernel/ms_kernel/lower_bound.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -85,7 +88,7 @@ uint32_t LowerBoundCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t LowerBoundCpuKernel::LowerBoundCompute(CpuKernelContext &ctx) {
+uint32_t LowerBoundCpuKernel::LowerBoundCompute(const CpuKernelContext &ctx) {
   Tensor *sorted_x_data = ctx.Input(0);
   auto sorted_x_data_addr = reinterpret_cast<T1 *>(sorted_x_data->GetData());
   auto sorted_x_data_shape = sorted_x_data->GetTensorShape();
@@ -109,9 +112,8 @@ uint32_t LowerBoundCpuKernel::LowerBoundCompute(CpuKernelContext &ctx) {
       int64_t seq_row = i / values_data_column;
       int64_t low = seq_row * sorted_x_data_column;
       int64_t up = (seq_row + 1) * sorted_x_data_column - 1;
-      int64_t mid;
       while (low <= up) {
-        mid = (low + up) / 2;
+        int64_t mid = (low + up) / 2;
         if (values_data_addr[i] <= sorted_x_data_addr[mid]) {
           up = mid - 1;
         } else {
@@ -131,9 +133,8 @@ uint32_t LowerBoundCpuKernel::LowerBoundCompute(CpuKernelContext &ctx) {
         int64_t seq_row = i / values_data_column;
         int64_t low = seq_row * sorted_x_data_column;
         int64_t up = (seq_row + 1) * sorted_x_data_column - 1;
-        int64_t mid;
         while (low <= up) {
-          mid = (low + up) / 2;
+          int64_t mid = (low + up) / 2;
           if (values_data_addr[i] <= sorted_x_data_addr[mid]) {
             up = mid - 1;
           } else {

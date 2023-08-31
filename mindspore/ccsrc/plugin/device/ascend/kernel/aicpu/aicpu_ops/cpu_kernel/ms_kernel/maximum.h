@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MAXIMUM_H_
 #define AICPU_KERNELS_NORMALIZED_MAXIMUM_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,34 +30,35 @@ class MaximumCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MaximumParamCheck(CpuKernelContext &ctx);
+  uint32_t MaximumParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx);
+  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialComputeSameShape(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16);
+  void SpecialComputeSameShape(int64_t start, int64_t end, const CpuKernelContext &ctx, bool is_float16);
 
   template <typename T>
-  void SpecialComputeXOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16);
+  void SpecialComputeXOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx, bool is_float16);
 
   template <typename T>
-  void SpecialComputeYOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16);
+  void SpecialComputeYOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx, bool is_float16);
 
   template <typename T>
-  uint32_t NoBcastCompute(CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(CpuKernelContext &ctx, Bcast &bcast);
+  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  void BcastComputeMultiKernel(int64_t start, int64_t end, CpuKernelContext &ctx, Bcast &bcast, bool is_float16);
+  void BcastComputeMultiKernel(int64_t start, int64_t end, const CpuKernelContext &ctx, const Bcast &bcast,
+                               bool is_float16);
 
   template <typename T>
-  void BcastComputeOneKernel(CpuKernelContext &ctx, Bcast &bcast, bool is_float16);
+  void BcastComputeOneKernel(const CpuKernelContext &ctx, const Bcast &bcast, bool is_float16);
 
   template <typename T>
-  uint32_t MaximumCompute(CpuKernelContext &ctx);
+  uint32_t MaximumCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

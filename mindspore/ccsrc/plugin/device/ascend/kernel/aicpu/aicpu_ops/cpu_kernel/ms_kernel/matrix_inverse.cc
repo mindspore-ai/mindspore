@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-#include "matrix_inverse.h"
+#include "cpu_kernel/ms_kernel/matrix_inverse.h"
+
+#include <algorithm>
 #include <complex>
 #include <vector>
+
 #include "Eigen/Core"
 #include "Eigen/LU"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -58,7 +61,7 @@ uint32_t MatrixInverseCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(CpuKernelContext &ctx) {
+uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   T *input_ptr = reinterpret_cast<T *>(input->GetData());
   Tensor *output = ctx.Output(0);

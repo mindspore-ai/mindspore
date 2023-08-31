@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lu.h"
+#include "cpu_kernel/ms_kernel/lu.h"
+
+#include <algorithm>
+#include <vector>
 
 #include "Eigen/LU"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -71,7 +74,7 @@ uint32_t LuCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LuCpuKernel::LuCheck(CpuKernelContext &ctx) {
+uint32_t LuCpuKernel::LuCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   auto output_1 = ctx.Output(1);
@@ -92,7 +95,7 @@ uint32_t LuCpuKernel::LuCheck(CpuKernelContext &ctx) {
 }
 
 template <typename Scalar, typename Tidx>
-uint32_t LuCpuKernel::LuCompute(CpuKernelContext &ctx) {
+uint32_t LuCpuKernel::LuCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Scalar *>(ctx.Input(0)->GetData());
   auto output_lu = reinterpret_cast<Scalar *>(ctx.Output(0)->GetData());
   auto output_p = reinterpret_cast<Tidx *>(ctx.Output(1)->GetData());

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIXSOLVE_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIXSOLVE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class MatrixSolveCpuKernel : public CpuKernel {
@@ -28,10 +28,10 @@ class MatrixSolveCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MatrixSolveDataAndTypeCheck(CpuKernelContext &ctx);
+  uint32_t MatrixSolveDataAndTypeCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t MatrixSolveCompute(CpuKernelContext &ctx);
+  uint32_t MatrixSolveCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

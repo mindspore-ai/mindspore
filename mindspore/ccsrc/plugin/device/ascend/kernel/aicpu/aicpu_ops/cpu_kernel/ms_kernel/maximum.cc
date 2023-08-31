@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#include "maximum.h"
+#include "cpu_kernel/ms_kernel/maximum.h"
+
+#include <algorithm>
 
 #include "Eigen/Dense"
 #include "cmath"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "iostream"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
@@ -64,7 +66,7 @@ uint32_t MaximumCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaximumCpuKernel::MaximumParamCheck(CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::MaximumParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -83,7 +85,8 @@ uint32_t MaximumCpuKernel::MaximumParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
+void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, const CpuKernelContext &ctx,
+                                               bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -131,7 +134,8 @@ void MaximumCpuKernel::SpecialComputeSameShape(int64_t start, int64_t end, CpuKe
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
+void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx,
+                                                 bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -179,7 +183,8 @@ void MaximumCpuKernel::SpecialComputeXOneElement(int64_t start, int64_t end, Cpu
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, CpuKernelContext &ctx, bool is_float16) {
+void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, const CpuKernelContext &ctx,
+                                                 bool is_float16) {
   auto input1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -227,7 +232,7 @@ void MaximumCpuKernel::SpecialComputeYOneElement(int64_t start, int64_t end, Cpu
 }
 
 template <typename T>
-void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx) {
+void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx) {
   bool is_float16 = false;
   if (std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value || std::is_same<T, float>::value ||
       std::is_same<T, double>::value) {
@@ -252,7 +257,7 @@ void MaximumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   int64_t in0_elements_nums = ctx.Input(0)->NumElements();
   int64_t in1_elements_nums = ctx.Input(1)->NumElements();
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -283,8 +288,8 @@ uint32_t MaximumCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, CpuKernelContext &ctx, Bcast &bcast,
-                                               bool is_float16) {
+void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, const CpuKernelContext &ctx,
+                                               const Bcast &bcast, bool is_float16) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -340,7 +345,7 @@ void MaximumCpuKernel::BcastComputeMultiKernel(int64_t start, int64_t end, CpuKe
 }
 
 template <typename T>
-void MaximumCpuKernel::BcastComputeOneKernel(CpuKernelContext &ctx, Bcast &bcast, bool is_float16) {
+void MaximumCpuKernel::BcastComputeOneKernel(const CpuKernelContext &ctx, const Bcast &bcast, bool is_float16) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -397,7 +402,7 @@ void MaximumCpuKernel::BcastComputeOneKernel(CpuKernelContext &ctx, Bcast &bcast
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t MaximumCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   int64_t data_num = ctx.Output(0)->NumElements();
   bool is_float16 = false;
   if (std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value || std::is_same<T, float>::value ||
@@ -431,7 +436,7 @@ uint32_t MaximumCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
 }
 
 template <typename T>
-uint32_t MaximumCpuKernel::MaximumCompute(CpuKernelContext &ctx) {
+uint32_t MaximumCpuKernel::MaximumCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();

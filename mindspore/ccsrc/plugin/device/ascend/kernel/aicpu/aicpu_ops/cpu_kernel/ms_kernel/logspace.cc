@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "logspace.h"
+#include "cpu_kernel/ms_kernel/logspace.h"
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -51,7 +51,7 @@ uint32_t LogSpaceCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogSpaceCpuKernel::LogSpaceCheck(CpuKernelContext &ctx) {
+uint32_t LogSpaceCpuKernel::LogSpaceCheck(const CpuKernelContext &ctx) {
   // get Attr steps_attr
   AttrValue *steps_attr_ptr = ctx.GetAttr("steps");
   if (steps_attr_ptr) {
@@ -63,7 +63,7 @@ uint32_t LogSpaceCpuKernel::LogSpaceCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogSpaceCpuKernel::LogSpaceCompute(CpuKernelContext &ctx) {
+uint32_t LogSpaceCpuKernel::LogSpaceCompute(const CpuKernelContext &ctx) {
   DataType data_type_in = ctx.Input(0)->GetDataType();
   DataType data_type = ctx.Output(0)->GetDataType();
   if (data_type_in == data_type) {
@@ -92,7 +92,7 @@ uint32_t LogSpaceCpuKernel::LogSpaceCompute(CpuKernelContext &ctx) {
       }
     }
     if (steps_value == 1) {
-      double end_num = pow(base_value, double(input_start));
+      double end_num = pow(base_value, static_cast<double>(input_start));
       *(output_y) = static_cast<T>(end_num);
     }
   } else if (data_type_in == DT_FLOAT) {
@@ -121,7 +121,7 @@ uint32_t LogSpaceCpuKernel::LogSpaceCompute(CpuKernelContext &ctx) {
       }
     }
     if (steps_value == 1) {
-      double end_num = pow(base_value, double(input_start));
+      double end_num = pow(base_value, static_cast<double>(input_start));
       *(output_y) = static_cast<T>(end_num);
     }
   } else if (data_type_in == DT_FLOAT16) {
@@ -149,7 +149,7 @@ uint32_t LogSpaceCpuKernel::LogSpaceCompute(CpuKernelContext &ctx) {
       }
     }
     if (steps_value == 1) {
-      double end_num = pow(base_value, double(input_start));
+      double end_num = pow(base_value, static_cast<double>(input_start));
       *(output_y) = static_cast<T>(end_num);
     }
   }

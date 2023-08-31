@@ -17,9 +17,10 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MATRIXDETERMINANT_H_
 #define AICPU_KERNELS_NORMALIZED_MATRIXDETERMINANT_H_
 
-#include "cpu_ops_kernel.h"
-#include "utils/bcast.h"
 #include <complex>
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "utils/bcast.h"
 
 namespace aicpu {
 class MatrixDeterminantCpuKernel : public CpuKernel {
@@ -31,9 +32,9 @@ class MatrixDeterminantCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t MatrixDeterminantCheck(CpuKernelContext &ctx);
+  static uint32_t MatrixDeterminantCheck(const CpuKernelContext &ctx);
   template <typename T>
-  static uint32_t MatrixDeterminantCompute(CpuKernelContext &ctx);
+  static uint32_t MatrixDeterminantCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

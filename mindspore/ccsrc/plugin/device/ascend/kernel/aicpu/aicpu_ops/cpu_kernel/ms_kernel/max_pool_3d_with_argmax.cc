@@ -15,10 +15,15 @@
  * limitations under the License.
  */
 
-#include "max_pool_3d_with_argmax.h"
-#include <iostream>
+#include "cpu_kernel/ms_kernel/max_pool_3d_with_argmax.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <string>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -101,7 +106,7 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(CpuKernelContext &ctx) {
+uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(const CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_y_info = ctx.Output(0);
   auto output_argmax_info = ctx.Output(1);
@@ -117,8 +122,8 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(CpuKernelCo
                      DTypeStr(output_argmax_type).c_str())
 
   std::vector<int64_t> dim_vec = input_info->GetTensorShape()->GetDimSizes();
-  int64_t dimsize = dim_vec.size();
-  KERNEL_CHECK_FALSE(dimsize == 5, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should be 5.", dimsize)
+  KERNEL_CHECK_FALSE(dim_vec.size() == 5, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should be 5.",
+                     dim_vec.size())
 
   const size_t DIM_SIZE1 = 1;
   const size_t DIM_SIZE3 = 3;
@@ -191,7 +196,7 @@ void MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxSingleCompute(T *input, T 
             for (int64_t x = start_w; x < end_w; x += dW) {
               S index = z * iH * iW + y * iW + x;
               T val = ip[index];
-              if ((val > maxval) || std::isnan(double(val))) {
+              if ((val > maxval) || std::isnan(static_cast<double>(val))) {
                 maxval = (T)val;
                 maxindex = index;
               }
@@ -210,7 +215,7 @@ void MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxSingleCompute(T *input, T 
 }
 
 template <typename T, typename S>
-uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(CpuKernelContext &ctx) {
+uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_y_info = ctx.Output(0);
   auto output_argmax_info = ctx.Output(1);
