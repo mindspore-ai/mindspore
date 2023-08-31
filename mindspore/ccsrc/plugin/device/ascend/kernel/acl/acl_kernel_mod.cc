@@ -234,6 +234,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
       }
     }
     need_convert_host_tensor_ = false;
+    // need recreate converter when first launch in static shape.
+    CreateAclConverter();
   }
 
   MS_EXCEPTION_IF_NULL(converter_);
