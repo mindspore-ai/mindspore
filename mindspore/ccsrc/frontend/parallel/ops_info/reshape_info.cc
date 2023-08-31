@@ -194,22 +194,61 @@ Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
   return FAILED;
 }
 
-Status ReshapeInfo::ComputeReplaceOp() {
-  // handle dynamic shape
-  auto input_shape = input_layout_.tensor_shape_origin().array();
-  auto output_shape = output_layout_.tensor_shape_origin().array();
-  if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape) &&
-      (AccumulateShape(input_shape) == AccumulateShape(output_shape))) {
-    return ComputeReplaceOpForDynamicShape();
+bool DstShapeIsConstant(const AnfNodePtr &shape_input_node) {
+  MS_EXCEPTION_IF_NULL(shape_input_node);
+  Shape origin_dst_shape;
+  if (shape_input_node->isa<ValueNode>()) {
+    return true;
   }
 
+  if (IsPrimitiveCNode(shape_input_node, prim::kPrimMakeTuple)) {
+    auto shape_input_cnode = shape_input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(shape_input_cnode);
+    for (size_t i = 1; i < shape_input_cnode->inputs().size(); ++i) {
+      auto input_node = shape_input_cnode->input(i);
+      MS_EXCEPTION_IF_NULL(input_node);
+      if (input_node->isa<ValueNode>()) {
+        continue;
+      } else {
+        // the dst shape is dynamic
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (IsPrimitiveCNode(shape_input_node, prim::kPrimShape)) {
+    // the dst shape is dynamic
+    return false;
+  }
+
+  MS_LOG(EXCEPTION) << "The dst shape must be either Tuple or MakeTuple cnode or Shape op, but got "
+                    << shape_input_node->fullname_with_scope();
+}
+
+Status ReshapeInfo::ComputeReplaceOp() {
   if (is_skip_) {
-    ConstructOperator constructor;
-    replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
-    replace_op_info_.clear();
-    MS_LOG(INFO) << "skip reshape redistribution and reshape slice_shape is "
-                 << ShapeToString(output_layout_.slice_shape().array());
+    if (DstShapeIsConstant(cnode_->input(2))) {
+      ConstructOperator constructor;
+      replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
+      replace_op_info_.clear();
+      MS_LOG(INFO) << "skip reshape redistribution and reshape slice_shape is "
+                   << ShapeToString(output_layout_.slice_shape().array());
+    } else {
+      replace_op_.clear();
+      replace_op_info_.clear();
+      MS_LOG(WARNING) << name_ << ": dst shape is dynamic, and skip redistribution";
+    }
   } else {
+    // handle dynamic shape, now the dynamic dimension can not be split
+    auto input_shape = input_layout_.tensor_shape_origin().array();
+    auto output_shape = output_layout_.tensor_shape_origin().array();
+    if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape) &&
+        (AccumulateShape(input_shape) == AccumulateShape(output_shape))) {
+      return ComputeReplaceOpForDynamicShape();
+    }
+
+    // handle static shape
     RankList dev_list = stage_device_list();
     TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
     if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {

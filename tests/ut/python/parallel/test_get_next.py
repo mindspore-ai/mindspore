@@ -31,7 +31,7 @@ class Net(nn.Cell):
         super().__init__()
         self.norm = P.L2Normalize().shard(strategy1)
         self.prelu = P.PReLU().shard(strategy2)
-        self.w = Parameter(initializer(w, [channel, ]), name='w')
+        self.w = Parameter(initializer(w, [channel,]), name='w')
 
     def construct(self, data):
         x = self.norm(data)
@@ -67,6 +67,7 @@ class GradWrap(nn.Cell):
 
 
 def compile_net(net):
+    net.set_train()
     _cell_graph_executor.compile(net)
 
 

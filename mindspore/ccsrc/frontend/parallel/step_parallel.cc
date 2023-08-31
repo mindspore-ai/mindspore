@@ -1567,10 +1567,10 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
         continue;
       }
       Dimensions input_strategy;
-      if (shape_list[0][i][0] % dev_num == 0) {
-        input_strategy.push_back(dev_num);
-      } else {
-        input_strategy.push_back(1);
+      input_strategy.push_back(dev_num);
+      if (shape_list[0][i][0] > 0 && shape_list[0][i][0] % dev_num != 0) {
+        MS_LOG(EXCEPTION) << "the shapes of dataset is " << shape_list[0]
+                          << ", the batch dim can not be evenly div by dev_num " << dev_num;
       }
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
         input_strategy.push_back(1);
