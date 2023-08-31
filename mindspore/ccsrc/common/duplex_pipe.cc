@@ -105,6 +105,11 @@ std::string DuplexPipe::Read() {
     SetTimeOut();
     ssize_t size = read(fd2_[0], c_buf_, kBufferSize);  // MAYBE BLOCKED, Till reading something
     if (size <= 0) {
+      if (errno == EINTR) {
+        DP_WARNING << "Read was interrupted by system interrupt, try again";
+        continue;
+      }
+      DP_ERROR << "Read from pipe failed, errno = " << errno << ", reason = " << strerror(errno);
       break;
     }
     CancelTimeOut();
