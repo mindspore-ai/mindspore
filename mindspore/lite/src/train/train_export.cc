@@ -682,6 +682,9 @@ int TrainExport::SaveWeightsToFile(bool enable_fp16, const std::vector<std::stri
     }
   }
   weights.close();
+#ifndef _MSC_VER
+  chmod(file_name_.c_str(), S_IRUSR);
+#endif
   return RET_OK;
 }
 

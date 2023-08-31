@@ -19,6 +19,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.Locale;
 
@@ -172,7 +177,13 @@ public class NativeLibrary {
                 outputStream.write(buffer, 0, n);
                 byteCnt += n;
             }
+            final Set<PosixFilePermission> perms = new HashSet<>();
+            perms.add(PosixFilePermission.OWNER_READ);
+            Files.setPosixFilePermissions(tmpFile.toPath(), perms);
             return byteCnt;
+        } catch (IOException e) {
+            LOGGER.severe(String.format(Locale.ENGLISH, "copyLib failed: %s", e));
+            return 0;
         } finally {
             libResource.close();
         }
@@ -216,8 +227,8 @@ public class NativeLibrary {
             }
             String dependLibName = libResourceName.substring(libResourceName.lastIndexOf("/") + 1);
             final File tmpDependFile = new File(targetDir.getCanonicalPath(), dependLibName);
-            tmpDependFile.deleteOnExit();
             LOGGER.info(String.format("extract %d bytes to %s", copyLib(dependLibRes, tmpDependFile), tmpDependFile));
+            deleteFile(tmpDependFile);
         } catch (IOException e) {
             LOGGER.warning(String.format("extract library into tmp file (%s) failed.", e.toString()));
         }
