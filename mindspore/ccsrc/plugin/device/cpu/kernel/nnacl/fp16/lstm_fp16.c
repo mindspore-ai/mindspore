@@ -169,7 +169,7 @@ void UpdateOutputFp16(float16_t *hidden_state, float16_t *output, const float16_
     if (batch != 1) {
       left_matrix = buffer[C6NUM];
 #ifdef ENABLE_ARM64
-      RowMajor2ColNMajorFp16(hidden_buffer, left_matrix, batch, hidden_size);
+      RowMajor2ColNMajorFp16(hidden_buffer, left_matrix, batch, hidden_size, false);
 #else
       RowMajor2Col16MajorFp16(hidden_buffer, left_matrix, batch, hidden_size, false);
 #endif
@@ -229,7 +229,7 @@ void LstmStepUnitFp16(float16_t *output, float16_t *input_gate, float16_t *forge
   } else {
     // pack state for matmul
 #ifdef ENABLE_ARM64
-    RowMajor2ColNMajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_);
+    RowMajor2ColNMajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_, false);
 #else
     RowMajor2Col16MajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_, false);
 #endif
@@ -334,7 +334,8 @@ void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight
   const float16_t *packed_input = input;
   if (lstm_param->batch_ != 1 || lstm_param->seq_len_ != 1) {
     float16_t *temp_input = buffer[0];
-    RowMajor2ColNMajorFp16(input, temp_input, lstm_param->seq_len_ * lstm_param->batch_, lstm_param->input_size_);
+    RowMajor2ColNMajorFp16(input, temp_input, lstm_param->seq_len_ * lstm_param->batch_, lstm_param->input_size_,
+                           false);
     packed_input = temp_input;
   }
 #else

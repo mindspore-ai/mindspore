@@ -103,14 +103,16 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
   if (params_.a_batch_ == 1) {
     if (params_.a_transpose_) {
       if (target_ == kARM64) {
-        pack_code.CodeFunction("RowMajor2RowNMajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_);
+        pack_code.CodeFunction("RowMajor2RowNMajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_,
+                               "false");
       } else {
         pack_code.CodeFunction("RowMajor2Row12MajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_,
                                false);
       }
     } else {
       if (target_ == kARM64) {
-        pack_code.CodeFunction("RowMajor2ColNMajorFp16", input_a_str, input_a_pack_str, params_.row_, params_.deep_);
+        pack_code.CodeFunction("RowMajor2ColNMajorFp16", input_a_str, input_a_pack_str, params_.row_, params_.deep_,
+                               "false");
       } else {
         pack_code.CodeFunction("RowMajor2Col12MajorFp16", input_a_str, input_a_pack_str, params_.row_, params_.deep_,
                                false);
@@ -123,13 +125,13 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
               << ";\n";
     if (params_.a_transpose_) {
       if (target_ == kARM64) {
-        pack_code << "    RowMajor2RowNMajorFp16(src, dst, " << params_.deep_ << ", " << params_.row_ << ");\n";
+        pack_code << "    RowMajor2RowNMajorFp16(src, dst, " << params_.deep_ << ", " << params_.row_ << ", false);\n";
       } else {
         pack_code << "    RowMajor2Row12MajorFp16(src, dst, " << params_.deep_ << ", " << params_.row_ << ", false);\n";
       }
     } else {
       if (target_ == kARM64) {
-        pack_code << "    RowMajor2ColNMajorFp16(src, dst, " << params_.row_ << ", " << params_.deep_ << ");\n";
+        pack_code << "    RowMajor2ColNMajorFp16(src, dst, " << params_.row_ << ", " << params_.deep_ << ", false);\n";
       } else {
         pack_code << "    RowMajor2Col12MajorFp16(src, dst, " << params_.row_ << ", " << params_.deep_ << ", false);\n";
       }

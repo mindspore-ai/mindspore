@@ -24,6 +24,8 @@
 #define MS_F32X4_GETI(src, i) src[i]
 #define MS128_F32_GETI(src, i) src[i]
 #define MS_FLOAT32X4 float32x4_t
+#define MS_FLOAT32X4X2 float32x4x2_t
+#define MS_FLOAT32X4X4 float32x4x4_t
 #define MS_FLOAT128_F32 float32x4_t
 #define MS_INT32X4 int32x4_t
 #define MS_INT128_EPI32 int32x4_t
