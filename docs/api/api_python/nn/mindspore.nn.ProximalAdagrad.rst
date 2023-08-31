@@ -3,9 +3,7 @@ mindspore.nn.ProximalAdagrad
 
 .. py:class:: mindspore.nn.ProximalAdagrad(params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
 
-    ProximalAdagrad算法的实现。
-
-    ProximalAdagrad用于在线学习和随机优化。
+    ProximalAdagrad算法的实现，用于在线学习和随机优化。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_。
 
     .. math::

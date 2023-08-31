@@ -3446,7 +3446,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation mode. Default: ``Inter.BILINEAR``.
             It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``.
 
-            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
+            - ``Inter.BILINEAR`` , means interpolation method is bilinear interpolation.
 
             - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
 

@@ -356,7 +356,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     .. math::
         tmp\_step= \min(current\_step, decay\_steps)
 
-    If `update_decay_steps` is true, update the value of `tmp_decay_step` every `decay_steps`. The formula is :
+    If `update_decay_steps` is true, update the value of :math:`tmp_decay_steps` every `decay_steps`. The formula is :
 
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)

@@ -571,7 +571,8 @@ class PixelShuffle(Cell):
     <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
-    :math:`(*, C, H \times r, W \times r)`, where r is an upscale factor and * is zero or more batch dimensions.
+    :math:`(*, C, H \times r, W \times r)`,
+    where :math:`r` is an upscale factor and :math:`*` is zero or more batch dimensions.
 
     Note:
         The dimension of input Tensor on Ascend should be less than 7.
@@ -621,7 +622,8 @@ class PixelUnshuffle(Cell):
     <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
-    :math:`(*, C \times r^2, H, W)` , where r is a downscale factor and * is zero or more batch dimensions.
+    :math:`(*, C \times r^2, H, W)` ,
+    where :math:`r` is a downscale factor and :math:`*` is zero or more batch dimensions.
 
     Args:
         downscale_factor (int): factor to unshuffle the input, and is a positive integer.

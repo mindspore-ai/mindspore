@@ -12,7 +12,7 @@ mindspore.dataset.Schema
         schema对象，关于数据集的行列配置的策略信息。
 
     异常：
-        - **RuntimeError** - 模式文件加载失败。
+        - **RuntimeError** - schema文件加载失败。
 
     .. py:method:: add_column(name, de_type, shape=None)
 

@@ -11,7 +11,7 @@ mindspore.dataset.vision.RandomResizedCropWithBBox
         - **ratio** (Union[list, tuple], 可选) - 裁剪子图的宽高比的随机选取范围，需要在[min, max)区间。默认值： ``(3. / 4., 4. / 3.)`` 。
         - **interpolation** (:class:`~.vision.Inter`, 可选) - 插值方式。它可以是 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 、 ``Inter.BICUBIC`` 。默认值： ``Inter.BILINEAR`` 。
 
-          - ``Inter.BILINEA`` ，双线性插值。
+          - ``Inter.BILINEAR`` ，双线性插值。
           - ``Inter.NEAREST`` ，最近邻插值。
           - ``Inter.BICUBIC`` ，双三次插值。
 
