@@ -170,7 +170,7 @@ def test_squeeze_grad():
 
 def test_SubGrad():
     """ test_SubGrad """
-    input_x = Tensor(np.array([[2, 2]]))
+    input_x = Tensor(np.array([2, 2]))
     input_y = Tensor(np.array([[2, 2], [2, 2]]))
     sub = P.Sub()
 
@@ -183,7 +183,7 @@ def test_SubGrad():
     sens = Tensor(np.ones_like(out.asnumpy()))
     args = [input_x, input_y, sens]
     gout = gfn(*args)
-    expect_dx = np.ones([1, 2]).astype(np.int32) * 2  # reduce sum dout to the shape of x
+    expect_dx = np.ones([2]).astype(np.int32) * 2  # reduce sum dout to the shape of x
     expect_dy = np.ones([2, 2]).astype(np.int32) * (-1)
     assert np.array_equal(gout[0].asnumpy(), expect_dx)
     assert np.array_equal(gout[1].asnumpy(), expect_dy)

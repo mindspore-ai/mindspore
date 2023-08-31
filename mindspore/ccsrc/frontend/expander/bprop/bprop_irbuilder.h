@@ -60,6 +60,7 @@ class BpropIRBuilder : public Emitter {
 
   // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
+  size_t GetRank(const NodePtr &node) const { return GetShape(node).size(); }
   // For node that has multiple outputs
   std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }
   TypePtr GetDtype(const NodePtr &node) const { return node->dtype(); }

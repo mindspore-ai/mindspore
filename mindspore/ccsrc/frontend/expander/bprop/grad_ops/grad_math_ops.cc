@@ -1921,7 +1921,7 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     dw = ib->BatchMatMul(x, dout, !ta, false);
   }
 
-  return BinopGradCommonWithShift(ib, x, w, dx, dw, 2);
+  return BinopGradCommon(ib, x, w, dx, dw, 2);
 });
 
 REG_BPROP_BUILDER("Eps").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
