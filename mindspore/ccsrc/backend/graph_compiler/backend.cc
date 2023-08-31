@@ -641,7 +641,14 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
     }
     (void)graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
     pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
-    graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
+    // PyNative use kernel graph will result in front node and back node is the same; But in pynative task sink, backend
+    // still create new kernel graph
+    if (root_graph_->has_flag(kFlagIsPyNativeBpropKernelGraph) &&
+        !pynative::GraphAdapter::PyNativeEnableTaskSink(root_graph_)) {
+      graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, {graph->output()});
+    } else {
+      graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
+    }
     // Clear front outputs after the outputs is cached.
     graph->set_front_outputs({});
     AnfAlgo::UpdateGraphValidRefPair(graph);

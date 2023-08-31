@@ -761,9 +761,8 @@ void MindRTBackendBase::CompileKernelGraph(const KernelGraphPtr &kernel_graph,
   if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
     graph_id = graph_compiler_->CompileDynamicGraph(kernel_graph, device_context);
   } else {
-    graph_id =
-      graph_compiler_->CompileGraph(kernel_graph, std::make_pair(kernel_graph->inputs(), kernel_graph->outputs()),
-                                    device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+    graph_id = graph_compiler_->CompileGraph(kernel_graph, io_nodes, device_context, run_mode,
+                                             ms_execution_mode_ == kPynativeMode);
     if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
       MS_LOG(INFO)
         << "Set kFlagEnableRunGraphBySingleOp: require the root_graph and subgraph to have the same markings ";
