@@ -135,6 +135,8 @@ Status AclAllocator::CopyHostDataToDevice(void *host_data, void *device_data, si
 Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_device_data, size_t data_size,
                                             int src_device_id, int dst_device_id) {
   MS_LOG(INFO) << "src device id: " << src_device_id << ", dst device id: " << dst_device_id;
+  MS_LOG(DEBUG) << "src device addr: " << src_device_data << ", dst device addr: " << dst_device_data
+                << ", with size: " << data_size;
   if (dst_device_id == -1 || src_device_id == -1) {
     MS_LOG(ERROR) << "device data copy device data, need set src device id and dst device id, now src device id: "
                   << src_device_id << ", dst device id: " << dst_device_id;
