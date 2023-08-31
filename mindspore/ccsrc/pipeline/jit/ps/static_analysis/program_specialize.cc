@@ -1778,6 +1778,15 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   }
   if (!value->isa<FuncGraph>() || value->cast_ptr<FuncGraph>()->parent() == nullptr ||
       (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast_ptr<FuncGraph>()->parent()))) {
+    if (IS_OUTPUT_ON(MsLogLevel::kDebug)) {
+      MS_LOG(DEBUG) << "Specialize non-value to func graph, value: " << value->ToString()
+                    << ", cnode: " << cnode->DebugString() << ", origin_node: " << origin_node->DebugString()
+                    << ", func_graph_: " << func_graph_->ToString();
+      if (value->isa<FuncGraph>() && value->cast_ptr<FuncGraph>()->parent() != nullptr) {
+        MS_LOG(DEBUG) << "Specialize func graph, " << value->ToString()
+                      << " has_parent, is_visible: " << IsVisible(func_graph_, value->cast_ptr<FuncGraph>()->parent());
+      }
+    }
     return BuildValueNode(value, origin_node, ival);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimJ) && origin_node->isa<Parameter>() &&
              !value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
