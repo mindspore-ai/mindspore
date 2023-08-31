@@ -34,6 +34,7 @@
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/common.h"
+#include "extendrt/delegate/factory.h"
 
 namespace mindspore::lite {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
@@ -60,6 +61,22 @@ void DefaultGraphCompiler::InitCompileOption(const FuncGraphPtr &graph) {
   }
 }
 
+void DefaultGraphCompiler::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) {
+  const ConfigInfos config_infos;
+  auto &device_contexts = context_->MutableDeviceInfo();
+  if (device_contexts.empty()) {
+    MS_LOG(ERROR) << "no context found";
+  }
+  auto device_type = device_contexts.at(0)->GetDeviceType();
+  auto provider = device_contexts.at(0)->GetProvider();
+  auto delegate =
+    DelegateRegistry<ExtendDelegate *>::GetInstance().GetDelegate(device_type, provider, context_, config_infos);
+  if (delegate != nullptr) {
+    delegate->ReplaceNodes(graph);
+  }
+  // other delegate // implement by plugin later
+}
+
 std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
 
@@ -70,6 +87,8 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
   }
 
   InitCompileOption(graph);
+
+  ReplaceNodes(graph);
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
   auto graph_segments = Partition(graph);
@@ -109,7 +128,7 @@ CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, c
 
 std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_, option_);
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_, context_, option_);
   }
   return {scheduler_->Schedule(compile_result)};
 }

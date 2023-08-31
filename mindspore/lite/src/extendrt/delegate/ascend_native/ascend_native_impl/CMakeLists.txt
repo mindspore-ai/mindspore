@@ -20,13 +20,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 set(CMAKE_CXX_LINK clang++)
-# ascend_native kernel must be compiled with -D_GLIBCXX_USE_CXX11_ABI=1
-# get_property(ORIGIN_DEFS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
-# string(REPLACE "_GLIBCXX_USE_CXX11_ABI=0" "_GLIBCXX_USE_CXX11_ABI=1 " NEW_DEFS ${ORIGIN_DEFS})
-# set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS ${NEW_DEFS})
-set(SRC_LIST ${SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/add.cc)
-#file(GLOB_RECURSE SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-
-add_library(ascend_native_kernels_impl SHARED ${SRC_LIST})
+if(DEFINED SRC_LIST)
+    add_library(ascend_native_kernels_impl SHARED ${SRC_LIST})
+endif()

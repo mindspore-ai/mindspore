@@ -17,10 +17,11 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TYPE_H_
 
 #include <memory>
-
+#include <vector>
 #include "include/api/delegate_api.h"
 #include "ir/func_graph.h"
 #include "src/extendrt/kernel/base_kernel.h"
+#include "extendrt/kernel/kernel_lib.h"
 
 namespace mindspore {
 class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::BaseKernel> {
@@ -38,6 +39,14 @@ class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::BaseKernel> 
   }
 
   std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override {
+    // not implemented
+    return nullptr;
+  }
+
+  virtual std::shared_ptr<kernel::BaseKernel> CreateKernel(const kernel::KernelSpec &spec,
+                                                           const std::vector<InferTensor *> &inputs,
+                                                           const std::vector<InferTensor *> &outputs,
+                                                           const InferContext *ctx) const {
     // not implemented
     return nullptr;
   }

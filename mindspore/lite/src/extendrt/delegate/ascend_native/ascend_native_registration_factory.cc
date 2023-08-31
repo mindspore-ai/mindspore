@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "extendrt/kernel/ascend_native/ascend_native_registration_factory.h"
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_registration_factory.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 
 namespace mindspore::kernel {
 template <>

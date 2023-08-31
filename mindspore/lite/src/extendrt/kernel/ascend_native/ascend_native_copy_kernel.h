@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "extendrt/kernel/ascend_native/ascend_native_base_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ops/copy.h"
 
@@ -28,13 +28,18 @@ namespace mindspore::kernel {
 class AscendNativeCopyKernel : public AscendNativeBaseKernel {
  public:
   AscendNativeCopyKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                         InferPrimitive prim, std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                         std::string name)
+                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
+
+  int InferShape() override;
 
   int Prepare() override;
 
-  int Execute() override;
+  int Run() override;
+
+  int PreProcess() override;
+
+  int PostProcess() override;
 
  private:
   ops::Copy::CopyFormatType copy_type_;

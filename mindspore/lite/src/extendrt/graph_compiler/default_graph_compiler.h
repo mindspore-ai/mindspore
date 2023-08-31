@@ -58,6 +58,7 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   Status IsolateSubGraphs();
   static std::vector<InferTensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
   std::vector<AnfNodePtr> SkipMakeTuple(const AnfNodePtr &origin_node);
+  void ReplaceNodes(const std::shared_ptr<FuncGraph> &graph);
 
  private:
   std::shared_ptr<infer::ExecutionPlan> execution_plan_{nullptr};

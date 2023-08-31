@@ -366,7 +366,8 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
   auto device_type = device_contexts.at(0)->GetDeviceType();
   auto provider = device_contexts.at(0)->GetProvider();
 
-  auto delegate = DelegateRegistry::GetInstance().GetDelegate(device_type, provider, ctx, config_infos);
+  auto delegate = DelegateRegistry<std::shared_ptr<GraphExecutor>>::GetInstance().GetDelegate(device_type, provider,
+                                                                                              ctx, config_infos);
   if (delegate == nullptr) {
     return nullptr;
   }

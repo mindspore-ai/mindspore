@@ -1,5 +1,6 @@
 add_library(ascend_native_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_helper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/stub_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ascend_native_plugin_impl.cc
@@ -8,4 +9,3 @@ add_library(ascend_native_mid OBJECT
         )
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ascend_native_impl)
-#target_link_libraries(ascend_native_plugin ascend_native_kernels_impl)

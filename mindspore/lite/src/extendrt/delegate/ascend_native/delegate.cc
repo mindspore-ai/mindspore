@@ -20,12 +20,14 @@
 #include <utility>
 #include <string>
 #include <set>
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_composite.h"
 #include "extendrt/delegate/ops/copy.h"
 #include "extendrt/kernel/ascend_native/ascend_native_composite_kernel.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_stub.h"
+#include "extendrt/delegate/factory.h"
+
 #include "ops/encoder_layer.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/add_fusion.h"
@@ -36,8 +38,11 @@
 #include "ops/cast.h"
 #include "ops/not_equal.h"
 #include "ops/tuple_get_item.h"
+#include "ops/less.h"
 
 namespace mindspore {
+
+constexpr auto kAscendNativeProvider = "ascend_native";
 namespace {
 static inline kernel::InferTensor *anfTensorToTensorInfo(const common::KernelWithIndex &tensor_id) {
   auto [prev_node, index] = tensor_id;
@@ -100,7 +105,7 @@ bool AscendNativeDelegate::IsSupport(const CNodePtr &cnode) {
   std::set<std::string> ops = {ops::kNameEncoderLayer,     ops::kNameMulFusion, ops::kNameAddFusion,
                                ops::kNameMatMulFusion,     ops::kNameGather,    ops::kNameReshape,
                                ops::kNameUsePastEmbedding, ops::kNameCast,      ops::kNameNotEqual,
-                               ops::kNameTupleGetItem};
+                               ops::kNameTupleGetItem,     ops::kNameLess};
   if (ops.find(prim->name()) != ops.end()) {
     return true;
   }
@@ -111,7 +116,6 @@ void AscendNativeDelegate::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph)
   auto nodes = TopoSort(graph->get_return());
   // for all the nodes in the graph, call the delegate isDelegateNode and CreateKernel interface to create kernels
   helper_ = std::make_shared<SubGraphHelper>(graph);
-  helper_->DrawGraph("origraph.dot", graph, false);
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -137,7 +141,6 @@ void AscendNativeDelegate::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph)
     ReplaceSubGraph(graph, i);
   }
   helper_->FixAllNodes(nodes);
-  helper_->DrawGraph("mygraph.dot", graph, true);
 }
 
 void AscendNativeDelegate::ReplaceSubGraph(const std::shared_ptr<FuncGraph> &graph, int idx) {
@@ -156,17 +159,16 @@ void AscendNativeDelegate::ReplaceSubGraph(const std::shared_ptr<FuncGraph> &gra
 
 bool AscendNativeDelegate::IsDelegateNode(const std::shared_ptr<AnfNode> &node) {
   auto cnode = node->cast<CNodePtr>();
-  if (cnode != nullptr) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim->name() == ops::kNameAscendNativeComposite) {
-      return true;
-    }
-  }
+  auto copy_prim = std::make_shared<Primitive>(ops::kNameCopy);
+  auto composite_prim = std::make_shared<Primitive>(ops::kNameAscendNativeComposite);
+  if ((cnode != nullptr) && (IsPrimitiveCNode(cnode, composite_prim) || IsPrimitiveCNode(cnode, copy_prim)))
+    return true;
   return false;
 }
 
 void AscendNativeDelegate::CreateInputKernelTensors(const CNodePtr &cnode,
-                                                    std::vector<kernel::InferTensor *> *input_tensors) {
+                                                    std::vector<kernel::InferTensor *> *input_tensors,
+                                                    std::shared_ptr<DelegateAllocator> allocator) {
   input_tensors->clear();
   auto input_nodes = FuncGraphUtils::GetNodeInputs(cnode);
   for (auto &tensor_id : input_nodes) {
@@ -188,7 +190,8 @@ void AscendNativeDelegate::CreateInputKernelTensors(const CNodePtr &cnode,
 }
 
 void AscendNativeDelegate::CreateOutputKernelTensors(const CNodePtr &cnode,
-                                                     std::vector<kernel::InferTensor *> *output_tensors) {
+                                                     std::vector<kernel::InferTensor *> *output_tensors,
+                                                     std::shared_ptr<DelegateAllocator> allocator) {
   output_tensors->clear();
   auto output_num = AnfUtils::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
@@ -216,22 +219,26 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
     MS_LOG(ERROR) << "AscendNativeDelegate::CreateKernel cnode is nullptr";
     return nullptr;
   }
+  auto stream = ascend_native::CreateStream();
+  auto allocator = std::make_shared<DelegateAllocator>(stream);
   // step II - Prepare kernel attributes
   std::vector<kernel::InferTensor *> input_tensors;
-  CreateInputKernelTensors(cnode, &input_tensors);
+  CreateInputKernelTensors(cnode, &input_tensors, allocator);
   std::vector<kernel::InferTensor *> output_tensors;
-  CreateOutputKernelTensors(cnode, &output_tensors);
+  CreateOutputKernelTensors(cnode, &output_tensors, allocator);
   kernel::InferPrimitive primitive;
   primitive.base_operator = CreateOperatorByCNode(cnode);
   primitive.cnode = cnode;
   auto kernel_name = cnode->fullname_with_scope();
   auto node_type = primitive.base_operator->name();
+
   if (node_type == ops::kNameAscendNativeComposite) {
-    auto kernel = std::make_shared<kernel::AscendNativeCompositeKernel>(
-      input_tensors, output_tensors, primitive, &ascend_native_ctx_, ascend_native_stream_, kernel_name);
+    auto kernel = std::make_shared<kernel::AscendNativeCompositeKernel>(input_tensors, output_tensors, primitive,
+                                                                        ascend_native_ctx_.get(), stream, kernel_name);
     int idx = static_cast<int>(GetValue<int64_t>(primitive.base_operator->GetAttr("group")));
     auto func_graph = helper_->GetSbg(idx)->func_graph();
     kernel->set_func_graph(func_graph);
+    kernel->set_stream(stream);
     return kernel;
   } else {
     // create base kernel for debug
@@ -243,7 +250,7 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
     }
     if (plugin_factory.HasKey(node_type)) {
       kernel::AscendNativeBaseKernel *ascend_native_op = plugin_factory.GetCreator(node_type)(
-        input_tensors, output_tensors, primitive, &ascend_native_ctx_, ascend_native_stream_, node_type);
+        input_tensors, output_tensors, primitive, ascend_native_ctx_.get(), stream, node_type);
       if (ascend_native_op == nullptr) {
         return nullptr;
       }
@@ -252,8 +259,7 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
         auto in_tensors = ker->in_tensors();
         for (auto &t : in_tensors) {
           if (t->IsConst() && t->device_data() != nullptr) {
-            t->set_device_data(
-              ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(ascend_native_stream_)));
+            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream)));
           }
         }
       }
@@ -262,6 +268,7 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
       } else {
         ker->set_name(kernel_name);
       }
+      ker->set_stream(stream);
       return ker;
     } else {
       MS_LOG(WARNING) << "Unsupported op type for ascend native. kernel name:" << kernel_name << " type:" << node_type;
@@ -269,4 +276,75 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
     }
   }
 }
+
+std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const kernel::KernelSpec &spec,
+                                                                       const std::vector<InferTensor *> &inputs,
+                                                                       const std::vector<InferTensor *> &outputs,
+                                                                       const InferContext *ctx) const {
+  // step I - Convert to cnode
+  auto cnode = spec.cnode;
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "AscendNativeDelegate::CreateKernel cnode is nullptr";
+    return nullptr;
+  }
+  if (stream_ == nullptr) {
+    stream_ = ascend_native::CreateStream();  // TODO(yoni) - remove
+  }
+  auto stream = stream_;
+  // step II - Prepare kernel attributes
+  auto kernel_name = cnode->fullname_with_scope();
+  kernel::InferPrimitive primitive;
+  primitive.base_operator = spec.primitive;
+  primitive.cnode = cnode;
+  auto node_type = primitive.base_operator->name();
+  if (node_type == ops::kNameAscendNativeComposite) {
+    auto kernel = std::make_shared<kernel::AscendNativeCompositeKernel>(inputs, outputs, primitive,
+                                                                        ascend_native_ctx_.get(), stream, kernel_name);
+    int idx = static_cast<int>(GetValue<int64_t>(primitive.base_operator->GetAttr("group")));
+    auto func_graph = helper_->GetSbg(idx)->func_graph();
+    kernel->set_func_graph(func_graph);
+    kernel->set_stream(stream);
+    return kernel;
+  } else {
+    // create base kernel for debug
+    auto orig_node_type = node_type;
+    // step III - Create Ascend native Kernel
+    auto &plugin_factory = kernel::AscendNativeRegistrationFactory::Get();
+    if (node_type != ops::kNameCopy) {
+      node_type = ops::kNameAscendNativeStub;
+    }
+    if (plugin_factory.HasKey(node_type)) {
+      kernel::AscendNativeBaseKernel *ascend_native_op =
+        plugin_factory.GetCreator(node_type)(inputs, outputs, primitive, ascend_native_ctx_.get(), stream, node_type);
+      if (ascend_native_op == nullptr) {
+        return nullptr;
+      }
+      auto ker = std::shared_ptr<kernel::AscendNativeBaseKernel>(ascend_native_op);
+      if (!ker->IsWeightInputHanledInner()) {
+        auto in_tensors = ker->in_tensors();
+        for (auto &t : in_tensors) {
+          if (t->IsConst() && t->device_data() != nullptr) {
+            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream)));
+          }
+        }
+      }
+      if (node_type == "AscendNativeStub") {
+        ker->set_name(orig_node_type);
+      } else {
+        ker->set_name(kernel_name);
+      }
+      ker->set_stream(stream);
+      return ker;
+    } else {
+      MS_LOG(ERROR) << "Unsupported op type for ascend native. kernel name:" << kernel_name << " type:" << node_type;
+      return nullptr;
+    }
+  }
+}
+
+ExtendDelegate *AscendDelegateCreator(const std::shared_ptr<Context> &, const ConfigInfos &) {
+  return &AscendNativeDelegate::Instance();
+}
+REG_DELEGATE(kAscend, kAscendNativeProvider, AscendDelegateCreator);
+
 }  // namespace mindspore

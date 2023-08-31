@@ -25,5 +25,8 @@ void GemmFp32(void *queue, size_t m_size, size_t n_size, size_t k_size, float AL
 
 void GemmFp16(void *queue, bool ta, bool tb, size_t m_size, size_t n_size, size_t k_size, float ALPHA, void *d_hA,
               size_t lda, void *d_hB, size_t ldb, float BETA, void *d_fC, size_t ldc, size_t core_num);
+
+void BGemmFp16(void *queue, bool ta, bool tb, size_t m_size, size_t n_size, size_t k_size, float ALPHA, void *d_hA,
+               size_t lda, void *d_hB, size_t ldb, float BETA, void *d_fC, size_t ldc, int repeats, size_t core_num);
 }  // namespace mindspore::ascend_native
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_GEMM_H_

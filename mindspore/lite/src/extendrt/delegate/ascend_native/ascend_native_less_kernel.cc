@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 
-#include "extendrt/kernel/ascend_native/ascend_native_add_kernel.h"
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
-#include "extendrt/delegate/ascend_native/ascend_native_impl/add.h"
-#include "ops/fusion/add_fusion.h"
+#include "extendrt/delegate/ascend_native/ascend_native_less_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
+// #include "extendrt/delegate/ascend_native/ascend_native_impl/less.h"
+#include "ops/less.h"
 #include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore::kernel {
-using mindspore::ops::kNameAddFusion;
+using mindspore::ops::kNameLess;
 
-int AscendNativeAddKernel::Prepare() {
+int AscendNativeLessKernel::InferShape() {
   if (out_tensors_[0]->shape().size() == 0) {
     if (in_tensors_[0] != nullptr) out_tensors_[0]->set_shape(in_tensors_[0]->shape());
   }
   return kSuccess;
 }
 
-int AscendNativeAddKernel::Execute() {
-  MS_LOG(INFO) << "AscendNativeAddKernel::Execute";
-  const std::vector<InferTensor *> &in_tensors = this->in_tensors();
-  auto aBufSize = in_tensors[0]->ElementsNum();
-  ascend_native::AddFp16(in_tensors[0]->device_data(), in_tensors[1]->device_data(), out_tensors()[0]->device_data(),
-                         aBufSize, const_cast<void *>(get_stream()));
+int AscendNativeLessKernel::Prepare() {
+  auto ret = InferShape();
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
+    return kLiteError;
+  }
   return kSuccess;
 }
-REGISTER_ASCEND_NATIVE_CREATOR(kNameAddFusion, AscendNativeAddKernel)
+
+int AscendNativeLessKernel::Run() {
+  MS_LOG(INFO) << "AscendNativeLessKernel::Execute";
+
+  return kSuccess;
+}
+REGISTER_ASCEND_NATIVE_CREATOR(kNameLess, AscendNativeLessKernel)
 }  // namespace mindspore::kernel

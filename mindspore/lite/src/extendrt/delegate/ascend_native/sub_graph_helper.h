@@ -28,7 +28,6 @@
 #include "mindapi/base/type_id.h"
 #include "extendrt/delegate/ops/copy.h"
 
-#define DPRN() std::cout
 namespace mindspore {
 class SubGraphHelper;
 using SubGraphHelperPtr = std::shared_ptr<SubGraphHelper>;
@@ -84,6 +83,7 @@ class SubGraphHelper : public std::enable_shared_from_this<SubGraphHelper> {
   AnfNodePtr CreateGetItemAndCopyUnique(const AnfNodePtr &node, int id, const CNodePtr &cinput,
                                         ops::Copy::CopyFormatType type);
   bool IsGraphInput(const AnfNodePtr &node) const;
+  void Dump(std::string file_name) const;
 
  private:
   int GetOutputsCount(int group);
@@ -98,6 +98,7 @@ class SubGraphHelper : public std::enable_shared_from_this<SubGraphHelper> {
   void DrawGraph(const FuncGraphPtr &graph, std::ostream &out, bool recursive) const;
   void DrawConnction(const AnfNodePtr &in_node, bool src_composite, int src_idx, const AnfNodePtr &node,
                      bool dst_composite, int dst_idx, std::ostream &out) const;
+  void DumpNode(std::ofstream &out, const AnfNodePtr &node) const;
   std::vector<SubGraphPtr> sg_v_;
   std::unordered_map<CNodePtr, int> map_;
   std::map<std::pair<int, AnfNodePtr>, AnfNodePtr> connection_map_;  // <port, node>->node

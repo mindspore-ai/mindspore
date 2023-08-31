@@ -19,6 +19,19 @@
 
 #include <stddef.h>
 
+#define ASCEND_UB_BUFFER_SIZE 241280
+#define ASCEND_HALF_UB_BUFFER_SIZE 120640
+#define ASCEND_THIRD_UB_BUFFER_SIZE 80432
+#define ASCEND_CROSS_BUF_SIZE 256
+#define ASCEND_UB_NUM_ELEM (ASCEND_UB_BUFFER_SIZE / sizeof(T))
+// 120640 for FP16
+#define ASCEND_CROSS_NUM_ELEM (ASCEND_CROSS_BUF_SIZE / sizeof(T))
+// 128 for FP16
+#define MAX_CROSS_ELEMS (ASCEND_UB_NUM_ELEM / (ASCEND_CROSS_NUM_ELEM))
+#define ACEND_LB_UB_BUFFER_SIZE = 25600;
+// 938 for FP16
+#define CeilDiv(x, y) ((x + y - 1) / y)
+
 namespace mindspore::ascend_native {
 void *CreateStream();
 void CopyHostFp32ToDeviceFp16(void *src, void **dst_ptr, size_t elem_num, void *stream);

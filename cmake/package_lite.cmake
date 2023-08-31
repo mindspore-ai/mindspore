@@ -902,7 +902,11 @@ else()
             if(MSLITE_ASCEND_TARGET)
                 install(TARGETS ascend_native_plugin
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(TARGETS ascend_native_kernels_impl
+                if(TARGET ascend_native_kernels_impl)
+                        install(TARGETS ascend_native_kernels_impl
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
+                install(TARGETS hccl_plugin
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
             install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../set_env.bash DESTINATION

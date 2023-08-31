@@ -84,7 +84,7 @@ class BaseKernel : public IKernel<ops::BaseOperator> {
     return lite::RET_OK;
   }
 
-  virtual int Run() { return lite::RET_ERROR; }
+  virtual int Run() { return lite::RET_OK; }
 
   virtual bool InferShapeDone() const {
     auto checker = context_ != nullptr ? context_->get_infer_checker() : lite::InferCheckerOutput;

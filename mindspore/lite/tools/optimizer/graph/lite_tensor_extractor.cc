@@ -193,6 +193,7 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
     if (abstract->isa<abstract::AbstractScalar>()) {
       continue;
     }
+
     if (!utils::isa<abstract::AbstractTensor>(abstract)) {
       if (utils::isa<abstract::AbstractScalar>(abstract)) {
         continue;
