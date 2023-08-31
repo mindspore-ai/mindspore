@@ -1915,7 +1915,9 @@ AbstractBasePtr AbstractDictionary::Clone() const {
                          MS_EXCEPTION_IF_NULL(item.second);
                          return std::make_pair(item.first->Clone(), item.second->Clone());
                        });
-  return std::make_shared<AbstractDictionary>(kv);
+  auto ret = std::make_shared<AbstractDictionary>(kv);
+  ret->set_extra_info(extra_info_);
+  return ret;
 }
 
 AbstractBasePtr AbstractDictionary::Broaden() const {
@@ -1925,7 +1927,9 @@ AbstractBasePtr AbstractDictionary::Broaden() const {
                          MS_EXCEPTION_IF_NULL(item.second);
                          return std::make_pair(item.first, item.second->Broaden());
                        });
-  return std::make_shared<AbstractDictionary>(kv);
+  auto ret = std::make_shared<AbstractDictionary>(kv);
+  ret->set_extra_info(extra_info_);
+  return ret;
 }
 
 std::string AbstractDictionary::ToString() const {

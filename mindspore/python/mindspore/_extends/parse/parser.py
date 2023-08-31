@@ -778,7 +778,11 @@ def _convert_stub_tensor(data):
             input_data = _convert_stub_tensor(input_data)
         return data
     if isinstance(data, dict):
-        return dict((_convert_stub_tensor(key), _convert_stub_tensor(value)) for key, value in data.items())
+        # Keep the dict object not change.
+        keys = tuple(data.keys())
+        for key in keys:
+            data[_convert_stub_tensor(key)] = _convert_stub_tensor(data.pop(key))
+        return data
     return data
 
 

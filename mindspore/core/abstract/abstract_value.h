@@ -1174,7 +1174,7 @@ class MS_CORE_API AbstractNamedTuple : public AbstractTuple {
 using AbstractNamedTuplePtr = std::shared_ptr<AbstractNamedTuple>;
 
 /// \brief Class AbstractDictionary describes a dictionary node's abstract value.
-class MS_CORE_API AbstractDictionary final : public AbstractBase {
+class MS_CORE_API AbstractDictionary final : public AbstractBase, public ExtraInfoHolder {
  public:
   /// \brief Constructor of AbstractDictionary.
   ///

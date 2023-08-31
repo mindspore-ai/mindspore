@@ -1552,6 +1552,17 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     }
     return abs;
   }
+  if (value->isa<ValueDictionary>() && anf_node != nullptr) {
+    auto abs = value->ToAbstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    // Attach corresponding python dictionary object to AbstractDictionary.
+    py::object py_dict_obj =
+      fallback::HasPyObjectInNode(anf_node) ? fallback::GetPyObjectFromNode(anf_node) : fallback::GeneratePyObj(abs);
+    fallback::AttachPyObjToAbs(abs, py_dict_obj, !fallback::HasPyObjectInNode(anf_node));
+    MS_LOG(DEBUG) << "Attach python dict object " << fallback::GetPyObjectPtrStr(py_dict_obj)
+                  << " to new abstract: " << abs->ToString();
+    return abs;
+  }
   return value->ToAbstract();
 }
 

@@ -90,7 +90,11 @@ def _convert_python_data(data):
             data[i] = _convert_python_data(data[i])
         return data
     if isinstance(data, dict):
-        return dict((_convert_python_data(key), _convert_python_data(value)) for key, value in data.items())
+        # Keep the dict object not change.
+        keys = tuple(data.keys())
+        for key in keys:
+            data[_convert_python_data(key)] = _convert_python_data(data.pop(key))
+        return data
     return data
 
 
