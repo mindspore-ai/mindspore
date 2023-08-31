@@ -334,3 +334,32 @@ def test_all_subgraph_mix_precision():
     context.set_context(mode=context.PYNATIVE_MODE)
     out_pynative = mix_net(x)
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+class AddNet(ms.nn.Cell):
+    def __init__(self):
+        super(AddNet, self).__init__()
+        self.add = ops.Add()
+
+    def construct(self, x):
+        out = self.add(x, x)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('dst_type', [ms.float16, ms.bfloat16])
+def test_to_float(mode, dst_type):
+    """
+    Feature: to_float
+    Description: Verify the result of to_float
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = Tensor(np.array([-1.0, 1.0, 0.0]), ms.float32)
+    net = AddNet().to_float(dst_type)
+    output = net(x)
+    assert output.dtype == dst_type

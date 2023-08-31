@@ -136,6 +136,36 @@ def test_cast_float64():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_cast_bfloat16():
+    """
+    Feature: cast
+    Description: Verify the result of cast with dst_type bfloat16
+    Expectation: success
+    """
+    tensor_to_cast = []
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.float16)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.float32)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.float64)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.int8)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.int16)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.int32)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.int64)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.uint8)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.uint16)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.uint32)))
+    tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.uint64)))
+    t = mstype.bfloat16
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    for tensor in tensor_to_cast:
+        net = Net(t)
+        output = net(tensor)
+        assert output.dtype == mstype.bfloat16
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cast_int8():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
