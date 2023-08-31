@@ -186,11 +186,18 @@ ParameterPtr GetFuncParameter(const CNodePtr &cnode) {
   return nullptr;
 }
 
-FuncGraphPtr GetFuncGraphFromAbstract(const abstract::AbstractBasePtr &abs) {
-  if (abs == nullptr) {
+FuncGraphPtr GetFuncGraphFromPartialAbstract(const abstract::AbstractBasePtr &abs) {
+  if (abs == nullptr || !abs->isa<abstract::PartialAbstractClosure>()) {
     return nullptr;
   }
-  auto func_graph_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(abs);
+
+  auto partial_closure = dyn_cast<abstract::PartialAbstractClosure>(abs);
+  MS_EXCEPTION_IF_NULL(partial_closure);
+  if (partial_closure->fn() == nullptr) {
+    MS_LOG(ERROR) << "Partial closure's func graph is null, " << abs->ToString();
+    return nullptr;
+  }
+  auto func_graph_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(partial_closure->fn());
   if (func_graph_abstract != nullptr) {
     MS_EXCEPTION_IF_NULL(func_graph_abstract);
     if (!func_graph_abstract->specialized()) {
@@ -199,17 +206,9 @@ FuncGraphPtr GetFuncGraphFromAbstract(const abstract::AbstractBasePtr &abs) {
     }
     return func_graph_abstract->func_graph();
   }
-  auto partial_closure = dyn_cast<abstract::PartialAbstractClosure>(abs);
-  if (partial_closure != nullptr) {
-    MS_EXCEPTION_IF_NULL(partial_closure);
-    if (partial_closure->fn() == nullptr) {
-      MS_LOG(ERROR) << "Partial closure's func graph is null, " << abs->ToString();
-      return nullptr;
-    }
-    return GetFuncGraphFromAbstract(partial_closure->fn());
-  }
-  MS_LOG(DEBUG) << "Unexpected abstract, " << abs->ToString();
-  return nullptr;
+
+  // Nested Partial.
+  return GetFuncGraphFromPartialAbstract(partial_closure->fn());
 }
 
 // Gets first input as MultitypeFuncGraph from the given cnode,
@@ -380,7 +379,7 @@ class SideEffectFinder {
     // Check SwitchLayer calls, add monad arguments if need.
     HandleSwitchLayerCalls();
     // Check Partial CNode calls, add monad arguments if need.
-    HandlePartialCNodeCalls();
+    HandlePartialCalls();
   }
 
   void UpdateOrderLists() const {
@@ -476,25 +475,34 @@ class SideEffectFinder {
     }
   }
 
-  // Trace effect info for Switch cnode.
-  EffectInfo TracePartialCNodeCallEffectInfo(const CNodePtr &cnode) {
-    const ParameterPtr &func_para = GetFuncParameter(cnode);
-    MS_EXCEPTION_IF_NULL(func_para);
-    MS_EXCEPTION_IF_NULL(func_para->abstract());
-    EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
-    auto partial_real_func = GetFuncGraphFromAbstract(func_para->abstract());
+  // Trace effect info for Partial call node.
+  EffectInfo TracePartialCallEffectInfo(const CNodePtr &cnode, const EffectInfo &old_info) {
+    const AnfNodePtr &func_node = cnode->input(0);
+    MS_EXCEPTION_IF_NULL(func_node);
+    MS_EXCEPTION_IF_NULL(func_node->abstract());
+    // Only handle for Parameter or Non-Partial CNode.
+    if (!func_node->isa<Parameter>() && (!func_node->isa<CNode>() || IsPrimitiveCNode(func_node, prim::kPrimPartial))) {
+      return old_info;
+    }
+    auto partial_real_func = GetFuncGraphFromPartialAbstract(func_node->abstract());
     if (partial_real_func == nullptr) {
-      return info;
+      return old_info;
     }
 
-    // Record the Partial CNode callers and real func graph.
+    // Not retry checking, if has already confirmed the Partial func graph has side effect, or still detect ongoing.
+    if (old_info.state != EffectInfo::kDetected || old_info.memory || old_info.io || old_info.load ||
+        old_info.back_mem) {
+      return old_info;
+    }
+
+    // Record the Partial callers and real func graph.
     (void)partial_cnode_calls_.emplace(cnode, partial_real_func);
 
     // Try to obtain the effect info of func graph.
     auto effect_info = ObtainEffectInfoForFuncGraph(partial_real_func);
-    MS_LOG(DEBUG) << "Parameter func: " << func_para->DebugString()
+    MS_LOG(DEBUG) << "CNode or Parameter func: " << func_node->DebugString()
                   << ", partial_real_func: " << partial_real_func->ToString() << ", "
-                  << func_para->abstract()->ToString() << ", cnode: " << cnode->DebugString()
+                  << func_node->abstract()->ToString() << ", cnode: " << cnode->DebugString()
                   << ", effect_info: " << effect_info.memory << "/" << effect_info.io << "/" << effect_info.load;
     return effect_info;
   }
@@ -537,15 +545,22 @@ class SideEffectFinder {
     return info;
   }
 
-  void HandlePartialCNodeCalls() {
+  void HandlePartialCalls() {
     for (auto &call : partial_cnode_calls_) {
       const auto &caller = call.first;
       const auto &func_graph = call.second;
       const auto &effect_info = ObtainEffectInfoForFuncGraph(func_graph);
       MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", caller: " << caller->DebugString() << ", "
-                    << caller->abstract()->ToString() << ", "
-                    << ", effect_info: " << effect_info.memory << "/" << effect_info.io << "/" << effect_info.load;
+                    << caller->abstract()->ToString() << ", effect_info: " << effect_info.memory << "/"
+                    << effect_info.io << "/" << effect_info.load << "/" << effect_info.back_mem;
       AddMonadForCaller(caller, effect_info);
+      // Setup monad parameters for func graph according the effect info.
+      if (effect_info.memory || effect_info.load) {
+        (void)AddMonadParameter(func_graph, "u", kUMonad->ToAbstract());
+      }
+      if (effect_info.io) {
+        (void)AddMonadParameter(func_graph, "io", kIOMonad->ToAbstract());
+      }
     }
   }
 
@@ -1315,7 +1330,9 @@ class SideEffectFinder {
     auto func_cnode = GetFuncCNode(cnode);
     if (func_cnode != nullptr) {
       caller_ = cnode;
-      return TraceEffectInfoForCNode(func_cnode);
+      auto effect_info = TraceEffectInfoForCNode(func_cnode);
+      // Retry for Partial call.
+      return TracePartialCallEffectInfo(cnode, effect_info);
     }
 
     // When input[0] is a parameter, it is a function parameter for
@@ -1323,11 +1340,8 @@ class SideEffectFinder {
     auto func_para = GetFuncParameter(cnode);
     if (func_para != nullptr) {
       auto effect_info = TraceEffectInfoForParameter(func_para);
-      // Retry for Partial CNode call.
-      if (!effect_info.memory && !effect_info.io && !effect_info.load) {
-        return TracePartialCNodeCallEffectInfo(cnode);
-      }
-      return effect_info;
+      // Retry for Partial call.
+      return TracePartialCallEffectInfo(cnode, effect_info);
     }
 
     // When input[0] is a MultitypeFuncGraph, it's not specialized

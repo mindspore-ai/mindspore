@@ -43,21 +43,15 @@ class ExpandVmapPrim : public ExpandMetaFgPrim {
   virtual ~ExpandVmapPrim() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
   bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const override;
+
+ private:
+  AnfNodePtr PostProcessVmap(const AnfNodePtr &expanded_vmap_node, const AnfNodePtrList &partial_inputs,
+                             const std::vector<size_t> &orig_fg_param_info, const ValuePtr &out_axes, int axis_size);
+  // Record the stacked parameters, and the corresponding origin parameters from each cell, preserved
+  // for future feedback.
+  ParamMappingVector param_mapping_table_;
 };
 using ExpandVmapPrimPtr = std::shared_ptr<ExpandVmapPrim>;
-namespace internal {
-constexpr int64_t kParamSizeIndex = 0;
-constexpr int64_t kUMonadOffsetIndex = 1;
-constexpr int64_t kIOMonadOffsetIndex = 2;
-using VisitedHashSetPair = std::pair<mindspore::HashSet<FuncGraphPtr>, mindspore::HashSet<AnfNodePtr>>;
-constexpr char kVmapFunctionModelName[] = "mindspore.ops._vmap";
-
-int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes);
-
-FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource, int axis_size,
-                               VisitedHashSetPair *visited_pair,
-                               mindspore::HashMap<std::string, ParameterPtr> *stacked_params = nullptr);
-}  // namespace internal
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
