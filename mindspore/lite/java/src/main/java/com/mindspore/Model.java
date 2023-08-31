@@ -19,6 +19,7 @@ package com.mindspore;
 import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
 
 import com.mindspore.config.MSContext;
+import com.mindspore.config.DataType;
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
+import java.lang.reflect.Array;
 
 /**
  * The Model class is used to define a MindSpore model, facilitating computational graph management.
@@ -42,6 +44,7 @@ public class Model {
 
     private long modelPtr = POINTER_DEFAULT_VALUE;
     private boolean isModelSharePtr = false;
+    private List<MSTensor> inputTensors = null;
 
     /**
      * Construct function.
@@ -49,6 +52,7 @@ public class Model {
     public Model() {
         this.isModelSharePtr = false;
         this.modelPtr = this.createModel();
+        this.inputTensors = null;
     }
 
     /**
@@ -59,6 +63,7 @@ public class Model {
     public Model(long modelPtr) {
         this.isModelSharePtr = true;
         this.modelPtr = modelPtr;
+        this.inputTensors = null;
     }
 
     /**
@@ -158,7 +163,21 @@ public class Model {
      * @return predict status.
      */
     public boolean predict() {
-        return this.runStep(modelPtr);
+        List<MSTensor> inputs = this.getInputs();
+        if (inputs == null || inputs.size() == 0) {
+            return false;
+        }
+        long[] inputsPtrArray = new long[inputs.size()];
+        Object[] bufferArray = new Object[inputs.size()];
+        for (int i = 0; i < inputs.size(); i++) {
+            inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
+            Object obj = this.getTensorBuffer(inputs.get(i));
+            if (Array.getLength(obj) == 0) {
+                return false;
+            }
+            bufferArray[i] = obj;
+        }
+        return this.runStep(modelPtr, inputsPtrArray, bufferArray);
     }
 
     /**
@@ -167,7 +186,7 @@ public class Model {
      * @return run model status.work in train mode.
      */
     public boolean runStep() {
-        return this.runStep(modelPtr);
+        return this.predict();
     }
 
     /**
@@ -194,13 +213,16 @@ public class Model {
      * @return input tensors.
      */
     public List<MSTensor> getInputs() {
+        if (this.inputTensors != null){
+            return this.inputTensors;
+        }
         List<Long> tensorAddrs = this.getInputs(this.modelPtr);
-        List<MSTensor> tensors = new ArrayList<>(tensorAddrs.size());
+        this.inputTensors = new ArrayList<>(tensorAddrs.size());
         for (Long msTensorAddr : tensorAddrs) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
-            tensors.add(msTensor);
+            this.inputTensors.add(msTensor);
         }
-        return tensors;
+        return this.inputTensors;
     }
 
     /**
@@ -225,11 +247,14 @@ public class Model {
      * @return input tensor.
      */
     public MSTensor getInputByTensorName(String tensorName) {
-        if (tensorName == null) {
-            return null;
+        List<MSTensor> inputTensors = this.getInputs();
+        for (int i = 0; i < inputTensors.size(); i++) {
+            MSTensor tensor = inputTensors.get(i);
+            if (tensor.tensorName().equals(tensorName)) {
+                return tensor;
+            }
         }
-        long tensorAddr = this.getInputByTensorName(this.modelPtr, tensorName);
-        return new MSTensor(tensorAddr);
+        return null;
     }
 
     /**
@@ -416,7 +441,39 @@ public class Model {
      * Free model
      */
     public void free() {
+        if (this.inputTensors != null){
+            for (MSTensor tensor : this.inputTensors) {
+                tensor.free();
+            }
+            this.inputTensors = null;
+        }
         this.free(modelPtr, isModelSharePtr);
+    }
+
+    /**
+    * get buffer based on tensor dataType
+    **/
+    private Object getTensorBuffer(MSTensor tensor) {
+        int dataType = tensor.getDataType();
+        Object ret = null;
+        switch(dataType) {
+            case DataType.kNumberTypeFloat32:
+            case DataType.kNumberTypeFloat16:
+                ret = tensor.getFloatData();
+                break;
+            case DataType.kNumberTypeInt32:
+                ret = tensor.getIntData();
+                break;
+            case DataType.kNumberTypeInt64:
+                ret = tensor.getLongData();
+                break;
+            default:
+                return ret;
+        }
+        if (ret == null) {
+            return tensor.getByteData();
+        }
+        return ret;
     }
 
     private native long createModel();
@@ -435,7 +492,7 @@ public class Model {
 
     private native long getInputByTensorName(long modelPtr, String tensorName);
 
-    private native boolean runStep(long modelPtr);
+    private native boolean runStep(long modelPtr, long[] inputs, Object[] buffer);
 
     private native List<Long> getOutputs(long modelPtr);
 
