@@ -82,6 +82,8 @@ class ModelProcess {
 
   bool CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs);
   bool CheckAndInitOutput(const std::vector<KernelTensorPtr> &outputs);
+  void CheckAndInitDynOutputDeviceBuf(const KernelTensorPtr &output, const AclTensorInfo &output_info,
+                                      void **output_device_buffer, size_t *output_buf_size, size_t output_idx);
   bool CheckInputTensors(const std::vector<KernelTensorPtr> &inputs);
   bool CheckOutputTensors(const std::vector<KernelTensorPtr> &outputs);
   bool CheckAndSetDynFlag();
@@ -98,7 +100,7 @@ class ModelProcess {
   bool ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes);
   void FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info);
-  void FreeResourceOutput(std::vector<AclTensorInfo> acl_tensor_info);
+  void FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_info, const std::vector<KernelTensorPtr> &outputs);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_ = UINT32_MAX;
@@ -123,6 +125,8 @@ class ModelProcess {
   bool is_dynamic_shape_range_ = false;
   aclmdlIODims *dynamic_dims_ = nullptr;
   void *weight_ptr_ = nullptr;
+  std::vector<bool> user_defined_output_buf_;
+  void *dyn_out_sys_buf_addr_ = nullptr;
   bool is_sharing_workspace_ = false;
   int32_t device_id_ = 0;
 };
