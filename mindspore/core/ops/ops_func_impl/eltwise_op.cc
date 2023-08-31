@@ -24,7 +24,6 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr EltwiseOpFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_shape = input_args[kInputIndex0]->GetShape();
   return input_shape->Clone();
 }
@@ -32,9 +31,7 @@ BaseShapePtr EltwiseOpFuncImpl::InferShape(const PrimitivePtr &primitive,
 BaseShapePtr EltwiseOpFuncImpl::InferShapeWithCheck(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args,
                                                     const size_t max_rank) const {
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_shape = input_args[kInputIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(input_shape);
   auto input_shape_vec = input_shape->GetShapeVector();
   MS_CHECK_VALUE(input_shape_vec.size() < max_rank,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("rank of input", input_shape_vec.size(), kLessThan,
@@ -44,7 +41,6 @@ BaseShapePtr EltwiseOpFuncImpl::InferShapeWithCheck(const PrimitivePtr &primitiv
 
 TypePtr EltwiseOpFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_type = input_args[kInputIndex0]->GetType();
   return input_type->Clone();
 }

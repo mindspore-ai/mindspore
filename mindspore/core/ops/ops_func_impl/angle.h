@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ELTWISE_OP_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ELTWISE_OP_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ANGLE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ANGLE_H_
 
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API EltwiseOpFuncImpl : public OpFuncImpl {
+class AngleFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
- protected:
-  BaseShapePtr InferShapeWithCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                                   const size_t max_rank) const;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ELTWISE_OP_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ANGLE_H_

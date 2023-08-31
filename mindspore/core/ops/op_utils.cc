@@ -42,8 +42,9 @@
 
 namespace mindspore {
 namespace ops {
-std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
-                                       const std::string &op_name, const std::string &, const std::string &) {
+std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
+                                       const std::string &op_name, const std::string &op_x_name,
+                                       const std::string &op_y_name) {
   if (x_shape == y_shape) {
     return x_shape;
   }
@@ -72,11 +73,14 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
         broadcast_shape[dst_i] = min_shape[i];
       }
     } else if (MS_UNLIKELY(max_shape[dst_i] != min_shape[i] && min_shape[i] != -1 && min_shape[i] != 1)) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', x.shape and y.shape need to broadcast. The value of x.shape["
-                               << std::to_string(x_length + i) << "] or y.shape[" << std::to_string(y_length + i)
-                               << "] must be 1 or -1 when they are not the same, but got x.shape = " << x_shape
-                               << " and y.shape = " << y_shape;
+      auto x_shape_name = op_x_name + ".shape";
+      auto y_shape_name = op_y_name + ".shape";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', " << x_shape_name << " and " << y_shape_name
+                               << " need to broadcast. The value of " << x_shape_name << "["
+                               << std::to_string(x_length + i) << "] or " << y_shape_name << "["
+                               << std::to_string(y_length + i)
+                               << "] must be 1 or -1 when they are not the same, but got " << x_shape_name << " = "
+                               << x_shape << " and " << y_shape_name << " = " << y_shape;
     }
   }
   return broadcast_shape;

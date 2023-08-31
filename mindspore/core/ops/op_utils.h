@@ -117,7 +117,6 @@ std::optional<T> GetScalarValue(const ValuePtr &value);
 template <typename T>
 std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
-
 const std::set<TypePtr> common_valid_types_with_bool = {
   kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};
 
@@ -134,7 +133,7 @@ const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64, kBFl
 const std::set<TypePtr> all_types = {kBool,    kInt,     kInt8,    kInt16,     kInt32,      kInt64,
                                      kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,     kFloat,
                                      kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
-std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
+std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
                                        const std::string &op_name, const std::string &op_x_name = "input1",
                                        const std::string &op_y_name = "input2");
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name,

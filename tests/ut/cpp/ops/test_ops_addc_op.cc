@@ -52,7 +52,7 @@ static std::vector<MultiInputOpParams> GetCases() {
                                        {}});
   }
   return cases;
-}  // namespace ops
+}
 
 #define ADDC_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(op_name) \
   OP_FUNC_IMPL_TEST_DECLARE(op_name, MultiInputOpParams)   \
@@ -62,4 +62,4 @@ ADDC_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Addcdiv);
 ADDC_OP_FUNC_IMPL_TEST_WITH_DEFAULT_CASES(Addcmul);
 }  // namespace ops
 }  // namespace mindspore
-#endif // TESTS_UT_CPP_OPS_TEST_OPS_ADDC_OP_H_
+#endif  // TESTS_UT_CPP_OPS_TEST_OPS_ADDC_OP_H_

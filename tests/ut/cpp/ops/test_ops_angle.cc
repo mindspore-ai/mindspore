@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_OPS_ANGLE_H_
-#define MINDSPORE_CORE_OPS_ANGLE_H_
-
-#include <memory>
-#include <set>
-#include <string>
-#include <vector>
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/ops_func_impl/angle.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAngle = "Angle";
+static auto cases = testing::Values(
+  EltwiseOpParams{{2, 3}, kComplex64, {2, 3}, kFloat32}, EltwiseOpParams{{2, -1}, kComplex64, {2, -1}, kFloat32},
+  EltwiseOpParams{{-1, -1}, kComplex64, {-1, -1}, kFloat32}, EltwiseOpParams{{-2}, kComplex64, {-2}, kFloat32});
 
-class MIND_API Angle : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(Angle);
-  Angle() : BaseOperator(kNameAngle) { InitIOName({"input"}, {"output"}); }
-};
+OP_FUNC_IMPL_TEST_DECLARE(Angle, EltwiseOpParams);
+
+OP_FUNC_IMPL_TEST_CASES(Angle, cases);
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_ANGLE_H_

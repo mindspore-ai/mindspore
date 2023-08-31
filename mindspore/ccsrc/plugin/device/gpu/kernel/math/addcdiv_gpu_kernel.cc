@@ -90,7 +90,6 @@ bool AddcdivGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 }
 
 bool AddcdivGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  kernel_name_ = primitive_->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -101,7 +100,6 @@ bool AddcdivGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   }
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  Resize(inputs, outputs);
   return true;
 }
 

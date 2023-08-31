@@ -1,0 +1,8 @@
+#operator angle
+angle:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
