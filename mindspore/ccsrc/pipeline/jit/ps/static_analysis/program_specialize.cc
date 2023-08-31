@@ -774,11 +774,11 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   if constexpr (std::is_same<S, AbstractList>()) {
     auto old_sequence_abs_list = old_sequence_abs->cast<AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(old_sequence_abs_list);
-    if (old_sequence_abs_list->has_list_py_obj()) {
+    if (fallback::HasObjInExtraInfoHolder(old_sequence_abs_list)) {
       MS_LOG(DEBUG) << "old AbstractList has python object, attach it to new AbstractList.";
-      auto list_obj = old_sequence_abs_list->list_py_obj<py::list>();
-      auto create_in_graph = old_sequence_abs_list->create_in_graph();
-      new_sequence_abs->set_list_py_obj(list_obj, create_in_graph);
+      auto list_obj = fallback::GetObjFromExtraInfoHolder(old_sequence_abs_list);
+      auto create_in_graph = fallback::GetCreateInGraphFromExtraInfoHolder(old_sequence_abs_list);
+      fallback::AttachPyObjToExtraInfoHolder(new_sequence_abs, list_obj, create_in_graph);
     }
   }
 
@@ -1344,10 +1344,10 @@ void UpdateInputsUserData(const CNodePtr &old_cnode, const std::vector<AnfNodePt
       const auto &real_type = fallback::GetRealShape<AbstractBase, BaseShape>(old_input_abs);
       fallback::SetRealShape<AnfNode, BaseShape>(new_inputs[i], real_type);
     }
-    if (fallback::HasPySeqObject(old_input_abs)) {
+    if (fallback::HasObjInExtraInfoHolder(old_input_abs)) {
       MS_LOG(DEBUG) << "Inherit python list object from old input abstract.";
-      auto list_py_obj = fallback::GetPySeqObject<AbstractBase, py::list>(old_input_abs);
-      fallback::SetPySeqObject<AbstractBase, py::list>(new_inputs[i]->abstract(), list_py_obj);
+      auto list_py_obj = fallback::GetObjFromExtraInfoHolder(old_input_abs);
+      fallback::AttachPyObjToExtraInfoHolder(new_inputs[i]->abstract(), list_py_obj, false);
     }
   }
 }

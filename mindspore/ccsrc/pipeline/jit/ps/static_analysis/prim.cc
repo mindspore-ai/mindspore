@@ -2393,39 +2393,10 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
   MS_LOG(DEBUG) << "Generate python object for new value node.";
   py::object py_list_obj = fallback::GeneratePyObj(abs);
-  fallback::AttachListObjToAbs(abs, py_list_obj, true);
+  fallback::AttachPyObjToAbs(abs, py_list_obj, true);
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
-}
-
-std::shared_ptr<py::list> GetPySeqObjectFromNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (fallback::HasPySeqObject(node)) {
-    MS_LOG(DEBUG) << "Current PyExecute node has python list object";
-    return fallback::GetPySeqObject<AnfNode, py::list>(node);
-  }
-  // If a PyExecute node with list abstract has no python list object attach it on the node,
-  // it means it is a list inplace operation node on make_list node.
-  MS_LOG(DEBUG) << "Current PyExecute node does not have python list object, get python list object from input.";
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  constexpr size_t min_input_size = 4;
-  if (cnode->size() < min_input_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "PyExecute node should have at least " << min_input_size << " inputs, but node"
-                               << cnode->DebugString() << " has only " << cnode->size() << " inputs.";
-  }
-  constexpr size_t values_index = 3;
-  auto value_input_node = cnode->input(values_index);
-  auto value_input_cnode = value_input_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_input_cnode);
-  constexpr size_t list_index = 1;
-  auto first_list_input = value_input_cnode->input(list_index);
-  if (!fallback::HasPySeqObject(first_list_input)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Node " << first_list_input->DebugString() << " should have python list object, "
-                               << "but not found.";
-  }
-  return fallback::GetPySeqObject<AnfNode, py::list>(first_list_input);
 }
 
 EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,

@@ -1059,8 +1059,53 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
 };
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 
+class MS_CORE_API ExtraInfoHolder {
+ public:
+  ~ExtraInfoHolder() = default;
+
+  /// \brief Set data to ExtraInfoHolder.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \param[in] data The data to store in ExtraInfoHolder.
+  template <typename T>
+  void SetData(const std::string &key, const std::shared_ptr<T> &data) {
+    extra_info_->set<T>(key, data);
+  }
+
+  /// \brief Get data from ExtraInfoHolder using key.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \return The corresponding data.
+  template <typename T>
+  std::shared_ptr<T> GetData(const std::string &key) const {
+    return extra_info_->get<T>(key);
+  }
+
+  /// \brief Check whether ExtraInfoHolder has specific data.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \return True if it exists, otherwise false.
+  bool HasData(const std::string &key) const { return extra_info_->has(key); }
+
+  /// \brief Get corresponding extra info user data.
+  ///
+  /// \return The corresponding extra info user data.
+  UserDataPtr extra_info() const { return extra_info_; }
+
+  /// \brief Set corresponding extra info user data.
+  ///
+  /// \param[in] extra_info The corresponding extra info user data.
+  void set_extra_info(const UserDataPtr &extra_info) { extra_info_ = extra_info; }
+
+  /// \brief Clear corresponding extra info user data.
+  void ClearExtraInfo() { extra_info_ = std::make_shared<UserData>(); }
+
+ protected:
+  UserDataPtr extra_info_ = std::make_shared<UserData>();
+};
+
 /// \brief Class AbstractList describes a list.
-class MS_CORE_API AbstractList final : public AbstractSequence {
+class MS_CORE_API AbstractList final : public AbstractSequence, public ExtraInfoHolder {
  public:
   /// \brief Constructor of AbstractList.
   ///
@@ -1099,64 +1144,11 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
-  /// \brief Set corresponding list user data.
-  ///
-  /// \param[in] list_user_data The corresponding list python object.
-  /// \param[in] create_in_graph Indicate whether the list object is created within graph.
-  template <typename T>
-  void set_list_py_obj(const std::shared_ptr<T> &list_py_obj, bool create_in_graph) {
-    constexpr auto py_obj_key = "py_obj_key";
-    list_user_data_->set<T>(py_obj_key, list_py_obj);
-    constexpr auto create_in_graph_key = "create_in_graph_key";
-    list_user_data_->set<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
-  }
-
-  /// \brief Get corresponding list user data.
-  ///
-  /// \return The corresponding list user data.
-  template <typename T>
-  std::shared_ptr<T> list_py_obj() const {
-    constexpr auto py_obj_key = "py_obj_key";
-    return list_user_data_->get<T>(py_obj_key);
-  }
-
-  /// \brief Check whether the AbstractList has list user data.
-  ///
-  /// \return True if it exists, otherwise false.
-  bool has_list_py_obj() const {
-    constexpr auto py_obj_key = "py_obj_key";
-    return list_user_data_->has(py_obj_key);
-  }
-
-  /// \brief Check whether the list object is created in graph.
-  ///
-  /// \return True if the object is created in graph, otherwise false.
-  bool create_in_graph() const {
-    constexpr auto create_in_graph_key = "create_in_graph_key";
-    return *list_user_data_->get<bool>(create_in_graph_key);
-  }
-
-  /// \brief Set corresponding list user data.
-  ///
-  /// \param[in] list_user_data The corresponding user data.
-  void set_list_user_data(const UserDataPtr &list_user_data) { list_user_data_ = list_user_data; }
-
-  /// \brief Clear corresponding list user data.
-  void ClearListUserData() { list_user_data_ = std::make_shared<UserData>(); }
-
-  /// \brief Get corresponding list user data.
-  ///
-  /// \return The corresponding list user data.
-  UserDataPtr list_user_data() const { return list_user_data_; }
-
   /// \brief Check and convert the list to dynamic length list.
   void CheckAndConvertToDynamicLenSequence(bool raise_exception = true) override;
 
  protected:
   ValuePtr RealBuildValue() const override;
-
- private:
-  UserDataPtr list_user_data_ = std::make_shared<UserData>();
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
