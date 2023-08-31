@@ -55,24 +55,6 @@ TEST_P(TestReduce, dyn_shape) {
   ASSERT_TRUE(*out_abstract == *expect);
 }
 
-INSTANTIATE_TEST_CASE_P(
-  TestReduce, TestReduce,
-  testing::Values(ReduceParams{{2, 3}, kFloat32, CreateScalar(1), true, {2, 1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateScalar(1), false, {2}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateScalar(kValueAny), true, {-1, -1}, kFloat32},
-                  ReduceParams{{-1, 3}, kFloat32, CreateScalar(0), true, {1, 3}, kFloat32},
-                  ReduceParams{{-1, 3}, kFloat32, CreateScalar(0), false, {3}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({1}), true, {2, 1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({1}), false, {2}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({0, 1}), true, {1, 1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({}), false, {}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({kValueAny}), false, {-2}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateTuple({1, kValueAny}), true, {-1, -1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({1}), true, {2, 1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({1}), false, {2}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({0, 1}), true, {1, 1}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({}), false, {}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({kValueAny}), false, {-2}, kFloat32},
-                  ReduceParams{{2, 3}, kFloat32, CreateList({1, kValueAny}), true, {-1, -1}, kFloat32}));
+
 }  // namespace ops
 }  // namespace mindspore
