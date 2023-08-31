@@ -124,7 +124,7 @@ def test_insert_node():
     assert relu1.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
     assert len(node.get_normalized_args().values()) == 2
     assert list(node.get_normalized_args().values())[0] == ScopedValue.create_naming_value('x')
-    assert list(node.get_normalized_args().values())[1].type == ValueType.IntValue
+    assert list(node.get_normalized_args().values())[1].type == ValueType.ConstantValue
     # check relu1 target users
     target_users = stree.get_node("relu1").get_target_users(0)
     assert len(target_users) == 1

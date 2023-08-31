@@ -42,7 +42,7 @@ class ForParser(Parser):
                                               targets=[ScopedValue(ValueType.NamingValue, "self", target)],
                                               expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
                                               args=[ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                    ScopedValue(ValueType.StringValue, "", target)])
+                                                    ScopedValue(ValueType.ConstantValue, "", target)])
 
     @staticmethod
     def modify_construct_ast(stree, ast_node, old_name, new_name):
