@@ -1053,3 +1053,37 @@ def test_2d_dtypes_forward():
         out_ms = net(x_ms, w_ms, b_ms).asnumpy()
         out_np = np.array([5, 15, 25, 35, 14, 51, 88, 125]).reshape(2, 4).astype(dtype)
         assert np.abs(out_ms - out_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_0d_bias():
+    """
+    Feature: Test dense 0d bias.
+    Description: Test dense 0d bias for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    dtype = np.int64
+    error = 1e-3
+    net = Dense()
+    x_np = np.array([2, 0, 1, 3]).reshape(2, 2).astype(dtype)
+    w_np = np.array([1, 2, 2, 7]).reshape(2, 2).astype(dtype)
+    b_np = np.array(118).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    out_np = np.array([120, 122, 125, 141]).reshape(2, 2).astype(dtype)
+    assert np.abs(out_ms - out_np).mean() < error
+    dtype = np.float64
+    x_np = np.array([2, 0, 1, 3]).astype(dtype)
+    w_np = np.array([1, 2, 2, 7]).astype(dtype)
+    b_np = np.array(118).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    out_np = np.array(143).astype(dtype)
+    assert np.abs(out_ms - out_np).mean() < error

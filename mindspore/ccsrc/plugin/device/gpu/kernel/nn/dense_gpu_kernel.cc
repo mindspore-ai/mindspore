@@ -24,6 +24,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_v2_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -67,6 +68,7 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
 
   has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
+  compute_type_ = GetComputeType(dtype_a_);
 
   return true;
 }
@@ -79,73 +81,79 @@ int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
 
-  auto output_shape = outputs[kIndex0]->GetShapeVector();
-  auto input1_shape = inputs[kIndex0]->GetShapeVector();
+  auto out_shape = outputs[kIndex0]->GetShapeVector();
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
 
-  auto dims = output_shape.size();
-  is_empty_tensor_ = false;
+  is_empty_tensor_ = std::any_of(x_shape.begin(), x_shape.end(), [](const int64_t shape) { return shape == 0; });
+  auto dims = out_shape.size();
   if (dims == 0) {
-    if (input1_shape[0] == 0) {
-      is_empty_tensor_ = true;
-    }
     m_ = n_ = 1;
-    k_ = input1_shape[0];
-    lda_ = SizeToInt(k_);
-    ldb_ = SizeToInt(k_);
-    ldc_ = SizeToInt(n_);
-    return KRET_OK;
-  }
-  if (dims < kDimLowerLimit) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 2"
-                      << " if the dim of w is 1, but got " << dims;
-  }
-
-  m_ = output_shape[dims - kDimOffset2];
-  for (size_t i = 0; i < dims - kDimOffset2; i++) {
-    m_ *= output_shape[i];
-  }
-  n_ = output_shape[dims - 1];
-
-  if (input1_shape.size() > (dims - 1)) {
-    k_ = input1_shape[dims - 1];
+    k_ = x_shape[0];
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init k_ via input1_shape failed.";
+    m_ = out_shape[dims - kDimOffset2];
+    for (size_t i = 0; i < dims - kDimOffset2; i++) {
+      m_ *= out_shape[i];
+    }
+    n_ = out_shape.back();
+    k_ = x_shape.back();
   }
+  if (has_bias_) {
+    auto b_shape = inputs[kIndex2]->GetShapeVector();
+    b_size_ = b_shape.size() == 0 ? 1 : n_;
+  }
+  ResetResource();
+  return KRET_OK;
+}
+
+void DenseGpuKernelMod::ResetSize() {
   lda_ = SizeToInt(k_);
   ldb_ = SizeToInt(k_);
   ldc_ = SizeToInt(n_);
+  x_size_ = m_ * k_;
+  w_size_ = n_ * k_;
+  out_size_ = m_ * n_;
+}
 
-  compute_type_ = GetComputeType(dtype_a_);
-
-  if (need_cast_) {
-    x_size_ = m_ * k_;
-    w_size_ = n_ * k_;
-    out_size_ = m_ * n_;
-    workspace_size_list_.push_back(sizeof(float) * x_size_);
-    workspace_size_list_.push_back(sizeof(float) * w_size_);
-    workspace_size_list_.push_back(sizeof(float) * out_size_);
-    if (has_bias_) {
-      b_size_ = n_;
-      workspace_size_list_.push_back(sizeof(float) * b_size_);
-    }
+void DenseGpuKernelMod::ResetWorkspace() {
+  workspace_size_list_.push_back(sizeof(float) * x_size_);
+  workspace_size_list_.push_back(sizeof(float) * w_size_);
+  workspace_size_list_.push_back(sizeof(float) * out_size_);
+  if (has_bias_) {
+    workspace_size_list_.push_back(sizeof(float) * b_size_);
   }
+}
 
-  return KRET_OK;
+void DenseGpuKernelMod::ResetResource() {
+  ResetSize();
+  if (need_cast_) {
+    ResetWorkspace();
+  }
+}
+
+template <typename T>
+cudaError_t DenseGpuKernelMod::FillBias(T *src, T *dst, cudaStream_t stream) {
+  cudaError_t status;
+  if (b_size_ == 1) {
+    status = FillV2(out_size_, src, dst, device_id_, stream);
+  } else {
+    status = Fill(m_, n_, src, dst, stream);
+  }
+  return status;
 }
 
 template <typename T, typename S>
 bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto input1_addr = GetDeviceAddress<T>(inputs, 0);
-  auto input2_addr = GetDeviceAddress<T>(inputs, 1);
-  auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto w = GetDeviceAddress<T>(inputs, kIndex1);
+  auto out = GetDeviceAddress<T>(outputs, kIndex0);
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   cudaError_t status;
 
   if (is_empty_tensor_) {
     if (has_bias_) {
-      auto input3_addr = GetDeviceAddress<T>(inputs, kIndex2);
-      status = Fill(m_, n_, input3_addr, output_addr, stream);
+      auto b = GetDeviceAddress<T>(inputs, kIndex2);
+      status = FillBias(b, out, stream);
       CHECK_CUDA_STATUS(status, kernel_name_);
     }
     return true;
@@ -156,20 +164,20 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     auto cast_w = GetPossiblyNullDeviceAddress<float>(workspace, kIndex1);
     auto cast_out = GetPossiblyNullDeviceAddress<float>(workspace, kIndex2);
 
-    status = Cast(x_size_, input1_addr, cast_x, stream);
+    status = Cast(x_size_, x, cast_x, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
-    status = Cast(w_size_, input2_addr, cast_w, stream);
+    status = Cast(w_size_, w, cast_w, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
 
     float alpha = 1.0f;
     float beta = 0.0f;
 
     if (has_bias_) {
-      auto b_addr = GetDeviceAddress<T>(inputs, kIndex2);
+      auto b = GetDeviceAddress<T>(inputs, kIndex2);
       auto cast_b = GetPossiblyNullDeviceAddress<float>(workspace, kIndex3);
-      status = Cast(b_size_, b_addr, cast_b, stream);
+      status = Cast(b_size_, b, cast_b, stream);
       CHECK_CUDA_STATUS(status, kernel_name_);
-      status = Fill(m_, n_, cast_b, cast_out, stream);
+      status = FillBias(cast_b, cast_out, stream);
       CHECK_CUDA_STATUS(status, kernel_name_);
       beta = 1.0f;
     }
@@ -177,9 +185,9 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasGemmEx(handle_, CUBLAS_OP_T, CUBLAS_OP_N, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha, cast_w,
                    dtype_b_, ldb_, cast_x, dtype_a_, lda_, &beta, cast_out, dtype_c_, ldc_, compute_type_, algo_),
-      "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
+      "cublasGemmEx failed.");
 
-    status = Cast(out_size_, cast_out, output_addr, stream);
+    status = Cast(out_size_, cast_out, out, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
@@ -188,16 +196,16 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   S beta = static_cast<S>(0.0f);
 
   if (has_bias_) {
-    auto input3_addr = GetDeviceAddress<T>(inputs, 2);
-    status = Fill(m_, n_, input3_addr, output_addr, stream);
+    auto b = GetDeviceAddress<T>(inputs, kIndex2);
+    status = FillBias(b, out, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
     beta = static_cast<S>(1.0f);
   }
 
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
-    cublasGemmEx(handle_, CUBLAS_OP_T, CUBLAS_OP_N, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha, input2_addr,
-                 dtype_b_, ldb_, input1_addr, dtype_a_, lda_, &beta, output_addr, dtype_c_, ldc_, compute_type_, algo_),
-    "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
+    cublasGemmEx(handle_, CUBLAS_OP_T, CUBLAS_OP_N, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha, w, dtype_b_,
+                 ldb_, x, dtype_a_, lda_, &beta, out, dtype_c_, ldc_, compute_type_, algo_),
+    "cublasGemmEx failed.");
   return true;
 }
 
