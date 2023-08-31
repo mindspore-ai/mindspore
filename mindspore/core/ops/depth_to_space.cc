@@ -102,6 +102,11 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("block_size", block_size % dim_1, kEqual, 0, prim_name);
   auto out_shape = x_shape;
   if (out_shape[dim_1] != abstract::Shape::kShapeDimAny) {
+    if (block_size * block_size > x_shape[dim_1]) {
+      MS_EXCEPTION(ValueError) << "For DepthToSpace, the square of block_size must be smaller than the input channel, "
+                                  "but got the block_size is "
+                               << block_size << ", and the input channel is " << x_shape[dim_1] << ".";
+    }
     (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
                                              x_shape[dim_1] % (block_size * block_size), kEqual, 0, prim_name);
     out_shape[dim_1] /= block_size * block_size;

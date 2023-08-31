@@ -275,10 +275,12 @@ class CNodeDecoder {
       return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat32);
     } else if (type_id == TypeId::kNumberTypeInt32) {
       return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt32);
+    } else if (type_id == TypeId::kNumberTypeInt64) {
+      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt64);
     }
     MS_LOG(ERROR) << "Fail to parse scalar " << scalar_json[kJsonKeyValue]
                   << " in json, because its type: " << scalar_json[kJsonKeyDataType]
-                  << " is not in supported list: [float16, float32, int32]. json is: " << scalar_json;
+                  << " is not in supported list: [float16, float32, int32, int64]. json is: " << scalar_json;
     return nullptr;
   }
 
