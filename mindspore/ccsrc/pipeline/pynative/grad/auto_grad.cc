@@ -75,6 +75,32 @@ inline bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   return kGradBlackList.find(prim->name()) == kGradBlackList.end();
 }
 
+bool NeedGrad(const std::vector<ValuePtr> &input_values) {
+  for (auto &input_arg : input_values) {
+    MS_EXCEPTION_IF_NULL(input_arg);
+    if (input_arg->isa<tensor::Tensor>()) {
+      const auto &input_tensor = input_arg->cast<tensor::TensorPtr>();
+      auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
+      MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+      if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type())) {
+        return true;
+      }
+      auto variable = auto_grad_meta_data->variable();
+      if (variable != nullptr && variable->is_need_grad()) {
+        return true;
+      }
+    } else if (input_arg->isa<ValueSequence>()) {
+      auto value_seq = input_arg->cast<ValueSequencePtr>()->value();
+      if (NeedGrad(value_seq)) {
+        return true;
+      }
+    } else if (input_arg->isa<tensor::COOTensor>() || input_arg->isa<tensor::CSRTensor>()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ValuePtr GetFakeZeroTensor() {
   static ValuePtr fake_v = std::make_shared<tensor::Tensor>(0);
   return fake_v;
@@ -659,8 +685,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
 
   auto &prim = grad_param->op_grad_info->op_prim;
-  if (!IsPrimNeedGrad(prim)) {
-    MS_LOG(DEBUG) << "Prim " << prim->name() << " not need do op grad";
+  if (!IsPrimNeedGrad(prim) || !NeedGrad(grad_param->op_grad_info->input_value)) {
+    MS_LOG(DEBUG) << "Prim " << prim->name() << " does not need to do op grad.";
     return true;
   }
 

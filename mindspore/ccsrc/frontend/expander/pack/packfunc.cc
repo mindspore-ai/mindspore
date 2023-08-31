@@ -366,7 +366,7 @@ static std::unordered_map<std::string, PackGraphMap> graph_pack_cache;
 
 void ClearCompileAllCache() { graph_pack_cache.clear(); }
 
-void ClearAllCache() {
+void ClearAllPackCache() {
   graph_pack_cache.clear();
   pynative_pack_cache.clear();
   ClearGraphGradInfoCache();

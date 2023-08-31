@@ -48,6 +48,7 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/step_assigned_parallel.h"
 #include "frontend/expander/pack/packfunc.h"
+#include "frontend/expander/utils.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"

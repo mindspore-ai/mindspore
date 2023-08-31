@@ -28,7 +28,7 @@ namespace expander {
 FuncGraphPtr ExpandPackFuncGraph(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list);
 FuncGraphPtr ExpandPackFuncPynative(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
                                     bool pynative_grad = false);
-void ClearAllCache();
+void ClearAllPackCache();
 void ClearCompileAllCache();
 bool IsPackGraph(const FuncGraphPtr &fg);
 void GetPackGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters);
