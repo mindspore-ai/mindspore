@@ -64,7 +64,6 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor
 
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
   bool initialized_;
-  std::mutex init_mutex_;
 };
 }  // namespace ascend
 }  // namespace device
