@@ -1696,6 +1696,17 @@ class AfterOptARewriter : public BaseRewriter {
     return joined_result_node;
   }
 
+  bool HasPyExecuteInput(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &inputs = cnode->inputs();
+    for (auto &input : inputs) {
+      if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
@@ -1703,7 +1714,7 @@ class AfterOptARewriter : public BaseRewriter {
     }
     const auto &fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    if (!CheckInputsHasAnyType(cnode)) {
+    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
       return nullptr;
     }
     // Skip the io_monad input
