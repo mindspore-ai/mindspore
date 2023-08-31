@@ -2165,6 +2165,28 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
     std::vector<OutHandler> return_handles;
     TraceTupleGetItem(node->cast<CNodePtr>(), &output_index);
     if (output_index >= handles.size()) {
+      MS_EXCEPTION_IF_ZERO("handles_size", handles.size());
+      auto input_node = handles[0].node;
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto abs = input_node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractSequence>()) {
+        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+        size_t abs_size = abs_seq->size();
+        if (output_index >= abs_size) {
+          MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << abs_size
+                            << "), node: " << node->fullname_with_scope()
+                            << ", input node: " << input->fullname_with_scope();
+        }
+        auto real_node = AnfUtils::VisitKernel(node, output_index).first;
+        MS_EXCEPTION_IF_NULL(real_node);
+        auto real_opt = Convert(real_node);
+        MS_EXCEPTION_IF_NULL(real_opt);
+        OutHandler real_handler;
+        real_handler.op = real_opt;
+        real_handler.node = real_node;
+        return std::vector<OutHandler>{real_handler};
+      }
       MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << handles.size()
                         << "), node: " << node->fullname_with_scope()
                         << ", input node: " << input->fullname_with_scope();
