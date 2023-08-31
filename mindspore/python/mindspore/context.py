@@ -302,8 +302,8 @@ class _Context:
                 raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
                                  f"{supported_modes}, but got {ascend_value}.")
             if isinstance(supported_modes, tuple) and not isinstance(ascend_value, supported_modes):
-                raise ValueError(f"For 'ascend_config', the type of argument {ascend_key} must be one of "
-                                 f"{supported_modes}, but got {type(ascend_value)}.")
+                raise TypeError(f"For 'ascend_config', the type of argument {ascend_key} must be one of "
+                                f"{supported_modes}, but got {type(ascend_value)}.")
             cfg_setter = ascend_cfg_setters.get(ascend_key)
             cfg_setter(ascend_value)
 
