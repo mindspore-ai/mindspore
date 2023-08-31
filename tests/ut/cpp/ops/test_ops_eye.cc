@@ -49,9 +49,9 @@ TEST_P(TestEye, dyn_shape) {
 INSTANTIATE_TEST_CASE_P(
   TestEye, TestEye,
   testing::Values(
-    EyeParams{CreateInt(6), CreateInt(8), CreateInt(kNumberTypeFloat64), {6, 8}, kFloat64},
-    EyeParams{CreateScalar(kValueAny), CreateInt(8), CreateInt(kNumberTypeFloat16), {-1, 8}, kFloat16},
-    EyeParams{CreateInt(6), CreateScalar(kValueAny), CreateInt(kNumberTypeComplex128), {6, -1}, kComplex128},
-    EyeParams{CreateScalar(kValueAny), CreateScalar(kValueAny), CreateInt(kNumberTypeInt8), {-1, -1}, kInt8}));
+    EyeParams{CreatePyInt(6), CreatePyInt(8), CreatePyInt(kNumberTypeFloat64), {6, 8}, kFloat64},
+    EyeParams{CreateScalar(kValueAny), CreatePyInt(8), CreatePyInt(kNumberTypeFloat16), {-1, 8}, kFloat16},
+    EyeParams{CreatePyInt(6), CreateScalar(kValueAny), CreatePyInt(kNumberTypeComplex128), {6, -1}, kComplex128},
+    EyeParams{CreateScalar(kValueAny), CreateScalar(kValueAny), CreatePyInt(kNumberTypeInt8), {-1, -1}, kInt8}));
 }  // namespace ops
 }  // namespace mindspore

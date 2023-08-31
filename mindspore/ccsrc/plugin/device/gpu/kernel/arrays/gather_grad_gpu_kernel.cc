@@ -96,11 +96,6 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int GatherGradGpuKernelMod::GetGatherDGradDimValue(const BaseOperatorPtr &base_operator) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
-  return static_cast<int>(kernel_ptr->get_dim());
-}
-
 void GatherGradGpuKernelMod::CalculateDim(int axis) {
   if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

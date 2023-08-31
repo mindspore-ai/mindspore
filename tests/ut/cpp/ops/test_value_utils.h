@@ -48,7 +48,7 @@ ValuePtr CreateScalar(T v) {
   return std::make_shared<NumberContainer>(v)->value_;
 }
 
-static inline ValuePtr CreateInt(int v) { return CreateScalar<int64_t>(v); }
+static inline ValuePtr CreatePyInt(int v) { return std::make_shared<Int64Imm>(v); }
 
 static inline ValuePtr CreateTuple(const std::vector<NumberContainer> &values) {
   std::vector<ValuePtr> value_vec;

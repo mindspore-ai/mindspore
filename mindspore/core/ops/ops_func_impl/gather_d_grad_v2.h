@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_GATHER_D_GRAD_H_
-#define MINDSPORE_CORE_OPS_GATHER_D_GRAD_H_
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_D_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_D_GRAD_H_
+
 #include <vector>
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGatherDGrad = "GatherDGrad";
-class MIND_API GatherDGrad : public BaseOperator {
+class MIND_API GatherDGradV2FuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(GatherDGrad);
-  GatherDGrad() : BaseOperator(kNameGatherDGrad) { InitIOName({"index", "grad"}, {"output"}); }
-  void Init(int64_t dim = 0, const std::vector<int64_t> &shape = {});
-  void set_dim(int64_t dim);
-  void set_shape(const std::vector<int64_t> &shape);
-  int64_t get_dim() const;
-  std::vector<int64_t> get_shape() const;
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_GATHER_D_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_D_GRAD_H_

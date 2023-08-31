@@ -23,8 +23,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "ops/grad/gather_d_grad.h"
-#include "ops/grad/gather_d_grad_v2.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather_grad.cuh"
