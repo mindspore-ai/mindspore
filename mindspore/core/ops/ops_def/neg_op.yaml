@@ -1,0 +1,8 @@
+#operator next_after
+neg:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor

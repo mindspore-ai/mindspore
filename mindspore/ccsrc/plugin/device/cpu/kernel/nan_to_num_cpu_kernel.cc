@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/nan_to_num_cpu_kernel.h"
-#include "mindspore/core/ops/nan_to_num.h"
 #include "mindspore/core/base/float16.h"
 
 using std::isinf;
@@ -30,15 +29,6 @@ constexpr size_t kNanToNumOutputsNum = 1;
 
 bool NanToNumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NanToNum>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NanToNum ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  nan_value_ = kernel_ptr->get_nan_value();
-  posinf_value_ = kernel_ptr->get_posinf_value();
-  neginf_value_ = kernel_ptr->get_neginf_value();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

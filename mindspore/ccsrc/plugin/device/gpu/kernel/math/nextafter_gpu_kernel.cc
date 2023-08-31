@@ -15,7 +15,6 @@
  */
 #include "plugin/device/gpu/kernel/math/nextafter_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/nextafter_impl.cuh"
-#include "ops/nextafter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,7 +22,6 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::NextAfter>(base_operator->GetPrim());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

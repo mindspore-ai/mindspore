@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include "mindspore/core/ops/nextafter.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"

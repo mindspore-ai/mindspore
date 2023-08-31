@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include "common/common_test.h"
-#include "ops/ops_func_impl/neg.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+#include "ops/ops_func_impl/next_after.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Neg, EltwiseOpParams);
+BaseShapePtr NextAfterFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) const {
+  return BroadCastInferShape(primitive->name(), input_args);
+}
 
-OP_FUNC_IMPL_TEST_CASES(Neg, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                             EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                             EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+TypePtr NextAfterFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
+  return input_args[0]->GetType()->Clone();
+}
 }  // namespace ops
 }  // namespace mindspore
