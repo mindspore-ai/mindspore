@@ -19,9 +19,10 @@ Primitive operator classes and operator functional.
 A collection of operators to build neural networks or to compute functions.
 """
 
-from . import gen_ops_def, gen_enum_def
+from . import gen_ops_def, arg_handler, gen_labels
 
 from .gen_ops_def import *
-from .gen_enum_def import *
+from .arg_handler import *
+from .gen_labels import *
 
 __all__ = []

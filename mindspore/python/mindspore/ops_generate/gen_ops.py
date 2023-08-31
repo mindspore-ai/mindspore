@@ -46,8 +46,7 @@ from mindspore.ops import signature as sig
 from mindspore.common import dtype as mstype
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops_generate.arg_dtype_cast import TypeCastKind, type_it
-from mindspore.ops_generate.arg_handler import *
-from mindspore.ops.auto_generate.gen_enum_def import *
+from mindspore.ops.auto_generate.arg_handler import *
 """
 cc_license_str = f"""/**
  * Copyright 2023 Huawei Technologies Co., Ltd
@@ -315,26 +314,52 @@ def generate_py_primitive(yaml_data):
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
         signature_code = generate_py_op_signature(operator_data.get('args_signature'))
-        label_code = generate_py_op_label(operator_data.get('labels'))
 
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, operator_data.get('class'))
-
         init_args, args_assign, init_args_with_default = process_args(args)
-        args_assign = '\n'.join(assign for assign in args_assign)
+        init_code = '\n'.join(assign for assign in args_assign)
+
+        labels = operator_data.get('labels')
+        if labels is not None:
+            if init_code != "":
+                init_code += "\n"
+            init_code += \
+                '\n'.join([f"""        self.add_prim_attr("{key}", {value})""" for key, value in labels.items()])
+        if init_code == "":
+            init_code = f"""        pass"""
+
         primitive_code = f"""
 class {class_name}(Primitive):
     {signature_code}
     @prim_attr_register
     def __init__(self, {', '.join(init_args_with_default) if init_args_with_default else ''}):
-{args_assign if args_assign else '        pass'}
-{label_code}
+{init_code}
+
     def __call__(self, *args):
         return super().__call__(*args, {', '.join([f'self.{arg}' for arg in init_args])})
 """
 
         gen_py += primitive_code
     return gen_py
+
+
+def generate_py_labels(yaml_data):
+    """
+    generate python labels
+    """
+    gen_label_py = f"""op_labels = {{"""
+    for operator_name, operator_data in yaml_data.items():
+        label_dict = operator_data.get('labels')
+        if label_dict is not None:
+            class_name = get_op_name(operator_name, operator_data.get('class'))
+            gen_label_py += f"""
+    "{class_name}": {{"""
+            gen_label_py += f""", """.join([f""""{key}": {value}""" for key, value in label_dict.items()])
+            gen_label_py += f"""}}, """
+    gen_label_py += f"""
+}}"""
+    return gen_label_py
 
 
 def generate_op_name_opdef(yaml_data):
@@ -483,17 +508,18 @@ OpDef g{class_name} = {{
         for i, (arg_name, arg_info) in enumerate(args.items()):
             dtype = arg_info.get('dtype')
             init = arg_info.get('init')
-            if init is None:
-                init = 0
-            else:
-                init = 1
+            init_flag = 0 if init is None else 1
+            arg_handler = arg_info.get('arg_handler')
+            arg_handler_str = "" if arg_handler is None else arg_handler
+
             cc_index_str += f"""
                 {{"{arg_name}", {i}}},"""
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').replace('tuple', 'array').replace(
                 'list', 'array').upper()
             cc_dtype_str.replace('TUPLE', 'ARRAY').replace('LIST', 'ARRAY')
+
             opdef_cc += f"""
-                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init}}},"""
+                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}"}},"""
         opdef_cc += f"""
     }},"""
 
@@ -572,19 +598,23 @@ def generate_py_code(work_path, yaml_path, doc_yaml_path):
     """Generate python file from yaml."""
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py')
     tmp_op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_ops_def.py')
-    yaml_str = None
     with open(yaml_path, 'r') as yaml_file:
         yaml_str = yaml.safe_load(yaml_file)
 
-    doc_str = None
     with open(doc_yaml_path, 'r') as doc_file:
         doc_str = yaml.safe_load(doc_file)
 
     py_prim = generate_py_primitive(yaml_str)
     py_func = generate_py_op_func(yaml_str, doc_str)
-    py_file = None
     with open(tmp_op_py_path, 'w') as py_file:
         py_file.write(py_licence_str + py_header + py_prim + py_func)
+    check_change_and_replace_file(op_py_path, tmp_op_py_path)
+
+    op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_labels.py')
+    tmp_op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_labels.py')
+    py_labels = generate_py_labels(yaml_str)
+    with open(tmp_op_py_path, 'w') as py_file:
+        py_file.write(py_licence_str + "\n" + py_labels + "\n")
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
 
@@ -613,25 +643,21 @@ namespace mindspore::ops {{
     tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_name.h')
     tmp_lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_lite_ops.h')
 
-    cc_file = None
     with open(tmp_op_cc_path, 'w') as cc_file:
         cc_file.write(cc_license_str + cc_header + cc_code)
     check_change_and_replace_file(op_cc_path, tmp_op_cc_path)
 
     lite_ops_code = generate_lite_ops(yaml_str)
-    lite_ops_file = None
     with open(tmp_lite_ops_path, 'w') as lite_ops_file:
         lite_ops_file.write(cc_license_str + lite_ops_code)
     check_change_and_replace_file(lite_ops_path, tmp_lite_ops_path)
 
     op_prim_code = generate_op_prim_opdef(yaml_str)
-    op_prim_file = None
     with open(tmp_op_prim_path, 'w') as op_prim_file:
         op_prim_file.write(cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
     op_name_code = generate_op_name_opdef(yaml_str)
-    op_name_file = None
     with open(tmp_op_name_path, 'w') as op_name_file:
         op_name_file.write(cc_license_str + op_name_code)
     check_change_and_replace_file(op_name_path, tmp_op_name_path)
