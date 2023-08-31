@@ -14,13 +14,11 @@
 # ============================================================================
 """Rewrite module api: SymbolTree."""
 from typing import Optional, Union
-from types import FunctionType
 import mindspore as ms
 
 from mindspore.nn import Cell
 from mindspore import _checkparam as Validator
 from .node import Node
-from ..node.node import Node as NodeImpl
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
 
@@ -90,20 +88,6 @@ class SymbolTree:
                 raise TypeError(f"For call-function Node, key in kwarg must be a str, but got: {type(v)}",)
             if v not in MsDtypes and not isinstance(v, ParamTypes):
                 raise TypeError(f"For call-function Node, got unsupported kwarg value: {v}, type: {type(v)}")
-
-    def create_call_function(self, func, targets, *args, **kwargs): # pylint: disable=C0111
-        Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
-        Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
-        args_ = list(args)
-        SymbolTree._check_args_type(args_)
-        for i, arg in enumerate(args_):
-            if isinstance(arg, Node):
-                args_[i] = arg.get_handler()
-        SymbolTree._check_kwargs_type(kwargs)
-        for key, value in kwargs.items():
-            if isinstance(value, Node):
-                kwargs[key] = value.get_handler()
-        return Node(NodeImpl._create_call_function(func, targets, args_, kwargs)) # pylint: disable=W0212
 
     def get_handler(self) -> SymbolTreeImpl:
         return self._symbol_tree

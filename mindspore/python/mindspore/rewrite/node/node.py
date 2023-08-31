@@ -14,9 +14,9 @@
 # ============================================================================
 """Node class define of Rewrite. See detail in Node class docstring."""
 from typing import Optional, Union
-import types
 import ast
 import inspect
+from types import FunctionType
 
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
@@ -235,47 +235,42 @@ class Node:
         return ast_node
 
     @staticmethod
-    def _create_call_function(func, targets, args, kwargs):
+    def _create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
+                              kwargs: {str: ScopedValue}=None):
         """
-        Create a Node object and generate the execution code to insert into the source code.
-        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
+        Create a node that corresponds to a function call.
 
-        Args:
-            func (FunctionType) - The function to be called.
-            targets (list [str]) - indicates the output name. As the output of the node in the source code.
-            args (ParamType) - parameter name of the node. Used as a parameter to a code statement in source
-                code. The default value is None, which means there is no parameter input in the cell.
-            kwargs ({str: ParamType}) - The key type must be str, and the value type must be ParamType. The
-                input parameter name used to describe the formal parameter with a keyword. Enter the name in the source
-                code as the 'kwargs' in the statement expression. The default value is None, which means there is no
-                'kwargs' input.
+       Args:
+            function (FunctionType): The function to be called.
+            targets (list[str]): indicates output names. Used as targets of an assign statement in source code.
+            args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
+                source code. Default: ``None`` , which indicates the `function` has no args inputs.
+            kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
+                Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
+                code. Default: ``None`` , which indicates the `function` has no kwargs inputs.
 
         Returns:
             An instance of `Node`.
         """
-        if not isinstance(func, types.FunctionType):
-            raise TypeError("The 'func' parameter must be a Function, but got ", type(func))
-
-        _package = func.__globals__['__package__']
-        func_name = ".".join([_package, func.__name__]) if _package else func.__name__
-
-        ast_assign = Node.create_assign_node(targets, func_name, args, kwargs)
-        scope_targets = [ScopedValue.create_naming_value(targets[0])]
-        scope_func = ScopedValue.create_naming_value(func_name, "")
-        call_args = list()
-        for arg in args:
-            if isinstance(arg, Node):
-                call_args.append(ScopedValue.create_variable_value(arg.get_targets()[0].value))
-            else:
-                call_args.append(ScopedValue.create_variable_value(arg))
-        call_kwargs = {}
-        for k, v in kwargs.items():
-            call_kwargs[k] = ScopedValue.create_variable_value(v)
-        return Node.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
-                                               call_kwargs)
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        targets = Node._handle_targets(targets)
+        _package = None
+        if isinstance(function, FunctionType):
+            _package = function.__globals__['__package__']
+        func_full_name = ".".join([_package, function.__name__]) if _package else function.__name__
+        func_scope = ''
+        func_name = func_full_name.split('.')[-1]
+        if func_full_name.count('.') > 0:
+            func_scope = func_full_name.rsplit('.')[0]
+        func_scope_name = ScopedValue.create_naming_value(func_name, func_scope)
+        node = Node.inner_create_call_function(func_name, None, func_scope_name, function, targets, args, kwargs)
+        return node
 
     @classmethod
-    def inner_create_call_function(cls, node_name, ast_node, func_name, func, targets, args, kwargs):
+    def inner_create_call_function(cls, node_name, ast_node, func_name, function, targets, args, kwargs):
         '''
         Instantiate an instance of node whose type is `CallFunction`.
 
@@ -284,12 +279,12 @@ class Node:
             func_name (str): Name of function.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
             targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            func ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
+            function (Object): An instance of function. See detail in docstring of Node class.
             args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
             kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
                 class.
         '''
-        return cls(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, func)
+        return cls(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, function)
 
     @staticmethod
     def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
