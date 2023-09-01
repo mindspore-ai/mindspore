@@ -140,7 +140,6 @@ function(__install_white_list_ops)
         #     ${TOP_DIR}/mindspore/core/ops/sin.h
             ${TOP_DIR}/mindspore/core/ops/skip_gram.h
             ${TOP_DIR}/mindspore/core/ops/smooth_l1_loss.h
-            ${TOP_DIR}/mindspore/core/ops/softmax.h
             ${TOP_DIR}/mindspore/core/ops/softmax_cross_entropy_with_logits.h
             ${TOP_DIR}/mindspore/core/ops/space_to_batch.h
             ${TOP_DIR}/mindspore/core/ops/space_to_batch_nd.h
@@ -1109,7 +1108,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
             ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/concat.h
-            ${TOP_DIR}/mindspore/core/ops/softmax.h
             ${TOP_DIR}/mindspore/core/ops/strided_slice.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/custom.h

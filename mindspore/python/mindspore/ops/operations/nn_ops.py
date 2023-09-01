@@ -31,7 +31,7 @@ from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
-                             Elu, Sigmoid, HSigmoid, AvgPool, BiasAdd,
+                             Elu, Sigmoid, Softmax, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
                              GridSampler3D, GridSampler2D)
 from .manually_defined import BatchNorm
@@ -353,50 +353,6 @@ class AdaptiveMaxPool3D(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x', 'output_size'], outputs=['y', 'argmax'])
-
-
-class Softmax(Primitive):
-    r"""
-    Applies the Softmax operation to the input tensor on the specified axis.
-
-    Refer to :func:`mindspore.ops.softmax` for more details.
-
-    Args:
-        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: ``-1`` .
-
-    Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions. Supported dtypes:
-
-          - Ascend: float16, float32.
-          - GPU/CPU: float16, float32, float64.
-
-    Outputs:
-        Tensor, with the same type and shape as the logits.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> softmax = ops.Softmax()
-        >>> output = softmax(logits)
-        >>> print(output)
-        [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=-1):
-        """Initialize Softmax."""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-        validator.check_value_type("axis", axis, [int, tuple], self.name)
-        if isinstance(axis, int):
-            self.add_prim_attr('axis', (axis,))
-        for item in self.axis:
-            validator.check_value_type("item of axis", item, [int], self.name)
 
 
 class Softplus(Primitive):

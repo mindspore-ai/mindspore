@@ -41,7 +41,7 @@
 #include "ops/pad.h"
 // #include "ops/prelu.h"
 // #include "ops/reshape.h"
-#include "ops/softmax.h"
+// #include "ops/softmax.h"
 #include "ops/strided_slice.h"
 // #include "ops/abs.h"
 #include "ops/div.h"

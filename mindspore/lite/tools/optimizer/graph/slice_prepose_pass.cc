@@ -26,7 +26,6 @@
 #include "ops/fusion/full_connection.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/slice_fusion.h"
-#include "ops/softmax.h"
 #include "ops/op_utils.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"

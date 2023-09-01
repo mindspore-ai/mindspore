@@ -30,7 +30,6 @@ namespace prim {
 // Loss
 GVAR_DEF(PrimitivePtr, kPrimBCEWithLogitsLoss, std::make_shared<Primitive>("BCEWithLogitsLoss"));
 GVAR_DEF(PrimitivePtr, kPrimFlattenGrad, std::make_shared<Primitive>("FlattenGrad"));
-GVAR_DEF(PrimitivePtr, kPrimSoftmax, std::make_shared<Primitive>("Softmax"));
 GVAR_DEF(PrimitivePtr, kPrimSoftmaxV2, std::make_shared<Primitive>("SoftmaxV2"));
 GVAR_DEF(PrimitivePtr, kPrimSoftmaxGrad, std::make_shared<Primitive>("SoftmaxGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSoftsign, std::make_shared<Primitive>("Softsign"));

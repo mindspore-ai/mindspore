@@ -453,6 +453,9 @@ def _vmap_clone_prim(prim):
 @_primexpr
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""
+    if x_dim < 0:
+        x_dim = x_dim + x_ndim
+
     # For axis, it's value in Union[int, list, tuple]
     logical_x_ndim = x_ndim - 1
     if isinstance(axis, int):

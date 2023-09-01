@@ -629,21 +629,21 @@ def get_matmul_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Softmax)
+@vmap_rules_getters.register("Softmax")
 def get_softmax_vmap_rule(prim, axis_size):
     """VmapRule for `Softmax`"""
-    axis = prim.axis[0]
-    if isinstance(axis, tuple):
-        axis = axis[0]
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
         x_ndim = F.rank(x)
+        if not F.isconstant(axis) or not F.isconstant(x_ndim):
+            raise ValueError
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        out = P.Softmax(batch_axis)(x)
+        out = prim(x, batch_axis)
         return out, x_dim
 
     return vmap_rule

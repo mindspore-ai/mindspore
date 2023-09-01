@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_SOFTMAX_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_SOFTMAX_CPU_KERNEL_H_
 
-#include <vector>
 #include <map>
+#include <vector>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -36,13 +36,15 @@ class SoftmaxCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
  private:
-  std::vector<int> axis_list_;
+  std::vector<int64_t> axis_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

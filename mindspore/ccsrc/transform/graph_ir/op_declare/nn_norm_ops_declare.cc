@@ -23,6 +23,7 @@
 namespace mindspore::transform {
 // SoftmaxV2
 INPUT_MAP(SoftmaxV2) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(SoftmaxV2) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(SoftmaxV2) = {
   {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };

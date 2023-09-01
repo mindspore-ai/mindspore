@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <algorithm>
-#include <map>
-#include <utility>
 #include <functional>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/softmax_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/softmax_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -55,22 +55,12 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
                                                   const std::vector<kernel::KernelTensor *> &, void *)>;
 
   void ResetResource() {
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_shape_.clear();
-
     // add new
     axis_acc_ = 0;
     outer_size_ = 1;
     inner_size_ = 1;
     shape_.clear();
     is_log_softmax_ = false;
-  }
-
- protected:
-  void InitSizeLists() {
-    output_size_list_.push_back(output_size_);
-    return;
   }
 
  private:
@@ -88,11 +78,6 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool is_null_input_{false};
-  size_t input_size_{0};
-  size_t output_size_{0};
-  size_t workspace_size_{0};
-
-  std::vector<size_t> input_shape_{};
   size_t shape_size_{0};
   size_t batch_size_{0};
   size_t height_{0};

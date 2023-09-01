@@ -20,7 +20,6 @@
 #include <memory>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/softmax.h"
 // #include "ops/log_softmax.h"
 
 namespace mindspore::lite {

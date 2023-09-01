@@ -16,11 +16,12 @@
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "ir/value.h"
 #include "ops/conv_pool_op_name.h"
 #include "ops/nn_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
-#include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -197,20 +198,17 @@ REG_FUNCTOR("ShapeCalc_ExtractImagePatches", ExtractImagePatchesShapeCalc);
 class SoftmaxShapeCalc : public ShapeCalcFunctor {
  public:
   DECLARE_SHAPE_CALC("ShapeCalc_Softmax", SoftmaxShapeCalc)
-  explicit SoftmaxShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_Softmax"), axis_(axis) {}
-  ValuePtr ToValue() const override { return MakeValue(axis_); }
-  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
   ShapeArray Calc(const ShapeArray &inputs) const override {
-    // inputs: {x_shape}
-    return {GetTransposeAxis(inputs.at(0), axis_)};
+    // inputs: {x_shape, axis}
+    auto axis = inputs.at(1)[0];
+    return {GetTransposeAxis(inputs.at(0), axis)};
   }
   std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
     int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
     return {x_rank};
   }
-
- protected:
-  int64_t axis_{0};
 };
 REG_FUNCTOR("ShapeCalc_Softmax", SoftmaxShapeCalc);
 
@@ -1341,22 +1339,30 @@ REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i9}).SetBody(BODYFUNC(ib
 });
 
 REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto axis = GetValue<std::vector<int64_t>>(ib->GetAttr("axis"));
-  auto one_axis = axis[0];
   auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto axis = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   auto shp = ib->GetShape(x);
-  if (IsLastAxis(shp, one_axis)) {
-    return {ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)))};
+  std::vector<int64_t> axis_vec{};
+  auto axis_value = axis->BuildValue();
+  bool success = false;
+  if (!(axis_value->isa<ValueAny>() || axis_value->isa<None>())) {
+    axis_vec = GetIntList(axis_value);
+    success = true;
   }
-  NodePtr reverse_axis = IsDynamicRank(shp) ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(one_axis), {x})[0]
-                                            : ib->Value(GetTransposeAxis(shp, one_axis));
+  if (success && IsLastAxis(shp, axis_vec[0])) {
+    auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
+    return {dx, ib->OutZeros(axis)};
+  }
+  auto reverse_axis = (IsDynamicRank(shp) || !success)
+                        ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(), {x, axis}, {1})[0]
+                        : ib->Value(GetTransposeAxis(shp, axis_vec[0]));
   out = ib->Transpose(out, reverse_axis);
   dout = ib->Transpose(dout, reverse_axis);
   auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
   dx = ib->Transpose(dx, reverse_axis);
-  return {dx};
+  return {dx, ib->OutZeros(axis)};
 });
 
 REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody(BODYFUNC(ib) {

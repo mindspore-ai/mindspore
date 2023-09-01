@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,10 @@
 #include "plugin/device/cpu/kernel/mkldnn/softmax_cpu_kernel.h"
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/softmax.h"
 
 namespace mindspore {
 namespace kernel {
 bool SoftmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  constexpr size_t input_num = 1;
-  constexpr size_t output_num = 1;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  auto axis_list_me = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(ops::kAxis));
-  (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list_),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (axis_list_.size() != 1) {
-    MS_LOG(EXCEPTION) << "For Softmin and Softmax, the parameter 'axis' only support int type on CPU, but got tuple.";
-  }
-
   return true;
 }
 
@@ -41,10 +29,12 @@ int SoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return ret;
   }
   auto src_shape = inputs[kIndex0]->GetShapeVector();
-  int axis = axis_list_[0];
-  if (axis >= SizeToInt(src_shape.size())) {
-    axis = SizeToInt(src_shape.size()) - 1;
+  axis_list_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  if (axis_list_.size() != 1) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_
+                      << ", the parameter 'axis' only support int type on CPU, but got tuple.";
   }
+  int axis = axis_list_[0];
   while (axis < 0) {
     axis += SizeToInt(src_shape.size());
   }

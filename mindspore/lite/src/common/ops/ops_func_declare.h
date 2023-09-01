@@ -93,7 +93,6 @@
 #include "ops/sigmoid_cross_entropy_with_logits.h"
 #include "ops/skip_gram.h"
 #include "ops/smooth_l1_loss.h"
-#include "ops/softmax.h"
 #include "ops/softmax_cross_entropy_with_logits.h"
 #include "ops/space_to_batch.h"
 #include "ops/space_to_batch_nd.h"
