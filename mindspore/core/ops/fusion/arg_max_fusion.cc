@@ -26,10 +26,11 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "mindapi/ir/type.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(ArgMaxFusion, Argmax);
+MIND_API_OPERATOR_IMPL(ArgMaxFusion, BaseOperator);
 void ArgMaxFusion::Init(const bool keep_dims, const bool out_max_value, const int64_t top_k, const int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);
@@ -57,6 +58,19 @@ int64_t ArgMaxFusion::get_top_k() const {
   auto topk = GetAttr(kTopK);
   MS_EXCEPTION_IF_NULL(topk);
   return GetValue<int64_t>(topk);
+}
+
+void ArgMaxFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+void ArgMaxFusion::set_output_type(const TypeId output_type) {
+  (void)this->AddAttr(kOutputType, api::Type::GetType(output_type));
+}
+
+int64_t ArgMaxFusion::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+
+TypeId ArgMaxFusion::get_output_type() const {
+  auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
+  return type_ptr->type_id();
 }
 
 namespace {
