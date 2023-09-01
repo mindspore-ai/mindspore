@@ -1570,7 +1570,7 @@ AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
     }
     if (other_sequence->size() != size()) {
       auto dyn_len_sequence = BroadenToDynamicLenSequence();
-      return dyn_len_sequence->Join(other_sequence->BroadenToDynamicLenSequence());
+      return dyn_len_sequence->DynamicLenSequenceJoin(other_sequence->BroadenToDynamicLenSequence());
     }
   } catch (std::exception &e) {
     MS_LOG(ERROR) << e.what();
