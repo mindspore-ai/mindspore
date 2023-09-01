@@ -82,7 +82,8 @@ Status SUN397Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows, sample_size;
+  int64_t num_rows;
+  int64_t sample_size;
   RETURN_IF_NOT_OK(SUN397Op::CountTotalRows(dataset_dir_, decode_, &num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
@@ -96,7 +97,8 @@ Status SUN397Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 }
 
 Status SUN397Node::to_json(nlohmann::json *out_json) {
-  nlohmann::json args, sampler_args;
+  nlohmann::json args;
+  nlohmann::json sampler_args;
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;

@@ -111,7 +111,8 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 }
 
 TensorShape ResizeOp::ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w) {
-  const int kHeightIndexFromBack = -3, kWidthIndexFromBack = -2;
+  const int kHeightIndexFromBack = -3;
+  const int kWidthIndexFromBack = -2;
   auto out_shape_vec = input.AsVector();
   auto size = out_shape_vec.size();
   out_shape_vec[size + kHeightIndexFromBack] = output_h;

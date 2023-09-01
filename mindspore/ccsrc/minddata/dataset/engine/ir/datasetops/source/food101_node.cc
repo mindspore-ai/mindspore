@@ -90,7 +90,8 @@ Status Food101Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows = 0, sample_size;
+  int64_t num_rows = 0;
+  int64_t sample_size;
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(Build(&ops));
   CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build Food101Op.");
@@ -108,7 +109,8 @@ Status Food101Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
 }
 
 Status Food101Node::to_json(nlohmann::json *out_json) {
-  nlohmann::json args, sampler_args;
+  nlohmann::json args;
+  nlohmann::json sampler_args;
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;

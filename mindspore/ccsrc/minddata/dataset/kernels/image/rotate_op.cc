@@ -136,8 +136,10 @@ Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 
 TensorShape RotateOp::ConstructShape(const TensorShape &in_shape) const {
   auto in_shape_vec = in_shape.AsVector();
-  const int h_index = -3, w_index = -2;
-  int32_t outputH = -1, outputW = -1;
+  const int h_index = -3;
+  const int w_index = -2;
+  int32_t outputH = -1;
+  int32_t outputW = -1;
   if (!expand_) {
     outputH = static_cast<int32_t>(in_shape[h_index]);
     outputW = static_cast<int32_t>(in_shape[w_index]);

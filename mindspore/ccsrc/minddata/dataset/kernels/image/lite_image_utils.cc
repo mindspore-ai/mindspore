@@ -514,7 +514,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
                                input_cv->shape().ToString());
     }
 
-    LiteMat im_in, im_out;
+    LiteMat im_in;
+    LiteMat im_out;
     std::shared_ptr<Tensor> output_tensor;
     TensorShape new_shape = TensorShape({output_height, output_width, 3});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
@@ -995,7 +996,7 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     int width = 0;
     CHECK_FAIL_RETURN_UNEXPECTED(matrix.size() <= 6, "Invalid mat shape.");
     double M[6] = {};
-    for (int i = 0; i < matrix.size(); i++) {
+    for (size_t i = 0; i < matrix.size(); i++) {
       M[i] = static_cast<double>(matrix[i]);
     }
     int input_height = static_cast<int>(input->shape()[0]);

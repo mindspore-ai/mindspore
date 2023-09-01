@@ -178,7 +178,8 @@ Status CutMixBatchOp::ComputeLabel(const std::shared_ptr<Tensor> &label, int64_t
         label_shape_size == kMaxLabelShapeSize ? std::vector{index_i, j, k} : std::vector{index_i, k};
       std::vector<int64_t> second_index =
         label_shape_size == kMaxLabelShapeSize ? std::vector{rand_indx_i, j, k} : std::vector{rand_indx_i, k};
-      float first_value, second_value;
+      float first_value;
+      float second_value;
       RETURN_IF_NOT_OK(float_label->GetItemAt(&first_value, first_index));
       RETURN_IF_NOT_OK(float_label->GetItemAt(&second_value, second_index));
       RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, label_lam * first_value + (1 - label_lam) * second_value));

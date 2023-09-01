@@ -98,7 +98,8 @@ void Food101Op::Print(std::ostream &out, bool show_all) const {
 Status Food101Op::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   RETURN_UNEXPECTED_IF_NULL(trow);
   std::string img_name = (Path(folder_path_) / Path("images") / Path(all_img_lists_[row_id])).ToString() + ".jpg";
-  std::shared_ptr<Tensor> image, label;
+  std::shared_ptr<Tensor> image;
+  std::shared_ptr<Tensor> label;
   std::string label_str;
   for (auto it : classes_) {
     if (all_img_lists_[row_id].find(it) != all_img_lists_[row_id].npos) {

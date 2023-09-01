@@ -947,7 +947,8 @@ Status DataQueueOp::SendDataToGPU() {
   RETURN_IF_NOT_OK(LaunchParallelCopyThread());
   MS_LOG(INFO) << "Device queue, sending data to GPU.";
 #ifndef ENABLE_SECURITY
-  uint64_t batch_record_start, batch_record_end;
+  uint64_t batch_record_start;
+  uint64_t batch_record_end;
   batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
   TensorRow current_row;

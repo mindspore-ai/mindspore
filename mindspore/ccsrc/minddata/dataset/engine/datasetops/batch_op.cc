@@ -64,7 +64,10 @@ Status BatchOp::operator()() {
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   int64_t epoch_num = op_current_epochs_;  // in failover reset this can be greater than zero
-  int64_t ep_step = 0, total_step = 0, batch_num = 0, cnt = 0;
+  int64_t ep_step = 0;
+  int64_t total_step = 0;
+  int64_t batch_num = 0;
+  int64_t cnt = 0;
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
 
   TensorRow new_row;
@@ -216,7 +219,8 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
           std::to_string(column_index) + ", expected shape for this column is:" + shape1.str() +
           ", got shape:" + shape2.str());
       } else {  // newly popped rows have different type
-        std::string type1, type2;
+        std::string type1;
+        std::string type2;
         type1 = first_type.ToString();
         type2 = old_tensor->type().ToString();
         RETURN_STATUS_UNEXPECTED(

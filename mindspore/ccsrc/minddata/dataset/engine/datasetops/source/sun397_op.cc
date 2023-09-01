@@ -48,7 +48,8 @@ Status SUN397Op::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   auto file_path = image_path_label_pairs_[row_id].first;
   auto label_num = image_path_label_pairs_[row_id].second;
 
-  std::shared_ptr<Tensor> image, label;
+  std::shared_ptr<Tensor> image;
+  std::shared_ptr<Tensor> label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(label_num, &label));
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(file_path, &image));
 

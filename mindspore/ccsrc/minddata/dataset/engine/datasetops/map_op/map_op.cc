@@ -515,7 +515,8 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     return Status::OK();
   }
   auto column_name_id_map = child_[0]->column_name_id_map();
-  TensorRow i_row, o_row;
+  TensorRow i_row;
+  TensorRow o_row;
   (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(i_row),
                        [&new_row](const auto &it) { return new_row[it]; });
   i_row.setId(new_row.getId());
