@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/SparseCore"
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 
@@ -28,18 +28,18 @@ class SparseMatrixMatMulCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ValidParam(CpuKernelContext &ctx);
+  uint32_t ValidParam(const CpuKernelContext &ctx);
   // check if the matrix can mul
   template <typename T>
-  uint32_t CheckMatMul(CpuKernelContext &ctx);
+  uint32_t CheckMatMul(const CpuKernelContext &ctx);
   // create eigen sparsematrix with eigen::map
   template <typename indiceT, typename valueT>
   Eigen::Ref<const Eigen::SparseMatrix<valueT, Eigen::RowMajor, indiceT> > CreateEigenSparseMatrix(
     indiceT rows, indiceT cols, int64_t nnz, indiceT *row_pointers, indiceT *col_indices, valueT *values,
     bool transpose, bool adjoint);
-  // do the actual complute
+  // do the actual ute
   template <typename indiceT, typename valueT>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 };
 
 }  // namespace aicpu

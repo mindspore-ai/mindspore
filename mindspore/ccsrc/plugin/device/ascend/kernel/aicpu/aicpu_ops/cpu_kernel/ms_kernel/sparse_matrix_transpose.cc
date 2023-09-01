@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_matrix_transpose.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/sparse_matrix_transpose.h"
+#include <numeric>
+#include <vector>
+#include <iostream>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include <numeric>
-#include <iostream>
-
-using namespace std;
 
 namespace aicpu {
 const uint32_t kInputNum = 5;
@@ -77,10 +75,10 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
           status = SparseMatrixTransposeCompute<int32_t, double_t>(ctx);
           break;
         case DT_COMPLEX64:
-          status = SparseMatrixTransposeComputecomplex<int32_t, complex<float_t>>(ctx);
+          status = SparseMatrixTransposeComputecomplex<int32_t, std::complex<float_t>>(ctx);
           break;
         case DT_COMPLEX128:
-          status = SparseMatrixTransposeComputecomplex<int32_t, complex<double_t>>(ctx);
+          status = SparseMatrixTransposeComputecomplex<int32_t, std::complex<double_t>>(ctx);
           break;
         default:
           KERNEL_LOG_ERROR("data type of x_value is not required");
@@ -123,10 +121,10 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
           status = SparseMatrixTransposeCompute<int64_t, double_t>(ctx);
           break;
         case DT_COMPLEX64:
-          status = SparseMatrixTransposeComputecomplex<int64_t, complex<float_t>>(ctx);
+          status = SparseMatrixTransposeComputecomplex<int64_t, std::complex<float_t>>(ctx);
           break;
         case DT_COMPLEX128:
-          status = SparseMatrixTransposeComputecomplex<int64_t, complex<double_t>>(ctx);
+          status = SparseMatrixTransposeComputecomplex<int64_t, std::complex<double_t>>(ctx);
           break;
         default:
           KERNEL_LOG_ERROR("data type of x_value is not required");
@@ -147,7 +145,7 @@ uint32_t SparseMatrixTransposeCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelContext &ctx) {
+uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(const CpuKernelContext &ctx) {
   indiceT *x_dense_shape = static_cast<indiceT *>(ctx.Input(0)->GetData());
   indiceT *x_batch_pointers = static_cast<indiceT *>(ctx.Input(1)->GetData());
   indiceT *x_row_pointers = static_cast<indiceT *>(ctx.Input(2)->GetData());
@@ -188,15 +186,15 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelC
   auto num_rows = x_dense_shape[rank - 2];
   auto num_cols = x_dense_shape[rank - 1];
   auto num_batch = ctx.Input(1)->NumElements() - 1;
-  int y_part_row_pointers[num_cols + 1];
-  int part_row_pointers[num_rows + 1];
+  std::vector<int> y_part_row_pointers(num_cols + 1);
+  std::vector<int> part_row_pointers(num_rows + 1);
 
   for (int j = 0; j < num_batch; ++j) {
     int n = x_batch_pointers[j + 1] - x_batch_pointers[j];
-    valueT part_values[n];
-    indiceT part_col_indices[n];
-    indiceT y_part_col_indices[n];
-    valueT y_part_values[n];
+    std::vector<valueT> part_values(n);
+    std::vector<indiceT> part_col_indices(n);
+    std::vector<indiceT> y_part_col_indices(n);
+    std::vector<valueT> y_part_values(n);
     for (int i = 0; i < num_cols + 1; ++i) {
       y_part_row_pointers[i] = 0;
     }
@@ -210,7 +208,7 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelC
     for (int64_t i = 0; i < n; ++i) {
       y_part_row_pointers[part_col_indices[i] + 1] += 1;
     }
-    std::partial_sum(y_part_row_pointers, y_part_row_pointers + num_cols + 1, y_part_row_pointers);
+    std::partial_sum(y_part_row_pointers.begin(), y_part_row_pointers.end(), y_part_row_pointers.begin());
     for (int k = 0; k < num_cols + 1; ++k) {
       y_row_pointers[(num_cols + 1) * j + k] = y_part_row_pointers[k];
     }
@@ -251,7 +249,7 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeCompute(CpuKernelC
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(CpuKernelContext &ctx) {
+uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(const CpuKernelContext &ctx) {
   indiceT *x_dense_shape = static_cast<indiceT *>(ctx.Input(0)->GetData());
   indiceT *x_batch_pointers = static_cast<indiceT *>(ctx.Input(1)->GetData());
   indiceT *x_row_pointers = static_cast<indiceT *>(ctx.Input(2)->GetData());
@@ -280,15 +278,15 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(Cpu
   auto num_rows = x_dense_shape[rank - 2];
   auto num_cols = x_dense_shape[rank - 1];
   auto num_batch = ctx.Input(1)->NumElements() - 1;
-  int y_part_row_pointers[num_cols + 1];
-  int part_row_pointers[num_rows + 1];
+  std::vector<int> y_part_row_pointers(num_cols + 1);
+  std::vector<int> part_row_pointers(num_rows + 1);
 
   for (int j = 0; j < num_batch; ++j) {
     int n = x_batch_pointers[j + 1] - x_batch_pointers[j];
-    valueT part_values[n];
-    indiceT part_col_indices[n];
-    indiceT y_part_col_indices[n];
-    valueT y_part_values[n];
+    std::vector<valueT> part_values(n);
+    std::vector<indiceT> part_col_indices(n);
+    std::vector<indiceT> y_part_col_indices(n);
+    std::vector<valueT> y_part_values(n);
     for (int i = 0; i < num_cols + 1; ++i) {
       y_part_row_pointers[i] = 0;
     }
@@ -302,7 +300,7 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(Cpu
     for (int64_t i = 0; i < n; ++i) {
       y_part_row_pointers[part_col_indices[i] + 1] += 1;
     }
-    std::partial_sum(y_part_row_pointers, y_part_row_pointers + num_cols + 1, y_part_row_pointers);
+    std::partial_sum(y_part_row_pointers.begin(), y_part_row_pointers.end(), y_part_row_pointers.begin());
     for (int k = 0; k < num_cols + 1; ++k) {
       y_row_pointers[(num_cols + 1) * j + k] = y_part_row_pointers[k];
     }

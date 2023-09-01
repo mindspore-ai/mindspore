@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#include "tensor_scatter_update.h"
-
-#include <string.h>
-
+#include "cpu_kernel/ms_kernel/tensor_scatter_update.h"
+#include <vector>
 #include <algorithm>
 #include <complex>
 #include <iostream>
 #include <map>
-
 #include "eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -96,33 +93,33 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
 
   switch (data_type_var) {
     case DT_BOOL:
-      return DTYPE_CHOOSE<bool>(ctx);
+      return DTypeChoose<bool>(ctx);
     case DT_INT8:
-      return DTYPE_CHOOSE<int8_t>(ctx);
+      return DTypeChoose<int8_t>(ctx);
     case DT_INT16:
-      return DTYPE_CHOOSE<int16_t>(ctx);
+      return DTypeChoose<int16_t>(ctx);
     case DT_INT32:
-      return DTYPE_CHOOSE<int32_t>(ctx);
+      return DTypeChoose<int32_t>(ctx);
     case DT_INT64:
-      return DTYPE_CHOOSE<int64_t>(ctx);
+      return DTypeChoose<int64_t>(ctx);
     case DT_UINT8:
-      return DTYPE_CHOOSE<uint8_t>(ctx);
+      return DTypeChoose<uint8_t>(ctx);
     case DT_UINT16:
-      return DTYPE_CHOOSE<uint16_t>(ctx);
+      return DTypeChoose<uint16_t>(ctx);
     case DT_UINT32:
-      return DTYPE_CHOOSE<uint32_t>(ctx);
+      return DTypeChoose<uint32_t>(ctx);
     case DT_UINT64:
-      return DTYPE_CHOOSE<uint64_t>(ctx);
+      return DTypeChoose<uint64_t>(ctx);
     case DT_FLOAT16:
-      return DTYPE_CHOOSE<Eigen::half>(ctx);
+      return DTypeChoose<Eigen::half>(ctx);
     case DT_FLOAT:
-      return DTYPE_CHOOSE<float>(ctx);
+      return DTypeChoose<float>(ctx);
     case DT_DOUBLE:
-      return DTYPE_CHOOSE<double>(ctx);
+      return DTypeChoose<double>(ctx);
     case DT_COMPLEX64:
-      return DTYPE_CHOOSE<std::complex<float>>(ctx);
+      return DTypeChoose<std::complex<float>>(ctx);
     case DT_COMPLEX128:
-      return DTYPE_CHOOSE<std::complex<double>>(ctx);
+      return DTypeChoose<std::complex<double>>(ctx);
     default:
       KERNEL_LOG_ERROR("TensorScatterUpdate kernel data type [%s] not support.", DTypeStr(data_type_var).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -132,7 +129,7 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename var_type>
-uint32_t TensorScatterUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::DTypeChoose(const CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(1)->GetDataType());
   switch (indices_type) {
     case DT_INT32:
@@ -147,7 +144,7 @@ uint32_t TensorScatterUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
 }
 
 template <typename var_type, typename indices_type>
-uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(const CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 

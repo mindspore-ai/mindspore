@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SparseTensorDenseAddCpuKernel : public CpuKernel {
@@ -30,10 +30,10 @@ class SparseTensorDenseAddCpuKernel : public CpuKernel {
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
-  uint32_t ValidateInputs(CpuKernelContext &ctx);
+  uint32_t ValidateInputs(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

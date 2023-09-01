@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_matrix_mat_mul.h"
+#include "cpu_kernel/ms_kernel/sparse_matrix_mat_mul.h"
 #include <securec.h>
 #include <complex>
 #include <numeric>
+#include <algorithm>
 #include <string>
 #include <vector>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace aicpu {
 const char *SparseMatrixMatMul = "SparseMatrixMatMul";
@@ -53,10 +52,10 @@ uint32_t SparseMatrixMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
           status = DoCompute<int32_t, double_t>(ctx);
           break;
         case DT_COMPLEX64:
-          status = DoCompute<int32_t, complex<float_t> >(ctx);
+          status = DoCompute<int32_t, std::complex<float_t> >(ctx);
           break;
         case DT_COMPLEX128:
-          status = DoCompute<int32_t, complex<double_t> >(ctx);
+          status = DoCompute<int32_t, std::complex<double_t> >(ctx);
           break;
         default:
           KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
@@ -72,10 +71,10 @@ uint32_t SparseMatrixMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
           status = DoCompute<int64_t, double_t>(ctx);
           break;
         case DT_COMPLEX64:
-          status = DoCompute<int64_t, complex<float_t> >(ctx);
+          status = DoCompute<int64_t, std::complex<float_t> >(ctx);
           break;
         case DT_COMPLEX128:
-          status = DoCompute<int64_t, complex<double_t> >(ctx);
+          status = DoCompute<int64_t, std::complex<double_t> >(ctx);
           break;
         default:
           KERNEL_LOG_ERROR("data type of dense shape is not int32 or int64");
@@ -114,7 +113,7 @@ SparseMatrixMatMulCpuKernel::CreateEigenSparseMatrix(indiceT rows, indiceT cols,
   return sparse_matrix;
 }
 
-uint32_t SparseMatrixMatMulCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseMatrixMatMulCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   KERNEL_LOG_DEBUG("Start to execute ValidParam.");
   // valid input and output nullptr
   if (NormalCheck(ctx, INPUT_PARAMS_NUM, OUTPUT_PARAMS_NUM) != KERNEL_STATUS_OK) {
@@ -142,7 +141,7 @@ uint32_t SparseMatrixMatMulCpuKernel::ValidParam(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(CpuKernelContext &ctx) {
+uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(const CpuKernelContext &ctx) {
   KERNEL_LOG_DEBUG("check if the matrix can mul");
 
   const int rank = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
@@ -179,7 +178,7 @@ uint32_t SparseMatrixMatMulCpuKernel::CheckMatMul(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT, typename valueT>
-uint32_t SparseMatrixMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseMatrixMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   using Matrix = Eigen::Matrix<valueT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
   indiceT batch_size = ctx.Input(1)->NumElements() - 1;
@@ -258,8 +257,9 @@ uint32_t SparseMatrixMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
                                       results[i] = temp.transpose();
                                     } else if (conjugate_output) {
                                       results[i] = temp.conjugate();
-                                    } else
+                                    } else {
                                       results[i] = temp;
+                                    }
                                   }
                                 }),
     "SparseMatrixMatMul Compute failed.");

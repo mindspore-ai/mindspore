@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "sparse_segment_sum_with_num_segments.h"
-
+#include "cpu_kernel/ms_kernel/sparse_segment_sum_with_num_segments.h"
+#include <vector>
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -99,7 +99,7 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
 REGISTER_CPU_KERNEL(SparseSegmentSumWithNumSegments, SparseSegmentSumWithNumSegmentsCpuKernel);
 
 template <typename dataT, typename indicesT>
-uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
   size_t num_elements = ctx.Output(0)->GetTensorShape()->NumElements();
@@ -148,5 +148,5 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(CpuKernelContex
     }
   }
   return KERNEL_STATUS_OK;
-};
+}
 }  // namespace aicpu

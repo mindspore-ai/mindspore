@@ -18,14 +18,12 @@
 
 #include <memory>
 #include <vector>
-
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 
 namespace aicpu {
 class SplitCpuKernel : public CpuKernel {
@@ -42,7 +40,7 @@ class SplitCpuKernel : public CpuKernel {
    * @param ctx cpu kernel context
    * @return status if success
    */
-  uint32_t CheckAndInitParams(CpuKernelContext &ctx);
+  uint32_t CheckAndInitParams(const CpuKernelContext &ctx);
   /**
    * @brief split data when split num is 1
    * @param input_data_ptr ptr which store input data
@@ -69,7 +67,7 @@ class SplitCpuKernel : public CpuKernel {
   uint32_t SplitCompute(T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 
  private:
   DataType data_type_;

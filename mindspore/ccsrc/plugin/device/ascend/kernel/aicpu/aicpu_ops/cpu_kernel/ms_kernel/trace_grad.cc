@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "trace_grad.h"
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/ms_kernel/trace_grad.h"
+#include "Eigen/Core"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include "Eigen/Core"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -155,7 +156,7 @@ uint32_t TraceGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t TraceGradCpuKernel::TraceGradCompute(CpuKernelContext &ctx) {
+uint32_t TraceGradCpuKernel::TraceGradCompute(const CpuKernelContext &ctx) {
   auto input_x1 = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input_x2 = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto output_x = reinterpret_cast<T1 *>(ctx.Output(0)->GetData());

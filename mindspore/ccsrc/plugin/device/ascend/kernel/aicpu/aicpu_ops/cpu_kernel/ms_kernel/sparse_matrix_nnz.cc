@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_matrix_nnz.h"
+#include "cpu_kernel/ms_kernel/sparse_matrix_nnz.h"
 #include <securec.h>
 #include <complex>
 #include <numeric>
+#include <algorithm>
 #include <string>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace aicpu {
 const char *SparseMatrixNNZ = "SparseMatrixNNZ";
@@ -61,10 +60,10 @@ uint32_t SparseMatrixNNZCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT>
-uint32_t SparseMatrixNNZCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseMatrixNNZCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   const indiceT batch_size = ctx.Input(1)->NumElements() - 1;
   // define some temp arrays to store the output tensor data
-  int32_t result_nnz[batch_size];
+  std::vector<int32_t> result_nnz(batch_size);
   // do computer
   indiceT *batch_pointers_x = static_cast<indiceT *>(ctx.Input(1)->GetData());
   indiceT curr = 0;
@@ -75,7 +74,7 @@ uint32_t SparseMatrixNNZCpuKernel::DoCompute(CpuKernelContext &ctx) {
   }
   // write result
   int32_t *output_y = static_cast<int32_t *>(ctx.Output(0)->GetData());
-  std::copy(result_nnz, result_nnz + (int32_t)batch_size, output_y);
+  std::copy(result_nnz.data(), result_nnz.data() + (int32_t)batch_size, output_y);
 
   KERNEL_LOG_DEBUG("DoCompute end!!");
   return KERNEL_STATUS_OK;

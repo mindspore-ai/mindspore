@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd.
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "sqrt.h"
-
-#include <complex>
+#include "cpu_kernel/ms_kernel/sqrt.h"
 #include <unsupported/Eigen/CXX11/Tensor>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include <complex>
+#include <algorithm>
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -110,7 +111,7 @@ inline std::uint32_t SqrtExtraCheck(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-std::uint32_t SqrtCheck(CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
+std::uint32_t SqrtCheck(const CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
   return NormalCheck(ctx, kSqrtInputNum, kSqrtOutputNum) ? KERNEL_STATUS_PARAM_INVALID : SqrtExtraCheck(ctx);
 }
 

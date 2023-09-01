@@ -67,7 +67,7 @@ uint32_t SparseTensor::CreateSparseTensor(Tensor *ix, Tensor *tensorvals, std::v
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseTensor::IndicesValid(CpuKernelContext &ctx) const {
+uint32_t SparseTensor::IndicesValid(const CpuKernelContext &ctx) const {
   if (std::any_of(order_.begin(), order_.end(), [](int64_t ord) { return ord < 0; })) {
     KERNEL_LOG_ERROR("Order was not provided.");
     return KERNEL_STATUS_INNER_ERROR;

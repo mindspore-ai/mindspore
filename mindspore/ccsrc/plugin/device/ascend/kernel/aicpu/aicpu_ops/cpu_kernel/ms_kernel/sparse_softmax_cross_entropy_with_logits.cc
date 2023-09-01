@@ -1,5 +1,5 @@
 /**
-Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
+Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,20 @@ Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_softmax_cross_entropy_with_logits.h"
-#include <iostream>
+
+#include "cpu_kernel/ms_kernel/sparse_softmax_cross_entropy_with_logits.h"
 #include <unsupported/Eigen/CXX11/Tensor>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
+#include <iostream>
+#include <algorithm>
+#include <vector>
 #include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+
 namespace {
 const char *kSparseSoftmaxCrossEntropyWithLogits = "SparseSoftmaxCrossEntropyWithLogits";
 const uint32_t kOutputNum{2};
@@ -45,11 +49,7 @@ void SparseSoftmaxCrossEntropyWithLogitsSingleOp(data_type *input_features, labe
   }
   Eigen::TensorMap<Eigen::Tensor<data_type, kDimSizeTwo>, Eigen::Aligned> logits(input_features, batch_size,
                                                                                  classes_num);
-  Eigen::TensorMap<Eigen::Tensor<double_t, 1>, Eigen::Aligned> dims_sum(dims_exp_sum, batch_size);
-  Eigen::TensorMap<Eigen::Tensor<data_type, 1>, Eigen::Aligned> dims_max(dims_maximum, batch_size);
-  Eigen::array<int, 1> axes{{1}};
   // compute softmax
-  dims_max = logits.maximum(axes);
   const data_type constant_one(1.0);
   for (size_t index = 0, batch_idx = 0; index < features_total; index++) {
     output_backprop[index] = Eigen::numext::exp(input_features[index] - dims_maximum[batch_idx]);
@@ -58,7 +58,6 @@ void SparseSoftmaxCrossEntropyWithLogitsSingleOp(data_type *input_features, labe
       batch_idx++;
     }
   }
-  dims_sum = dims_sum.inverse();
   for (size_t index = 0, batch_idx = 0; index < features_total; index++) {
     *(output_backprop + index) =
       static_cast<data_type>(static_cast<double_t>(*(output_backprop + index)) * dims_exp_sum[batch_idx]);
@@ -106,7 +105,7 @@ void SparseSoftmaxCrossEntropyWithLogitsMultiOp(data_type *input_features, label
   }
 }
 
-std::uint32_t SparseSoftmaxCrossEntropyWithLogitsExtraCheck(CpuKernelContext &ctx) {
+std::uint32_t SparseSoftmaxCrossEntropyWithLogitsExtraCheck(const CpuKernelContext &ctx) {
   Tensor *input_features = ctx.Input(0);
   Tensor *input_labels = ctx.Input(1);
   Tensor *output_loss = ctx.Output(0);
@@ -187,14 +186,11 @@ inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(const CpuKernelContex
     }
   }
   // Determine whether to enable multi-core parallel computing
-  size_t pivot, classes_num;
   int64_t batch_size{1};
-  pivot = dims.size() - 1;
-  classes_num = dims[pivot];
-  for (size_t index = 0; index < dims.size(); index++) {
-    if (index < pivot) {
-      batch_size *= dims[index];
-    }
+  size_t pivot = dims.size() - 1;
+  size_t classes_num = dims[pivot];
+  for (size_t index = 0; index < pivot; index++) {
+    batch_size *= dims[index];
   }
   // Eigen::Array
   muilt_core_flag = true;  // Float Needs rectification

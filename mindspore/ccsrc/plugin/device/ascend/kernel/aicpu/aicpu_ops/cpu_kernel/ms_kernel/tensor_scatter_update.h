@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,24 @@
 #ifndef AICPU_KERNELS_NORMALIZED_TENSORSCATTERUPDATE_H_
 #define AICPU_KERNELS_NORMALIZED_TENSORSCATTERUPDATE_H_
 
-#include "cpu_ops_kernel.h"
-#include "cpu_types.h"
+#include <string>
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/bcast.h"
-#include <string.h>
 
 namespace aicpu {
 class TensorScatterUpdateCpuKernel : public CpuKernel {
  public:
   TensorScatterUpdateCpuKernel() = default;
-  ~TensorScatterUpdateCpuKernel() override = default;
+
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   template <typename var_type>
-  uint32_t DTYPE_CHOOSE(CpuKernelContext &ctx);
+  uint32_t DTypeChoose(const CpuKernelContext &ctx);
 
   template <typename var_type, typename indices_type>
-  uint32_t TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx);
+  uint32_t TensorScatterUpdateComputeRealKernel(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

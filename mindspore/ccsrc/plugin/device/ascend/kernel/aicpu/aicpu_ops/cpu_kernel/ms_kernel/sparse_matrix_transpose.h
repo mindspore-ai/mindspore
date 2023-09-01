@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSEMATRIXTRANSPOSE_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSEMATRIXTRANSPOSE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/sparse_tensor.h"
 #include "Eigen/SparseCore"
 
@@ -27,11 +27,11 @@ class SparseMatrixTransposeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SparseMatrixTransposeParamCheck(CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeParamCheck(const CpuKernelContext &ctx);
   template <typename indiceT, typename valueT>
-  uint32_t SparseMatrixTransposeCompute(CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeCompute(const CpuKernelContext &ctx);
   template <typename indiceT, typename valueT>
-  uint32_t SparseMatrixTransposeComputecomplex(CpuKernelContext &ctx);
+  uint32_t SparseMatrixTransposeComputecomplex(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

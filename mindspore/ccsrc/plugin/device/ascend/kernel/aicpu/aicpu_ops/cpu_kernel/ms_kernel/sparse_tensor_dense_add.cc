@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_tensor_dense_add.h"
+
+#include "cpu_kernel/ms_kernel/sparse_tensor_dense_add.h"
 #include <float.h>
 #include <securec.h>
+#include <vector>
 #include <complex>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "iostream"
-#include "kernel_log.h"
-#include "status.h"
+#include <algorithm>
+#include <iostream>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+
 namespace {
 const char *kSparseTensorDenseAdd = "SparseTensorDenseAdd";
 const uint32_t kOutputNum = 1;
@@ -73,7 +77,7 @@ uint32_t SparseTensorDenseAddCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SparseTensorDenseAddCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseAddCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *a_indices = ctx.Input(0);
   Tensor *a_values = ctx.Input(1);
   Tensor *b = ctx.Input(3);
@@ -132,7 +136,7 @@ uint32_t SparseTensorDenseAddCpuKernel::DoCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(CpuKernelContext &ctx) {
+uint32_t SparseTensorDenseAddCpuKernel::ValidateInputs(const CpuKernelContext &ctx) {
   Tensor *a_indices_t = ctx.Input(0);
   Tensor *a_values_t = ctx.Input(1);
   Tensor *a_shape_t = ctx.Input(2);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {
@@ -24,7 +24,9 @@ struct DataBank {
         a_shape_t(nullptr),
         b_indices_t(nullptr),
         b_values_t(nullptr),
-        b_shape_t(nullptr) {}
+        b_shape_t(nullptr),
+        output_indices_t(nullptr),
+        output_values_t(nullptr) {}
   Tensor *a_indices_t;
   Tensor *a_values_t;
   Tensor *a_shape_t;
@@ -52,8 +54,8 @@ class SparseMaximumCpuKernel : public CpuKernel {
                                           std::vector<std::pair<bool, int64_t>> *entries_to_copy);
 
   template <typename T>
-  uint32_t EigenedSparseMax(DataBank &databank);
+  uint32_t EigenedSparseMax(const DataBank &databank);
 
-  static uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
+  static uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
 };
 }  // namespace aicpu

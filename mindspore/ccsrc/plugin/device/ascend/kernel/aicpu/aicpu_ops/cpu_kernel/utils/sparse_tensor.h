@@ -116,7 +116,7 @@ class SparseTensor {
    * sparse indices valid
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t IndicesValid(CpuKernelContext &ctx) const;
+  uint32_t IndicesValid(const CpuKernelContext &ctx) const;
 
   template <typename T>
   void Reorder(const std::vector<int64_t> &order) {

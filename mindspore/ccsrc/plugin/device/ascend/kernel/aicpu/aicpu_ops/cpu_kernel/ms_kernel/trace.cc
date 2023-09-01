@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "trace.h"
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/trace.h"
+#include <algorithm>
 #include "cstring"
 #include "securec.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -81,7 +82,7 @@ uint32_t TraceCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t TraceCpuKernel::TraceCompute(Tensor *input, Tensor *output, CpuKernelContext &ctx) {
+uint32_t TraceCpuKernel::TraceCompute(Tensor *input, Tensor *output, const CpuKernelContext &ctx) {
   auto inputDataAddr = reinterpret_cast<T *>(input->GetData());
   auto outputDataAddr = reinterpret_cast<T *>(output->GetData());
   auto input_shape = ctx.Input(0)->GetTensorShape();

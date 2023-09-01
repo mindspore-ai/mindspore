@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tanh.h"
-
+#include "cpu_kernel/ms_kernel/tanh.h"
+#include "cmath"
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <complex>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cmath"
-#include <complex>
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -55,7 +55,7 @@ uint32_t TanhCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t TanhCpuKernel::TanhCompute(CpuKernelContext &ctx) {
+uint32_t TanhCpuKernel::TanhCompute(const CpuKernelContext &ctx) {
   Eigen::internal::scalar_tanh_op<T> tanh_op;
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());

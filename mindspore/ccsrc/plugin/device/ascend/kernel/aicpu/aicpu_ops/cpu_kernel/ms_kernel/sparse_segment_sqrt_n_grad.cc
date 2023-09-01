@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_segment_sqrt_n_grad.h"
-
+#include "cpu_kernel/ms_kernel/sparse_segment_sqrt_n_grad.h"
+#include <vector>
 #include "Eigen/Core"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -51,7 +51,6 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
   auto shape0 = inputx->GetTensorShape();
   auto shape1 = input_indices->GetTensorShape();
   auto shape2 = input_segment_ids->GetTensorShape();
-  auto scalarshape = input_output_dim->GetTensorShape();
   if (shape0->GetDims() < 1) {
     KERNEL_LOG_ERROR("[%s] Tensor input0's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
@@ -61,17 +60,17 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type0 == DT_FLOAT) {
-    return ComputeKernal<float>(ctx);
+    return ComputeKernel<float>(ctx);
   } else if (data_type0 == DT_DOUBLE) {
-    return ComputeKernal<double>(ctx);
+    return ComputeKernel<double>(ctx);
   } else {
-    return ComputeKernal<Eigen::half>(ctx);
+    return ComputeKernel<Eigen::half>(ctx);
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
+uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
   int l = ctx.Output(0)->GetTensorShape()->GetDimSize(0);
@@ -115,8 +114,8 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
       continue;
     }
     for (size_t j = 1; j <= countnum; j++) {
-      for (size_t l = 0; l < n; l++) {
-        y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(sqrt(countnum));
+      for (size_t a = 0; a < n; a++) {
+        y_addr[indices_addr[i - j] * n + a] += x_addr[beginindex * n + a] / (T)(sqrt(countnum));
       }
     }
     beginindex = segment_ids_addr[i];
@@ -125,12 +124,12 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernal(CpuKernelContext &ctx) {
 
   int i = m;
   for (size_t j = 1; j <= countnum; j++) {
-    for (size_t l = 0; l < n; l++) {
-      y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(sqrt(countnum));
+    for (size_t a = 0; a < n; a++) {
+      y_addr[indices_addr[i - j] * n + a] += x_addr[beginindex * n + a] / (T)(sqrt(countnum));
     }
   }
   return KERNEL_STATUS_OK;
-};
+}
 
 REGISTER_CPU_KERNEL(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradCpuKernel);
 }  // namespace aicpu
