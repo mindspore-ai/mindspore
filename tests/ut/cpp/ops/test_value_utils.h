@@ -76,6 +76,15 @@ static inline bool CmpTupleShape(const std::vector<ShapeVector> &shapes, const a
   auto expect = std::make_shared<abstract::TupleShape>(vec);
   return ((*expect) == (*out));
 }
+
+static inline ValuePtr CreatePyIntList(const std::vector<int32_t> &values) {
+  std::vector<ValuePtr> value_vec;
+  value_vec.reserve(values.size());
+  for (const auto &v : values) {
+    value_vec.push_back(CreatePyInt(v));
+  }
+  return std::make_shared<ValueList>(value_vec);
+}
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_NUMBER_CONTAINER_H_

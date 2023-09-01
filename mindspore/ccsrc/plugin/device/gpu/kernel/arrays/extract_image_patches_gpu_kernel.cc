@@ -56,11 +56,7 @@ bool ExtractImagePatchesKernelMod::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs) {
   ResetResource();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractImagePatches>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractImagePatches ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -96,11 +92,11 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_row_size_ = t_input_shape[kIndex1];
 
   // get attr
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractImagePatches>(base_operator);
-  auto ksizes = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
-  auto rates = kernel_ptr->get_rates();
-  auto padding = kernel_ptr->get_padding();
+  auto ksizes = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  auto strides = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  auto rates = inputs[kIndex3]->GetValueWithCheck<std::vector<int64_t>>();
+  mindspore::PadMode padding = static_cast<mindspore::PadMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+
   ksize_row_ = ksizes[kIndex2];
   ksize_col_ = ksizes[kIndex3];
   stride_row_ = strides[kIndex2];
@@ -118,10 +114,10 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
                       << ksizes.size() << ", the size of 'strides': " << strides.size()
                       << ", the size of 'rates': " << rates.size();
   }
-  if (padding == "VALID") {
+  if (padding == PadMode::VALID) {
     output_rows_ = std::ceil((input_row_size_ - patch_rows_eff_ + 1.f) / static_cast<float>(stride_row_));
     output_cols_ = std::ceil((input_col_size_ - patch_cols_eff_ + 1.f) / static_cast<float>(stride_col_));
-  } else if (padding == "SAME") {
+  } else if (padding == PadMode::SAME) {
     output_rows_ = std::ceil(input_row_size_ / static_cast<float>(stride_row_));
     output_cols_ = std::ceil(input_col_size_ / static_cast<float>(stride_col_));
   } else {

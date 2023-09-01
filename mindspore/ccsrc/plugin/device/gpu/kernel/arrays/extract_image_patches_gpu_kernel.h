@@ -23,7 +23,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "ops/extract_image_patches.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/extract_image_patches_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
