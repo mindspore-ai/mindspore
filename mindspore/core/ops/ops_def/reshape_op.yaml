@@ -1,0 +1,11 @@
+#operator reshape
+reshape:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+      type_cast: tensor
+  returns:
+    output:
+      dtype: tensor
