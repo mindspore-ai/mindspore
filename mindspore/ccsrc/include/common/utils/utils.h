@@ -330,6 +330,21 @@ constexpr auto kAttrTupleIndexTypes = "tuple_index_types";
 constexpr auto kAttrTupleIndexAxis = "tuple_index_axis";
 constexpr auto kAttrInitByNone = "init_by_none";
 constexpr auto kAttrExpandDimsCnt = "expand_dims_cnt";
+constexpr auto kAttrEmptyIndicesOut = "empty_indices_out";
+constexpr auto kAttrHasTrue = "has_true";
+constexpr auto kAttrHasSequence = "has_sequence";
+constexpr auto kAttrOriginIndexType = "origin_index_type";
+constexpr auto kIntIndex = "int_index";
+constexpr auto kTensorIndexSequenceIndex = "tensor_index_sequence_index";
+constexpr auto kNoneIndex = "none_index";
+constexpr auto kBoolSequenceIndex = "bool_sequence_index";
+constexpr auto kSliceIndex = "slice_index";
+constexpr auto kEllipsisIndex = "ellipsis_index";
+constexpr auto kSetitemByTupleWithTensor = "setitem_by_tuple_with_tensor";
+constexpr auto kSetitemByTuple = "setitem_by_tuple";
+constexpr auto kPreSetitemByTuple = "pre_setitem_by_tuple";
+constexpr auto kAttrTupleIndexInfoType = "tuple_index_info_type";
+constexpr auto kAttrSimpleSliceInfo = "simple_slice_info";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
