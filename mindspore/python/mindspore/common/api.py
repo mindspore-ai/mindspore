@@ -439,7 +439,10 @@ class _MindsporeFunctionExecutor:
             self._graph_executor.set_jit_config(jit_config_dict)
 
         if self.obj is None:
+            # Set an attribute to fn as an identifier.
+            setattr(self.fn, "__jit_function__", True)
             is_compile = self._graph_executor.compile(self.fn, compile_args, kwargs, phase, True)
+            delattr(self.fn, "__jit_function__")
         else:
             if isinstance(self.obj, ms.nn.Cell):
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
