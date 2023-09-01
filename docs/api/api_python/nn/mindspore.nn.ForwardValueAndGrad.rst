@@ -9,7 +9,7 @@ mindspore.nn.ForwardValueAndGrad
     通过梯度函数来创建反向图，用于计算梯度。
 
     参数：
-        - **network** (Cell) - 训练网络。
+        - **network** (Union[Cell, Function, MethodType]) - 训练网络。
         - **weights** (ParameterTuple) - 训练网络中需要计算梯度的参数。默认值： ``None`` 。
         - **get_all** (bool) - 如果为 ``True`` ，则计算网络输入对应的梯度。默认值： ``False`` 。
         - **get_by_list** (bool) - 如果为 ``True`` ，则计算参数变量对应的梯度。如果 `get_all` 和 `get_by_list` 都为 ``False`` ，则计算第一个输入对应的梯度。如果 `get_all` 和 `get_by_list` 都为True，则以（（输入的梯度）,（参数的梯度））的形式同时获取输入和参数变量的梯度。默认值： ``False`` 。
