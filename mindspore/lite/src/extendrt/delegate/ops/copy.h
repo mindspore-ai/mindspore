@@ -42,6 +42,7 @@ class MIND_API Copy : public BaseOperator {
   /// \brief Constructor.
   Copy() : BaseOperator(kNameCopy) {}
   void set_copy_format(CopyFormatType format);
+  int get_copy_format() const;
 };
 }  // namespace ops
 }  // namespace mindspore

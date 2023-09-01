@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "extendrt/kernel/ascend_native/ascend_native_gather_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_gather_kernel.h"
 #include <vector>
 #include <memory>
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/gather.h"
 #include "ops/gather.h"
 
@@ -26,7 +26,7 @@ using mindspore::ops::kNameGather;
 
 int AscendNativeGatherKernel::Prepare() { return kSuccess; }
 
-int AscendNativeGatherKernel::Execute() {
+int AscendNativeGatherKernel::Run() {
   MS_LOG(INFO) << "AscendNativeGatherKernel::Execute";
   const std::vector<InferTensor *> &in_tensors = this->in_tensors();
   if (in_tensors.size() != THREE_TENSOR) {

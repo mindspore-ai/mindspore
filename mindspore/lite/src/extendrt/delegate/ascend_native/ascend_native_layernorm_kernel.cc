@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "extendrt/kernel/ascend_native/ascend_native_layernorm_kernel.h"
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_layernorm_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/layernorm.h"
 #include "ops/fusion/layer_norm_fusion.h"
 namespace mindspore::kernel {
 using mindspore::ops::kNameLayerNormFusion;
 
-int AscendNativeLayernormKernel::Prepare() {
+int AscendNativeLayernormKernel::InferShape() {
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     if (out_tensors_[i]->shape().size() == 0) {
       if (in_tensors_[i] != nullptr) {
@@ -32,7 +32,16 @@ int AscendNativeLayernormKernel::Prepare() {
   return kSuccess;
 }
 
-int AscendNativeLayernormKernel::Execute() {
+int AscendNativeLayernormKernel::Prepare() {
+  auto ret = InferShape();
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
+int AscendNativeLayernormKernel::Run() {
   MS_LOG(INFO) << "AscendNativeLayernormKernel::Execute";
   const std::vector<InferTensor *> &in_tensors = this->in_tensors();
   if (in_tensors.size() != THREE_TENSOR) {

@@ -15,11 +15,9 @@
  */
 
 #include "extendrt/kernel/ascend_native/ascend_native_composite_kernel.h"
-#include <memory>
 #include <algorithm>
-#include <vector>
-#include <unordered_map>
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include <string>
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/utils/func_graph_utils.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_composite.h"
 #include "ops/primitive_c.h"
@@ -51,7 +49,7 @@ static inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   return base_operator;
 }
 
-std::shared_ptr<BaseKernel> AscendNativeCompositeKernel::CreateKernel(const AnfNodePtr &node) {
+std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKernel(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     MS_LOG(ERROR) << "AscendNativeCompositeKernel::CreateKernel not a cnode";
     return nullptr;
@@ -92,8 +90,21 @@ std::shared_ptr<BaseKernel> AscendNativeCompositeKernel::CreateKernel(const AnfN
     if (!ker->IsWeightInputHanledInner()) {
       auto in_tensors = ker->in_tensors();
       for (auto &t : in_tensors) {
+        MS_EXCEPTION_IF_NULL(t);
+        if (t->IsConst() && (t->data() == nullptr)) {
+          MS_LOG(ERROR) << "no data to tensor " << t->tensor_name();
+          return nullptr;
+        }
         if (t->IsConst() && t->device_data() == nullptr) {
-          t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream_)));
+          bool t_is_float = (t->data_type() == kNumberTypeFloat || t->data_type() == kNumberTypeFloat32);
+          if (t_is_float) {
+            void *device_ptr = nullptr;
+            ascend_native::CopyHostFp32ToDeviceFp16(t->data(), &device_ptr, t->ElementsNum(),
+                                                    const_cast<void *>(stream_));
+            t->set_device_data(device_ptr);
+          } else {
+            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream_)));
+          }
         }
       }
     }
@@ -106,6 +117,12 @@ std::shared_ptr<BaseKernel> AscendNativeCompositeKernel::CreateKernel(const AnfN
     MS_LOG(WARNING) << "Unsupported op type for ascend native. kernel name:" << kernel_name << " type:" << node_type;
     return nullptr;
   }
+}
+
+int AscendNativeCompositeKernel::GetIdxFromString(std::string str) {
+  auto idx_str = str.rfind("_");
+  std::string sub = str.substr(idx_str + 1);
+  return std::stoi(sub);
 }
 
 static inline kernel::InferTensor *anfTensorToTensorInfo(const common::KernelWithIndex &tensor_id) {
@@ -141,35 +158,53 @@ void AscendNativeCompositeKernel::CreateInputKernelTensors(const CNodePtr &cnode
   input_tensors->clear();
   auto graph_inputs = func_graph_->get_inputs();
   auto input_nodes = FuncGraphUtils::GetNodeInputs(cnode);
+  auto cnode_inputs = this->primitive_.cnode->inputs();
   for (auto &tensor_id : input_nodes) {
     bool found_tensor = false;
     for (size_t j = 0; j < graph_inputs.size(); j++) {
       if (tensor_id.first == graph_inputs[j]) {
-        input_tensors->push_back(in_tensors_[j]);
-        allocated_tensors_.insert(in_tensors_[j]);
+        int idx = GetIdxFromString(tensor_id.first->fullname_with_scope());
+        input_tensors->push_back(in_tensors_[idx]);
+        allocated_tensors_.insert(in_tensors_[idx]);
         auto it = std::find_if(kernel_list_.begin(), kernel_list_.end(),
                                [&tensor_id](const KernelWithIndexAndTensor &k) { return k.kernel_index == tensor_id; });
         if (it == kernel_list_.end()) {
-          kernel_list_.push_back(KernelWithIndexAndTensor(tensor_id, in_tensors_[j]));
+          kernel_list_.push_back(KernelWithIndexAndTensor(tensor_id, in_tensors_[idx]));
         }
         found_tensor = true;
         break;
       }
     }
     if (!found_tensor) {
-      auto it = std::find_if(kernel_list_.begin(), kernel_list_.end(),
-                             [&tensor_id](const KernelWithIndexAndTensor &k) { return k.kernel_index == tensor_id; });
-      // tensor already created - use the same tensor
-      if (it != kernel_list_.end()) {
-        input_tensors->push_back(it->tensor_info);
-      } else {
-        auto tensor_info = anfTensorToTensorInfo(tensor_id);
-        if (tensor_info == nullptr) {
-          MS_LOG(ERROR) << "failed to get tensor info";
-          return;
+      for (size_t j = 1; j < cnode_inputs.size(); j++) {
+        if (tensor_id.first == cnode_inputs[j]) {
+          input_tensors->push_back(in_tensors_[j - 1]);
+          allocated_tensors_.insert(in_tensors_[j - 1]);
+          auto it =
+            std::find_if(kernel_list_.begin(), kernel_list_.end(),
+                         [&tensor_id](const KernelWithIndexAndTensor &k) { return k.kernel_index == tensor_id; });
+          if (it == kernel_list_.end()) {
+            kernel_list_.push_back(KernelWithIndexAndTensor(tensor_id, in_tensors_[j - 1]));
+          }
+          found_tensor = true;
+          break;
         }
-        input_tensors->push_back(tensor_info);
-        kernel_list_.push_back(KernelWithIndexAndTensor(tensor_id, tensor_info));
+      }
+      if (!found_tensor) {
+        auto it = std::find_if(kernel_list_.begin(), kernel_list_.end(),
+                               [&tensor_id](const KernelWithIndexAndTensor &k) { return k.kernel_index == tensor_id; });
+        // tensor already created - use the same tensor
+        if (it != kernel_list_.end()) {
+          input_tensors->push_back(it->tensor_info);
+        } else {
+          auto tensor_info = anfTensorToTensorInfo(tensor_id);
+          if (tensor_info == nullptr) {
+            MS_LOG(ERROR) << "failed to get tensor info";
+            return;
+          }
+          input_tensors->push_back(tensor_info);
+          kernel_list_.push_back(KernelWithIndexAndTensor(tensor_id, tensor_info));
+        }
       }
     }
   }
@@ -196,16 +231,28 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
             auto get_item = outc->input(i)->cast<CNodePtr>();
             auto tuple_idx = common::AnfAlgo::GetTupleGetItemOutIndex(get_item);
             if ((get_item->input(SECOND_INPUT) == cnode) && (tuple_idx == output_idx)) {
+              out_tensors_[i - 1]->set_device_data(
+                ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(stream_)));
+              out_tensors_[i - 1]->ResetRefCount();
+              allocated_tensors_.insert(out_tensors_[i - 1]);
               output_tensors->push_back(out_tensors_[i - 1]);
               output_found = true;
             }
           } else if (outc->input(i) == cnode) {
+            out_tensors_[i - 1]->set_device_data(
+              ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(stream_)));
+            out_tensors_[i - 1]->ResetRefCount();
+            allocated_tensors_.insert(out_tensors_[i - 1]);
             output_tensors->push_back(out_tensors_[i - 1]);
             output_found = true;
           }
         }
       } else {
         if (graph_output == cnode) {
+          out_tensors_[0]->set_device_data(
+            ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(stream_)));
+          out_tensors_[0]->ResetRefCount();
+          allocated_tensors_.insert(out_tensors_[0]);
           output_tensors->push_back(out_tensors_[0]);
           output_found = true;
         }
@@ -222,15 +269,15 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
 Status AscendNativeCompositeKernel::AllocTensors() {
   OptAllocator allocator;
   std::unordered_map<kernel::InferTensor *, int> ref_count;
-  std::unordered_map<kernel::InferTensor *, size_t> offset_map;
+  offset_map_.clear();
   for (auto &kernel : kernels_) {
     // malloc output tensors
     for (auto &tensor : kernel->out_tensors()) {
       if ((allocated_tensors_.find(tensor) == allocated_tensors_.end())) {
-        if (offset_map.find(tensor) == offset_map.end()) {
+        if (offset_map_.find(tensor) == offset_map_.end()) {
           size_t tensor_size = tensor->Size();
           size_t offset = allocator.Malloc(tensor_size);
-          offset_map[tensor] = offset;
+          offset_map_[tensor] = offset;
           ref_count[tensor] = tensor->init_ref_count();
         }
       }
@@ -242,35 +289,43 @@ Status AscendNativeCompositeKernel::AllocTensors() {
         int count = ref_count[tensor] - 1;
         ref_count[tensor] = count;
         if (count == 0) {
-          allocator.Free(offset_map[tensor]);
+          allocator.Free(offset_map_[tensor]);
         }
       }
     }
   }
   // Set Tensor data
   device_mem_size_ = allocator.total_size();
+  return ReAllocTensors();
+}
+
+Status AscendNativeCompositeKernel::ReAllocTensors() {
+  if (device_memory_base_addr_ != nullptr) {
+    return kSuccess;
+  }
   if (device_mem_size_ > 0) {
     device_memory_base_addr_ = ascend_native::MallocDevice(device_mem_size_, const_cast<void *>(stream_));
     if (device_memory_base_addr_ == nullptr) {
       MS_LOG(EXCEPTION) << "Allocation of " << device_mem_size_ << "B on device failed";
       return kMDOutOfMemory;
     }
-    for (auto &kernel : kernels_) {
-      for (auto &tensor : kernel->out_tensors()) {
-        if (allocated_tensors_.find(tensor) == allocated_tensors_.end()) {
-          auto it = offset_map.find(tensor);
-          if (it != offset_map.end()) {
-            tensor->set_device_data(
-              reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(device_memory_base_addr_) + it->second));
-          }
-        }
-      }
+    for (auto &it : offset_map_) {
+      auto &tensor = it.first;
+      tensor->set_device_data(
+        reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(device_memory_base_addr_) + it.second));
     }
   }
   return kSuccess;
 }
 
-void AscendNativeCompositeKernel::FreeDevice(void *ptr) { ascend_native::FreeDevice(ptr, const_cast<void *>(stream_)); }
+void AscendNativeCompositeKernel::FreeDevice() {
+  ascend_native::FreeDevice(device_memory_base_addr_, const_cast<void *>(stream_));
+  device_memory_base_addr_ = nullptr;
+  for (auto &it : offset_map_) {
+    auto &tensor = it.first;
+    tensor->set_device_data(nullptr);
+  }
+}
 
 void AscendNativeCompositeKernel::InitializeTensorRefrenceCnt() {
   for (auto &kernel : kernels_) {
@@ -287,10 +342,32 @@ Status AscendNativeCompositeKernel::AllocateGraphTensors() {
   if (device_memory_base_addr_ == nullptr) {
     InitializeTensorRefrenceCnt();
   } else {
-    FreeDevice(device_memory_base_addr_);
-    device_memory_base_addr_ = nullptr;
+    FreeDevice();
   }
   return AllocTensors();
+}
+
+Status AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
+  if (get_workspace() != nullptr) return kSuccess;
+  void *ws_ptr = nullptr;
+  if (ws_size > 0) {
+    if (ws_size > max_ws_size_) {
+      MS_LOG(ERROR) << "kernel ws is too big " << ws_size;
+      return kLiteError;
+    }
+    // alloc ws on device space
+    ws_ptr = ascend_native::MallocDevice(ws_size, const_cast<void *>(stream_));
+    if (ws_ptr == nullptr) {
+      MS_LOG(EXCEPTION) << "Allocation of " << ws_size << "B on device failed";
+      return kMDOutOfMemory;
+    }
+    set_workspace(ws_ptr);
+    set_workspace_size(ws_size);
+    for (auto &kernel : kernels_) {
+      kernel->set_workspace(ws_ptr);
+    }
+  }
+  return kSuccess;
 }
 
 int AscendNativeCompositeKernel::Prepare() {
@@ -311,12 +388,19 @@ int AscendNativeCompositeKernel::Prepare() {
     return kLiteError;
   }
   // call kernel prepare
+  size_t ws_size = 0;
   for (auto &kernel : kernels_) {
     auto ret = kernel->Prepare();
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "composite kernel prepare failed with " << ret;
       return kLiteError;
     }
+    size_t k_ws_size = kernel->get_workspace_size();
+    if (k_ws_size > ws_size) ws_size = k_ws_size;
+  }
+  if (AllocateGraphWorkspace(ws_size) != kSuccess) {
+    MS_LOG(ERROR) << "kernel workspace allocation failed ";
+    return kLiteError;
   }
   if (AllocateGraphTensors() != kSuccess) {
     MS_LOG(ERROR) << "kernel graph allocation failed ";
@@ -325,13 +409,23 @@ int AscendNativeCompositeKernel::Prepare() {
   return kSuccess;
 }
 
-int AscendNativeCompositeKernel::Execute() {
+int AscendNativeCompositeKernel::Run() {
   MS_LOG(INFO) << "AscendNativeCompositeKernel::Execute";
-  // call kernel execute interface one by one
+  // call kernel run interface one by one
   for (auto &kernel : kernels_) {
-    auto exec_ret = kernel->Execute();
-    if (exec_ret != kSuccess) {
-      MS_LOG(ERROR) << "kernel execute failed with " << exec_ret;
+    auto ret = kernel->PreProcess();
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "kernel preprocess failed with " << ret << " for " << kernel->get_name();
+      return kLiteError;
+    }
+    ret = kernel->Run();
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "kernel run failed with " << ret << " for " << kernel->get_name();
+      return kLiteError;
+    }
+    ret = kernel->PostProcess();
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "kernel postprocess failed with " << ret << " for " << kernel->get_name();
       return kLiteError;
     }
   }
@@ -339,5 +433,44 @@ int AscendNativeCompositeKernel::Execute() {
   ascend_native::SyncDevice(const_cast<void *>(stream_));
   return kSuccess;
 }
+
+int AscendNativeCompositeKernel::PostProcess() {
+  // Free device data
+  FreeDevice();
+  ascend_native::FreeDevice(get_workspace(), const_cast<void *>(stream_));
+  set_workspace(nullptr);
+  // Decrement inputs ref count
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    auto ref = in_tensors_[i]->ref_count();
+    in_tensors_[i]->set_ref_count(--ref);
+    if ((ref <= 0) && (in_tensors_[i]->category() == lite::VAR)) {
+      ascend_native::FreeDevice(in_tensors_[i]->device_data(), const_cast<void *>(stream_));
+      in_tensors_[i]->set_device_data(nullptr);
+    }
+  }
+  return kSuccess;
+}
+
+int AscendNativeCompositeKernel::PreProcess() {
+  for (auto &tensor : out_tensors()) {
+    if (tensor->device_data() == nullptr) {
+      auto data_ptr = ascend_native::MallocDevice(tensor->Size(), const_cast<void *>(stream_));
+      if (data_ptr == nullptr) {
+        MS_LOG(ERROR) << "Cannot allocate device memory size:" << tensor->Size();
+        return lite::RET_NULL_PTR;
+      }
+      tensor->set_device_data(data_ptr);
+    }
+    tensor->ResetRefCount();
+  }
+  auto ws_size = get_workspace_size();
+  ReAllocTensors();
+  if (AllocateGraphWorkspace(ws_size) != kSuccess) {
+    MS_LOG(ERROR) << "kernel workspace allocation failed ";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameAscendNativeComposite, AscendNativeCompositeKernel)
 }  // namespace mindspore::kernel

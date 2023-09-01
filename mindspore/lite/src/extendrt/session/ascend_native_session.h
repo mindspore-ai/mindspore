@@ -26,6 +26,7 @@
 #include "extendrt/delegate/type.h"
 #include "extendrt/delegate/ascend_native/delegate.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
+#include "extendrt/delegate/factory.h"
 #include "infer/kernel.h"
 #include "infer/tensor.h"
 #include "infer/context.h"
@@ -47,7 +48,6 @@ class AscendNativeSession : public InferSession {
                   std::vector<tensor::Tensor> *outputs) override;
   Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
-
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
   std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) override;
   std::vector<std::string> GetOutputNames(uint32_t graph_id) override;
@@ -71,6 +71,7 @@ class AscendNativeSession : public InferSession {
   void InitializeTensorRefrenceCnt();
   Status AllocTensors();
   Status AllocateGraphTensors();
+  std::shared_ptr<AscendDeviceInfo> GetDeviceInfo(const std::shared_ptr<Context> &context);
 
   std::shared_ptr<mindspore::AscendNativeDelegate> delegate_;
   std::vector<std::shared_ptr<kernel::BaseKernel>> kernels_;

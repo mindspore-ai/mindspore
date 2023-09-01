@@ -27,6 +27,8 @@
 #include "src/extendrt/kernel/nnacl/nnacl_base_kernel.h"
 #include "src/extendrt/kernel/extendrt_kernel_exec.h"
 #include "nnacl/format_transpose_parameter.h"
+#include "extendrt/delegate/ascend_native/delegate.h"
+#include "extendrt/delegate/factory.h"
 
 namespace mindspore {
 namespace lite {
@@ -75,11 +77,42 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   return kernel;
 }
 
+void SingleGraphScheduler::CreateDelegateKernel(const std::shared_ptr<CompileNode> &node,
+                                                mindspore::ExtendDelegate *delegate,
+                                                std::vector<InferKernel *> *kernels) {
+  auto delegate_kernel = delegate->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->graph_format,
+                                                 compile_option_->backend, node->GetBaseOperator(), node->GetCNode()},
+                                                node->GetInputs(), node->GetOutputs(), context_.get());
+  if (delegate_kernel != nullptr) {
+    auto kernel_exec = new kernel::ExtendRTKernelExec(delegate_kernel);
+    kernel_exec->set_name(node->GetName());
+    auto desc = kernel_exec->desc();
+    desc.format = Format::NCHW;  // now all delegate should be nchw, but this will cause bad performance.
+    kernel_exec->set_desc(desc);
+    kernel_exec->set_context(this->context_.get());  // not safety
+    kernels->push_back(kernel_exec);
+  }
+}
+
 int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
   kernel_selector_ = kernel::CreateKernelSelector(compile_option_);
+  const ConfigInfos config_infos;
+  auto &device_contexts = ctx_->MutableDeviceInfo();
+  if (device_contexts.empty()) {
+    MS_LOG(ERROR) << "no context found";
+    return RET_ERROR;
+  }
+  auto device_type = device_contexts.at(0)->GetDeviceType();
+  auto provider = device_contexts.at(0)->GetProvider();
+  auto delegate =
+    DelegateRegistry<ExtendDelegate *>::GetInstance().GetDelegate(device_type, provider, ctx_, config_infos);
   std::vector<InferKernel *> kernels;
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, RET_NULL_PTR);
+    if ((delegate != nullptr) && (delegate->IsDelegateNode(node->GetCNode()))) {
+      CreateDelegateKernel(node, delegate, &kernels);
+      continue;
+    }
     auto kernel_exec =
       kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->graph_format,
                                       compile_option_->backend, node->GetBaseOperator(), node->GetCNode()},

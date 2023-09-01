@@ -15,7 +15,7 @@
  */
 
 #include "extendrt/delegate/ascend_native/stub_kernel.h"
-#include "extendrt/kernel/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_stub.h"
 
 namespace mindspore::kernel {

@@ -21,12 +21,17 @@
 #include <string>
 #include "extendrt/delegate/type.h"
 #include "src/extendrt/utils/func_graph_utils.h"
-#include "extendrt/kernel/ascend_native/ascend_native_base_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 #include "extendrt/delegate/ascend_native/sub_graph_helper.h"
+#include "extendrt/delegate/ascend_native/delegate_allocator.h"
 
 namespace mindspore {
 class AscendNativeDelegate : public ExtendDelegate {
  public:
+  static AscendNativeDelegate &Instance() {
+    static AscendNativeDelegate instance;
+    return instance;
+  }
   AscendNativeDelegate() = default;
   virtual ~AscendNativeDelegate() = default;
 
@@ -35,28 +40,29 @@ class AscendNativeDelegate : public ExtendDelegate {
   bool IsDelegateNode(const std::shared_ptr<AnfNode> &node) override;
 
   std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override;
+  std::shared_ptr<kernel::BaseKernel> CreateKernel(const kernel::KernelSpec &spec,
+                                                   const std::vector<InferTensor *> &inputs,
+                                                   const std::vector<InferTensor *> &outputs,
+                                                   const InferContext *ctx) const override;
 
-  void set_ascend_native_stream(const void *ascend_native_stream) {
-    this->ascend_native_stream_ = ascend_native_stream;
-  }
   void set_ascend_native_ctx(std::shared_ptr<kernel::InferContext> ascend_native_ctx) {
     this->ascend_native_ctx_ = ascend_native_ctx;
   }
 
  private:
-  void CreateInputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *input_tensors);
-  void CreateOutputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *output_tensors);
+  void CreateInputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *input_tensors,
+                                std::shared_ptr<DelegateAllocator> allocator);
+  void CreateOutputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *output_tensors,
+                                 std::shared_ptr<DelegateAllocator> allocator);
   bool IsSupport(const CNodePtr &cnode);
   void ReplaceSubGraph(const std::shared_ptr<FuncGraph> &graph, int idx);
   std::vector<KernelWithIndexAndTensor> kernel_list_;
-  const void *ascend_native_stream_ = nullptr;
   std::shared_ptr<kernel::InferContext> ascend_native_ctx_ = nullptr;
   void DrawGraph(const std::string &file_name, const std::shared_ptr<FuncGraph> &graph);
   std::shared_ptr<SubGraphHelper> helper_;
-
- private:
-  decltype(ascend_native::MallocCopy) *MallocCopy_{nullptr};
+  mutable void *stream_{nullptr};  // testing
 };
+
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_DELEGATE_H_

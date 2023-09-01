@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_STUB_KERNEL_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_STUB_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_LAYERNORM_KERNEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_LAYERNORM_KERNEL_H_
 
 #include <string>
 #include <vector>
@@ -23,18 +23,17 @@
 #include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 
 namespace mindspore::kernel {
-class AscendNativeStubKernel : public AscendNativeBaseKernel {
+class AscendNativeLayernormKernel : public AscendNativeBaseKernel {
  public:
-  //  AscendNativeStubKernel() = delete;
-
-  AscendNativeStubKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
+  AscendNativeLayernormKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
+                              InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
+
+  int InferShape() override;
 
   int Prepare() override;
 
-  int Execute() override;
-  int Run() override { return 0; }
+  int Run() override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_STUB_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_LAYERNORM_KERNEL_H_

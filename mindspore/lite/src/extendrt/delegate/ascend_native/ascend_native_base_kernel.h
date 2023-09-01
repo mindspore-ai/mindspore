@@ -37,7 +37,7 @@ struct KernelWithIndexAndTensor {
       : kernel_index(kernel_index), tensor_info(tensor_info) {}
 
   common::KernelWithIndex kernel_index;
-  kernel::InferTensor *tensor_info;
+  kernel::InferTensor *tensor_info{nullptr};
 };
 namespace kernel {
 class AscendNativeBaseKernel : public BaseKernel {
@@ -52,31 +52,40 @@ class AscendNativeBaseKernel : public BaseKernel {
 
   AscendNativeBaseKernel &operator=(AscendNativeBaseKernel &&src) = delete;
 
-  AscendNativeBaseKernel(InferPrimitive prim, std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                         std::string name)
+  AscendNativeBaseKernel(InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : BaseKernel(prim, ctx), stream_(stream), name_(name) {}
 
   AscendNativeBaseKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                         InferPrimitive prim, std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                         std::string name)
-      : BaseKernel(prim, ctx), stream_(stream), name_(name) {
-    BaseKernel::set_in_tensors(inputs);
-    BaseKernel::set_out_tensors(outputs);
+                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
+      : BaseKernel(prim, inputs, outputs, ctx), stream_(stream), name_(name) {}
+
+  template <class OpsT>
+  std::shared_ptr<OpsT> AsOps() {
+    return std::make_shared<OpsT>(primitive_.base_operator->GetPrim());
   }
 
   void set_stream(const void *stream) { stream_ = stream; }
   const void *get_stream() { return stream_; }
   const std::string get_name() const { return name_; }
   void set_name(std::string name) { name_ = name; }
-
+  bool InferShapeDone() const override { return true; }
+  int InferShape() override { return mindspore::lite::RET_OK; }
+  int PreProcess() override { return mindspore::lite::RET_OK; }
+  int PostProcess() override { return mindspore::lite::RET_OK; }
   virtual bool IsWeightInputHanledInner() const { return false; }
   virtual bool isFormatAndTypeSupport(int index, TypeId type, Format fmt) { return true; }
-  virtual int get_workspace_size() const { return 0; }
+  virtual size_t get_workspace_size() const { return 0; }
+
+  void *get_workspace() const { return ws_ptr_; }
+  void set_workspace(void *ws_ptr) { ws_ptr_ = ws_ptr; }
 
  protected:
   const void *stream_ = nullptr;
   std::string name_;
   FuncGraphPtr func_graph_;
+
+ private:
+  void *ws_ptr_ = nullptr;
 };
 }  // namespace kernel
 }  // namespace mindspore

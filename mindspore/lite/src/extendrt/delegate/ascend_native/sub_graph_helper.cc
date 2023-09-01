@@ -552,4 +552,44 @@ void SubGraphHelper::DrawGraph(const std::string &file_name, const FuncGraphPtr 
   out << "}\n";
   out.close();
 }
+
+void SubGraphHelper::DumpNode(std::ofstream &out, const AnfNodePtr &node) const {
+  out << node->fullname_with_scope() << " typeid=" << node->tid() << " ";
+  if (node->isa<CNode>()) {
+    const auto &cnode = node->cast<CNodePtr>();
+    const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    out << prim->name();
+  }
+  if (node->isa<ValueNode>()) {
+    out << "node is valueNode";
+  }
+
+  out << std::endl;
+}
+
+void SubGraphHelper::Dump(std::string file_name) const {
+  std::ofstream out(file_name);
+  int count = 0;
+  out << "graph have " << func_graph_->get_inputs().size() << " inputs" << std::endl;
+  for (const auto &in : func_graph_->get_inputs()) {
+    DumpNode(out, in);
+  }
+  auto nodes = TopoSort(func_graph_->get_return());
+  out << "graph have " << nodes.size() << " nodes" << std::endl;
+  for (const auto &node : nodes) {
+    out << "node #" << count << std::endl;
+    DumpNode(out, node);
+    if (node->isa<CNode>()) {
+      const auto &cnode = node->cast<CNodePtr>();
+      out << "node " << count << " have " << cnode->inputs().size() - 1 << " inputs" << std::endl;
+      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+        const auto &input = cnode->input(i);
+        DumpNode(out, input);
+      }
+    }
+    count++;
+  }
+  out.close();
+}
+
 }  // namespace mindspore

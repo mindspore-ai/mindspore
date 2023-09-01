@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "extendrt/utils/tensor_utils.h"
-#include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/delegate/ascend_native/delegate.h"
@@ -32,6 +31,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "src/train/opt_allocator.h"
+#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 Status AscendNativeSession::MoveDataFromHostToDevice(void *sd, bool s_fp16, void *dd, bool d_fp16, size_t elem_num) {
@@ -77,7 +77,12 @@ Status AscendNativeSession::MoveDataFromDeviceToHost(void *sd, bool s_fp16, void
 }
 
 void *AscendNativeSession::MallocDevice(size_t size) {
-  return ascend_native::MallocDevice(size, ascend_native_stream_);
+  MS_CHECK_GT(size, 0, nullptr);
+  auto device_data = ascend_native::MallocDevice(size, ascend_native_stream_);
+  if (device_data == nullptr) {
+    MS_LOG(ERROR) << "fail to allocate " << size << " bytes of device data";
+  }
+  return device_data;
 }
 
 void AscendNativeSession::FreeDevice(void *ptr) { ascend_native::FreeDevice(ptr, ascend_native_stream_); }
@@ -169,9 +174,35 @@ Status AscendNativeSession::AllocateGraphTensors() {
   return AllocTensors();
 }
 
+std::shared_ptr<AscendDeviceInfo> AscendNativeSession::GetDeviceInfo(const std::shared_ptr<Context> &context) {
+  auto device_list = context->MutableDeviceInfo();
+  auto ascend_info_iter = std::find_if(
+    device_list.begin(), device_list.end(), [&](std::shared_ptr<mindspore::DeviceInfoContext> &device_info) {
+      return (device_info && device_info->GetDeviceType() == kAscend && device_info->GetProvider() == "Ascend_native");
+    });
+  if (ascend_info_iter == device_list.end()) {
+    MS_LOG(ERROR) << "AscendDeviceInfo is not set. If using distributed inference, make sure device_id "
+                     "and rank_id are set in AscendDeviceInfo";
+    return nullptr;
+  }
+  auto device_info = *(ascend_info_iter);
+  return device_info->Cast<mindspore::AscendDeviceInfo>();
+}
+
 Status AscendNativeSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "AscendNativeSession::Init";
   context_ = ContextUtils::Convert(context.get());
+  auto ascend_info = GetDeviceInfo(context);
+  if (ascend_info != nullptr) {
+    std::string rank_table_file = "";
+    uint32_t device_id = ascend_info->GetDeviceID();
+    int rank_id = static_cast<int>(ascend_info->GetRankID());
+    std::string s_rank_id = std::to_string(rank_id);
+    bool ret = hccl::HcclAdapter::GetInstance().InitHccl(device_id, s_rank_id, rank_table_file, hccl::HcclMode::kGraph);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "HcclAdapter::initHccl failed";
+    }
+  }
   return kSuccess;
 }
 
@@ -260,8 +291,6 @@ Status AscendNativeSession::CompileGraph(FuncGraphPtr func_graph, const void *da
 
   delegate_->set_ascend_native_ctx(context_);
   ascend_native_stream_ = ascend_native::CreateStream();
-  delegate_->set_ascend_native_stream(ascend_native_stream_);
-
   // call delegate replace nodes make the delegate replace the graph nodes
   delegate_->ReplaceNodes(func_graph);
   auto nodes = TopoSort(func_graph->get_return());
@@ -382,16 +411,16 @@ Status AscendNativeSession::RunGraph(uint32_t graph_id, const std::vector<tensor
   MS_LOG(INFO) << "AscendNativeSession::RunGraph";
 
   // get inputs and outputs tensors, set the data ptr for inputs
-  auto ret = RefDataFromOuter(inputs);  // TODO(nizzan) Is needed?
+  auto ret = RefDataFromOuter(inputs);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Sync tensor data from use tensor failed: " << ret;
     return ret;
   }
-  // call kernel execute interface one by one
+  // call kernel run interface one by one
   for (auto &kernel : kernels_) {
-    auto exec_ret = kernel->Execute();
+    auto exec_ret = kernel->Run();
     if (exec_ret != kSuccess) {
-      MS_LOG(ERROR) << "kernel execute failed with " << exec_ret;
+      MS_LOG(ERROR) << "kernel Run failed with " << exec_ret;
       return kLiteError;
     }
   }

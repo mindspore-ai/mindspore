@@ -120,7 +120,14 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
           return kDelegateSession;
         }
         if (device_context->GetProvider() == "ascend_native") {
-          return kAscendNativeSession;
+          return kDefaultSession;
+        }
+        if (device_context->GetProvider() == mindrt_cpu_provider) {
+          if (!kernel::AscendKernelPlugin::Register()) {
+            MS_LOG(ERROR) << "Failed to register Ascend plugin";
+            return kNoneSession;
+          }
+          return kDefaultSession;
         }
         if (device_context->GetProvider() == mindrt_cpu_provider) {
           if (!kernel::AscendKernelPlugin::Register()) {

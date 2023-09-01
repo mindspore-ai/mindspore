@@ -27,13 +27,15 @@
 #include "src/infer/kernel.h"
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 #include "src/infer/context.h"
+#include "src/extendrt/delegate/type.h"
 
 namespace mindspore {
 namespace lite {
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(InferContextPtr context, std::shared_ptr<CompileOption> option)
-      : context_(std::move(context)), compile_option_(std::move(option)) {}
+  explicit SingleGraphScheduler(InferContextPtr context, const std::shared_ptr<Context> &ctx,
+                                std::shared_ptr<CompileOption> option)
+      : context_(std::move(context)), ctx_(ctx), compile_option_(std::move(option)) {}
   virtual ~SingleGraphScheduler() = default;
   InferKernel *Schedule(const CompileResultPtr &node_list);
 
@@ -44,9 +46,12 @@ class SingleGraphScheduler {
 
  private:
   InferContextPtr context_{nullptr};
+  std::shared_ptr<Context> ctx_{nullptr};
   std::shared_ptr<CompileOption> compile_option_{nullptr};
   infer::ExecutionFlowPtr execution_flow_{nullptr};
   std::shared_ptr<kernel::KernelSelector> kernel_selector_{nullptr};
+  void CreateDelegateKernel(const std::shared_ptr<CompileNode> &node, mindspore::ExtendDelegate *delegate,
+                            std::vector<InferKernel *> *kernels);
 
   std::map<std::string, OpParameter *> op_parameters_;
 };

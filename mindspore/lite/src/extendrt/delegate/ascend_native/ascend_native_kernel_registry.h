@@ -20,26 +20,24 @@
 #include <vector>
 #include <memory>
 #include "extendrt/delegate/type.h"
-#include "extendrt/kernel/ascend_native/ascend_native_registration_factory.h"
-#include "extendrt/kernel/ascend_native/ascend_native_base_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_registration_factory.h"
+#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 
 namespace mindspore::kernel {
 template <class T>
 AscendNativeBaseKernel *GetAscendNativeKernelOp(const std::vector<InferTensor *> &inputs,
                                                 const std::vector<InferTensor *> &outputs, InferPrimitive prim,
-                                                std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                                                std::string name) {
+                                                const InferContext *ctx, const void *stream, std::string name) {
   auto *op = new (std::nothrow) T(inputs, outputs, prim, ctx, stream, name);
   if (op == nullptr) {
-    MS_LOG(WARNING) << "TensorRT is nullptr.";
+    MS_LOG(WARNING) << "Ascend op is nullptr.";
     return nullptr;
   }
   return op;
 }
 typedef AscendNativeBaseKernel *(*AscendNativeKernelOp)(const std::vector<InferTensor *> &inputs,
                                                         const std::vector<InferTensor *> &outputs, InferPrimitive prim,
-                                                        std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                                                        std::string name);
+                                                        const InferContext *ctx, const void *stream, std::string name);
 
 #define REGISTER_ASCEND_NATIVE_CREATOR(KEY, ASCEND_NATIVE_KERNEL_OP) \
   REGISTER_CLASS_CREATOR(std::string, KEY, AscendNativeKernelOp, GetAscendNativeKernelOp<ASCEND_NATIVE_KERNEL_OP>);

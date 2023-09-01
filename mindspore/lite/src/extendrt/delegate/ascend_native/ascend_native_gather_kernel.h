@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_ADD_KERNEL_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_ADD_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_
 
 #include <string>
 #include <vector>
 #include <memory>
-#include "extendrt/kernel/ascend_native/ascend_native_base_kernel.h"
+#include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
+#include "extendrt/utils/func_graph_utils.h"
 
 namespace mindspore::kernel {
-class AscendNativeAddKernel : public AscendNativeBaseKernel {
+class AscendNativeGatherKernel : public AscendNativeBaseKernel {
  public:
-  AscendNativeAddKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                        InferPrimitive prim, std::shared_ptr<kernel::InferContext> *ctx, const void *stream,
-                        std::string name)
+  AscendNativeGatherKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
+                           InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
 
   int Prepare() override;
-
-  int Execute() override;
-
- private:
+  int Run() override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_ADD_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_

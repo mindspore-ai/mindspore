@@ -55,19 +55,17 @@ class NNACLFirstKernelSelector : public KernelSelector {
     }
 
     auto acl_lib = KernelLibRegister::Instance().GetKernelLib(kAclKernelLibName);
-    if (acl_lib == nullptr) {
-      MS_LOG(ERROR) << "Can not find acl kernellib.";
-      return nullptr;
-    }
-    if (acl_lib->Support(match_ks.op_type, match_ks.attr, match_ks.backend)) {
-      auto kernel = acl_lib->CreateKernelExec(match_ks, inputs, outputs, ctx);
-      if (kernel == nullptr) {
-        MS_LOG(ERROR) << "Create kernel from " << acl_lib->Name() << " failed, op_type: " << match_ks.op_type
-                      << ", kernel attr: " << match_ks.attr;
-        return nullptr;
+    if (acl_lib != nullptr) {
+      if (acl_lib->Support(match_ks.op_type, match_ks.attr, match_ks.backend)) {
+        auto kernel = acl_lib->CreateKernelExec(match_ks, inputs, outputs, ctx);
+        if (kernel == nullptr) {
+          MS_LOG(ERROR) << "Create kernel from " << acl_lib->Name() << " failed, op_type: " << match_ks.op_type
+                        << ", kernel attr: " << match_ks.attr;
+          return nullptr;
+        }
+        MS_LOG(INFO) << "Create KernelMod kernel for " << match_ks.cnode->fullname_with_scope();
+        return kernel;
       }
-      MS_LOG(INFO) << "Create KernelMod kernel for " << match_ks.cnode->fullname_with_scope();
-      return kernel;
     }
 
     auto kernelmod_lib = KernelLibRegister::Instance().GetKernelLib(kDefaultKernelLibName);
