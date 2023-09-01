@@ -7,7 +7,7 @@ mindspore.dataset.vision.Inter
 
     可选枚举值为： ``Inter.NEAREST`` 、 ``Inter.ANTIALIAS``、 ``Inter.LINEAR`` 、 ``Inter.BILINEAR`` 、 ``Inter.CUBIC``、 ``Inter.BICUBIC`` 、 ``Inter.AREA`` 、 ``Inter.PILCUBIC`` 。
 
-    - **Inter.Nest** - 最近邻插值。
+    - **Inter.NEAREST** - 最近邻插值。
     - **Inter.ANTIALIAS** - 抗锯齿插值。
     - **Inter.LINEAR** - 线性插值，实现同 ``Inter.BILINEAR`` 。
     - **Inter.BILINEAR** - 是双线性插值。

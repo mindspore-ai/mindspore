@@ -166,7 +166,7 @@ class BuiltinSampler:
 
     def get_num_samples(self):
         """
-        Get num_samples value of the current sampler instance.
+        Get `num_samples` value of the current sampler instance.
         This parameter can be optionally passed in when defining the Sampler. Default: ``None``.
         This method will return the num_samples value.
         If the current sampler has child samplers,

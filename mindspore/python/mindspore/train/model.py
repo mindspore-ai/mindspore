@@ -1606,12 +1606,18 @@ class Model:
                 config_path ('configPath', str) and config_item (str, dict). When config_item is set,
                 its priority is higher than config_path. Set rank table file for inference. The content
                 of the configuration file is as follows:
+
                 .. code-block::
+
                     [ascend_context]
                     rank_table_file=[path_a](storage initial path of the rank table file)
+
                 When set
+
                 .. code-block::
+
                     config_dict = {"ascend_context" : {"rank_table_file" : "path_b"}}
+
                 The path_b from the config_dict will be used to compile the model.
 
         Returns:

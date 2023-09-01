@@ -22,7 +22,7 @@ mindspore.nn.polynomial_decay_lr
     .. math::
         tmp\_decay\_epoch = decay\_epoch
 
-    如果 `update_decay_epoch` 为 ``True`` ，则每个epoch更新 `tmp_decay_epoch` 的值。公式为：
+    如果 `update_decay_epoch` 为 ``True`` ，则每个epoch更新 :math:`tmp_decay_epoch` 的值。公式为：
 
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)

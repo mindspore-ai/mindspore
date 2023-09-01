@@ -1757,7 +1757,7 @@ class LowpassBiquad(AudioTensorOperation):
 
 class Magphase(AudioTensorOperation):
     """
-    Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
+    Separate a complex-valued spectrogram with shape :math:`(..., 2)` into its magnitude and phase.
 
     Args:
         power (float): Power of the norm, which must be non-negative. Default: ``1.0``.

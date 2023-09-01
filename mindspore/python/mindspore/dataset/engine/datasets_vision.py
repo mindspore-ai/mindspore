@@ -2473,9 +2473,9 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         task (str, optional): Set the task type of reading lfw data, support ``'people'`` and ``'pairs'``.
             Default: ``None`` , means ``'people'``.
         usage (str, optional): The image split to use, support '``10fold'``, ``'train'``, ``'test'`` and ``'all'``.
-            Default: ``None`` , will read samples including train and test.
+            Default: ``None`` , will read samples including ``'train'`` and ``'test'``.
         image_set (str, optional): Type of image funneling to use, support ``'original'``, ``'funneled'`` or
-            ``'deepfunneled'``. Default: ``None`` , will use 'funneled'.
+            ``'deepfunneled'``. Default: ``None`` , will use ``'funneled'``.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
@@ -3068,6 +3068,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
     PhotoTour dataset.
 
     According to the given `usage` configuration, the generated dataset has different output columns:
+
     - `usage` = 'train', output columns: `[image, dtype=uint8]` .
     - `usage` ≠ 'train', output columns: `[image1, dtype=uint8]` , `[image2, dtype=uint8]` , `[matches, dtype=uint32]` .
 
@@ -3106,9 +3107,9 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `dataset_dir` is not exist.
-        ValueError: If `usage` is not ``"train"`` or ``"test"``.
-        ValueError: If name is not ``"notredame"``, ``"yosemite"``, ``"liberty"``,
-            ``"notredame_harris"``, ``"yosemite_harris"`` or ``"liberty_harris"``.
+        ValueError: If `usage` is not ``'train'`` or ``'test'``.
+        ValueError: If name is not ``'notredame'``, ``'yosemite'``, ``'liberty'``,
+            ``'notredame_harris'``, ``'yosemite_harris'`` or ``'liberty_harris'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 

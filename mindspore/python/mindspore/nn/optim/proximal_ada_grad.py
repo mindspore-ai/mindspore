@@ -55,9 +55,7 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
 
 class ProximalAdagrad(Optimizer):
     r"""
-    Implements the ProximalAdagrad algorithm.
-
-    ProximalAdagrad is an online Learning and Stochastic Optimization.
+    Implements the ProximalAdagrad algorithm that is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 

@@ -149,7 +149,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             :class:`mindspore.dataset.PKSampler`, :class:`mindspore.dataset.RandomSampler`,
             :class:`mindspore.dataset.SequentialSampler`, :class:`mindspore.dataset.DistributedSampler`.
         padded_sample (dict, optional): Samples will be appended to dataset, where
-            keys are the same as column_list. Default: ``None``.
+            keys are the same as columns_list. Default: ``None``.
         num_padded (int, optional): Number of padding samples. Dataset size
             plus num_padded should be divisible by num_shards. Default: ``None``.
         num_samples (int, optional): The number of samples to be included in the dataset.

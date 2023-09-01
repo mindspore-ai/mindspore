@@ -6,6 +6,7 @@ mindspore.dataset.PhotoTourDataset
     PhotoTour数据集。
 
     根据给定的 `usage` 配置，生成数据集具有不同的输出列：
+
     - `usage` = 'train'，输出列： `[image, dtype=uint8]` 。
     - `usage` ≠ 'train'，输出列： `[image1, dtype=uint8]` 、 `[image2, dtype=uint8]` 、 `[matches, dtype=uint32]` 。
 
@@ -30,8 +31,8 @@ mindspore.dataset.PhotoTourDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `dataset_dir` 不存在。
-        - **ValueError** - `usage` 不是 ``"train"`` 或 ``"test"`` 。
-        - **ValueError** - `name` 不是 ``"notredame"`` 、 ``"yosemite"`` 、 ``"liberty"`` 、 ``"notredame_harris"`` 、 ``"yosemite_harris"`` 或 ``"liberty_harris"`` 。
+        - **ValueError** - `usage` 不是 ``'train'`` 或 ``'test'`` 。
+        - **ValueError** - `name` 不是 ``''notredame'`` 、 ``'yosemite'`` 、 ``'liberty'`` 、 ``'notredame_harris'`` 、 ``'yosemite_harris'`` 或 ``'liberty_harris'`` 。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
