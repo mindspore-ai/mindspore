@@ -1099,24 +1099,24 @@ class GroupNorm(Cell):
             gamma_init, num_channels), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_channels), name="beta", requires_grad=affine)
+        self.reduce_mean = P.ReduceMean(keep_dims=True)
+        self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.shape = F.shape
         self.reshape = F.reshape
-        self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.square = F.square
-        self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.sqrt = P.Sqrt()
 
     def _cal_output(self, x):
         """calculate groupnorm output"""
-        batch, channel, height, width = self.shape(x)
+        batch, channel, height, width = F.shape(x)
         self._channel_check(channel, self.num_channels, self.cls_name)
-        x = self.reshape(x, (batch, self.num_groups, -1))
+        x = F.reshape(x, (batch, self.num_groups, -1))
         mean = self.reduce_mean(x, 2)
-        var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups)
+        var = F.div(self.reduce_sum(F.square(F.sub(x, mean)), 2), (channel * height * width / self.num_groups))
         std = self.sqrt(var + self.eps)
-        x = (x - mean) / std
-        x = self.reshape(x, (batch, channel, height, width))
-        output = x * self.reshape(self.gamma, (-1, 1, 1)) + self.reshape(self.beta, (-1, 1, 1))
+        x = F.div(F.sub(x, mean), std)
+        x = F.reshape(x, (batch, channel, height, width))
+        output = F.add(x * F.reshape(self.gamma, (-1, 1, 1)), F.reshape(self.beta, (-1, 1, 1)))
         return output
 
     @staticmethod
@@ -1144,7 +1144,7 @@ class GroupNorm(Cell):
         return 'num_groups={}, num_channels={}'.format(self.num_groups, self.num_channels)
 
     def construct(self, x):
-        self._check_input_dim(self.shape(x), self.cls_name)
+        self._check_input_dim(F.shape(x), self.cls_name)
         self._check_dtype(x.dtype, [mstype.float16, mstype.float32], self.cls_name)
         output = self._cal_output(x)
         return output
