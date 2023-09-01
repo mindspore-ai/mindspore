@@ -15,9 +15,12 @@
  */
 
 #include <sstream>
-
+#include <set>
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/aoe_util.h"
+#include "utils/ms_context.h"
+#include "pipeline/jit/ps/base.h"
+#include "utils/phase.h"
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
 #endif
@@ -25,6 +28,20 @@
 
 namespace mindspore {
 namespace transform {
+namespace {
+bool IsTrain() {
+  auto ms_context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  bool enable_ge = ms_context_ptr->backend_policy() == "ge";
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  bool enable_training = false;
+  if (!phase.empty()) {
+    enable_training = pipeline::GetPhasePrefix(phase) == "train";
+  }
+  return enable_ge && enable_training;
+}
+}  // namespace
+
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
                                const OptionMap &options)
     : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
@@ -73,6 +90,26 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
 
   int id = GenerateId();
   OptionMap new_options = options;
+  auto ms_context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  bool is_training = IsTrain();
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
+    (new_options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
+    MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE)
+                 << " by user.";
+  } else if (is_training) {
+    auto soc_version = ms_context_ptr->ascend_soc_version();
+    if (soc_version == "ascend910b") {
+      (new_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
+      MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
+    } else {
+      (new_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
+    }
+  } else {
+    (new_options)["ge.exec.precision_mode"] = "force_fp16";
+    MS_LOG(INFO) << "Set precision_mode force_fp16.";
+  }
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
   if (CompileCacheEnable() && !compile_cache_dep_files_hash.empty()) {
