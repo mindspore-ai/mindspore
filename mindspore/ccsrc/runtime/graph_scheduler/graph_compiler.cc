@@ -484,6 +484,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     if (!device_context->graph_executor_->CompileGraph(kernel_graph, {})) {
       MS_LOG(EXCEPTION) << "Compile kernel_graph failed: " << kernel_graph->graph_id();
     }
+    kernel_graph->UpdateInternalParameter();
     kernel_graph->CacheGraphOutputToFrontNodeWithIndex({kernel_graph->output()}, outputs);
     kernel_graph->set_front_outputs(outputs);
     return kernel_graph->graph_id();
