@@ -97,7 +97,7 @@ AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph) {
 }
 
 bool IsSideEffectNode(const AnfNodePtr &node) {
-  std::vector<PrimitivePtr> side_effect_nodes = {prim::kPrimAssign, prim::kPrimInplaceAssign};
+  std::vector<PrimitivePtr> side_effect_nodes = {prim::kPrimAssign};
   return std::any_of(side_effect_nodes.begin(), side_effect_nodes.end(),
                      [&node](const PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }

@@ -241,6 +241,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
 #endif
+  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || is_ascend);
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
   return pm;

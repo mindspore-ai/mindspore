@@ -13,8 +13,6 @@
 # limitations under the License.
 # ===========================================================================
 """GraphKernel model builder"""
-
-import copy
 from .model import Tensor, Value, Operator, Graph, AlignShape
 
 
@@ -159,12 +157,6 @@ class CompositeGraph:
                 out_desc = op['output_desc']
                 name, shape, dtype, data_format = out_desc[0]['tensor_name'], out_desc[
                     0]['shape'], out_desc[0]['data_type'], out_desc[0]['format']
-                if op['name'] == 'InplaceAssign':
-                    inputs[0].add_buddy(inputs[1])
-                    inputs[1].para_type = Tensor.PARA_OUTPUT
-                    output = inputs[2]
-                    self.tensors[name] = output
-                    continue
                 output = self.tensors.get(name, None)
                 if not output:
                     output = builder.tensor(shape, dtype, data_format, name=name)
@@ -173,46 +165,17 @@ class CompositeGraph:
         self.graph = builder.get()[0]
         self.desc = desc
 
-    def _pre_dump(self, outputs):
-        """restore name to before load"""
-        inplace_assign = {}  # y_name, output_name
-        inplace_assign_z = None
-        for op in self.desc['op_desc']:
-            if op['name'] == 'InplaceAssign':
-                inplace_assign[op['input_desc'][1][0]['tensor_name']] = op['output_desc'][0]['tensor_name']
-        if inplace_assign:
-            for t in outputs:
-                if t.name not in inplace_assign:
-                    inplace_assign_z = t
-        return inplace_assign, inplace_assign_z
 
     def dump(self, subgraph):
         """Dump Graph to json"""
         desc = {}
         inputs, outputs = subgraph.deduce_parameters()
         graph_ops = set(subgraph.ops)
-        inplace_assign, inplace_assign_z = self._pre_dump(outputs)
 
         def dump_output(t):
-            if t.name in inplace_assign:
-                z = inplace_assign_z if inplace_assign_z is not None else self.tensors.get(t.name, None)
-                return {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign.get(t.name)}
             return {'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}
 
         def dump_op_desc(d):
-            if d['name'] == 'InplaceAssign':
-                y = d['input_desc'][1][0]['tensor_name']
-                if self.tensors[y].op in graph_ops:
-                    z, fake = (inplace_assign_z, False) if inplace_assign_z is not None else (self.tensors.get(y), True)
-                    inplace_desc = copy.deepcopy(d)
-                    inplace_desc['attr'] = {'name': 'fake_output', 'value': fake}
-                    z_desc, out_desc = inplace_desc['input_desc'][2][0], inplace_desc['output_desc'][0]
-                    z_desc['shape'] = z.shape
-                    z_desc['data_type'] = z.dtype
-                    z_desc['tensor_name'] = z.name
-                    out_desc['shape'] = z.shape
-                    out_desc['data_type'] = z.dtype
-                    return inplace_desc
             op = self.tensors[d['output_desc'][0]['tensor_name']].op
             if op in graph_ops or op in subgraph.recompute_ops:
                 return d

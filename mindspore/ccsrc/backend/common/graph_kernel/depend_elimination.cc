@@ -16,7 +16,11 @@
 
 #include "backend/common/graph_kernel/depend_elimination.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 bool DependElimination::Run(const FuncGraphPtr &func_graph) {
@@ -42,5 +46,32 @@ bool DependElimination::Run(const FuncGraphPtr &func_graph) {
     }
   }
   return true;
+}
+
+const BaseRef GeneratedDependElimination::DefinePattern() const {
+  auto reducesum_node = VectorRef({prim::kPrimReduceSum, input2_, input3_});
+  auto assign_node = VectorRef({prim::kPrimAssign, input1_, reducesum_node});
+  auto depend_node = VectorRef({prim::kPrimDepend, input1_, assign_node});
+  return depend_node;
+}
+
+const AnfNodePtr GeneratedDependElimination::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                     const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(equiv);
+  constexpr size_t kGraphNodeNum = 2;
+  auto input1 = utils::cast<AnfNodePtr>((*equiv)[input1_]);
+  if (common::AnfAlgo::IsGraphKernel(input1)) {
+    auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(input1);
+    auto sub_graph_nodes = sub_graph->GetOrderedCnodes();
+    if (sub_graph_nodes.size() == kGraphNodeNum &&
+        GetCNodePrimitive(sub_graph_nodes.front())->name() == prim::kPrimBroadcastTo->name()) {
+      auto assign_node = node->cast<CNodePtr>()->input(kIndex2);
+      auto reducesum_node = assign_node->cast<CNodePtr>()->input(kIndex2);
+      return reducesum_node;
+    }
+  }
+  return nullptr;
 }
 }  // namespace mindspore::graphkernel

@@ -84,11 +84,6 @@ void SafeSplitSchemer::SplitNodes(const FuncGraphPtr &func_graph) {
   for (size_t i = 0; i < topo_valid_nodes.size(); ++i) {
     const auto &node = topo_valid_nodes[i];
     node_group_[node] = i;
-    if (IsPrimitiveCNode(node, prim::kPrimInplaceAssign)) {
-      // Let InplaceAssign and its second input in a same group.
-      auto input2 = node->input(kIndex2);
-      node_group_[input2] = i;
-    }
   }
 
   std::map<size_t, AnfNodePtrList> group_nodes;
