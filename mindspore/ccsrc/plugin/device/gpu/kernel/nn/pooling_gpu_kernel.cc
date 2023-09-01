@@ -24,29 +24,29 @@ MS_REG_GPU_KERNEL_ONE(MaxPool, KernelAttr().AddInputAttr(kNumberTypeFloat16).Add
                       PoolingFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(AvgPool,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)  // input
-                        .AddInputAttr(kObjectTypeTuple)    // kernel_size
-                        .AddInputAttr(kObjectTypeTuple)    // strides
-                        .AddInputAttr(kNumberTypeInt64)    // pad_mode
-                        .AddInputAttr(kNumberTypeInt64)    // data_format
+                        .AddInputAttr(kNumberTypeFloat64)                   // input
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
                         .AddOutputAttr(kNumberTypeFloat64),
                       PoolingFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(AvgPool,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kObjectTypeTuple)  // kernel_size
-                        .AddInputAttr(kObjectTypeTuple)  // strides
-                        .AddInputAttr(kNumberTypeInt64)  // pad_mode
-                        .AddInputAttr(kNumberTypeInt64)  // data_format
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
                         .AddOutputAttr(kNumberTypeFloat32),
                       PoolingFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(AvgPool,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kObjectTypeTuple)  // kernel_size
-                        .AddInputAttr(kObjectTypeTuple)  // strides
-                        .AddInputAttr(kNumberTypeInt64)  // pad_mode
-                        .AddInputAttr(kNumberTypeInt64)  // data_format
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
                         .AddOutputAttr(kNumberTypeFloat16),
                       PoolingFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),

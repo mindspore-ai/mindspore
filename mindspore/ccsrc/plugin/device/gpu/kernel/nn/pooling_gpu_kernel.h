@@ -32,9 +32,21 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kNumberFive = 5;
+constexpr auto kNumberThree = 3;
+constexpr auto kNumberTwo = 2;
 constexpr auto kAvgPool = "AvgPool";
 constexpr auto kAvgPool3D = "AvgPool3D";
+constexpr auto kMaxPool3D = "MaxPool3D";
+constexpr auto kKernelSizeIdx = 1;
+constexpr auto kStridesIdx = 2;
+constexpr auto kPadModeIdx = 3;
+constexpr auto kDataFormatIdx = 4;
+constexpr auto kPadListIdx = 4;
+constexpr auto kCeilModeIdx = 5;
+constexpr auto kCountIncludePadIdx = 6;
+constexpr auto kDivisorOverrideIdx = 7;
+constexpr auto kFormatAvg3DIdx = 8;
+constexpr auto kFormatMax3DIdx = 6;
 
 template <typename T>
 class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
@@ -62,7 +74,6 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
         pad_value_(0),
         is_null_input_(false),
         ceil_mode_(false),
-        kernel_name_("Pooling"),
         input_size_(0),
         output_size_(0),
         workspace_size_(0) {}
@@ -114,38 +125,30 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    kernel_name_ = primitive_->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     InitResource();
-    // if (inputs.size() != 1) {
-    //   MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size();
-    // }
-
+    size_t format_index = kDataFormatIdx;
     if (kernel_name_ == kAvgPool3D) {
-      size_t divisor_override_index = ops::GetInputIndexByName(kernel_name_, "divisor_override");
-      divisor_override_ = inputs[divisor_override_index]->GetValueWithCheck<int64_t>();
-      size_t ceil_mode_index = ops::GetInputIndexByName(kernel_name_, "ceil_mode");
-      ceil_mode_ = inputs[ceil_mode_index]->GetValueWithCheck<bool>();
+      divisor_override_ = inputs[kDivisorOverrideIdx]->GetValueWithCheck<int64_t>();
+      ceil_mode_ = inputs[kCeilModeIdx]->GetValueWithCheck<bool>();
       AvgPool3DPadListCheck(inputs);
+      format_index = kFormatAvg3DIdx;
+    }
+    if (kernel_name_ == kMaxPool3D) {
+      format_index = kFormatMax3DIdx;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->dtype_id()));
-    data_format_ = mindspore::FormatEnumToString(inputs[0]->format());
-    // auto format_attr = GetValue<std::string>(prim->GetAttr("format"));
-    // change all the string format to Enum(todo)
-    size_t format_index = ops::GetInputIndexByName(kernel_name_, "format");
-    auto format_attr =
-      mindspore::FormatEnumToString(static_cast<mindspore::Format>(inputs[format_index]->GetValueWithCheck<int64_t>()));
-    if (Anyone(format_attr, kOpFormat_NHWC, kOpFormat_NDHWC)) {
+    data_format_ = inputs[0]->format();
+
+    auto format_attr = static_cast<mindspore::Format>(inputs[format_index]->GetValueWithCheck<int64_t>());
+    if (Anyone(format_attr, mindspore::Format::NHWC, mindspore::Format::NDHWC)) {
       data_format_ = format_attr;
     }
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();
@@ -233,12 +236,11 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  void SetPoolingMode(const std::vector<KernelTensorPtr> &inputs) {
+  void SetPoolingMode(const std::vector<KernelTensor *> &inputs) {
     mode_ = kernel_name_;
     bool include = false;
     if (kernel_name_ == kAvgPool3D) {
-      size_t index = ops::GetInputIndexByName(kernel_name_, "count_include_pad");
-      include = inputs[index]->GetValueWithCheck<bool>();
+      include = inputs[kCountIncludePadIdx]->GetValueWithCheck<bool>();
     }
     if (mode_ == kAvgPool || mode_ == kAvgPool3D) {
       pooling_mode_ =
@@ -250,34 +252,30 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void SetPad(const std::vector<KernelTensorPtr> &inputs) {
-    size_t index = ops::GetInputIndexByName(kernel_name_, "pad_mode");
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[index]->GetValueWithCheck<int64_t>());
+  void SetPad(const std::vector<KernelTensor *> &inputs) {
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
     std::vector<int> window;
-    // std::vector<int64_t> window_me = GetValue<std::vector<int64_t>>(prim->GetAttr("kernel_size"));
-    size_t kernel_size_index = ops::GetInputIndexByName(kernel_name_, "kernel_size");
-    auto window_me = inputs[kernel_size_index]->GetValueWithCheck<std::vector<int64_t>>();
+    auto window_me = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (window.size() < 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 4, but got "
+    if (window.size() < kNumberTwo) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 2, but got "
                         << window.size();
     }
-    int window_height = window[2];
-    int window_width = window[3];
-    size_t stride_me_index = ops::GetInputIndexByName(kernel_name_, "strides");
-    auto stride_me = inputs[stride_me_index]->GetValueWithCheck<std::vector<int64_t>>();
+    int window_height = window[0];
+    int window_width = window[1];
+    auto stride_me = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[2] = {window_height, window_width};
     int paddingA[2] = {0, 0};
-    if (stride_.size() < 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 4, but got "
+    if (stride_.size() < kNumberTwo) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 2, but got "
                         << stride_.size();
     }
-    int strideA[2] = {stride_[2], stride_[3]};
-    int stride_h = stride_[2];
-    int stride_w = stride_[3];
+    int strideA[2] = {stride_[0], stride_[1]};
+    int stride_h = stride_[0];
+    int stride_w = stride_[1];
     if (pad_mode_ == mindspore::PadMode::SAME) {
       pad_height_ = GetPad(old_height_, window_height, stride_h);
       pad_width_ = GetPad(old_width_, window_width, stride_w);
@@ -296,39 +294,36 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       "cudnnSetPoolingNdDescriptor failed");
   }
 
-  void SetPad3D(const std::vector<KernelTensorPtr> &inputs) {
+  void SetPad3D(const std::vector<KernelTensor *> &inputs) {
     const int kPadListSize = 6;
     const int kDims = 3;
     const int kPadScale = 2;
-    size_t pad_mode_index = ops::GetInputIndexByName(kernel_name_, "pad_mode");
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[pad_mode_index]->GetValueWithCheck<int64_t>());
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
 
     std::vector<int> window;
-    size_t window_me_index = ops::GetInputIndexByName(kernel_name_, "kernel_size");
-    auto window_me = inputs[window_me_index]->GetValueWithCheck<std::vector<int64_t>>();
+    auto window_me = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (window.size() < 5) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 5, but got "
+    if (window.size() < kNumberThree) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 3, but got "
                         << window.size();
     }
-    int window_depth = window[2];
-    int window_height = window[3];
-    int window_width = window[4];
-    size_t stride_me_index = ops::GetInputIndexByName(kernel_name_, "strides");
-    std::vector<int64_t> stride_me = inputs[stride_me_index]->GetValueWithCheck<std::vector<int64_t>>();
+    int window_depth = window[0];
+    int window_height = window[1];
+    int window_width = window[2];
+    std::vector<int64_t> stride_me = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[3] = {window_depth, window_height, window_width};
     int paddingA[3] = {0, 0, 0};
-    if (stride_.size() < kNumberFive) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 5, but got "
+    if (stride_.size() < kNumberThree) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 3, but got "
                         << stride_.size();
     }
-    int strideA[3] = {stride_[2], stride_[3], stride_[4]};
-    int stride_d = stride_[2];
-    int stride_h = stride_[3];
-    int stride_w = stride_[4];
+    int strideA[3] = {stride_[0], stride_[1], stride_[2]};
+    int stride_d = stride_[0];
+    int stride_h = stride_[1];
+    int stride_w = stride_[2];
     if (pad_mode_ == mindspore::PadMode::SAME) {
       pad_depth_ = GetPad(old_depth_, window_depth, stride_d);
       pad_height_ = GetPad(old_height_, window_height, stride_h);
@@ -344,8 +339,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       pad_height_ = 0;
       pad_width_ = 0;
     } else {
-      size_t pad_list_index = ops::GetInputIndexByName(kernel_name_, "pad_list");
-      std::vector<int64_t> pad_list = inputs[pad_list_index]->GetValueWithCheck<std::vector<int64_t>>();
+      std::vector<int64_t> pad_list = inputs[kPadListIdx]->GetValueWithCheck<std::vector<int64_t>>();
       if (pad_list.size() != kPadListSize) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad_list' must be " << kPadListSize
                           << ", but got " << pad_list.size();
@@ -360,24 +354,21 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       "cudnnSetPoolingNdDescriptor failed");
   }
 
-  std::vector<int64_t> GetEdgeKernelSize(const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
+  std::vector<int64_t> GetEdgeKernelSize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
     if (!ceil_mode_ && divisor_override_ == 0) {
       return {};
     }
 
-    const size_t k3dSizeLowerLimit = 5;
-    const size_t kIdxD = 2;
-    const size_t kIdxH = 3;
-    const size_t kIdxW = 4;
+    const size_t k3dSizeLowerLimit = 3;
+    const size_t kIdxD = 0;
+    const size_t kIdxH = 1;
+    const size_t kIdxW = 2;
     const size_t kScale = 2;
     std::vector<int64_t> edge_kernel;
-    size_t kernel_size_index = ops::GetInputIndexByName(kernel_name_, "kernel_size");
-    std::vector<int64_t> kernel_size = inputs[kernel_size_index]->GetValueWithCheck<std::vector<int64_t>>();
-    size_t strides_index = ops::GetInputIndexByName(kernel_name_, "strides");
-    std::vector<int64_t> strides = inputs[strides_index]->GetValueWithCheck<std::vector<int64_t>>();
-    size_t pad_list_index = ops::GetInputIndexByName(kernel_name_, "pad_list");
-    std::vector<int64_t> pad = inputs[pad_list_index]->GetValueWithCheck<std::vector<int64_t>>();
+    std::vector<int64_t> kernel_size = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    std::vector<int64_t> strides = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    std::vector<int64_t> pad = inputs[kPadListIdx]->GetValueWithCheck<std::vector<int64_t>>();
 
     if (kernel_size.size() != k3dSizeLowerLimit) {
       MS_LOG(EXCEPTION) << "kernel_size must be " << k3dSizeLowerLimit << "D, but got " << kernel_size.size();
@@ -415,19 +406,16 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     return edge_kernel;
   }
 
-  void AvgPool3DPadListCheck(const std::vector<KernelTensorPtr> &inputs) {
-    size_t pad_mode_index = ops::GetInputIndexByName(kernel_name_, "pad_mode");
-    mindspore::PadMode pad_mode = static_cast<mindspore::PadMode>(inputs[pad_mode_index]->GetValueWithCheck<int64_t>());
+  void AvgPool3DPadListCheck(const std::vector<KernelTensor *> &inputs) {
+    mindspore::PadMode pad_mode = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
 
     if (pad_mode == mindspore::PadMode::SAME || pad_mode == mindspore::PadMode::VALID) {
       return;
     }
-    size_t pad_list_index = ops::GetInputIndexByName(kernel_name_, "pad_list");
-    std::vector<int64_t> pad_list = inputs[pad_list_index]->GetValueWithCheck<std::vector<int64_t>>();
+    std::vector<int64_t> pad_list = inputs[kPadListIdx]->GetValueWithCheck<std::vector<int64_t>>();
 
-    if (kernel_name_ == kAvgPool3DDOpName &&
-        !inputs[ops::GetInputIndexByName(kernel_name_, "count_include_pad")]->GetValueWithCheck<bool>() &&
-        inputs[ops::GetInputIndexByName(kernel_name_, "divisor_override")]->GetValueWithCheck<int64_t>() &&
+    if (kernel_name_ == kAvgPool3DDOpName && !inputs[kCountIncludePadIdx]->GetValueWithCheck<bool>() &&
+        inputs[kDivisorOverrideIdx]->GetValueWithCheck<int64_t>() &&
         std::any_of(pad_list.begin(), pad_list.end(), [](int64_t pad) { return pad > 0; })) {
       MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode
                         << " && padding > 0 && count_include_pad == False && divisor_override != None";
@@ -454,7 +442,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> output_shape_exclude_nc_;
   std::string mode_;
   mindspore::PadMode pad_mode_;
-  std::string data_format_ = kOpFormat_NCHW;
+  mindspore::Format data_format_ = mindspore::Format::NCHW;
 
   cudnnDataType_t cudnn_data_type_;
   cudnnTensorFormat_t compute_format_;
@@ -473,7 +461,6 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   float pad_value_;
   bool is_null_input_;
   bool ceil_mode_;
-  std::string kernel_name_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
