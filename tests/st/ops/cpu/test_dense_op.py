@@ -371,3 +371,81 @@ def test_empty_tensor():
     out_ms = net(x_ms, w_ms, b_ms).asnumpy()
     assert out_ms.shape == ()
     assert np.abs(out_ms - b_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_empty_tensor_dyn_shape():
+    """
+    Feature: Test dense empty tensor with dynamic shape.
+    Description: Test dense empty tensor with dynamic shape for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    error = 1e-3
+    dtype = np.float32
+    net = Dense()
+    x_np = np.array([]).astype(dtype)
+    w_np = np.array([]).astype(dtype)
+    b_np = np.array(np.random.randn()).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+
+    net.set_inputs(
+        Tensor(shape=[None for _ in x_ms.shape], dtype=x_ms.dtype),
+        Tensor(shape=[None for _ in w_ms.shape], dtype=w_ms.dtype),
+        None,
+    )
+    out_ms = net(x_ms, w_ms, None).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - 0.0).mean() < error
+
+    net.set_inputs(
+        Tensor(shape=[None for _ in x_ms.shape], dtype=x_ms.dtype),
+        Tensor(shape=[None for _ in w_ms.shape], dtype=w_ms.dtype),
+        b_ms,
+    )
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - b_np).mean() < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_empty_tensor_dyn_rank():
+    """
+    Feature: Test dense empty tensor with dynamic rank.
+    Description: Test dense empty tensor with dynamic rank for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    error = 1e-3
+    dtype = np.float32
+    net = Dense()
+    x_np = np.array([]).astype(dtype)
+    w_np = np.array([]).astype(dtype)
+    b_np = np.array(np.random.randn()).astype(dtype)
+    x_ms = Tensor(x_np)
+    w_ms = Tensor(w_np)
+    b_ms = Tensor(b_np)
+
+    net.set_inputs(
+        Tensor(dtype=x_ms.dtype),
+        Tensor(dtype=w_ms.dtype),
+        None,
+    )
+    out_ms = net(x_ms, w_ms, None).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - 0.0).mean() < error
+
+    net.set_inputs(
+        Tensor(dtype=x_ms.dtype),
+        Tensor(dtype=w_ms.dtype),
+        b_ms,
+    )
+    out_ms = net(x_ms, w_ms, b_ms).asnumpy()
+    assert out_ms.shape == ()
+    assert np.abs(out_ms - b_np).mean() < error

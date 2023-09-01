@@ -38,6 +38,11 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
   // The input addresses that are not used in the kernel launch.
@@ -47,6 +52,8 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   std::string kernel_type_{"Unknown"};
   static std::vector<KernelAttr> common_valid_types_with_bool_complex_;
   static std::vector<KernelAttr> common_two_valid_types_with_bool_complex_;
+
+  bool is_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

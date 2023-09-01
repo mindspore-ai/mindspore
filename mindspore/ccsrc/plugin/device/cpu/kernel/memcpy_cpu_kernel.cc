@@ -36,8 +36,23 @@ bool MemcpyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
+int MemcpyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+    return ret;
+  }
+  auto shape0 = inputs[kIndex0]->GetShapeVector();
+  is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
+  return ret;
+}
+
 bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  if (is_empty_tensor_) {
+    return true;
+  }
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs can not be empty.";
   }

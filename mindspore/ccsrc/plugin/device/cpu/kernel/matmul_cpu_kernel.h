@@ -38,6 +38,9 @@ class MatMulCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (is_empty_tensor_) {
+      return true;
+    }
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
@@ -51,6 +54,8 @@ class MatMulCpuKernelMod : public NativeCpuKernelMod {
  private:
   std::shared_ptr<CpuKernelFunc> func_obj_;
   std::string kernel_type_{kUnkown};
+
+  bool is_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

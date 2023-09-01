@@ -91,6 +91,11 @@ class MatMulInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(ret_shape);
     }
 
+    if (x_shp.size() == 1 && y_shp.size() == 1 && x_shp[0] == 0 && y_shp[0] == 0) {
+      ShapeVector ret_shape;
+      return std::make_shared<abstract::Shape>(ret_shape);
+    }
+
     const size_t SHAPE_SIZE = 2;
     if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
       MS_EXCEPTION(ValueError) << "MatMul inputs should have the same dimension size and equal to 2.";
