@@ -60,7 +60,7 @@ LocalFile<KeyType, ValueType>::~LocalFile() {
     if (file == nullptr) {
       continue;
     }
-    file->Close();
+    (void)file->Close();
     ChangeFileMode(file->get_file_name(), S_IRUSR | S_IWUSR);
   }
 }
