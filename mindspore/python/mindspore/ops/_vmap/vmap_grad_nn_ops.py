@@ -111,14 +111,20 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPoolGrad`."""
     chw_reverse_index = -3
 
-    def vmap_rule(x_bdim, y_bdim, dy_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, dy_bdim)
+    def vmap_rule(x_bdim, y_bdim, dy_bdim, kernel_size_bdim,
+                  strides_bdim, pad_mode_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, dy_bdim, kernel_size_bdim,
+                                                      strides_bdim, pad_mode_bdim, data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         y, y_dim = y_bdim
         dy, dy_dim = dy_bdim
+        kernel_size, _ = kernel_size_bdim
+        strides, _ = strides_bdim
+        pad_mode, _ = pad_mode_bdim
+        data_format, _ = data_format_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         y = _bdim_at_front(y, y_dim, axis_size)
         dy = _bdim_at_front(dy, dy_dim, axis_size)
@@ -128,7 +134,7 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
         x = F.reshape(x, (-1,) + x_shape[chw_reverse_index:])
         y = F.reshape(y, (-1,) + y_shape[chw_reverse_index:])
         dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
-        out = prim(x, y, dy)
+        out = prim(x, y, dy, kernel_size, strides, pad_mode, data_format)
         out = F.reshape(out, x_shape)
         return out, 0
 

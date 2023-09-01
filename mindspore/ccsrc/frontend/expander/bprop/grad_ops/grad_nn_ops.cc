@@ -1012,7 +1012,7 @@ REG_BPROP_BUILDER("AvgPool").SetBody(BODYFUNC(ib) {
   auto cond_block = ib->Conditional(cond, true_branch, false_branch);
   auto dx =
     ib->Emit("AvgPoolGrad",
-             {x, out, ib->TensorGetItem(cond_block, 0), ib->TensorGetItem(cond_block, 1), pad_mode, format, dout}, {});
+             {x, out, dout, ib->TensorGetItem(cond_block, 0), ib->TensorGetItem(cond_block, 1), pad_mode, format}, {});
   return {dx, ib->OutZeros(kernel_size), ib->OutZeros(strides), ib->OutZeros(pad_mode), ib->OutZeros(format)};
 });
 
