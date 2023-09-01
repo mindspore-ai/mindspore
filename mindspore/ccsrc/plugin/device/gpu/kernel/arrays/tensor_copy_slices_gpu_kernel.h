@@ -23,7 +23,6 @@
 #include <numeric>
 #include <functional>
 #include <map>
-#include "ops/tensor_copy_slices.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
