@@ -204,6 +204,13 @@ bool SortByPredComm(const std::shared_ptr<Task> &task1, const std::shared_ptr<Ta
           task1->id() < task2->id());
 }
 
+// Sort by predecessor to comm DFS
+bool SortByPredCommDepth(const std::shared_ptr<Task> &task1, const std::shared_ptr<Task> &task2) {
+  return task1->pred_comm() < task2->pred_comm() ||
+         (task1->pred_comm() == task2->pred_comm() && task1->depth() > task2->depth()) ||
+         (task1->pred_comm() == task2->pred_comm() && task1->depth() == task2->depth() && task1->id() < task2->id());
+}
+
 // Sorting by load for processing elements
 struct SortByLoad {
   bool operator()(const ProcessingElement &pe1, const ProcessingElement &pe2) const {
@@ -458,7 +465,8 @@ constexpr TaskSortFunction THREAD_SORT[] = {SortByWeightMax,
                                             SortByWeightedLength,
                                             SortByDepthMax,
                                             SortByDepthMin,
-                                            SortByPredComm};
+                                            SortByPredComm,
+                                            SortByPredCommDepth};
 
 constexpr std::string_view THREAD_SORT_NAMES[] = {"SortByWeightMax",
                                                   "SortByWeightMin",
@@ -473,13 +481,14 @@ constexpr std::string_view THREAD_SORT_NAMES[] = {"SortByWeightMax",
                                                   "SortByWeightedLength",
                                                   "SortByDepthMax",
                                                   "SortByDepthMin",
-                                                  "SortByPredComm"};
+                                                  "SortByPredComm",
+                                                  "SortByPredCommDepth"};
 
 enum class PEsSort { kSortByLoad = 0, kSortByValidStart, kNumPEsSort };
 
 constexpr std::string_view PE_NAME_SORT[] = {"SortByLoad", "SortByValidStart"};
 
-SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input) {
+SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input, const std::string &graph_name) {
   std::vector<std::shared_ptr<Task>> *tasks = &(input.tasks);
   auto type_to_num_cores_map = GetTestPEs();
   SchedulingOutput output{{}, SIZE_MAX};
@@ -497,6 +506,7 @@ SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input) {
 
   // Loop over all sorting combinations
   std::unordered_map<std::shared_ptr<Task>, Time> best_start, best_end;  // to use in verify dependencies only
+  std::string best_solution;
   MS_LOG(INFO) << "Start loop multiple scheduling functions";
   for (size_t task_sort = 0; task_sort < static_cast<size_t>(kNumTaskSort); ++task_sort) {
     for (size_t pes_sort = 0; pes_sort < static_cast<size_t>(PEsSort::kNumPEsSort); ++pes_sort) {
@@ -505,6 +515,7 @@ SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input) {
                                               (pes_sort == static_cast<size_t>(PEsSort::kSortByLoad)));
       if (solution.makespan < output.makespan) {
         output = solution;
+        best_solution = THREAD_SORT_NAMES[task_sort];
         for (const auto &task : *tasks) {  // to use in verify dependencies only
           best_start[task] = task->start();
           best_end[task] = task->end();
@@ -518,6 +529,7 @@ SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input) {
   MS_LOG(INFO) << "End loop multiple scheduling functions";
 
   // Print stats about best solution
+  MS_LOG(INFO) << "Best solution is: " << best_solution;
   MS_LOG(INFO) << "Makespan of best solution is " << output.makespan;
   MS_LOG(INFO) << "Bottom level lower bound is " << LowerBoundBottomLevel(*tasks);
   MS_LOG(INFO) << "Max type lower bound is " << LowerBoundPEs(*tasks, type_to_num_cores_map);
@@ -539,7 +551,7 @@ SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input) {
 
   // Output log file with all info (scheduling and dependencies)
   MS_LOG(INFO) << "Start printing output log file";
-  PrintLog(output, dependencies);
+  PrintLog(output, dependencies, graph_name);
   MS_LOG(INFO) << "End printing output log file";
 
   return output;
@@ -641,7 +653,7 @@ SchedulingOutput FastGreedyScheduler::ProcessCore(std::vector<std::shared_ptr<Ta
 }
 
 SchedulingOutput FastGreedyScheduler::ProcessSingle(const SchedulingInput &input, const TaskSortFunction &sortPtr,
-                                                    bool pe_load_sort) {
+                                                    bool pe_load_sort, const std::string &graph_name) {
   auto tasks = input.tasks;
   // auto tasks = GetTestTasks();
   auto type_to_num_cores_map = GetTestPEs();
@@ -757,7 +769,7 @@ SchedulingOutput FastGreedyScheduler::ProcessSingle(const SchedulingInput &input
   } else {
     MS_LOG(INFO) << "Verification of Dependencies: FAILURE";
   }
-  PrintLog(output, dependencies);
+  PrintLog(output, dependencies, graph_name);
 
   return output;
 }
@@ -869,8 +881,9 @@ bool FastGreedyScheduler::VerifyDAG(std::vector<std::shared_ptr<Task>> &tasks) {
 }
 
 void FastGreedyScheduler::PrintLog(const SchedulingOutput &output,
-                                   const std::vector<std::pair<TaskId, TaskId>> &dependencies) {
-  std::ofstream out_file("comp_comm_scheduling_out.log", std::ios::out | std::ios::trunc);
+                                   const std::vector<std::pair<TaskId, TaskId>> &dependencies,
+                                   const std::string &graph_name) {
+  std::ofstream out_file("comp_comm_scheduling_out_" + graph_name + ".log", std::ios::out | std::ios::trunc);
   if (!out_file.is_open()) {
     MS_LOG(ERROR) << "Could not open comp_comm_scheduling_out.log";
     return;
@@ -1061,21 +1074,30 @@ void CompCommScheduling(const FuncGraphPtr &graph) {
   }
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
+  MS_LOG(INFO) << "Main graph pointer: " << graph;
   MS_EXCEPTION_IF_NULL(manager);
-  std::list<CNodePtr> cnode_list = graph->GetOrderedCnodes();
-  std::vector<CNodePtr> cnode_vec(cnode_list.cbegin(), cnode_list.cend());
 
-  MS_LOG(INFO) << "Start ExtractSchedulingInput";
-  std::unordered_map<CNodePtr, TaskPtr> cnode_to_task;
-  SchedulingInput scheduling_input = ExtractSchedulingInput(manager, cnode_vec, &cnode_to_task);
-  MS_LOG(INFO) << "End ExtractSchedulingInput";
+  FuncGraphSet graphs = manager->func_graphs();
+  for (const auto &subgraph : graphs) {
+    MS_LOG(INFO) << "Start Scheduling Subgraph " << subgraph;
+    std::stringstream graph_ss;
+    graph_ss << subgraph;
+    std::string graph_name = graph_ss.str();
+    std::list<CNodePtr> cnode_list = subgraph->GetOrderedCnodes();
+    std::vector<CNodePtr> cnode_vec(cnode_list.cbegin(), cnode_list.cend());
 
-  auto scheduling_output = FastGreedyScheduler::Process(scheduling_input);
-  auto dependencies = FastGreedyScheduler::ScheduleToDependencies(scheduling_output);
+    MS_LOG(INFO) << "Start ExtractSchedulingInput";
+    std::unordered_map<CNodePtr, TaskPtr> cnode_to_task;
+    SchedulingInput scheduling_input = ExtractSchedulingInput(manager, cnode_vec, &cnode_to_task);
+    MS_LOG(INFO) << "End ExtractSchedulingInput";
 
-  MS_LOG(INFO) << "Start AddRealDependencies";
-  AddRealDependencies(manager, cnode_vec, dependencies, &cnode_to_task);
-  MS_LOG(INFO) << "End AddRealDependencies";
+    auto scheduling_output = FastGreedyScheduler::Process(scheduling_input, graph_name);
+    auto dependencies = FastGreedyScheduler::ScheduleToDependencies(scheduling_output);
+
+    MS_LOG(INFO) << "Start AddRealDependencies";
+    AddRealDependencies(manager, cnode_vec, dependencies, &cnode_to_task);
+    MS_LOG(INFO) << "End AddRealDependencies";
+  }
 }
 }  // namespace opt
 }  // namespace mindspore
