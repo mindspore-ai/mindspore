@@ -393,7 +393,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   auto abs = node->abstract();
   auto abs_type = AnfAlgo::GetAbstractObjectType(abs);
   auto kernel_object_type = kernel::TypeIdToKernelObjectTypeForTupleUnfold(abs_type);
-  if (common::AnfAlgo::IsDynamicSequence(node)) {
+  if (common::AnfAlgo::IsDynamicSequence(node) || (node->isa<ValueNode>() && AnfAlgo::IsSequenceOutputOfScalar(node))) {
     kernel_object_type = kernel::KernelObjectType::TUPLE;
   } else if (abs_type == kObjectTypeTuple || abs_type == kObjectTypeList) {
     auto tuple_len = AnfAlgo::GetOutputElementNum(node);

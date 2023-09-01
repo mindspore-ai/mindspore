@@ -80,10 +80,12 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  // Disable const to tensor pass, ascend platform need to match the change in the future.
+  // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
-  common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
+  // Disable const to tensor pass, ascend platform need to match the change in the future.
+  // common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   if (graph->has_flag(kAttrMutableKernel) || graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   }
@@ -150,7 +152,8 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
-  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  // Disable const to tensor pass, ascend platform need to match the change in the future.
+  // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
   common_pm->AddPass(std::make_shared<AddNFusion>());

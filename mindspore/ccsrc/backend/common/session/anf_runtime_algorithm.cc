@@ -2152,6 +2152,26 @@ tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_
   return nullptr;
 }
 
+bool AnfRuntimeAlgorithm::IsSequenceOutputOfScalar(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abs = node->abstract();
+  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  // Check all elements in tuple/list are scalar.
+  auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+  MS_EXCEPTION_IF_NULL(abs_seq);
+  if (abs_seq->dynamic_len()) {
+    const auto &element_abs = abs_seq->dynamic_len_element_abs();
+    return (element_abs == nullptr) || (element_abs->isa<abstract::AbstractScalar>());
+  }
+  const auto &elements = abs_seq->elements();
+
+  return std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
+    return (element != nullptr) && (element->isa<abstract::AbstractScalar>());
+  });
+}
+
 bool AnfRuntimeAlgorithm::IsSummaryNode(const AnfNodePtr &node) {
   return (IsPrimitiveCNode(node, prim::kPrimScalarSummary) || IsPrimitiveCNode(node, prim::kPrimTensorSummary) ||
           IsPrimitiveCNode(node, prim::kPrimImageSummary) || IsPrimitiveCNode(node, prim::kPrimHistogramSummary));
