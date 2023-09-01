@@ -23,7 +23,7 @@ from itertools import product
 
 SUPPORTED_INPUT_NUM = [1, 2, 3, 4, 5, 6, 7]
 SUPPORTED_OUTPUT_NUM = [1, 2, 3, 4, 5]
-SUPPORTED_DEVICE_ARCH = ["ascend910", "ascend310p", "ascend310"]
+SUPPORTED_DEVICE_ARCH = ["ascend910", "ascend310p", "ascend310", "ascend910b"]
 
 
 def gen_ops_info():
