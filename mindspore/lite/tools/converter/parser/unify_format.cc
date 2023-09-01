@@ -330,16 +330,19 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
 
 STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (fmk_type_ != converter::kFmkTypeOnnx) {
+  if (fmk_type_ != converter::kFmkTypeOnnx || cnode->inputs().size() <= kNumInputSize) {
     return RET_OK;
   }
-  if (cnode->inputs().size() > kNumInputSize && utils::isa<ParameterPtr>(cnode->input(kNumResizeInputShape))) {
+  auto size_node = cnode->input(kNumInputSize);
+  MS_CHECK_TRUE_RET(size_node != nullptr, RET_ERROR);
+  if (utils::isa<ParameterPtr>(size_node) && size_node->cast<ParameterPtr>() != nullptr &&
+      size_node->cast<ParameterPtr>()->has_default()) {
     auto status = ConvertOnnxResizeForConstShape(func_graph, cnode);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "ConvertOnnxResizeForConstShape failed.";
       return RET_ERROR;
     }
-  } else if (cnode->inputs().size() > kNumInputSize && utils::isa<CNodePtr>(cnode->input(kNumResizeInputShape))) {
+  } else {
     auto status = ConvertOnnxResizeForVariableShape(func_graph, cnode);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "ConvertResizeForVariableShape failed.";

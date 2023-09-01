@@ -343,9 +343,6 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
     MS_LOG(ERROR) << "cnode is invalid.";
     return lite::RET_ERROR;
   }
-  if (resize_prim->GetAttr(ops::kCoordinateTransformMode) == nullptr) {
-    return lite::RET_OK;
-  }
   if (cnode->inputs().size() == opt::kInputSizeFour) {
     auto new_input = cnode->inputs();
     new_input.erase(new_input.begin() + opt::kInputIndexTwo);

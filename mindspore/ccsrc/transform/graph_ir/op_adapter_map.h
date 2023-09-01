@@ -460,6 +460,8 @@ constexpr const char kNameCommonGRU[] = "CommonGRU";
 constexpr const char kNameTril[] = "Tril";
 constexpr const char kNameConv2DTransposeV2[] = "Conv2DTransposeV2";
 constexpr const char kNameGridSampler3D[] = "GridSampler3D";
+constexpr const char kNameResizeArea[] = "ResizeArea";
+constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 
 class OpAdapterDesc;
 

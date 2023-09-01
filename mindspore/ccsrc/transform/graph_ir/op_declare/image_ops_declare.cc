@@ -58,6 +58,21 @@ REG_ADPT_DESC(ResizeBilinear, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
 
+// ResizeArea
+INPUT_MAP(ResizeArea) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
+ATTR_INPUT_MAP(ResizeArea) = {{"size", "size"}};
+ATTR_MAP(ResizeArea) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeArea) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ResizeArea, kNameResizeArea, ADPT_DESC(ResizeArea))
+
+// ResizeBicubic
+INPUT_MAP(ResizeBicubic) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
+ATTR_INPUT_MAP(ResizeBicubic) = {{"size", "size"}};
+ATTR_MAP(ResizeBicubic) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                           {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
+
 // CropAndResize
 INPUT_MAP(CropAndResize) = {
   {1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};

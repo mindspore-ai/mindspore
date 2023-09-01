@@ -67,6 +67,10 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
     dst_prim = std::make_shared<acl::ResizeNearestNeighborV2>();
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::LINEAR)) {
     dst_prim = std::make_shared<acl::ResizeBilinearV2>();
+  } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::AREA)) {
+    dst_prim = std::make_shared<acl::ResizeArea>();
+  } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::CUBIC)) {
+    dst_prim = std::make_shared<acl::ResizeBicubic>();
   } else {
     MS_LOG(ERROR) << "Not support resize method " << method << ", cnode " << cnode->fullname_with_scope();
     return RET_ERROR;
