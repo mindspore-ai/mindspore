@@ -70,6 +70,7 @@ using mindspore::abstract::AbstractTuplePtr;
 using mindspore::abstract::AbstractUndetermined;
 using mindspore::abstract::EnvSetSparseResultMgr;
 using mindspore::abstract::FuncGraphAbstractClosure;
+using mindspore::abstract::PartialAbstractClosure;
 
 void HyperMap::Init() {
   if (fn_leaf_) {
@@ -1389,7 +1390,10 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
         MS_LOG(EXCEPTION) << "'VmapOperation' arg0 is a 'CellList', whose elements must be 'Cell', but got "
                           << fn_abs->ToString() << ".";
       }
-
+      auto partial_fn = dyn_cast<PartialAbstractClosure>(fn_abs);
+      if (partial_fn != nullptr) {
+        fn = partial_fn->fn();
+      }
       auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
       if (real_fn == nullptr) {
         MS_LOG(EXCEPTION) << "'VmapOperation' arg0 is a 'CellList', whose element " << fn->ToString()
@@ -1399,8 +1403,8 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
       FuncGraphPtr orig_graph = real_fn->func_graph();
       MS_EXCEPTION_IF_NULL(orig_graph);
       orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-
-      int fn_nparam = SizeToInt(orig_graph->parameters().size());
+      int fn_nparam =
+        SizeToInt(orig_graph->parameters().size() - (partial_fn != nullptr ? partial_fn->args().size() : 0));
       if (*nparam == -1) {
         origin_graph_info = orig_graph->debug_info();
         *nparam = fn_nparam;
@@ -1413,7 +1417,10 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
     if (fn == nullptr) {
       MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString() << ".";
     }
-
+    auto partial_fn = dyn_cast<PartialAbstractClosure>(fn);
+    if (partial_fn != nullptr) {
+      fn = partial_fn->fn();
+    }
     auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
     if (real_fn == nullptr) {
       MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to 'FuncGraphAbstractClosure' failed.";
@@ -1422,7 +1429,7 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
     FuncGraphPtr orig_graph = real_fn->func_graph();
     MS_EXCEPTION_IF_NULL(orig_graph);
     orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-    *nparam = SizeToInt(orig_graph->parameters().size());
+    *nparam = SizeToInt(orig_graph->parameters().size() - (partial_fn != nullptr ? partial_fn->args().size() : 0));
     origin_graph_info = orig_graph->debug_info();
   }
   return origin_graph_info;
