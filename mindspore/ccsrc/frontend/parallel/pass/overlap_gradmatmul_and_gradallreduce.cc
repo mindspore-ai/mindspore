@@ -110,15 +110,12 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
         forward_matmul_unique_id_list.end()) {
       continue;
     }
-    auto pre_node = RealInputNode(matmul_cnode, 1);
-    if (!pre_node->isa<CNode>()) {
-      continue;
-    }
-    auto pre_cnode = pre_node->cast<CNodePtr>();
-    if (!pre_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+    auto pre_cnode = RealInputNode(matmul_cnode, 1)->cast<CNodePtr>();
+    if (pre_cnode == nullptr || !pre_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
       (*backward_matmul_list).push_back(matmul_cnode);
       continue;
     }
+
     auto pre_cnode_forward_comm_unique_id =
       GetValue<std::string>(pre_cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
     if (std::find(forward_comm_node_unique_id_list.begin(), forward_comm_node_unique_id_list.end(),
@@ -208,8 +205,8 @@ void OverlapGradMatmulAndGradAllreduce(const FuncGraphPtr &graph) {
         continue;
       }
     }
-    auto comm_i1_input = comm_i1->input(1)->cast<CNodePtr>();
-    auto matmul_i_input = matmul_i->input(1)->cast<CNodePtr>();
+    auto comm_i1_input = comm_i1->input(1);
+    auto matmul_i_input = matmul_i->input(1);
     std::vector<AnfNodePtr> depend1_inputs{NewValueNode(prim::kPrimDepend), matmul_i_input, comm_i1_input};
     auto depend_node1 = matmul_i_input->func_graph()->NewCNode(depend1_inputs);
     depend_node1->set_abstract(matmul_i_input->abstract()->Clone());
