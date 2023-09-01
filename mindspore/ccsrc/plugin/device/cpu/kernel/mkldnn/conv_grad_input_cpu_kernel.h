@@ -49,7 +49,7 @@ class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
   const size_t input_size_index_{2};
   std::string kernel_type_;
   std::string format_;
-  std::string pad_mode_;
+  mindspore::PadMode pad_mode_;
   int64_t group_;
   std::vector<int64_t> strides_include_nc_;
   std::vector<int64_t> dilation_include_nc_;

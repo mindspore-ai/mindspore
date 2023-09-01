@@ -44,7 +44,7 @@ bool ConvGradInputCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   const auto stride_attr = format_ == NCHW ? STRIDE : STRIDES;
   const auto dilation_attr = format_ == NCHW ? DILATION : DILATIONS;
-  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  pad_mode_ = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
   strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(stride_attr));
   dilation_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(dilation_attr));
   return true;

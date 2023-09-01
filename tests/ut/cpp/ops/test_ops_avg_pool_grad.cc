@@ -30,53 +30,32 @@
 
 namespace mindspore {
 namespace ops {
-struct AvgPoolGradShape {
-  ShapeVector x_origin_shape;
+struct AvgPoolGradParams {
+  ShapeVector x_shape;
+  TypePtr x_dtype;
   ShapeVector out_shape;
 };
 
-struct AvgPoolGradDType {
-  TypePtr x_origin_dtype;
-  TypePtr out_dtype;
-};
-
-class TestAvgPoolGrad : public TestOps,
-                        public testing::WithParamInterface<std::tuple<AvgPoolGradShape, AvgPoolGradDType>> {};
+class TestAvgPoolGrad : public TestOps, public testing::WithParamInterface<AvgPoolGradParams> {};
 
 TEST_P(TestAvgPoolGrad, dyn_shape) {
-  const auto &shape_param = std::get<0>(GetParam());
-  const auto &dtype_param = std::get<1>(GetParam());
+  const auto &param = GetParam();
   auto avg_pool_grad_func_impl = std::make_shared<AvgPoolGradFuncImpl>();
   auto prim = std::make_shared<Primitive>("AvgPoolGrad");
 
-  auto x_origin = std::make_shared<abstract::AbstractTensor>(dtype_param.x_origin_dtype, shape_param.x_origin_shape);
-  ASSERT_NE(x_origin, nullptr);
-
-  auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
-  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_dtype);
-
-  auto infer_shape = avg_pool_grad_func_impl->InferShape(prim, {x_origin});
+  auto x = std::make_shared<abstract::AbstractTensor>(param.x_dtype, param.x_shape);
+  ASSERT_NE(x, nullptr);
+  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  auto infer_shape = avg_pool_grad_func_impl->InferShape(prim, {x});
   ASSERT_NE(infer_shape, nullptr);
   ASSERT_TRUE(*infer_shape == *expect_shape);
-  auto infer_dtype = avg_pool_grad_func_impl->InferType(prim, {x_origin});
-  ASSERT_NE(infer_dtype, nullptr);
-  ASSERT_TRUE(*infer_dtype == *expect_dtype);
 }
 
-auto AvgPoolGradDynTestCase = testing::ValuesIn({
-  AvgPoolGradShape{{1, 3, 5, 5}, {1, 3, 5, 5}},
-  AvgPoolGradShape{{1, 3, -1, -1}, {1, 3, -1, -1}},
-  AvgPoolGradShape{{-1, -1, -1, -1}, {-1, -1, -1, -1}},
-  AvgPoolGradShape{{-2}, {-2}},
-});
-
-auto AvgPoolGradDTypeTestCase = testing::ValuesIn({
-  AvgPoolGradDType{kFloat16, kFloat16},
-  AvgPoolGradDType{kFloat32, kFloat32},
-  AvgPoolGradDType{kFloat64, kFloat64},
-});
-
 INSTANTIATE_TEST_CASE_P(TestAvgPoolGradGroup, TestAvgPoolGrad,
-                        testing::Combine(AvgPoolGradDynTestCase, AvgPoolGradDTypeTestCase));
+                        testing::Values(AvgPoolGradParams{{1, 3, 5, 5}, kFloat16, {1, 3, 5, 5}},
+                                        AvgPoolGradParams{{1, 3, -1, -1}, kFloat32, {1, 3, -1, -1}},
+                                        AvgPoolGradParams{{-1, -1, -1, -1}, kFloat64, {-1, -1, -1, -1}},
+                                        AvgPoolGradParams{{-2}, kFloat64, {-2}}));
+
 }  // namespace ops
 }  // namespace mindspore

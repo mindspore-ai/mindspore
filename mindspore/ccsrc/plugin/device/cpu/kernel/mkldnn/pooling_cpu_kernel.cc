@@ -35,7 +35,7 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
   format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
-  pad_mode = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  pad_mode = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
   kernel_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
   strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
 
@@ -45,7 +45,7 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
                  (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
   }
 
-  if (kernel_name_ == kAvgPool3DOpName && (pad_mode == PAD_MODE_LOWER_PAD || pad_mode == PAD_MODE_UPPER_PAD) &&
+  if (kernel_name_ == kAvgPool3DOpName && (pad_mode == mindspore::PadMode::PAD) &&
       KernelMod::primitive_->HasAttr(DIVISOR_OVERRIDE) &&
       GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE)) != 0 &&
       KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&

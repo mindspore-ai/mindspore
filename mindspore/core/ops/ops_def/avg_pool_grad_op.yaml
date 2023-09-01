@@ -1,11 +1,11 @@
 #operator avg_pool_grad
 avg_pool_grad:
     args:
-        x_origin:
+        x:
             dtype: tensor
-        out_origin:
+        out:
             dtype: tensor
-        grad:
+        dout:
             dtype: tensor
         kernel_size:
             dtype: tuple[int]

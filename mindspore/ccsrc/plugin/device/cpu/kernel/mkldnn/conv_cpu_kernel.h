@@ -39,7 +39,7 @@ class ConvCpuKernelMod : public MKLCpuKernelMod {
 
  private:
   std::string format_;
-  std::string pad_mode_;
+  mindspore::PadMode pad_mode_;
   int64_t group_;
 };
 }  // namespace kernel

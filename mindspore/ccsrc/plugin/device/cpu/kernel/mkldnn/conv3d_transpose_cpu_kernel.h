@@ -45,7 +45,7 @@ class Conv3DTransposeCpuKernelMod : public MKLCpuKernelMod {
  private:
   size_t group{0};
   std::string format;
-  std::string pad_mode;
+  mindspore::PadMode pad_mode;
   std::vector<int64_t> strides_include_nc;
   std::vector<int64_t> dilation_include_nc;
   std::string kernel_type_;

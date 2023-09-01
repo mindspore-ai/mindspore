@@ -36,7 +36,7 @@ bool ConvGradFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
   group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP));
-  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  pad_mode_ = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
   if (format_ != NCHW && format_ != NCDHW) {
     MS_LOG(ERROR) << kernel_name_ << " only supports " << NCHW << " or " << NCDHW << " format "
                   << ", but got format: " << format_;

@@ -24,50 +24,72 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kAvgPooling3DGradInputsNum = 1;
-constexpr size_t kAvgPooling3DGradDynamicInputsNum = 2;
-constexpr size_t kPoolingGradInputsNum = 3;
-constexpr size_t kPoolingGradOutputsNum = 1;
 constexpr size_t kMaxPoolingGradWorkSpaceNum = 2;
 constexpr size_t kAvgPoolingGradWorkSpaceNum = 1;
+// avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
+constexpr size_t kKernelSizeIdx = 3;
+constexpr size_t kStridesIdx = 4;
+constexpr size_t kPadModeIdx = 5;
+constexpr size_t kDataFormatIdx = 6;
+
+// avgpool3dgrad input indexes
+constexpr size_t kAvg3DGradIndex = 1;
+constexpr size_t kAvg3DKernelSizeIdx = 2;
+constexpr size_t kAvg3DStridesIdx = 3;
+constexpr size_t kAvg3DPadModeIdx = 4;
+constexpr size_t kAvg3DPadsIdx = 5;
+constexpr size_t kAvg3DCeilModeIdx = 6;
+constexpr size_t kAvg3DCountIncludePadIdx = 7;
+constexpr size_t kAvg3DDivisorOverrideIdx = 8;
+constexpr size_t kAvg3DDataFormatIdx = 9;
+
+// maxpool3dgrad input indexes are different from those of avgpool3dgrad
+// the input indexes of maxpool3dgrad are roughly listed, which need to be determined later.
+constexpr size_t kMax3DGradIndex = kGradIndex;
+constexpr size_t kMax3DKernelSizeIdx = kKernelSizeIdx;
+constexpr size_t kMax3DStridesIdx = kStridesIdx;
+constexpr size_t kMax3DPadModeIdx = kPadModeIdx;
+constexpr size_t kMax3DPadsIdx = 6;
+constexpr size_t kMax3DCeilModeIdx = 7;
+constexpr size_t kMax3DDataFormatIdx = 8;
+
 }  // namespace
 
 bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  size_t inputs_size = inputs.size();
-  if (kernel_name_ != kAvgPool3DGradOpName) {
-    CHECK_KERNEL_INPUTS_NUM(inputs_size, kPoolingGradInputsNum, kernel_name_);
-  } else if (inputs_size != kAvgPooling3DGradInputsNum && inputs_size != kAvgPooling3DGradDynamicInputsNum) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the number of inputs must be " << kAvgPooling3DGradInputsNum
-                     << " or " << kAvgPooling3DGradDynamicInputsNum << ", but got " << inputs_size;
-  }
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingGradOutputsNum, kernel_name_);
-  if (KernelMod::primitive_->HasAttr(CEIL_MODE)) {
-    ValuePtr ceil_mode = KernelMod::primitive_->GetAttr(CEIL_MODE);
-    ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
-                 (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
-  }
-  if (kernel_name_ == kAvgPoolGradOpName || kernel_name_ == kAvgPool3DGradOpName) {
+  grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? kAvg3DGradIndex : kGradIndex;
+  dtype_ = inputs[grad_index_]->dtype_id();
+  // avgpool3dgrad input
+  if (kernel_name_ == kAvgPool3DGradOpName) {
+    ceil_mode_ = inputs[kAvg3DCeilModeIdx]->GetValueWithCheck<bool>();
     algorithm_ = dnnl::algorithm::pooling_avg;
-    if (KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&
-        GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD))) {
+    if (inputs[kAvg3DDivisorOverrideIdx]->GetValueWithCheck<bool>()) {
       algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
     }
-    if (KernelMod::primitive_->HasAttr(DIVISOR_OVERRIDE) &&
-        GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE)) != 0) {
-      divisor_override_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE));
-    }
+    divisor_override_ = inputs[kAvg3DDivisorOverrideIdx]->GetValueWithCheck<int64_t>();
+    format_ = static_cast<mindspore::Format>(inputs[kAvg3DDataFormatIdx]->GetValueWithCheck<int64_t>());
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kAvg3DPadModeIdx]->GetValueWithCheck<int64_t>());
+    kernel_include_nc_ = inputs[kAvg3DKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_include_nc_ = inputs[kAvg3DStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    dtype_ = inputs[kAvg3DGradIndex]->dtype_id();
+    return true;
   }
-  grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 0 : kGradIndex;
-  if (kernel_name_ == kAvgPool3DGradOpName && inputs_size == kAvgPooling3DGradDynamicInputsNum) {
-    grad_index_ = 1;
+
+  // avgpoolgrad, maxpoolgrad and maxpool3dgrad input
+  if (kernel_name_ == kAvgPoolGradOpName) {
+    algorithm_ = dnnl::algorithm::pooling_avg;
   }
-  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
-  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
-  kernel_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
-  strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
-  dtype_ = inputs[grad_index_]->dtype_id();
+  pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
+  kernel_include_nc_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_include_nc_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  format_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
+
+  // ceil mode and format of maxpool3dgrad are different index
+  if (kernel_name_ == kMaxPool3DGradGradOpName) {
+    ceil_mode_ = inputs[kMax3DCeilModeIdx]->GetValueWithCheck<bool>();
+    format_ = static_cast<mindspore::Format>(inputs[kMax3DDataFormatIdx]->GetValueWithCheck<int64_t>());
+  }
   return true;
 }
 
@@ -84,29 +106,28 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   src_desc_ = GetDefaultMemDesc(src_shape);
   dst_desc_ = GetDefaultMemDesc(dst_shape_);
-  if (src_dim == SHAPE_4D && format_ != NCHW) {
+  if (src_dim == SHAPE_4D && format_ != mindspore::Format::NCHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format_;
   }
-  if (src_dim == SHAPE_5D && format_ != NCDHW) {
+  if (src_dim == SHAPE_5D && format_ != mindspore::Format::NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format_;
   }
 
-  if (kernel_include_nc_.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
-                      << kernel_include_nc_.size() << "D!";
-  }
-  if (strides_include_nc_.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
-                      << strides_include_nc_.size() << "D!";
-  }
-  const dnnl::memory::dims kernel(kernel_include_nc_.begin() + NC_LEN, kernel_include_nc_.end());
-  const dnnl::memory::dims strides(strides_include_nc_.begin() + NC_LEN, strides_include_nc_.end());
+  const dnnl::memory::dims kernel(kernel_include_nc_.begin(), kernel_include_nc_.end());
+  const dnnl::memory::dims strides(strides_include_nc_.begin(), strides_include_nc_.end());
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
   PaddingInfo padding_info{pad_mode_, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
-  GetPadding(src_shape, padding_info);
+  std::vector<int64_t> pad_list;
+  if (kernel_name_ == kAvgPool3DGradOpName) {
+    pad_list = inputs[kAvg3DPadsIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  }
+  if (kernel_name_ == kMaxPool3DGradOpName) {
+    pad_list = inputs[kMax3DPadsIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  }
+  GetPadding(src_shape, padding_info, pad_list);
 
   // Pooling_avg forward description
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc_,

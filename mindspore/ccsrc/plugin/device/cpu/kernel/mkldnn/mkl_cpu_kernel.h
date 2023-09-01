@@ -178,7 +178,7 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
 #endif
 
 struct PaddingInfo {
-  const std::string &pad_mode;
+  const mindspore::PadMode &pad_mode;
   const dnnl::memory::dims &kernel_size;
   const dnnl::memory::dims &stride;
   const dnnl::memory::dims &dilation;
@@ -206,7 +206,12 @@ class MKLCpuKernelMod : public NativeCpuKernelMod {
  protected:
   bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
                        std::vector<size_t> *dst_shape) const;
+  // new function
+  void GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info,
+                  const std::vector<int64_t> &pad_list) const;
+  // old function
   void GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info) const;
+
   void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
   void SetArgumentHandle(int arg_key, void *ptr);
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;

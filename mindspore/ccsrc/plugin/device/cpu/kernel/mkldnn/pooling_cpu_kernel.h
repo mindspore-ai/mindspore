@@ -59,7 +59,7 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
   std::string format_;
-  std::string pad_mode;
+  mindspore::PadMode pad_mode;
   std::vector<int64_t> kernel_include_nc{};
   std::vector<int64_t> strides_include_nc{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};

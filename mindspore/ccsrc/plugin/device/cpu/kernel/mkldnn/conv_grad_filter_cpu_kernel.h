@@ -50,7 +50,7 @@ class ConvGradFilterCpuKernelMod : public MKLCpuKernelMod {
   std::string kernel_type_;
   std::string format_;
   int64_t group_;
-  std::string pad_mode_;
+  mindspore::PadMode pad_mode_;
   std::vector<int64_t> strides_include_nc_;
   std::vector<int64_t> dilation_include_nc_;
 };

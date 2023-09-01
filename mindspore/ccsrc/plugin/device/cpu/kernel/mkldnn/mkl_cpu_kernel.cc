@@ -56,6 +56,42 @@ void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int6
 }
 }  // namespace
 
+// new function
+void MKLCpuKernelMod::GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info,
+                                 const std::vector<int64_t> &pad_list) const {
+  MS_EXCEPTION_IF_NULL(padding_info.padding_l);
+  MS_EXCEPTION_IF_NULL(padding_info.padding_r);
+  size_t src_dim = src_shape.size();
+  if (src_dim < NC_LEN) {
+    MS_LOG(EXCEPTION) << "Set pad only support src dim >= 2!";
+  }
+  const size_t dim_exclude_nc = src_dim - NC_LEN;
+  std::vector<int64_t> shape_exclude_nc;
+  for (size_t i = NC_LEN; i < src_dim; ++i) {
+    shape_exclude_nc.push_back(SizeToLong(src_shape[i]));
+  }
+
+  if (padding_info.pad_mode == mindspore::PadMode::SAME) {
+    for (size_t i = 0; i < dim_exclude_nc; ++i) {
+      int64_t wh = shape_exclude_nc[i];
+      int64_t out = (wh + padding_info.stride[i] - 1) / padding_info.stride[i];
+      int64_t effective_k = (SizeToLong(padding_info.kernel_size[i]) - 1) * padding_info.dilation[i] + 1;
+      int64_t pad_along = std::max(int64_t(0), (out - 1) * padding_info.stride[i] + effective_k - wh);
+      int64_t pad = pad_along / 2;
+      padding_info.padding_l->push_back(pad);
+      padding_info.padding_r->push_back(pad_along - pad);
+    }
+  } else if (padding_info.pad_mode == mindspore::PadMode::VALID) {
+    for (size_t i = 0; i < dim_exclude_nc; ++i) {
+      padding_info.padding_l->push_back(0);
+      padding_info.padding_r->push_back(0);
+    }
+  } else {
+    GeneratePaddingForPadMode(padding_info, shape_exclude_nc, pad_list);
+  }
+}
+
+// old function
 void MKLCpuKernelMod::GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info) const {
   MS_EXCEPTION_IF_NULL(padding_info.padding_l);
   MS_EXCEPTION_IF_NULL(padding_info.padding_r);
@@ -69,7 +105,7 @@ void MKLCpuKernelMod::GetPadding(const std::vector<int64_t> &src_shape, const Pa
     shape_exclude_nc.push_back(SizeToLong(src_shape[i]));
   }
 
-  if (padding_info.pad_mode == PAD_MODE_LOWER_SAME || padding_info.pad_mode == PAD_MODE_UPPER_SAME) {
+  if (padding_info.pad_mode == mindspore::PadMode::SAME) {
     for (size_t i = 0; i < dim_exclude_nc; ++i) {
       int64_t wh = shape_exclude_nc[i];
       int64_t out = (wh + padding_info.stride[i] - 1) / padding_info.stride[i];
@@ -79,7 +115,7 @@ void MKLCpuKernelMod::GetPadding(const std::vector<int64_t> &src_shape, const Pa
       padding_info.padding_l->push_back(pad);
       padding_info.padding_r->push_back(pad_along - pad);
     }
-  } else if (padding_info.pad_mode == PAD_MODE_LOWER_VALID || padding_info.pad_mode == PAD_MODE_UPPER_VALID) {
+  } else if (padding_info.pad_mode == mindspore::PadMode::VALID) {
     for (size_t i = 0; i < dim_exclude_nc; ++i) {
       padding_info.padding_l->push_back(0);
       padding_info.padding_r->push_back(0);

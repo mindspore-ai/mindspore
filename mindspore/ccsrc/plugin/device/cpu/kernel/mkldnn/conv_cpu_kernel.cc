@@ -28,7 +28,7 @@ constexpr size_t kConvOutputsNum = 1;
 bool ConvCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrFormat));
   group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(kAttrGroup));
-  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrPadMode));
+  pad_mode_ = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(kAttrPadMode)));
   return true;
 }
 

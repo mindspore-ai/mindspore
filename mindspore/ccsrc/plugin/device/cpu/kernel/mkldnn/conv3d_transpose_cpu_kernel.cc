@@ -31,7 +31,7 @@ bool Conv3DTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   group = LongToSize(GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP)));
   format = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
-  pad_mode = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  pad_mode = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
   strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
   dilation_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(DILATIONS));
   return true;
