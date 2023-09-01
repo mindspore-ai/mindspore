@@ -440,8 +440,8 @@ void MatVecMulNoPackFp32(const float *a, const float *b, float *c, const float *
       }
       c[oc_index] = dst;
     }
-    a += k;
-    b += k * col;
+    a += C1500NUM;
+    b += C1500NUM * col;
   }
   if (k == depth) {
     return;

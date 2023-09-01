@@ -162,6 +162,7 @@ struct FullQuantParam {
   bool per_channel = true;
   TargetDevice target_device = CPU;
   double smooth_alpha = 0.5f;
+  bool enable_smooth_shift = false;
 };
 
 struct TransformQuantParam {

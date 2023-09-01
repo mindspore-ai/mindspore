@@ -539,7 +539,7 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
 
   MS_LOG(INFO) << "Start smooth quant.";
   SmoothQuant sq;
-  ret = sq.Run(func_graph, param_->fullQuantParam.smooth_alpha);
+  ret = sq.Run(func_graph, param_->fullQuantParam.smooth_alpha, param_->fullQuantParam.enable_smooth_shift);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run smooth quant failed.";
     return ret;
@@ -557,7 +557,6 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
     MS_LOG(ERROR) << "Insert AscendQuant&DeQuant node failed.";
     return ret;
   }
-
   return RET_OK;
 }
 

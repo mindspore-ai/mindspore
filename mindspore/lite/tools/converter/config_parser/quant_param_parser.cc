@@ -204,6 +204,11 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
     MS_LOG(ERROR) << "INPUT ILLEGAL: smooth_alpha should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!full_quant_string.enable_smooth_shift.empty() &&
+      !ConvertBool(full_quant_string.enable_smooth_shift, &full_quant->enable_smooth_shift)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: enable_smooth_shift should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 
