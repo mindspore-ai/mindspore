@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <set>
 
 #include "ir/anf.h"
 #include "utils/hash_map.h"
@@ -85,6 +86,8 @@ class BACKEND_EXPORT OpAdaptationInfoRegister {
   static std::string GenerateKey(const std::string &me_op_name, const std::string &device_name, bool flag);
   // key: (op_name + device_name + flag), value: <OpAdaptationInfo *>
   static std::map<std::string, OpAdaptationInfo *> &GetOpInfoMap();
+  // For improving performance, no need generate key for every op
+  static std::set<std::string> &GetOpName();
 };
 
 class BACKEND_EXPORT RegisterHelper {

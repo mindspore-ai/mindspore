@@ -372,10 +372,11 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     return ProcessFastPass(func_graph, func_graph_index);
   }
   if (func_graph_index->has_gen_index()) {
-    auto ret = MustExistPrimitiveName();
+    const auto &ret = MustExistPrimitiveName();
     for (const auto &primtive_name : ret) {
-      auto cnode_iter = func_graph_index->name_to_cnode_.find(primtive_name);
+      const auto cnode_iter = func_graph_index->name_to_cnode_.find(primtive_name);
       if (cnode_iter == func_graph_index->name_to_cnode_.end()) {
+        MS_LOG(INFO) << "Prim " << primtive_name << " not exist in name to cnode";
         return false;
       }
     }

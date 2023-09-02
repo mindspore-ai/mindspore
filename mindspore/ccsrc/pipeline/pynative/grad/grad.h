@@ -47,7 +47,7 @@ class GradExecutor {
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
         dynamic_shape_(std::make_shared<DynamicShape>()),
-        async_executor_(std::make_shared<AsyncHqueue>("grad_queue")) {}
+        bprop_queue_(std::make_shared<AsyncHqueue>("bprop_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -91,7 +91,7 @@ class GradExecutor {
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline AsyncHqueuePtr async_executor() const { return async_executor_; }
+  inline AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
   mindspore::OrderedMap<std::string, TopCellInfoPtr> &already_run_top_cell() { return already_run_top_cell_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
@@ -119,7 +119,6 @@ class GradExecutor {
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
-  void WorkerJoin() { async_executor_->WorkerJoin(); }
   void SaveDynamicInputsCells(const py::object &obj, const py::args &args);
   void SetTopCellDynamicAttr(const py::object &cell);
   bool use_dynamic_shape_process() const {
@@ -211,7 +210,9 @@ class GradExecutor {
   AnfNodePtr GetValueSequenceInput(const ValuePtr &v) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
-  void DispatchGradQueueTask(std::function<void(void)> task) const;
+  void DispatchGradQueueTask(std::function<void(void)> &&task) const;
+  void WaitBpropTask() const;
+  void ClearBpropTask() const;
 
   bool init_{false};
   bool grad_flag_{false};
@@ -240,7 +241,8 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};
-  AsyncHqueuePtr async_executor_;
+  AsyncHqueuePtr bprop_queue_;
+  AsyncHqueuePtr bprop_assist_queue_;
   std::set<std::string> dynamic_inputs_cells_;
   std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
   bool forward_use_dynamic_shape_process_{false};

@@ -473,20 +473,23 @@ void CheckNodeValid(const AnfNodePtr &node) {
   }
 }
 
-void AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session::SessionPtr &session_ptr) {
+bool AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session::SessionPtr &session_ptr) {
+  const auto &parameters = kernel_graph->parameters();
   // Just have a return node or empty graph
-  if (kernel_graph->nodes().size() < kIndex2) {
-    return;
+  if ((kernel_graph->nodes().size() - parameters.size()) < kIndex2) {
+    return false;
   }
+  // Update parameters info
+  for (const auto &p : parameters) {
+    (void)session_ptr->CreateNewParameterFromParameter(p, kernel_graph.get());
+    kernel_graph->SetKernelInfoForNode(p);
+  }
+  // Run by single op will create kernel info in single op graph, so no need do this here;
+  // But, run by Actor need kernel info, so do this here
   bool run_by_single_op = kernel_graph->has_flag(kFlagEnableRunGraphBySingleOp);
-  const auto &nodes = TopoSort(kernel_graph->get_return());
-  for (const auto &node : nodes) {
-    if (node->isa<Parameter>()) {
-      (void)session_ptr->CreateNewParameterFromParameter(node, kernel_graph.get());
-    }
-    // Run by single op will create kernel info in single op graph, so no need do this here;
-    // Run by Actor need kernel info, so do this here
-    if (!run_by_single_op) {
+  if (!run_by_single_op) {
+    const auto &nodes = TopoSort(kernel_graph->get_return());
+    for (const auto &node : nodes) {
       if (node->isa<CNode>()) {
         const auto &cnode = node->cast<CNodePtr>();
         if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0)); prim != nullptr) {
@@ -514,6 +517,7 @@ void AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session
   output_node->set_abstract(abstract_tuple);
   kernel_graph->set_output(output_node);
   MS_LOG(INFO) << "Insert make tuple for output";
+  return true;
 }
 
 bool NeedCheckMultiTarget(const FuncGraphPtr &func_graph, int ms_execution_mode) {
@@ -524,6 +528,46 @@ bool NeedCheckMultiTarget(const FuncGraphPtr &func_graph, int ms_execution_mode)
   bool is_call_graph = func_graph->has_flag(kFlagJitCallGraph);
   bool is_control_flow = !func_graph->func_graphs_used_total().empty();
   return (run_in_dynamic && is_call_graph) || is_control_flow;
+}
+
+void UnifyIR(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  static const std::map<std::string, std::string> kOpListToTupleNames = {
+    {mindspore::kMakeListNewOpName, mindspore::kMakeTupleOpName},
+    {mindspore::kListGetItemOpName, mindspore::kTupleGetItemOpName},
+    {mindspore::kListSetItemOpName, mindspore::kTupleSetItemOpName}};
+  // List name --> tuple name.
+  auto &&op_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto iter = kOpListToTupleNames.find(op_name);
+  if (iter != kOpListToTupleNames.end()) {
+    common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+    cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(iter->second)));
+    // Reset full scope name.
+    cnode->set_fullname_with_scope("");
+    MS_LOG(INFO) << "Rename op from " << iter->first << " to " << iter->second << " for op "
+                 << cnode->fullname_with_scope() << ", debug name:" << cnode->DebugString();
+    op_name = iter->second;
+  }
+
+  // TupleGetItem --> RealTupleGetItem.
+  if (op_name == mindspore::kTupleGetItemOpName && NeedConvertToRealTupleGetItem(cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+    cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealTupleGetItemOpName)));
+    // Reset full scope name.
+    cnode->set_fullname_with_scope("");
+    MS_LOG(INFO) << "Rename op from TupleGetItem to RealTupleGetItem for op " << cnode->fullname_with_scope()
+                 << ", debug name:" << cnode->DebugString();
+  }
+
+  // MakeTuple --> RealMakeTuple
+  if (op_name == mindspore::kMakeTupleOpName && common::AnfAlgo::IsDynamicSequence(cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
+    cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealMakeTupleOpName)));
+    // Reset full scope name.
+    cnode->set_fullname_with_scope("");
+    MS_LOG(INFO) << "Rename op from MakeTuple to RealMakeTuple for op " << cnode->fullname_with_scope()
+                 << ", debug name:" << cnode->DebugString();
+  }
 }
 }  // namespace
 
@@ -606,10 +650,6 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
-  static const std::map<std::string, std::string> kOpListToTupleNames = {
-    {mindspore::kMakeListNewOpName, mindspore::kMakeTupleOpName},
-    {mindspore::kListGetItemOpName, mindspore::kTupleGetItemOpName},
-    {mindspore::kListSetItemOpName, mindspore::kTupleSetItemOpName}};
   // When the input is an empty sequence, the number of inputs will be recorded as 0, and the tensor cannot be
   // expressed, so the empty sequence is set to dynamic len.
   for (const auto &parameter : root_graph->parameters()) {
@@ -627,50 +667,33 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   const auto &graphs = root_graph->manager()->func_graphs();
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
-    const auto &nodes = TopoSort(graph->get_return());
-    for (const auto &node : nodes) {
-      if (node == nullptr || (!node->isa<CNode>())) {
-        continue;
-      }
-
+    auto output = graph->get_return();
+    if (!output->isa<CNode>()) {
+      continue;
+    }
+    bool is_pynative_kernel_graph = graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
+    auto seen = NewSeenGeneration();
+    std::queue<AnfNodePtr> to_visit;
+    to_visit.emplace(output);
+    while (!to_visit.empty()) {
+      auto node = to_visit.front();
+      to_visit.pop();
+      MS_EXCEPTION_IF_NULL(node);
       CheckNodeValid(node);
 
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      // List name --> tuple name.
-      const auto &op_name = common::AnfAlgo::GetCNodeName(cnode);
-      auto iter = kOpListToTupleNames.find(op_name);
-      if (iter != kOpListToTupleNames.end()) {
-        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
-        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(iter->second)));
-        // Reset full scope name.
-        cnode->set_fullname_with_scope("");
-        MS_LOG(INFO) << "Rename op from " << iter->first << " to " << iter->second << " for op "
-                     << cnode->fullname_with_scope() << ", debug name:" << cnode->DebugString();
-      }
-
-      // TupleGetItem --> RealTupleGetItem.
-      if (op_name == mindspore::kTupleGetItemOpName && NeedConvertToRealTupleGetItem(cnode)) {
-        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
-        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealTupleGetItemOpName)));
-        // Reset full scope name.
-        cnode->set_fullname_with_scope("");
-        MS_LOG(INFO) << "Rename op from TupleGetItem to RealTupleGetItem for op " << cnode->fullname_with_scope()
-                     << ", debug name:" << cnode->DebugString();
-      }
-
-      // MakeTuple --> RealMakeTuple
-      if (op_name == mindspore::kMakeTupleOpName && common::AnfAlgo::IsDynamicSequence(cnode)) {
-        common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
-        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealMakeTupleOpName)));
-        // Reset full scope name.
-        cnode->set_fullname_with_scope("");
-        MS_LOG(INFO) << "Rename op from MakeTuple to RealMakeTuple for op " << cnode->fullname_with_scope()
-                     << ", debug name:" << cnode->DebugString();
-      }
-
-      if (common::GetEnv("MS_RUNTIME_COMPILE") == "1") {
+      UnifyIR(cnode);
+      if (!is_pynative_kernel_graph && common::GetEnv("MS_RUNTIME_COMPILE") == "1") {
         SetPyExecuteSyncAttr(cnode);
+      }
+      for (auto &input : cnode->inputs()) {
+        MS_EXCEPTION_IF_NULL(input);
+        if (input->seen_ == seen || !input->isa<CNode>()) {
+          continue;
+        }
+        to_visit.emplace(input);
+        input->seen_ = seen;
       }
     }
   }
@@ -719,16 +742,17 @@ void MindRTBackendBase::CompileGraph(const FuncGraphPtr &func_graph, device::Run
     MS_EXCEPTION_IF_NULL(session);
     session->SetKernelGraphId(kernel_graph);
     MS_LOG(INFO) << "Compile graph: " << kernel_graph->ToString() << ", kernel graph";
-    AddKernelGraphCompileInfo(kernel_graph, session);
-    kernel_graph->SetExecOrderByDefault();
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), device_id_});
-    MS_EXCEPTION_IF_NULL(device_context);
-    device_context->Initialize();
-    CompileKernelGraph(kernel_graph, std::make_pair(kernel_graph->inputs(), kernel_graph->outputs()), device_context,
-                       run_mode);
+    if (AddKernelGraphCompileInfo(kernel_graph, session)) {
+      kernel_graph->SetExecOrderByDefault();
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), device_id_});
+      MS_EXCEPTION_IF_NULL(device_context);
+      device_context->Initialize();
+      CompileKernelGraph(kernel_graph, std::make_pair(kernel_graph->inputs(), kernel_graph->outputs()), device_context,
+                         run_mode);
+    }
   }
 }
 
