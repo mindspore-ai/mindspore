@@ -166,4 +166,10 @@ ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>
                     {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Im2col, kNameIm2Col, ADPT_DESC(Im2col))
+
+// AffineGrid
+INPUT_MAP(AffineGrid) = {{1, INPUT_DESC(theta)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(AffineGrid) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(AffineGrid) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AffineGrid, kNameAffineGrid, ADPT_DESC(AffineGrid))
 }  // namespace mindspore::transform

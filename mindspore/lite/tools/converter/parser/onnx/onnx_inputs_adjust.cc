@@ -31,6 +31,9 @@
 #include "ops/cast.h"
 #include "ops/multinomial.h"
 #include "ops/one_hot.h"
+#include "ops/affine_grid.h"
+#include "ops/reverse_v2.h"
+#include "ops/transpose.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
@@ -643,8 +646,6 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
       status = AdjustMultinomial(func_graph, cnode, &need_update_manager);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimOneHot)) {
       status = AdjustOneHot(func_graph, cnode);
-    } else {
-      continue;
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";

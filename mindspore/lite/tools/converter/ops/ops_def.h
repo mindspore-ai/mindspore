@@ -54,6 +54,8 @@ ADD_CONVERTER_ONLY_OP(MegatronScaledMaskedSoftmax);
 ADD_CONVERTER_ONLY_OP(Shrink);
 ADD_CONVERTER_ONLY_OP(TfIdfVectorizer);
 ADD_CONVERTER_ONLY_OP(MVN);
+ADD_CONVERTER_ONLY_OP(RandomUniformLike);
+ADD_CONVERTER_ONLY_OP(Rot90);
 }  // namespace lite
 }  // namespace mindspore
 

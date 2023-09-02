@@ -146,6 +146,14 @@ ATTR_MAP(HistogramFixedWidth) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>()
 OUTPUT_MAP(HistogramFixedWidth) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(HistogramFixedWidth, kHistogramFixedWidthDOpName, ADPT_DESC(HistogramFixedWidth))
 
+// Histogram
+INPUT_MAP(Histogram) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Histogram) = {{"min", ATTR_DESC(min, AnyTraits<float>())},
+                       {"max", ATTR_DESC(max, AnyTraits<float>())},
+                       {"bins", ATTR_DESC(bins, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Histogram) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Histogram, kHistogramOpName, ADPT_DESC(Histogram))
+
 // Pdist
 INPUT_MAP(Pdist) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Pdist) = {

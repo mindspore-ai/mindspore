@@ -47,6 +47,9 @@ STATUS TransposeMapper::Mapper(const CNodePtr &cnode) {
   }
   ParameterPtr perm_param = perm_input->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(perm_param != nullptr, lite::RET_ERROR, "ParameterPtr casts failed.");
+  if (!perm_param->has_default()) {
+    return lite::RET_OK;
+  }
   auto data = acl::GetIntParameterData(perm_param);
   std::vector<int64_t> perm;
   std::transform(data.begin(), data.end(), std::back_inserter(perm),

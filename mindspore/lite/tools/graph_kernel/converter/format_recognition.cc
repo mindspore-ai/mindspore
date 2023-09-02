@@ -50,6 +50,9 @@ std::pair<std::string, bool> GetTransposeFormat(const CNodePtr &cnode) {
   if (cnode->input(perm_idx)->isa<Parameter>()) {
     auto perm_para = cnode->input(perm_idx)->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(perm_para);
+    if (!perm_para->has_default()) {
+      return GetLiteFormat(cnode);
+    }
     auto perm_tensor = perm_para->default_param()->cast<tensor::TensorPtr>();
     auto perm = static_cast<int32_t *>(perm_tensor->data_ptr()->data());
     std::transform(perm, perm + perm_tensor->shape()[0], std::back_inserter(perm_list), IntToLong);

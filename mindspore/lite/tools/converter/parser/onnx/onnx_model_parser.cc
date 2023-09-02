@@ -44,6 +44,7 @@
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include "tools/converter/parser/onnx/onnx_quantize_linear_adjust.h"
 #include "tools/converter/parser/onnx/onnx_deform_conv2d_adjust.h"
+#include "tools/converter/parser/onnx/onnx_custom_op_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
@@ -93,6 +94,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converte
     }
     if (!OnnxDeformConv2dAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "onnx MMCVModulatedDeformConv2d adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (!OnnxCustomOpAdjust::Adjust(func_graph)) {
+      MS_LOG(ERROR) << "onnx OnnxCustomOp adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
