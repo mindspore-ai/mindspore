@@ -422,12 +422,16 @@ KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &
   return *this;
 }
 
-KernelAttr &KernelAttr::AddAllSameAttr(const bool &all_same) {
+KernelAttr &KernelAttr::AddAllSameAttr(bool all_same, size_t all_same_input_num) {
   all_same_ = all_same;
+  if (all_same_input_num < 1) {
+    MS_LOG(EXCEPTION) << "Allsame attr must >= 1, but get " << all_same_input_num;
+  }
+  all_same_input_num_ = all_same_input_num;
   return *this;
 }
 
-KernelAttr &KernelAttr::AddSkipCheckAttr(const bool &skip_check) {
+KernelAttr &KernelAttr::AddSkipCheckAttr(bool skip_check) {
   skip_check_ = skip_check;
   return *this;
 }
@@ -442,7 +446,7 @@ KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
   return *this;
 }
 
-KernelAttr &KernelAttr::AddAllOutInRef(const bool &all_out_in_ref) {
+KernelAttr &KernelAttr::AddAllOutInRef(bool all_out_in_ref) {
   all_out_in_ref_ = all_out_in_ref;
   return *this;
 }
@@ -554,6 +558,34 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
   return std::make_pair(false, 0);
 }
 
+bool CheckAttrForAllSameInput(const KernelAttr &kernel_attr, const KernelAttr &cur_kernel_attr) {
+  auto input_num = kernel_attr.GetInputSize();
+  auto cur_input_num = cur_kernel_attr.GetInputSize();
+  size_t cur_all_same_input_num = cur_kernel_attr.GetAllSameInputNum();  // default 0; else >=1 when allsame=true
+  size_t cur_standalone_input_num = cur_input_num - cur_all_same_input_num;
+  size_t each_attr_input_num =
+    (input_num - cur_standalone_input_num) / (cur_all_same_input_num == 0 ? 1 : cur_all_same_input_num);
+  // deal with allsame inputs
+  for (size_t i = 0; i < cur_all_same_input_num; ++i) {
+    for (size_t j = 0; j < each_attr_input_num; ++j) {
+      auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+      auto start = j + i * each_attr_input_num;
+      if (kernel_attr.GetInputAttr(start).dtype != dtype && kernel_attr.GetInputAttr(start).dtype != kTypeUnknown) {
+        return true;
+      }
+    }
+  }
+  // deal with the rest except allsame inputs
+  for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
+    auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+    auto start = each_attr_input_num * cur_all_same_input_num + i;
+    if (kernel_attr.GetInputAttr(start).dtype != dtype && kernel_attr.GetInputAttr(start).dtype != kTypeUnknown) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
                                         const std::vector<KernelAttr> &kernel_attr_list) {
   // kernel_attr should not be all same. If so, then return false.
@@ -571,14 +603,8 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
       continue;
     }
 
-    bool mis_match = false;
-    for (size_t i = 0; i < input_num; ++i) {
-      auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
-      if (kernel_attr.GetInputAttr(i).dtype != dtype && kernel_attr.GetInputAttr(i).dtype != kTypeUnknown) {
-        mis_match = true;
-        break;
-      }
-    }
+    bool mis_match = CheckAttrForAllSameInput(kernel_attr, cur_kernel_attr);
+
     if (mis_match) {
       continue;
     }
