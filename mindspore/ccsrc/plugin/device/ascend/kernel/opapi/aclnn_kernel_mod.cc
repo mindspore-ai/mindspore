@@ -81,11 +81,17 @@ void AclnnKernelMod::SetOutputsInfo(const std::vector<TypeId> &type_ids, const S
                                << " and type's size:" << type_ids.size();
   }
   output_params_.resize(type_ids.size());
+  output_size_list_.resize(type_ids.size());
   for (size_t i = 0; i < type_ids.size(); i++) {
     output_params_[i].data_type = type_ids[i];
     output_params_[i].ori_shape = shapes[i];
+    size_t type_size = GetTypeByte(TypeIdToType(type_ids[i]));
+    size_t tensor_size = shapes[i].empty()
+                           ? type_size
+                           : std::accumulate(shapes[i].begin(), shapes[i].end(), type_size, std::multiplies<size_t>());
+    tensor_size = std::max(tensor_size, type_size);
+    output_size_list_[i] = tensor_size;
   }
-  output_size_list_.resize(type_ids.size(), 0);
 }
 
 std::vector<TaskInfoPtr> AclnnKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
