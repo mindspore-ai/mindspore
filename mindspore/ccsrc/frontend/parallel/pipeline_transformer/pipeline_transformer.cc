@@ -128,8 +128,9 @@ bool PipelineTransformer::MainGraph() {
     MS_LOG(WARNING) << "Can't find main graph, possible reason is can't find virtual dataset.";
     return false;
   }
-  const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  enable_share_cell_ = cell_reuse_env == "1" || cell_reuse_env == "2";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  enable_share_cell_ = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (!enable_share_cell_) {
     return true;
   }
@@ -150,7 +151,7 @@ bool PipelineTransformer::MainGraph() {
     return true;
   }
   if (shared_cell_ == nullptr) {
-    MS_LOG(WARNING) << "Can't find share graph, but the environment MS_DEV_CELL_REUSE is set.";
+    MS_LOG(WARNING) << "Can't find reused cell, but exist at least a cell marked with lazy_inline.";
     return false;
   }
   return true;

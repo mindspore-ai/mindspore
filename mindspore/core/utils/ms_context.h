@@ -56,6 +56,8 @@ enum JitSyntaxLevel : int {
   kLax,         // JIT Fallback fully enabled.
 };
 
+enum class CellReuseLevel { kNoCellReuse, kNoInline, kLazyInline };
+
 const int kGraphMode = 0;
 const int kPynativeMode = 1;
 
@@ -254,6 +256,9 @@ class MS_CORE_API MsContext {
   bool EnableAoeOnline() const;
   bool EnableAoeOffline() const;
 
+  void SetCellReuseLevel(const CellReuseLevel &level) { cell_reuse_level_ = level; }
+  enum CellReuseLevel CellReuseLevel() const { return cell_reuse_level_; }
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
@@ -282,6 +287,7 @@ class MS_CORE_API MsContext {
 
   static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
   static std::map<std::string, std::string> &PluginPathMap();
+  enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string

@@ -32,8 +32,9 @@ namespace irpass {
 class SetCellOutputNoRecompute : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-    static const auto cell_reuse = (cell_reuse_env == "1" || cell_reuse_env == "2");
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
     if (!IsValueNode<FuncGraph>(node)) {
       return nullptr;
     }
@@ -57,7 +58,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       }
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
-        if (!cell_reuse) {
+        if (no_cell_reuse) {
           real_output->AddAttr(kAttrRecompute, MakeValue(false));
         }
 
@@ -70,7 +71,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
         }
       }
     }
-    if (!cell_reuse) {
+    if (no_cell_reuse) {
       fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
     }
     return nullptr;

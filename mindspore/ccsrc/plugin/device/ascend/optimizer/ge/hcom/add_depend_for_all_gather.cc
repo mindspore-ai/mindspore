@@ -142,9 +142,10 @@ bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::map<
 
 bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  static const bool is_cell_reuse =
-    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
-  if (is_cell_reuse) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (cell_reuse) {
     return false;
   }
   bool changed = false;

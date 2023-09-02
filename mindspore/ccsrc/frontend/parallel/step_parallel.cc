@@ -2568,11 +2568,12 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
 static void ReorderForGradAccumulation(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   if (!root->has_flag(BACKWARD) && ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
     root->set_flag(BACKWARD, true);
-    const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-    const bool enable_cell_reuse = cell_reuse_env == "1" || cell_reuse_env == "2";
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
     DumpGraph(root, "before_reorder");
     if (IsTraining(manager)) {
-      if (enable_cell_reuse) {
+      if (cell_reuse) {
         TagMicroBatchBpEndInCellShare(root, manager);
       }
       std::unordered_map<int64_t, std::vector<CNodePtr>> forward_start;
@@ -2616,10 +2617,11 @@ static void MicroBatchPreProcess(const FuncGraphPtr &root, const FuncGraphManage
   }
   TagMicroBatchStart(manager, all_nodes);
   TagMicroBatchEnd(manager, all_nodes);
-  const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  const bool enable_cell_reuse = cell_reuse_env == "1" || cell_reuse_env == "2";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
   bool enable_grad_accu = ParallelContext::GetInstance()->grad_accumulation_step() > 1;
-  if (!enable_cell_reuse && enable_grad_accu) {
+  if (no_cell_reuse && enable_grad_accu) {
     TagMicroBatchBpEndPrim(root);
     TagMicroBatchBpEnd(root);
   }

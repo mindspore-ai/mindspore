@@ -84,9 +84,9 @@ bool is_step_in() {
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 1) {
     return false;
   }
-  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
-  return !graph_reuse;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
 }
 }  // namespace
 
