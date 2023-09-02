@@ -16,7 +16,6 @@
 
 #include "src/litert/kernel/cpu/fp16/lstm_non_mindir_fp16.h"
 #include "nnacl/fp16/lstm_fp16.h"
-#include "nnacl/fp16/cast_fp16.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -36,6 +35,18 @@ int LstmNonMindirFp16CPUKernel::Prepare() {
   return LstmFp16BaseCPUKernel::Prepare();
 }
 
+int LstmNonMindirFp16CPUKernel::ReSize() {
+  auto ret = InitParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmFp16 InitParam failed.";
+    return RET_ERROR;
+  }
+  if (running_pack_) {
+    return RET_OK;
+  }
+  return PackWeightAndBias();
+}
+
 int LstmNonMindirFp16CPUKernel::InitInputWeightBias() {
   // malloc and init input * weight right matrix buffer
   // input -- row: seq_len * batch; col: input_size
@@ -44,40 +55,20 @@ int LstmNonMindirFp16CPUKernel::InitInputWeightBias() {
   auto weight_i = in_tensors_.at(1);
   auto weight_i_data = weight_i->data();
   CHECK_NULL_RETURN(weight_i_data);
-  weight_i_ptr_ = reinterpret_cast<float16_t *>(
-    malloc(weight_segment_num_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
-  MS_CHECK_TRUE_MSG(weight_i_ptr_ != nullptr, lite::RET_NULL_PTR,
-                    "LstmNonMindirCPUKernel malloc weight_i_ptr_ failed.");
-  pack_buffer_.push_back(weight_i_ptr_);
-  if (weight_i->data_type() == kNumberTypeFloat32) {
-    PackLstmWeightFp32ToFp16(weight_i_ptr_, reinterpret_cast<float *>(weight_i_data), weight_segment_num_,
-                             lstm_param_->input_size_, lstm_param_->hidden_size_, lstm_param_->input_col_align_);
-  } else if (weight_i->data_type() == kNumberTypeFloat16) {
-    PackLstmWeightFp16(weight_i_ptr_, reinterpret_cast<float16_t *>(weight_i_data), weight_segment_num_,
-                       lstm_param_->input_size_, lstm_param_->hidden_size_, lstm_param_->input_col_align_);
-  } else {
-    MS_LOG(ERROR) << "Unsupported data type of weight_i tensor for lstm.";
-    return RET_ERROR;
+  auto ret = PackInputWeight(weight_i_data, nullptr, weight_i->data_type());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "LstmNonMindir fp16 PackInputWeight failed.";
+    return ret;
   }
-
   // input bias
   auto bias = in_tensors_.at(FOURTH_INPUT);
   auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
-  input_bias_ =
-    reinterpret_cast<float16_t *>(malloc(weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float16_t)));
-  MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmNonMindirCPUKernel malloc input_bias_ failed.");
-  pack_buffer_.push_back(input_bias_);
-  (void)memset(input_bias_, 0, weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float16_t));
-  if (bias->data_type() == kNumberTypeFloat32) {
-    PackLstmBiasFp32ToFp16(input_bias_, reinterpret_cast<float *>(bias_data), weight_segment_num_,
-                           lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_);
-  } else if (bias->data_type() == kNumberTypeFloat16) {
-    PackLstmBiasFp16(input_bias_, reinterpret_cast<float16_t *>(bias_data), weight_segment_num_,
-                     lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_);
-  } else {
-    MS_LOG(ERROR) << "Unsupported data type of bias tensor for lstm.";
-    return RET_ERROR;
+  lstm_param_->has_bias_ = true;
+  ret = PackInputBias(bias_data, nullptr, bias->data_type());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "LstmNonMindir fp16 PackInputBias failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -90,52 +81,22 @@ int LstmNonMindirFp16CPUKernel::InitStateWeightBias() {
   auto weight_h = in_tensors_.at(THIRD_INPUT);
   auto weight_h_data = weight_h->data();
   CHECK_NULL_RETURN(weight_h_data);
-  weight_h_ptr_ = reinterpret_cast<float16_t *>(
-    malloc(weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * sizeof(float16_t)));
-  MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR,
-                    "LstmNonMindirCPUKernel malloc weight_h_ptr_ failed.");
-
-  if (weight_need_pack_) {
-    if (weight_h->data_type() == kNumberTypeFloat32) {
-      PackLstmWeightFp32ToFp16(weight_h_ptr_, reinterpret_cast<float *>(weight_h_data), weight_segment_num_,
-                               lstm_param_->output_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
-    } else if (weight_h->data_type() == kNumberTypeFloat16) {
-      PackLstmWeightFp16(weight_h_ptr_, reinterpret_cast<float16_t *>(weight_h_data), weight_segment_num_,
-                         lstm_param_->output_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
-    } else {
-      MS_LOG(ERROR) << "Unsupported data type of weight_h tensor for lstm.";
-      return RET_ERROR;
-    }
-  } else {
-    if (weight_h->data_type() == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(weight_h_data), weight_h_ptr_, weight_h->ElementsNum());
-    } else if (weight_h->data_type() == kNumberTypeFloat16) {
-      (void)memcpy(weight_h_ptr_, reinterpret_cast<float16_t *>(weight_h_data), weight_h->Size());
-    } else {
-      MS_LOG(ERROR) << "Unsupported data type of weight_h tensor for lstm.";
-      return RET_ERROR;
-    }
+  auto ret = PackStateWeight(weight_h_data, nullptr, weight_h->data_type());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "LstmNonMindir fp16 PackStateWeight failed.";
+    return ret;
   }
 
   // state bias
   auto bias = in_tensors_[FOURTH_INPUT];
   auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
-  state_bias_ =
-    reinterpret_cast<float16_t *>(malloc(weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float16_t)));
-  MS_CHECK_TRUE_MSG(state_bias_ != nullptr, lite::RET_NULL_PTR, "LstmNonMindirCPUKernel malloc state_bias_ failed.");
-  (void)memset(state_bias_, 0, weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float16_t));
-  if (bias->data_type() == kNumberTypeFloat32) {
-    auto state_bias_data = reinterpret_cast<float *>(bias_data) + kGateNum * lstm_param_->hidden_size_;
-    PackLstmBiasFp32ToFp16(state_bias_, state_bias_data, weight_segment_num_, lstm_param_->hidden_size_,
-                           lstm_param_->state_col_align_, lstm_param_->bidirectional_);
-  } else if (bias->data_type() == kNumberTypeFloat16) {
-    auto state_bias_data = reinterpret_cast<float16_t *>(bias_data) + kGateNum * lstm_param_->hidden_size_;
-    PackLstmBiasFp16(state_bias_, state_bias_data, weight_segment_num_, lstm_param_->hidden_size_,
-                     lstm_param_->state_col_align_, lstm_param_->bidirectional_);
-  } else {
-    MS_LOG(ERROR) << "Unsupported data type of bias tensor for lstm.";
-    return RET_ERROR;
+  lstm_param_->has_bias_ = true;
+  auto offset = kGateNum * lstm_param_->hidden_size_ * lite::DataTypeSize(bias->data_type());
+  ret = PackStateBias(reinterpret_cast<uint8_t *>(bias_data) + offset, nullptr, bias->data_type());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "LstmNonMindir fp16 PackStateBias failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -154,37 +115,16 @@ int LstmNonMindirFp16CPUKernel::InitProjectWeight() {
     MS_LOG(ERROR) << "Project-weight's shape[0] must be 1(bidirectional=false) or 2(bidirectional=true).";
     return RET_ERROR;
   }
-  int pro_col_align = lstm_param_->proj_col_align_;
-  weight_project_ptr_ =
-    reinterpret_cast<float16_t *>(malloc(batch * lstm_param_->hidden_size_ * pro_col_align * sizeof(float16_t)));
-  MS_CHECK_TRUE_MSG(weight_project_ptr_ != nullptr, lite::RET_NULL_PTR,
-                    "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
-
-  if (weight_need_pack_) {
-    if (weight_pro->data_type() == kNumberTypeFloat32) {
-      PackLstmWeightFp32ToFp16(weight_project_ptr_, reinterpret_cast<float *>(weight_pro_data), batch,
-                               lstm_param_->hidden_size_, lstm_param_->output_size_, pro_col_align);
-    } else if (weight_pro->data_type() == kNumberTypeFloat16) {
-      PackLstmWeightFp16(weight_project_ptr_, reinterpret_cast<float16_t *>(weight_pro_data), batch,
-                         lstm_param_->hidden_size_, lstm_param_->output_size_, pro_col_align);
-    } else {
-      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
-      return RET_ERROR;
-    }
-  } else {
-    if (weight_pro->data_type() == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(weight_pro_data), weight_project_ptr_, weight_pro->ElementsNum());
-    } else if (weight_pro->data_type() == kNumberTypeFloat16) {
-      (void)memcpy(weight_project_ptr_, weight_pro_data, weight_pro->Size());
-    } else {
-      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
-      return RET_ERROR;
-    }
+  auto ret = PackProjectWeight(weight_pro_data, nullptr, weight_pro->data_type());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "LstmNonMindir fp16 PackProjectWeight failed.";
+    return ret;
   }
   size_t bias_size = UP_ROUND(lstm_param_->output_size_, C8NUM) * sizeof(float16_t);
   project_bias_ = reinterpret_cast<float16_t *>(malloc(bias_size));
   MS_CHECK_TRUE_MSG(project_bias_ != nullptr, lite::RET_NULL_PTR,
                     "LstmNonMindirCPUKernel malloc project_bias_ failed.");
+  pack_buffer_.push_back(project_bias_);
   (void)memset(project_bias_, 0, bias_size);
   return RET_OK;
 }

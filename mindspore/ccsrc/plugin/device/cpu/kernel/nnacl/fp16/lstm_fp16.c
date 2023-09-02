@@ -23,28 +23,38 @@
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
-void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int deep, int col, int col_align) {
+void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int deep, int col, int col_align,
+                              const int32_t *order) {
   for (int i = 0; i < batch; i++) {
     const float *src_batch = src + i * col * deep;
-    float16_t *dst_batch = dst + i * col_align * deep;
+    float16_t *dst_batch = dst + (order == NULL ? i : order[i]) * col_align * deep;
+#ifdef ENABLE_ARM64
+    RowMajor2ColNMajorFp16(src_batch, dst_batch, col, deep, true);
+#else
     RowMajor2Col8MajorFp16(src_batch, dst_batch, col, deep, true);
+#endif
   }
 }
 
-void PackLstmWeightFp16(float16_t *dst, const float16_t *src, int batch, int deep, int col, int col_align) {
+void PackLstmWeightFp16(float16_t *dst, const float16_t *src, int batch, int deep, int col, int col_align,
+                        const int32_t *order) {
   for (int i = 0; i < batch; i++) {
     const float16_t *src_batch = src + i * col * deep;
-    float16_t *dst_batch = dst + i * col_align * deep;
+    float16_t *dst_batch = dst + (order == NULL ? i : order[i]) * col_align * deep;
+#ifdef ENABLE_ARM64
+    RowMajor2ColNMajorFp16(src_batch, dst_batch, col, deep, false);
+#else
     RowMajor2Col8MajorFp16(src_batch, dst_batch, col, deep, false);
+#endif
   }
 }
 
-void PackLstmBiasFp32ToFp16(float16_t *dst, const float *src, int batch, int col, int col_align,
-                            bool is_bidirectional) {
+void PackLstmBiasFp32ToFp16(float16_t *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
+                            const int32_t *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
-    float16_t *dst_batch = dst + i * col_align;
+    float16_t *dst_batch = dst + (order == NULL ? i : order[i]) * col_align;
     Float32ToFloat16(src_batch, dst_batch, col);
   }
   if (is_bidirectional) {
@@ -52,17 +62,18 @@ void PackLstmBiasFp32ToFp16(float16_t *dst, const float *src, int batch, int col
     float16_t *backward_dst = dst + unidirectional_batch * col_align;
     for (int i = 0; i < unidirectional_batch; i++) {
       const float *backward_src_batch = backward_src + i * col;
-      float16_t *backward_dst_batch = backward_dst + i * col_align;
+      float16_t *backward_dst_batch = backward_dst + (order == NULL ? i : order[i]) * col_align;
       Float32ToFloat16(backward_src_batch, backward_dst_batch, col);
     }
   }
 }
 
-void PackLstmBiasFp16(float16_t *dst, const float16_t *src, int batch, int col, int col_align, bool is_bidirectional) {
+void PackLstmBiasFp16(float16_t *dst, const float16_t *src, int batch, int col, int col_align, bool is_bidirectional,
+                      const int32_t *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   for (int i = 0; i < unidirectional_batch; i++) {
     const float16_t *src_batch = src + i * col;
-    float16_t *dst_batch = dst + i * col_align;
+    float16_t *dst_batch = dst + (order == NULL ? i : order[i]) * col_align;
     (void)memcpy(dst_batch, src_batch, col * sizeof(float16_t));
   }
   if (is_bidirectional) {
@@ -70,7 +81,7 @@ void PackLstmBiasFp16(float16_t *dst, const float16_t *src, int batch, int col, 
     float16_t *backward_dst = dst + unidirectional_batch * col_align;
     for (int i = 0; i < unidirectional_batch; i++) {
       const float16_t *backward_src_batch = backward_src + i * col;
-      float16_t *backward_dst_batch = backward_dst + i * col_align;
+      float16_t *backward_dst_batch = backward_dst + (order == NULL ? i : order[i]) * col_align;
       (void)memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float16_t));
     }
   }
@@ -166,14 +177,17 @@ void UpdateOutputFp16(float16_t *hidden_state, float16_t *output, const float16_
 
   if (weight_project) {
     float16_t *left_matrix = hidden_buffer;
+#ifdef ENABLE_ARM64
+    if (batch >= C4NUM) {
+      left_matrix = buffer[C6NUM];
+      RowMajor2ColLadder12MajorFp16(hidden_buffer, left_matrix, batch, hidden_size);
+    }
+#else
     if (batch != 1) {
       left_matrix = buffer[C6NUM];
-#ifdef ENABLE_ARM64
-      RowMajor2ColNMajorFp16(hidden_buffer, left_matrix, batch, hidden_size, false);
-#else
       RowMajor2Col16MajorFp16(hidden_buffer, left_matrix, batch, hidden_size, false);
-#endif
     }
+#endif
     LstmMatMulFp16(hidden_state, left_matrix, weight_project, project_bias, batch, hidden_size, output_size,
                    batch == 1);
   }
@@ -186,11 +200,7 @@ void UpdateOutputFp16(float16_t *hidden_state, float16_t *output, const float16_
 #ifdef ENABLE_ARM64
 void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const float16_t *bias, int row, int deep,
                     int col, bool is_vec) {
-  if (is_vec) {
-    VecMatmulFp16(a, b, c, bias, ActType_No, deep, col);
-  } else {
-    MatmulBaseFp16Neon(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
-  }
+  MatmulFp16OptV2(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
 }
 #else
 void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const float16_t *bias, int row, int deep,
@@ -207,7 +217,7 @@ void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const 
 void UpdateLstmGateFp16(float16_t *gate_buffer, const float16_t *input, const float16_t *weight, const float16_t *bias,
                         int row, int deep, int col, int col_align, bool is_vec) {
   for (int i = 0; i < 4; i++) {
-    const float16_t *weight_i = weight + deep * col * i;
+    const float16_t *weight_i = weight + deep * col_align * i;
     const float16_t *bias_i = bias + col_align * i;
     float16_t *gate = gate_buffer + row * col * i;
     LstmMatMulFp16(gate, input, weight_i, bias_i, row, deep, col, is_vec);
@@ -223,19 +233,25 @@ void LstmStepUnitFp16(float16_t *output, float16_t *input_gate, float16_t *forge
   float16_t *cell_buffer = buffer[C4NUM];
   float16_t *hidden_buffer = buffer[C5NUM];
   bool is_vec = lstm_param->batch_ == 1;
+#ifdef ENABLE_ARM64
+  if (lstm_param->batch_ <= C3NUM) {
+    UpdateLstmGateFp16(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
+                       lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
+  } else {
+    RowMajor2ColLadder12MajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_);
+    UpdateLstmGateFp16(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
+                       lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
+  }
+#else
   if (is_vec) {
     UpdateLstmGateFp16(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
                        lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
   } else {
-    // pack state for matmul
-#ifdef ENABLE_ARM64
-    RowMajor2ColNMajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_, false);
-#else
     RowMajor2Col16MajorFp16(hidden_state, packed_state, lstm_param->batch_, lstm_param->output_size_, false);
-#endif
     UpdateLstmGateFp16(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->output_size_,
                        lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
   }
+#endif
   ElementAddFp16(input_gate, state_gate, input_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   ElementAddFp16(forget_gate, state_gate + lstm_param->batch_ * lstm_param->hidden_size_ * 2, forget_gate,
                  lstm_param->batch_ * lstm_param->hidden_size_);
@@ -270,7 +286,6 @@ void LstmStepUnitFp16(float16_t *output, float16_t *input_gate, float16_t *forge
   }
 }
 
-#ifdef ENABLE_ARM64
 void LstmGateCompute(float16_t *gate, const float16_t *input, const float16_t *weight_i, const float16_t *input_bias,
                      const LstmParameter *lstm_param) {
   int row_input = lstm_param->seq_len_ * lstm_param->batch_;
@@ -278,28 +293,15 @@ void LstmGateCompute(float16_t *gate, const float16_t *input, const float16_t *w
     const float16_t *weight_loop = weight_i + lstm_param->input_size_ * lstm_param->input_col_align_ * i;
     const float16_t *bias_loop = input_bias + lstm_param->input_col_align_ * i;
     float16_t *gate_loop = gate + lstm_param->seq_len_ * lstm_param->batch_ * lstm_param->hidden_size_ * i;
-    if (row_input == 1) {
-      VecMatmulFp16(input, weight_loop, gate_loop, bias_loop, ActType_No, lstm_param->input_size_,
-                    lstm_param->hidden_size_);
-    } else {
-      MatmulBaseFp16Neon(input, weight_loop, gate_loop, bias_loop, ActType_No, lstm_param->input_size_, row_input,
-                         lstm_param->hidden_size_, lstm_param->hidden_size_, OutType_Nhwc);
-    }
-  }
-}
+#ifdef ENABLE_ARM64
+    MatmulFp16OptV2(input, weight_loop, gate_loop, bias_loop, ActType_No, lstm_param->input_size_, row_input,
+                    lstm_param->hidden_size_, lstm_param->hidden_size_, OutType_Nhwc);
 #else
-void LstmGateCompute(float16_t *gate, const float16_t *input, const float16_t *weight_i, const float16_t *input_bias,
-                     const LstmParameter *lstm_param) {
-  for (int i = 0; i < C4NUM; i++) {
-    const float16_t *weight_loop = weight_i + lstm_param->input_size_ * lstm_param->input_col_align_ * i;
-    const float16_t *bias_loop = input_bias + lstm_param->input_col_align_ * i;
-    float16_t *gate_loop = gate + lstm_param->seq_len_ * lstm_param->batch_ * lstm_param->hidden_size_ * i;
-    MatMulFp16(input, weight_loop, gate_loop, bias_loop, ActType_No, lstm_param->input_size_,
-               lstm_param->seq_len_ * lstm_param->batch_, lstm_param->hidden_size_, lstm_param->hidden_size_,
-               OutType_Nhwc);
+    MatMulFp16(input, weight_loop, gate_loop, bias_loop, ActType_No, lstm_param->input_size_, row_input,
+               lstm_param->hidden_size_, lstm_param->hidden_size_, OutType_Nhwc);
+#endif
   }
 }
-#endif
 
 void LstmUnidirectionalFp16(float16_t *output, const float16_t *packed_input, const float16_t *weight_i,
                             const float16_t *weight_h, const float16_t *input_bias, const float16_t *state_bias,
@@ -332,10 +334,10 @@ void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight
   // forward
 #ifdef ENABLE_ARM64
   const float16_t *packed_input = input;
-  if (lstm_param->batch_ != 1 || lstm_param->seq_len_ != 1) {
+  if (lstm_param->batch_ * lstm_param->seq_len_ >= C4NUM) {
     float16_t *temp_input = buffer[0];
-    RowMajor2ColNMajorFp16(input, temp_input, lstm_param->seq_len_ * lstm_param->batch_, lstm_param->input_size_,
-                           false);
+    RowMajor2ColLadder12MajorFp16(input, temp_input, lstm_param->seq_len_ * lstm_param->batch_,
+                                  lstm_param->input_size_);
     packed_input = temp_input;
   }
 #else

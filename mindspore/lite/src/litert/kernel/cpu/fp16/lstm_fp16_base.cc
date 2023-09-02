@@ -17,6 +17,7 @@
 #include "src/litert/kernel/cpu/fp16/lstm_fp16_base.h"
 #include <cfloat>
 #include "nnacl/fp16/lstm_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -123,12 +124,12 @@ int LstmFp16BaseCPUKernel::InitParam() {
                                                           : lstm_param_->batch_ * lstm_param_->output_size_;
   weight_segment_num_ = lstm_param_->bidirectional_ ? C2NUM * kGateNum : kGateNum;
 #ifdef ENABLE_ARM64
-  lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C4NUM);
-  lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
+  lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C1NUM);
+  lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C4NUM);
 
-  lstm_param_->state_row_align_ = UP_ROUND(lstm_param_->batch_, C4NUM);
-  lstm_param_->state_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
-  lstm_param_->proj_col_align_ = UP_ROUND(lstm_param_->output_size_, C8NUM);
+  lstm_param_->state_row_align_ = UP_ROUND(lstm_param_->batch_, C1NUM);
+  lstm_param_->state_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C4NUM);
+  lstm_param_->proj_col_align_ = UP_ROUND(lstm_param_->output_size_, C4NUM);
   weight_need_pack_ = true;
 #else
   lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C16NUM);
@@ -170,6 +171,135 @@ int LstmFp16BaseCPUKernel::PackWeightAndBias() {
   return RET_OK;
 }
 
+int LstmFp16BaseCPUKernel::PackInputWeight(const void *src, const int32_t *order, TypeId src_data_type) {
+  weight_i_ptr_ = reinterpret_cast<float16_t *>(
+    malloc(weight_segment_num_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
+  MS_CHECK_TRUE_MSG(weight_i_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmCPUKernel fp16 malloc weight_i_ptr_ failed.");
+  pack_buffer_.push_back(weight_i_ptr_);
+  if (src_data_type == kNumberTypeFloat32) {
+    PackLstmWeightFp32ToFp16(weight_i_ptr_, reinterpret_cast<const float *>(src), weight_segment_num_,
+                             lstm_param_->input_size_, lstm_param_->hidden_size_, lstm_param_->input_col_align_, order);
+  } else if (src_data_type == kNumberTypeFloat16) {
+    PackLstmWeightFp16(weight_i_ptr_, reinterpret_cast<const float16_t *>(src), weight_segment_num_,
+                       lstm_param_->input_size_, lstm_param_->hidden_size_, lstm_param_->input_col_align_, order);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of weight_i tensor for lstm.";
+    return RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+int LstmFp16BaseCPUKernel::PackInputBias(const void *src, const int32_t *order, TypeId src_data_type) {
+  auto bias_size = weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float16_t);
+  input_bias_ = reinterpret_cast<float16_t *>(malloc(bias_size));
+  MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmCPUKernel fp16 malloc input_bias_ failed.");
+  pack_buffer_.push_back(input_bias_);
+  (void)memset(input_bias_, 0, bias_size);
+  if (!lstm_param_->has_bias_) {
+    return lite::RET_OK;
+  }
+  if (src_data_type == kNumberTypeFloat32) {
+    PackLstmBiasFp32ToFp16(input_bias_, reinterpret_cast<const float *>(src), weight_segment_num_,
+                           lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_,
+                           order);
+  } else if (src_data_type == kNumberTypeFloat16) {
+    PackLstmBiasFp16(input_bias_, reinterpret_cast<const float16_t *>(src), weight_segment_num_,
+                     lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_, order);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of bias tensor for lstm.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+int LstmFp16BaseCPUKernel::PackStateWeight(const void *src, const int32_t *order, TypeId src_data_type) {
+  weight_h_ptr_ = reinterpret_cast<float16_t *>(
+    malloc(weight_segment_num_ * lstm_param_->state_col_align_ * lstm_param_->output_size_ * sizeof(float16_t)));
+  MS_CHECK_TRUE_MSG(weight_h_ptr_ != nullptr, lite::RET_NULL_PTR, "LstmCPUKernel fp16 malloc weight_h_ptr_ failed.");
+  pack_buffer_.push_back(weight_h_ptr_);
+  if (weight_need_pack_) {
+    if (src_data_type == kNumberTypeFloat32) {
+      PackLstmWeightFp32ToFp16(weight_h_ptr_, reinterpret_cast<const float *>(src), weight_segment_num_,
+                               lstm_param_->output_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_,
+                               order);
+    } else if (src_data_type == kNumberTypeFloat16) {
+      PackLstmWeightFp16(weight_h_ptr_, reinterpret_cast<const float16_t *>(src), weight_segment_num_,
+                         lstm_param_->output_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_, order);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_h tensor for lstm.";
+      return RET_ERROR;
+    }
+  } else {
+    auto element_num = weight_segment_num_ * lstm_param_->hidden_size_ * lstm_param_->output_size_;
+    if (src_data_type == kNumberTypeFloat32) {
+      Float32ToFloat16(reinterpret_cast<const float *>(src), weight_h_ptr_, element_num);
+    } else if (src_data_type == kNumberTypeFloat16) {
+      (void)memcpy(weight_h_ptr_, src, element_num * sizeof(float16_t));
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_h tensor for lstm.";
+      return RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
+int LstmFp16BaseCPUKernel::PackStateBias(const void *src, const int32_t *order, TypeId src_data_type) {
+  state_bias_ =
+    reinterpret_cast<float16_t *>(malloc(weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float16_t)));
+  MS_CHECK_TRUE_MSG(state_bias_ != nullptr, lite::RET_NULL_PTR, "LstmCPUKernel fp16 malloc state_bias_ failed.");
+  (void)memset(state_bias_, 0, weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float16_t));
+  pack_buffer_.push_back(state_bias_);
+  if (!lstm_param_->has_bias_) {
+    return RET_OK;
+  }
+  if (src_data_type == kNumberTypeFloat32) {
+    PackLstmBiasFp32ToFp16(state_bias_, reinterpret_cast<const float *>(src), weight_segment_num_,
+                           lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_,
+                           order);
+  } else if (src_data_type == kNumberTypeFloat16) {
+    PackLstmBiasFp16(state_bias_, reinterpret_cast<const float16_t *>(src), weight_segment_num_,
+                     lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_, order);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of bias tensor for lstm.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int LstmFp16BaseCPUKernel::PackProjectWeight(const void *src, const int32_t *order, TypeId src_data_type) {
+  int batch = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+  weight_project_ptr_ = reinterpret_cast<float16_t *>(
+    malloc(batch * lstm_param_->hidden_size_ * lstm_param_->proj_col_align_ * sizeof(float16_t)));
+  MS_CHECK_TRUE_MSG(weight_project_ptr_ != nullptr, lite::RET_NULL_PTR,
+                    "LstmNonMindirCPUKernel malloc weight_project_ptr_ failed.");
+  pack_buffer_.push_back(weight_project_ptr_);
+
+  if (weight_need_pack_) {
+    if (src_data_type == kNumberTypeFloat32) {
+      PackLstmWeightFp32ToFp16(weight_project_ptr_, reinterpret_cast<const float *>(src), batch,
+                               lstm_param_->hidden_size_, lstm_param_->output_size_, lstm_param_->proj_col_align_,
+                               order);
+    } else if (src_data_type == kNumberTypeFloat16) {
+      PackLstmWeightFp16(weight_project_ptr_, reinterpret_cast<const float16_t *>(src), batch,
+                         lstm_param_->hidden_size_, lstm_param_->output_size_, lstm_param_->proj_col_align_, order);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
+      return RET_ERROR;
+    }
+  } else {
+    auto element_num = batch * lstm_param_->hidden_size_ * lstm_param_->project_size_;
+    if (src_data_type == kNumberTypeFloat32) {
+      Float32ToFloat16(reinterpret_cast<const float *>(src), weight_project_ptr_, element_num);
+    } else if (src_data_type == kNumberTypeFloat16) {
+      (void)memcpy(weight_project_ptr_, src, element_num * sizeof(float16_t));
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
+      return RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
 void LstmFp16BaseCPUKernel::FreePackBuffer() {
   for (auto buffer : pack_buffer_) {
     if (buffer) {
@@ -185,7 +315,7 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
   }
   bool need_pack_input = true;
 #ifdef ENABLE_ARM64
-  need_pack_input = lstm_param_->seq_len_ != 1 || lstm_param_->batch_ != 1;
+  need_pack_input = lstm_param_->seq_len_ * lstm_param_->batch_ >= C4NUM;
 #endif
   if (need_pack_input) {
     running_buffer_[kTempInputBufferIndex] = reinterpret_cast<float16_t *>(
@@ -203,7 +333,12 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
     return RET_ERROR;
   }
 
-  if (lstm_param_->batch_ != 1) {
+#ifdef ENABLE_ARM64
+  need_pack_input = lstm_param_->batch_ >= C4NUM;
+#else
+  need_pack_input = lstm_param_->batch_ != 1;
+#endif
+  if (need_pack_input) {
     running_buffer_[kTempStateBufferIndex] = reinterpret_cast<float16_t *>(
       ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->output_size_ * sizeof(float16_t)));
     if (running_buffer_[kTempStateBufferIndex] == nullptr) {
@@ -237,7 +372,7 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
       return RET_ERROR;
     }
   }
-  if (lstm_param_->batch_ != 1 && in_tensors_.size() == C7NUM) {
+  if (need_pack_input && in_tensors_.size() == C7NUM) {
     running_buffer_[kTempProjectInputBufferIndex] = reinterpret_cast<float16_t *>(
       ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
     if (running_buffer_[kTempProjectInputBufferIndex] == nullptr) {
@@ -249,17 +384,11 @@ int LstmFp16BaseCPUKernel::MallocRunBuffer() {
 }
 
 void LstmFp16BaseCPUKernel::FreeRunBuffer() {
-  ms_context_->allocator->Free(running_buffer_[kTempInputBufferIndex]);
-  ms_context_->allocator->Free(running_buffer_[kTempInputGateBufferIndex]);
-  if (lstm_param_->batch_ != 1) {
-    ms_context_->allocator->Free(running_buffer_[kTempStateBufferIndex]);
-  }
-  ms_context_->allocator->Free(running_buffer_[kTempStateGateBufferIndex]);
-  if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
-    ms_context_->allocator->Free(running_buffer_[kTempCellStateBufferIndex]);
-  }
-  if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
-    ms_context_->allocator->Free(running_buffer_[kTempHiddenStateBufferIndex]);
+  for (int i = 0; i < C7NUM; ++i) {
+    if (running_buffer_[i] != nullptr) {
+      ms_context_->allocator->Free(running_buffer_[i]);
+      running_buffer_[i] = nullptr;
+    }
   }
 }
 }  // namespace mindspore::kernel

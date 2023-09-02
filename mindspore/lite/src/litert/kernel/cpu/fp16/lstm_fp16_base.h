@@ -40,6 +40,13 @@ class LstmFp16BaseCPUKernel : public LiteKernel {
   virtual int InitInputWeightBias() = 0;
   virtual int InitStateWeightBias() = 0;
   virtual int InitProjectWeight() = 0;
+  int InitParam();
+  int PackWeightAndBias();
+  int PackInputWeight(const void *src, const int32_t *order, TypeId src_data_type);
+  int PackInputBias(const void *src, const int32_t *order, TypeId src_data_type);
+  int PackStateWeight(const void *src, const int32_t *order, TypeId src_data_type);
+  int PackStateBias(const void *src, const int32_t *order, TypeId src_data_type);
+  int PackProjectWeight(const void *src, const int32_t *order, TypeId src_data_type);
 
   bool running_pack_{false};
   bool weight_need_pack_{false};
@@ -57,8 +64,6 @@ class LstmFp16BaseCPUKernel : public LiteKernel {
   std::vector<void *> pack_buffer_;
 
  private:
-  int PackWeightAndBias();
-  int InitParam();
   void FreePackBuffer();
   void FreeRunBuffer();
   int MallocRunBuffer();

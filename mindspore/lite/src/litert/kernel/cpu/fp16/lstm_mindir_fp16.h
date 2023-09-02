@@ -45,11 +45,15 @@ class LstmMindirFp16CPUKernel : public LstmFp16BaseCPUKernel {
   ~LstmMindirFp16CPUKernel() override = default;
 
   int Prepare() override;
+  int ReSize() override;
 
  protected:
   int InitInputWeightBias() override;
   int InitStateWeightBias() override;
   int InitProjectWeight() override;
+
+ private:
+  bool gpu_orig_state_{false};
 };
 }  // namespace mindspore::kernel
 

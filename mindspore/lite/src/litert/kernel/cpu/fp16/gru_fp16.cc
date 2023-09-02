@@ -100,10 +100,10 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   }
   if (weight_g->data_type() == kNumberTypeFloat32) {
     PackLstmWeightFp32ToFp16(weight_g_ptr_, reinterpret_cast<float *>(weight_g->data()), weight_batch_,
-                             gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_);
+                             gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_, nullptr);
   } else if (weight_g->data_type() == kNumberTypeFloat16) {
     PackLstmWeightFp16(weight_g_ptr_, reinterpret_cast<float16_t *>(weight_g->data()), weight_batch_,
-                       gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_);
+                       gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_, nullptr);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight_g tensor for gru.";
     return RET_ERROR;
@@ -120,10 +120,10 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   memset(input_bias_, 0, weight_batch_ * gru_param_->input_col_align_ * sizeof(float16_t));
   if (bias->data_type() == kNumberTypeFloat32) {
     PackLstmBiasFp32ToFp16(input_bias_, reinterpret_cast<float *>(bias->data()), weight_batch_,
-                           gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_);
+                           gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_, nullptr);
   } else if (bias->data_type() == kNumberTypeFloat16) {
     PackLstmBiasFp16(input_bias_, reinterpret_cast<float16_t *>(bias->data()), weight_batch_, gru_param_->hidden_size_,
-                     gru_param_->input_col_align_, gru_param_->bidirectional_);
+                     gru_param_->input_col_align_, gru_param_->bidirectional_, nullptr);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of bias tensor for gru.";
     return RET_ERROR;
@@ -148,10 +148,11 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   if (!is_vec_) {
     if (weight_r->data_type() == kNumberTypeFloat32) {
       PackLstmWeightFp32ToFp16(weight_r_ptr_, reinterpret_cast<float *>(weight_r->data()), weight_batch_,
-                               gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_);
+                               gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_,
+                               nullptr);
     } else if (weight_r->data_type() == kNumberTypeFloat16) {
       PackLstmWeightFp16(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data()), weight_batch_,
-                         gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_);
+                         gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_, nullptr);
     } else {
       MS_LOG(ERROR) << "Unsupported data type of weight_r tensor for gru.";
       return RET_ERROR;
@@ -179,11 +180,11 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   if (bias->data_type() == kNumberTypeFloat32) {
     auto state_bias_data = reinterpret_cast<float *>(bias->data()) + gate_num * gru_param_->hidden_size_;
     PackLstmBiasFp32ToFp16(state_bias_, state_bias_data, weight_batch_, gru_param_->hidden_size_,
-                           gru_param_->state_col_align_, gru_param_->bidirectional_);
+                           gru_param_->state_col_align_, gru_param_->bidirectional_, nullptr);
   } else if (bias->data_type() == kNumberTypeFloat16) {
     auto state_bias_data = reinterpret_cast<float16_t *>(bias->data()) + gate_num * gru_param_->hidden_size_;
     PackLstmBiasFp16(state_bias_, state_bias_data, weight_batch_, gru_param_->hidden_size_,
-                     gru_param_->state_col_align_, gru_param_->bidirectional_);
+                     gru_param_->state_col_align_, gru_param_->bidirectional_, nullptr);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of bias tensor for gru.";
     return RET_ERROR;
