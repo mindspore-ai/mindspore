@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_bprop """
 import numpy as np
-
+import pytest
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import Tensor
@@ -22,7 +22,7 @@ from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from tests.mindspore_test_framework.utils.bprop_util import bprop
-
+from tests.st.pynative.utils import GradOfFirstInput
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -89,3 +89,36 @@ def test_bprop_wrt_inputs_and_params():
                   wrt=['inputs', 'params'],
                   params=net.trainable_params())
     print(grads)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_network_with_dict_output():
+    """
+    Feature: Test sens dict
+    Description: Net out is dict
+    Expectation: Success
+    """
+    class DicNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = P.ReLU()
+
+        def construct(self, x):
+            y = self.relu(x)
+            out = {Tensor(True): y}
+            return out
+
+    x = np.array([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]])
+    ms_net = DicNet()
+    # No sens
+    ms_grad = GradOfFirstInput(ms_net, False)
+    grad_out = ms_grad(Tensor(x))
+    assert np.allclose(np.ones_like(x), grad_out.asnumpy())
+
+    # Have sens
+    out = ms_net(Tensor(x))
+    ms_grad = GradOfFirstInput(ms_net, True)
+    grad_out = ms_grad(Tensor(x), out)
+    assert np.allclose(x, grad_out.asnumpy())

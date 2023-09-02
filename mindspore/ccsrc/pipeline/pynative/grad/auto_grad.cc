@@ -184,19 +184,6 @@ AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, c
     MS_EXCEPTION_IF_NULL(coo_tensor);
     auto data = coo_tensor->GetValues();
     return BuildSpecialNode(tape, data, nullptr, type);
-  } else if (value->isa<ValueDictionary>()) {
-    const auto &dic_v = value->cast<ValueDictionaryPtr>()->value();
-    std::vector<ValuePtr> v_list;
-    (void)std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
-                         [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
-    MS_EXCEPTION_IF_NULL(abs);
-    const auto &abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
-    MS_EXCEPTION_IF_NULL(abs_dict);
-    abstract::AbstractBasePtrList abs_list;
-    (void)std::transform(abs_dict->elements().begin(), abs_dict->elements().end(), std::back_inserter(abs_list),
-                         [](const auto &elem) { return elem.second; });
-    return BuildSpecialNode(tape, std::make_shared<ValueTuple>(v_list),
-                            std::make_shared<abstract::AbstractTuple>(abs_list), type);
   } else {
     MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
     return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
@@ -638,12 +625,12 @@ AnfNodePtr VariableAdjoint::RealDout() {
 std::string VariableAdjoint::ToString() const {
   std::ostringstream buf;
   buf << "Variable id: " << PyNativeAlgo::Common::GetIdByValue(out_value_) << " is_need_grad: " << is_need_grad_
-      << ", is_need_propagate " << is_need_propagate_ << " is_leaf: " << is_leaf_ << " ";
+      << ", is_need_propagate: " << is_need_propagate_ << " is_leaf: " << is_leaf_;
   for (size_t i = 0; i < fn()->next_edges().size(); ++i) {
     auto last_variable = fn()->next_edges()[i].first;
     auto din = fn()->next_edges()[i].second;
-    buf << "last variable id: " << PyNativeAlgo::Common::GetIdByValue(last_variable->out_value_)
-        << " din: " << din->DebugString() << "   ";
+    buf << ", next edge variable id: " << PyNativeAlgo::Common::GetIdByValue(last_variable->out_value_)
+        << " din: " << din->DebugString();
   }
   return buf.str();
 }
@@ -1723,13 +1710,15 @@ AbstractBasePtr AutoGradCellImpl::BuildForwardLastNode() {
   return fn->accumulate_dout()->abstract();
 }
 
-ParameterPtr AutoGradCellImpl::NewWeightParameter(const tensor::TensorPtr &tensor,
-                                                  const abstract::AbstractBasePtr &abs) {
+ParameterPtr AutoGradCellImpl::CreateTapeParameter(const tensor::TensorPtr &tensor,
+                                                   const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(abs);
   auto param = ad_param()->fg_->add_parameter();
   param->set_abstract(abs);
-  param->set_default_param(tensor);
+  if (tensor->is_parameter()) {
+    param->set_default_param(tensor);
+  }
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data == nullptr) {
     auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
@@ -1742,7 +1731,7 @@ ParameterPtr AutoGradCellImpl::NewWeightParameter(const tensor::TensorPtr &tenso
 
 ParameterPtr AutoGradCellImpl::AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
-  auto param = NewWeightParameter(tensor, abs);
+  auto param = CreateTapeParameter(tensor, abs);
   auto zeros_like_dout =
     BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), param->abstract(), SpecialType::kZerosLikeType);
   auto func_node = std::make_shared<FunctionNode>(ad_param()->tape_, zeros_like_dout);
@@ -1766,12 +1755,14 @@ AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList &w
 }
 
 void AutoGradCellImpl::UpdateSensParameter(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     const auto &sens_tensor = value->cast<tensor::TensorPtr>();
     const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     const auto variable = auto_grad_meta_data->variable();
-    if (auto_grad_meta_data->grad_type() == TensorGradType::kParameter && variable == nullptr) {
+    // Return input parameter or weight parameter for net, if v is parameter just entry once
+    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type()) && variable == nullptr) {
       (void)AddParameterNode(sens_tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
     }
   } else if (value->isa<ValueSequence>()) {
@@ -1993,8 +1984,8 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
     auto p = ad_param()->tape_->add_parameter();
     auto param = ExtractParameter(weight_tensor);
     if (param == nullptr) {
-      param = NewWeightParameter(weight_tensor,
-                                 PyNativeAlgo::Common::SetAbstractValueToAnyValue(weight_tensor->ToAbstract()));
+      param = CreateTapeParameter(weight_tensor,
+                                  PyNativeAlgo::Common::SetAbstractValueToAnyValue(weight_tensor->ToAbstract()));
     }
     MS_EXCEPTION_IF_NULL(param);
     const auto &param_info = weight_tensor->param_info();
