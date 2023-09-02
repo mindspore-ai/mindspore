@@ -208,12 +208,6 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
   return true;
 }
 
-bool AclSupportFormat(const std::string &format) {
-  static const std::set<std::string> default_support = {kOpFormat_DEFAULT, kOpFormat_ND,    kOpFormat_NCHW,
-                                                        kOpFormat_NHWC,    kOpFormat_NDHWC, kOpFormat_NCDHW};
-  return default_support.find(format) != default_support.end();
-}
-
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
                                      const BackendOpRunInfoPtr &op_run_info, int64_t tensor_mask) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -234,13 +228,8 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   } else {
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
     kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
-    if (op_run_info->base_op_run_info.use_dynamic_shape_process && !AclSupportFormat(device_address->format())) {
-      kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-      AnfAlgo::SetOutputAddr(nullptr, 0, param.get());
-    } else {
-      kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
-      AnfAlgo::SetOutputAddr(device_address, 0, param.get());
-    }
+    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
+    AnfAlgo::SetOutputAddr(device_address, 0, param.get());
   }
   if (input_tensor->isa<tensor::MapTensor>()) {
     auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();

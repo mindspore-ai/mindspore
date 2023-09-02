@@ -723,7 +723,7 @@ void GeGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) {
 bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
                                    const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(WARNING) << "ge graph executor compile graph " << graph->ToString();
+  MS_LOG(INFO) << "ge graph executor compile graph " << graph->ToString();
   std::map<std::string, ShapeVector> m_origin_shape;
   const auto &tensor_order_map = GetParams(graph, &m_origin_shape);
   auto &compile_cache_context = CompileCacheContext::GetInstance();

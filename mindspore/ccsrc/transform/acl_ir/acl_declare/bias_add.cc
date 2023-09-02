@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(BiasAdd).Input(0, {"NCHW"}, {}).Input(1, {"NCHW"}, {"NC1HWC0"});
+REGISTER_ACL_OP(BiasAdd).Input(0, {"NCHW"}).Input(1, {"NCHW"});
 }  // namespace transform
 }  // namespace mindspore

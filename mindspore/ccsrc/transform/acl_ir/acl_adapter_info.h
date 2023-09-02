@@ -32,7 +32,6 @@ using AclFormatSelector = std::function<std::string(TypeId, const std::vector<Sh
 
 struct AclSpecialInfo {
   std::vector<std::string> ori_format{};
-  std::vector<std::string> dev_format{};
   std::string reshape_type{};
 };
 
@@ -42,12 +41,21 @@ class AclAdapterInfo {
   ~AclAdapterInfo() = default;
 
   AclAdapterInfo &Input(size_t index, const std::vector<std::string> &ori_format = {},
-                        const std::vector<std::string> &dev_format = {}, const std::string &reshape_type = {}) {
+                        const std::string &reshape_type = {}) {
     AclSpecialInfo info;
     info.ori_format = ori_format;
-    info.dev_format = dev_format;
     info.reshape_type = reshape_type;
     (void)input_info_.emplace(index, info);
+    return *this;
+  }
+
+  AclAdapterInfo &Output(size_t index, const std::vector<std::string> &dev_format = {}) {
+    (void)output_info_.emplace(index, dev_format);
+    return *this;
+  }
+
+  AclAdapterInfo &Output(size_t index, size_t input_index) {
+    (void)output_index_info_.emplace(index, input_index);
     return *this;
   }
 
@@ -91,6 +99,9 @@ class AclAdapterInfo {
     return *this;
   }
 
+  const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
+  bool no_special_outputs() const { return (output_info_.empty() && output_index_info_.empty()); }
+  std::string output_format(size_t index, const std::vector<std::string> &input_formats) const;
   const std::string &op_type() const { return op_type_; }
   const bool &is_3d() const { return is_3d_ops_; }
   const bool &is_need_pad_no_shape() const { return is_need_pad_no_shape_; }
@@ -98,11 +109,12 @@ class AclAdapterInfo {
   const bool &is_dynamic() const { return is_dynamic_; }
   const bool &is_const_input() const { return is_const_input_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
-  const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
   const AclFormatSelector &output_selector() const { return output_selector_; }
 
  private:
+  std::string SelectFormatFromIndex(size_t index, const std::vector<std::string> &input_formats) const;
+
   std::string op_type_;
   bool is_3d_ops_{false};
   bool is_need_pad_no_shape_{false};
@@ -111,6 +123,8 @@ class AclAdapterInfo {
   bool is_const_input_{false};
   AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
   std::map<size_t, AclSpecialInfo> input_info_{};
+  std::map<size_t, std::vector<std::string>> output_info_{};
+  std::map<size_t, size_t> output_index_info_{};
   std::vector<ge::DataType> extra_supported_datatype_{};
   AclFormatSelector output_selector_{nullptr};
 };

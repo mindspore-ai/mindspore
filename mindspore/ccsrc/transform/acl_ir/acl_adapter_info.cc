@@ -15,9 +15,33 @@
  */
 
 #include "transform/acl_ir/acl_adapter_info.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace transform {
+std::string AclAdapterInfo::SelectFormatFromIndex(size_t index, const std::vector<std::string> &input_formats) const {
+  if (output_index_info_.find(index) == output_index_info_.end() ||
+      output_index_info_.at(index) >= input_formats.size()) {
+    return kOpFormat_DEFAULT;
+  }
+  return input_formats[output_index_info_.at(index)];
+}
+
+std::string AclAdapterInfo::output_format(size_t index, const std::vector<std::string> &input_formats) const {
+  if (!output_info_.empty()) {
+    const auto &format_list = output_info_.at(index);
+    if (format_list.empty()) {
+      return SelectFormatFromIndex(index, input_formats);
+    }
+    auto find = std::find_if(format_list.begin(), format_list.end(), [&input_formats](const auto &format) {
+      return std::any_of(input_formats.begin(), input_formats.end(),
+                         [&format](const auto &input_format) { return input_format == format; });
+    });
+    return find == format_list.end() ? kOpFormat_DEFAULT : *find;
+  }
+  return SelectFormatFromIndex(index, input_formats);
+}
+
 AclAdapterManager &AclAdapterManager::GetInstance() {
   static AclAdapterManager instance;
   return instance;
