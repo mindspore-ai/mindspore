@@ -396,6 +396,17 @@ Status RunGraphWithStreamAsync(const std::shared_ptr<GraphRunner> &runner, const
   return runner->RunGraphWithStreamAsync(options, stream, inputs, outputs);
 }
 
+Status RegisterExternalAllocator(const std::shared_ptr<GraphRunner> &runner, const void *const stream,
+                                 GeAllocatorPtr allocator) {
+  MS_EXCEPTION_IF_NULL(runner);
+  return runner->RegisterExternalAllocator(stream, allocator);
+}
+
+Status UnregisterExternalAllocator(const std::shared_ptr<GraphRunner> &runner, const void *const stream) {
+  MS_EXCEPTION_IF_NULL(runner);
+  return runner->UnregisterExternalAllocator(stream);
+}
+
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase) {
   return BuildDatasetGraph(param, phase);
 }
