@@ -363,7 +363,6 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
       auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
       auto new_partial_abs =
         std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), old_partial_abs->node());
-      new_partial_abs->set_is_primitive_function_partial(old_partial_abs->is_primitive_function_partial());
       new_partial_abs->set_need_append_to_end(old_partial_abs->need_append_to_end());
       new_abs = new_partial_abs;
       MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()

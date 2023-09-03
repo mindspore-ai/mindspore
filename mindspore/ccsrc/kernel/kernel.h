@@ -554,7 +554,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   AddressPtr host_data_{nullptr};                        // Host data address.
   std::unique_ptr<uint8_t[]> dyn_output_data_{nullptr};  // Create new output memory buffer for dynamic output
   string GetAbstractName() const;
-  int32_t device_id_{0};
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
