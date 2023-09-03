@@ -79,17 +79,16 @@ class RowTensor(RowTensorInner):
     """
     A sparse representation of a set of tensor slices at given indices.
 
-    An RowTensor is typically used to represent a subset of a larger
-    tensor dense of shape :math:`(L0, D1, .., DN)` where L0 >> D0.
+    When the `values` of a RowTensor has a shape of :math:`(d_0, d_1, ..., d_n)`, then this RowTensor is used to
+    represent a subset of a larger dense tensor of shape :math:`(l_0, d_1, ..., d_n)`, where :math:`d_i` is the size of
+    i-th axis in RowTensor, :math:`l_0` is the size of 0-th axis of dense tensor and it satisfies :math:`l_0 > d_0`.
 
-    The values in indices are the indices in the first dimension of the slices
-    that have been extracted from the larger tensor.
-
-    The dense tensor dense represented by an RowTensor slices has
-    `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
+    The parameter `indices` is used to specify locations from which the `RowTensor` is sliced in the first dimension of
+    the dense tensor, which means the parameters `indices` and `values` have the following relationship
+    :math:`dense[indices[i], :, :, :, ...] = values[i, :, :, :, ...]`.
 
     For example, if indices is [0], values is [[1, 2]], shape is
-     :math:`(3, 2)` , then the dense representation of the row tensor will be:
+    :math:`(3, 2)` , then the dense representation of the row tensor will be:
 
     .. code-block::
 
@@ -101,8 +100,8 @@ class RowTensor(RowTensorInner):
         This is an experimental API that is subjected to change or deletion.
 
     Args:
-        indices (Tensor): A 1-D integer Tensor of shape :math:`(D0)` . Default: ``None``.
-        values (Tensor): A Tensor of any dtype of shape :math:`(D0, D1, ..., Dn)` . Default: ``None``.
+        indices (Tensor): A 1-D integer Tensor of shape :math:`(d_0)` . Default: ``None``.
+        values (Tensor): A Tensor of any dtype of shape :math:`(d_0, d_1, ..., d_n)` . Default: ``None``.
         shape (tuple(int)): An integer tuple which contains the shape
             of the corresponding dense tensor. Default: ``None``.
         row_tensor (RowTensor): A RowTensor object. Default: ``None``.
