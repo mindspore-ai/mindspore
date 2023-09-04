@@ -16,7 +16,9 @@
 
 import pytest
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, Tensor
+from mindspore import dtype as mstype
+import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -47,7 +49,7 @@ def test_ms_syntax_operator_int_is_not_int():
         net = IdentityIsNot(1, 2)
         ret = net()
         print(ret)
-    assert "For syntax like 'a is not b', b supports True, False and None" in str(err)
+    assert "For syntax like 'a is not b', b supports True, False, None and Type" in str(err)
 
 
 @pytest.mark.level1
@@ -110,5 +112,22 @@ def test_ms_syntax_operator_bool_is_not_false():
     Expectation: No exception
     """
     net = IdentityIsNot(True, False)
+    ret = net()
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ms_syntax_operator_type_is_not_type():
+    """
+    Feature: simple expression
+    Description: test is operator.
+    Expectation: No exception
+    """
+    x = Tensor(0, ms.int32)
+    net = IdentityIsNot(x.dtype, mstype.bool_)
     ret = net()
     assert ret

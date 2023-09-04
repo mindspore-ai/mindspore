@@ -168,15 +168,18 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
                              const AbstractBasePtrList &args_abs_list) {
   // Statement: x is t
   // Inputs: x, t
+  constexpr size_t kInputsNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 2);
-  ValuePtr t = args_abs_list[1]->BuildValue();
-  if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION) << "For syntax like 'a is b', b supports True, False and None, but got " << t->ToString();
-  }
+  CheckArgsSize(op_name, args_abs_list, kInputsNum);
   ValuePtr x = args_abs_list[0]->BuildValue();
-  if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
+  ValuePtr t = args_abs_list[1]->BuildValue();
+
+  if (args_abs_list[0]->isa<abstract::AbstractType>() && args_abs_list[1]->isa<abstract::AbstractType>()) {
+    return std::make_shared<AbstractScalar>(*t == *x);
+  } else if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
     return std::make_shared<AbstractScalar>(true);
+  } else if (!SupportedIsTargetValue(t) && !args_abs_list[1]->isa<abstract::AbstractType>()) {
+    MS_LOG(EXCEPTION) << "For syntax like 'a is b', b supports True, False, None and Type, but got " << t->ToString();
   }
 
   return std::make_shared<AbstractScalar>(*t == *x);
@@ -186,20 +189,28 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
                                const AbstractBasePtrList &args_abs_list) {
   // Statement: x is not t
   // Inputs: x, t
+  constexpr size_t kInputsNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 2);
-  ValuePtr t = args_abs_list[1]->BuildValue();
-  if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION) << "For syntax like 'a is not b', b supports True, False and None, but got " << t->ToString();
-  }
+  CheckArgsSize(op_name, args_abs_list, kInputsNum);
   ValuePtr x = args_abs_list[0]->BuildValue();
+  ValuePtr t = args_abs_list[1]->BuildValue();
+
+  if (args_abs_list[0]->isa<abstract::AbstractType>() && args_abs_list[1]->isa<abstract::AbstractType>()) {
+    return std::make_shared<AbstractScalar>(!(*t == *x));
+  } else if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
+    return std::make_shared<AbstractScalar>(false);
+  } else if (!SupportedIsTargetValue(t) && !args_abs_list[1]->isa<abstract::AbstractType>()) {
+    MS_LOG(EXCEPTION) << "For syntax like 'a is not b', b supports True, False, None and Type, but got "
+                      << t->ToString();
+  }
 
   return std::make_shared<AbstractScalar>(!(*t == *x));
 }
 
 bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list) {
+  constexpr size_t kInputsNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 2);
+  CheckArgsSize(op_name, args_abs_list, kInputsNum);
   const auto &key = args_abs_list[0];
   auto dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 1);
 
