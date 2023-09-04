@@ -76,14 +76,9 @@ bool CheckMetaFgOps(const AnfNodePtr &node) {
   if (value == nullptr) {
     return false;
   }
-  auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
-  if (meta_func_graph == nullptr) {
-    return false;
-  }
-
   const auto &meta_fg_ops = GetMetaFgOps();
   for (auto meta_fg_op : meta_fg_ops) {
-    if (meta_fg_op->Match(meta_func_graph)) {
+    if (meta_fg_op->Match(value)) {
       return true;
     }
   }

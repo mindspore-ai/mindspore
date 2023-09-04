@@ -423,6 +423,11 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
+  // Disable after_resolve_pass if Pre-Lift is enabled.
+  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  if (enable_pre_lift) {
+    after_resolve_pass.set_disabled(true);
+  }
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
@@ -436,7 +441,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.partial_eliminate_,
   });
   // Disable c_1 if Pre-Lift is not enabled.
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
   if (!enable_pre_lift) {
     c_1.set_disabled(true);
   }

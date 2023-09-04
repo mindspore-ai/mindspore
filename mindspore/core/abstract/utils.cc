@@ -310,6 +310,27 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
                              << type->ToString();
 }
 
+void SetVariableFlag(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::AbstractFunction>()) {
+    return;
+  }
+  const auto func_abs = abs->cast_ptr<abstract::AbstractFunction>();
+  MS_EXCEPTION_IF_NULL(func_abs);
+  abstract::FuncGraphAbstractClosure *closure_abs = nullptr;
+  auto partial_closure_abs = func_abs->cast_ptr<abstract::PartialAbstractClosure>();
+  if (partial_closure_abs != nullptr) {
+    closure_abs = partial_closure_abs->fn()->cast_ptr<abstract::FuncGraphAbstractClosure>();
+  } else {
+    closure_abs = func_abs->cast_ptr<abstract::FuncGraphAbstractClosure>();
+  }
+  if (closure_abs != nullptr) {
+    auto func = closure_abs->func_graph();
+    MS_EXCEPTION_IF_NULL(func);
+    func->set_is_tensor_condition_branch(true);
+    MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
+  }
+}
+
 namespace {
 FuncGraphPtr GetFuncGraphFromAbs(const abstract::AbstractBasePtr &abs, const AnfNodePtr &call_node) {
   MS_EXCEPTION_IF_NULL(call_node);

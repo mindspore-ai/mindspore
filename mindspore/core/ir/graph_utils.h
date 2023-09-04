@@ -65,7 +65,8 @@ MS_CORE_API std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccF
                                              const IncludeFunc &include = AlwaysInclude);
 
 MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root);
-std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root);
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root,
+                                                    const GraphFilterFunc &filter = GraphFilterFunc());
 
 MS_CORE_API CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const MatchFunc &match_predicate);
 

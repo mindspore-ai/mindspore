@@ -91,6 +91,9 @@ class MS_CORE_API Cloner {
   bool preset_abstract() const { return preset_abstract_; }
   void set_preset_abstract(bool preset_abstract) { preset_abstract_ = preset_abstract; }
 
+  GraphFilterFunc lifting_func_graph_filter() const { return lifting_func_graph_filter_; }
+  void set_lifting_func_graph_filter(GraphFilterFunc filter) { lifting_func_graph_filter_ = filter; }
+
  private:
   void CloneNodes();
   void LinkCNodeEdges();
@@ -131,6 +134,7 @@ class MS_CORE_API Cloner {
   bool clone_all_child_graphs_;
   bool clone_all_used_graphs_;
   bool preset_abstract_{true};
+  GraphFilterFunc lifting_func_graph_filter_;
   TraceInfoPtr relation_;
   TraceInfoPtr target_relation_;
   NodeToNodeMap replicated_node_;
@@ -152,7 +156,8 @@ MS_CORE_API AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGra
                                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr,
                                    const NodeDebugInfoPtr &call_debug_info = nullptr);
 
-MS_CORE_API FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph, bool preset_abstract = true);
+MS_CORE_API FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph, bool preset_abstract = true,
+                                      const GraphFilterFunc &lifting_func_graph_filter = GraphFilterFunc());
 MS_CORE_API FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs);
 
 MS_CORE_API ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation);

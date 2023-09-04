@@ -35,6 +35,7 @@
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/operator/composite/composite.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -598,11 +599,60 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   return true;
 }
 
+// Used for excluding the func graphs in VMap.
+bool UsedByVmap(const FuncGraphPtr &func_graph) {
+  const auto &cnodes_index = func_graph->func_graph_cnodes_index();
+  if (cnodes_index.empty()) {
+    return false;
+  }
+  const auto matcher = [&func_graph](const std::pair<const CNodeIndexPairPtr, int64_t> &cnode_index) {
+    const auto &cnode = cnode_index.first->first;
+    const auto &vmap_meta = GetCNodeValueWithoutDoSignature(cnode);
+    if (vmap_meta != nullptr && vmap_meta->isa<prim::VmapOperation>()) {
+      MS_LOG(DEBUG) << "Found VMap CNode: " << cnode->DebugString();
+      return true;
+    }
+    // The func graph is used in MakeTuple or UnpackGraph.
+    const auto user_matcher = [](const FuncGraphPtr &func_graph, const AnfNodePtr &cnode) {
+      auto manager = func_graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      auto &users = manager->node_users()[cnode];
+      for (const auto &user : users) {
+        const auto &user_vmap_meta = GetCNodeValueWithoutDoSignature(user.first);
+        if (user_vmap_meta != nullptr && user_vmap_meta->isa<prim::VmapOperation>()) {
+          MS_LOG(DEBUG) << "Found VMap CNode: " << user.first->DebugString();
+          return true;
+        }
+      }
+      return false;
+    };
+    const auto unpack_graph_prim = GetCNodePrimitive(cnode);
+    if (unpack_graph_prim != nullptr && unpack_graph_prim->isa<prim::UnpackGraphPrimitive>()) {
+      return user_matcher(func_graph, cnode);
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+      return user_matcher(func_graph, cnode);
+    }
+    // Deal with F.vmap(fn, ...) in construct().
+    // Not check fn passed from nested func graph calls.
+    if (cnode_index.first->second == 1) {
+      const auto vmap_func = GetCNodeFuncGraph(cnode);
+      if (vmap_func == nullptr) {
+        return false;
+      }
+      auto first_param = vmap_func->parameters()[0];
+      return user_matcher(func_graph, first_param);
+    }
+    return false;
+  };
+  return std::any_of(cnodes_index.cbegin(), cnodes_index.cend(), matcher);
+}
+
 bool PreCConvAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
   FuncGraphPtr func_graph = resource->func_graph();
-  FuncGraphPtr new_fg = LiftingClone(func_graph, false);
+  FuncGraphPtr new_fg = LiftingClone(func_graph, false, UsedByVmap);
   resource->set_func_graph(new_fg);
   return GradPartialTransformPass(resource);
 }

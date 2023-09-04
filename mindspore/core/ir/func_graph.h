@@ -72,8 +72,8 @@ struct CNodeIndexEqual {
   }
 };
 
-template <typename ValueT, class CounterHash = std::hash<ValueT>, class CounterEqual = std::equal_to<ValueT>>
-using CounterOrderedMap = OrderedMap<ValueT, int, CounterHash, CounterEqual>;
+template <typename KeyT, class CounterHash = std::hash<KeyT>, class CounterEqual = std::equal_to<KeyT>>
+using CounterOrderedMap = OrderedMap<KeyT, int, CounterHash, CounterEqual>;
 using AnfNodeCounterMap = CounterOrderedMap<AnfNodePtr>;
 using CNodeIndexCounterMap = CounterOrderedMap<CNodeIndexPairPtr, CNodeIndexHasher, CNodeIndexEqual>;
 

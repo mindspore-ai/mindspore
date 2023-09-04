@@ -58,6 +58,8 @@ MS_CORE_API AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type);
 MS_CORE_API AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type);
 MS_CORE_API std::vector<FuncGraphPtr> GetFuncGraphsFromCallNode(const CNodePtr &call_node);
 
+MS_CORE_API void SetVariableFlag(const AbstractBasePtr &abs);
+
 class MS_CORE_API EnvSetSparseResultMgr {
  public:
   static EnvSetSparseResultMgr &GetInstance() noexcept {

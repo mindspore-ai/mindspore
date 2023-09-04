@@ -147,7 +147,7 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const Match
   return nullptr;
 }
 
-std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root) {
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root, const GraphFilterFunc &filter) {
   std::vector<FuncGraphPtr> todo;
   todo.push_back(root);
   auto seen = NewSeenGeneration();
@@ -158,6 +158,9 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root) {
     auto used = top->func_graphs_used();
     for (auto &item : used) {
       if (item.first->seen_ == seen) {
+        continue;
+      }
+      if (filter && filter(item.first)) {
         continue;
       }
       todo.push_back(item.first);
@@ -191,9 +194,9 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
 
   auto graph = GetValuePtr<FuncGraph>(node);
   if (graph != nullptr) {
-    auto &ret = graph->return_node();
-    if (ret != nullptr) {
-      vecs.push_back(ret);
+    auto &res = graph->return_node();
+    if (res != nullptr) {
+      vecs.push_back(res);
     }
     return vecs;
   } else if (node->func_graph() != nullptr) {
@@ -214,9 +217,9 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
 
   auto graph = GetValuePtr<FuncGraph>(node);
   if (graph != nullptr) {
-    auto &ret = graph->return_node();
-    if (ret != nullptr) {
-      vecs.push_back(ret);
+    auto &res = graph->return_node();
+    if (res != nullptr) {
+      vecs.push_back(res);
     }
   } else if (node->isa<CNode>()) {
     FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
@@ -267,9 +270,9 @@ std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, cons
     if (graph_filter != nullptr && graph_filter(graph)) {
       return vecs;
     }
-    auto &ret = graph->return_node();
-    if (ret != nullptr) {
-      vecs.push_back(ret);
+    auto &res = graph->return_node();
+    if (res != nullptr) {
+      vecs.push_back(res);
     }
   } else if (node->isa<CNode>()) {
     FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);

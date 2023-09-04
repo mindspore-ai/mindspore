@@ -22,6 +22,7 @@
 #include "ir/graph_utils.h"
 #include "ir/manager.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -199,9 +200,10 @@ void Cloner::AddChildGraphs(const FuncGraphPtr &func_graph) {
   std::set<const FuncGraph *> memo;
   for (auto &graph : scopes) {
     // Avoid to insert duplicate function.
-    if (graph != func_graph && memo.emplace(graph.get()).second) {
-      (void)todo_.emplace_back(CloneInfo{graph, nullptr, {}});
+    if (graph == func_graph || !memo.emplace(graph.get()).second) {
+      continue;
     }
+    (void)todo_.emplace_back(CloneInfo{graph, nullptr, {}});
   }
 }
 
@@ -214,9 +216,10 @@ void Cloner::AddTotalGraphs(const FuncGraphPtr &func_graph) {
   auto &used = func_graph->func_graphs_used();
   for (auto &fg : used) {
     // Avoid to insert duplicate function.
-    if (memo.emplace(fg.first.get()).second) {
-      (void)todo_.emplace_back(CloneInfo{fg.first, nullptr, {}});
+    if (!memo.emplace(fg.first.get()).second) {
+      continue;
     }
+    (void)todo_.emplace_back(CloneInfo{fg.first, nullptr, {}});
   }
 }
 
@@ -716,7 +719,7 @@ void Cloner::Lift(const std::vector<FuncGraphPtr> &sorted) {
 
 void Cloner::SetEdgesBfs(const FuncGraphPtr &root_fg, FuncGraphTransaction *tx) {
   MS_EXCEPTION_IF_NULL(root_fg);
-  const auto &func_graphs = BroadFirstSearchGraphUsed(root_fg);
+  const auto &func_graphs = BroadFirstSearchGraphUsed(root_fg, lifting_func_graph_filter());
   for (auto &func_graph : func_graphs) {
     SetEdges(func_graph, tx);
   }
@@ -726,7 +729,7 @@ void Cloner::LiftParameters(const FuncGraphVector &todo_func_graphs) {
   MS_EXCEPTION_IF_NULL(manager_);
   auto tx = manager_->Transact();
   for (const auto &todo_func_graph : todo_func_graphs) {
-    const auto &func_graphs = BroadFirstSearchGraphUsed(todo_func_graph);
+    const auto &func_graphs = BroadFirstSearchGraphUsed(todo_func_graph, lifting_func_graph_filter());
     for (auto &func_graph : func_graphs) {
       GenParameters(func_graph);
     }
@@ -965,10 +968,12 @@ AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &targe
   return cloner[func_graph->output()];
 }
 
-FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph, bool preset_abstract) {
+FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph, bool preset_abstract,
+                          const GraphFilterFunc &lifting_func_graph_filter) {
   MS_EXCEPTION_IF_NULL(func_graph);
   Cloner cloner({}, false);
   cloner.set_preset_abstract(preset_abstract);
+  cloner.set_lifting_func_graph_filter(lifting_func_graph_filter);
   cloner.AddClone(func_graph, nullptr, {}, kLifting);
   auto target_func_graph = cloner[func_graph];
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {

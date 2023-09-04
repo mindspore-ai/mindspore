@@ -41,14 +41,9 @@ namespace {
 constexpr int64_t kParamSizeIndex = 0;
 constexpr int64_t kUMonadOffsetIndex = 1;
 constexpr int64_t kIOMonadOffsetIndex = 2;
-using VisitedHashSetPair = std::pair<mindspore::HashSet<FuncGraphPtr>, mindspore::HashSet<AnfNodePtr>>;
 constexpr char kVmapFunctionModelName[] = "mindspore.ops._vmap";
 
 int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes);
-
-FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource, int axis_size,
-                               VisitedHashSetPair *visited_pair,
-                               mindspore::HashMap<std::string, ParameterPtr> *stacked_params = nullptr);
 
 // White list of primitives consistent before and after transformation.
 const mindspore::HashSet<std::string> throughtout_op{prim::kPrimMakeTuple->name(),   prim::kPrimMakeList->name(),
@@ -159,55 +154,6 @@ void BindUMonad(const AnfNodePtr &u_monad_node, const FuncGraphPtr &vmap_fg, Anf
     auto update_state_node = UpdateParam(vmap_fg, u_monad_node, false, *param_mapping_table);
     (void)outputs->emplace_back(update_state_node);
   }
-}
-
-AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const ValuePtr &in_axes, size_t *u_monad_offset,
-                      size_t *io_monad_offset, ParamMappingVector *param_mapping_table) {
-  FuncGraphPtr vmap_fg = vmap_app->func_graph();
-  bool is_in_axes_value_sequence = in_axes->isa<ValueSequence>();
-  ValueSequencePtr in_axes_to_value_sequence = dyn_cast<ValueSequence>(in_axes);
-
-  auto inputs = vmap_app->inputs();
-  auto inputs_size = inputs.size();
-  if (inputs_size == 0) {
-    MS_EXCEPTION(ValueError) << "The inputs number of CNode: " << vmap_app->DebugString()
-                             << " should be positive but got : " << inputs_size << ".";
-  }
-  GetMonadOffset(inputs, u_monad_offset, io_monad_offset);
-  size_t abstract_monad_count = *u_monad_offset > *io_monad_offset ? *u_monad_offset : *io_monad_offset;
-  size_t real_params_size = inputs_size > abstract_monad_count ? inputs_size - abstract_monad_count : 0;
-  if (is_in_axes_value_sequence && real_params_size - 1 != in_axes_to_value_sequence->size()) {
-    MS_EXCEPTION(ValueError) << "The length of vmap_app inputs (except primitive input and monad input) is: "
-                             << (real_params_size - 1)
-                             << " and the length of in_axis is: " << in_axes_to_value_sequence->size()
-                             << ". These two numbers should be equal.";
-  }
-
-  AnfNodePtrList outputs;
-  outputs.push_back(vmap_app->input(0));
-  for (unsigned int i = 1; i < real_params_size; ++i) {
-    auto input = inputs[i];
-    auto in_axis = is_in_axes_value_sequence ? (*in_axes_to_value_sequence)[i - 1] : in_axes;
-    auto input_abs = input->abstract();
-    CNodePtr cur_make_seq_cnode = nullptr;
-    if (input_abs->isa<abstract::AbstractSequence>()) {
-      cur_make_seq_cnode = BuildBindInAxisSeqInput(input, in_axis, vmap_fg);
-    } else {
-      cur_make_seq_cnode = vmap_fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), input, NewValueNode(in_axis)});
-    }
-    (void)outputs.emplace_back(cur_make_seq_cnode);
-  }
-
-  if (*u_monad_offset > 0 && inputs_size > *u_monad_offset) {
-    AnfNodePtr u_monad_node = inputs[inputs_size - *u_monad_offset];
-    BindUMonad(u_monad_node, vmap_fg, &outputs, param_mapping_table);
-  }
-
-  if (*io_monad_offset > 0 && inputs_size > 0) {
-    (void)outputs.emplace_back(inputs.back());
-  }
-
-  return vmap_fg->NewCNode(outputs);
 }
 
 ValueSequencePtr GetInAxesSeq(const ValuePtr &in_axes, size_t parameters_size) {
@@ -380,7 +326,7 @@ ValuePtr CreatePrimtivePy(const mindspore::HashMap<std::string, ValuePtr> &attrs
   ValuePtr op_instance = nullptr;
   bool succ = parse::ConvertData(obj, &op_instance);
   if (!succ) {
-    MS_LOG(ERROR) << "Failure:get Python op " << op_path << " from " << op_name << " fail";
+    MS_LOG(ERROR) << "Failure: Get Python op " << op_path << " from " << op_name << " fail";
     return nullptr;
   }
   return op_instance;
@@ -468,9 +414,9 @@ AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::Resource
   return prim_vmap_rule;
 }
 
-AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng) {
+AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(node);
-  auto &node_user_map = mng->node_users();
+  auto &node_user_map = manager->node_users();
   auto user = node_user_map.find(node);
   if (user != node_user_map.end() && !user->second.empty()) {
     auto user_set = user->second;
@@ -500,7 +446,7 @@ AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph
         for (auto pair : user_set) {
           if (pair.first->func_graph() == func_graph) {
             auto user_node = pair.first->cast<CNodePtr>();
-            mng->SetEdge(user_node, pair.second, copy_node);
+            manager->SetEdge(user_node, pair.second, copy_node);
           }
         }
         return copy_node;
@@ -510,33 +456,48 @@ AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph
   return node;
 }
 
-void BindFvAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
-                const AnfNodePtr &stacked_param_node = nullptr) {
+void BindAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphPtr &top_func_graph,
+              const FuncGraphManagerPtr &manager, const AnfNodePtr &stacked_param_node = nullptr) {
   MS_EXCEPTION_IF_NULL(node);
-  auto &node_user_map = mng->node_users();
+  auto &node_user_map = manager->node_users();
   auto user = node_user_map.find(node);
-  if (user != node_user_map.end() && !user->second.empty()) {
-    auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
-    CNodePtr replace_node = nullptr;
-    if (stacked_param_node == nullptr) {
-      replace_node = func_graph->NewCNode({make_tuple, node, NewValueNode(kNone)});
-    } else {
-      replace_node = func_graph->NewCNode({make_tuple, stacked_param_node, NewValueNode(SizeToLong(0))});
+  if (user == node_user_map.end() || user->second.empty()) {
+    return;
+  }
+  auto user_set = user->second;
+  for (auto pair : user_set) {
+    const auto user_func_graph = pair.first->func_graph();
+    MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", user_func_graph: " << user_func_graph->ToString();
+    if (user_func_graph != func_graph && user_func_graph != top_func_graph) {
+      continue;
     }
-    auto user_set = user->second;
-    for (auto pair : user_set) {
-      if (pair.first->func_graph() == func_graph) {
-        auto user_node = pair.first->cast<CNodePtr>();
-        mng->SetEdge(user_node, pair.second, replace_node);
-      }
+    auto user_node = pair.first->cast<CNodePtr>();
+    MS_LOG(DEBUG) << "user_node: " << user_node->DebugString();
+    if (IsPrimitiveCNode(user_node, prim::kPrimPartial) || IsPrimitiveCNode(user_node, prim::kPrimVmapStackAssign) ||
+        IsPrimitiveCNode(user_node, prim::kPrimVmapUnstackAssign)) {
+      continue;
+    }
+    CNodePtr replace_node = nullptr;
+    auto make_tuple_node = NewValueNode(prim::kPrimMakeTuple);
+    if (stacked_param_node == nullptr) {
+      replace_node = user_func_graph->NewCNode({make_tuple_node, node, NewValueNode(kNone)});
+    } else {
+      replace_node = user_func_graph->NewCNode({make_tuple_node, stacked_param_node, NewValueNode(SizeToLong(0))});
+    }
+    if (IsPrimitiveCNode(user_node, prim::kPrimMakeTuple) && pair.second == 1) {
+      // For Partial Inputs.
+      manager->Replace(user_node, replace_node);
+    } else {
+      manager->SetEdge(user_node, pair.second, replace_node);
     }
   }
 }
 
-void BindParamAxis(const AnfNodePtr &node, const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
-                   mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
+void BindParamAxis(const AnfNodePtr &node, const FuncGraphPtr &vmap_fg, const FuncGraphPtr &top_func_graph,
+                   const FuncGraphManagerPtr &manager, mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
+  MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", node: " << node->DebugString();
   if (stacked_params == nullptr || stacked_params->empty()) {
-    BindFvAxis(node, vmap_fg, manager);
+    BindAxis(node, vmap_fg, top_func_graph, manager);
     return;
   }
   std::string param_name = dyn_cast<Parameter>(node)->name();
@@ -546,139 +507,10 @@ void BindParamAxis(const AnfNodePtr &node, const FuncGraphPtr &vmap_fg, const Fu
   if (iter != stacked_params->end()) {
     ParameterPtr stacked_param_node = iter->second;
     MS_EXCEPTION_IF_NULL(stacked_param_node);
-    BindFvAxis(node, vmap_fg, manager, stacked_param_node);
+    BindAxis(node, vmap_fg, top_func_graph, manager, stacked_param_node);
   } else {
-    BindFvAxis(node, vmap_fg, manager);
+    BindAxis(node, vmap_fg, top_func_graph, manager);
   }
-}
-
-void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
-                         VisitedHashSetPair *visited_pair, int axis_size,
-                         mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
-  // Map ValueNode.
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto value_nodes = vmap_fg->value_nodes();
-
-  auto visited_graph = &visited_pair->first;
-  auto visited_node = &visited_pair->second;
-
-  for (const auto &value_pair : value_nodes) {
-    auto node = value_pair.first;
-    // ValueNode may have been transformed when other graphs are expanded.
-    if (visited_node->count(node) > 0) {
-      MS_LOG(DEBUG) << node->DebugString() << " has been transformed.";
-      continue;
-    }
-    node = CopyNodeToVmap(node, vmap_fg, manager);
-    if (IsValueNode<FuncGraph>(node)) {
-      MS_LOG(DEBUG) << "Map FuncGraph node " << node->DebugString() << ".";
-      (void)visited_node->insert(node);
-      auto sub_func_graph = GetValueNode<FuncGraphPtr>(node);
-      MS_EXCEPTION_IF_NULL(sub_func_graph);
-      if (visited_graph->count(sub_func_graph) > 0) {
-        continue;
-      }
-      (void)visited_graph->insert(sub_func_graph);
-      auto transformed_fg = ExpandVmapFunctor(sub_func_graph, resource, axis_size, visited_pair, stacked_params);
-      transformed_fg->set_flag(FUNC_GRAPH_FLAG_VMAP_TRANSFORMED, true);
-      auto replace_node = NewValueNode(transformed_fg);
-      (void)visited_node->insert(replace_node);
-      (void)manager->Replace(node, replace_node);
-    } else if (IsValueNode<Primitive>(node)) {
-      auto replace_node = ExpandVmapPrimitive(node, resource, axis_size);
-      MS_EXCEPTION_IF_NULL(replace_node);
-      (void)visited_node->insert(replace_node);
-      (void)manager->Replace(node, replace_node);
-    } else if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
-               IsValueNode<ValueTuple>(node) || IsValueNode<ValueList>(node) || IsValueNode<Type>(node) ||
-               IsValueNode<StringImm>(node)) {
-      auto value_node_ptr = node->cast<ValueNodePtr>();
-      ValuePtr node_value = value_node_ptr->value();
-      std::vector<ValuePtr> elements;
-      elements.push_back(node_value);
-      elements.push_back(kNone);
-      auto replace_value = std::make_shared<ValueTuple>(elements);
-      auto replace_node = NewValueNode(replace_value);
-      (void)visited_node->insert(replace_node);
-      (void)manager->Replace(node, replace_node);
-    } else if (IsValueNode<Monad>(node)) {
-      continue;
-    } else {
-      MS_LOG(EXCEPTION) << "vmap do not support transform " << node->DebugString() << " right now.";
-    }
-  }
-}
-
-void ExpandVmapFreeVariable(const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
-                            const mindspore::HashSet<AnfNodePtr> &visited_node,
-                            mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
-  // Map free variable.
-  auto free_variables_nodes = vmap_fg->free_variables();
-  for (auto &pair : free_variables_nodes) {
-    auto node = pair.first;
-    if (visited_node.count(node) > 0 || node->isa<CNode>()) {
-      continue;
-    }
-    if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
-        IsValueNode<ValueTuple>(node) || IsValueNode<Type>(node)) {
-      BindFvAxis(node, vmap_fg, manager);
-    } else if (node->isa<Parameter>()) {
-      BindParamAxis(node, vmap_fg, manager, stacked_params);
-    } else {
-      MS_LOG(EXCEPTION) << "vmap do not support transform " << node->DebugString() << " right now.";
-    }
-  }
-}
-
-FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource, int axis_size,
-                               VisitedHashSetPair *visited_pair,
-                               mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
-  MS_EXCEPTION_IF_NULL(vmap_fg);
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->AddFuncGraph(vmap_fg);
-  auto visited_node = &visited_pair->second;
-
-  // The parameters of the current graph will be transformed in the upper graph, and recorded in
-  // `visited_node` to avoid being repeatedly transformed refer as a free variable in other graph.
-  auto parameter_nodes = vmap_fg->parameters();
-  for (auto &node : parameter_nodes) {
-    MS_LOG(DEBUG) << "parameter_nodes" << node->DebugString() << ".";
-    (void)visited_node->insert(node);
-  }
-
-  ExpandVmapValueNode(vmap_fg, resource, visited_pair, axis_size, stacked_params);
-  ExpandVmapFreeVariable(vmap_fg, manager, *visited_node, stacked_params);
-
-  return vmap_fg;
-}
-
-// Entry to perform Vmap transformation.
-AnfNodePtr ExpandVmap(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource, int axis_size,
-                      mindspore::HashMap<std::string, ParameterPtr> *stacked_params) {
-  MS_EXCEPTION_IF_NULL(vnode);
-  if (IsValueNode<FuncGraph>(vnode)) {
-    ScopeGuard scope_guard(vnode->scope());
-    auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
-    MS_EXCEPTION_IF_NULL(func_graph);
-    MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will perform the Vmap transformation.";
-
-    // Record transformed FuncGraphs and other nodes to avoid repeatedly expanding and transforming.
-    // Whose lifecycle is limited to the current extension.
-    mindspore::HashSet<FuncGraphPtr> visited_graph;
-    mindspore::HashSet<AnfNodePtr> visited_node;
-    (void)visited_graph.insert(func_graph);
-    (void)visited_node.insert(vnode);
-
-    VisitedHashSetPair visited_pair(visited_graph, visited_node);
-    auto tf_fg = ExpandVmapFunctor(func_graph, resource, axis_size, &visited_pair, stacked_params);
-    visited_node.clear();
-
-    return NewValueNode(tf_fg);
-  }
-  MS_LOG(EXCEPTION) << "Currently, the first argument in F.vmap only supports Cell, Python defined "
-                       "function or @jit decorated function.";
 }
 
 std::string GetShapeString(const ShapeVector &tensor_shape) {
@@ -690,24 +522,19 @@ std::string GetShapeString(const ShapeVector &tensor_shape) {
   return oss.str();
 }
 
-void GenerateStackedParams(const FuncGraphPtr vmap_fg, size_t cell_size, const std::vector<AnfNodePtrList> &param_table,
+void GenerateStackedParams(const FuncGraphPtr &top_fg, size_t cell_size, const std::vector<AnfNodePtrList> &param_table,
                            mindspore::HashMap<std::string, ParameterPtr> *stacked_params,
                            ParamMappingVector *param_mapping_table) {
-  MS_EXCEPTION_IF_NULL(vmap_fg);
-  FuncGraphPtr top_fg = vmap_fg;
-  while (top_fg->parent() != nullptr) {
-    top_fg = top_fg->parent();
-  }
-
+  MS_EXCEPTION_IF_NULL(top_fg);
   ShapeVector tensor_shape;
   TypeId tensor_type = kNumberTypeFloat32;
   std::string param_name = "";
   for (size_t i = 0; i < param_table[0].size(); ++i) {
-    AnfNodePtrList param;
+    AnfNodePtrList params;
     std::string orig_param_name = "";
     for (size_t j = 0; j < param_table.size(); ++j) {
       auto param_node = dyn_cast<Parameter>(param_table[j][i]);
-      (void)param.emplace_back(param_node);
+      (void)params.emplace_back(param_node);
       MS_EXCEPTION_IF_NULL(param_node);
       auto default_param = param_node->default_param();
       MS_EXCEPTION_IF_NULL(default_param);
@@ -737,22 +564,19 @@ void GenerateStackedParams(const FuncGraphPtr vmap_fg, size_t cell_size, const s
         }
       }
     }
-    ParameterPtr param_node = nullptr;
-
     ShapeVector stacked_shape(tensor_shape);
     (void)stacked_shape.insert(stacked_shape.begin(), cell_size);
     tensor::TensorPtr stacked_param_tensor = std::make_shared<tensor::Tensor>(tensor_type, stacked_shape);
     MS_EXCEPTION_IF_NULL(stacked_param_tensor);
-
     ParamInfoPtr param_info = std::make_shared<ParamInfo>();
     param_info->set_name(param_name);
     stacked_param_tensor->set_param_info(param_info);
+    ParameterPtr new_param_node = top_fg->AddFvParameter(param_name, stacked_param_tensor);
+    MS_LOG(DEBUG) << "Add new parameter " << new_param_node->ToString() << " to the top graph " << top_fg->ToString()
+                  << ".";
 
-    param_node = top_fg->AddFvParameter(param_name, stacked_param_tensor);
-    MS_LOG(DEBUG) << "Add new parameter " << param_node->ToString() << "to the top graph " << top_fg->ToString() << ".";
-
-    (*stacked_params)[param_name] = param_node;
-    std::pair<ParameterPtr, AnfNodePtrList> param_mapping(param_node, param);
+    (*stacked_params)[param_name] = new_param_node;
+    std::pair<ParameterPtr, AnfNodePtrList> param_mapping(new_param_node, params);
     (void)param_mapping_table->emplace_back(param_mapping);
   }
 }
@@ -776,9 +600,9 @@ void GetCellParams(const FuncGraphPtr &vmap_fg, AnfNodePtrList *param_nodes) {
   }
 }
 
-AnfNodePtr TraverseVmapNode(CNodePtr vmap_node, size_t cell_size,
-                            mindspore::HashMap<std::string, ParameterPtr> *stacked_params,
-                            ParamMappingVector *param_mapping_table) {
+AnfNodePtr HandleVmapCellList(const FuncGraphPtr &top_func_graph, const CNodePtr &vmap_node, size_t cell_size,
+                              mindspore::HashMap<std::string, ParameterPtr> *stacked_params,
+                              ParamMappingVector *param_mapping_table) {
   AnfNodePtr vmap_fn_node = nullptr;
   auto cell_list_node = vmap_node->input(1);
   CNodePtr cnode = cell_list_node->cast<CNodePtr>();
@@ -792,9 +616,24 @@ AnfNodePtr TraverseVmapNode(CNodePtr vmap_node, size_t cell_size,
   size_t param_size = 0;
   for (size_t i = 1; i < inputs_size; i++) {
     vmap_fn_node = cnode->input(i);
-    vmap_fg = GetValueNode<FuncGraphPtr>(vmap_fn_node);
-    MS_EXCEPTION_IF_NULL(vmap_fg);
-    GetCellParams(vmap_fg, &param_table[i - 1]);
+    if (IsPrimitiveCNode(vmap_fn_node, prim::kPrimPartial)) {
+      const auto partial_cnode = dyn_cast_ptr<CNode>(vmap_fn_node);
+      vmap_fg = GetValueNode<FuncGraphPtr>(partial_cnode->input(1));
+    } else {
+      vmap_fg = GetValueNode<FuncGraphPtr>(vmap_fn_node);
+    }
+    if (vmap_fg == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The " << i << "th input is not func graph, but " << vmap_fn_node->DebugString()
+                                 << ", cnode: " << cnode->DebugString();
+    }
+    if (IsPrimitiveCNode(vmap_fn_node, prim::kPrimPartial)) {
+      const auto partial_cnode = dyn_cast_ptr<CNode>(vmap_fn_node);
+      constexpr auto ignore_partial_fn_count = 2;
+      (void)std::copy(partial_cnode->inputs().cbegin() + ignore_partial_fn_count, partial_cnode->inputs().cend(),
+                      std::back_inserter(param_table[i - 1]));
+    } else {
+      GetCellParams(vmap_fg, &param_table[i - 1]);
+    }
     if (param_size == 0) {
       param_size = param_table[i - 1].size();
     } else if (param_size != param_table[i - 1].size()) {
@@ -803,18 +642,219 @@ AnfNodePtr TraverseVmapNode(CNodePtr vmap_node, size_t cell_size,
     }
   }
 
-  GenerateStackedParams(vmap_fg, cell_size, param_table, stacked_params, param_mapping_table);
+  GenerateStackedParams(top_func_graph, cell_size, param_table, stacked_params, param_mapping_table);
   return vmap_fn_node;
 }
 }  // namespace
+
+void ExpandVmapPrim::ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
+                                         VisitedHashSetPair *visited_pair, int axis_size) {
+  // Map ValueNode.
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto value_nodes = vmap_fg->value_nodes();
+
+  auto visited_graph = &visited_pair->first;
+  auto visited_node = &visited_pair->second;
+
+  for (const auto &value_pair : value_nodes) {
+    auto node = value_pair.first;
+    // ValueNode may have been transformed when other graphs are expanded.
+    if (visited_node->count(node) > 0) {
+      MS_LOG(DEBUG) << node->DebugString() << " has been transformed.";
+      continue;
+    }
+    node = CopyNodeToVmap(node, vmap_fg, manager);
+    if (IsValueNode<FuncGraph>(node)) {
+      MS_LOG(DEBUG) << "Map FuncGraph node " << node->DebugString() << ".";
+      (void)visited_node->insert(node);
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(node);
+      MS_EXCEPTION_IF_NULL(sub_func_graph);
+      if (visited_graph->count(sub_func_graph) > 0) {
+        continue;
+      }
+      (void)visited_graph->insert(sub_func_graph);
+      auto transformed_fg = ExpandVmapFuncGraph(sub_func_graph, resource, axis_size, visited_pair);
+      transformed_fg->set_flag(FUNC_GRAPH_FLAG_VMAP_TRANSFORMED, true);
+      auto replace_node = NewValueNode(transformed_fg);
+      (void)visited_node->insert(replace_node);
+      (void)manager->Replace(node, replace_node);
+    } else if (IsValueNode<Primitive>(node)) {
+      auto replace_node = ExpandVmapPrimitive(node, resource, axis_size);
+      MS_EXCEPTION_IF_NULL(replace_node);
+      (void)visited_node->insert(replace_node);
+      (void)manager->Replace(node, replace_node);
+    } else if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
+               IsValueNode<ValueTuple>(node) || IsValueNode<ValueList>(node) || IsValueNode<Type>(node) ||
+               IsValueNode<StringImm>(node)) {
+      auto value_node_ptr = node->cast<ValueNodePtr>();
+      ValuePtr node_value = value_node_ptr->value();
+      std::vector<ValuePtr> elements;
+      elements.push_back(node_value);
+      elements.push_back(kNone);
+      auto replace_value = std::make_shared<ValueTuple>(elements);
+      auto replace_node = NewValueNode(replace_value);
+      (void)visited_node->insert(replace_node);
+      (void)manager->Replace(node, replace_node);
+    } else if (IsValueNode<Monad>(node)) {
+      continue;
+    } else {
+      MS_LOG(EXCEPTION) << "vmap do not support transform " << node->DebugString() << " right now.";
+    }
+  }
+}
+
+void ExpandVmapPrim::ExpandVmapFreeVariable(const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
+                                            const mindspore::HashSet<AnfNodePtr> &visited_node) {
+  // Map free variable.
+  auto free_variables_nodes = vmap_fg->free_variables();
+  MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", fv size: " << vmap_fg->free_variables().size();
+  for (auto &pair : free_variables_nodes) {
+    auto node = pair.first;
+    if (visited_node.count(node) > 0 || node->isa<CNode>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", node: " << node->DebugString();
+    if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
+        IsValueNode<ValueTuple>(node) || IsValueNode<Type>(node)) {
+      BindAxis(node, vmap_fg, top_func_graph_, manager);
+    } else if (node->isa<Parameter>()) {
+      BindParamAxis(node, vmap_fg, top_func_graph_, manager, &stacked_params_);
+    } else {
+      MS_LOG(EXCEPTION) << "vmap do not support transform " << node->DebugString() << " right now.";
+    }
+  }
+}
+
+void ExpandVmapPrim::ExpandVmapPartialInputs(const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
+                                             const mindspore::HashSet<AnfNodePtr> &visited_node) {
+  // Map partial inputs.
+  MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", partial_inputs_ size: " << partial_inputs_.size();
+  for (auto &node : partial_inputs_) {
+    if (visited_node.count(node) > 0 || node->isa<CNode>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", node: " << node->DebugString();
+    if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
+        IsValueNode<ValueTuple>(node) || IsValueNode<Type>(node)) {
+      BindAxis(node, vmap_fg, top_func_graph_, manager);
+    } else if (node->isa<Parameter>()) {
+      BindParamAxis(node, vmap_fg, top_func_graph_, manager, &stacked_params_);
+    } else {
+      MS_LOG(EXCEPTION) << "vmap do not support transform " << node->DebugString() << " right now.";
+    }
+  }
+}
+
+FuncGraphPtr ExpandVmapPrim::ExpandVmapFuncGraph(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
+                                                 int axis_size, VisitedHashSetPair *visited_pair) {
+  MS_EXCEPTION_IF_NULL(vmap_fg);
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &visited_node = visited_pair->second;
+  // The parameters of the current graph will be transformed in the upper graph, and recorded in
+  // `visited_node` to avoid being repeatedly transformed refer as a free variable in other graph.
+  auto parameter_nodes = vmap_fg->parameters();
+  for (auto &node : parameter_nodes) {
+    MS_LOG(DEBUG) << "parameter_nodes" << node->DebugString() << ".";
+    (void)visited_node.insert(node);
+  }
+
+  ExpandVmapValueNode(vmap_fg, resource, visited_pair, axis_size);
+  ExpandVmapFreeVariable(vmap_fg, manager, visited_node);
+  ExpandVmapPartialInputs(vmap_fg, manager, visited_node);
+  return vmap_fg;
+}
+
+// Entry to perform Vmap transformation.
+AnfNodePtr ExpandVmapPrim::ExpandVmap(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource,
+                                      int axis_size) {
+  MS_EXCEPTION_IF_NULL(vnode);
+  if (IsValueNode<FuncGraph>(vnode)) {
+    ScopeGuard scope_guard(vnode->scope());
+    auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
+    MS_EXCEPTION_IF_NULL(func_graph);
+    MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will perform the Vmap transformation.";
+
+    // Record transformed FuncGraphs and other nodes to avoid repeatedly expanding and transforming.
+    // Whose lifecycle is limited to the current extension.
+    mindspore::HashSet<FuncGraphPtr> visited_graph;
+    mindspore::HashSet<AnfNodePtr> visited_node;
+    (void)visited_graph.insert(func_graph);
+    (void)visited_node.insert(vnode);
+
+    VisitedHashSetPair visited_pair(visited_graph, visited_node);
+    auto tf_fg = ExpandVmapFuncGraph(func_graph, resource, axis_size, &visited_pair);
+    visited_node.clear();
+    return NewValueNode(tf_fg);
+  }
+  MS_LOG(EXCEPTION) << "Currently, the first argument in F.vmap only supports Cell, Python defined "
+                       "function or @jit decorated function.";
+}
+
+AnfNodePtr ExpandVmapPrim::BindInAxis(const CNodePtr &vmap_app, const AnfNodePtrList &partial_inputs,
+                                      const ValuePtr &in_axes, size_t *u_monad_offset, size_t *io_monad_offset) {
+  FuncGraphPtr vmap_fg = vmap_app->func_graph();
+  bool is_in_axes_value_sequence = in_axes->isa<ValueSequence>();
+  ValueSequencePtr in_axes_to_value_sequence = dyn_cast<ValueSequence>(in_axes);
+
+  auto inputs = vmap_app->inputs();
+  auto inputs_size = inputs.size();
+  if (inputs_size == 0) {
+    MS_EXCEPTION(ValueError) << "The inputs number of CNode: " << vmap_app->DebugString()
+                             << " should be positive but got : " << inputs_size << ".";
+  }
+  GetMonadOffset(inputs, u_monad_offset, io_monad_offset);
+  size_t abstract_monad_count = *u_monad_offset > *io_monad_offset ? *u_monad_offset : *io_monad_offset;
+  size_t real_params_size = inputs_size > abstract_monad_count ? inputs_size - abstract_monad_count : 0;
+  if (is_in_axes_value_sequence && real_params_size - 1 != in_axes_to_value_sequence->size()) {
+    MS_EXCEPTION(ValueError) << "The length of vmap_app inputs (except primitive input and monad input) is: "
+                             << (real_params_size - 1)
+                             << " and the length of in_axis is: " << in_axes_to_value_sequence->size()
+                             << ". These two numbers should be equal.";
+  }
+
+  AnfNodePtrList outputs;
+  outputs.push_back(vmap_app->input(0));
+  (void)std::transform(partial_inputs.cbegin(), partial_inputs.cend(), std::back_inserter(outputs),
+                       [&vmap_fg](const AnfNodePtr &node) {
+                         const auto make_tuple_node = NewValueNode(prim::kPrimMakeTuple);
+                         return vmap_fg->NewCNode({make_tuple_node, node, NewValueNode(kNone)});
+                       });
+  for (unsigned int i = 1; i < real_params_size; ++i) {
+    auto input = inputs[i];
+    auto in_axis = is_in_axes_value_sequence ? (*in_axes_to_value_sequence)[i - 1] : in_axes;
+    auto input_abs = input->abstract();
+    CNodePtr cur_make_seq_cnode = nullptr;
+    if (input_abs->isa<abstract::AbstractSequence>()) {
+      cur_make_seq_cnode = BuildBindInAxisSeqInput(input, in_axis, vmap_fg);
+    } else {
+      cur_make_seq_cnode = vmap_fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), input, NewValueNode(in_axis)});
+    }
+    (void)outputs.emplace_back(cur_make_seq_cnode);
+  }
+
+  if (*u_monad_offset > 0 && inputs_size > *u_monad_offset) {
+    AnfNodePtr u_monad_node = inputs[inputs_size - *u_monad_offset];
+    BindUMonad(u_monad_node, vmap_fg, &outputs, &param_mapping_table_);
+  }
+
+  if (*io_monad_offset > 0 && inputs_size > 0) {
+    (void)outputs.emplace_back(inputs.back());
+  }
+
+  return vmap_fg->NewCNode(outputs);
+}
 
 AnfNodePtr ExpandVmapPrim::PostProcessVmap(const AnfNodePtr &expanded_vmap_node, const AnfNodePtrList &partial_inputs,
                                            const std::vector<size_t> &orig_fg_param_info, const ValuePtr &out_axes,
                                            int axis_size) {
   FuncGraphPtr vmap_post_fg = std::make_shared<FuncGraph>();
-  AnfNodePtrList exec_node;
-  exec_node.push_back(expanded_vmap_node);
-  (void)std::copy(partial_inputs.cbegin(), partial_inputs.cend(), std::back_inserter(exec_node));
+  vmap_post_fg->debug_info()->set_name("vmap_eliminate");
+  AnfNodePtrList exec_node_inputs;
+  exec_node_inputs.push_back(expanded_vmap_node);
+  (void)std::for_each(partial_inputs.cbegin(), partial_inputs.cend(),
+                      [&](const AnfNodePtr &) { exec_node_inputs.push_back(vmap_post_fg->add_parameter()); });
   AnfNodePtr u_monad_node = nullptr;
   AnfNodePtr io_monad_node = nullptr;
   size_t parameters_size = orig_fg_param_info[kParamSizeIndex];
@@ -825,16 +865,16 @@ AnfNodePtr ExpandVmapPrim::PostProcessVmap(const AnfNodePtr &expanded_vmap_node,
   for (size_t i = 0; i < parameters_size; ++i) {
     if (i == u_monad_index) {
       u_monad_node = vmap_post_fg->add_parameter();
-      exec_node.push_back(u_monad_node);
+      exec_node_inputs.push_back(u_monad_node);
       continue;
     } else if (i == io_monad_index) {
       io_monad_node = vmap_post_fg->add_parameter();
-      exec_node.push_back(io_monad_node);
+      exec_node_inputs.push_back(io_monad_node);
       continue;
     }
-    exec_node.push_back(vmap_post_fg->add_parameter());
+    exec_node_inputs.push_back(vmap_post_fg->add_parameter());
   }
-  auto vmap_outputs = vmap_post_fg->NewCNode(exec_node);
+  auto vmap_outputs = vmap_post_fg->NewCNode(exec_node_inputs);
 
   auto update_state_prim = NewValueNode(prim::kPrimUpdateState);
   if (u_monad_node) {
@@ -905,38 +945,42 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
   bool change = false;
   auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  const auto &resource = std::dynamic_pointer_cast<pipeline::Resource>(optimizer->resource());
+  MS_EXCEPTION_IF_NULL(resource);
+  top_func_graph_ = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(top_func_graph_);
   for (auto &vmap_node : prim_nodes_) {
-    auto VmapPrim = GetValueNode<PrimitivePtr>(vmap_node->input(0));
-    MS_EXCEPTION_IF_NULL(VmapPrim);
-    ValuePtr in_axes = VmapPrim->GetAttr("in_axes");
+    MS_LOG(DEBUG) << "vmap_node: " << vmap_node->DebugString();
+    auto vmap_prim = GetValueNode<PrimitivePtr>(vmap_node->input(0));
+    MS_EXCEPTION_IF_NULL(vmap_prim);
+    ValuePtr in_axes = vmap_prim->GetAttr("in_axes");
     MS_EXCEPTION_IF_NULL(in_axes);
-    ValuePtr out_axes = VmapPrim->GetAttr("out_axes");
+    ValuePtr out_axes = vmap_prim->GetAttr("out_axes");
     MS_EXCEPTION_IF_NULL(out_axes);
-    ValuePtr cell_size_value = VmapPrim->GetAttr("cell_size");
+    ValuePtr cell_size_value = vmap_prim->GetAttr("cell_size");
     MS_EXCEPTION_IF_NULL(cell_size_value);
     auto cell_size = cell_size_value->isa<UInt64Imm>() ? dyn_cast<UInt64Imm>(cell_size_value)->value() : 0;
 
     AnfNodePtr vmap_fn_node = nullptr;
-
-    mindspore::HashMap<std::string, ParameterPtr> stacked_params;
-
     param_mapping_table_.clear();
+    stacked_params_.clear();
     if (cell_size > 0) {
       // This branch handles the model ensembling parallel training case. Get one function node in the 'CellList'
       // as the vmap function, meanwhile preprocess the cells parameters to get the stacked parameters and
       // the parameters mapping table.
-      vmap_fn_node = TraverseVmapNode(vmap_node, cell_size, &stacked_params, &param_mapping_table_);
+      vmap_fn_node = HandleVmapCellList(top_func_graph_, vmap_node, cell_size, &stacked_params_, &param_mapping_table_);
     } else {
       vmap_fn_node = vmap_node->input(1);
     }
     MS_EXCEPTION_IF_NULL(vmap_fn_node);
-    AnfNodePtrList partial_inputs;
+    MS_LOG(DEBUG) << "vmap_fn_node: " << vmap_fn_node->DebugString();
+    partial_inputs_.clear();
     if (IsPrimitiveCNode(vmap_fn_node, prim::kPrimPartial)) {
       const auto partial_cnode = dyn_cast_ptr<CNode>(vmap_fn_node);
       vmap_fn_node = partial_cnode->input(1);
       constexpr auto ignore_partial_fn_count = 2;
       (void)std::copy(partial_cnode->inputs().cbegin() + ignore_partial_fn_count, partial_cnode->inputs().cend(),
-                      std::back_inserter(partial_inputs));
+                      std::back_inserter(partial_inputs_));
     }
     FuncGraphPtr vmap_fg = GetValueNode<FuncGraphPtr>(vmap_fn_node);
     MS_EXCEPTION_IF_NULL(vmap_fg);
@@ -949,11 +993,10 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
     for (auto &user : users) {
       // When `vmap_node` has more than one user or `fn` has more than one user, the original function graph
       // cannot be modified directly.
-      MS_LOG(DEBUG) << "Funcgraph: " << vmap_fg->ToString() << " is also used outside the scope of vmap.";
       auto vmap_fg_copy = BasicClone(vmap_fg, true);
+      MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", vmap_fg_copy: " << vmap_fg_copy->ToString();
       manager->AddFuncGraph(vmap_fg_copy);
       vmap_fn_node = NewValueNode(vmap_fg_copy);
-
       if (parallel::IsPynativeParallel()) {
         auto func_graph = GetValueNode<FuncGraphPtr>(vmap_fn_node);
         MS_EXCEPTION_IF_NULL(func_graph);
@@ -967,6 +1010,7 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
         MS_LOG(INTERNAL_EXCEPTION) << "Something went wrong, CNode vmap_app's arguments is less than 1, CNode: "
                                    << vmap_app->DebugString();
       }
+      MS_LOG(DEBUG) << "vmap_app: " << vmap_app->DebugString() << ", user_index: " << user_index;
       size_t parameters_size = vmap_app->size() - 1;
       std::vector<size_t> orig_fg_param_info;
       (void)orig_fg_param_info.emplace_back(parameters_size);
@@ -975,23 +1019,24 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       // Step1: Bind the inputs with the corresponding in_axes.
       size_t u_monad_offset = 0;
       size_t io_monad_offset = 0;
-      auto bind_axes_node = BindInAxis(vmap_app, in_axes, &u_monad_offset, &io_monad_offset, &param_mapping_table_);
+      auto bind_axes_node = BindInAxis(vmap_app, partial_inputs_, in_axes, &u_monad_offset, &io_monad_offset);
       MS_EXCEPTION_IF_NULL(bind_axes_node);
       MS_EXCEPTION_IF_NULL(vmap_app->abstract());
       bind_axes_node->set_abstract(vmap_app->abstract());
+      MS_LOG(DEBUG) << "vmap_app: " << vmap_app->DebugString() << ", bind_axes_node: " << bind_axes_node->DebugString();
       (void)manager->Replace(vmap_app, bind_axes_node);
       (void)orig_fg_param_info.emplace_back(u_monad_offset);
       (void)orig_fg_param_info.emplace_back(io_monad_offset);
 
       // Step2: Bind the variables with the corresponding axis, and overload the original
       // operation with the VmapRule operation meanwhile transfer the axis information.
-      auto expanded_vmap =
-        ExpandVmap(vmap_fn_node->cast<ValueNodePtr>(), optimizer->resource(), axis_size, &stacked_params);
+      auto expanded_vmap = ExpandVmap(vmap_fn_node->cast<ValueNodePtr>(), optimizer->resource(), axis_size);
       MS_EXCEPTION_IF_NULL(expanded_vmap);
 
       // Step3: Post processing of converted vmap function graph, including: MatchOutAxis and Parameter feedback.
-      auto match_out_axis = PostProcessVmap(expanded_vmap, partial_inputs, orig_fg_param_info, out_axes, axis_size);
+      auto match_out_axis = PostProcessVmap(expanded_vmap, partial_inputs_, orig_fg_param_info, out_axes, axis_size);
       MS_EXCEPTION_IF_NULL(match_out_axis);
+      MS_LOG(DEBUG) << "match_out_axis: " << match_out_axis->DebugString();
       manager->SetEdge(bind_axes_node, user_index, match_out_axis);
     }
     change = true;
