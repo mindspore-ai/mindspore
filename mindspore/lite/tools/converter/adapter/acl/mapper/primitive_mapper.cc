@@ -131,7 +131,7 @@ void PrimitiveMapper::AdjustOnnxPoolAttr(const std::string &src_prim_name, const
     if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
       padding_mode = kPadModToStrMap[pad_mode];
     }
-    if (src_prim_name == ops::kNameMaxPool && padding_mode == "CALCULATED") {
+    if ((src_prim_name == ops::kNameMaxPool || dst_prim->name() == ops::kNameAvgPool) && padding_mode == "CALCULATED") {
       padding_mode = "VALID";
     }
     std::string pad_mode_name = src_prim_name == acl::kNameMaxPoolV3 ? kNamePaddingMode : ops::kPadMode;

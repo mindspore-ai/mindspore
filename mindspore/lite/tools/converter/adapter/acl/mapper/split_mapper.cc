@@ -36,15 +36,14 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(split_num_val);
   prim->AddAttr("num_split", split_num_val);
   ValuePtr axis_value = prim->GetAttr("axis");
-  ValuePtr size_splits_value = prim->GetAttr("size_splits");
 
-  auto size_splits_vector = GetValue<std::vector<int64_t>>(size_splits_value);
-  // SplitV not support dynamic shape in CANN.
   bool size_split_is_equla = true;
-  for (size_t i = 1; i < size_splits_vector.size(); i++) {
-    if (size_splits_vector[i] != size_splits_vector[0]) {
-      size_split_is_equla = false;
-    }
+  ValuePtr size_splits_value = prim->GetAttr("size_splits");
+  if (size_splits_value != nullptr) {
+    auto size_splits_vector = GetValue<std::vector<int64_t>>(size_splits_value);
+    // SplitV not support dynamic shape in CANN.
+    size_split_is_equla = std::all_of(size_splits_vector.begin() + 1, size_splits_vector.end(),
+                                      [&size_splits_vector](int64_t x) { return x == size_splits_vector.at(0); });
   }
   PrimitivePtr dst_prim = nullptr;
   if (cnode->size() == opt::kInputSizeThree || (cnode->size() == kNumInputSize && axis_value != nullptr &&
