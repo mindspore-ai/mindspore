@@ -24,7 +24,7 @@ from mindspore.common import mutable
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
-    _extend, _dict_clear, _haskey, _update, _fromkeys
+    _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for_squeeze, \
@@ -3667,6 +3667,11 @@ def dict_get(self_, key_index, default_value=None):
     if not _haskey(self_, key_index):
         return default_value
     return F.dict_getitem(self_, key_index)
+
+
+def dict_setitem(self_, key, target):
+    """Dictionary setitem"""
+    return _dict_setitem(self_, key, target)
 
 
 def dict_clear(self_):

@@ -193,6 +193,16 @@ def get_bprop_list_inplace_pop(self):
     return bprop
 
 
+@bprop_getters.register("DictInplaceSetItem")
+def get_bprop_dict_inplace_setitem(self):
+    """Generate bprop for list inplace pop"""
+
+    def bprop(x, key, target, out, dout):
+        return (zeros_like(x), zeros_like(key), zeros_like(target))
+
+    return bprop
+
+
 @bprop_getters.register(seq.ListAppend)
 def get_bprop_list_append(self):
     """Generate bprop for ListAppend"""

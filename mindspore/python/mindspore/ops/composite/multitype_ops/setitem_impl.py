@@ -22,6 +22,7 @@ from mindspore.ops.operations._inner_ops import SliceGetItem
 from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.common import Tensor
+from mindspore.ops.composite.base import _dict_setitem
 from ...operations._sequence_ops import SequenceSliceSetItem
 
 DOC_URL = "https://mindspore.cn/search/en?inputValue=Index%20value%20assignment"
@@ -252,7 +253,7 @@ def _dict_setitem_with_tensor(data, key, value):
     Outputs:
         dict, type is as same as the element type of data.
     """
-    return F.dict_setitem(data, key, value)
+    return _dict_setitem(data, key, value)
 
 
 @setitem.register("Tensor", "Tensor", "Tensor")

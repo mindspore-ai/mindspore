@@ -103,3 +103,9 @@ def list_inplace_clear(list_obj):
         list_obj = []
     list_obj.clear()
     return list_obj
+
+
+def dict_inplace_setitem(dict_obj, key, target):
+    """Inplace dictionary setitem operation for dict_obj."""
+    dict_obj[key] = target
+    return dict_obj
