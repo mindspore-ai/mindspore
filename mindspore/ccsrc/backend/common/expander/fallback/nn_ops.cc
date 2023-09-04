@@ -43,6 +43,12 @@ DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
     ShapeVector reshape_x_shape = {-1, x_shape.back()};
     ShapeVector reshape_w_shape = {-1, w_shape.back()};
     ShapeVector reshape_ret_shape;
+    bool is_empty = std::any_of(x_shape.begin(), x_shape.end(), [](const int64_t shape) { return shape == 0; });
+    if (is_empty) {
+      reshape_x_shape[0] = 1;
+      reshape_w_shape[0] = 1;
+      return {reshape_x_shape, reshape_w_shape, reshape_ret_shape};
+    }
     if (x_shape.size() != 1) {
       reshape_ret_shape = x_shape;
       reshape_ret_shape.back() = -1;

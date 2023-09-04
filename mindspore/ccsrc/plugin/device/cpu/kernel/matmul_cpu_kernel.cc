@@ -147,6 +147,11 @@ int MatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
+  auto shape0 = inputs[kIndex0]->GetShapeVector();
+  is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
+  if (is_empty_tensor_) {
+    return ret;
+  }
   return func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
 }
 
