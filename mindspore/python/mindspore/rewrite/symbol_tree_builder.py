@@ -39,7 +39,6 @@ class SymbolTreeBuilder:
         network_str = inspect.getsource(type(network))
         self._ast_root: ast.Module = ast.parse(network_str)
         self._root_tree: Optional[SymbolTree] = None
-        self._jit_config_dict = network.jit_config_dict
 
     @staticmethod
     def ast_transform(ast_root: ast.AST) -> ast.AST:

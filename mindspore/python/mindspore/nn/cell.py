@@ -157,6 +157,7 @@ class Cell(Cell_):
         self.grad_ops_label = False
         self.ge_sync_data = False
         self._is_check_and_refresh = False
+        self._amp_level = ""
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -2531,6 +2532,14 @@ class Cell(Cell_):
         cast_type = mstype.float16 if mixed_type == MixedPrecisionType.FP16 else mstype.float32
         cast_inputs = self._cast_mixed_precision_inputs(inputs, cast_type)
         return cast_inputs
+
+    def _get_attr_from_cell(self, network):
+        if not isinstance(network, Cell):
+            return
+        if hasattr(network, "jit_config_dict"):
+            self._jit_config_dict = network.jit_config_dict
+        if hasattr(network, "_amp_level"):
+            self._amp_level = getattr(network, "_amp_level")
 
 
 class GraphCell(Cell):
