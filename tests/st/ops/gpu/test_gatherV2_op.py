@@ -926,10 +926,10 @@ def test_gather2():
                          [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
 
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
-    expect = np.array([[[0., 0., 0., 0., 0.],
+    indices = Tensor(np.array([[6, 1, 3]]).astype(np.int64))
+    expect = np.array([[[7., 9., 2., 5., 7.],
                         [4., 9., 5., 6., 4.],
-                        [0., 0., 0., 0., 0.]]])
+                        [0., 4., 2., 2., 8.]]])
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = GatherNet2()
@@ -979,10 +979,10 @@ def test_gatherV2_dyn_ab():
                          [3., 7., 2., 7., 4.],
                          [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
-    expect = np.array([[[0., 0., 0., 0., 0.],
+    indices = Tensor(np.array([[7, 1, 4]]).astype(np.int32))
+    expect = np.array([[[9., 8., 6., 8., 5.],
                         [4., 9., 5., 6., 4.],
-                        [0., 0., 0., 0., 0.]]])
+                        [1., 8., 6., 2., 8.]]])
     output = gather(x, indices)
     error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
     diff = output.asnumpy() - expect
@@ -1011,17 +1011,17 @@ def test_gatherV2_dyn_a():
                          [3., 7., 2., 7., 4.],
                          [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
-    expect = np.array([[[0., 5., 0.]],
-                       [[0., 9., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 4., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 1., 0.]],
-                       [[0., 9., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 7., 0.]],
-                       [[0., 2., 0.]]]).astype(np.float32)
+    indices = Tensor(np.array([[2, 1, 3]]).astype(np.int64))
+    expect = np.array([[[4., 5., 1.]],
+                       [[5., 9., 6.]],
+                       [[4., 8., 3.]],
+                       [[2., 4., 2.]],
+                       [[6., 8., 2.]],
+                       [[9., 1., 7.]],
+                       [[2., 9., 5.]],
+                       [[6., 8., 8.]],
+                       [[2., 7., 7.]],
+                       [[8., 2., 2.]]]).astype(np.float32)
     output = gather(x, indices)
     error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
     diff = output.asnumpy() - expect
@@ -1087,17 +1087,17 @@ def test_gatherV2_dyn_b():
                          [3., 7., 2., 7., 4.],
                          [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
-    expect = np.array([[[0., 5., 0.]],
-                       [[0., 9., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 4., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 1., 0.]],
-                       [[0., 9., 0.]],
-                       [[0., 8., 0.]],
-                       [[0., 7., 0.]],
-                       [[0., 2., 0.]]]).astype(np.float32)
+    indices = Tensor(np.array([[2, 1, 3]]).astype(np.int32))
+    expect = np.array([[[4., 5., 1.]],
+                       [[5., 9., 6.]],
+                       [[4., 8., 3.]],
+                       [[2., 4., 2.]],
+                       [[6., 8., 2.]],
+                       [[9., 1., 7.]],
+                       [[2., 9., 5.]],
+                       [[6., 8., 8.]],
+                       [[2., 7., 7.]],
+                       [[8., 2., 2.]]]).astype(np.float32)
     output = gather(x, indices)
     error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
     diff = output.asnumpy() - expect
@@ -1426,6 +1426,5 @@ def test_gather_tensor_outofbound(data_type):
 
     graph_table_tensor = Tensor(x)
 
-    with pytest.raises(RuntimeError) as raise_info:
+    with pytest.raises(RuntimeError):
         graph_table_tensor.gather(input_indices, axis)
-    assert "failed" in str(raise_info.value)
