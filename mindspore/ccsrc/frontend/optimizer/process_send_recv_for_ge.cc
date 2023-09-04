@@ -222,9 +222,8 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   static const bool is_enable_ge = (context->backend_policy() == "ge");
-  static const bool is_cell_reuse =
-    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
-  if (!is_enable_ge || !is_cell_reuse) {
+  static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
+  if (!is_enable_ge || no_cell_reuse) {
     return;
   }
   auto parallel_context = parallel::ParallelContext::GetInstance();
