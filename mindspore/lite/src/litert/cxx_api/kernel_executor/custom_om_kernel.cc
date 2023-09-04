@@ -75,12 +75,7 @@ int CustomOMKernel::ConvertMSTensorToHiaiTensor() {
       MS_LOG(ERROR) << "ms_input and hiai_input have different dataSize.";
       return kLiteError;
     }
-    auto ret = memcpy_s(hiai_inputs_.at(i)->GetData(), hiai_inputs_.at(i)->GetSize(), inputs_.at(i).Data().get(),
-                        inputs_.at(i).DataSize());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno=" << ret;
-      return kLiteError;
-    }
+    memcpy(hiai_inputs_.at(i)->GetData(), inputs_.at(i).Data().get(), inputs_.at(i).DataSize());
   }
   return kSuccess;
 }
@@ -91,12 +86,7 @@ int CustomOMKernel::ConvertHiaiTensorToMSTensor() {
       MS_LOG(ERROR) << "ms_output and hiai_output have different dataSize.";
       return kLiteError;
     }
-    auto ret = memcpy_s(outputs_.at(i).MutableData(), outputs_.at(i).DataSize(), hiai_outputs_.at(i)->GetData(),
-                        hiai_outputs_.at(i)->GetSize());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno=" << ret;
-      return kLiteError;
-    }
+    memcpy(outputs_.at(i).MutableData(), hiai_outputs_.at(i)->GetData(), hiai_outputs_.at(i)->GetSize());
   }
   return kSuccess;
 }
