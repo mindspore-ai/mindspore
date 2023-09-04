@@ -92,6 +92,8 @@ constexpr size_t kDeviceAddressFlagInit = 0;
 constexpr size_t kDeviceAddressFlagRefNode = 1;
 // Indicates that it is the device address of node which has no user.
 constexpr size_t kDeviceAddressFlagNotUsed = 2;
+// Indicates that it is the device address of node has init arg and do not need device address.
+constexpr size_t kDeviceAddressFlagIgnoreDevicePtr = 4;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:

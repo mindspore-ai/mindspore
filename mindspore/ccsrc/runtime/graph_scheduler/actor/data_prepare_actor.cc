@@ -597,9 +597,20 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
         const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
         MS_EXCEPTION_IF_NULL(front_node);
         MS_LOG(DEBUG) << "Prepare data for value node:" << value_node->fullname_with_scope()
-                      << ", debug name:" << value_node->DebugString() << ", front node:" << front_node->DebugString()
-                      << " for graph:" << graph->ToString();
-        PrepareDataForValueNode(value_node, front_node, device_context, context);
+                      << ", debug name:" << value_node->DebugString()
+                      << ", front node:" << front_node->fullname_with_scope() << " for graph:" << graph->ToString();
+        const auto &device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
+        const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+        MS_EXCEPTION_IF_NULL(device_tensor);
+        // If front_node has more than one device tensor, it means the node may used in multi graphs.
+        // so we will clear the deviceaddress flag of ignore.
+        if (TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagIgnoreDevicePtr) && device_tensors.size() > 1) {
+          device_tensor->ClearFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
+        }
+        // If node address has flag ignore, we will not prepare device data for it.
+        if (!TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
+          PrepareDataForValueNode(value_node, front_node, device_context, context);
+        }
       }
     }
 
