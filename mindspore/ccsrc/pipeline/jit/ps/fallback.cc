@@ -630,6 +630,17 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
       ret[i] = GeneratePyObj(elements[i]);
     }
     return ret;
+  } else if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    py::dict ret = py::dict();
+    const auto &key_value_pairs = abs_dict->elements();
+    for (size_t i = 0; i < key_value_pairs.size(); ++i) {
+      py::object key = GeneratePyObj(key_value_pairs[i].first);
+      // The key should be unique.
+      key = py::isinstance<py::none>(key) ? py::str(std::to_string(i)) : key;
+      ret[key] = GeneratePyObj(key_value_pairs[i].second);
+    }
+    return ret;
   }
   return ValueToPyData(abs->BuildValue());
 }
@@ -642,12 +653,18 @@ bool EnableFallbackList() {
 
 void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
   MS_EXCEPTION_IF_NULL(abs);
+  constexpr auto py_object_key = "py_obj_key";
+  constexpr auto create_in_graph_key = "create_in_graph_key";
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    constexpr auto py_object_key = "py_obj_key";
     abs_list->SetData<py::object>(py_object_key, std::make_shared<py::object>(obj));
-    constexpr auto create_in_graph_key = "create_in_graph_key";
     abs_list->SetData<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
+    return;
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    abs_dict->SetData<py::object>(py_object_key, std::make_shared<py::object>(obj));
+    abs_dict->SetData<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
     return;
   }
   MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
@@ -655,58 +672,92 @@ void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py
 
 py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
+  constexpr auto py_object_key = "py_obj_key";
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    constexpr auto py_object_key = "py_obj_key";
     return *abs_list->GetData<py::object>(py_object_key);
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    return *abs_dict->GetData<py::object>(py_object_key);
   }
   MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
 }
 
 bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
+  constexpr auto create_in_graph_key = "create_in_graph_key";
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    constexpr auto create_in_graph_key = "create_in_graph_key";
     return *abs_list->GetData<bool>(create_in_graph_key);
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    return *abs_dict->GetData<bool>(create_in_graph_key);
   }
   MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
 }
 
 bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
+  constexpr auto py_object_key = "py_obj_key";
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    constexpr auto py_object_key = "py_obj_key";
     return abs_list->HasData(py_object_key);
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    return abs_dict->HasData(py_object_key);
   }
   return false;
 }
 
+// Nested attach list and dict object to corresponding abstract.
 void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
   if (!EnableFallbackList()) {
     return;
   }
-  // Nested attach list object to corresponding abstract list.
-  // Do not consider dictionary yet.
-  if (!abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractNamedTuple>()) {
+  if (abs->isa<abstract::AbstractNamedTuple>()) {
+    return;
+  }
+  if (!abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractDictionary>()) {
     return;
   }
   constexpr auto cell_list_attr = "__cell_as_list__";
-  if (py::hasattr(obj, cell_list_attr)) {
+  constexpr auto cell_dict_attr = "__cell_as_dict__";
+  if (py::hasattr(obj, cell_list_attr) || py::hasattr(obj, cell_dict_attr)) {
+    // CellList and CellDict do not support inplace operations, do not need to attach python object.
     return;
   }
   if (abs->isa<abstract::AbstractList>()) {
-    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    MS_LOG(DEBUG) << "Attach list python" << obj << " to abstract: " << abs->ToString();
     if (!py::isinstance<py::list>(obj)) {
       MS_INTERNAL_EXCEPTION(TypeError) << "Object should be list but got: " << py::str(obj);
     }
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
     AttachPyObjToExtraInfoHolder(abs_list, obj, create_in_graph);
     auto list_obj = py::list(obj);
     for (size_t i = 0; i < abs_list->size(); ++i) {
       auto element_abs = abs_list->elements()[i];
       auto element_obj = list_obj[i];
       AttachPyObjToAbs(element_abs, element_obj, create_in_graph);
+    }
+    return;
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    if (!py::isinstance<py::dict>(obj)) {
+      MS_INTERNAL_EXCEPTION(TypeError) << "Object should be dict but got: " << py::str(obj);
+    }
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    MS_LOG(DEBUG) << "Attach dict python" << obj << " to abstract: " << abs->ToString();
+    AttachPyObjToExtraInfoHolder(abs_dict, obj, create_in_graph);
+    auto dict_obj = py::dict(obj);
+    auto key_list_obj = py::list(obj);
+    const auto &key_value_pairs = abs_dict->elements();
+    for (size_t i = 0; i < key_value_pairs.size(); ++i) {
+      auto value_abs = key_value_pairs[i].second;
+      auto value_obj = dict_obj[key_list_obj[i]];
+      AttachPyObjToAbs(value_abs, value_obj, create_in_graph);
     }
     return;
   }
@@ -733,25 +784,26 @@ void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
   if (!EnableFallbackList()) {
     return;
   }
+  constexpr auto py_obj_str = "__py_object__";
   if (py::isinstance<py::list>(obj)) {
-    constexpr auto py_list_obj_str = "__py_object__";
-    node->set_user_data<py::list>(py_list_obj_str, std::make_shared<py::list>(py::list(obj)));
+    node->set_user_data<py::list>(py_obj_str, std::make_shared<py::list>(py::list(obj)));
   } else if (py::isinstance<py::tuple>(obj)) {
-    constexpr auto py_list_obj_str = "__py_object__";
-    node->set_user_data<py::tuple>(py_list_obj_str, std::make_shared<py::tuple>(py::list(obj)));
+    node->set_user_data<py::tuple>(py_obj_str, std::make_shared<py::tuple>(py::tuple(obj)));
+  } else if (py::isinstance<py::dict>(obj)) {
+    node->set_user_data<py::dict>(py_obj_str, std::make_shared<py::dict>(py::dict(obj)));
   }
 }
 
 bool HasPyObjectInNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  constexpr auto py_list_obj_str = "__py_object__";
-  return node->has_user_data(py_list_obj_str);
+  constexpr auto py_obj_str = "__py_object__";
+  return node->has_user_data(py_obj_str);
 }
 
 py::object GetPyObjectFromNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  constexpr auto py_list_obj_str = "__py_object__";
-  return *node->user_data<py::object>(py_list_obj_str);
+  constexpr auto py_obj_str = "__py_object__";
+  return *node->user_data<py::object>(py_obj_str);
 }
 
 // Convert some CNode to PyExectue, eg:
