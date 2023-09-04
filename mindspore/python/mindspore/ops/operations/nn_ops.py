@@ -4124,7 +4124,7 @@ class OneHot(Primitive):
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
-          Data type must be uint8, int32 or int64.
+          Data type must be int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one-hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
