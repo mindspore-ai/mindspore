@@ -1007,10 +1007,12 @@ class NeighborExchangeV2(Primitive):
         self.rank_size = get_group_size(_get_group(group))
         for rank_id in send_rank_ids:
             if rank_id != -1:
-                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int, "send_rank_id")
+                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int,
+                                             "rank_id in send_rank_ids")
         for rank_id in recv_rank_ids:
             if rank_id != -1:
-                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int, "recv_rank_id")
+                validator.check_number_range(rank_id, 0, self.rank_size, validator.INC_LEFT, int,
+                                             "rank_id in recv_rank_ids")
 
     def __call__(self, tensor):
         raise NotImplementedError
