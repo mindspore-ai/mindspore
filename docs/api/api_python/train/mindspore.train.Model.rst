@@ -140,13 +140,44 @@
         返回：
             Dict，用于加载分布式checkpoint的参数layout字典。
 
-    .. py:method:: predict(*predict_data, backend=None)
+    .. py:method:: predict(*predict_data, backend=None, config=None)
 
         输入样本得到预测结果。
 
         参数：
             - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
             - **backend** (str) - 选择预测后端，该参数为实验性质特性，主要用于MindSpore Lite云侧推理。默认值： ``None`` 。
+            - **config** (dict，可选) - 当后端为 ‘lite’ 时，config 参数使能。config 包括两个部分：config_path（configPath，str）和 config_item（str，dict）。当 config_item 设置时，其优先级高于 config_path。设置推理的排名表文件。配置文件的内容如下：
+
+                config_path 定义配置文件的路径，用于在构建模型期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.ini"。默认值： ``""`` , 以下是 config.ini 文件的内容：
+
+                .. code-block::
+
+                    [ascend_context]
+                    rank_table_file=[path_a](storage initial path of the rank table file)
+                    [execution_plan]
+                    [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
+                    [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
+
+                当只配置config_path的方式如下：
+
+                .. code-block::
+
+                    config = {"configPath" : "/home/user/config.ini"}
+
+                config_dict 配置参数字典，当只配置config_dict的方式如下：
+
+                .. code-block::
+
+                    config = {"ascend_context" : {"rank_table_file" : "path_b"}, "execution_plan" : {"op_name1" : "data_type:float16", "op_name2" : "data_type:float32"}}
+
+                当同时配置config_path 和 config_dict的方式如下：
+
+                .. code-block::
+
+                    config = {"configPath" : "/home/user/config.ini", "ascend_context" : {"rank_table_file" : "path_b"}, "execution_plan" : {"op_name3" : "data_type:float16", "op_name4" : "data_type:float32"}}
+
+                注意到 config_dict 和 config_item均配置了"configPath"，此时以 config_dict 中的 "path_b" 为准。
 
         返回：
             返回预测结果，类型是Tensor或Tensor元组。

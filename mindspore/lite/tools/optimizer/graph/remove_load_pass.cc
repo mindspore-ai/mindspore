@@ -20,10 +20,17 @@
 namespace mindspore::opt {
 bool RemoveLoadPass::Run(const mindspore::FuncGraphPtr &func_graph) {
   // Remove Load Node
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
+
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     return false;
   }
+
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     if (opt::CheckPrimitiveType(cnode, prim::kPrimLoad)) {
       auto node_users = manager->node_users()[cnode];
