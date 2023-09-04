@@ -981,7 +981,8 @@ def mul(input, other):
         >>> print(output)
         [ 4. 10. 18.]
     """
-    return tensor_mul(input, other)
+    _multi = _get_cache_prim(P.Mul)()
+    return _multi(input, other)
 
 
 def multiply(input, other):
@@ -2005,7 +2006,8 @@ def sin(input):
         >>> print(output)
         [0.5810352 0.27635565 0.41687083 0.5810352]
     """
-    return sin_(input)
+    _sin = _get_cache_prim(P.Sin)()
+    return _sin(input)
 
 
 def sinc(input):
