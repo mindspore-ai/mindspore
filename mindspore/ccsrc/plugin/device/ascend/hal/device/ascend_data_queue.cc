@@ -65,7 +65,7 @@ bool GetAclDataType(const std::string &str_type, aclDataType *acl_type) {
 }
 
 void CheckRtRetWithError(rtError_t error, const std::string &msg) {
-  if (error != RT_ERROR_NONE) {
+  if (error != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Rt error: " << msg << " | Error number: " << error;
   }
 }
@@ -160,11 +160,12 @@ DataQueueStatus AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
       MS_LOG(ERROR) << "Allocate device memory of data queue failed";
     }
     CheckRtRetWithError(
-      rtMemcpyAsync(addr, item.data_len, item.data_ptr, item.data_len, RT_MEMCPY_HOST_TO_DEVICE, stream_),
+      aclrtMemcpyAsync(addr, item.data_len, item.data_ptr, item.data_len, ACL_MEMCPY_HOST_TO_DEVICE, stream_),
       "Rt Memcpy Error");
     item.device_addr = addr;
   }
-  CheckRtRetWithError(rtStreamSynchronize(stream_), "Call runtime rtStreamSynchronize failed");
+  CheckRtRetWithError(aclrtSynchronizeStreamWithTimeout(stream_, -1),
+                      "Call runtime aclrtSynchronizeStreamWithTimeout failed");
   node_info_[tail_].data_ = std::move(data);
   tail_ = (tail_ + 1) % (capacity_);
   ++size_;
@@ -441,9 +442,9 @@ DataQueueStatus AscendHostQueue::Push(std::vector<DataQueueItem> data) {
 }
 
 bool AscendHostQueue::HostQueueInit() {
-  auto rt_ret = rtSetDevice(device_id_);
+  auto rt_ret = aclrtSetDevice(device_id_);
   if (rt_ret != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtSetDevice failed, ret = " << rt_ret;
+    MS_LOG(ERROR) << "call aclrtSetDevice failed, ret = " << rt_ret;
     return false;
   }
 
@@ -536,9 +537,9 @@ bool AscendHostQueue::LaunchTensor2MBuff(const std::vector<DataQueueItem> &data,
 bool AscendHostQueue::EnqueueData(void *buff, bool *need_resend) {
   MS_EXCEPTION_IF_NULL(need_resend);
   *need_resend = false;
-  auto rt_error = rtSetDevice(device_id_);
+  auto rt_error = aclrtSetDevice(device_id_);
   if (rt_error != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtSetDevice device failed, ret=" << rt_error;
+    MS_LOG(ERROR) << "call aclrtSetDevice device failed, ret=" << rt_error;
     return false;
   }
   rt_error = rtMemQueueEnQueue(device_id_, queue_id_, buff);

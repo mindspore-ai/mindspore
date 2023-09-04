@@ -25,6 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
 #include "runtime/mem.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace kernel {
@@ -176,9 +177,9 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-  auto status =
-    rtMemcpyAsync(output_addr, outputs[0]->size, address_x, input_size_byte, RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
-  if (status != RT_ERROR_NONE) {
+  auto status = aclrtMemcpyAsync(output_addr, outputs[0]->size, address_x, input_size_byte, ACL_MEMCPY_DEVICE_TO_DEVICE,
+                                 stream_ptr);
+  if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtMemcpyAsync failed, ret = 0x" << status;
   }
 }

@@ -45,9 +45,9 @@ LabelGotoTask::LabelGotoTask(const ModelContext &model_context, const std::share
 
 LabelGotoTask::~LabelGotoTask() {
   if (index_value_ != nullptr) {
-    rtError_t rt_ret = rtFree(index_value_);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rtFree index_value_ failed, ret: " << rt_ret;
+    auto rt_ret = aclrtFree(index_value_);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclrtFree index_value_ failed, ret: " << rt_ret;
     }
     index_value_ = nullptr;
   }
@@ -68,8 +68,8 @@ void LabelGotoTask::Distribute() {
 
     uint64_t index = 0;
     rt_ret = aclrtMemcpy(index_value_, sizeof(uint64_t), &index, sizeof(index), ACL_MEMCPY_HOST_TO_DEVICE);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpy failed, ret: " << rt_ret;
     }
   }
 

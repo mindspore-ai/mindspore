@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task/label_manager.h"
 #include <algorithm>
 #include <string>
+#include "acl/acl_rt.h"
 #include "runtime/mem.h"
 #include "runtime/dev.h"
 #include "runtime/rt_model.h"
@@ -41,9 +42,9 @@ static std::string GetVectorString(const std::vector<T> &vec) {
 LabelGuard::~LabelGuard() {
   void *label_info = GetLabelInfo();
   if (label_info != nullptr) {
-    rtError_t rt_ret = rtFree(label_info);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree label_info failed! ret: " << rt_ret;
+    auto rt_ret = aclrtFree(label_info);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclrtFree label_info failed! ret: " << rt_ret;
     }
   }
 }
@@ -115,7 +116,7 @@ std::shared_ptr<LabelGuard> LabelManager::GetLabelInfo(rtModel_t model, const st
   rt_ret = rtLabelListCpy(label_list.data(), SizeToUint(label_list.size()), label_info, label_info_size);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rt api rtLabelListCpy failed, ret: " << rt_ret;
-    (void)rtFree(label_info);
+    (void)aclrtFree(label_info);
     return nullptr;
   }
 

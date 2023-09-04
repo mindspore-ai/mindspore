@@ -145,7 +145,7 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     }
     for (const auto &it : mem_mng->idle_mem_buf_map_) {
       MS_EXCEPTION_IF_NULL(it.second);
-      (void)rtMemset(it.second->device_addr_, it.first, 0, it.first);
+      (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
     }
   };
   fn(persistent_mem());

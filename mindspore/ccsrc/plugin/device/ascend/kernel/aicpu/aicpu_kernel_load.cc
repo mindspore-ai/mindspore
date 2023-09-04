@@ -20,6 +20,8 @@
 #include <string>
 #include <ios>
 #include <fstream>
+#include "acl/acl_rt.h"
+#include "acl/acl.h"
 #include "runtime/kernel.h"
 #include "runtime/mem.h"
 #include "runtime/context.h"
@@ -168,9 +170,9 @@ bool AicpuOpKernelLoad::LoadAicpuKernelSo(const AnfNodePtr &node,
 
   kernel_mod_ptr->SetCustSo(so_name);
   rtContext_t rt_cur_ctx = nullptr;
-  auto rt_error = rtCtxGetCurrent(&rt_cur_ctx);
-  if (rt_error != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret = 0x" << rt_error;
+  auto rt_error = aclrtGetCurrentContext(&rt_cur_ctx);
+  if (rt_error != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret = 0x" << rt_error;
     return false;
   }
   // use current context as resource key
@@ -238,16 +240,16 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     }
     allocated_mem->emplace_back(d_so_name);
 
-    status = rtMemcpy(d_aicpu_data, aicpu_data_length, aicpu_data, aicpu_data_length, RT_MEMCPY_HOST_TO_DEVICE);
-    if (status != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rtMemcpy failed, ret = 0x" << status;
+    status = aclrtMemcpy(d_aicpu_data, aicpu_data_length, aicpu_data, aicpu_data_length, ACL_MEMCPY_HOST_TO_DEVICE);
+    if (status != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclrtMemcpy failed, ret = 0x" << status;
       return false;
     }
 
-    status = rtMemcpy(d_so_name, so_name.size(), reinterpret_cast<const void *>(so_name.c_str()), so_name.size(),
-                      RT_MEMCPY_HOST_TO_DEVICE);
-    if (status != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rtMemcpy failed, ret = 0x" << status;
+    status = aclrtMemcpy(d_so_name, so_name.size(), reinterpret_cast<const void *>(so_name.c_str()), so_name.size(),
+                         ACL_MEMCPY_HOST_TO_DEVICE);
+    if (status != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclrtMemcpy failed, ret = 0x" << status;
       return false;
     }
 
@@ -273,9 +275,9 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     return false;
   }
   allocated_mem->emplace_back(args);
-  status = rtMemcpy(args, args_size, v_cust_so.data(), args_size, RT_MEMCPY_HOST_TO_DEVICE);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtMemcpy failed, ret = 0x" << status;
+  status = aclrtMemcpy(args, args_size, v_cust_so.data(), args_size, ACL_MEMCPY_HOST_TO_DEVICE);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpy failed, ret = 0x" << status;
     return false;
   }
 
@@ -291,10 +293,9 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   }
 
   rtContext_t rt_cur_ctx = nullptr;
-  rtError_t status = RT_ERROR_NONE;
-  status = rtCtxGetCurrent(&rt_cur_ctx);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret = 0x" << status;
+  auto status = aclrtGetCurrentContext(&rt_cur_ctx);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret = 0x" << status;
     return false;
   }
   // use current context as resource key
@@ -320,8 +321,8 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   }
 
   rtStream_t stream = nullptr;
-  status = rtStreamCreate(&stream, 0);
-  if (status != RT_ERROR_NONE) {
+  status = aclrtCreateStream(&stream);
+  if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtStreamCreate failed, ret = 0x" << status;
     return false;
   }
@@ -334,9 +335,9 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
     MS_LOG(ERROR) << "Call rtCpuKernelLaunch failed, ret = 0x" << status;
     return false;
   }
-  status = rtStreamSynchronize(stream);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtStreamSynchronize failed, ret = 0x" << status;
+  status = aclrtSynchronizeStreamWithTimeout(stream, -1);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtSynchronizeStream failed, ret = 0x" << status;
     return false;
   }
 
@@ -350,9 +351,9 @@ void AicpuOpKernelLoad::FreeDeviceMemory() {
       if (mem == nullptr) {
         continue;
       }
-      auto rt_error = rtFree(mem);
-      if (rt_error != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "Call rtFree failed, ret = 0x" << rt_error;
+      auto rt_error = aclrtFree(mem);
+      if (rt_error != ACL_ERROR_NONE) {
+        MS_LOG(EXCEPTION) << "Call aclrtFree failed, ret = 0x" << rt_error;
       }
     }
   }
@@ -360,9 +361,9 @@ void AicpuOpKernelLoad::FreeDeviceMemory() {
 
   for (auto stream : stream_list_) {
     if (stream != nullptr) {
-      auto rt_error = rtStreamDestroy(stream);
-      if (rt_error != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "Call rtStreamDestroy failed, ret = 0x" << rt_error;
+      auto rt_error = aclrtDestroyStream(stream);
+      if (rt_error != ACL_ERROR_NONE) {
+        MS_LOG(EXCEPTION) << "Call aclrtDestroyStream failed, ret = 0x" << rt_error;
       }
     }
   }

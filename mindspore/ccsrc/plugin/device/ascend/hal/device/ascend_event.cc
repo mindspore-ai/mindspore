@@ -16,31 +16,33 @@
 
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 #include "runtime/event.h"
 #include "runtime/stream.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::device::ascend {
 AscendEvent::AscendEvent() {
-  auto ret = rtEventCreate(&event_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
+  auto ret = aclrtCreateEvent(&event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtCreateEvent failed, ret:" << ret;
     event_ = nullptr;
   }
 }
 
 AscendTimeEvent::AscendTimeEvent() {
-  auto ret = rtEventCreateWithFlag(&event_, RT_EVENT_TIME_LINE);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
+  auto ret = aclrtCreateEventWithFlag(&event_, ACL_EVENT_TIME_LINE);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtCreateEvent failed, ret:" << ret;
     event_ = nullptr;
   }
 }
 
 AscendEvent::~AscendEvent() {
-  auto ret = rtEventDestroy(event_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtEventDestory failed, ret:" << ret;
+  auto ret = aclrtDestroyEvent(event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret;
   }
 
   event_ = nullptr;
@@ -51,9 +53,9 @@ AscendEvent::~AscendEvent() {
 void AscendEvent::RecordEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(record_stream_);
-  auto ret = rtEventRecord(event_, record_stream_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventRecord failed, ret:" << ret;
+  auto ret = aclrtRecordEvent(event_, record_stream_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtRecordEvent failed, ret:" << ret;
   }
   need_wait_ = true;
 }
@@ -61,22 +63,22 @@ void AscendEvent::RecordEvent() {
 void AscendEvent::WaitEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(wait_stream_);
-  auto ret = rtStreamWaitEvent(wait_stream_, event_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamWaitEvent failed, ret:" << ret;
+  auto ret = aclrtStreamWaitEvent(wait_stream_, event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtStreamWaitEvent failed, ret:" << ret;
   }
-  ret = rtEventReset(event_, wait_stream_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventReset failed, ret:" << ret;
+  ret = aclrtResetEvent(event_, wait_stream_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << ret;
   }
   need_wait_ = false;
 }
 
 void AscendEvent::SyncEvent() {
   MS_EXCEPTION_IF_NULL(event_);
-  auto ret = rtEventSynchronize(event_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventSynchronize failed, ret:" << ret;
+  auto ret = aclrtSynchronizeEvent(event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSynchronizeEvent failed, ret:" << ret;
   }
 }
 
@@ -85,9 +87,9 @@ void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {
   auto ascend_other = static_cast<const AscendEvent *>(other);
   MS_EXCEPTION_IF_NULL(ascend_other);
   MS_EXCEPTION_IF_NULL(ascend_other->event_);
-  auto ret = rtEventElapsedTime(cost_time, event_, ascend_other->event_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtEventElapsedTime failed, ret:" << ret;
+  auto ret = aclrtEventElapsedTime(cost_time, event_, ascend_other->event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtEventElapsedTime failed, ret:" << ret;
   }
 }
 

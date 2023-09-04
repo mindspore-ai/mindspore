@@ -202,9 +202,9 @@ void AicpuOpKernelMod::FreeExtInfoDeviceAddr() {
 
 bool AicpuOpKernelMod::CheckDeviceSupportBlockingAicpuOpProcess() const {
   int32_t device_id = 0;
-  auto ret = rtGetDevice(&device_id);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtGetDevice failed, ret: " << ret;
+  auto ret = aclrtGetDevice(&device_id);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call aclrtGetDevice failed, ret: " << ret;
   }
   int32_t value = 0;
   ret = rtGetDeviceCapability(device_id, FEATURE_TYPE_BLOCKING_OPERATOR, RT_MODULE_TYPE_AICPU, &value);
@@ -367,15 +367,15 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(INFO) << "Insert EventWait, stream: " << stream_ptr << ", event: " << rt_event_
                  << ", node: " << cnode->fullname_with_scope();
 
-    rtError_t rt_ret = rtStreamWaitEvent(stream_ptr, rt_event_);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rt api rtStreamWaitEvent failed, ret: " << rt_ret;
+    auto rt_ret = aclrtStreamWaitEvent(stream_ptr, rt_event_);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call rt api aclrtStreamWaitEvent failed, ret: " << rt_ret;
       return false;
     }
 
-    rt_ret = rtEventReset(rt_event_, stream_ptr);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rt api rtEventReset failed, ret: " << rt_ret;
+    rt_ret = aclrtResetEvent(rt_event_, stream_ptr);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call rt api aclrtResetEvent failed, ret: " << rt_ret;
       return false;
     }
   }
@@ -473,9 +473,10 @@ void AicpuOpKernelMod::SyncOutputShape() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
   }
-  ret = rtStreamSynchronize(stream_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();
+  ret = aclrtSynchronizeStreamWithTimeout(stream_, -1);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call runtime aclrtSynchronizeStreamWithTimeout failed. Op name: "
+                      << cnode->fullname_with_scope();
   }
 
   MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();

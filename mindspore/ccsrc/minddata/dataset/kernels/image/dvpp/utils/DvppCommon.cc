@@ -26,6 +26,10 @@ const static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { (void)acldvpp
 const static auto g_roiConfigDeleter = [](acldvppRoiConfig *p) { (void)acldvppDestroyRoiConfig(p); };
 const static auto g_jpegeConfigDeleter = [](acldvppJpegeConfig *p) { (void)acldvppDestroyJpegeConfig(p); };
 
+namespace {
+constexpr int32_t kTimeLimit = -1;
+}  // namespace
+
 DvppCommon::DvppCommon(aclrtContext dvppContext, aclrtStream dvppStream)
     : dvppContext_(dvppContext), dvppStream_(dvppStream) {}
 
@@ -127,7 +131,7 @@ APP_ERROR DvppCommon::DeInit() {
     return ret;
   }
 
-  ret = aclrtSynchronizeStream(dvppStream_);  // APP_ERROR ret
+  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);  // APP_ERROR ret
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     return ret;
@@ -435,7 +439,7 @@ APP_ERROR DvppCommon::ResizeProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &o
   }
 
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return ret;
@@ -483,7 +487,7 @@ APP_ERROR DvppCommon::ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDes
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed tp synchronize stream, ret = " << ret << ".";
       return ret;
@@ -765,7 +769,7 @@ APP_ERROR DvppCommon::CropProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &out
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return ret;
@@ -862,7 +866,7 @@ APP_ERROR DvppCommon::JpegDecode(const DvppDataInfo &input, const DvppDataInfo &
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
@@ -907,7 +911,7 @@ APP_ERROR DvppCommon::PngDecode(const DvppDataInfo &input, const DvppDataInfo &o
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
@@ -1241,7 +1245,7 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
     device_ptr = nullptr;
     return ret;
   }
-  ret = aclrtSynchronizeStream(dvppStream_);
+  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     RELEASE_DVPP_DATA(device_ptr);
@@ -1292,7 +1296,7 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
   // Attention: We must call the aclrtSynchronizeStream to ensure the task of memory replication has been completed
   // after calling aclrtMemcpyAsync
-  ret = aclrtSynchronizeStream(dvppStream_);
+  ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inDevBuff);
@@ -1637,7 +1641,7 @@ APP_ERROR DvppCommon::JpegEncode(const DvppDataInfo &input, DvppDataInfo &output
     return ret;
   }
   if (withSynchronize) {
-    ret = aclrtSynchronizeStream(dvppStream_);
+    ret = aclrtSynchronizeStreamWithTimeout(dvppStream_, kTimeLimit);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to aclrtSynchronizeStream, ret = " << ret << ".";
       return APP_ERR_DVPP_JPEG_ENCODE_FAIL;

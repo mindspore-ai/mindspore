@@ -1,18 +1,18 @@
 /**
-* Copyright 2021 Huawei Technologies Co., Ltd
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #include "acl/acl_rt.h"
 
 /**
@@ -72,9 +72,7 @@ ACL_FUNC_VISIBILITY aclError aclrtMemcpyAsync(void *dst, size_t destMax, const v
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtSetDevice(int32_t deviceId) {
-  return ACL_ERROR_NONE;
-}
+ACL_FUNC_VISIBILITY aclError aclrtSetDevice(int32_t deviceId) { return ACL_ERROR_NONE; }
 
 /**
  * @ingroup AscendCL
@@ -85,9 +83,7 @@ ACL_FUNC_VISIBILITY aclError aclrtSetDevice(int32_t deviceId) {
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtResetDevice(int32_t deviceId) {
-  return ACL_ERROR_NONE;
-}
+ACL_FUNC_VISIBILITY aclError aclrtResetDevice(int32_t deviceId) { return ACL_ERROR_NONE; }
 
 /**
  * @ingroup AscendCL
@@ -122,9 +118,7 @@ ACL_FUNC_VISIBILITY aclError aclrtMemsetAsync(void *dst, size_t destMax, int32_t
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) {
-  return ACL_SUCCESS;
-}
+ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) { return ACL_SUCCESS; }
 
 /**
  * @ingroup AscendCL
@@ -147,6 +141,41 @@ ACL_FUNC_VISIBILITY aclError aclrtMemset(void *devPtr, size_t maxCount, int32_t 
   return ACL_SUCCESS;
 }
 
-ACL_FUNC_VISIBILITY aclError aclrtDestroyStream(aclrtStream stream) {
+ACL_FUNC_VISIBILITY aclError aclrtDestroyStream(aclrtStream stream) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtSetCurrentContext(aclrtContext context) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtGetDeviceCount(uint32_t *count) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtGetCurrentContext(aclrtContext *context) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtGetMemInfo(aclrtMemAttr attr, size_t *free, size_t *total) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtFree(void *devPtr) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtSynchronizeStream(aclrtStream stream) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtDestroyEvent(aclrtEvent event) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtCreateEventWithFlag(aclrtEvent *event, uint32_t flag) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtCreateStreamWithConfig(aclrtStream *stream, uint32_t priority, uint32_t flag) {
+  return ACL_SUCCESS;
+}
+
+ACL_FUNC_VISIBILITY aclError aclrtRecordEvent(aclrtEvent event, aclrtStream stream) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtStreamWaitEvent(aclrtStream stream, aclrtEvent event) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtSynchronizeEvent(aclrtEvent event) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtEventElapsedTime(float *ms, aclrtEvent startEvent, aclrtEvent endEvent) {
+  return ACL_SUCCESS;
+}
+
+ACL_FUNC_VISIBILITY aclError aclrtCreateEvent(aclrtEvent *event) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtCreateStream(aclrtStream *stream) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclrtSynchronizeStreamWithTimeout(aclrtStream stream, int32_t timeout) {
   return ACL_SUCCESS;
 }

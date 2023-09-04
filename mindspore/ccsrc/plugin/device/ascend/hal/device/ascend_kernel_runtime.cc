@@ -220,10 +220,10 @@ void AscendKernelRuntime::SetContext() {
   if (thread_local_rt_context == rt_context_) {
     return;
   }
-  auto ret = rtCtxSetCurrent(rt_context_);
+  auto ret = aclrtSetCurrentContext(rt_context_);
   thread_local_rt_context = rt_context_;
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+  if (ret != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetCurrentContext, ret[" << ret << "]";
   }
 }
 
@@ -231,9 +231,9 @@ void AscendKernelRuntime::SetCurrentContext() {
   if (rt_context_ == nullptr) {
     return;
   }
-  auto ret = rtCtxSetCurrent(rt_context_);
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+  auto ret = aclrtSetCurrentContext(rt_context_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetCurrentContext, ret[" << ret << "]";
   }
 }
 
@@ -437,7 +437,7 @@ bool AscendKernelRuntime::Init() {
   }
   bool init_device = false;
   try {
-    // Start up profiling before rtSetDevice
+    // Start up profiling before aclrtSetDevice
     bool ret = InitDevice();
     if (!ret) {
       return ret;
@@ -1318,14 +1318,14 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
     return;
   }
 
-  int device_count = 0;
-  auto ret = rtGetDeviceCount(&device_count);
-  if (ret != RT_ERROR_NONE) {
+  uint32_t device_count = 0;
+  auto ret = aclrtGetDeviceCount(&device_count);
+  if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
 
   ret = aclrtSetDevice(UintToInt(device_id));
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
   (void)initialized_device_set_.insert(device_id);
@@ -1355,10 +1355,10 @@ bool AscendKernelRuntime::InitDevice() {
     return false;
   }
 
-  // Context will be created by rtSetDevice
-  const auto rt_ret = rtCtxGetCurrent(&rt_context_);
-  if (rt_ret != RT_ERROR_NONE || rt_context_ == nullptr) {
-    MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret[" << rt_ret << "]";
+  // Context will be created by aclrtSetDevice
+  const auto rt_ret = aclrtGetCurrentContext(&rt_context_);
+  if (rt_ret != ACL_ERROR_NONE || rt_context_ == nullptr) {
+    MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret[" << rt_ret << "]";
     return false;
   }
 
@@ -1378,7 +1378,7 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
     auto ret = aclrtResetDevice(UintToInt(device_id));
-    if (ret != RT_ERROR_NONE) {
+    if (ret != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call aclrtResetDevice, ret[" << ret << "]";
     }
     (void)initialized_device_set_.erase(device_id);

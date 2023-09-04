@@ -18,6 +18,8 @@
 #include <set>
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 #include "external/runtime/rt_error_codes.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/model_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
@@ -105,9 +107,9 @@ void RuntimeModel::InitEvent(uint32_t event_num) {
   MS_LOG(INFO) << "Event number: " << event_num;
   for (uint32_t i = 0; i < event_num; ++i) {
     rtEvent_t rt_event;
-    rtError_t rt_ret = rtEventCreateWithFlag(&rt_event, RT_EVENT_WITH_FLAG);
-    if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtEventCreate failed, ret: " << rt_ret;
+    auto rt_ret = aclrtCreateEventWithFlag(&rt_event, RT_EVENT_WITH_FLAG);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rt api aclrtCreateEvent failed, ret: " << rt_ret;
     }
     event_list_.push_back(rt_event);
   }
@@ -261,9 +263,9 @@ void RuntimeModel::Run() const {
     MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << ret;
   }
 
-  MS_LOG(INFO) << "Run rtModelExecute success, start to rtStreamSynchronize.";
-  ret = rtStreamSynchronize(rt_model_stream_);
-  if (ret != RT_ERROR_NONE) {
+  MS_LOG(INFO) << "Run rtModelExecute success, start to aclrtSynchronizeStreamWithTimeout.";
+  ret = aclrtSynchronizeStreamWithTimeout(rt_model_stream_, -1);
+  if (ret != ACL_ERROR_NONE) {
     if (ret == ACL_ERROR_RT_END_OF_SEQUENCE) {
       MS_LOG(INFO) << "Model stream ACL_ERROR_RT_END_OF_SEQUENCE signal received.";
       return;
@@ -271,7 +273,7 @@ void RuntimeModel::Run() const {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamSynchronize failed, ret: " << ret;
+    MS_LOG(EXCEPTION) << "Call rt api aclrtSynchronizeStreamWithTimeout failed, ret: " << ret;
   }
 
   MS_LOG(INFO) << "Davinci task run success.";
@@ -288,7 +290,7 @@ void RuntimeModel::RtModelUnbindStream() noexcept {
 
 void RuntimeModel::RtStreamDestory() noexcept {
   for (size_t i = 0; i < stream_list_.size(); i++) {
-    if (rtStreamDestroy(stream_list_[i]) != RT_ERROR_NONE) {
+    if (aclrtDestroyStream(stream_list_[i]) != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Destroy stream failed! Index: " << i;
       return;
     }
@@ -317,7 +319,7 @@ void RuntimeModel::RtModelDestory() const noexcept {
 
 void RuntimeModel::RtEventDestory() noexcept {
   for (size_t i = 0; i < event_list_.size(); i++) {
-    if (rtEventDestroy(event_list_[i]) != RT_ERROR_NONE) {
+    if (aclrtDestroyEvent(event_list_[i]) != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Destroy event failed! Index: " << i;
       return;
     }

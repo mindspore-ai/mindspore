@@ -21,6 +21,7 @@
 #include <set>
 #include <algorithm>
 #include "ops/ascend_op_name.h"
+#include "acl/acl_rt.h"
 #include "runtime/rt.h"
 #include "external/acl/acl_rt.h"
 #include "ir/tensor.h"
@@ -622,7 +623,7 @@ bool RtModelZeroCopy::UpdateTaskArgs(const session::KernelGraph &graph, void *st
     return false;
   }
 
-  if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
+  if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
     MS_LOG(WARNING) << "Sync stream for graph:" << graph.ToString() << " failed.";
     return true;
   }

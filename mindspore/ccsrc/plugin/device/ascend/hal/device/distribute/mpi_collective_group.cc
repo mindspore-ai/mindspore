@@ -17,6 +17,8 @@
 #include <algorithm>
 #include "hccl/hccl.h"
 #include "runtime/rt.h"
+#include "acl/acl_rt.h"
+#include "acl/acl.h"
 #include "plugin/device/ascend/hal/device/distribute/mpi_collective_group.h"
 namespace mindspore {
 namespace device {
@@ -119,7 +121,7 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
   if (group_comm_.count(name) != 0) {
     return true;
   }
-  CHECK_RET(rtSetDevice(local_rank_id_), RT_ERROR_NONE, "Call rtSetDevice error.");
+  CHECK_RET(aclrtSetDevice(local_rank_id_), ACL_ERROR_NONE, "Call aclrtSetDevice error.");
   HcclRootInfo rootInfo;
   if (static_cast<unsigned int>(rank_id_) == ranks[0]) {
     CHECK_RET(static_cast<int32_t>(HcclGetRootInfo(&rootInfo)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),

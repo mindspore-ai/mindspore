@@ -20,7 +20,9 @@
 #include <gmock/gmock.h>
 #include "runtime/event.h"
 #include "mock/mock_helper.h"
+#include "acl/acl_rt.h"
 
 MOCK_H(rtEventReset, rtError_t, rtEvent_t, rtStream_t);
+MOCK_H(aclrtResetEvent, aclError, aclrtEvent, aclrtStream);
 
 #endif  // MINDSPORE_UT_MOCK_MOCK_HELPER_H_

@@ -174,9 +174,9 @@ void ReleaseDevMem(void **ptr) {
     return;
   }
   if (*ptr != nullptr) {
-    rtError_t rt_error = rtFree(*ptr);
-    if (rt_error != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "[DumperBase] Call rtFree failed, ret:" << rt_error;
+    auto rt_error = aclrtFree(*ptr);
+    if (rt_error != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "[DumperBase] Call aclrtFree failed, ret:" << rt_error;
     }
     *ptr = nullptr;
   }
