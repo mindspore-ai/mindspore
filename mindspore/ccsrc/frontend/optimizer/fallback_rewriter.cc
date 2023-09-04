@@ -2153,8 +2153,29 @@ class AfterOptARewriter : public BaseRewriter {
     return value_tuple_node;
   }
 
-  // dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
+  // If the value dict has attached object:
+  //   dict(k0:v0, k1:v1, ...) --> PyExecute('get_local_variable(dict_key)', ...)
+  // otherwise:
+  //   dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
+    auto abs = value_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    MS_EXCEPTION_IF_NULL(abs_dict);
+    if (fallback::HasObjInExtraInfoHolder(abs_dict) && !fallback::GetCreateInGraphFromExtraInfoHolder(abs_dict)) {
+      // If the abstract of value dict has python object and the python object is created outside the graph,
+      // the we use the python object to generate pyexecute node.
+      py::dict dict_object = fallback::GetObjFromExtraInfoHolder(abs_dict);
+      const std::string dict_obj_str_prefix = "__dict_py_object_";
+      auto dict_obj_id = fallback::GetPyObjectPtrStr(dict_object);
+      MS_LOG(DEBUG) << "Current python object id: " << dict_obj_id;
+      auto dict_obj_str = dict_obj_str_prefix + dict_obj_id + "_";
+      auto res = fallback::ConvertPyObjectToPyExecute(fg, dict_obj_str, dict_object, value_node, false);
+      MS_LOG(DEBUG) << "Convert value dict node: " << value_node->DebugString()
+                    << " to inplace pyexecute node: " << res->DebugString();
+      return res;
+    }
+
     const auto &keys_values = dict->value();
 
     // Local parameters values.
@@ -2176,6 +2197,8 @@ class AfterOptARewriter : public BaseRewriter {
 
     auto make_dict_node = ConstructNewDictNode(fg, make_key_tuple_node, make_value_tuple_node);
     make_dict_node->set_debug_info(value_node->debug_info());
+    MS_LOG(DEBUG) << "Convert value dict node: " << value_node->DebugString()
+                  << " to non-inplace pyexecute node: " << make_dict_node->DebugString();
     return make_dict_node;
   }
 
