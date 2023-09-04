@@ -2359,8 +2359,6 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
         MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: (" << arg_name << " : " << py::str(arg_value)
                                    << " ) in Primitive '" << prim_->name() << "'.";
       }
-      // ConvertAttrValueToInt should be removed later.
-      (void)CheckAndConvertUtils::ConvertAttrValueToInt(prim_->name(), arg_name, &converted_ret);
       (void)new_inputs.emplace_back(NewValueNode(converted_ret));
     }
   }
@@ -2386,6 +2384,35 @@ AnfNodePtr DoTransPrimitiveFunctionEvaluator::ConvertInputInPrimitive(const std:
   return fg->NewCNode({NewValueNode(op_fg), input_node});
 }
 
+void DoTransPrimitiveFunctionEvaluator::AddPrimAttrs(const PrimitiveFunctionPtr &prim_func) {
+  auto prim_name = prim_func->name();
+  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE);
+  if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT << "in "
+                               << parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE << ".";
+  }
+  py::dict op_labels = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT);
+  if (!op_labels.contains(py::str(prim_name))) {
+    return;
+  }
+  py::dict labels = op_labels[py::str(prim_name)];
+  for (const auto &p : labels) {
+    auto attr_name = py::cast<std::string>(p.first);
+    auto attr_obj = py::reinterpret_borrow<py::object>(p.second);
+    ValuePtr converted_ret = nullptr;
+    bool converted = parse::ConvertData(attr_obj, &converted_ret);
+    if (!converted) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
+                                 << " convert python obj to MindSpore obj failed; primitive name: " << prim_name
+                                 << ", attribute name:" << attr_name << ", attribute value:" << py::str(attr_obj)
+                                 << ", attribute type:"
+                                 << py::cast<std::string>(attr_obj.attr("__class__").attr("__name__"));
+    }
+    (void)prim_func->AddAttr(attr_name, converted_ret);
+    MS_LOG(DEBUG) << "Add attr for " << prim_name << ". Key: " << attr_name << ", value: " << converted_ret->ToString();
+  }
+}
+
 EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                                                           const AnfNodeConfigPtr &out_conf) {
@@ -2398,7 +2425,6 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   MS_EXCEPTION_IF_NULL(do_trans_prim_func);
   auto prim_func = do_trans_prim_func->function();
   bool is_prim_instance = do_trans_prim_func->is_prim_instance();
-  std::vector<AnfNodePtr> new_cnode_inputs{NewValueNode(prim_func)};
 
   auto op_def = mindspore::ops::GetOpDef(prim_func->name());
   if (op_def == nullptr) {
@@ -2410,6 +2436,11 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
     MS_LOG(INTERNAL_EXCEPTION) << "The size of args in op_def `" << args_size
                                << "` should be equal to the inputs size minus one `" << cnode->size() - 1 << "`.";
   }
+  // The labels of primitive instance have been added in PrimitivePyAdapter::AddPyAttr, not need to be handled here.
+  if (!is_prim_instance) {
+    AddPrimAttrs(prim_func);
+  }
+  std::vector<AnfNodePtr> new_cnode_inputs{NewValueNode(prim_func)};
   // In OpDef, inputs defined first and the initial args are defined last.
   for (size_t i = 0; i < args_size; i++) {
     auto op_arg = op_def->args_[i];

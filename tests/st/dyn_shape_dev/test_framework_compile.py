@@ -67,7 +67,6 @@ def test_avg_pool_create_instance_const_args():
     print("out:", out)
 
 
-@pytest.mark.skip(reason="Need to add arg_handler to OpArg of OpDef.")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu_training

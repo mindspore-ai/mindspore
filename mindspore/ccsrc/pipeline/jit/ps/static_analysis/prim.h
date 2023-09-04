@@ -247,6 +247,7 @@ class DoTransPrimitiveFunctionEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(DoTransPrimitiveFunctionEvaluator, TransitionPrimEvaluator)
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
+  void AddPrimAttrs(const PrimitiveFunctionPtr &prim_func);
   AnfNodePtr ConvertInputInPrimitive(const std::string &module_name, const std::string &op_name, const FuncGraphPtr &fg,
                                      const AnfNodePtr &input_node);
 
