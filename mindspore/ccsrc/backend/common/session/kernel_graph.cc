@@ -1294,7 +1294,7 @@ void KernelGraph::SetInputNodes() {
       }
       auto front_node = backend_front_anf_map_[input_node];
       for (size_t i = 0; i < params.size(); ++i) {
-        FrontBackendlMapUpdate(input_node, params[i]);
+        // Keep the input_node in the map. Otherwise, the SetInputNodes function is not reentrant.
         tuple_backend_front_anf_index_map_[params[i]] = AnfWithOutIndex(front_node, i);
       }
     } else if (params.size() == 1) {
