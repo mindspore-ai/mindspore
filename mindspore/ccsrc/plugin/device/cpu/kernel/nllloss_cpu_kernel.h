@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/kernel/nllloss.h"
-#include "nnacl/op_base.h"
+#include "mindspore/core/ops/gen_enum_def.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,21 +42,7 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
   }
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
@@ -69,8 +55,8 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
   NLLLossFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NLLLossFunc>> func_list_;
   NLLLossStruct nllloss_param_{};
-  ReductionType reduction_type_;
-  int32_t ignore_index_;
+  ops::Reduction reduction_type_;
+  int64_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -23,7 +23,6 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.ops.primitive import _primexpr
-from mindspore.ops.primitive import Primitive
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
     _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
@@ -45,15 +44,10 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
             lambda x, y: x * y, shape if keep_dim == 0 else shape[:-keep_dim])
         return (new_batch_size,) if keep_dim == 0 else (new_batch_size, *shape[-keep_dim:])
 
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        reduction_type = "none"
-    else:
-        reduction_type = prim.reduction
-
-    def vmap_rule(x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim):
-        is_all_none, result = vmap_general_preprocess(
-            prim, x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim)
+    def vmap_rule(x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim, reduction_bdim,
+                  ignore_index_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, loss_grad_bdim, target_bdim, weight_bdim,
+                                                      total_weight_bdim, reduction_bdim, ignore_index_bdim)
         if is_all_none:
             return result
 
@@ -62,6 +56,8 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         target, target_dim = target_bdim
         weight, w_dim = weight_bdim
         total_weight, tw_dim = total_weight_bdim
+        reduction, _ = reduction_bdim
+        ignore_index, _ = ignore_index_bdim
 
         x_shape = F.shape(x)
         loss_grad_shape = F.shape(loss_grad)
@@ -71,10 +67,10 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         if w_dim is not None or tw_dim is not None:
             _raise_value_error("The source axis of weight and total_weight in `NLLLossGrad` must be None for now, "
                                "but got {} and {}.".format(w_dim, tw_dim))
-        if lg_dim is not None and reduction_type != "none":
+        if lg_dim is not None and reduction != 0:
             _raise_value_error("The source axis of loss_grad in `NLLLossGrad` can be not None "
                                "just when reduction type is none for vmap, "
-                               "but reduction type is {}.".format(reduction_type))
+                               "but reduction type is {}.".format(reduction))
 
         # If stacked, move vmap_dim to first dim and reshape to right shape.
         if x_dim is not None:
@@ -97,7 +93,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
                 target_shape = F.shape(target)
             target = F.reshape(target, _get_reshape_shape(target_shape))
 
-        out = prim(x, loss_grad, target, weight, total_weight)
+        out = prim(x, loss_grad, target, weight, total_weight, reduction, ignore_index)
         output = F.reshape(out, x_shape)
         out_dim = 0
         return output, out_dim

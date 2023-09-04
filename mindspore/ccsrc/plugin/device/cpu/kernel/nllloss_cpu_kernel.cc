@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 
 #include "plugin/device/cpu/kernel/nllloss_cpu_kernel.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
-#include "mindspore/core/ops/nllloss.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNLLLossInputsNum = 3;
+constexpr size_t kNLLLossInputsNum = 5;
 constexpr size_t kNLLLossOutputsNum = 2;
 constexpr int minLabelNum = 0;
-const std::map<Reduction, ReductionType> kReductionMap = {
-  {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
+constexpr auto kReductionIdx = 3;
+constexpr auto kIgnoreIndexIdx = 4;
 }  // namespace
 
 bool NLLLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -39,15 +39,6 @@ bool NLLLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto reduction = Reduction(GetValue<int64_t>(primitive_->GetAttr(ops::kReduction)));
-  auto pair = kReductionMap.find(reduction);
-  if (pair == kReductionMap.end()) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_
-                      << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
-  }
-  reduction_type_ = pair->second;
-  ignore_index_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kIgnoreIndex)));
   return true;
 }
 
@@ -56,6 +47,9 @@ int NLLLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
+  auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
+  reduction_type_ = static_cast<ops::Reduction>(reduction);
+  ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
 
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
   nllloss_param_.batch_ = LongToInt(logits_shape[kIndex0]);
@@ -98,15 +92,15 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
     float n_loss = -logits[index] * n_weight;
     tmp_total_weight += n_weight;
     total_loss += n_loss;
-    if (reduction_type_ == Reduction_None) {
+    if (reduction_type_ == ops::Reduction::NONE) {
       loss[i] = n_loss;
     }
   }
 
   *total_weight = tmp_total_weight;
-  if (reduction_type_ == Reduction_Sum) {
+  if (reduction_type_ == ops::Reduction::SUM) {
     *loss = total_loss;
-  } else if (reduction_type_ == Reduction_Mean) {
+  } else if (reduction_type_ == ops::Reduction::MEAN) {
     *loss = total_loss / tmp_total_weight;
   }
   return true;
@@ -117,6 +111,8 @@ std::vector<std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc>> NLLLossCpuK
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossCpuKernelMod::LaunchKernel<int32_t>},
@@ -124,9 +120,18 @@ std::vector<std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc>> NLLLossCpuK
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> NLLLossCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc> &pair) { return pair.first; });
+  return support_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NLLLoss, NLLLossCpuKernelMod);
 }  // namespace kernel

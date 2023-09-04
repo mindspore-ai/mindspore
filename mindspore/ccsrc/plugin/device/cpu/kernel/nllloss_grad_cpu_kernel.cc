@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 
 #include "plugin/device/cpu/kernel/nllloss_grad_cpu_kernel.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
 #include <unordered_map>
-#include "mindspore/core/ops/grad/nllloss_grad.h"
-#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNLLLossGradInputsNum = 5;
+constexpr size_t kNLLLossGradInputsNum = 7;
 constexpr size_t kNLLLossGradOutputsNum = 1;
-const std::unordered_map<Reduction, ReductionType> kReductionMap = {
-  {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
+constexpr auto kReductionIdx = 5;
+constexpr auto kIgnoreIndexIdx = 6;
 }  // namespace
 
 bool NLLLossGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
@@ -40,17 +39,6 @@ bool NLLLossGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto reduction = Reduction(GetValue<int64_t>(primitive_->GetAttr(ops::kReduction)));
-
-  auto pair = kReductionMap.find(reduction);
-  if (pair == kReductionMap.end()) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_
-                      << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
-  }
-
-  reduction_type_ = pair->second;
-  ignore_index_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kIgnoreIndex)));
   return true;
 }
 
@@ -60,7 +48,9 @@ int NLLLossGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
-
+  auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
+  reduction_type_ = static_cast<ops::Reduction>(reduction);
+  ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
   auto logits_shape = inputs[0]->GetShapeVector();
   nllloss_param_.batch_ = LongToInt(logits_shape[0]);
   nllloss_param_.class_num_ = LongToInt(logits_shape[1]);
@@ -99,9 +89,9 @@ bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
     }
     int index = i * nllloss_param_.class_num_ + labels[i];
     float n_weight = weight[labels[i]];
-    if (reduction_type_ == Reduction_Sum) {
+    if (reduction_type_ == ops::Reduction::SUM) {
       logits_grad[index] = -loss_grad[0] * n_weight;
-    } else if (reduction_type_ == Reduction_Mean) {
+    } else if (reduction_type_ == ops::Reduction::MEAN) {
       logits_grad[index] = -loss_grad[0] * n_weight / *total_weight;
     } else {
       logits_grad[index] = -loss_grad[i] * n_weight;
@@ -117,6 +107,8 @@ std::vector<std::pair<KernelAttr, NLLLossGradCpuKernelMod::NLLLossGradFunc>> NLL
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossGradCpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr()
@@ -125,8 +117,18 @@ std::vector<std::pair<KernelAttr, NLLLossGradCpuKernelMod::NLLLossGradFunc>> NLL
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossGradCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> NLLLossGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, NLLLossGradCpuKernelMod::NLLLossGradFunc> &pair) { return pair.first; });
+  return support_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NLLLossGrad, NLLLossGradCpuKernelMod);
 }  // namespace kernel

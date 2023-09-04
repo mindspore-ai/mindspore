@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ class NLLLossGradGpuKernelMod : public NativeGpuKernelMod {
   int c_;
   bool is_null_input_;
   int num_dloss_;
-  int32_t ignore_index_;
+  int64_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

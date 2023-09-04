@@ -674,16 +674,18 @@ REG_BPROP_BUILDER("SoftmaxCrossEntropyWithLogits").SetUnusedInputs({i0, i1}).Set
 });
 
 REG_BPROP_BUILDER("NLLLoss").SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto target = ib->GetInput(kIndex1);
+  auto logits = ib->GetInput(kIndex0);
+  auto labels = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
+  auto reduction = ib->GetInput(kIndex3);
+  auto ignore_index = ib->GetInput(kIndex4);
+
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
   auto total_weight = ib->TupleGetItem(out, 1);
   auto dout_x = ib->TupleGetItem(dout, 0);
-  auto dx = ib->Emit("NLLLossGrad", {x, dout_x, target, weight, total_weight},
-                     {{"reduction", ib->GetAttr("reduction")}, {"ignore_index", ib->GetAttr("ignore_index")}});
-  return {dx, ib->OutZeros(target), ib->OutZeros(weight)};
+  auto dx = ib->Emit("NLLLossGrad", {logits, dout_x, labels, weight, total_weight, reduction, ignore_index});
+  return {dx, ib->OutZeros(labels), ib->OutZeros(weight), ib->OutZeros(reduction), ib->OutZeros(ignore_index)};
 });
 
 REG_BPROP_BUILDER("ResizeBilinear").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {

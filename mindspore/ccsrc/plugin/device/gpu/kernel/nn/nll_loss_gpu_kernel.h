@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,11 @@ class NLLLossGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, NLLLossLaunchFunc>> func_list_;
   NLLLossLaunchFunc kernel_func_;
-
   ReductionMode reduction_;
   string kernel_name_;
   unsigned int label_size_;
   unsigned int num_classes_;
-  int32_t ignore_index_;
+  int64_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore
