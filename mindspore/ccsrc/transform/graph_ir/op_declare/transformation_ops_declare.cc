@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,4 +157,13 @@ ATTR_MAP(TfIdfVectorizer) = {
   {"weights", ATTR_DESC(weights, AnyTraits<std::vector<float>>())}};
 OUTPUT_MAP(TfIdfVectorizer) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer))
+
+// Im2col
+INPUT_MAP(Im2col) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>())},
+                    {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>())},
+                    {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                    {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Im2col, kNameIm2Col, ADPT_DESC(Im2col))
 }  // namespace mindspore::transform

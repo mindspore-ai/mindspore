@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,6 +462,7 @@ constexpr const char kNameConv2DTransposeV2[] = "Conv2DTransposeV2";
 constexpr const char kNameGridSampler3D[] = "GridSampler3D";
 constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
+constexpr const char kNameIm2Col[] = "Im2Col";
 
 class OpAdapterDesc;
 
