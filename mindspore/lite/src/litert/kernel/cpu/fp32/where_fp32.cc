@@ -154,7 +154,7 @@ int WhereCPUKernel::RunWithSingleInput() {
 }
 
 int WhereCPUKernel::BroadCastForInput(lite::Tensor *condition, lite::Tensor *x, lite::Tensor *y,
-                                      void *condition_broadcast_buf, void *x_broadcast_buf, void *y_broadcast_buf,
+                                      void **condition_broadcast_buf, void **x_broadcast_buf, void **y_broadcast_buf,
                                       lite::Tensor *output) {
   size_t broad_cast_buf_size = output->ElementsNum();
   if (output->data_type() == kNumberTypeFloat32) {
@@ -181,33 +181,33 @@ int WhereCPUKernel::BroadCastForInput(lite::Tensor *condition, lite::Tensor *x, 
   memcpy(y_info.input_shape_, y->shape().data(), y->shape().size() * sizeof(int));
   memcpy(y_info.output_shape_, output->shape().data(), output->shape().size() * sizeof(int));
 
-  condition_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
-  if (condition_broadcast_buf == nullptr) {
+  *condition_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (*condition_broadcast_buf == nullptr) {
     MS_LOG(ERROR) << "malloc failed.";
     return RET_ERROR;
   }
-  BroadcastToSize8(condition->data(), &condition_info, condition_broadcast_buf);
+  BroadcastToSize8(condition->data(), &condition_info, *condition_broadcast_buf);
 
-  x_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
-  if (x_broadcast_buf == nullptr) {
-    ms_context_->allocator->Free(condition_broadcast_buf);
+  *x_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (*x_broadcast_buf == nullptr) {
+    ms_context_->allocator->Free(*condition_broadcast_buf);
     MS_LOG(ERROR) << "malloc failed.";
     return RET_ERROR;
   }
-  BroadcastToSize32(x->data(), &x_info, x_broadcast_buf);
+  BroadcastToSize32(x->data(), &x_info, *x_broadcast_buf);
 
-  y_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
-  if (y_broadcast_buf == nullptr) {
-    ms_context_->allocator->Free(y_broadcast_buf);
-    ms_context_->allocator->Free(condition_broadcast_buf);
+  *y_broadcast_buf = ms_context_->allocator->Malloc(broad_cast_buf_size);
+  if (*y_broadcast_buf == nullptr) {
+    ms_context_->allocator->Free(*x_broadcast_buf);
+    ms_context_->allocator->Free(*condition_broadcast_buf);
     MS_LOG(ERROR) << "malloc failed.";
     return RET_ERROR;
   }
-  BroadcastToSize32(y->data(), &y_info, y_broadcast_buf);
+  BroadcastToSize32(y->data(), &y_info, *y_broadcast_buf);
   int max_num = out_tensors_.front()->ElementsNum();
-  condition_ = reinterpret_cast<bool *>(condition_broadcast_buf);
-  x_ = x_broadcast_buf;
-  y_ = y_broadcast_buf;
+  condition_ = reinterpret_cast<bool *>(*condition_broadcast_buf);
+  x_ = *x_broadcast_buf;
+  y_ = *y_broadcast_buf;
   output_data_ = out_tensors_.at(0)->data();
   where_param_->condition_num_ = max_num;
   where_param_->x_num_ = max_num;
@@ -232,7 +232,7 @@ int WhereCPUKernel::RunWithTripleInputs() {
   // need broad cast
   if (condition->ElementsNum() != y->ElementsNum() && condition->shape().size() != y->shape().size()) {
     MS_LOG(INFO) << "need broadcast.";
-    auto ret = BroadCastForInput(condition, x, y, condition_broadcast_buf, x_broadcast_buf, y_broadcast_buf, output);
+    auto ret = BroadCastForInput(condition, x, y, &condition_broadcast_buf, &x_broadcast_buf, &y_broadcast_buf, output);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "BroadCastForInput failed.";
       return RET_ERROR;
@@ -279,8 +279,8 @@ int WhereCPUKernel::RunWithTripleInputs() {
     x_broadcast_buf = nullptr;
   }
   if (y_broadcast_buf != nullptr) {
-    y_broadcast_buf = nullptr;
     ms_context_->allocator->Free(y_broadcast_buf);
+    y_broadcast_buf = nullptr;
   }
   return RET_OK;
 }
