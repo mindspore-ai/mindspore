@@ -57,7 +57,7 @@ size_t NormalizeDimIndex::ConstNormalizeDimIndex(size_t data_dims, size_t dim_in
   }
   size_t output = 0;
   size_t ellipse_occupy_dims = data_dims + expand_dims_bit.count() - not_ellipse_occupy_dims;
-  if (!has_ellipsis || ellipse_occupy_dims == 0 || dim_index < ellipse_position) {
+  if (!has_ellipsis || dim_index < ellipse_position) {
     output = dim_index - expand_dims_count;
     return output;
   }

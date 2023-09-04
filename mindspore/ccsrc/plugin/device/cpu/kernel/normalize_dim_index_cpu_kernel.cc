@@ -67,7 +67,7 @@ bool NormalizeDimIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   auto output_addr = static_cast<int64_t *>(outputs[kIndex0]->addr);
   ShapeVector data_shape = data_shapes_[0];
   auto new_dim_index = ops::NormalizeDimIndex::ConstNormalizeDimIndex(data_shape.size() + expand_dims_cnt_, dim_index_,
-                                                                      tuple_index_types_, expand_dims_cnt_);
+                                                                      tuple_index_types_, 0);
   CheckCopy(output_addr, sizeof(int64_t), &new_dim_index, sizeof(int64_t), kernel_name_);
   return true;
 }
