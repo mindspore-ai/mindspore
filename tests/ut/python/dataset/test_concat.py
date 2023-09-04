@@ -470,6 +470,140 @@ def test_concat_17():
     ds.config.set_seed(original_seed)
 
 
+def test_concat_18():
+    """
+    Feature: Concat op
+    Description: Test random select of ConcatDataset with sampler
+    Expectation: Output passes the equality test
+    """
+    logger.info("test_concat_18")
+
+    original_seed = config_get_set_seed(3)
+
+    def define_generators():
+        # 0, 1, 2 (3 samples)
+        data1 = ds.GeneratorDataset(generator, ["col1"])
+        # 3, 4, 5 ... 9 (7 samples)
+        data2 = ds.GeneratorDataset(generator_10, ["col1"])
+        # 10, 11, 12 ... 19 (10 samples)
+        data3 = ds.GeneratorDataset(generator_20, ["col1"])
+        # 20, 21, 22 ... 28 (9 samples)
+        data4 = ds.GeneratorDataset(generator_29, ["col1"])
+        return data1, data2, data3, data4
+
+    # check first 3 samples comes from data1 and data2
+    data1, data2, _, _ = define_generators()
+    check_flag = [False, False]
+    data12 = data1 + data2
+    data12.use_sampler(ds.RandomSampler())
+    for i, d in enumerate(data12.create_tuple_iterator(output_numpy=True)):
+        if d[0] <= 2:
+            check_flag[0] = True
+        else:
+            check_flag[1] = True
+        if i > 2:
+            break
+    assert check_flag == [True, True]
+
+    # check first 10 samples comes from data1 ~ data4
+    data1, data2, data3, data4 = define_generators()
+    check_flag = [False, False, False, False]
+    data1234 = data1.concat([data2, data3, data4])
+    data1234.use_sampler(ds.RandomSampler())
+    for i, d in enumerate(data1234.create_tuple_iterator(output_numpy=True)):
+        if d[0] <= 2:
+            check_flag[0] = True
+        elif d[0] <= 9:
+            check_flag[1] = True
+        elif d[0] <= 19:
+            check_flag[2] = True
+        elif d[0] <= 28:
+            check_flag[3] = True
+        if i > 9:
+            break
+    assert check_flag == [True, True, True, True]
+
+    # check global shuffle on shared source
+    class DS:
+        def __init__(self, i, j):
+            self.data = [i for i in range(i, j)]
+        def __getitem__(self, index):
+            return self.data[index]
+        def __len__(self):
+            return len(self.data)
+
+    data1 = ds.GeneratorDataset(DS(0, 20), "data1", shuffle=True, num_shards=2, shard_id=0)
+    data2 = ds.GeneratorDataset(DS(20, 25), "data1", shuffle=True, num_shards=2, shard_id=1)
+    data3 = data1 + data2
+    data3.use_sampler(ds.RandomSampler())
+
+    check_flag = [False, False]
+    for i, d in enumerate(data1234.create_tuple_iterator(output_numpy=True)):
+        if d[0] <= 2:
+            check_flag[0] = True
+        elif d[0] <= 19:
+            check_flag[1] = True
+        if i > 6:
+            break
+    assert check_flag == [True, True]
+
+    ds.config.set_seed(original_seed)
+
+
+def test_concat_19():
+    """
+    Feature: Concat op
+    Description: Test random select of ConcatDataset in debug mode
+    Expectation: Output passes the equality test
+    """
+    logger.info("test_concat_19")
+
+    original_seed = config_get_set_seed(2)
+
+    class DS:
+        def __init__(self, i, j):
+            self.data = [i for i in range(i, j)]
+        def __getitem__(self, index):
+            return self.data[index]
+        def __len__(self):
+            return len(self.data)
+
+    ds1 = ds.GeneratorDataset(DS(0, 20), "data1", shuffle=True)
+    ds2 = ds.GeneratorDataset(DS(20, 25), "data1", shuffle=True)
+    ds3 = ds1.concat([ds2])
+    ds3.use_sampler(ds.RandomSampler())
+    ds3 = ds3.map(lambda x: x+1)
+
+    # check data distribution in debug mode
+    ds.config.set_debug_mode(True)
+    less_than_20 = 0
+    greater_euqal_to_20 = 0
+    for i, data in enumerate(ds3.create_tuple_iterator(output_numpy=True, num_epochs=1)):
+        if data[0] < 20:
+            less_than_20 += 1
+        else:
+            greater_euqal_to_20 += 1
+        if i >= 15:
+            break
+    result1 = [less_than_20, greater_euqal_to_20]
+
+    # check data distribution in pipeline mode
+    ds.config.set_debug_mode(False)
+    less_than_20 = 0
+    greater_euqal_to_20 = 0
+    for i, data in enumerate(ds3.create_tuple_iterator(output_numpy=True, num_epochs=1)):
+        if data[0] < 20:
+            less_than_20 += 1
+        else:
+            greater_euqal_to_20 += 1
+        if i >= 15:
+            break
+    result2 = [less_than_20, greater_euqal_to_20]
+
+    assert result1 == result2
+    ds.config.set_seed(original_seed)
+
+
 if __name__ == "__main__":
     test_concat_01()
     test_concat_02()
@@ -488,3 +622,5 @@ if __name__ == "__main__":
     test_concat_15()
     test_concat_16()
     test_concat_17()
+    test_concat_18()
+    test_concat_19()

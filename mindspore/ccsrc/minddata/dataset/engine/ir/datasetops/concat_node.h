@@ -32,7 +32,8 @@ class ConcatNode : public DatasetNode {
   explicit ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets,
                       const std::shared_ptr<SamplerObj> &sampler = nullptr,
                       const std::vector<std::pair<int, int>> &children_flag_and_nums = {},
-                      const std::vector<std::pair<int, int>> &children_start_end_index = {});
+                      const std::vector<std::pair<int, int>> &children_start_end_index = {},
+                      const std::vector<int64_t> &children_sizes = {});
 
   /// \brief Destructor
   ~ConcatNode() override = default;
@@ -104,6 +105,7 @@ class ConcatNode : public DatasetNode {
   std::shared_ptr<SamplerObj> sampler_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
+  std::vector<int64_t> children_sizes_;
 };
 }  // namespace dataset
 }  // namespace mindspore

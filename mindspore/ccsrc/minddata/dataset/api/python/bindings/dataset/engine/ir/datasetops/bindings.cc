@@ -168,10 +168,11 @@ PYBIND_REGISTER(ConcatNode, 2, ([](const py::module *m) {
                   (void)py::class_<ConcatNode, DatasetNode, std::shared_ptr<ConcatNode>>(*m, "ConcatNode",
                                                                                          "to create a ConcatNode")
                     .def(py::init([](const std::vector<std::shared_ptr<DatasetNode>> &datasets, py::handle sampler,
-                                     const py::list &children_flag_and_nums, const py::list &children_start_end_index) {
-                      auto concat = std::make_shared<ConcatNode>(datasets, toSamplerObj(sampler),
-                                                                 toPairVector(children_flag_and_nums),
-                                                                 toPairVector(children_start_end_index));
+                                     const py::list &children_flag_and_nums, const py::list &children_start_end_index,
+                                     const py::list &children_sizes) {
+                      auto concat = std::make_shared<ConcatNode>(
+                        datasets, toSamplerObj(sampler), toPairVector(children_flag_and_nums),
+                        toPairVector(children_start_end_index), toInt64Vector(children_sizes));
                       THROW_IF_ERROR(concat->ValidateParams());
                       return concat;
                     }));

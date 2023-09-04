@@ -61,6 +61,8 @@ std::vector<std::string> toStringVector(const py::list list);
 
 std::vector<pid_t> toIntVector(const py::list input_list);
 
+std::vector<int64_t> toInt64Vector(const py::list input_list);
+
 std::unordered_map<int32_t, std::vector<pid_t>> toIntMap(const py::dict input_dict);
 
 std::pair<int64_t, int64_t> toIntPair(const py::tuple tuple);
