@@ -982,6 +982,8 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 
   std::shared_ptr<AbstractSequence> BroadenToDynamicLenSequence();
 
+  std::shared_ptr<AbstractSequence> DynamicLenSequenceJoin(const std::shared_ptr<AbstractSequence> &other);
+
   void set_dyn_len_arg();
   bool dyn_len_arg() const;
 
@@ -994,8 +996,6 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   size_t space_num_{0};
   AbstractBasePtr dynamic_len_element_abs_ = nullptr;
   bool dyn_len_arg_ = false;
-
-  std::shared_ptr<AbstractSequence> DynamicLenSequenceJoin(const std::shared_ptr<AbstractSequence> &other);
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 

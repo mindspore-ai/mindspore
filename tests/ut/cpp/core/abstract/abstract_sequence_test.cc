@@ -350,5 +350,24 @@ TEST_F(DynamicSequenceTestUtils, test_sequence_convert_to_dyn_len) {
   abs_seq->CheckAndConvertToDynamicLenSequence(false);
   ASSERT_FALSE(abs_seq->dynamic_len());
 }
+
+/// Feature: AbstractSequence join test.
+/// Description: List of length 3  can not join with List of length 2.
+/// Expectation: Can not join list of difference length..
+TEST_F(DynamicSequenceTestUtils, test_sequence_join_with_different_length) {
+  std::vector<AbstractBasePtr> elems1 = {std::make_shared<AbstractClass>(kInt32),
+                                         std::make_shared<AbstractClass>(kFloat32)};
+  std::vector<AbstractBasePtr> elems2 = {std::make_shared<AbstractClass>(kInt32),
+                                         std::make_shared<AbstractClass>(kFloat32),
+                                         std::make_shared<AbstractClass>(kInt64)};
+  auto abs_seq1 = std::make_shared<AbstractList>(elems1);
+  auto abs_seq2 = std::make_shared<AbstractList>(elems2);
+  try {
+    abs_seq1->Join(abs_seq2);
+    FAIL();
+  } catch (std::runtime_error const &err) {
+    ASSERT_TRUE(std::string(err.what()).find("Type Join Failed") != std::string::npos);
+  }
+}
 }  // namespace abstract
 }  // namespace mindspore
