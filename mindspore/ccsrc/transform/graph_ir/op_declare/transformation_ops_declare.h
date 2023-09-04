@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,4 +71,7 @@ DECLARE_OP_USE_OUTPUT(BatchToSpaceND)
 
 DECLARE_OP_ADAPTER(TfIdfVectorizer)
 DECLARE_OP_USE_OUTPUT(TfIdfVectorizer)
+
+DECLARE_OP_ADAPTER(Im2col)
+DECLARE_OP_USE_OUTPUT(Im2col)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_TRANSFORMATION_OPS_DECLARE_H_
