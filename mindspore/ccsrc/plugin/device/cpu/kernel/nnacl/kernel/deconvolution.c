@@ -290,7 +290,7 @@ ConvolutionBaseStruct *CreateDeConv(ConvParameter *param) {
 }
 
 ConvolutionBaseStruct *SelectDeConv(ConvParameter *conv_param) {
-#ifdef BUILD_LITE
+#ifndef _WIN32
 #ifndef ENABLE_MCU
   bool param_winograd_fit = (conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
                             (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1);

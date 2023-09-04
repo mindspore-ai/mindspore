@@ -16,7 +16,7 @@
 #ifndef NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 #define NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 
-#ifdef BUILD_LITE
+#ifndef _WIN32
 #ifndef ENABLE_MCU
 #include <pthread.h>
 #include "nnacl/op_base.h"
