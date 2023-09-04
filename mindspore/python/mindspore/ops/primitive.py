@@ -84,6 +84,17 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
+    def _add_prim_arg(self, name, value):
+        """
+        Store primitive initialization arguments.
+
+        Different from add_prim_attr, it is used internally to store Primitive
+        initialization arguments in Python.
+        """
+        self.__dict__[name] = value
+        self.attrs[name] = value
+        return self
+
     def set_device(self, device_target):
         """
         Set primitive been executed device.

@@ -175,19 +175,6 @@ def get_op_name(operator_name, class_def):
     return class_name
 
 
-def generate_py_op_label(labels):
-    """
-    generate label init python code
-    """
-    if labels is None:
-        return ''
-    label_code = ""
-    for lable_name, lable_value in labels.items():
-        label_code += f"""        self.add_prim_attr("{lable_name}", {lable_value})
-"""
-    return label_code
-
-
 def generate_py_op_func(yaml_data, doc_data):
     """
     generate python operator function
@@ -302,7 +289,7 @@ def process_args(args):
             else:
                 assign_str = f'{arg_handler}({assign_str})'
 
-        assign_str = f"""        self.{arg_name} = """ + assign_str
+        assign_str = f"""        self._add_prim_arg("{arg_name}", {assign_str})"""
         args_assign.append(assign_str)
     return args_name, args_assign, init_args_with_default
 
