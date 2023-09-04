@@ -289,8 +289,8 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   for (const auto &kernel : kernels) {
     auto [kernel_type, kernel_info_list] = QueryKernelType(kernel);
     if (kernel_type == KernelType::UNKNOWN_KERNEL_TYPE) {
-      MS_LOG(EXCEPTION) << "Query kernel type failed, node name: " << kernel->fullname_with_scope()
-                        << ", node info: " << kernel->DebugString();
+      MS_EXCEPTION(TypeError) << "Query kernel type failed, node name: " << kernel->fullname_with_scope()
+                              << ", node info: " << kernel->DebugString();
     }
     // in this func, no select process, acl/aicpu/host kernel may not support pre node's format.
     GenerateKernelBuildInfo(kernel, kernel_type);
