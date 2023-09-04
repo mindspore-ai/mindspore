@@ -84,7 +84,7 @@ uint32_t FloorDivCpuKernel::FloorDivParamCheck(const CpuKernelContext &ctx) cons
 
 template <typename T>
 T DivCal(const T &x_i, const T &y_i) {
-  return static_cast<T>(Eigen::numext::floor(x_i / y_i));
+  return static_cast<T>(Eigen::numext::floor(static_cast<double>(x_i) / static_cast<double>(y_i)));
 }
 
 template <>
@@ -94,7 +94,7 @@ int8_t DivCal(const int8_t &x_i, const int8_t &y_i) {
     int8_t abs_y_i = y_i < 0 ? -y_i : y_i;
     return (-(abs_x_i + abs_y_i - 1) / abs_y_i);
   } else {
-    return (x_i / y_i);
+    return (static_cast<double>(x_i) / static_cast<double>(y_i));
   }
 }
 
@@ -105,7 +105,7 @@ int16_t DivCal(const int16_t &x_i, const int16_t &y_i) {
     int16_t abs_y_i = y_i < 0 ? -y_i : y_i;
     return (-(abs_x_i + abs_y_i - 1) / abs_y_i);
   } else {
-    return (x_i / y_i);
+    return (static_cast<double>(x_i) / static_cast<double>(y_i));
   }
 }
 
@@ -116,7 +116,7 @@ int32_t DivCal(const int32_t &x_i, const int32_t &y_i) {
     int32_t abs_y_i = y_i < 0 ? -y_i : y_i;
     return (-(abs_x_i + abs_y_i - 1) / abs_y_i);
   } else {
-    return (x_i / y_i);
+    return (static_cast<double>(x_i) / static_cast<double>(y_i));
   }
 }
 
@@ -127,7 +127,7 @@ int64_t DivCal(const int64_t &x_i, const int64_t &y_i) {
     int64_t abs_y_i = y_i < 0 ? -y_i : y_i;
     return (-(abs_x_i + abs_y_i - 1) / abs_y_i);
   } else {
-    return (x_i / y_i);
+    return (static_cast<double>(x_i) / static_cast<double>(y_i));
   }
 }
 
