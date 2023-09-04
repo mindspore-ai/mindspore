@@ -384,6 +384,29 @@ class Node:
         """
         return self._node.get_args()
 
+    def get_symbol_tree(self) -> 'SymbolTree':
+        """
+        Get the symbol tree which current node belongs to.
+
+        Returns:
+            SymbolTree, None if current node does not belong to any SymbolTree.
+
+        Examples:
+        >>> from mindspore.rewrite import SymbolTree
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
+        >>> stree = SymbolTree.create(net)
+        >>> node = stree.get_node("conv1")
+        >>> print(node.get_symbol_tree())
+        <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
+        """
+        from .symbol_tree import SymbolTree
+        stree_impl = self._node.get_belong_symbol_tree()
+        if not stree_impl:
+            return None
+        return SymbolTree(stree_impl)
+
     def get_kwargs(self) -> {str: ScopedValue}:
         return self._node.get_kwargs()
 

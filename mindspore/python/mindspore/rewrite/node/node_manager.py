@@ -211,11 +211,8 @@ class NodeManager:
         title (str): A string as a title will be printed before dumping topological relation.
         """
         try:
-            from tabulate import tabulate
+            from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
         except ImportError:
-            print("`topologival_manager:dump()` relies on the library `tabulate`, "
-                  "which could not be found on this machine. Run `pip "
-                  "install tabulate` to install the library.")
             return ""
         dump_str = "=" * 40 + title + "=" * 40 + '\n'
         node_specs = [[

@@ -92,13 +92,20 @@ class SymbolTree:
     def get_handler(self) -> SymbolTreeImpl:
         return self._symbol_tree
 
-    def nodes(self):
+    def nodes(self, all_nodes: bool = False):
         """
         Get the generator of the node in the current SymbolTree, which is used to iterate
         through the nodes in SymbolTree.
 
+        Args:
+            all_nodes (bool): Get all nodes including nodes in CallFunction node, CellContainer node
+                and sub symbol tree. Default: ``False`` .
+
         Returns:
-            A generator for node of current SymbolTree.
+            A generator for nodes in SymbolTree.
+
+        Raises:
+            TypeError: If `all_nodes` is not bool.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
@@ -110,7 +117,9 @@ class SymbolTree:
             ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
              'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return']
         """
-        for node in self._symbol_tree.nodes():
+        Validator.check_value_type("all_nodes", all_nodes, [bool], "nodes")
+        nodes = self._symbol_tree.all_nodes() if all_nodes else self._symbol_tree.nodes()
+        for node in nodes:
             yield Node(node)
 
     def get_node(self, node_name: str) -> Optional[Node]:
@@ -134,7 +143,7 @@ class SymbolTree:
             conv1
         """
         Validator.check_value_type("node_name", node_name, [str], "SymbolTree")
-        node_impl = self._symbol_tree.get_node(node_name)
+        node_impl = self._symbol_tree.get_node_from_name(node_name)
         if node_impl is None:
             return None
         return Node(node_impl)
@@ -166,8 +175,10 @@ class SymbolTree:
             ...     if node.get_name() == "conv1":
             ...         position = stree.before(node)
         """
-        Validator.check_value_type("node", node, [Node], "SymbolTree")
-        return self._symbol_tree.before(node.get_handler())
+        Validator.check_value_type("node", node, [Node, str], "SymbolTree")
+        if isinstance(node, Node):
+            node = node.get_handler()
+        return self._symbol_tree.before(node)
 
     def after(self, node: Union[Node, str]):
         """
@@ -193,8 +204,10 @@ class SymbolTree:
             ...     if node.get_name() == "conv1":
             ...         position = stree.after(node)
         """
-        Validator.check_value_type("node", node, [Node], "SymbolTree")
-        return self._symbol_tree.after(node.get_handler())
+        Validator.check_value_type("node", node, [Node, str], "SymbolTree")
+        if isinstance(node, Node):
+            node = node.get_handler()
+        return self._symbol_tree.after(node)
 
     def insert(self, position, node: Node) -> Node:
         """
@@ -253,8 +266,10 @@ class SymbolTree:
             >>> node = stree.get_node("conv1")
             >>> stree.erase(node)
         """
-        Validator.check_value_type("node", node, [Node], "SymbolTree")
-        return Node(self._symbol_tree.erase_node(node.get_handler()))
+        Validator.check_value_type("node", node, [Node, str], "SymbolTree")
+        if isinstance(node, Node):
+            node = node.get_handler()
+        return Node(self._symbol_tree.erase_node(node))
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
         """
@@ -306,7 +321,7 @@ class SymbolTree:
         self._symbol_tree.dump()
 
     def print_node_tabulate(self, all_nodes: bool = False):
-        """
+        r"""
         Print the topology information of nodes in SymbolTree, including node type, node name, node code,
         and node input-output relationship.
         The information is output to the screen using the print interface.
@@ -315,9 +330,18 @@ class SymbolTree:
             all_nodes (bool): Print information of all nodes, including nodes in CallFunction
                 node, CellContainer node and sub symbol tree. Default: ``False`` .
 
-        .. warning::
-            This is an experimental API that is subject to change or deletion.
+        Raises:
+            TypeError: If `all_nodes` is not bool.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.print_node_tabulate()
         """
+        Validator.check_value_type("all_nodes", all_nodes, [bool], "print_node_tabulate")
         self._symbol_tree.print_node_tabulate(all_nodes)
 
     def get_code(self) -> str:

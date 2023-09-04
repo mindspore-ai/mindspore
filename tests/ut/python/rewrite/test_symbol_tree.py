@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import os
+import sys
 import ast
 import inspect
 
@@ -20,8 +21,10 @@ from mindspore.nn import Cell, Conv2d, BatchNorm2d, ReLU
 from mindspore.ops import Add
 from mindspore.rewrite import ScopedValue, ValueType
 from mindspore.rewrite import Node as NodeApi
+from mindspore.rewrite import SymbolTree as SymbolTreeApi
 from mindspore.rewrite.symbol_tree import SymbolTree
 from mindspore.rewrite.node import Node
+from mindspore import nn, ops
 from .utils import get_symbol_tree_nodes_count
 
 
@@ -471,3 +474,129 @@ def test_save_network_to_file():
     assert os.path.exists("./new_network.py")
 
     os.system("rm -f new_network.py")
+
+
+def external_func(x):
+    x = ops.abs(x)
+    return x
+
+
+class SubSubNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_func(x)
+        x = self.subsubnet_internal_func(x)
+        return x
+
+    def subsubnet_internal_func(self, x):
+        x = self.abs(x)
+        return x
+
+
+class SubNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subsubnet = SubSubNet()
+        self.abs = ops.Abs()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_func(x)
+        x = self.subnet_internal_func(x)
+        return x
+
+    def subnet_internal_func(self, x):
+        x = self.abs(x)
+        x = self.subsubnet(x)
+        return x
+
+
+class MyNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.sub_net = SubNet()
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_func(x)
+        x = self.internal_func(x)
+        return x
+
+    def internal_func(self, x):
+        x = self.sub_net(self.abs(x))
+        return x
+
+
+def test_nodes():
+    """
+    Feature: Python api nodes of SymbolTree of Rewrite.
+    Description: Call nodes to get nodes from symbol tree.
+    Expectation: Success.
+    """
+    net = MyNet()
+    stree = SymbolTreeApi.create(net)
+    assert len(list(stree.nodes())) == 5
+    assert len(list(stree.nodes(True))) == 26
+    sub_tree = SymbolTreeApi(stree.get_node("sub_net").get_handler().symbol_tree)
+    assert len(list(sub_tree.nodes())) == 5
+    assert len(list(sub_tree.nodes(True))) == 17
+    sub_sub_tree = SymbolTreeApi(sub_tree.get_node("subsubnet").get_handler().symbol_tree)
+    assert len(list(sub_sub_tree.nodes())) == 5
+    assert len(list(sub_sub_tree.nodes(True))) == 8
+
+def test_print_node_tabulate():
+    """
+    Feature: Python api print_node_tabulate of SymbolTree of Rewrite.
+    Description: Call print_node_tabulate from symbol tree.
+    Expectation: Success.
+    """
+    class PrintRedirect:
+        content = ""
+        def write(self, string):
+            self.content += string
+        def flush(self):
+            self.content = ""
+
+    net = MyNet()
+    stree = SymbolTreeApi.create(net)
+    try:
+        from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
+    except ImportError:
+        # tabulate is not installed
+        return
+
+    # tabulate is installed
+    redirecter = PrintRedirect()
+    sys_stdout = sys.stdout
+    sys.stdout = redirecter
+    stree.print_node_tabulate(False)
+    sys.stdout = sys_stdout
+    assert redirecter.content.count("NodeType.Input         input_x        x                          "
+                                    "[]                           [[0, [('relu', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallCell      relu           x = self.relu(x)           "
+                                    "[[0, ('input_x', 0)]]        [[0, [('external_func', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  external_func  x = external_func(x)       "
+                                    "[[0, ('relu', 0)]]           [[0, [('internal_func', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  internal_func  x = self.internal_func(x)  "
+                                    "[[0, ('external_func', 0)]]  [[0, [('return_1', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.Output        return_1       return x                   "
+                                    "[[0, ('internal_func', 0)]]  []") == 1
+    redirecter = PrintRedirect()
+    sys_stdout = sys.stdout
+    sys.stdout = redirecter
+    stree.print_node_tabulate(True)
+    sys.stdout = sys_stdout
+    assert redirecter.content.count("NodeType.CallFunction  subnet_internal_func  x = self.subnet_internal_func"
+                                    "(x)  [[0, ('external_func', 0)]]         [[0, [('return_1', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.Tree           subsubnet  x = self.subsubnet(x)  [[0, ('abs', 0)]"
+                                    "]        [[0, [('return', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  subsubnet_internal_func  x = self.subsubnet_internal_func"
+                                    "(x)  [[0, ('external_func', 0)]]            [[0, [('return_1', 0)]]]") == 1

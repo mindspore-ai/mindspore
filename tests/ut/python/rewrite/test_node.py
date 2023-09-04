@@ -15,7 +15,10 @@
 import ast
 
 from mindspore.nn import Cell
+from mindspore import nn, ops
 from mindspore.rewrite import ScopedValue
+from mindspore.rewrite import SymbolTree as SymbolTreeApi
+from mindspore.rewrite import Node as NodeApi
 from mindspore.rewrite.node import Node
 
 
@@ -177,3 +180,70 @@ def test_create_by_cell5():
         "h": ScopedValue.create_variable_value(1),
         "cool_boy": ScopedValue.create_naming_value('Naroto'),
     }
+
+
+def external_func(x):
+    x = ops.abs(x)
+    return x
+
+
+class SubNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.abs = ops.Abs()
+        self.relu = nn.ReLU()
+        self.container = nn.SequentialCell(nn.ReLU())
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_func(x)
+        x = self.subnet_internal_func(x)
+        return x
+
+    def subnet_internal_func(self, x):
+        x = self.abs(x)
+        x = self.subsubnet(x)
+        x = self.container(x)
+        return x
+
+
+class MyNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.sub_net = SubNet()
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_func(x)
+        x = self.internal_func(x)
+        return x
+
+    def internal_func(self, x):
+        x = self.sub_net(self.abs(x))
+        return x
+
+
+def test_get_symbol_tree():
+    """
+    Feature: Python api get_symbol_tree of Node of Rewrite.
+    Description: Call get_symbol_tree to get symbol tree of node.
+    Expectation: Success.
+    """
+    net = MyNet()
+    stree = SymbolTreeApi.create(net)
+    for node in stree.nodes():
+        assert node.get_symbol_tree().get_handler() == stree.get_handler()
+    internal_func_node = stree.get_node('internal_func')
+    for node in internal_func_node.get_handler().nodes():
+        assert NodeApi(node).get_symbol_tree().get_handler() == stree.get_handler()
+    subtree = SymbolTreeApi(stree.get_node("sub_net").get_handler().symbol_tree)
+    for node in subtree.nodes():
+        assert node.get_symbol_tree().get_handler() == subtree.get_handler()
+    subnet_internal_func_node = subtree.get_node('subnet_internal_func')
+    for node in subnet_internal_func_node.get_handler().nodes():
+        assert NodeApi(node).get_symbol_tree().get_handler() == subtree.get_handler()
+    subnet_cell_container = subtree.get_node('container')
+    for node in subnet_cell_container.get_handler().nodes():
+        assert NodeApi(node).get_symbol_tree().get_handler() == subtree.get_handler()
