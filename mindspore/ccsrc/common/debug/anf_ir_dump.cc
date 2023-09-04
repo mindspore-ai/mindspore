@@ -371,14 +371,13 @@ void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr 
   buffer << ")";
 }
 
-void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer,
-                         const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> &sub_graphs) {
+void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, size_t sub_graphs_size) {
   if (graph == nullptr) {
     return;
   }
 
   buffer << "# IR entry: @" << graph->ToString() << std::endl;
-  buffer << "# Total subgraphs: " << sub_graphs.size() << std::endl;
+  buffer << "# Total subgraphs: " << sub_graphs_size << std::endl;
   buffer << std::endl;
 
   if (!graph->attrs().empty()) {
@@ -1124,7 +1123,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
 
-  DumpGlobalInfoEntry(graph, buffer, sub_graphs);
+  DumpGlobalInfoEntry(graph, buffer, sub_graphs.size());
   buffer << oss.str();
   // Output global info
   fout << buffer.str() << std::endl;
@@ -1138,6 +1137,14 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   fout.close();
   // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
+void DumpIRHead(const FuncGraphPtr &top_func, std::ostringstream &ofs) {
+  auto sub_graphs = top_func->func_graphs_used_total();
+  DumpGlobalInfoEntry(top_func, ofs, sub_graphs.size());
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  (void)DumpParams(top_func, ofs, &para_map);
+  ofs << std::endl;
 }
 
 void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name,
@@ -1158,7 +1165,7 @@ void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool du
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
 
   // Dump global info
-  DumpGlobalInfoEntry(graph, graph_buffer, sub_graphs);
+  DumpGlobalInfoEntry(graph, graph_buffer, sub_graphs.size());
   graph_buffer << oss.str();
   // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, graph_buffer);
@@ -1192,7 +1199,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
   // Dump global info
-  DumpGlobalInfoEntry(graph, buffer, sub_graphs);
+  DumpGlobalInfoEntry(graph, buffer, sub_graphs.size());
   // Output global info
   fout << buffer.str() << std::endl;
   buffer.str(std::string());

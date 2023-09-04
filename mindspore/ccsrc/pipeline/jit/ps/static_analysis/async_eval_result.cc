@@ -64,8 +64,9 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
       try {
         MS_LOG(DEBUG) << "Python exception happened, check the information as below.";
         std::ostringstream exceptionStream;
+        exceptionStream << ex.what() << std::endl;
         trace::GetTraceStackInfo(exceptionStream);
-        if (!exceptionStream.str().empty()) {
+        if (!trace::GetCNodeDebugStack().empty()) {
           MS_LOG(ERROR) << "Exception happened, check the information as below.\n" << exceptionStream.str();
         }
       } catch (const std::exception &e) {

@@ -374,13 +374,13 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   ParseExceptionMessage(msg.str(), oss, &dmsg, &umsg);
   DisplayUserExceptionMessage(oss, umsg);
-  DisplayDevExceptionMessage(oss, dmsg, location_);
   thread_local bool running = false;
   if (!running) {
     running = true;
     if (this_thread_max_log_level >= MsLogLevel::kException) {
       RemoveLabelBeforeOutputLog(msg);
     }
+    DisplayDevExceptionMessage(oss, dmsg, location_);
     const auto &trace_provider = GetTraceProvider();
     if (trace_provider != nullptr) {
       trace_provider(oss, true);
