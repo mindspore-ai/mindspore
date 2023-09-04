@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "logit.h"
+#include "cpu_kernel/ms_kernel/logit.h"
+
+#include <algorithm>
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "Eigen/LU"
 #include "cmath"
-#include "cpu_context.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -59,7 +61,7 @@ uint32_t LogitCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogitCpuKernel::LogitCompute(CpuKernelContext &ctx) {
+uint32_t LogitCpuKernel::LogitCompute(const CpuKernelContext &ctx) {
   auto input_tensor = ctx.Input(0);
   auto output_tensor = ctx.Output(0);
   auto input = reinterpret_cast<T *>(input_tensor->GetData());

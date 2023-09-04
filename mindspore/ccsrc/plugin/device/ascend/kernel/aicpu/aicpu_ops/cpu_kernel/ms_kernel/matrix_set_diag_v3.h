@@ -17,11 +17,11 @@
 #ifndef _MATRIX_SET_DIAG_V3_KERNELS_H_
 #define _MATRIX_SET_DIAG_V3_KERNELS_H_
 
-#include "cpu_attr_value.h"
-#include "cpu_ops_kernel.h"
-#include "cpu_tensor.h"
-#include "cpu_tensor_shape.h"
-#include "cpu_types.h"
+#include "cpu_kernel/inc/cpu_attr_value.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_kernel/inc/cpu_tensor_shape.h"
+#include "cpu_kernel/inc/cpu_types.h"
 
 namespace aicpu {
 
@@ -29,13 +29,13 @@ class MatrixSetDiagV3CpuKernel : public CpuKernel {
  public:
   MatrixSetDiagV3CpuKernel() = default;
   ~MatrixSetDiagV3CpuKernel() = default;
-  virtual uint32_t Compute(CpuKernelContext &ctx) override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CheckParam(CpuKernelContext &ctx);
+  uint32_t CheckParam(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "max_unpool_2d_grad.h"
+#include "cpu_kernel/ms_kernel/max_unpool_2d_grad.h"
 
 #include <cmath>
 #include <iostream>
+#include <string>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -42,7 +43,7 @@ const char *kMaxUnpool2DGrad = "MaxUnpool2DGrad";
 
 namespace aicpu {
 template <typename DATA_T>
-uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGrad_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type) {
+uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGrad_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:
@@ -91,7 +92,7 @@ uint32_t MaxUnpool2DGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCheck(CpuKernelContext &ctx) {
+uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCheck(const CpuKernelContext &ctx) {
   DataType input0Type = ctx.Input(0)->GetDataType();
   DataType input1Type = ctx.Input(1)->GetDataType();
   DataType outputType = ctx.Output(0)->GetDataType();
@@ -123,7 +124,7 @@ uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCheck(CpuKernelContext &ctx) {
 }
 
 template <typename DATA_T, typename INDICES_T>
-uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCompute(CpuKernelContext &ctx) {
+uint32_t MaxUnpool2DGradCpuKernel::MaxUnpool2DGradCompute(const CpuKernelContext &ctx) {
   Tensor *grads = ctx.Input(1);
   Tensor *indices = ctx.Input(2);
   Tensor *output = ctx.Output(0);

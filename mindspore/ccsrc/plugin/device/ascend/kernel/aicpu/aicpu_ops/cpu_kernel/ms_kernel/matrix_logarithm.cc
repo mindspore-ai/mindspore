@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-#include "matrix_logarithm.h"
+#include "cpu_kernel/ms_kernel/matrix_logarithm.h"
 
-#include <complex>
+#include <math.h>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <algorithm>
+#include <complex>
+#include <vector>
+
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "iostream"
-#include "kernel_log.h"
-#include "math.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
 namespace {
@@ -58,7 +61,7 @@ uint32_t MatrixLogarithmCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(CpuKernelContext &ctx) {
+uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input x tensor shape failed.")
@@ -81,7 +84,7 @@ uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(CpuKernelContext &ctx) {
+uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();

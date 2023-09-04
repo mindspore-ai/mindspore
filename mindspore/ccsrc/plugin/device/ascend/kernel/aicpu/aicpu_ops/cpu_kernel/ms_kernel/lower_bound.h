@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOWERBOUND_H_
 #define AICPU_KERNELS_NORMALIZED_LOWERBOUND_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class LowerBoundCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class LowerBoundCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t LowerBoundCompute(CpuKernelContext &ctx);
+  static uint32_t LowerBoundCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

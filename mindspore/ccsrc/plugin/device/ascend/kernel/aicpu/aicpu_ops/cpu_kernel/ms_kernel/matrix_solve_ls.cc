@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "matrix_solve_ls.h"
+#include "cpu_kernel/ms_kernel/matrix_solve_ls.h"
 
 #include <Eigen/Cholesky>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -172,7 +172,7 @@ void MatrixSolveLsCpuKernel::RealCholeskySingleCompute(T *aptr, T *bptr, T *xptr
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::RealCholesky(CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::RealCholesky(const CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto aptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto bptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -272,7 +272,7 @@ void MatrixSolveLsCpuKernel::ComplexCholeskySingleCompute(std::complex<T> *aptr,
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::ComplexCholesky(CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::ComplexCholesky(const CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto l2 = reinterpret_cast<double *>(ctx.Input(2)->GetData());
   auto aptr = reinterpret_cast<std::complex<T> *>(ctx.Input(0)->GetData());
@@ -337,7 +337,7 @@ void MatrixSolveLsCpuKernel::RealQrSingleCompute(T *aptr, T *bptr, T *xptr, int6
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::RealQr(CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::RealQr(const CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto aptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto bptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -417,7 +417,7 @@ void MatrixSolveLsCpuKernel::ComplexQrSingleCompute(std::complex<T> *aptr, std::
 }
 
 template <typename T>
-uint32_t MatrixSolveLsCpuKernel::ComplexQr(CpuKernelContext &ctx) {
+uint32_t MatrixSolveLsCpuKernel::ComplexQr(const CpuKernelContext &ctx) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   int64_t m = ctx.Input(0)->GetTensorShape()->GetDimSize(dims - 2);
   int64_t k = ctx.Input(0)->GetTensorShape()->GetDimSize(dims - 1);

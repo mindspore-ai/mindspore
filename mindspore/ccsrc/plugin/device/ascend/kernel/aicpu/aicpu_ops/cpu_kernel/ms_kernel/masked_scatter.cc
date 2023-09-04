@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "masked_scatter.h"
+#include "cpu_kernel/ms_kernel/masked_scatter.h"
+
+#include <vector>
 
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "log.h"
-#include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel/ms_kernel/log.h"
+#include "securec/include/securec.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 
@@ -88,7 +90,7 @@ uint32_t MaskedScatterCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-uint32_t MaskedScatterCpuKernel::InputCheck(CpuKernelContext &ctx) {
+uint32_t MaskedScatterCpuKernel::InputCheck(const CpuKernelContext &ctx) {
   auto input_shape_a = ctx.Input(0)->GetTensorShape();
   auto input_shape_b = ctx.Input(1)->GetTensorShape();
 
@@ -129,7 +131,7 @@ uint32_t MaskedScatterCpuKernel::InputCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MaskedScatterCpuKernel::MaskedScatterCompute(CpuKernelContext &ctx) {
+uint32_t MaskedScatterCpuKernel::MaskedScatterCompute(const CpuKernelContext &ctx) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   bool *mask = reinterpret_cast<bool *>(ctx.Input(1)->GetData());
   T *updates = reinterpret_cast<T *>(ctx.Input(2)->GetData());
@@ -166,8 +168,9 @@ uint32_t MaskedScatterCpuKernel::MaskedScatterCompute(CpuKernelContext &ctx) {
         KERNEL_CHECK_FALSE(j < updates_numElements, KERNEL_STATUS_PARAM_INVALID,
                            "Number of elements of updates < number of ones in mask.");
         y[iter.GetInputPosA()] = updates[j], j += 1;
-      } else
+      } else {
         y[i] = x[i];
+      }
     }
   }
   return KERNEL_STATUS_OK;

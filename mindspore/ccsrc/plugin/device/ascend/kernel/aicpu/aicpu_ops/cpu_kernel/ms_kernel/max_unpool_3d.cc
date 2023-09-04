@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "max_unpool_3d.h"
+#include "cpu_kernel/ms_kernel/max_unpool_3d.h"
 
 #include <cmath>
 #include <iostream>
+#include <string>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -41,7 +42,7 @@ const char *kMaxUnpool3D = "MaxUnpool3D";
 
 namespace aicpu {
 template <typename DATA_T>
-uint32_t MaxUnpool3DCpuKernel::MaxUnpool3D_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type) {
+uint32_t MaxUnpool3DCpuKernel::MaxUnpool3D_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:
@@ -91,7 +92,7 @@ uint32_t MaxUnpool3DCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCheck(CpuKernelContext &ctx) {
+uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCheck(const CpuKernelContext &ctx) {
   DataType input0Type = ctx.Input(0)->GetDataType();
   DataType outputType = ctx.Output(0)->GetDataType();
   KERNEL_CHECK_FALSE((input0Type == outputType), KERNEL_STATUS_PARAM_INVALID,
@@ -108,7 +109,7 @@ uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCheck(CpuKernelContext &ctx) {
 }
 
 template <typename DATA_T, typename INDICES_T>
-uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCompute(CpuKernelContext &ctx) {
+uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *indices = ctx.Input(1);
   Tensor *output = ctx.Output(0);

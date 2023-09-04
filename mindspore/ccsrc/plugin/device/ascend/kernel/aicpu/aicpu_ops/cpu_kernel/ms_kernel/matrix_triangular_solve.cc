@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#include "matrix_triangular_solve.h"
+#include "cpu_kernel/ms_kernel/matrix_triangular_solve.h"
+
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <vector>
+
 #include "Eigen/Core"
 #include "complex"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-
-using namespace Eigen;
-using namespace std;
+#include "common/kernel_log.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -66,7 +67,7 @@ uint32_t MatrixTriangularSolveCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(CpuKernelContext &ctx) {
+uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(const CpuKernelContext &ctx) {
   Tensor *in_matrix = ctx.Input(0);
   Tensor *in_rhs = ctx.Input(1);
   // check same data type constraint
@@ -99,7 +100,7 @@ uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(CpuKernelCon
 }
 
 template <typename T>
-uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(CpuKernelContext &ctx) {
+uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(const CpuKernelContext &ctx) {
   Tensor *matrix_tensor = ctx.Input(0);
   Tensor *rhs_tensor = ctx.Input(1);
   Tensor *y_tensor = ctx.Output(0);

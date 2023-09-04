@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "matrix_power.h"
+#include "cpu_kernel/ms_kernel/matrix_power.h"
 
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <functional>
+
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 1;
@@ -64,7 +65,7 @@ template <typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 template <typename T>
-uint32_t MatrixPowerCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t MatrixPowerCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   auto x_shape = input_x->GetTensorShape()->GetDimSizes();

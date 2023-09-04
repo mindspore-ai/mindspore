@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "matrix_solve.h"
+#include "cpu_kernel/ms_kernel/matrix_solve.h"
 
+#include <algorithm>
 #include <complex>
 #include "Eigen/Core"
 #include "Eigen/LU"
 #include "unsupported/Eigen/CXX11/Tensor"
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -54,7 +55,7 @@ uint32_t MatrixSolveCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixSolveCpuKernel::MatrixSolveDataAndTypeCheck(CpuKernelContext &ctx) {
+uint32_t MatrixSolveCpuKernel::MatrixSolveDataAndTypeCheck(const CpuKernelContext &ctx) {
   DataType matrix_type = ctx.Input(0)->GetDataType();
   DataType rhs_type = ctx.Input(1)->GetDataType();
   KERNEL_CHECK_FALSE((matrix_type == rhs_type), KERNEL_STATUS_PARAM_INVALID,
@@ -66,7 +67,7 @@ uint32_t MatrixSolveCpuKernel::MatrixSolveDataAndTypeCheck(CpuKernelContext &ctx
 }
 
 template <typename T>
-uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(CpuKernelContext &ctx) {
+uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
   auto input1_tensor = ctx.Input(1);

@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#include "lstsq.h"
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
-#include "utils/eigen_tensor.h"
+#include "cpu_kernel/ms_kernel/lstsq.h"
+
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
 #include <iostream>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/kernel_util.h"
+#include "utils/eigen_tensor.h"
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
@@ -71,7 +73,7 @@ uint32_t LstsqCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t LstsqCpuKernel::LstsqCompute(CpuKernelContext &ctx) {
+uint32_t LstsqCpuKernel::LstsqCompute(const CpuKernelContext &ctx) {
   Eigen::Index m = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   Eigen::Index n = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
   Eigen::Index k = 1;

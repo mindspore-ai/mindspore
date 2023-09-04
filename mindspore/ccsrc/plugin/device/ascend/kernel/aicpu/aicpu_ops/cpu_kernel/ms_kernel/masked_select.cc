@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "masked_select.h"
+#include "cpu_kernel/ms_kernel/masked_select.h"
+
 #include <array>
 #include <atomic>
 #include <algorithm>
+#include <functional>
+#include <numeric>
 #include <vector>
+
 #include "Eigen/Core"
-#include "securec.h"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "securec/include/securec.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 
@@ -75,16 +79,16 @@ std::vector<int64_t> CalIndexStride(const std::vector<int64_t> &shape) {
 
 // calculate the original index of data.
 // shape:[7,8,9] indexStride:[72,9,1] and flatten_index:11--> ori_index:[0,1,2]
-bool CalIndexInfo(const std::vector<int64_t> &indexStride, int64_t flattenIndex, std::vector<int64_t> &oriIndex,
+bool CalIndexInfo(const std::vector<int64_t> &indexStride, int64_t flattenIndex, std::vector<int64_t> *oriIndex,
                   int dimNum) {
   for (int i = 0; i < dimNum - 1; i++) {
     if (indexStride[i] == 0) {
       return false;
     }
-    oriIndex[i] = flattenIndex / indexStride[i];
+    (*oriIndex)[i] = flattenIndex / indexStride[i];
     flattenIndex = flattenIndex % indexStride[i];
   }
-  oriIndex[dimNum - 1] = flattenIndex;
+  (*oriIndex)[dimNum - 1] = flattenIndex;
   return true;
 }
 
@@ -97,15 +101,15 @@ inline int64_t CalFlattenIndex(const std::vector<int64_t> &indexStride, const st
   return flattenIndex;
 }
 
-void UpdateIndexByCarry(std::vector<int64_t> &preIndex, const std::vector<int64_t> &shape, int dimNum) {
+void UpdateIndexByCarry(std::vector<int64_t> *preIndex, const std::vector<int64_t> &shape, int dimNum) {
   // shape:[7,3,10,17] and last index:[0,0,9,16] -> next index:[0,1,0,0]
   constexpr int64_t carryBit = 1;
   for (int i = dimNum - 1; i >= 0; i--) {
-    preIndex[i] = preIndex[i] + carryBit;
-    if (preIndex[i] < shape[i]) {
+    (*preIndex)[i] = (*preIndex)[i] + carryBit;
+    if ((*preIndex)[i] < shape[i]) {
       break;
     } else {
-      preIndex[i] = preIndex[i] - shape[i];
+      (*preIndex)[i] = (*preIndex)[i] - shape[i];
     }
   }
   return;
@@ -165,7 +169,7 @@ uint32_t MaskedSelectCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
+uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
                                                 const std::vector<int64_t> &inputShapeMask,
                                                 const std::vector<int64_t> &outputShape, int64_t dataNum) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -187,7 +191,7 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std
     int64_t cnt = 0;
     int dimNum = outputShape.size();
     std::vector<int64_t> indexValue(dimNum, 0);
-    if (!CalIndexInfo(indexStrideOutput, start, indexValue, dimNum)) {
+    if (!CalIndexInfo(indexStrideOutput, start, &indexValue, dimNum)) {
       taskFlag.store(false);
       KERNEL_LOG_ERROR("Invalid index stride, please check.");
       return;
@@ -200,7 +204,7 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std
         y[start + cnt] = x[xFlatIndex];
         cnt++;
       }
-      UpdateIndexByCarry(indexValue, outputShape, dimNum);
+      UpdateIndexByCarry(&indexValue, outputShape, dimNum);
     }
     int idx = threadNum.fetch_add(1, std::memory_order_relaxed);
     if (idx >= queueLen) {
@@ -224,10 +228,9 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std
   std::sort(outputIndexList.begin(), outputIndexList.begin() + validNum, CompareFunc);
 
   int validOffset = outputIndexList[0].len;
-  int64_t copyLen = 0;
   int ret = 0;
   for (int i = 1; i < validNum; i++) {
-    copyLen = outputIndexList[i].len;
+    int64_t copyLen = outputIndexList[i].len;
     if (copyLen <= 0) {
       continue;
     }
@@ -241,7 +244,7 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(CpuKernelContext &ctx) {
+uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   KERNEL_CHECK_NULLPTR(x, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[0] failed.",
                        kMaskedSelect);
@@ -267,11 +270,8 @@ uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(CpuKernelContext &ctx) {
   auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
   KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
                      "Shape of x and mask can't be broadcast.");
-  int64_t tensor_size = 1;
-  for (const int64_t &d : output_shape) {
-    tensor_size *= d;
-  }
 
+  int64_t tensor_size = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (tensor_size >= kParallelDataNums) {
     ret = ParallelCompute<T>(ctx, input_shape_a, input_shape_b, output_shape, tensor_size);
     return ret;

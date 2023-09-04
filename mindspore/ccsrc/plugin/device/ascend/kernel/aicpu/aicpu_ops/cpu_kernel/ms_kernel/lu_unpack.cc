@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lu_unpack.h"
+#include "cpu_kernel/ms_kernel/lu_unpack.h"
+
 #include <string.h>
 #include <Eigen/Dense>
 #include <algorithm>
+#include <memory>
 #include <iostream>
-#include "cpu_context.h"
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "cpu_tensor.h"
-#include "securec.h"
+#include <utility>
+#include <vector>
+
+#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_tensor.h"
+#include "securec/include/securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -41,7 +46,7 @@ const char *kLuUnpack = "LuUnpack";
 }  // namespace
 namespace aicpu {
 template <typename T_data, typename T_pivots>
-uint32_t LuUnpackCpuKernel::LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
+uint32_t LuUnpackCpuKernel::LuUnpack(const CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
                                      T_data *P_eye) {
   int32_t Lu_data_dims = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDims();
   int64_t Lu_data_dim1 = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDimSize(Lu_data_dims - 2);
@@ -66,31 +71,27 @@ uint32_t LuUnpackCpuKernel::LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_
                   matrix_width, matrix_height);
   //  Triu
   if (matrix_width > matrix_height) {
-    MatrixMap output2(reinterpret_cast<T_data *>(ctx.Output(kThirdOutputIndex)->GetData()) + matrix_index * U_stride,
-                      matrix_height, matrix_height);
     T_data *MiddlePtr = new T_data[matrix_size];
     MatrixMap MiddleData(MiddlePtr, matrix_width, matrix_height);
     MiddleData = input.template triangularView<Eigen::Upper>();
-    output2 = MiddleData.block(0, 0, matrix_height, matrix_height);
+    MatrixMap(reinterpret_cast<T_data *>(ctx.Output(kThirdOutputIndex)->GetData()) + matrix_index * U_stride,
+              matrix_height, matrix_height) = MiddleData.block(0, 0, matrix_height, matrix_height);
     delete[] MiddlePtr;
   } else {
-    MatrixMap output2(reinterpret_cast<T_data *>(ctx.Output(kThirdOutputIndex)->GetData()) + matrix_index * U_stride,
-                      matrix_width, matrix_height);
-    output2 = input.template triangularView<Eigen::Upper>();
+    MatrixMap(reinterpret_cast<T_data *>(ctx.Output(kThirdOutputIndex)->GetData()) + matrix_index * U_stride,
+              matrix_width, matrix_height) = input.template triangularView<Eigen::Upper>();
   }
   //  Tril
   if (matrix_height > matrix_width) {
-    MatrixMap output1(reinterpret_cast<T_data *>(ctx.Output(kSecondOutputIndex)->GetData()) + matrix_index * L_stride,
-                      matrix_width, matrix_width);
     T_data *MiddlePtr = new T_data[matrix_size];
     MatrixMap MiddleData(MiddlePtr, matrix_width, matrix_height);
     MiddleData = input.template triangularView<Eigen::UnitLower>();
-    output1 = MiddleData.block(0, 0, matrix_width, matrix_width);
+    MatrixMap(reinterpret_cast<T_data *>(ctx.Output(kSecondOutputIndex)->GetData()) + matrix_index * L_stride,
+              matrix_width, matrix_width) = MiddleData.block(0, 0, matrix_width, matrix_width);
     delete[] MiddlePtr;
   } else {
-    MatrixMap output1(reinterpret_cast<T_data *>(ctx.Output(kSecondOutputIndex)->GetData()) + matrix_index * L_stride,
-                      matrix_width, matrix_height);
-    output1 = input.template triangularView<Eigen::UnitLower>();
+    MatrixMap(reinterpret_cast<T_data *>(ctx.Output(kSecondOutputIndex)->GetData()) + matrix_index * L_stride,
+              matrix_width, matrix_height) = input.template triangularView<Eigen::UnitLower>();
   }
   //  Swap
   std::vector<T_pivots> final_order;
@@ -134,7 +135,7 @@ uint32_t LuUnpackCpuKernel::LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_
 }
 
 template <typename T_data, typename T_pivots>
-uint32_t LuUnpackCpuKernel::LuUnpackCompute(CpuKernelContext &ctx) {
+uint32_t LuUnpackCpuKernel::LuUnpackCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(kFirstInputIndex);
   Tensor *input1_tensor = ctx.Input(kSecondInputIndex);
   auto input_0_Shape = input0_tensor->GetTensorShape();
@@ -144,7 +145,6 @@ uint32_t LuUnpackCpuKernel::LuUnpackCompute(CpuKernelContext &ctx) {
   int64_t Lu_data_dim2 = input_0_Shape->GetDimSize(Lu_data_dims - 1);
   int32_t Lu_pivots_dims = input_1_Shape->GetDims();
   int64_t Lu_pivots_dim = input_1_Shape->GetDimSize(Lu_pivots_dims - 1);
-  auto input_dim_size = input_0_Shape->GetDimSizes();
   auto input_x1 = reinterpret_cast<T_pivots *>(input1_tensor->GetData());
 
   int32_t block_size = Lu_data_dim1 * Lu_data_dim1;
@@ -153,14 +153,13 @@ uint32_t LuUnpackCpuKernel::LuUnpackCompute(CpuKernelContext &ctx) {
   for (int32_t i = 0; i < Lu_data_dim1; i++) {
     *(P_eye + (Lu_data_dim1 + 1) * i) = num;
   }
-  uint32_t check_status = 0;
   int64_t Lu_data_stride = Lu_data_dim1 * Lu_data_dim2;
   int64_t Lu_pivots_stride = Lu_pivots_dim;
   int64_t batch_num = ctx.Input(0)->NumElements() / Lu_data_stride;
   if (batch_num < kParallelBatchNum || Lu_data_dims == kLuDataMinRank) {
     for (int64_t matrix_index = 0; matrix_index < batch_num; matrix_index++) {
       T_pivots *Lu_pivots_working_ptr = input_x1 + matrix_index * Lu_pivots_stride;
-      check_status = LuUnpack(ctx, Lu_pivots_working_ptr, matrix_index, P_eye);
+      uint32_t check_status = LuUnpack(ctx, Lu_pivots_working_ptr, matrix_index, P_eye);
       if (check_status == KERNEL_STATUS_PARAM_INVALID) {
         return check_status;
       }
@@ -246,7 +245,7 @@ void LuUnpackCpuKernel::SetMap() {
   calls_[DT_UINT8][DT_UINT8] = LuUnpackCompute<uint8_t, uint8_t>;
 }
 
-void LuUnpackCpuKernel::SetOutputShape(CpuKernelContext &ctx) {
+void LuUnpackCpuKernel::SetOutputShape(const CpuKernelContext &ctx) {
   Tensor *LU_data_ = ctx.Input(0);
   Tensor *output0 = ctx.Output(0);
   Tensor *output1 = ctx.Output(1);

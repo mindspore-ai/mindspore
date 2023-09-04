@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lu_solve.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/lu_solve.h"
+
+#include <Eigen/Dense>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include <Eigen/Dense>
-#include <iostream>
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
@@ -98,7 +102,7 @@ uint32_t LuSolveCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename T2>
-uint32_t LuSolveCpuKernel::LuSolve(CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr,
+uint32_t LuSolveCpuKernel::LuSolve(const CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr,
                                    int32_t *pivots_working_ptr, int64_t b_stride, int64_t a) {
   auto output_y = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   auto input_0_Shape = ctx.Input(0)->GetTensorShape();
@@ -122,13 +126,12 @@ uint32_t LuSolveCpuKernel::LuSolve(CpuKernelContext &ctx, T *b_working_ptr, T *l
 }
 
 template <typename T, typename T2>
-uint32_t LuSolveCpuKernel::LuSolveCompute(CpuKernelContext &ctx) {
+uint32_t LuSolveCpuKernel::LuSolveCompute(const CpuKernelContext &ctx) {
   auto input_x0 = reinterpret_cast<T2 *>(ctx.Input(0)->GetData());
   auto input_x1 = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto input_x2 = reinterpret_cast<int32_t *>(ctx.Input(2)->GetData());
   auto input_0_Shape = ctx.Input(0)->GetTensorShape();
   auto input_1_Shape = ctx.Input(1)->GetTensorShape();
-  auto input_2_Shape = ctx.Input(2)->GetTensorShape();
   T *input_0 = new T[input_0_Shape->NumElements()];
   T *input_1 = new T[input_1_Shape->NumElements()];
   for (int64_t i = 0; i < input_0_Shape->NumElements(); i++) {
@@ -141,7 +144,6 @@ uint32_t LuSolveCpuKernel::LuSolveCompute(CpuKernelContext &ctx) {
   int32_t lu_dims = input_1_Shape->GetDims();
   std::vector<int64_t> b_dims_vector = input_0_Shape->GetDimSizes();
   std::vector<int64_t> lu_dims_vector = input_1_Shape->GetDimSizes();
-  std::vector<int64_t> pivots_dims_vector = input_2_Shape->GetDimSizes();
   int64_t b_stride = input_0_Shape->GetDimSize(b_dims - 1) * input_0_Shape->GetDimSize(b_dims - 2);
   int64_t lu_stride = input_1_Shape->GetDimSize(lu_dims - 1) * input_1_Shape->GetDimSize(lu_dims - 2);
   int64_t pivots_stride = input_1_Shape->GetDimSize(lu_dims - 1);

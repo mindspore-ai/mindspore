@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "matrix_determinant.h"
+#include "cpu_kernel/ms_kernel/matrix_determinant.h"
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <complex>
 #include <iostream>
 #include <vector>
 #include "./utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 
 namespace {
@@ -77,7 +77,7 @@ uint32_t MatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCheck(CpuKernelContext &ctx) {
+uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
   KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   KERNEL_LOG_INFO(
@@ -88,7 +88,7 @@ uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCheck(CpuKernelContext &ct
 }
 
 template <typename T>
-uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(CpuKernelContext &ctx) {
+uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(const CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   Tensor *output_tensor = ctx.Output(0);
   std::vector<int64_t> dims = input_tensor->GetTensorShape()->GetDimSizes();

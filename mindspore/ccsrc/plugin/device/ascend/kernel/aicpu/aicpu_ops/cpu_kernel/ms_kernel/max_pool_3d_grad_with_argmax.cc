@@ -15,10 +15,14 @@
  * limitations under the License.
  */
 
-#include "max_pool_3d_grad_with_argmax.h"
-#include <iostream>
+#include "cpu_kernel/ms_kernel/max_pool_3d_grad_with_argmax.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -92,7 +96,7 @@ uint32_t MaxPool3DGradWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxParamCheck(CpuKernelContext &ctx) {
+uint32_t MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxParamCheck(const CpuKernelContext &ctx) {
   auto input_x_info = ctx.Input(0);
   auto input_grads_info = ctx.Input(1);
   auto input_argmax_info = ctx.Input(2);
@@ -114,8 +118,8 @@ uint32_t MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxParamCheck(Cpu
                      DTypeStr(input_argmax_type).c_str())
 
   std::vector<int64_t> dim_vec = input_x_info->GetTensorShape()->GetDimSizes();
-  int64_t dimsize = dim_vec.size();
-  KERNEL_CHECK_FALSE(dimsize == 5, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should be 5.", dimsize)
+  KERNEL_CHECK_FALSE(dim_vec.size() == 5, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should be 5.",
+                     dim_vec.size())
 
   const size_t DIM_SIZE1 = 1;
   const size_t DIM_SIZE3 = 3;
@@ -157,7 +161,6 @@ void MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxSingleCompute(
   S *argmax = input_argmax;
 
   /* calculate max points */
-  // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
   int64_t ti, i, j;
   for (ti = 0; ti < oD; ti++) {
     for (i = 0; i < oH; i++) {
@@ -176,7 +179,7 @@ void MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxSingleCompute(
 }
 
 template <typename T, typename S>
-uint32_t MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxCompute(CpuKernelContext &ctx) {
+uint32_t MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxCompute(const CpuKernelContext &ctx) {
   auto input_x_info = ctx.Input(0);
   auto input_grads_info = ctx.Input(1);
   auto input_argmax_info = ctx.Input(2);

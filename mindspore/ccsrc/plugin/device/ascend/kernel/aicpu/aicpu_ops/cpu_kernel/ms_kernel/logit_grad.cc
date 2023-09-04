@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "logit_grad.h"
+#include "cpu_kernel/ms_kernel/logit_grad.h"
+
+#include <limits>
+#include <algorithm>
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "Eigen/LU"
 #include "cmath"
-#include "cpu_context.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -59,7 +62,7 @@ uint32_t LogitGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogitGradCpuKernel::LogitGradCompute(CpuKernelContext &ctx) {
+uint32_t LogitGradCpuKernel::LogitGradCompute(const CpuKernelContext &ctx) {
   auto input_y_grad_tensor = ctx.Input(0);
   auto input_x_tensor = ctx.Input(1);
   auto output_x_grad_tensor = ctx.Output(0);

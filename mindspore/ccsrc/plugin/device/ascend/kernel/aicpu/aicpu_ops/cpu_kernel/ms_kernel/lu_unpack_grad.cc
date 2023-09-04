@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lu_unpack_grad.h"
+#include "cpu_kernel/ms_kernel/lu_unpack_grad.h"
+
+#include <algorithm>
 #include <iostream>
+
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "securec/include/securec.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 
@@ -65,7 +68,8 @@ uint32_t LuUnpackGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LuUnpackGradCpuKernel::TriLU(CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output, int64_t a) {
+uint32_t LuUnpackGradCpuKernel::TriLU(const CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output,
+                                      int64_t a) {
   Tensor *L_grad = NULL;
   Tensor *U_grad = NULL;
   Tensor *LU_data = NULL;
@@ -107,9 +111,8 @@ uint32_t LuUnpackGradCpuKernel::TriLU(CpuKernelContext &ctx, Tensor *L_grad_outp
     }
     delete[] MiddlePtr;
   } else {
-    MatrixMap output_L(reinterpret_cast<T *>(L_grad_output->GetData()) + a * output_stride, LU_data_height,
-                       LU_data_width);
-    output_L = input_L.template triangularView<Eigen::StrictlyLower>();
+    MatrixMap(reinterpret_cast<T *>(L_grad_output->GetData()) + a * output_stride, LU_data_height, LU_data_width) =
+      input_L.template triangularView<Eigen::StrictlyLower>();
   }
   if (LU_data_height > LU_data_width) {
     MatrixMap output_U(reinterpret_cast<T *>(U_grad_output->GetData()) + a * output_stride, LU_data_height,
@@ -124,15 +127,14 @@ uint32_t LuUnpackGradCpuKernel::TriLU(CpuKernelContext &ctx, Tensor *L_grad_outp
     }
     delete[] MiddlePtr;
   } else {
-    MatrixMap output_U(reinterpret_cast<T *>(U_grad_output->GetData()) + a * output_stride, LU_data_height,
-                       LU_data_width);
-    output_U = input_U.template triangularView<Eigen::Upper>();
+    MatrixMap(reinterpret_cast<T *>(U_grad_output->GetData()) + a * output_stride, LU_data_height, LU_data_width) =
+      input_U.template triangularView<Eigen::Upper>();
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LuUnpackGradCpuKernel::LuUnpackGradCompute(CpuKernelContext &ctx) {
+uint32_t LuUnpackGradCpuKernel::LuUnpackGradCompute(const CpuKernelContext &ctx) {
   Tensor *LU_data = NULL;
   Tensor *L_grad_output = NULL;
   Tensor *U_grad_output = NULL;

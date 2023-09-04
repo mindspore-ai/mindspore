@@ -16,7 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MASKED_SELECT_H_
 #define AICPU_KERNELS_NORMALIZED_MASKED_SELECT_H_
 
-#include "cpu_ops_kernel.h"
+#include <vector>
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class MaskedSelectCpuKernel : public CpuKernel {
@@ -31,9 +32,9 @@ class MaskedSelectCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MaskedSelectCompute(CpuKernelContext &ctx);
+  uint32_t MaskedSelectCompute(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ParallelCompute(CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
+  uint32_t ParallelCompute(const CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
                            const std::vector<int64_t> &inputShapeMask, const std::vector<int64_t> &outputShape,
                            int64_t dataNum);
 };
