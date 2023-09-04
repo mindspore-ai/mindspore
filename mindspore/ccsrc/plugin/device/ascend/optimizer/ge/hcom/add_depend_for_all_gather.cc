@@ -67,23 +67,35 @@ AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
                 << ", successor node: " << succ_node->fullname_with_scope();
   return succ_node;
 }
+
+void AddDependCtrl(AnfNodePtr first_node, AnfNodePtr second_node, const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(first_node);
+  auto first_cnode = first_node->cast<CNodePtr>();
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                    common::AnfAlgo::GetInputNode(first_cnode, 0), second_node};
+  MS_LOG(DEBUG) << "Add Depend between node: " << second_node->fullname_with_scope()
+                << " and node: " << first_node->fullname_with_scope();
+  auto new_input = graph->NewCNode(inputs);
+  new_input->set_abstract(common::AnfAlgo::GetInputNode(first_cnode, 0)->abstract());
+  common::AnfAlgo::SetNodeInput(first_cnode, new_input, 0);
+}
 }  // namespace
 
-bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::map<int64_t, AnfNodePtr> &all_gather_nodes,
+bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &node_list,
                                       const std::map<int64_t, std::vector<AnfNodePtr>> &fusion_allgather_nodes,
-                                      const std::map<AnfNodePtr, size_t> &node_index_map,
-                                      const std::vector<AnfNodePtr> &node_list) {
+                                      const std::map<AnfNodePtr, size_t> &node_index_map) {
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
     MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
     return false;
   }
   bool changed = false;
-  std::map<int64_t, AnfNodePtr> fusion_allgather_outputs;
+  std::map<int64_t, std::vector<AnfNodePtr>> fusion_allgather_outputs;
   auto iter = fusion_allgather_nodes.begin();
   for (size_t i = 1; i < fusion_allgather_nodes.size(); i++) {
-    auto pre_fusion_id = iter->first;
-    auto nodes = (++iter)->second;
-    for (auto &node : nodes) {
+    auto pre_fusion_id = (iter)->first;
+    auto nodes = (iter++)->second;
+    for (size_t j = 0; j < nodes.size(); ++j) {
+      auto node = j < nodes.size() - 1 ? nodes[j + 1] : (iter->second).at(0);
       MS_EXCEPTION_IF_NULL(node);
       auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
       auto allgather_second_succ = GetFirstNextUsers(graph, allgather_first_succ, node_index_map, node_list);
@@ -100,21 +112,23 @@ bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::map<
       AnfNodePtr another_input = nullptr;
       auto second_succ_cnode = allgather_second_succ->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(second_succ_cnode);
-      for (size_t j = 1; j < second_succ_cnode->inputs().size(); j++) {
-        auto succ_input = second_succ_cnode->input(j);
-        if (succ_input != allgather_first_succ) {
+      for (size_t k = 1; k < second_succ_cnode->inputs().size(); k++) {
+        auto succ_input = second_succ_cnode->input(k);
+        if (succ_input != nullptr && succ_input != allgather_first_succ) {
           another_input = succ_input;
           break;
         }
       }
-      fusion_allgather_outputs[pre_fusion_id] = another_input;
-      break;
+      if (another_input != nullptr) {
+        fusion_allgather_outputs[pre_fusion_id].push_back(another_input);
+      }
     }
   }
-  auto node_iter = all_gather_nodes.begin();
-  for (size_t i = 1; i < all_gather_nodes.size(); i++) {
+  auto node_iter = fusion_allgather_nodes.begin();
+  for (size_t i = 1; i < fusion_allgather_nodes.size(); i++) {
     auto pre_fusion_id = node_iter->first;
-    auto node = (++node_iter)->second;
+    auto nodes = (++node_iter)->second;
+    auto node = nodes.at(0);
     MS_EXCEPTION_IF_NULL(node);
     auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
     if (allgather_first_succ == nullptr) {
@@ -127,14 +141,9 @@ bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::map<
                     << ", AllGather node:" << node->fullname_with_scope();
       continue;
     }
-    auto succ_cnode = allgather_first_succ->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(succ_cnode);
-    auto &pre_fusion_output = fusion_allgather_outputs[pre_fusion_id];
-    std::vector<AnfNodePtr> new_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                          common::AnfAlgo::GetInputNode(succ_cnode, 0), pre_fusion_output};
-    auto new_input_depend = graph->NewCNode(new_inputs);
-    new_input_depend->set_abstract(succ_cnode->abstract());
-    common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
+    auto &pre_fusion_outputs = fusion_allgather_outputs[pre_fusion_id];
+    auto &pre_fusion_last_output = pre_fusion_outputs.back();
+    AddDependCtrl(allgather_first_succ, pre_fusion_last_output, graph);
     changed = true;
   }
   return changed;
@@ -165,38 +174,35 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
     if (common::AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
         common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0 && !is_recompute) {
       fusion_allgather_nodes[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)].push_back(node);
-      all_gather_node[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
-    }
-  }
-  auto next_iter = all_gather_node.begin();
-  auto iter = fusion_allgather_nodes.begin();
-  auto fusion_size = all_gather_node.size();
-  for (size_t i = 1; i < fusion_size; ++i) {
-    auto next_node = (++next_iter)->second;
-    MS_EXCEPTION_IF_NULL(next_node);
-    auto next_cnode = next_node->cast<CNodePtr>();
-    auto fusion_nodes = (iter++)->second;
-    for (auto &node : fusion_nodes) {
-      MS_EXCEPTION_IF_NULL(node);
       auto succ_node = GetFirstNextUsers(graph, node, node_index_map, node_list);
       if (succ_node == nullptr) {
         MS_LOG(DEBUG) << "allgather node " << node->fullname_with_scope() << "has no outputs.";
         continue;
       }
-      std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                        common::AnfAlgo::GetInputNode(next_cnode, 0), succ_node};
-      MS_LOG(DEBUG) << "Add Depend between node: " << succ_node->fullname_with_scope()
-                    << " and node: " << next_node->fullname_with_scope();
-      auto new_input = graph->NewCNode(inputs);
-      new_input->set_abstract(common::AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
-      common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
+      all_gather_node[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
+    }
+  }
+
+  auto iter = all_gather_node.begin();
+  auto fusion_nodes_iter = fusion_allgather_nodes.begin();
+  auto fusion_size = all_gather_node.size();
+  for (size_t i = 1; i < fusion_size; ++i) {
+    auto fusion_nodes = (fusion_nodes_iter++)->second;
+    auto next_fusion_nodes = fusion_nodes_iter->second;
+    auto fusion_first_node = fusion_nodes.at(0);
+    auto fusion_last_node = (iter++)->second;
+    MS_EXCEPTION_IF_NULL(fusion_first_node);
+    MS_EXCEPTION_IF_NULL(fusion_last_node);
+    auto fusion_first_succ = GetFirstNextUsers(graph, fusion_first_node, node_index_map, node_list);
+    auto fusion_second_succ = GetFirstNextUsers(graph, fusion_first_succ, node_index_map, node_list);
+    auto fusion_last_succ = GetFirstNextUsers(graph, fusion_last_node, node_index_map, node_list);
+    for (auto &next_fusion_node : next_fusion_nodes) {
+      AddDependCtrl(next_fusion_node, fusion_last_succ, graph);
+      AddDependCtrl(next_fusion_node, fusion_second_succ, graph);
     }
     changed = true;
   }
-  changed =
-    InsertDependForAllGatherParallel(graph, all_gather_node, fusion_allgather_nodes, node_index_map, node_list) ||
-    changed;
-  return changed;
+  return InsertDependForAllGatherParallel(graph, node_list, fusion_allgather_nodes, node_index_map) || changed;
 }
 }  // namespace opt
 }  // namespace mindspore
