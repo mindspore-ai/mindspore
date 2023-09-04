@@ -466,12 +466,20 @@ def generate_cc_opdef(yaml_data):
     """
     generate OpDef
     """
+    opdef_end_code = f"""
+}}  // namespace mindspore::ops"""
+
     func_suffix_str = 'FuncImpl'
     func_impl_dir = 'ops_func_impl'
-    gen_cc = ''
+
+    gen_cc = f"""
+
+namespace mindspore::ops {{"""
     opdef_map_str = f"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
-    gen_include = ''
+    gen_include = f"""
+
+#include \"ops/op_def.h\""""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
@@ -552,7 +560,8 @@ OpDef g{class_name} = {{
     opdef_map_str += f"""
 }};"""
     gen_cc += opdef_map_str
-    return gen_cc, gen_include
+
+    return gen_include + gen_cc + opdef_end_code
 
 
 def merge_files_to_one_file(file_names, one_file_name):
@@ -594,22 +603,20 @@ def check_change_and_replace_file(last_file_path, tmp_file_path):
         os.system(f'mv {tmp_file_path} {last_file_path}')
 
 
-def generate_py_code(work_path, yaml_path, doc_yaml_path):
+def generate_py_code(work_path, yaml_str, doc_str, file_pre):
     """Generate python file from yaml."""
-    op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py')
-    tmp_op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_ops_def.py')
-    with open(yaml_path, 'r') as yaml_file:
-        yaml_str = yaml.safe_load(yaml_file)
-
-    with open(doc_yaml_path, 'r') as doc_file:
-        doc_str = yaml.safe_load(doc_file)
+    py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/{file_pre}_ops_def.py')
+    tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_def.py')
 
     py_prim = generate_py_primitive(yaml_str)
     py_func = generate_py_op_func(yaml_str, doc_str)
-    with open(tmp_op_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + py_header + py_prim + py_func)
-    check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
+    with open(tmp_py_path, 'w') as py_file:
+        py_file.write(py_licence_str + py_header + py_prim + py_func)
+    check_change_and_replace_file(py_path, tmp_py_path)
+
+
+def generate_labels_file(work_path, yaml_str):
     op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_labels.py')
     tmp_op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_labels.py')
     py_labels = generate_py_labels(yaml_str)
@@ -618,45 +625,35 @@ def generate_py_code(work_path, yaml_path, doc_yaml_path):
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
 
-def generate_cc_code(work_path, yaml_path):
+def generate_cc_code(work_path, yaml_str):
     """Generate c++ file from yaml."""
-    op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
+    # ops_def
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
-    op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
-    lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/gen_lite_ops.h')
-
-    yaml_str = None
-    with open(yaml_path, 'r') as yaml_file:
-        yaml_str = yaml.safe_load(yaml_file)
-
-    cc_code, cc_include = generate_cc_opdef(yaml_str)
-    cc_code += f"""
-}}  // namespace mindspore::ops"""
-
-    cc_header = f"""
-#include "ops/op_def.h"
-{cc_include}
-namespace mindspore::ops {{
-"""
-    tmp_op_prim_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_primitive.h')
     tmp_op_cc_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_def.cc')
-    tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_name.h')
-    tmp_lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_lite_ops.h')
-
+    cc_def_code = generate_cc_opdef(yaml_str)
     with open(tmp_op_cc_path, 'w') as cc_file:
-        cc_file.write(cc_license_str + cc_header + cc_code)
+        cc_file.write(cc_license_str + cc_def_code)
     check_change_and_replace_file(op_cc_path, tmp_op_cc_path)
 
-    lite_ops_code = generate_lite_ops(yaml_str)
-    with open(tmp_lite_ops_path, 'w') as lite_ops_file:
-        lite_ops_file.write(cc_license_str + lite_ops_code)
-    check_change_and_replace_file(lite_ops_path, tmp_lite_ops_path)
-
+    # ops_primitive
+    op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
+    tmp_op_prim_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_primitive.h')
     op_prim_code = generate_op_prim_opdef(yaml_str)
     with open(tmp_op_prim_path, 'w') as op_prim_file:
         op_prim_file.write(cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
+    # lite_ops
+    lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/gen_lite_ops.h')
+    tmp_lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_lite_ops.h')
+    lite_ops_code = generate_lite_ops(yaml_str)
+    with open(tmp_lite_ops_path, 'w') as lite_ops_file:
+        lite_ops_file.write(cc_license_str + lite_ops_code)
+    check_change_and_replace_file(lite_ops_path, tmp_lite_ops_path)
+
+    # ops_names
+    op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
+    tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_name.h')
     op_name_code = generate_op_name_opdef(yaml_str)
     with open(tmp_op_name_path, 'w') as op_name_file:
         op_name_file.write(cc_license_str + op_name_code)
@@ -710,8 +707,9 @@ def {enum_name}_to_enum({enum_name}_str):
     return gen_eum_py, gen_eum_cc
 
 
-def generate_enum_code(work_path, enum_yaml_path):
+def generate_enum_code(work_path):
     """Generate python function and c++ definition for enum yaml."""
+    enum_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
     dst_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py')
     tmp_dst_arg_handler_path = os.path.join(work_path,
@@ -734,24 +732,51 @@ def generate_enum_code(work_path, enum_yaml_path):
     check_change_and_replace_file(enum_def_path, tmp_enum_def_path)
 
 
+def merge_files(origin_dir, dst_file, file_format):
+    """ merge_files """
+    op_yaml_file_names = glob.glob(os.path.join(origin_dir, file_format))
+    merge_files_to_one_file(op_yaml_file_names, dst_file)
+
+
+def safe_load_yaml_str(yaml_paths):
+    """ safe_load_yaml_str """
+    yaml_str = dict()
+    for yaml_path in yaml_paths:
+        with open(yaml_path, 'r') as yaml_file:
+            yaml_str.update(yaml.safe_load(yaml_file))
+    return yaml_str
+
+
 def main():
     current_path = os.path.dirname(os.path.abspath(__file__))
     work_path = os.path.join(current_path, '../../../../')
-    yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
+
+    # ops
+    ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops_doc.yaml')
     yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
+    merge_files(yaml_dir_path, ops_yaml_path, '*op.yaml')
+    merge_files(yaml_dir_path, doc_yaml_path, '*doc.yaml')
 
-    op_yaml_file_names = glob.glob(os.path.join(yaml_dir_path, '*op.yaml'))
-    merge_files_to_one_file(op_yaml_file_names, yaml_path)
+    # inner ops
+    inner_ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops.yaml')
+    inner_doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml')
+    inner_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/inner')
+    merge_files(inner_yaml_dir_path, inner_ops_yaml_path, '*op.yaml')
+    merge_files(inner_yaml_dir_path, inner_doc_yaml_path, '*doc.yaml')
 
-    op_yaml_doc_file_names = glob.glob(os.path.join(yaml_dir_path, '*doc.yaml'))
-    merge_files_to_one_file(op_yaml_doc_file_names, doc_yaml_path)
 
-    generate_py_code(work_path, yaml_path, doc_yaml_path)
-    generate_cc_code(work_path, yaml_path)
+    # gen python ops files
+    all_doc_str = safe_load_yaml_str({doc_yaml_path, inner_doc_yaml_path})
+    generate_py_code(work_path, safe_load_yaml_str({ops_yaml_path}), all_doc_str, "gen")
+    generate_py_code(work_path, safe_load_yaml_str({inner_ops_yaml_path}), all_doc_str, "gen_inner")
 
-    enum_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
-    generate_enum_code(work_path, enum_yaml_path)
+
+    # all ops gen files
+    all_ops_str = safe_load_yaml_str({ops_yaml_path, inner_ops_yaml_path})
+    generate_labels_file(work_path, all_ops_str)
+    generate_cc_code(work_path, all_ops_str)
+    generate_enum_code(work_path)
 
 
 if __name__ == "__main__":
