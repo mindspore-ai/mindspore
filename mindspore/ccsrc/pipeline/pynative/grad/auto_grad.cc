@@ -710,7 +710,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
 
   auto &prim = grad_param->op_grad_info->op_prim;
-  if (!IsPrimNeedGrad(prim) || !NeedGrad(grad_param->op_grad_info->input_value)) {
+  if (!IsPrimNeedGrad(prim) || (grad_param->grad_by_value && !NeedGrad(grad_param->op_grad_info->input_value))) {
     MS_LOG(DEBUG) << "Prim " << prim->name() << " does not need to do op grad.";
     return true;
   }
