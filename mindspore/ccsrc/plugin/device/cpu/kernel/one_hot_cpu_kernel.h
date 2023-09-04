@@ -52,6 +52,7 @@ class OneHotCpuKernelMod : public NativeCpuKernelMod {
   TypeId output_dtype_{kTypeUnknown};
   size_t depth_{0};
   const size_t depth_index_{1};
+  const size_t axis_index_{kIndex4};
   size_t stride_{0};
   size_t axis_{0};
   static std::vector<KernelAttr> support_list_;

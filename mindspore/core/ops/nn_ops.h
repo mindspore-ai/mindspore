@@ -68,7 +68,6 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSoftmaxCrossEntropyWithLogitsV2,
 GVAR_DEF(PrimitivePtr, kPrimMultiMarginLoss, std::make_shared<Primitive>(kMultiMarginLossOpName));
 GVAR_DEF(PrimitivePtr, kPrimMultiMarginLossGrad, std::make_shared<Primitive>(kMultiMarginLossGradOpName));
 GVAR_DEF(PrimitivePtr, kSoftmaxGradExt, std::make_shared<Primitive>("SoftmaxGradExt"));
-GVAR_DEF(PrimitivePtr, kPrimOneHot, std::make_shared<Primitive>("OneHot"));
 GVAR_DEF(PrimitivePtr, kPrimOneHotD, std::make_shared<Primitive>("OneHotD"));
 
 GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));

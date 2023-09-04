@@ -234,6 +234,33 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     return gen_py
 
 
+def get_type_cast_str(type_cast_set, dtype):
+    """
+    get type cast kind str
+    """
+    if not type_cast_set or not dtype:
+        return ""
+    # add more type cast kind here
+    type_cast_kind_dict = {
+        'int': 'INT',
+        'tuple[int]': 'TUPLE',
+        'list[int]': 'LIST',
+        'scalar': 'SCALAR',
+        'tensor': 'TENSOR'
+    }
+    assign_str = ""
+    type_cast_list = []
+    for kind in type_cast_kind_dict:
+        if kind in type_cast_set:
+            type_cast_list.append(type_cast_kind_dict[kind])
+
+    assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
+    for kind in type_cast_kind_dict:
+        if dtype == kind:
+            assign_str += '_TO_' + type_cast_kind_dict[kind] + ')'
+    return assign_str
+
+
 def process_args(args):
     """process arg for yaml, get arg_name, default value, cast type, pre-handler, etc."""
     args_name = []
@@ -262,23 +289,7 @@ def process_args(args):
             type_cast_set = {ct.strip() for ct in type_cast.split(",")}
         if type_cast_set:
             assign_str += f'type_it({arg_name}, '
-            type_cast_list = []
-
-            if 'int' in type_cast_set:
-                type_cast_list.append('INT')
-            if 'tuple[int]' in type_cast_set:
-                type_cast_list.append('TUPLE')
-            if 'scalar' in type_cast_set:
-                type_cast_list.append('SCALAR')
-            # add more type cast kind here
-
-            assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
-            if dtype == 'tuple[int]':
-                assign_str += '_TO_TUPLE)'
-            if dtype == 'list[int]':
-                assign_str += '_TO_LIST)'
-            if dtype == 'tensor':
-                assign_str += '_TO_TENSOR)'
+            assign_str += get_type_cast_str(type_cast_set, dtype)
         else:
             assign_str += arg_name
 

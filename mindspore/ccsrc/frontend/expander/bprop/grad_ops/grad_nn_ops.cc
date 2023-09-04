@@ -694,13 +694,14 @@ REG_BPROP_BUILDER("ResizeBilinear").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("OneHot").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("OneHot").SetUnusedInputs({i0, i1, i2, i3, i5, i6}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto depth = ib->GetInput(kIndex1);
   auto on_value = ib->GetInput(kIndex2);
   auto off_value = ib->GetInput(kIndex3);
+  auto axis = ib->GetInput(kIndex4);
   return {ib->OutZeros(indices), ib->OutZeros(ib->Tensor(0, ib->GetDtype(depth))), ib->OutZeros(on_value),
-          ib->OutZeros(off_value)};
+          ib->OutZeros(off_value), ib->OutZeros(axis)};
 });
 
 REG_BPROP_BUILDER("SmoothL1Loss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {

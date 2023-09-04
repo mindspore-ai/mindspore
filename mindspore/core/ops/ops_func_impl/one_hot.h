@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/common_test.h"
-#include "ops/ops_func_impl/non_zero.h"
-#include "ops/test_ops.h"
-#include "ops/test_ops_cmp_utils.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ONE_HOT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ONE_HOT_H_
+
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(NonZero, EltwiseOpParams);
-
-OP_FUNC_IMPL_TEST_CASES(NonZero, testing::Values(EltwiseOpParams{{2, 3}, kFloat, {6, 2}, kInt64},
-                                                 EltwiseOpParams{{2, 2, 3}, kFloat, {12, 3}, kInt64}));
+class MIND_API OneHotFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ONE_HOT_H_

@@ -59,6 +59,7 @@ class OneHotGpuKernelMod : public NativeGpuKernelMod {
   OneHotLaunchFunc kernel_func_;
   size_t depth_{0};
   const size_t depth_index_{1};
+  const size_t axis_index_{kIndex4};
   size_t left_dim_size_{1};
   size_t right_dim_size_{1};
 };

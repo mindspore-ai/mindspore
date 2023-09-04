@@ -1074,10 +1074,9 @@ def get_one_hot_vmap_rule(prim, axis_size):
     else:
         prim_name = prim.name
 
-    axis = prim.axis
-
-    def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim, off_value_bdim)
+    def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim,
+                                                      off_value_bdim, axis_bdim)
         if is_all_none:
             return result
 
@@ -1085,6 +1084,7 @@ def get_one_hot_vmap_rule(prim, axis_size):
         depth, depth_dim = depth_bdim
         on_value, on_value_dim = on_value_bdim
         off_value, off_value_dim = off_value_bdim
+        axis, _ = axis_bdim
 
         if depth_dim is not None:
             _raise_value_error(
@@ -1097,9 +1097,12 @@ def get_one_hot_vmap_rule(prim, axis_size):
         if off_value_dim is not None:
             _raise_value_error(
                 "The source axis of `off_value` in {} must be None, but got {}.".format(prim_name, off_value_dim))
+
+        if not F.isconstant(axis):
+            _raise_value_error("'axis' in {} must be constant.".format(prim_name))
         ndim = F.rank(indices)
         new_axis, new_bd = _get_one_hot_vmap_axis(axis, ndim, indices_dim)
-        out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
+        out = prim(indices, depth, on_value, off_value, new_axis)
 
         return out, new_bd
 

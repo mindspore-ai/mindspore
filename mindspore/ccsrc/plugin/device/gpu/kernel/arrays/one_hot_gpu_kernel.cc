@@ -16,7 +16,6 @@
 
 #include "plugin/device/gpu/kernel/arrays/one_hot_gpu_kernel.h"
 #include <cstdint>
-#include "mindspore/core/ops/one_hot.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cuh"
 #include "utils/ms_context.h"
@@ -82,9 +81,7 @@ int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto output_shape = LongVecToSizeVec(outputs[kIndex0]->GetShapeVector());
-  auto one_hot_ptr = std::dynamic_pointer_cast<ops::OneHot>(base_operator);
-  MS_EXCEPTION_IF_NULL(one_hot_ptr);
-  int64_t axis = one_hot_ptr->get_axis();
+  int64_t axis = inputs[axis_index_]->GetValueWithCheck<int64_t>();
 
   int64_t input_dims = static_cast<int64_t>(input_shape.size());
   int64_t output_dims = static_cast<int64_t>(output_shape.size());

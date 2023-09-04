@@ -1,0 +1,8 @@
+#operator non_zero
+non_zero:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor

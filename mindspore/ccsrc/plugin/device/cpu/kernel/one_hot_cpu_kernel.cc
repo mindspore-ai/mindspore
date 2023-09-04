@@ -18,16 +18,12 @@
 #include <string>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/one_hot.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kOneHotInputsNum = 4;
+constexpr size_t kOneHotInputsNum = 5;
 constexpr size_t kOneHotOutputsNum = 1;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
 #define INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)             \
   case (DTYPE): {                                                            \
     switch (ODTYPE) {                                                        \
@@ -99,9 +95,7 @@ int OneHotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
 
   auto output_shape = outputs[kIndex0]->GetShapeVector();
-  auto one_hot_ptr = std::dynamic_pointer_cast<ops::OneHot>(base_operator);
-  MS_EXCEPTION_IF_NULL(one_hot_ptr);
-  int64_t axis = one_hot_ptr->get_axis();
+  int64_t axis = inputs[axis_index_]->GetValueWithCheck<int64_t>();
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'axis' must be -1, or an int which is less than the dimension of output, but got "

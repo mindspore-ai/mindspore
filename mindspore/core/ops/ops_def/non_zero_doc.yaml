@@ -1,0 +1,31 @@
+non_zero:
+    description: |
+        Return a tensor of the positions of all non-zero values.
+
+        Refer to :func:`mindspore.ops.nonzero` for more details.
+
+        Inputs:
+            - **x** (Tensor) - The input Tensor, its rank should be greater than or eaqual to 1.
+
+        Outputs:
+            - **y** (Tensor), 2-D Tensor of data type int64.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops import NonZero
+            >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+            >>> output = ops.non_zero(x)
+            >>> print(output)
+            [[0 0 0]
+            [0 1 0]]
+            >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+            >>> output = ops.non_zero(x)
+            >>> print(output)
+            [[0]
+            [2]
+            [4]]
