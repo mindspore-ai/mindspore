@@ -217,6 +217,41 @@ int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, co
   return RET_OK;
 }
 
+// preprocess input batch
+int PreProcessBatch(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
+                    lite::Tensor *tensor) {
+  CHECK_NULL_RETURN(tensor);
+  for (int image_index = 0; image_index < data_pre_process_param.calibrate_size; image_index++) {
+    size_t size;
+    char *data_buffer = nullptr;
+    auto ret =
+      PreProcess(data_pre_process_param, input_name, image_index, reinterpret_cast<void **>(&data_buffer), &size);
+    if (data_buffer == nullptr || size == 0) {
+      MS_LOG(ERROR) << "data_buffer is nullptr or size == 0";
+      return RET_ERROR;
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Preprocess failed.";
+      delete[] data_buffer;
+      return RET_ERROR;
+    }
+    if (tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeFloat) {
+      auto data = reinterpret_cast<float *>(tensor->MutableData());
+      CHECK_NULL_RETURN(data);
+      if (memcpy_s(data + image_index * tensor->ElementsNum(), tensor->Size(), data_buffer, size) != EOK) {
+        MS_LOG(ERROR) << "memcpy data failed.";
+        delete[] data_buffer;
+        return RET_ERROR;
+      }
+    } else {
+      MS_LOG(ERROR) << "Not supported data_type: " << tensor->data_type();
+      return RET_ERROR;
+    }
+    delete[] data_buffer;
+  }
+  return RET_OK;
+}
+
 int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, size_t image_index,
                void **data, size_t *size) {
   if (data == nullptr || size == nullptr) {

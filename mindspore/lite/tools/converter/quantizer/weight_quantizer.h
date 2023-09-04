@@ -42,20 +42,6 @@
 namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
-  WeightQuantizer() {
-    quant_min_ = QuantMin(bit_num_, false, false);
-    quant_max_ = QuantMax(bit_num_, false);
-    symmetric_quant_min_ = QuantMin(bit_num_, false, true);
-    symmetric_quant_max_ = QuantMax(bit_num_, false);
-    // parse type_id_
-    MS_ASSERT(bit_num_ > 0 && bit_num_ <= k16Bit);
-    if (bit_num_ > 0 && bit_num_ <= k8Bit) {
-      type_id_ = kNumberTypeInt8;
-    } else if (bit_num_ <= k16Bit) {
-      type_id_ = kNumberTypeInt16;
-    }
-  }
-
   explicit WeightQuantizer(const std::shared_ptr<ConverterPara> &param, double init_scale = 0) : Quantizer(param) {
     bit_num_ = param_->commonQuantParam.bit_num;
     enable_encode_ = param_->commonQuantParam.enable_encode;

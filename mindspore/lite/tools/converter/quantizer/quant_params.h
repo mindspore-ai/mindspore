@@ -25,7 +25,6 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/quant_utils.h"
-
 namespace mindspore::lite::quant {
 enum WeightQuantType {
   FIXED_BIT_PER_CHANNEL = 0,
@@ -125,6 +124,11 @@ enum DequantStrategy {
   ON_THE_FLY,
 };
 
+enum WeightQuantStrategy {
+  MAX_MIN_ALGORITHM,
+  GPTQ_ALGORITHM,
+};
+
 enum PrecisionMode {
   QUANT,
   FLOAT32,
@@ -157,6 +161,7 @@ struct CommonQuantParam {
 
 struct WeightQuantParam {
   DequantStrategy dequant_strategy = DEFAULT;
+  WeightQuantStrategy quant_strategy = MAX_MIN_ALGORITHM;
   bool update_mindir = true;
   int max_segments = 1;
   bool per_channel = true;
@@ -197,7 +202,7 @@ typedef struct {
 
 typedef struct {
   float inv_norm;
-  MinMax mm;
+  lite::MinMax mm;
 } LayerParam;
 }  // namespace mindspore::lite::quant
 

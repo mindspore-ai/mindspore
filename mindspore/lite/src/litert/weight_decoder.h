@@ -65,6 +65,8 @@ class MS_API WeightDecoder {
     return 0;
   }
 
+  static int GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
+
   template <typename T>
   static int GetPreferredDim(const std::vector<T *> &in_tensors, const OpParameter *op_parameter, int index,
                              const std::vector<int> &dims, const std::string &model_version) {
@@ -217,8 +219,6 @@ class MS_API WeightDecoder {
     }
     return dequant_datas;
   }
-
-  static int GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
 
   static int GetDeConvPreferredDim(const OpParameter *op_parameter, const std::vector<int> &dims);
 
