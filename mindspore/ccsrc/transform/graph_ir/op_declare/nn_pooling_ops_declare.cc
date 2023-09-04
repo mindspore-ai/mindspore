@@ -88,7 +88,7 @@ REG_ADPT_DESC(AvgPool, kNameAvgPool, ADPT_DESC(AvgPool))
 INPUT_MAP(AvgPool3D) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AvgPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                        {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                       {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                        {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                        {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
                        {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
@@ -258,7 +258,7 @@ ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>()
                            {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", "orig_input_shape"}};
 OUTPUT_MAP(AvgPool3DGrad) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradDOpName, ADPT_DESC(AvgPool3DGrad))
+REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradOpName, ADPT_DESC(AvgPool3DGrad))
 
 // Dilation2DBackpropFilter
 INPUT_MAP(Dilation2DBackpropFilter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(out_backprop)}};
