@@ -306,13 +306,20 @@ std::vector<int> CastToInt(const ValuePtr &value) {
     }
   } else {
     auto data_type = value->type()->number_type();
-    if (data_type == kNumberTypeInt64) {
-      cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
-    } else if (data_type == kNumberTypeInt || data_type == kNumberTypeInt32) {
-      cur_value.push_back(GetValue<int>(value));
-    } else {
-      MS_LOG(ERROR) << "the function only process integer data.";
-      return {};
+    switch (data_type) {
+      case kNumberTypeInt64:
+        cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
+        break;
+      case kNumberTypeInt:
+      case kNumberTypeInt32:
+        cur_value.push_back(GetValue<int>(value));
+        break;
+      case kNumberTypeBool:
+        cur_value.push_back(GetValue<bool>(value));
+        break;
+      default:
+        MS_LOG(ERROR) << "the function only process integer data.";
+        return {};
     }
   }
   return cur_value;
@@ -1055,6 +1062,17 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeTwo, 1);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   trans_prim->AddAttr("quant_params", quant_params_holder);
+  auto input_abstract = input_node->abstract();
+  if (input_abstract != nullptr) {
+    auto abstract = input_abstract->Clone();
+    MS_CHECK_TRUE_RET(abstract != nullptr, nullptr);
+    FormatTransNodeType perm_type = perm == kNC2NH ? kNCHW2NHWC : (perm == kNH2NC ? kNHWC2NCHW : kNONE);
+    if (ConvertAbstractFormatShape(abstract, perm_type) != RET_OK) {
+      MS_LOG(WARNING) << "Convert abstract failed for node: " << cnode->fullname_with_scope();
+      return cnode;
+    }
+    cnode->set_abstract(abstract);
+  }
   return cnode;
 }
 

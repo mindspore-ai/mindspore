@@ -130,6 +130,7 @@ STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr
       MS_LOG(ERROR) << "Add attr " << attr_name << " failed for cnode: " << cnode->fullname_with_scope();
       return lite::RET_ERROR;
     }
+    return lite::RET_OK;
   }
 
   auto axes_input = cnode->input(kNameReduceInputNum - 1);

@@ -58,8 +58,8 @@ STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
     auto k_input = cnode->input(kInputNumThree - 1);
     MS_CHECK_TRUE_MSG(k_input != nullptr, lite::RET_ERROR, "k_input is nullptr.");
     if (!utils::isa<ParameterPtr>(k_input)) {
-      MS_LOG(ERROR) << "The k node is not parameter.";
-      return lite::RET_ERROR;
+      MS_LOG(INFO) << "The k node is not parameter.";
+      return lite::RET_OK;
     }
     ParameterPtr k_param = k_input->cast<ParameterPtr>();
     MS_CHECK_TRUE_MSG(k_param != nullptr, lite::RET_ERROR, "ParameterPtr casts failed.");

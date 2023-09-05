@@ -49,6 +49,13 @@ CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto reshape = func_graph->NewCNode(op_inputs);
   MS_CHECK_TRUE_MSG(reshape != nullptr, nullptr, "create cnode return nullptr");
   reshape->set_fullname_with_scope(input_node->fullname_with_scope() + "_reshape");
+
+  std::vector<int64_t> new_shape;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(new_shape),
+                 [](int x) { return static_cast<int64_t>(x); });
+  auto abstract = lite::CreateTensorAbstract(new_shape, kNumberTypeInt32);
+  MS_CHECK_TRUE_MSG(abstract != nullptr, nullptr, "Create tensor abstract for reshape failed.");
+  reshape->set_abstract(abstract);
   return reshape;
 }
 

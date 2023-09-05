@@ -480,20 +480,7 @@ STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Create cast node failed.";
     return RET_ERROR;
   }
-  std::string batch_shape = cast_node->Shape()->ToString();
-
-  batch_shape.erase(std::remove(batch_shape.begin(), batch_shape.end(), '('), batch_shape.end());
-  batch_shape.erase(std::remove(batch_shape.begin(), batch_shape.end(), ')'), batch_shape.end());
-
-  int batch_shape_num;
-  try {
-    batch_shape_num = std::stoi(batch_shape);
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "Get shape of batch_indices failed. " << e.what();
-    return RET_ERROR;
-  }
-
-  std::vector<int> shape = {batch_shape_num, 1};
+  std::vector<int> shape = {-1, 1};
   auto new_reshape_node = opt::GenReshapeNode(func_graph, cast_node, shape, cnode->fullname_with_scope() + "_Reshape");
   if (new_reshape_node == nullptr) {
     MS_LOG(ERROR) << "Create reshape node failed.";
