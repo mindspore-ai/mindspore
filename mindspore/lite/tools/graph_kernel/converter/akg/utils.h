@@ -25,7 +25,7 @@
 
 constexpr auto kAkgKernelSo = "akgkernels.so";
 namespace mindspore::graphkernel {
-constexpr size_t PROCESS_LIMIT = 8;
+constexpr int PROCESS_LIMIT = 8;
 constexpr size_t TIME_OUT = 100;
 constexpr auto kTunedSign = "tuned_signature";
 constexpr auto kAddMSLiteAkg =
