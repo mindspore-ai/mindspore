@@ -67,9 +67,8 @@ class Optimizer(Cell):
         if not isinstance(param_groups[0], dict):
             param_groups = [{'params': param_groups}]
 
-        for i, param_group in enumerate(param_groups):
-            self.add_param_group(i, param_group)
-            self.group_start_id.append(self.group_start_id[-1] + len(param_group.get("params")))
+        for param_group in param_groups:
+            self.add_param_group(param_group)
         self.parameters = ParameterTuple(self.parameters)
         self.hyper_map = C.HyperMap()
         self.enable_tuple_broaden = True
@@ -87,7 +86,7 @@ class Optimizer(Cell):
         format_string += ')'
         return format_string
 
-    def add_param_group(self, group_id, param_group):
+    def add_param_group(self, param_group):
         r"""
         Add a param group to the `Optimizer.param_groups`.
 
@@ -96,8 +95,9 @@ class Optimizer(Cell):
             param_group (dict): Specifies what Parameters should be optimized along with group
                 specific optimization options.
         """
+        group_id = len(self.param_groups)
         param_group = self._preprocess_param_group(param_group)
-        self.parameters += param_group.get("params")
+        self.parameters += tuple(param_group.get("params"))
 
         for name, default in self.defaults.items():
             if name not in param_group:
@@ -108,6 +108,7 @@ class Optimizer(Cell):
         param_group["lr"] = lr
         param_group["weight_decay"] = weight_decay
         self.param_groups.append(param_group)
+        self.group_start_id.append(self.group_start_id[-1] + len(param_group.get("params")))
 
     @staticmethod
     def _parameters_base_check(parameters, param_info):
