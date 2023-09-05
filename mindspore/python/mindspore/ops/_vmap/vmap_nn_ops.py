@@ -711,7 +711,7 @@ def get_adaptive_avgpool3d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.AvgPool)
+@vmap_rules_getters.register("AvgPool")
 def get_avgpool_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPool`."""
     chw_reverse_index = -3

@@ -21,12 +21,12 @@ class DemoFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return nullptr;
+    MS_LOG(EXCEPTION) << "This is a demo.";
   }
 
   AbstractBasePtr InferAbstract(const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) const override {
-    return nullptr;
+    MS_LOG(EXCEPTION) << "This is a demo.";
   }
 };
 

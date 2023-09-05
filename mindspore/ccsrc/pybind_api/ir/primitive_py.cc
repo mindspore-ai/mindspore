@@ -832,4 +832,11 @@ void RegPrimitive(const py::module *m) {
     .def("set_user_data", &PrimitivePyAdapter::SetUserData, "Set primitive user data.")
     .def("get_user_data", &PrimitivePyAdapter::GetUserData, "Get primitive user data.");
 }
+
+void RegPrimitiveFunction(const py::module *m) {
+  (void)py::class_<PrimitiveFunctionAdapter, std::shared_ptr<PrimitiveFunctionAdapter>>(*m, "PrimitiveFunction_")
+    .def_readonly(PYTHON_PRIMITIVE_FUNCTION_FLAG, &PrimitiveFunctionAdapter::parse_info_)
+    .def(py::init<>())
+    .def("name", &PrimitiveFunctionAdapter::name, "Get function name.");
+}
 }  // namespace mindspore

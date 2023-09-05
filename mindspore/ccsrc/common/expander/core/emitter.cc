@@ -30,6 +30,8 @@
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/op_def.h"
+#include "ir/primitive.h"
 
 namespace mindspore {
 namespace expander {
@@ -90,19 +92,24 @@ ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector
 }  // namespace
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
-  auto &func = Emitter::primc_func_cache()[op_name];
-  PrimitivePtr primc = nullptr;
-  if (func == nullptr) {
-    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-    const auto iter = op_primc_fns.find(op_name);
-    primc = iter == op_primc_fns.end() ? std::make_shared<ops::PrimitiveC>(op_name) : (func = iter->second)();
+  PrimitivePtr prim = nullptr;
+  if (mindspore::ops::GetOpDef(op_name) != nullptr) {
+    prim = std::make_shared<PrimitiveFunction>(op_name);
   } else {
-    primc = func();
+    auto &func = Emitter::primc_func_cache()[op_name];
+    if (func == nullptr) {
+      const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+      const auto iter = op_primc_fns.find(op_name);
+      prim = iter == op_primc_fns.end() ? std::make_shared<ops::PrimitiveC>(op_name) : (func = iter->second)();
+    } else {
+      prim = func();
+    }
   }
+  MS_EXCEPTION_IF_NULL(prim);
   if (!attrs.empty()) {
-    (void)primc->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
   }
-  return EmitOp(primc, inputs);
+  return EmitOp(prim, inputs);
 }
 
 NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {

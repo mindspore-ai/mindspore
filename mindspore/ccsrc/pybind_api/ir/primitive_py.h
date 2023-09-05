@@ -188,5 +188,21 @@ class OpPrimPyRegister {
   OpPrimPyRegister() {}
   HashMap<std::string, ValuePtr> primpy_map_;  // op_name, primpy
 };
+
+class PrimitiveFunctionAdapter {
+ public:
+  PrimitiveFunctionAdapter() = default;
+  void set_attached_primitive_function(const PrimitiveFunctionPtr &prim_func) {
+    attached_primitive_function_ = prim_func;
+  }
+  PrimitiveFunctionPtr attached_primitive_function() { return attached_primitive_function_.lock(); }
+  py::object name() { return py::str(attached_primitive_function_.lock()->name()); }
+
+  const bool parse_info_ = true;
+
+ private:
+  std::weak_ptr<PrimitiveFunction> attached_primitive_function_;
+};
+using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

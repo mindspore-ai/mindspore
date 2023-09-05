@@ -96,7 +96,6 @@ TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
 NodePtr LGamma(BpropIRBuilder *ib, const NodePtr &x);
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
 ShapeVector PoolToNHWC(const ShapeVector &v);
-NodePtr PoolToNHWCBlock(Emitter *e, const NodePtr &tuple);
 ShapeVector ConvToNHWC(const ShapeVector &v);
 ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin = 0, int64_t end = -1);
 NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x);

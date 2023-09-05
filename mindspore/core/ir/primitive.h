@@ -356,6 +356,7 @@ class MS_CORE_API PrimitiveFunction : public Primitive {
   bool operator==(const Value &other) const override;
   bool operator==(const PrimitiveFunction &other) const;
   abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return "PrimFunc_" + name(); }
 };
 using PrimitiveFunctionPtr = std::shared_ptr<PrimitiveFunction>;
 

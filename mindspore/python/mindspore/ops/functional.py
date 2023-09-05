@@ -31,6 +31,7 @@ from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
+from mindspore.ops import auto_generate
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -97,7 +98,7 @@ list_equal = Primitive("list_equal")
 scalar_ne = Primitive('scalar_ne')
 string_eq = Primitive('string_eq')
 string_concat = Primitive('string_concat')
-bool_not = Primitive("bool_not")
+bool_not = auto_generate.bool_not
 bool_or = Primitive("bool_or")
 bool_and = Primitive("bool_and")
 bool_eq = Primitive("bool_eq")

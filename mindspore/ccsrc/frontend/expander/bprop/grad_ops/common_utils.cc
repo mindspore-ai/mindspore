@@ -707,18 +707,6 @@ ShapeVector PoolToNHWC(const ShapeVector &v) {
   return new_v;
 }
 
-NodePtr PoolToNHWCBlock(Emitter *e, const NodePtr &tuple) {
-  constexpr auto N = 0;
-  constexpr auto C = 1;
-  constexpr auto H = 2;
-  constexpr auto W = 3;
-  auto out0 = e->TupleGetItem(tuple, N);
-  auto out1 = e->TupleGetItem(tuple, H);
-  auto out2 = e->TupleGetItem(tuple, W);
-  auto out3 = e->TupleGetItem(tuple, C);
-  return e->MakeTuple({out0, out1, out2, out3});
-}
-
 ShapeVector ConvToNHWC(const ShapeVector &v) {
   ShapeVector new_v(v);
   new_v[kIndex0] = v[kIndex1];

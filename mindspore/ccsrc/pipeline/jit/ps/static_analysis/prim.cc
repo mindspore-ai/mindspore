@@ -1291,12 +1291,7 @@ AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const PrimitivePtr &pr
     auto shape = op_def_->func_impl_->InferShape(primitive, args);
     return MakeAbstract(shape, type);
   }
-
-  if (frontend_func_impl_ != nullptr) {
-    return frontend_func_impl_->InferAbstract(primitive, args);
-  }
-
-  return nullptr;
+  MS_LOG(INTERNAL_EXCEPTION) << "Find infer function failed, primitive: " << primitive->ToString();
 }
 
 EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
@@ -2434,7 +2429,8 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   auto args_size = op_def->args_.size();
   if (args_size != cnode->size() - 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "The size of args in op_def `" << args_size
-                               << "` should be equal to the inputs size minus one `" << cnode->size() - 1 << "`.";
+                               << "` should be equal to the inputs size minus one `" << cnode->size() - 1 << "`."
+                               << "cnode:" << cnode->DebugString();
   }
   // The labels of primitive instance have been added in PrimitivePyAdapter::AddPyAttr, not need to be handled here.
   if (!is_prim_instance) {

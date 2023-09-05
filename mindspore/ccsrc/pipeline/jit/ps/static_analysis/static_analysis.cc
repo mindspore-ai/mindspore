@@ -930,11 +930,6 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (enable_pre_lift && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
     return std::make_shared<SwitchEvaluator>();
   }
-
-  if (PrimNeedFrontendInferValue(prim) && prim->HasPyEvaluator()) {
-    return GetPyEvaluator(prim, engine);
-  }
-
   if (NeedConvertPrimitiveArgs(prim)) {
     return std::make_shared<PrimitiveArgsToInputsEvaluator>(prim);
   }
@@ -992,6 +987,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
   if (func->tracking_id() == 0) {
     // Create primitive evaluator if tracking_id == 0.
     auto [iter, is_new] = evaluators_.emplace(func, nullptr);
+
     if (is_new) {
       iter->second = GetPrimEvaluator(primitive, shared_from_this());
       if (iter->second == nullptr) {

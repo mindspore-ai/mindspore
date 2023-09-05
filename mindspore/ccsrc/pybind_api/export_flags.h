@@ -19,6 +19,7 @@
 
 namespace mindspore {
 extern const char PYTHON_PRIMITIVE_FLAG[];
+extern const char PYTHON_PRIMITIVE_FUNCTION_FLAG[];
 extern const char PYTHON_CELL_AS_DICT[];
 extern const char PYTHON_CELL_AS_LIST[];
 extern const char PYTHON_MS_CLASS[];

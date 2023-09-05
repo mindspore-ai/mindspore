@@ -25,7 +25,7 @@ from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore._c_expression import Primitive_, prim_type, typing
+from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
 
@@ -942,3 +942,7 @@ class _PrimitiveC(Primitive):
 
 def _get_primitivec(name, attrs):
     return _PrimitiveC(name, attrs)
+
+
+def _create_primitive_function_obj():
+    return PrimitiveFunction_()

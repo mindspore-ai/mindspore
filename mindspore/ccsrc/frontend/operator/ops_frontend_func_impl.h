@@ -50,7 +50,9 @@ class OpFrontendFuncImpl {
   ///
   /// \return AbstractBasePtr with inferred shape and inferred type.
   virtual AbstractBasePtr InferAbstract(const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args) const = 0;
+                                        const std::vector<AbstractBasePtr> &input_args) const {
+    return nullptr;
+  }
 };
 
 using OpFrontendFuncImplPtr = std::shared_ptr<OpFrontendFuncImpl>;

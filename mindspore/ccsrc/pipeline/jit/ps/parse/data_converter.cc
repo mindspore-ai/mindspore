@@ -389,6 +389,17 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
   return primitive;
 }
 
+ValuePtr ConvertPrimitiveFunction(const py::object &obj) {
+  auto prim_func_adapter = obj.cast<PrimitiveFunctionAdapterPtr>();
+  MS_EXCEPTION_IF_NULL(prim_func_adapter);
+  auto cpp_primitive_func = prim_func_adapter->attached_primitive_function();
+  if (cpp_primitive_func == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot get cpp primitive function object from primitive function adapter:"
+                               << prim_func_adapter->name();
+  }
+  return cpp_primitive_func;
+}
+
 ValuePtr ConvertMetaFuncGraph(const py::object &obj, bool use_signature = false) {
   MS_LOG(DEBUG) << "Converting MetaFuncGraph object";
   auto meta = obj.cast<MetaFuncGraphPtr>();
@@ -678,6 +689,7 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_LIST, ConvertCellList),
     std::make_shared<ByTypeDataConvertFunc<Cell>>(ConvertCellObjToFuncGraph),
     std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FUNCTION_FLAG, ConvertPrimitiveFunction),
     std::make_shared<ByTypeDataConvertFunc<MetaFuncGraph>>(ConvertMetaFuncGraph),
     std::make_shared<ByTypeDataConvertFunc<FuncGraph>>(ConvertFuncGraph),
   };

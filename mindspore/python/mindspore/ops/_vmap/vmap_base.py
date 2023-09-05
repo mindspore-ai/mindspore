@@ -29,6 +29,7 @@ from mindspore.ops.function import _VmapGeneralPreprocess
 from mindspore.ops.primitive import Primitive, _PrimitiveC
 from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
 from mindspore.ops._grad_experimental.grad_base import BpropRegistry as VmapRuleRegistry
+from mindspore._c_expression import PrimitiveFunction_
 
 
 vmap_rules_getters = VmapRuleRegistry()
@@ -36,7 +37,12 @@ vmap_rules_getters = VmapRuleRegistry()
 
 def get_vmap_rule(prim, axis_size):
     """get vmap rule function by primitive obj or prim name for c++"""
-    out = vmap_rules_getters.get(prim, None)
+    if isinstance(prim, str):
+        out = vmap_rules_getters.get(prim, None)
+    elif isinstance(prim, Primitive):
+        out = vmap_rules_getters.get(prim.name, None)
+    elif isinstance(prim, PrimitiveFunction_):
+        out = vmap_rules_getters.get(prim.name(), None)
     if out:
         return out(prim, axis_size)
     return None

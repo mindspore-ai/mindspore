@@ -67,6 +67,10 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
   if (primc == nullptr || primc->isa<PrimitivePy>()) {
     return nullptr;
   }
+  // If it is primitive function, no need convert because primitive function are all C++ infer.
+  if (primc->isa<PrimitiveFunction>()) {
+    return nullptr;
+  }
   if (abstract::GetFrontendPrimitiveInferImpl(primc).has_value()) {
     return nullptr;
   }
@@ -89,6 +93,7 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
       }
     }
   }
+  // TODO(dyn_shape): need deleted after moving all python infer to c++ infer.
   auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
   MS_EXCEPTION_IF_NULL(new_prim);
   (void)new_prim->cast<PrimitivePtr>()->SetAttrs(primc->attrs());

@@ -1916,6 +1916,19 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   return nullptr;
 }
 
+namespace {
+bool ExistValueAny(const ValuePtr &value) {
+  if (value->isa<ValueSequence>()) {
+    auto seq_value = value->cast_ptr<ValueSequence>();
+    auto elements = seq_value->value();
+    for (auto &element : elements) {
+      return ExistValueAny(element);
+    }
+  }
+  return value->isa<ValueAny>();
+}
+}  // namespace
+
 AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                                         const AttrValueMapPtr &attrs, const AnfNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -1930,7 +1943,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     return BuildValueNodeForAbstractFunction(origin_node, ival, attrs, cnode, abs);
   } else {
     ValuePtr val = ival->BuildValue();
-    if (val->isa<ValueAny>()) {
+    if (ExistValueAny(val)) {
       return nullptr;
     }
     // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.

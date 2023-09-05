@@ -17,6 +17,7 @@
 
 namespace mindspore {
 const char PYTHON_PRIMITIVE_FLAG[] = "__primitive_flag__";
+const char PYTHON_PRIMITIVE_FUNCTION_FLAG[] = "__primitive_function_flag__";
 const char PYTHON_CELL_AS_DICT[] = "__cell_as_dict__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";
 const char PYTHON_MS_CLASS[] = "__ms_class__";
