@@ -1425,15 +1425,6 @@ void KernelGraph::InferType() {
                         << " in node:" << cnode->fullname_with_scope();
     }
 
-    // Infer value.
-    if (eval_impl->IsImplInferValue()) {
-      auto value = eval_impl->InferValue(primitive, abstracts);
-      if (value != nullptr && !value->isa<ValueAny>()) {
-        cnode->set_abstract(value->ToAbstract());
-        continue;
-      }
-    }
-
     // Infer shape and type for cnode.
     auto abstract = eval_impl->InferShapeAndType(nullptr, primitive, abstracts);
     if (abstract == nullptr) {

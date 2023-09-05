@@ -325,6 +325,10 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         // zero copy.
         node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
         node_device_tensor->set_user_data(input_device_tensor->user_data());
+        node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
+        node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
+        MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
+                      << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
         node_device_tensor->set_from_mem_pool(false);
         continue;
       }

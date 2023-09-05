@@ -149,7 +149,7 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
 
 bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
                                         const std::string &format) const {
-  if (user_data_ != nullptr) {
+  if (user_data_ != nullptr && user_data_->has(kUserDataType)) {
     return SyncUserDataToDevice(user_data_, host_ptr, size);
   }
 
@@ -176,6 +176,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_gpu_device = dynamic_cast<const GPUDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_gpu_device);
+  MS_LOG(DEBUG) << "Sync gpu device address from:" << src_device_addr << " to:" << this;
   src_gpu_device->MoveToDevice(false);
   if (src_gpu_device->mem_offloaded()) {
     return SyncHostToDevice(src_gpu_device->host_shape(), src_gpu_device->GetSize(), src_gpu_device->type_id(),
@@ -188,9 +189,9 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
 
 bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
                                           const std::string &format) const {
-  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
-                << ", size:" << size << ")";
+  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(address:" << ptr_ << " format:" << format_
+                << ", type_id:" << TypeIdLabel(type_id_) << ", size:" << size_ << "), src(address:" << src_ptr
+                << "format:" << format << ", type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   if (ptr_ == src_ptr) {
     MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
     return true;
@@ -271,7 +272,7 @@ void GPUDeviceAddress::ClearDeviceMemory() {
 }
 
 void GPUDeviceAddress::ClearUserData() {
-  if (user_data_ == nullptr) {
+  if (user_data_ == nullptr || (!user_data_->has(kUserDataType))) {
     return;
   }
 

@@ -355,8 +355,35 @@ void UseCacheToCompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext
   }
 }
 
+bool IsValidSequence(const ValueSequencePtr &sequence_value) {
+  MS_EXCEPTION_IF_NULL(sequence_value);
+  const auto &values = sequence_value->value();
+  if (values.empty()) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(values[0]);
+  if (values[0]->isa<ValueSequence>()) {
+    return false;
+  }
+  if (values[0]->type() == nullptr) {
+    MS_LOG(DEBUG) << "Failed to get type from value tuple:" << sequence_value->ToString();
+    return false;
+  }
+  TypeId base_type = values[0]->type()->type_id();
+  for (size_t i = 1; i < values.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(values[i]->type());
+    TypeId type = values[i]->type()->type_id();
+    if (type != base_type) {
+      MS_LOG(DEBUG) << "Invalid value type for value:" << sequence_value->ToString();
+      return false;
+    }
+  }
+  return true;
+}
+
 void CollectValueNodeForKernelGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  graph->ClearAllValueNode();
   const auto &nodes = TopoSort(graph->get_return());
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -367,7 +394,8 @@ void CollectValueNodeForKernelGraph(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(value_node);
     const auto &value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<Primitive>()) {
+    if (value->isa<Primitive>() ||
+        (value->isa<ValueSequence>() && (!IsValidSequence(value->cast<ValueSequencePtr>())))) {
       continue;
     }
     MS_LOG(DEBUG) << "Add value node:" << node->DebugString() << " for kernel graph:" << graph->ToString();

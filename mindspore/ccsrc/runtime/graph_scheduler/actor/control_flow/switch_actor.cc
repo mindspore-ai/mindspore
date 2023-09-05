@@ -86,10 +86,13 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
 
   if (type_id == TypeId::kNumberTypeInt32) {
     index = static_cast<int64_t>((static_cast<int32_t *>(static_cast<void *>(buf)))[0]);
+    MS_LOG(DEBUG) << "Index:" << index << " for actor:" << GetAID();
   } else if (type_id == TypeId::kNumberTypeInt64) {
     index = (static_cast<int64_t *>(static_cast<void *>(buf)))[0];
+    MS_LOG(DEBUG) << "Index:" << index << " for actor:" << GetAID();
   } else if (type_id == TypeId::kNumberTypeBool) {
     bool cond = (static_cast<bool *>(static_cast<void *>(buf)))[0];
+    MS_LOG(DEBUG) << "Condition:" << cond << " for actor:" << GetAID();
     index = static_cast<int64_t>(cond ? 1 : 0);
   } else {
     MS_LOG(ERROR) << "Index must be Int type.";

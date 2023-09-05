@@ -60,7 +60,7 @@ class AnyTypeGraphScheduler {
                                               const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph);
   void FixDeviceTensorStoreKeyInActor(const std::vector<AbstractActorPtr> &actors,
                                       AnyTypeKernelActor *const any_type_kernel_actor,
-                                      const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph,
+                                      const KernelGraphPtr &model_graph, const GraphCompilerInfo &graph_compiler_info,
                                       const std::vector<AnfNodePtr> &front_parameters);
 };
 }  // namespace runtime

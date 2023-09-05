@@ -172,6 +172,7 @@ void TaskEmitActionForMindRT(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   // Get the mindRT backend.
   auto bc_ptr = resource->GetBackend();
+  compile::set_infer_handler([](const py::object &obj, ValuePtr *value) { return parse::ConvertData(obj, value); });
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
