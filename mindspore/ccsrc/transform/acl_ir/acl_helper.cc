@@ -61,7 +61,8 @@ static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL
                                                             {GeDataType::DT_DOUBLE, kNumberTypeFloat64},
                                                             {GeDataType::DT_STRING, kObjectTypeString},
                                                             {GeDataType::DT_COMPLEX64, kNumberTypeComplex64},
-                                                            {GeDataType::DT_COMPLEX128, kNumberTypeComplex128}};
+                                                            {GeDataType::DT_COMPLEX128, kNumberTypeComplex128},
+                                                            {GeDataType::DT_BF16, kNumberTypeBFloat16}};
 
 TypeId ConvertGeType(GeDataType type) {
   if (kGeTypeToMsType.count(type) != 0) {
