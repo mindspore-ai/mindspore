@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@
 #endif
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "include/api/model.h"
+#include "src/tensor.h"
+
 namespace mindspore {
 namespace lite {
 namespace preprocess {
@@ -48,6 +50,9 @@ int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::str
 
 int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
                size_t image_index, mindspore::MSTensor *tensor);
+
+int PreProcessBatch(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
+                    lite::Tensor *tensor);
 
 }  // namespace preprocess
 }  // namespace lite

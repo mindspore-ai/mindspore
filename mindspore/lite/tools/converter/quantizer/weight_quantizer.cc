@@ -37,6 +37,7 @@
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/common/node_util.h"
 #include "src/common/quant_utils.h"
+#include "tools/converter/quantizer/gptq_quantizer.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -495,6 +496,8 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul,
                                    prim::kPrimGather};
     }
+  } else if (param_->weightQuantParam.quant_strategy == quant::GPTQ_ALGORITHM) {
+    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul};
   } else {
     support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
                                prim::kPrimMatMulFusion,  prim::kPrimFullConnection,
@@ -504,13 +507,23 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
                                prim::kPrimMatMul};
     per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
   }
-  auto ret = WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types, {});
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Weight Quant failed.";
-    return ret;
-  }
-  if (dequant_strategy_ != ON_THE_FLY) {
-    return MarkGraphWeightQuantType(func_graph);
+  if (param_->weightQuantParam.quant_strategy == quant::GPTQ_ALGORITHM) {
+    std::set<PrimitivePtr> gptq_support_primitive_types = {prim::kPrimMatMulFusion};
+    auto GPTQ = std::make_unique<GptqQuantizer>(func_graph, param_, gptq_support_primitive_types);
+    CHECK_NULL_RETURN(GPTQ);
+    if (GPTQ->DoQuantize() != RET_OK) {
+      MS_LOG(ERROR) << "GPTQ weight quant failed.";
+      return RET_ERROR;
+    }
+  } else {
+    auto ret = WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types, {});
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Weight Quant failed.";
+      return ret;
+    }
+    if (dequant_strategy_ != ON_THE_FLY) {
+      return MarkGraphWeightQuantType(func_graph);
+    }
   }
   return RET_OK;
 }

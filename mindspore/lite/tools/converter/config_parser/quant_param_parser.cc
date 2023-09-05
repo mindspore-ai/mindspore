@@ -277,6 +277,16 @@ int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_str
       return RET_INPUT_PARAM_INVALID;
     }
   }
+  if (!weight_quant_string.quant_strategy.empty()) {
+    if (weight_quant_string.quant_strategy == "GPTQ") {
+      weight_quant->quant_strategy = quant::GPTQ_ALGORITHM;
+    } else if (weight_quant_string.quant_strategy == "MAX_MIN") {
+      weight_quant->quant_strategy = quant::MAX_MIN_ALGORITHM;
+    } else {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: quant_strategy must be GPTQ or MAX_MIN.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
   if (!weight_quant_string.update_mindir.empty() &&
       !ConvertBool(weight_quant_string.update_mindir, &weight_quant->update_mindir)) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: update_mindir should be true or false.";

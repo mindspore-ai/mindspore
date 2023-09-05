@@ -642,7 +642,8 @@ int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::ma
                                                    {"update_mindir", weight_quant_string_.update_mindir},
                                                    {"max_segments", weight_quant_string_.max_segments},
                                                    {"per_channel", weight_quant_string_.per_channel},
-                                                   {"bias_correction", weight_quant_string_.bias_correction}};
+                                                   {"bias_correction", weight_quant_string_.bias_correction},
+                                                   {"quant_strategy", weight_quant_string_.quant_strategy}};
     return SetMapData(map, parse_map, kWeightQuantParam);
   }
   return RET_OK;
