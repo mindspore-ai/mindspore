@@ -16,7 +16,7 @@ mindspore.nn.AdaMax
             w = w - \frac{l}{1 - \beta_1^{t+1}} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个动量矩阵，:math:`v` 代表第二个动量矩阵，:math:`g` 代表梯度 `gradients` ，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 代表 `beta1` 的t次方 ， :math:`\l` 代表学习率 `learning_rate` ，:math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个动量矩阵，:math:`v` 代表第二个动量矩阵，:math:`g` 代表梯度 `gradients` ，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 代表 `beta1` 的t次方 ， :math:`l` 代表学习率 `learning_rate` ，:math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
 
     .. note::
 

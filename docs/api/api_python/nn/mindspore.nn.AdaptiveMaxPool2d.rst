@@ -29,7 +29,7 @@ mindspore.nn.AdaptiveMaxPool2d
 
     输出：
         Tensor，数据类型与 `input` 相同。
-        输出的shape为 `input_shape[:len(input_shape) - len(out_shape)] + out_shape` 。
+        输出的shape为 :math:`input\_shape[:len(input\_shape) - len(out\_shape)] + out\_shape` 。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

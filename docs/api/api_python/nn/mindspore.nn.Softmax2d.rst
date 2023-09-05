@@ -9,6 +9,7 @@ mindspore.nn.Softmax2d
 
     输入：
         - **x** (Tensor) - Tensor的shape :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, H_{in}, W_{in})`。
+          数据类型可以是float16或者float32。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同，取值范围为[0, 1]。

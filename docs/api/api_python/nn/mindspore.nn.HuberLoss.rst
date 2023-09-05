@@ -48,5 +48,5 @@ mindspore.nn.HuberLoss
         - **TypeError** - `logits` 和 `labels` 的数据类型不同。
         - **TypeError** - `delta` 不是float或int。
         - **ValueError** - `delta` 的值小于或等于0。
-        - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
+        - **ValueError** - `reduction` 不为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。
         - **ValueError** - `logits` 和 `labels` 有不同的shape，且不能互相广播。

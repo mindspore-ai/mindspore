@@ -506,8 +506,8 @@
         设置当前Cell和所有子Cell的训练模式。对于训练和预测具有不同结构的网络层(如 `BatchNorm`)，将通过这个属性区分分支。如果设置为True，则执行训练分支，否则执行另一个分支。
 
         .. note::
-            当执行Model.train()的时候，框架会默认调用Cell.set_train(True)。
-            当执行Model.eval()的时候，框架会默认调用Cell.set_train(False)。
+            当执行 :func:`mindspore.train.Model.train` 的时候，框架会默认调用Cell.set_train(True)。
+            当执行 :func:`mindspore.train.Model.eval` 的时候，框架会默认调用Cell.set_train(False)。
 
         参数：
             - **mode** (bool) - 指定模型是否为训练模式。默认值： ``True`` 。
@@ -520,12 +520,12 @@
 
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
-        指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
-        其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
+        指定输入/输出Tensor的分布策略，通过其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
+        其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： :func:`mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
         .. note:: 需设置为PyNative模式，并且ParallelMode.AUTO_PARALLEL，
-            同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
+            同时设置 :func:`mindspore.set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
             如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
 
         参数：
@@ -558,9 +558,7 @@
 
     .. py:method:: trainable_params(recurse=True)
 
-        返回Cell的可训练参数。
-
-        返回一个可训练参数的列表。
+        返回Cell的一个可训练参数的列表。
 
         参数：
             - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的可训练参数。默认值： ``True`` 。
@@ -573,9 +571,7 @@
 
     .. py:method:: untrainable_params(recurse=True)
 
-        返回Cell的不可训练参数。
-
-        返回一个不可训练参数的列表。
+        返回Cell的一个不可训练参数的列表。
 
         参数：
             - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的不可训练参数。默认值： ``True`` 。
