@@ -456,16 +456,13 @@ std::string GetObjDesc(const py::object &source) {
 }
 
 void CheckArgsValid(const py::object &source, const py::tuple &args) {
-  std::string obj_desc = GetObjDesc(source);
+  if (!IS_OUTPUT_ON(mindspore::kInfo)) {
+    return;
+  }
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {
-      MS_EXCEPTION(TypeError)
-        << "The inputs types of the outermost network " << obj_desc
-        << " support bool, int, float, None, Tensor, Parameter, string, "
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
-           "and tuple or list containing only these types, and dict whose values are these types, but the "
-        << ToOrdinal(i + 1) << " arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"
-        << "For more details, please search 'outermost network' at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "The " << ToOrdinal(i + 1) << " arg type is " << args[i].get_type() << ", value is '"
+                   << py::str(args[i]) << "'.";
     }
   }
 }
