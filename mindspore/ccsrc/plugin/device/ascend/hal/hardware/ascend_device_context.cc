@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
+#include <map>
 #include <memory>
+#include <string>
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -23,6 +25,7 @@
 #endif
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "runtime/dev.h"
 
@@ -33,6 +36,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeviceContext::Initialize() {
+  GilReleaseWithCheck gil_release;
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);

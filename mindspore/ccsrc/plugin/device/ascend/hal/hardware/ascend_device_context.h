@@ -54,7 +54,6 @@ class AscendDeviceContext : public DeviceInterface<AscendGraphExecutor, AscendKe
 
  private:
   bool initialized_{false};
-  std::mutex init_mutex_;
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
 };

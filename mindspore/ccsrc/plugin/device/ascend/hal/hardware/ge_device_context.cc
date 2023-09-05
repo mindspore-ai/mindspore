@@ -62,6 +62,7 @@ void GeDeviceContext::Initialize() {
     return;
   }
 
+  MS_LOG(DEBUG) << "Start initialize...";
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
   if (common::IsEnableRefMode()) {

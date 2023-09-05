@@ -537,7 +537,6 @@ compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_de
   if (iter != mindrt_backends_.end()) {
     return iter->second;
   } else {
-    std::lock_guard<std::mutex> guard(pipeline::Resource::GetBackendInitMutex());
     auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id_);
     MS_EXCEPTION_IF_NULL(backend);
     mindrt_backends_[cur_device_target] = backend;

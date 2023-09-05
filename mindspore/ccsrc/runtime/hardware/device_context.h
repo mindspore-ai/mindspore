@@ -102,6 +102,9 @@ class DeviceContext {
   std::unique_ptr<DeviceResManager> device_res_manager_;
   std::unique_ptr<GraphExecutor> graph_executor_;
 
+ protected:
+  inline static std::mutex init_mutex_;
+
  private:
   std::shared_ptr<KernelExecutor> kernel_executor_;
   std::shared_ptr<KernelExecutor> dyn_kernel_executor_;
