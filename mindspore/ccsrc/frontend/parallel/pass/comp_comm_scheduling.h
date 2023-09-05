@@ -22,6 +22,7 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
+#include <string>
 
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/ir/manager.h"
@@ -190,10 +191,10 @@ struct SchedulingOutput {
 
 namespace FastGreedyScheduler {
 // Main functionality
-SchedulingOutput Process(SchedulingInput &);
+SchedulingOutput Process(SchedulingInput &, const std::string &);
 SchedulingOutput ProcessCore(std::vector<std::shared_ptr<Task>> &, std::unordered_map<TaskType, int32_t> &,
                              const TaskSortFunction &, bool);
-SchedulingOutput ProcessSingle(const SchedulingInput &, const TaskSortFunction &, bool);
+SchedulingOutput ProcessSingle(const SchedulingInput &, const TaskSortFunction &, bool, const std::string &);
 
 // Compute Auxiliary Values for Task Sorting
 void ComputeBottomLevelAndWeightedLength(std::vector<std::shared_ptr<Task>> &);
@@ -213,7 +214,7 @@ bool VerifyScheduling(std::vector<std::shared_ptr<Task>> &);
 bool VerifyDependencies(std::vector<std::shared_ptr<Task>> &, std::vector<std::pair<TaskId, TaskId>> &);
 
 // Log
-void PrintLog(const SchedulingOutput &, const std::vector<std::pair<TaskId, TaskId>> &);
+void PrintLog(const SchedulingOutput &, const std::vector<std::pair<TaskId, TaskId>> &, const std::string &);
 }  // namespace FastGreedyScheduler
 
 SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &, const std::vector<CNodePtr> &,
