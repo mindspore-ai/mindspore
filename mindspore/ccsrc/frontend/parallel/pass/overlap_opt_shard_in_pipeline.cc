@@ -36,6 +36,7 @@ namespace {
 inline bool is_allgather_comm_ops(const AnfNodePtr &node) {
   static const std::vector<PrimitivePtr> kAllGatherOpsPrim = {prim::kPrimMicroStepAllGather,
                                                               prim::kPrimMiniStepAllGather, prim::kPrimAllGather};
+
   for (const auto &prim : kAllGatherOpsPrim) {
     if (IsPrimitiveCNode(node, prim)) {
       auto allgather_instance_name = GetCNodePrimitive(node->cast<CNodePtr>())->instance_name();
@@ -79,6 +80,9 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
   if (!parallel::IsAutoParallelCareGraph(graph) ||
       parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1 ||
       parallel::ParallelContext::GetInstance()->grad_accumulation_shard()) {
+    return;
+  }
+  if (parallel::ParallelContext::GetInstance()->enable_fold_pipeline()) {
     return;
   }
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();

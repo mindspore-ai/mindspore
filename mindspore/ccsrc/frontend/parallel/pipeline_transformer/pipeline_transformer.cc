@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include <set>
 #include <vector>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include <memory>
-#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -46,12 +46,10 @@
 
 namespace mindspore {
 namespace parallel {
-// map<rank, tag>
-mindspore::HashMap<int64_t, int64_t> send_tag_map;
-mindspore::HashMap<int64_t, int64_t> recv_tag_map;
+
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
 
-static bool IsInWhiteList(const CNodePtr &cnode) {
+bool IsInWhiteList(const CNodePtr &cnode) {
   for (auto prim = WHITE_LIST.cbegin(); prim != WHITE_LIST.cend(); ++prim) {
     if (IsPrimitiveCNode(cnode, *prim)) {
       return true;
@@ -69,7 +67,7 @@ static AbstractBasePtr GetRealAbstract(const AnfNodePtr &node) {
   return node->abstract();
 }
 
-static TensorInfo GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_pair, bool is_param) {
+TensorInfo PipelineTransformer::GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_pair, bool is_param) {
   if (is_param) {
     auto inputs_tensor_info = op_info_pair.first->inputs_tensor_info();
     return inputs_tensor_info.at(IntToSize(op_info_pair.second));
@@ -174,6 +172,8 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
   int64_t micro = tuple.at(batch_axis) * micro_size / slice_batch_size;
   cnode->AddPrimalAttr(MICRO, MakeValue(micro));
   cnode->AddPrimalAttr(PIPELINE_BEGIN, MakeValue(micro));
+  int64_t seg = 0;
+  cnode->AddPrimalAttr(SEGMENT, MakeValue(seg));
   return MakeValue(micro);
 }
 
@@ -825,7 +825,7 @@ static ValueListPtr GetShapeValue(const Shape &shape) {
   return std::make_shared<ValueList>(element);
 }
 
-static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape, size_t index) {
+std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape, size_t index) {
   TypePtr type;
   auto cnode = node->cast<CNodePtr>();
   if (cnode != nullptr && IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -876,8 +876,8 @@ AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) con
 SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage,
                                          const ValuePtr &value) {
   auto dest_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
-  int64_t send_tag = send_tag_map[dest_rank];
-  send_tag_map[dest_rank]++;
+  int64_t send_tag = send_tag_map_[dest_rank];
+  send_tag_map_[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
   Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(user_node_stage));
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
@@ -909,6 +909,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
     send->set_user_data<AnfNode>(INPUT_PARAM, param);
   }
   send->AddPrimalAttr(MICRO, value);
+  send->AddPrimalAttr(DEST_RANK, MakeValue(user_node_stage));
   OperatorAttrs depend_attrs;
   auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
@@ -932,8 +933,8 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
                                               int64_t node_stage, const ValuePtr &value,
                                               const AnfNodePtr &graph_param) {
   auto src_rank = global_rank_ - (user_node_stage - node_stage) * per_stage_rank_num_;
-  int64_t recv_tag = recv_tag_map[src_rank];
-  recv_tag_map[src_rank]++;
+  int64_t recv_tag = recv_tag_map_[src_rank];
+  recv_tag_map_[src_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
   Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
   bool is_param = true;
@@ -965,6 +966,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
     recv->AddPrimalAttr(PIPELINE_BEGIN, value);
   }
   recv->AddPrimalAttr(MICRO, value);
+  recv->AddPrimalAttr(SRC_RANK, MakeValue(node_stage));
   auto node_abstract = node->abstract();
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
@@ -1016,8 +1018,7 @@ AnfNodePtr PipelineTransformer::Reuse(const AnfNodePtr &node, int64_t stage, con
       cnode = cnode->input(2)->cast<CNodePtr>();
     }
     if (cnode->input(1) == node) {
-      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      auto dest_rank_send = GetValue<int64_t>(prim->GetAttr(tag));
+      auto dest_rank_send = GetValue<int64_t>(cnode->GetPrimalAttr(tag));
       if (dest_rank_send == stage) {
         return input;
       }
@@ -1176,7 +1177,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
-tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
+tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
   auto out_shape_type = GetShapeType(node, out_shapes.at(index), index);
   auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes.at(index));
@@ -1262,8 +1263,8 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   MS_EXCEPTION_IF_NULL(old);
   auto old_is_pipeline_param = old->HasPrimalAttr(PIPELINE_PARAM);
   auto dest_rank = old->user_data<int64_t>(DEST_RANK);
-  auto send_tag = send_tag_map[*dest_rank];
-  send_tag_map[*dest_rank]++;
+  auto send_tag = send_tag_map_[*dest_rank];
+  send_tag_map_[*dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
   Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(*(old->user_data<int64_t>(USER_NODE_STAGE))));
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
@@ -1396,8 +1397,8 @@ AnfNodePtr PipelineTransformer::GenNewRecvFromOld(const AnfNodePtr &node, const 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto src_rank = *(cnode->user_data<int64_t>(SRC_RANK));
-  auto recv_tag = recv_tag_map[src_rank];
-  recv_tag_map[src_rank]++;
+  auto recv_tag = recv_tag_map_[src_rank];
+  recv_tag_map_[src_rank]++;
   auto dtype = node->user_data<Type>(SLICE_DTYPE);
   auto slice_shape = *(cnode->user_data<Shape>(SLICE_SHAPE));
   auto shape = GetShapeValue(slice_shape);
@@ -1644,8 +1645,8 @@ void PipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map.clear();
-  recv_tag_map.clear();
+  send_tag_map_.clear();
+  recv_tag_map_.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }
@@ -1658,6 +1659,7 @@ void PipelineTransformer::CutGraph() {
 void PipelineTransformer::ElimGraphStage() {
   for (auto &fg : manager_->func_graphs()) {
     fg->set_stage(-1);
+    fg->set_segment(-1);
   }
 }
 

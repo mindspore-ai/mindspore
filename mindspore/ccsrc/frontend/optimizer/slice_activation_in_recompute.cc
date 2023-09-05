@@ -267,6 +267,15 @@ void SpreadRecomputeDepend(const FuncGraphManagerPtr &manager, const std::vector
 }
 }  // namespace
 
+bool IsCurrentMicro(int64_t micro, int64_t current_micro) {
+  bool tmp_flag = true;
+  if (parallel::ParallelContext::GetInstance()->enable_fold_pipeline()) {
+    tmp_flag = (micro != current_micro);
+  } else {
+    tmp_flag = (micro > current_micro);
+  }
+  return tmp_flag;
+}
 void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
@@ -311,7 +320,7 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
         MS_LOG(EXCEPTION) << "In pipeline parallel mode, cannot find 'micro' attributes in node.";
       }
       int64_t micro = GetValue<int64_t>(slice_allgather_node->GetPrimalAttr(parallel::MICRO));
-      if (micro > current_micro) {
+      if (IsCurrentMicro(micro, current_micro)) {
         if (current_micro != -1) {
           MS_LOG(INFO) << "Insert allgather depends, micro is: " << current_micro;
           InsertAllGatherDependWithMicroInterleaved(graph, stage_slice_allgathers);

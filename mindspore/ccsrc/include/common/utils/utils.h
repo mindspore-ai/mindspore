@@ -36,6 +36,7 @@
 namespace mindspore {
 // attr key name
 constexpr auto kAttrNoneList = "none_list";
+constexpr auto kAttrSegment = "segment";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";
 constexpr auto kAttrInputNames = "input_names";
@@ -368,6 +369,9 @@ constexpr auto kCustomTypeHybrid = "hybrid";
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
+constexpr auto kPrimalAttrBackwardMicroEnd = "backward_micro_end";
+constexpr auto kPrimalAttrForwardEnd = "forward_end";
+constexpr auto kPrimalAttrSegmentMax = "segment_max";
 constexpr auto kPrimalAttrUniqueId = "unique_id";
 constexpr auto kPrimalAttrForwardUniqueId = "forward_unique_id";
 constexpr auto kPrimalAttrForwardCommNodeUniqueId = "forward_comm_node_unique_id";

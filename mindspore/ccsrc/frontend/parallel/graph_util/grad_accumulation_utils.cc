@@ -37,7 +37,6 @@ namespace mindspore {
 namespace parallel {
 constexpr char GRAD_ACCU_NUM[] = "grad_accu_num";
 constexpr char GRAD_ACCU_FORWARD_BEGIN[] = "grad_accu_forward_begin";
-constexpr char FORWARD_END[] = "forward_end";
 constexpr char GRAD_ACCU_FORWARD_END[] = "grad_accu_forward_end";
 constexpr char GRAD_ACCU_BACKWARD_END[] = "grad_accu_backward_end";
 constexpr char FIRST_PARAMETER_CNODE[] = "first_parameter_cnode";

@@ -335,6 +335,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_pipeline_stage_split_num", &ParallelContext::set_pipeline_stage_split_num,
          "Set pipeline stage split num.")
     .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")
+    .def("set_pipeline_segment_split_num", &ParallelContext::set_pipeline_segment_split_num,
+         "Set pipeline segment split num.")
+    .def("get_pipeline_segment_split_num", &ParallelContext::pipeline_segment_split_num,
+         "Get pipeline segment split num.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
     .def("get_full_batch_is_set", &ParallelContext::full_batch_is_set, "Get whether attr full_batch is set.")
@@ -348,6 +352,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set enable/disable parallel optimizer.")
     .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,
          "Get enable/disable parallel optimizer.")
+    .def("get_enable_fold_pipeline", &ParallelContext::enable_fold_pipeline, "Get enable/disable fold pipeline.")
     .def("set_communi_parallel_mode", &ParallelContext::set_communi_parallel_mode, "Set communication parallel mode.")
     .def("get_communi_parallel_mode", &ParallelContext::communi_parallel_mode, "Get communication parallel mode.")
     .def("set_optimizer_weight_shard_size", &ParallelContext::set_optimizer_weight_shard_size,

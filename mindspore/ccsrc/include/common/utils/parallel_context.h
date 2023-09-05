@@ -162,6 +162,11 @@ class COMMON_EXPORT ParallelContext {
   }
   bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
 
+  bool enable_fold_pipeline() const { return pipeline_segment_split_num_ > 1; }
+
+  void set_pipeline_segment_split_num(const int64_t segments);
+  int64_t pipeline_segment_split_num() const { return pipeline_segment_split_num_; }
+
   void set_hccl_test_available(bool hccl_test_available) { hccl_test_available_ = hccl_test_available; }
   bool hccl_test_available() const { return hccl_test_available_; }
   void set_grad_accumulation_shard(const bool grad_accumulation_shard) {
@@ -222,6 +227,7 @@ class COMMON_EXPORT ParallelContext {
   std::string parallel_mode_;
   std::string strategy_search_mode_;
   int64_t pipeline_stage_split_num_;
+  int64_t pipeline_segment_split_num_;
   size_t pipeline_micro_size_;
   bool parameter_broadcast_;
   bool device_num_is_set_;
@@ -241,6 +247,7 @@ class COMMON_EXPORT ParallelContext {
   std::string strategy_ckpt_save_file_;
   std::string group_ckpt_save_file_;
   bool enable_parallel_optimizer_;
+  bool enable_fold_pipeline_;
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;

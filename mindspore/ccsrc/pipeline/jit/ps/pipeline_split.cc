@@ -27,6 +27,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "frontend/parallel/pipeline_transformer/fold_pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -302,6 +303,12 @@ bool PipelineSplit(const ResourcePtr &res) {
   }
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  if (parallel_context->enable_fold_pipeline()) {
+    MS_LOG(INFO) << "Begin Fold Pipeline Transformer ";
+    transformer =
+      std::make_shared<parallel::FoldPipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
+  }
   // step1: Do color graph
   transformer->Coloring();
   if (!transformer->MainGraph()) {

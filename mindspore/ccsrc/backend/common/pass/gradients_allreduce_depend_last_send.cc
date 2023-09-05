@@ -34,6 +34,10 @@ bool GradientsAllReduceDependLastSend::Run(const FuncGraphPtr &graph) {
   if (split_stage_num <= 1) {
     return false;
   }
+  auto enable_fold_pipeline = parallel::ParallelContext::GetInstance()->enable_fold_pipeline();
+  if (enable_fold_pipeline) {
+    return false;
+  }
   if (common::GetEnv("MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION") == "1") {
     return false;
   }

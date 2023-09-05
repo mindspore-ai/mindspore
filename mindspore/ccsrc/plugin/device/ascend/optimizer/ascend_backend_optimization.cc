@@ -159,6 +159,8 @@
 #include "plugin/device/ascend/optimizer/enhancer/concat_outputs_for_all_gather.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_grad_comm.h"
+#include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather_output.h"
+#include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_reduce.h"
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
@@ -222,6 +224,7 @@
 #include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 #include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -735,9 +738,11 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   if (no_cell_reuse) {
     other_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
     other_pm->AddPass(std::make_shared<AllReduceFusion>());
+    other_pm->AddPass(std::make_shared<InsertDependForAllReduce>());
     other_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
     other_pm->AddPass(std::make_shared<AllGatherFusion>());
     other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
+    other_pm->AddPass(std::make_shared<InsertDependForAllGatherOutput>());
     other_pm->AddPass(std::make_shared<InsertDependForAllGather>());
     other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
     other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());

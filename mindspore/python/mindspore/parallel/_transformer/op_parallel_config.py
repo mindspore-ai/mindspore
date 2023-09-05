@@ -147,10 +147,11 @@ class _PipeLineConfig(_Config):
             >>> config=_PipeLineConfig(pipeline_stage=1, micro_batch_num=1)
     """
 
-    def __init__(self, pipeline_stage=1, micro_batch_num=1):
+    def __init__(self, pipeline_stage=1, micro_batch_num=1, pipeline_segment=1):
         Validator.check_positive_int(pipeline_stage, "pipeline_stage")
         Validator.check_positive_int(micro_batch_num, "micro_batch_num")
         self.pipeline_stage = pipeline_stage
+        self.pipeline_segment = pipeline_segment
         self.micro_batch_num = micro_batch_num
 
     @property
@@ -162,6 +163,16 @@ class _PipeLineConfig(_Config):
         Validator.check_positive_int(value, "pipeline_stage")
         self._pipeline_stage = value
         context.set_auto_parallel_context(pipeline_stages=value)
+
+    @property
+    def pipeline_segment(self):
+        return self._pipeline_segment
+
+    @pipeline_segment.setter
+    def pipeline_segment(self, value):
+        Validator.check_positive_int(value, "pipeline_segment")
+        self._pipeline_segment = value
+        context.set_auto_parallel_context(pipeline_segments=value)
 
     @property
     def micro_batch_num(self):

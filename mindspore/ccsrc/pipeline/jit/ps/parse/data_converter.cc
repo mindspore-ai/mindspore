@@ -918,6 +918,10 @@ void SetFuncGraphByCellObj(const FuncGraphPtr &func_graph, const py::object &obj
     auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
     func_graph->set_stage(stage);
   }
+  if (py::hasattr(obj, SEGMENT_NAME)) {
+    auto segment = py::cast<int>(py::getattr(obj, SEGMENT_NAME));
+    func_graph->set_segment(segment);
+  }
   auto cell = py::cast<CellPtr>(obj);
   if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
     auto value = cell->GetAttr(kAttrRandomOpSnapShot);

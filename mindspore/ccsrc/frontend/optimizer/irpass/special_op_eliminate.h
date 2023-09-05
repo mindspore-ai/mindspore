@@ -200,7 +200,9 @@ class MiniStepAllGatherPass : public AnfVisitor {
     std::string group = attrs[parallel::GROUP]->ToString();
     auto fusion = attrs[parallel::FUSION];
     bool contain_recompute = prim->HasAttr(parallel::RECOMPUTE);
+    bool contain_segment = prim->HasAttr(parallel::SEGMENT);
     bool recompute = contain_recompute && GetValue<bool>(attrs[parallel::RECOMPUTE]);
+    ValuePtr segment = contain_segment ? attrs[parallel::SEGMENT] : nullptr;
     parallel::Operator op = parallel::CreateAllGatherOp(group);
     std::vector<AnfNodePtr> node_input =
       parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE);
@@ -212,9 +214,15 @@ class MiniStepAllGatherPass : public AnfVisitor {
     if (contain_recompute) {
       attrs[parallel::RECOMPUTE] = MakeValue(recompute);
     }
+    if (contain_segment) {
+      attrs[parallel::SEGMENT] = segment;
+    }
     (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
+    if (node->cast<CNodePtr>()->HasPrimalAttr(kAttrSegment)) {
+      new_node->AddPrimalAttr(kAttrSegment, node->cast<CNodePtr>()->GetPrimalAttr(kAttrSegment));
+    }
     return new_node;
   }
 };
@@ -240,7 +248,9 @@ class MicroStepAllGatherPass : public AnfVisitor {
     }
     auto fusion = attrs[parallel::FUSION];
     bool contain_recompute = prim->HasAttr(parallel::RECOMPUTE);
+    bool contain_segment = prim->HasAttr(parallel::SEGMENT);
     bool recompute = contain_recompute && GetValue<bool>(attrs[parallel::RECOMPUTE]);
+    ValuePtr segment = contain_segment ? attrs[parallel::SEGMENT] : nullptr;
     parallel::Operator op = parallel::CreateAllGatherOp(group);
     std::vector<AnfNodePtr> node_input =
       parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE);
@@ -251,6 +261,9 @@ class MicroStepAllGatherPass : public AnfVisitor {
     attrs[parallel::FUSION] = fusion;
     if (contain_recompute) {
       attrs[parallel::RECOMPUTE] = MakeValue(recompute);
+    }
+    if (contain_segment) {
+      attrs[parallel::SEGMENT] = segment;
     }
     (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
