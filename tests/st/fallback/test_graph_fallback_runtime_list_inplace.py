@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, ops
 from mindspore import Tensor, jit, jit_class
 from mindspore.common import mutable
 from mindspore.ops.operations import _sequence_ops as seq
@@ -1302,3 +1302,31 @@ def test_list_inplace_with_attribute_of_jit_class_3():
     ret = net()
     assert ret == [4, 3, 2, 1]
     assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_stub_tensor():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        @jit
+        def construct(self, index):
+            return self.x[index]
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = [ops.add(Tensor(1), 1), ops.add(Tensor(2), 2)]
+    index = Tensor(0)
+    net = Net(x)
+    ret = net(index)
+    assert ret == Tensor(2)
+    context.set_context(mode=context.GRAPH_MODE)
