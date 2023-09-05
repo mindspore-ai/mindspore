@@ -30,6 +30,8 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr size_t STRIDE_SLICE_CNODE_BEGIN_INDEX = 2;
+constexpr size_t STRIDE_SLICE_CNODE_END_INDEX = 3;
 class StridedSliceInfo : public OperatorInfo {
  public:
   StridedSliceInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
@@ -40,6 +42,7 @@ class StridedSliceInfo : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -49,7 +52,7 @@ class StridedSliceInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetMask(const std::string &mask_name, int64_t *mask_value);
-  Status ChangeCNodeBeginEnd();
+  void ChangeCNodeBeginEnd();
 
  private:
   std::vector<int64_t> begin_;

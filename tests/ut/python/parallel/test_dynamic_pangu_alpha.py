@@ -20,14 +20,20 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer, Normal, TruncatedNormal
-
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.common.api import _cell_graph_executor
-
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import TrainOneStepCell, Momentum
+from mindspore.ops import composite as C
+from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell
+from mindspore.context import ParallelMode
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindspore.communication.management import get_group_size
+from mindspore.parallel._utils import _get_enable_parallel_optimizer
+from mindspore.nn.wrap.cell_wrapper import PipelineCell
+from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -704,6 +710,11 @@ class PanguAlpha_Model(nn.Cell):
         self.position_embedding.embedding_table.parallel_optimizer = False
         self.position_embedding.gather.shard(((1, 1), (config.dp,)))
         self.position_embedding.expand.shard(((config.dp, 1),))
+
+        self.get_attention_mask.pipeline_stage = 0
+        self.word_embedding.pipeline_stage = 0
+        self.position_embedding.pipeline_stage = 0
+
         self.blocks = nn.CellList()
         # Total fusion groups for HCCL operators. Specifically, the same tyep HCCL operators in same group will be fused.
         fusion_group_num = 4
@@ -733,6 +744,10 @@ class PanguAlpha_Model(nn.Cell):
                 # so we fuse communications of layernorm to a large value(+100)
                 per_block.layernorm1.set_comm_fusion(int(int(i / fusion_group_size) + 100))
                 per_block.layernorm2.set_comm_fusion(int(int(i / fusion_group_size) + 100))
+            if i < num_layers // 2:
+                per_block.pipeline_stage = 0
+            else:
+                per_block.pipeline_stage = 1
             self.blocks.append(per_block)
         if config.self_layernorm:
             self.layernorm = LayerNorm((config.embedding_size,), config.dp).to_float(
@@ -743,6 +758,8 @@ class PanguAlpha_Model(nn.Cell):
             self.layernorm.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
         self.layernorm.gamma.parallel_optimizer = False
         self.layernorm.beta.parallel_optimizer = False
+        self.layernorm.pipeline_stage = 1
+
         if config.param_init_type == mstype.float16:
             # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
             # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
@@ -784,6 +801,8 @@ class PanguAlpha_Model(nn.Cell):
             self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
             self.top_query_embedding.expand.shard(((config.dp, 1),))
             self.top_query_layer = QueryLayer(config)
+            self.top_query_embedding.pipeline_stage = 1
+            self.top_query_layer.pipeline_stage = 1
             if config.use_recompute:
                 self.top_query_layer.recompute()
                 self.top_query_layer.output.dropout.dropout.recompute(False)
@@ -885,6 +904,7 @@ class PanguAlpha(nn.Cell):
         self.backbone = PanguAlpha_Model(config)
         # Network head to get logits over vocabulary
         self.head = PanguAlpha_Head(config)
+        self.head.pipeline_stage = 1
 
     def construct(self, input_ids, input_mask, input_position=None, attention_mask=None, past=None):
         output_states, _, embedding_table = self.backbone(
@@ -1027,6 +1047,7 @@ class PANGUALPHAConfig:
     def __init__(self,
                  data_parallel_num,
                  model_parallel_num,
+                 pipeline_parallel_num=1,
                  batch_size=32,
                  seq_length=1024,
                  vocab_size=51200,
@@ -1074,6 +1095,8 @@ class PANGUALPHAConfig:
         self.use_top_query_attention = use_top_query_attention
         self.use_recompute = use_recompute
         self.param_init_type = param_init_type
+        if pipeline_parallel_num > 1:
+            context.set_auto_parallel_context(pipeline_stages=pipeline_parallel_num)
 
 
 def compile_net(net, _x1, _x2, _x3):
@@ -1168,3 +1191,314 @@ def test_pangu_alpha_batch_and_seq_dims_dynamic_and_dp_mp_op():
     input_position = Tensor(shape=[None, None], dtype=mstype.int32)
     attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
     compile_net(net, input_ids, input_position, attention_mask)
+
+
+GRADIENT_CLIP_TYPE = 1
+GRADIENT_CLIP_VALUE = 1.0
+clip_grad = C.MultitypeFuncGraph("clip_grad")
+
+
+@clip_grad.register("Number", "Number", "Tensor")
+def _clip_grad(clip_type, clip_value, grad):
+    """
+    Clip gradients.
+
+    Inputs:
+        clip_type (int): The way to clip, 0 for 'value', 1 for 'norm'.
+        clip_value (float): Specifies how much to clip.
+        grad (tuple[Tensor]): Gradients.
+
+    Outputs:
+        tuple[Tensor], clipped gradients.
+    """
+    if clip_type not in [0, 1]:
+        return grad
+    dt = F.dtype(grad)
+    # 0 for clip_by_value and 1 for clip_by_norm
+    if clip_type == 0:
+        new_grad = C.clip_by_value(
+            grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+            F.cast(F.tuple_to_array((clip_value,)), dt))
+    else:
+        new_grad = nn.ClipByNorm()(grad,
+                                   F.cast(F.tuple_to_array((clip_value,)),
+                                          dt))
+    return new_grad
+
+
+grad_scale = C.MultitypeFuncGraph("grad_scale")
+shard_grad_scale = C.MultitypeFuncGraph("shard_grad_scale")
+reciprocal = P.Reciprocal()
+
+
+@grad_scale.register("Tensor", "Tensor")
+def tensor_grad_scale(scale, grad):
+    return grad * reciprocal(scale)
+
+
+@grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_grad_scale_pipeline(scale, grad, accu_grad):
+    accu_grad = F.depend(accu_grad, grad)
+    new_grad = accu_grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    zeros = F.tensor_mul(accu_grad, 0.0)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, zeros))
+    return new_grad
+
+
+@shard_grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
+    new_grad = grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, F.zeros_like(accu_grad)))
+    return new_grad
+
+
+class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
+    """
+    Encapsulation class of PanguAlpha network training.
+
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+        scale_update_cell (Cell): Cell to do the loss scale. Default: None.
+    """
+    def __init__(self,
+                 network,
+                 optimizer,
+                 scale_update_cell=None,
+                 enable_global_norm=False,
+                 config=None):
+        super(PanguAlphaTrainOneStepWithLossScaleCell,
+              self).__init__(network, optimizer, scale_update_cell)
+        self.network = network
+        self.config = config
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.default_lr = Tensor([0.0], dtype=mstype.float32)
+        self.enable_global_norm = enable_global_norm
+        self.clip = ClipByGlobalNorm(self.weights, config)
+        self.cast = P.Cast()
+
+    def construct(self, input_ids, input_position, attention_mask, layer_past=None, sens=None):
+        """Defines the computation performed."""
+        weights = self.weights
+        # Forward process
+        loss = self.network(input_ids, input_position, attention_mask)
+        scaling_sens = self.scale_sense
+
+        # alloc status and clear should be right before gradoperation
+        status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
+        scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        # Backward process using loss scale
+        grads = self.grad(self.network,
+                          weights)(input_ids,
+                                   input_position, attention_mask,
+                                   scaling_sens_filled)
+
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
+        grads = self.hyper_map(
+            F.partial(grad_scale, scaling_sens), grads)
+
+        if self.enable_global_norm:
+            grads, _ = self.clip(grads)
+        else:
+            grads = self.hyper_map(
+                F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE),
+                grads)
+        # Check whether overflow
+        cond = self.get_overflow_status(status, grads)
+        overflow = self.process_loss_scale(cond)
+        # If overflow, surpass weights update
+        # if not, update weights
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        return F.depend(loss, succ), cond, scaling_sens
+
+
+class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
+    """
+    Encapsulation class of PanguAlpha network training.
+
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+        scale_update_cell (Cell): Cell to do the loss scale. Default: None.
+    """
+    def __init__(self, network, optimizer, scale_update_cell=None, enable_global_norm=True):
+        super(PanguAlphaTrainPipelineWithLossScaleCell, self).__init__(auto_prefix=False)
+        # self.config = config
+        self.network = network
+        self.network.add_flags(defer_inline=True)
+        self.weights = optimizer.parameters
+        self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
+        self.optimizer = optimizer
+        self.enable_global_norm = enable_global_norm
+        self.grad = C.GradOperation(get_by_list=True,
+                                    sens_param=True)
+        self.reducer_flag = False
+        self.allreduce = P.AllReduce()
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reducer_flag = True
+        self.grad_reducer = F.identity
+        self.degree = 1
+        if self.reducer_flag:
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.cast = P.Cast()
+        self.alloc_status = P.NPUAllocFloatStatus().add_prim_attr("_side_effect_flag", False)
+        self.get_status = P.NPUGetFloatStatus().add_prim_attr("_side_effect_flag", False)
+        self.clear_before_grad = P.NPUClearFloatStatus().add_prim_attr("_side_effect_flag", False)
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.base = Tensor(1, mstype.float32)
+        self.less_equal = P.LessEqual()
+        self.hyper_map = C.HyperMap()
+        self.loss_scale = None
+        self.reshape = P.Reshape()
+        self.loss_scaling_manager = scale_update_cell
+        if scale_update_cell:
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
+                                        name="loss_scale")
+        # self.clip = ClipByGlobalNorm(self.weights, self.config)
+        self.micro_size = 2
+        self.opt_shard = _get_enable_parallel_optimizer()
+
+    @C.add_flags(has_effect=True)
+    def construct(self,
+                  input_ids,
+                  input_position,
+                  attention_mask,
+                  past=None,
+                  sens=None):
+        """Defines the computation performed."""
+        weights = self.weights
+        loss = self.network(input_ids, input_position, attention_mask)
+        if sens is None:
+            scaling_sens = self.loss_scale
+            scaling_sens = self.reshape(scaling_sens, (1,))
+        else:
+            scaling_sens = sens
+        # alloc status and clear should be right before gradoperation
+        init = self.alloc_status()
+        status_clear = self.clear_before_grad(init)
+        grads = self.grad(self.network, weights)(input_ids,
+                                                 input_position,
+                                                 attention_mask,
+                                                 self.cast(scaling_sens / self.micro_size,
+                                                           mstype.float32))
+        init = F.depend(init, grads)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
+        flag_sum = self.reduce_sum(init, (0,))
+        loss = F.depend(loss, status_clear)
+        # apply grad reducer on grads
+        if self.opt_shard:
+            grads = self.grad_reducer(grads)
+            grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)
+        else:
+            accu_grads = self.grad_reducer(self.accu_grads)
+            grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
+        # if self.enable_global_norm:
+        #     grads, _ = self.clip(grads)
+        # else:
+        grads = self.hyper_map(
+            F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE),
+            grads)
+        if self.is_distributed:
+            # sum overflow flag over devices
+            flag_reduce = self.allreduce(flag_sum)
+            cond = self.less_equal(self.base, flag_reduce)
+        else:
+            cond = self.less_equal(self.base, flag_sum)
+        overflow = cond
+        if sens is None:
+            overflow = self.loss_scaling_manager(self.loss_scale, cond)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, overflow, scaling_sens)
+        return F.depend(ret, succ)
+
+
+def compile_pipeline_net(net, _x1, _x2, _x3):
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    loss_scale_value = math.pow(2, 32)
+    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
+    train_net = PanguAlphaTrainPipelineWithLossScaleCell(net, optimizer, scale_update_cell=update_cell)
+    train_net.set_train()
+    train_net.set_inputs(_x1, _x2, _x3)
+    phase, _ = _cell_graph_executor.compile(train_net, _x1, _x2, _x3)
+    context.reset_auto_parallel_context()
+    return phase
+
+
+def test_pipeline_dp_mp_op_bs_and_seq_dynamic_stage0():
+    '''
+    Feature: batch dim and seq dim are dynamic, and using pp + dp + mp + op, test stage-0
+    Description: all reshape skip redistribution, pipeline slice micro skip redistribution, and set virtual dataset
+    Expectation: compile success
+    '''
+    context.reset_auto_parallel_context()
+    os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION'] = "1"
+    ds_strategy = ((2, 1), (2, 1), (2, 1, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, dataset_strategy=ds_strategy,
+                                      enable_parallel_optimizer=True, global_rank=0)
+    config = PANGUALPHAConfig(data_parallel_num=2, model_parallel_num=2, pipeline_parallel_num=2, num_layers=3)
+    pangu_alpha = PanguAlpha(config)
+    loss = CrossEntropyLoss(config)
+    loss.pipeline_stage = 1
+    pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
+    pangu_alpha_loss = PipelineCell(pangu_alpha_loss, 2)
+    for i in range(pangu_alpha_loss.micro_size):
+        pangu_alpha_loss.micro_inputs[i].strided_slice.add_prim_attr("out_shard_size", 2)
+    net = _VirtualDatasetCell(pangu_alpha_loss)
+    net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+
+    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
+    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+
+    compile_pipeline_net(net, input_ids, input_position, attention_mask)
+    del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']
+
+
+def test_pipeline_dp_mp_op_bs_and_seq_dynamic_stage1():
+    '''
+    Feature: batch dim and seq dim are dynamic, and using pp + dp + mp + op, test stage-1
+    Description: all reshape skip redistribution, pipeline slice micro skip redistribution, and set virtual dataset
+    Expectation: compile success
+    '''
+    context.reset_auto_parallel_context()
+    os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION'] = "1"
+    ds_strategy = ((2, 1), (2, 1), (2, 1, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, dataset_strategy=ds_strategy,
+                                      enable_parallel_optimizer=True, global_rank=4)
+    config = PANGUALPHAConfig(data_parallel_num=2, model_parallel_num=2, pipeline_parallel_num=2, num_layers=3)
+    pangu_alpha = PanguAlpha(config)
+    loss = CrossEntropyLoss(config)
+    loss.pipeline_stage = 1
+    pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
+    pangu_alpha_loss = PipelineCell(pangu_alpha_loss, 2)
+    for i in range(pangu_alpha_loss.micro_size):
+        pangu_alpha_loss.micro_inputs[i].strided_slice.add_prim_attr("out_shard_size", 2)
+    net = _VirtualDatasetCell(pangu_alpha_loss)
+    net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+
+    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
+    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+
+    compile_pipeline_net(net, input_ids, input_position, attention_mask)
+    del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']

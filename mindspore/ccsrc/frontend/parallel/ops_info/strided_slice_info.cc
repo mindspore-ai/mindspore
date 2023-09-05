@@ -353,9 +353,9 @@ Status StridedSliceInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status StridedSliceInfo::ChangeCNodeBeginEnd() {
+void StridedSliceInfo::ChangeCNodeBeginEnd() {
   if (!skip_redistribution_) {
-    return SUCCESS;
+    return;
   }
   auto shard_size = strategy_->GetInputDim()[0];
   auto begin_new = begin_;
@@ -368,15 +368,11 @@ Status StridedSliceInfo::ChangeCNodeBeginEnd() {
   auto end_new_value = MakeValue(end_new);
   auto new_begin_value_node = std::make_shared<ValueNode>(begin_new_value);
   auto new_end_value_node = std::make_shared<ValueNode>(end_new_value);
-  cnode_->set_input(INDEX_TWO, new_begin_value_node);
-  cnode_->set_input(INDEX_THREE, new_end_value_node);
-  return SUCCESS;
+  cnode_->set_input(STRIDE_SLICE_CNODE_BEGIN_INDEX, new_begin_value_node);
+  cnode_->set_input(STRIDE_SLICE_CNODE_END_INDEX, new_end_value_node);
 }
 
 Status StridedSliceInfo::InferMirrorOps() {
-  if (ChangeCNodeBeginEnd() != SUCCESS) {
-    return FAILED;
-  }
   mirror_ops_.clear();
   if (inputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
@@ -401,6 +397,19 @@ Status StridedSliceInfo::InferMirrorOps() {
   mirror_ops_.push_back(end_op);
   mirror_ops_.push_back(strides_op);
   return SUCCESS;
+}
+
+ReplaceGraphPtr StridedSliceInfo::replace_graph(const CNodePtr &cnode) {
+  bool begin_is_constant = GetValueNode(cnode->input(STRIDE_SLICE_CNODE_BEGIN_INDEX)) != nullptr;
+  bool end_is_constant = GetValueNode(cnode->input(STRIDE_SLICE_CNODE_END_INDEX)) != nullptr;
+  if (begin_is_constant && end_is_constant) {
+    ChangeCNodeBeginEnd();
+  }
+
+  // In dynamic shape scene, the dynamic dimension of dataset is not really "full shape".
+  // So no need to divide begin and end by strategy of stridedslice.
+  // Now simply return nullptr here.
+  return nullptr;
 }
 
 // Note: if the batch dimension is not fully fetched, the batch strategy may not work.
