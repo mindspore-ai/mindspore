@@ -26,6 +26,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "include/common/utils/convert_utils.h"
+#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;
@@ -81,6 +82,8 @@ class GraphKernelJsonGenerator {
   const std::vector<size_t> &input_size_list() const { return input_size_list_; }
   const std::vector<size_t> &output_size_list() const { return output_size_list_; }
   std::map<std::string, AnfNodePtr> address_node_map() const { return address_node_map_; }
+  const SymbolEnginePtr &symbol_engine() const { return symbol_engine_; }
+  void set_symbol_engine(const SymbolEnginePtr &symbol_engine) { symbol_engine_ = symbol_engine; }
 
  private:
   bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json);
@@ -109,15 +112,16 @@ class GraphKernelJsonGenerator {
                             const std::pair<size_t, size_t> &position) const;
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node) const;
-  void CollectParallelDimInfo(const AnfNodePtr &anf_node);
   void GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                        const std::vector<AnfNodePtr> &output_list,
                        const std::map<AnfNodePtr, nlohmann::json> &node_json_map, nlohmann::json *kernel_json) const;
-  bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *node_json) const;
+  bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, ShapeVector *input_shape,
+                           nlohmann::json *node_json) const;
   size_t GetTensorSize(const nlohmann::json &node_json) const;
   std::string GetProcessorByTarget() const;
   size_t GenHashId(const std::string &info) const;
   void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
+  void SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json);
 
   DumpOption dump_option_;
   std::string kernel_name_;
@@ -128,6 +132,8 @@ class GraphKernelJsonGenerator {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::map<std::string, AnfNodePtr> address_node_map_;
+  SymbolEnginePtr symbol_engine_;
+  std::unordered_map<std::string, std::string> symbol_calc_exprs_;
   bool is_basic_op_{false};
   CallbackPtr cb_;
 };

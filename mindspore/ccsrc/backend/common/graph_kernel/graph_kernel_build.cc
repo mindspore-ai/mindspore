@@ -30,6 +30,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
+#include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -171,6 +172,16 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   option.get_target_info = true;
   option.save_ptr_address = true;
   GraphKernelJsonGenerator graph_kernel_json_generator(option);
+  if (sub_func_graph->has_attr(kAttrSymbolEngine)) {
+    auto engine = sub_func_graph->get_attr(kAttrSymbolEngine)->cast<SymbolEnginePtr>();
+    MS_EXCEPTION_IF_NULL(engine);
+    graph_kernel_json_generator.set_symbol_engine(engine);
+  } else if (common::AnfAlgo::IsDynamicShape(node)) {
+    auto engine = BuildSymbolEngine(sub_func_graph);
+    MS_EXCEPTION_IF_NULL(engine);
+    sub_func_graph->set_attr(kAttrSymbolEngine, engine);
+    graph_kernel_json_generator.set_symbol_engine(engine);
+  }
   if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";
   }

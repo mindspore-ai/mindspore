@@ -34,6 +34,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/common/profiler.h"
+#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -388,10 +389,44 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   return new_abs;
 }
 
+bool InferShapeForGraphWithSymbolEngine(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                        const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto output = func_graph->output();
+  auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine));
+  if (!symbol_engine->Infer(args_spec_list)) {
+    MS_LOG(INFO) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
+    return false;
+  }
+  auto out_shapes = symbol_engine->QueryShape(output);
+  BaseShapePtr abs_shape = nullptr;
+  if (out_shapes.size() == 1) {
+    abs_shape = std::make_shared<abstract::Shape>(out_shapes[0]);
+  } else {
+    abstract::BaseShapePtrList shape_list;
+    shape_list.reserve(out_shapes.size());
+    (void)std::transform(out_shapes.cbegin(), out_shapes.cend(), std::back_insert_iterator(shape_list),
+                         [](const ShapeVector &s) { return std::make_shared<abstract::Shape>(s); });
+    abs_shape = std::make_shared<abstract::TupleShape>(shape_list);
+  }
+  auto output_abs = output->abstract();
+  output_abs->set_shape(abs_shape);
+  cnode->set_abstract(output_abs);
+  return true;
+}
+
 void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
                         const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
+  if (func_graph->has_attr(kAttrSymbolEngine)) {
+    MS_LOG(DEBUG) << "SymbolEngine is found in funcgraph " << func_graph->ToString();
+    if (InferShapeForGraphWithSymbolEngine(cnode, func_graph, args_spec_list)) {
+      return;
+    }
+  }
+  MS_LOG(DEBUG) << "InferShape by primitive for funcgraph " << func_graph->ToString();
   if (args_spec_list.size() != func_graph->parameters().size()) {
     MS_LOG(EXCEPTION)
       << "The args_spec_list size should be the same as that of func_graph parameters, but get args_spec_list: "

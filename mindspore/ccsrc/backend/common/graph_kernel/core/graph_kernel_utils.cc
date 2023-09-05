@@ -152,15 +152,6 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   if (prim->HasAttr("primitive_target") && GetValue<std::string>(prim->GetAttr("primitive_target")) != target) {
     return true;
   }
-  if (!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion) {
-    // dynamic shape nodes is disabled with enable_dynamic_shape_fusion to be false.
-    if (common::AnfAlgo::IsDynamicShape(node)) {
-      return true;
-    }
-  } else if (common::AnfAlgo::IsDynamicRankNode(node)) {
-    // dynamic rank node is disabled with enable_dynamic_shape_fusion to be true
-    return true;
-  }
 
   // the "skip" is used by inplace node.
   // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.

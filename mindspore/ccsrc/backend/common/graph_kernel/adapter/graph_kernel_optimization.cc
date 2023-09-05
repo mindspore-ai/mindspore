@@ -27,7 +27,7 @@
 #include "backend/common/graph_kernel/add_atomic_clean.h"
 #include "backend/common/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/common/graph_kernel/core/arithmetic_simplify.h"
-#include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_cluster_cloud.h"
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/common/graph_kernel/insert_pad.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_splitter_with_py.h"
@@ -62,6 +62,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 
 #ifdef ENABLE_AKG
@@ -116,7 +117,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
           GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_parallel_op_combine));
 
   // Cluster basic kernels and composite kernels
-  pm->Add(std::make_shared<GraphKernelCluster>(), OptLevel_1);
+  pm->Add(std::make_shared<StaticShapeCluster>(), OptLevel_1);
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
@@ -238,6 +239,10 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   // Reduce fake output memory.
   pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
   // Compile graph kernel nodes, and inline nodes if compile failed.
+  auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
 #endif
@@ -302,7 +307,7 @@ bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes) {
   static std::vector<PrimitivePtr> supported_nodes;
   if (supported_nodes.empty()) {
     supported_nodes = GraphKernelExpanderCloud::GetExpanderOps();
-    auto cluster_nodes = GraphKernelCluster::GetClusterOps();
+    auto cluster_nodes = StaticShapeCluster::GetClusterOps();
     (void)std::copy(cluster_nodes.begin(), cluster_nodes.end(), std::back_inserter(supported_nodes));
   }
   for (const auto &node : nodes) {

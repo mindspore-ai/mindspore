@@ -26,7 +26,7 @@
 namespace mindspore::graphkernel {
 class GraphKernelClusterLite : public GraphKernelCluster {
  public:
-  GraphKernelClusterLite() : GraphKernelCluster() {
+  GraphKernelClusterLite() {
     auto cb = Callback::Instance();
     if (cb != nullptr) {
       device_ = cb->GetTargetFromContext();

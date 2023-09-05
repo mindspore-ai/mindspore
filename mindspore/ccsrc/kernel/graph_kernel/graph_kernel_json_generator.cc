@@ -257,8 +257,28 @@ class OpInfoExtractor {
 };
 }  // namespace
 
+void SetValueList(nlohmann::json *node_json, void *data, size_t data_size, TypeId type_id, const AnfNodePtr &cnode) {
+  if (type_id == kNumberTypeInt32) {
+    std::vector<int32_t> vec;
+    auto data_ptr = static_cast<int32_t *>(data);
+    for (size_t i = 0; i < data_size; i++) {
+      vec.push_back(data_ptr[i]);
+    }
+    (*node_json)["value"] = vec;
+  } else if (type_id == kNumberTypeInt64) {
+    std::vector<int64_t> vec;
+    auto data_ptr = static_cast<int64_t *>(data);
+    for (size_t i = 0; i < data_size; i++) {
+      vec.push_back(data_ptr[i]);
+    }
+    (*node_json)["value"] = vec;
+  } else {
+    MS_LOG(EXCEPTION) << "The input data of node " << cnode->DebugString() << " should be an int tensor.";
+  }
+}
+
 bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
-                                                   nlohmann::json *node_json) const {
+                                                   ShapeVector *input_shape, nlohmann::json *node_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(node_json);
   auto cnode = anf_node->cast<CNodePtr>();
@@ -281,12 +301,12 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
 
   auto type_id = tensor->data_type();
   auto *data = tensor->data_c();
+  auto data_size = tensor->DataSize();
   MS_EXCEPTION_IF_NULL(data);
-  if (tensor->DataSize() > 1) {
-    // not const tensor.
-    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, ["
-                    << input_node->DebugString(kDebugStrDepth) << "]";
-    return false;
+  if (data_size > 1) {
+    SetValueList(node_json, data, data_size, type_id, cnode);
+    *input_shape = ShapeVector{static_cast<ShapeValueDType>(data_size)};
+    return true;
   }
 
   if (type_id == kFloat64->type_id()) {
@@ -320,7 +340,15 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
                       << " is not in supported list: [float64, float32, float16, uint64, uint32, uint16, uint8, int64, "
                          "int32, int16, int8, bool].";
   }
+  *input_shape = {1};
   return true;
+}
+
+void GraphKernelJsonGenerator::SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json) {
+  if (symbol_engine_ != nullptr) {
+    (*kernel_json)[kJsonKeySymbolicShape] = symbol_engine_->QuerySymbolicShape(node);
+    (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
+  }
 }
 
 bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
@@ -357,11 +385,11 @@ bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, c
       input_desc_json[kJsonKeyFormat] = this->cb_->GetInputFormat(anf_node, real_input_index);
       input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
+      SaveSymbolicShape(anf_node->cast<CNodePtr>()->input(real_input_index + 1), &input_desc_json);
       auto input_shape = this->cb_->GetInputShape(anf_node, real_input_index);
-      if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
-        MS_LOG(DEBUG) << "Pick single value [" << input_desc_json[kJsonKeyValue] << "] from input[" << real_input_index
+      if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_shape, &input_desc_json)) {
+        MS_LOG(DEBUG) << "Pick value [" << input_desc_json[kJsonKeyValue] << "] from input[" << real_input_index
                       << "] of node [" << anf_node->DebugString(kDebugStrDepth);
-        input_shape.clear();
       }
       if (input_shape.empty()) {
         input_shape.push_back(1);
@@ -397,6 +425,7 @@ bool GraphKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, 
     output_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(anf_node, i);
     output_json[kJsonKeyName] = output_name;
     output_json[kJsonKeyTensorName] = "output_" + std::to_string(i) + "_" + std::to_string(GetOutputTensorIdxInc());
+    SaveSymbolicShape(anf_node, &output_json);
     auto output_shape = this->cb_->GetOutputShape(anf_node, i);
     if (output_shape.empty()) {
       output_shape.push_back(1);
@@ -859,7 +888,13 @@ bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &a
   (*kernel_json)[kJsonKeyInputDesc] = inputs_json;
   (*kernel_json)[kJsonKeyOutputDesc] =
     CreateOutputsJson(anf_nodes, input_list, output_list, inputs_json, node_json_map);
-
+  if (!symbol_calc_exprs_.empty()) {
+    nlohmann::json symbols_json;
+    for (const auto &it : symbol_calc_exprs_) {
+      symbols_json[it.first] = it.second;
+    }
+    (*kernel_json)[kJsonKeySymbolCalcExpr] = symbols_json;
+  }
   // Add parallel fusion information.
   GenParallelJson(anf_nodes, input_list, output_list, node_json_map, kernel_json);
   GenStitchJson(anf_nodes, &node_json_map, kernel_json);
@@ -963,6 +998,9 @@ nlohmann::json GraphKernelJsonGenerator::CreateInputsJson(const std::vector<AnfN
       input_shape.push_back(1);
     }
     input_desc_json[kJsonKeyShape] = input_shape;
+    auto cnode = tmp_input.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    SaveSymbolicShape(cnode->input(tmp_input.second.first + 1), &input_desc_json);
     (void)inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
   return inputs_json;
@@ -1059,6 +1097,7 @@ nlohmann::json GraphKernelJsonGenerator::CreateOutputsJson(const std::vector<Anf
         GetTensorName(node_json_map.at(tmp_output.first), kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
       output_desc_json[kJsonKeyDataType] = dtype;
       output_desc_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(tmp_output.first, tmp_output.second);
+      SaveSymbolicShape(tmp_output.first, &output_desc_json);
       auto output_shape = this->cb_->GetOutputShape(tmp_output.first, tmp_output.second);
       if (output_shape.empty()) {
         output_shape.push_back(1);

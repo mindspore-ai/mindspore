@@ -30,6 +30,7 @@
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -101,6 +102,25 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderCloud::InitOpList() { return GraphKernelExpanderCloud::GetExpanderOps(); }
+
+bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
+  if (IsComplexOp(node)) {
+    return true;
+  }
+  if (!GraphKernelExpander::CanExpand(node)) {
+    return false;
+  }
+  bool enable_dynshape_expander = (common::GetEnv("MS_DEV_ENABLE_DYNSHAPE_EXPANDER") == "on") &&
+                                  GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+  if (enable_dynshape_expander) {
+    if (common::AnfAlgo::IsDynamicRankNode(node)) {
+      return false;
+    }
+  } else if (common::AnfAlgo::IsDynamicShape(node)) {
+    return false;
+  }
+  return true;
+}
 
 ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {
   auto e = GetExpander(node, false);

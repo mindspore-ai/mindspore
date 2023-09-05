@@ -35,6 +35,7 @@ class ConvertOpUtils {
   // return true if the attribute is converted to input for this node, return false if no change for this node.
   static bool ConvertAttrToInput(const AnfNodePtr &node);
   static bool ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
+  static bool ConstInputToValueNode(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
   static bool AddConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
   static bool NeedConvert(const std::string &prim_name) { return GetOpIndexInfo().count(prim_name) != 0; }
   static bool NeedConvert(const std::string &prim_name, size_t index) {
@@ -58,7 +59,7 @@ class GraphKernelInputToAttrConverter : public opt::Pass {
 
  private:
   bool SetConstInputToAttr(const AnfNodePtr &graph_kernel_node) const;
-  bool EliminateConstInput(const AnfNodePtr &graph_kernel_node) const;
+  bool AdaptConstInput(const AnfNodePtr &graph_kernel_node) const;
   bool Process(const FuncGraphPtr &func_graph) const;
 };
 }  // namespace mindspore::graphkernel
