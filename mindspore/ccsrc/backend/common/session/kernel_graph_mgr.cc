@@ -784,6 +784,47 @@ void HandleParamExistCorrespondFrontendParam(const KernelGraphPtr &graph) {
     }
   }
 }
+
+bool NeedConvertValueNodeToParameter(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() != "ge") {
+    return false;
+  }
+  if (!node->isa<ValueNode>()) {
+    return false;
+  }
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->is_forward_output()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void ConvertValueNodeToParameter(const KernelGraphPtr &graph, const AnfNodePtr &node,
+                                 std::vector<ParameterPtr> *added_parameters) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(added_parameters);
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  auto new_parameter = graph->NewParameter(node->abstract());
+  new_parameter->IncreaseUsedGraphCount();
+  graph_inputs->push_back(new_parameter);
+
+  new_parameter->set_user_data(kForwardOutput, node->cast<ValueNodePtr>()->value());
+  graph->FrontBackendMapAdd(node, new_parameter);
+  (void)added_parameters->emplace_back(new_parameter);
+  MS_LOG(DEBUG) << "Replace ValueNode " << node->DebugString() << " with Parameter " << new_parameter->DebugString();
+}
 }  // namespace
 
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
@@ -1909,6 +1950,9 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
     graph_inputs->push_back(new_parameter);
     graph->FrontBackendMapAdd(node, new_parameter);
   }
+
+  std::vector<ParameterPtr> added_parameters;
+
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<Parameter>()) {
@@ -1917,6 +1961,10 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
     MS_LOG(DEBUG) << "Start create new node, node = " << node->DebugString();
     // Create value node
     if (node->isa<ValueNode>()) {
+      if (NeedConvertValueNodeToParameter(node)) {
+        ConvertValueNodeToParameter(graph, node, &added_parameters);
+        continue;
+      }
       // Create common value node
       if (!IsValueNode<FuncGraph>(node)) {
         (void)CreateNewValueNode(node, graph.get());
@@ -1941,6 +1989,13 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   }
 
   AddParameterToGraphInputs(func_graph->parameters(), graph.get());
+  // Add ValueNode-Parameter to graph.
+  auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(graph_inputs);
+  for (auto &parameter : added_parameters) {
+    (void)graph_inputs->emplace_back(parameter);
+  }
+
   FuncGraphManagerPtr manager = MakeManager({graph});
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);

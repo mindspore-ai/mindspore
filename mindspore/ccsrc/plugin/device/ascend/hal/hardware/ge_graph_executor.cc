@@ -402,6 +402,24 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   }
   return true;
 }
+
+void ClearForwardOutputAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &input_nodes = graph->input_nodes();
+  for (const auto &input : input_nodes) {
+    MS_EXCEPTION_IF_NULL(input);
+    auto parameter = input->cast<ParameterPtr>();
+    if (parameter != nullptr) {
+      if (parameter->has_user_data(kForwardOutput)) {
+        auto device_address = AnfAlgo::GetMutableOutputAddr(parameter, 0);
+        auto new_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(device_address, device_context);
+        AnfAlgo::SetOutputAddr(new_address, 0, parameter.get());
+        MS_LOG(DEBUG) << "Clear old address " << device_address.get() << " and set new address " << new_address.get()
+                      << " to parameter " << parameter->name();
+      }
+    }
+  }
+}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -948,6 +966,8 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << real_output_size << " tensor size "
                       << ge_outputs.size();
   }
+
+  ClearForwardOutputAddress(kg, device_context_);
   return true;
 }
 
@@ -1105,6 +1125,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
                         << ge_inputs.size();
     }
+    MS_LOG(DEBUG) << "[ZeroCopy] Update input " << kv.first->DebugString() << " address to "
+                  << output_addr->GetMutablePtr();
     (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()),
                                        output_addr->GetSize(), [](void *) {});
   }
@@ -1142,6 +1164,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
                         << "\n Maybe memory is not enough, memory statistics:"
                         << AscendMemAdapter::GetInstance().DevMemStatistics();
     }
+    MS_LOG(DEBUG) << "[ZeroCopy] Update output " << output_node->DebugString() << " out_idx " << index << " address to "
+                  << output_device_addr->GetMutablePtr();
     ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
                             output_device_addr->GetSize(), [](void *) {});
     idx++;

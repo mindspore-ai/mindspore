@@ -606,6 +606,10 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   GetShadowBackendNodeMap(graph, &shadow_backend_node_map);
   for (auto &item : need_alloc_nodes) {
     MS_EXCEPTION_IF_NULL(item);
+    if (item->has_user_data(kForwardOutput)) {
+      MS_LOG(DEBUG) << "Skip allocate memory for forward output parameter " << item->DebugString();
+      continue;
+    }
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);

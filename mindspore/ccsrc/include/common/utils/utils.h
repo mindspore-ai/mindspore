@@ -535,6 +535,7 @@ constexpr auto kIsLoopCountSink = "is_loop_count_sink";
 constexpr auto kIsDynamicShape = "is_dynamic_shape";
 constexpr auto kInputs = "inputs";
 constexpr auto kParameters = "parameters";
+constexpr auto kForwardOutput = "forward_output";
 constexpr auto kChildGraphResult = "child_graph_result";
 constexpr auto kDeviceTarget = "device_target";
 constexpr auto kRootGraphId = "root_graph_id";

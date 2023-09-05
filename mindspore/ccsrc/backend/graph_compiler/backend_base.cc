@@ -201,6 +201,26 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
 }
 }  // namespace
 
+bool GetTensorFromForwardOutputParameter(const AnfNodePtr &input_node, std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  // if input_node if from ValueNode,
+  // push Tensor of ValueNode to input_tensors.
+  if (input_node->isa<Parameter>()) {
+    auto parameter = input_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    if (parameter->has_user_data(kForwardOutput)) {
+      auto value = parameter->user_data<Value>(kForwardOutput);
+      auto tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      (void)input_tensors->emplace_back(tensor);
+      MS_LOG(DEBUG) << "Get forward output tensor " << tensor->ToString()
+                    << " for graph input, address:" << tensor->device_address().get();
+      return true;
+    }
+  }
+  return false;
+}
+
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kInputProcess,
@@ -214,6 +234,10 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
     MS_EXCEPTION_IF_NULL(kernel_graph);
     bool is_pynative_bprop_kernel_graph = kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
+      if (GetTensorFromForwardOutputParameter(input_node, &input_tensors)) {
+        continue;
+      }
+
       auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
       if (element_pair.first) {
         PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &flatten_values,
