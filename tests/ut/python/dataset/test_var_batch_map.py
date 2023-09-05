@@ -746,7 +746,7 @@ def test_batch_multiprocessing_with_in_out_rowsize():
         return col1, col2
 
     dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
-                            python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[12, 20])
+                            python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[3, 6])
 
     assert dataset.get_dataset_size() == 30
 
