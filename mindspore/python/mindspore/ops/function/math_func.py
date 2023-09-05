@@ -3233,13 +3233,14 @@ def invert(x):
         out_i = \sim x_{i}
 
     Args:
-        x (Tensor): The input Tensor.
+        x (Tensor): The input Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
+            The data type should be one of the following types: int16, uint16.
 
     Returns:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither int nor uint.
+        TypeError: If dtype of `x` is neither int16 nor uint16.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3265,8 +3266,10 @@ def erf(input):
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor of Gaussian error function. Its data type
-            must be float16 float32 or float64.
+        input (Tensor): The input tensor of Gaussian error function. Supported dtypes:
+
+            - Ascend: float16, float32.
+            - GPU/CPU: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -3299,7 +3302,10 @@ def erfc(input):
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor with a dtype of float16, float32 or float64.
+        input (Tensor): The input tensor. Supported dtypes:
+
+            - Ascend: float16, float32.
+            - GPU/CPU: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as `input`.
@@ -7096,7 +7102,8 @@ def cumsum(x, axis, dtype=None):
         For the case of dynamic shape, the dtype of `x` only support int32, float16 or float32.
 
     Args:
-        x (Tensor): The input Tensor to accumulate.
+        x (Tensor): The input Tensor of shape :math:`(N,*)` where :math:`*` means, any number
+            of additional dimensions.
         axis (int): Axis along which the cumulative sum is computed.
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
             the input Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
@@ -11200,7 +11207,10 @@ def erfinv(input):
     where :math:`x` is the `input`.
 
     Args:
-        input (Tensor): The input tensor to compute with, with data type float16, float32 or float64.
+        input (Tensor): The input tensor. Supported dtypes:
+
+            - Ascend: float16, float32.
+            - GPU/CPU: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as `input`.

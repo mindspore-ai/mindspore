@@ -27,7 +27,11 @@ mindspore.ops.GridSampler2D
           则不使用角像素对齐。默认值：``False`` 。
 
     输入：
-        - **input_x** (Tensor) - 一个4D的Tensor，dtype为float16、float32或float64，shape为 :math:`(N, C, H_{in}, W_{in})` 。
+        - **input_x** (Tensor) - 一个4D的Tensor，shape为 :math:`(N, C, H_{in}, W_{in})` 。支持数据类型：
+
+          - Ascend： float16、float32。
+          - GPU/CPU： float16、float32、float64。
+
         - **grid** (Tensor) - 一个4D的Tensor，dtype和 `input_x` 相同，shape为 :math:`(N, H_{out}, W_{out}, 2)` ，
           用于指定由输入空间维度归一化的采样像素位置。
 

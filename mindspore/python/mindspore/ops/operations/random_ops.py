@@ -728,6 +728,12 @@ class UniformReal(Primitive):
           separate calls, the random number generated will not change.
         - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
           to worry about which seed is more important.
+        - Currently, on the Ascend platform, `shape` as a Tensor is not supported.
+          This is supported on CPU/GPU platforms. When the input is a Tensor,
+          the supported data types are as follows:
+
+          - GPU: int32, int64.
+          - CPU: int16, int32, int64.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -737,7 +743,6 @@ class UniformReal(Primitive):
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of tensor to be generated. Only constant value is allowed.
-          Supported dtypes: int16, int32, int64.
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.

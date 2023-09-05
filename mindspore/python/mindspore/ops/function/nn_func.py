@@ -4625,7 +4625,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
 
     Args:
         input (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
-            H_{in}, W_{in})` (5-D case) and dtype of float16, float32 or float64.
+            H_{in}, W_{in})` (5-D case) and dtype of float32 or float64.
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str): An optional string specifying the interpolation method. The optional values are
@@ -5795,15 +5795,20 @@ def bias_add(input_x, bias):
     consistent with the shape of the `input_x` Tensor.
 
     Args:
-        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions.
-        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of `input_x`.
+        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
+
+            - Ascend/CPU: all Number type.
+            - GPU: float16, float32, int8.
+
+        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+            `input_x`. It has the same type as `input_x`.
 
     Returns:
         Tensor, with the same shape and data type as `input_x`.
 
     Raises:
         TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` or `bias` is inconsistent.
+        TypeError: If dtype of `input_x` and `bias` is inconsistent.
         TypeError: If dimension of `input_x` is not in the range [2, 5].
 
     Supported Platforms:

@@ -1343,7 +1343,8 @@ class CumProd(Primitive):
         reverse (bool): If ``True`` , reverse the result along axis. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor[Number]) - The input tensor.
+        - **x** (Tensor[Number]) - The input Tensor with shape
+          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **axis** (int) - The dimensions to compute the cumulative product.
           Only constant value is allowed.
 
@@ -1745,7 +1746,8 @@ class CumSum(Primitive):
         reverse (bool): If ``True`` , perform inverse cumulative sum. Default: ``False`` .
 
     Inputs:
-        - **input** (Tensor) - The input tensor to accumulate.
+        - **input** (Tensor) - The input Tensor with shape
+          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
           Must be in the range [-rank(input), rank(input)).
 
@@ -3153,8 +3155,10 @@ class Erf(Primitive):
     Refer to :func:`mindspore.ops.erf` for more details.
 
     Inputs:
-        - **x** (Tensor) - Input Tensor of Gaussian error function. Its data type
-          must be float16 float32 or float64.
+        - **x** (Tensor) - Input Tensor of Gaussian error function. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -3186,7 +3190,10 @@ class Erfc(Primitive):
     Refer to :func:`mindspore.ops.erfc` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor with a dtype of float16, float32 or float64.
+        - **x** (Tensor) - The input tensor. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -3771,8 +3778,10 @@ class Floor(Primitive):
     Refer to :func:`mindspore.ops.floor` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor, its data type must be float16,
-          float32 or float64.
+        - **x** (Tensor) - The input tensor. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -6870,7 +6879,10 @@ class Erfinv(Primitive):
     Refer to :func:`mindspore.ops.erfinv` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor to compute with, with data type float16, float32 or float64.
+        - **input_x** (Tensor) - The input tensor.  Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape and dtype as `input_x`.
