@@ -29,15 +29,19 @@ enum TaskType {
   kBpropTask,
   kFrontendTask,
   kBackendTask,
+  kKernelTask,
   kExitTask,
   kWaitTask
 };
+
+enum class KernelTaskType { kNORMAL_VIEW_TASK = 0, kCONTIGUOUS_TASK, kCOPY_TASK };
 
 class AsyncTask {
  public:
   explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
   virtual ~AsyncTask() = default;
   virtual void Run() = 0;
+  virtual bool RunWithRet() { return false; }
   virtual void SetException(const std::exception_ptr & /* e */) {}
 
   TaskType task_type() const { return task_type_; }

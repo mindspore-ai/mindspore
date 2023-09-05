@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <utility>
+#include <memory>
 #include "runtime/pynative/async/task.h"
 #include "pipeline/pynative/base.h"
 #include "backend/common/session/session_basic.h"
@@ -58,6 +59,61 @@ class BackendTask : public AsyncTask {
     run_func_;
   FrontendOpRunInfoPtr op_run_info_;
   BackendOpRunInfoPtr backend_op_run_info_;
+};
+
+class ViewKernelBackendTask : public AsyncTask {
+ public:
+  ViewKernelBackendTask(
+    std::function<void(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type)> run_func,
+    FrontendOpRunInfoPtr op_run_info, const KernelTaskType &task_type)
+      : AsyncTask(kBackendTask),
+        run_func_(std::move(run_func)),
+        op_run_info_(std::move(op_run_info)),
+        task_type_(task_type) {}
+  ~ViewKernelBackendTask() override = default;
+  void Run() override;
+
+ private:
+  std::function<void(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type)> run_func_;
+  FrontendOpRunInfoPtr op_run_info_;
+  KernelTaskType task_type_;
+};
+
+class AllocViewMemBackendTask : public AsyncTask {
+ public:
+  AllocViewMemBackendTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info,
+                                             const tensor::TensorPtr &input_tensor, const size_t &input_idx)>
+                            run_func,
+                          FrontendOpRunInfoPtr op_run_info, const tensor::TensorPtr &input_tensor,
+                          const size_t &input_idx)
+      : AsyncTask(kBackendTask),
+        run_func_(std::move(run_func)),
+        op_run_info_(std::move(op_run_info)),
+        input_tensor_(input_tensor),
+        input_idx_(input_idx) {}
+  ~AllocViewMemBackendTask() override = default;
+  void Run() override;
+  void SetException(const std::exception_ptr &e) override;
+
+ private:
+  std::function<void(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                     const size_t &input_idx)>
+    run_func_;
+  FrontendOpRunInfoPtr op_run_info_;
+  tensor::TensorPtr input_tensor_;
+  size_t input_idx_{0};
+};
+
+class ContiguousBackendTask : public AsyncTask {
+ public:
+  ContiguousBackendTask(std::function<void(const tensor::TensorPtr &tensor)> run_func, const tensor::TensorPtr &tensor)
+      : AsyncTask(kBackendTask), run_func_(std::move(run_func)), tensor_(tensor) {}
+  ~ContiguousBackendTask() override = default;
+  void Run() override;
+
+ private:
+  std::function<void(const tensor::TensorPtr &tensor)> run_func_;
+  tensor::TensorPtr tensor_;
 };
 }  // namespace pynative
 }  // namespace mindspore

@@ -25,6 +25,7 @@
 #include <vector>
 #include <numeric>
 #include <optional>
+#include <unordered_map>
 #include "kernel/oplib/oplib.h"
 #include "ir/dtype.h"
 #include "kernel/kernel.h"
@@ -544,6 +545,28 @@ std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string
                        [](int64_t num) { return static_cast<T>(num); });
   return out_shape;
 }
+
+struct FormatInfo {
+  FormatInfo(std::string format, bool is_padded) : baseFormat(format), isPadded(is_padded) {}
+  std::string baseFormat = kOpFormat_ND;
+  bool isPadded = false;
+};
+
+class BACKEND_EXPORT FormatHelper {
+ public:
+  static FormatHelper &GetInstance() noexcept;
+  const std::string GetBaseFormat(const std::string &format);
+  bool IsBaseFormatType(const std::string &format);
+  bool IsPadded(const std::string &format);
+  void Clear();
+
+ private:
+  FormatHelper() { InitInfo(); }
+  ~FormatHelper() = default;
+  void InitInfo();
+
+  std::unordered_map<std::string, FormatInfo> info;
+};
 }  // namespace trans
 }  // namespace mindspore
 

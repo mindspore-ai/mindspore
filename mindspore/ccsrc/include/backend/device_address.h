@@ -154,6 +154,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   void SetSize(size_t size) { size_ = size; }
 
   const std::string &format() const { return format_; }
+  void set_format(const std::string &format) { format_ = format; }
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
@@ -162,6 +163,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
   void set_type_id(TypeId type_id) { type_id_ = type_id; }
   ShapeVector host_shape() const { return host_shape_; }
+  void set_device_shape(const ShapeVector &shape) { device_shape_ = shape; }
+  const ShapeVector &device_shape() const { return device_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
   virtual bool mem_offloaded() const { return false; }
@@ -286,6 +289,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::pair<AnfNodeWeakPtr, size_t> node_index() const { return node_index_; }
   void set_deleter(const std::function<void(uint8_t *)> &deleter) { deleter_ = deleter; }
   std::function<void(uint8_t *)> deleter() const { return deleter_; }
+  void set_is_view(bool is_view) { is_view_ = is_view; }
+  bool is_view() { return is_view_; }
 
   using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
   SyncUserDataHandler sync_user_data_handler() { return sync_user_data_handler_; }
@@ -304,6 +309,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
   ShapeVector host_shape_{};
+  ShapeVector device_shape_{};
+  bool is_view_{false};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
   // The DeviceAddress is held by ValueNodes. These ValueNodes are outputs of forward network.

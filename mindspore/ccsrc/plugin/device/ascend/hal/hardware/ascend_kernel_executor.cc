@@ -49,6 +49,8 @@
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
+#include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -116,6 +118,18 @@ void RemovePlaceHolder(const KernelGraphPtr &graph) {
         MS_LOG(DEBUG) << "Remove placeholder input and kAttrPlaceHolderIndex for " << op_name;
       }
     }
+  }
+}
+
+pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
+                                          const std::shared_ptr<pynative::KernelTaskContext> &context) {
+  switch (task_type) {
+    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+      return std::make_shared<AscendContiguousKernelTask>(context);
+    case pynative::KernelTaskType::kCOPY_TASK:
+      return std::make_shared<AscendCopyWithSliceKernelTask>(context);
+    default:
+      MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
   }
 }
 }  // namespace
@@ -188,6 +202,25 @@ void AscendKernelExecutor::LaunchDeviceLibrary() const {
     MS_LOG(EXCEPTION) << "Cust aicpu kernel so load failed.";
   }
   MS_LOG(INFO) << "Status record: end launch device library.";
+}
+
+bool AscendKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+                                             const device::DeviceAddressPtrList &input_addr_list,
+                                             const TensorStorageInfoPtrList &input_storage_list,
+                                             const device::DeviceAddressPtrList &output_addr_list) const {
+  // TODO(wangchangheng): Lock保护
+  auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+
+  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
+                                                                    input_storage_list, output_addr_list, stream);
+
+  auto task = GetTaskByTaskType(task_type, task_context);
+  MS_EXCEPTION_IF_NULL(task);
+  auto ret = task->RunWithRet();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
+  }
+  return ret;
 }
 
 void AscendKernelExecutor::SetAtomicCleanToNodes(const KernelGraphPtr &graph,

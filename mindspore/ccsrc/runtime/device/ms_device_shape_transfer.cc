@@ -16,6 +16,7 @@
  */
 #include "runtime/device/ms_device_shape_transfer.h"
 #include <functional>
+#include <unordered_map>
 #include <numeric>
 #include <utility>
 #include <algorithm>
@@ -2020,5 +2021,56 @@ RangePair ShapeRangeTransfer::FRAC_Z_3DRange(const RangePair &ori_range, const T
   dst_range.push_back(c0);
   return dst_range;
 }
+void FormatHelper::InitInfo() {
+  info = {{kOpFormat_DEFAULT, FormatInfo(kOpFormat_DEFAULT, false)},
+          {kOpFormat_NC1HWC0, FormatInfo(kOpFormat_NCHW, true)},
+          {kOpFormat_ND, FormatInfo(kOpFormat_ND, false)},
+          {kOpFormat_NCHW, FormatInfo(kOpFormat_NCHW, false)},
+          {kOpFormat_NHWC, FormatInfo(kOpFormat_NHWC, false)},
+          {kOpFormat_FRAC_NZ, FormatInfo(kOpFormat_ND, true)},
+          {kOpFormat_FRAC_Z, FormatInfo(kOpFormat_NCHW, true)},
+          {kOpFormat_NDHWC, FormatInfo(kOpFormat_NCDHW, false)},
+          {kOpFormat_NCDHW, FormatInfo(kOpFormat_NCDHW, false)},
+          {kOpFormat_NDC1HWC0, FormatInfo(kOpFormat_NCDHW, true)},
+          {kOpFormat_FRACTAL_Z_3D, FormatInfo(kOpFormat_NCDHW, true)}};
+}
+
+FormatHelper &FormatHelper::GetInstance() noexcept {
+  static FormatHelper instance{};
+  return instance;
+}
+
+const std::string FormatHelper::GetBaseFormat(const std::string &format) {
+  const auto &iter = info.find(format);
+  if (iter != info.end()) {
+    return iter->second.baseFormat;
+  } else {
+    // TODO(wangchangheng): other format
+    // MS_LOG(EXCEPTION) << "not found:" << format;
+    return "";
+  }
+}
+
+bool FormatHelper::IsBaseFormatType(const std::string &format) {
+  const auto &iter = info.find(format);
+  if (iter == info.end()) {
+    // 待实现
+    MS_LOG(EXCEPTION) << "not found:" << format;
+    return false;
+  }
+
+  return iter->first == iter->second.baseFormat;
+}
+
+bool FormatHelper::IsPadded(const std::string &format) {
+  auto itr = info.find(format);
+  if (itr != info.end()) {
+    return itr->second.isPadded;
+  }
+  MS_LOG(ERROR) << "unknown format type:" << format;
+  return true;
+}
+
+void FormatHelper::Clear() { info.clear(); }
 }  // namespace trans
 }  // namespace mindspore

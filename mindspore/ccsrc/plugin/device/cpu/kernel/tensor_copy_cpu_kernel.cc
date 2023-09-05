@@ -75,7 +75,8 @@ bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
 
   auto ret = memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
   if (ret != EOK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << "Copy input:" << input
+                  << " size=" << inputs[0]->size << " ,To output:" << output << " size=" << outputs[0]->size;
     return false;
   }
   return true;

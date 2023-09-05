@@ -63,6 +63,10 @@ class AscendKernelExecutor : public KernelExecutor {
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return res_manager_->rank_id_; }
 
+  bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+                         const TensorStorageInfoPtrList &input_storage_list,
+                         const device::DeviceAddressPtrList &output_addr_list) const override;
+
  private:
   // Launch device aicpu library
   void LaunchDeviceLibrary() const;

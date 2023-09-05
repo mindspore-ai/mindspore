@@ -56,6 +56,7 @@ struct BaseOpRunInfo {
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
   std::vector<int64_t> dyn_input_sizes;
+  std::vector<tensor::TensorPtr> output_tensors;
 };
 
 struct AsyncStatus {
@@ -89,6 +90,7 @@ struct FrontendOpRunInfo {
   bool output_get_by_infer_value = false;
   bool should_be_cache = false;
   bool is_jit_input = false;
+  bool is_view_op = false;
   int mix_type{0};
   size_t input_size = 0;
   // real_out return to python; out_value in OpGradInfo may be fake value;
@@ -103,7 +105,6 @@ struct FrontendOpRunInfo {
   std::vector<Signature> signatures{};
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
-  std::vector<tensor::TensorPtr> output_tensors;
   std::vector<DeviceAddressPromisePtr> device_sync_promises;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;

@@ -206,7 +206,7 @@ int GetExecutionMode() {
 
 void UpdateTensorAddress(const session::BackendOpRunInfoPtr &op_run_info,
                          const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
-  auto &output_tensors = op_run_info->output_tensors;
+  auto &output_tensors = op_run_info->base_op_run_info.output_tensors;
   auto &output_promises = op_run_info->device_sync_promises;
   if (output_tensors.size() != output_nodes.size() || output_tensors.size() != output_promises.size()) {
     MS_LOG(EXCEPTION) << "Output tensors " << output_tensors.size() << " output promises " << output_promises.size()
@@ -238,7 +238,7 @@ void UpdateTensorAddressDynamic(const session::BackendOpRunInfoPtr &op_run_info,
                                 const OpCompilerInfoPtr &op_compiler_info,
                                 const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) {
   MS_EXCEPTION_IF_NULL(op_compiler_info);
-  auto &output_tensors = op_run_info->output_tensors;
+  auto &output_tensors = op_run_info->base_op_run_info.output_tensors;
   auto &output_promises = op_run_info->device_sync_promises;
   auto &output_nodes = op_compiler_info->graph_output_nodes_;
   if (output_tensors.size() != output_nodes.size() || output_tensors.size() != output_promises.size()) {
@@ -260,6 +260,26 @@ void UpdateTensorAddressDynamic(const session::BackendOpRunInfoPtr &op_run_info,
     if (exec_mode != kPynativeMode) {
       output_tensor->data_sync(false);
     }
+  }
+}
+
+void AllocateMemForTensor(const tensor::TensorPtr &tensor, DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  if ((device_address->GetPtr() == nullptr) &&
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  }
+
+  auto tensor_size = LongToSize(tensor->data().nbytes());
+  auto tensor_type = tensor->data_type();
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor_type, tensor->data_c(),
+                                        tensor->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
 }  // namespace
@@ -1186,6 +1206,119 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(op_compiler_info);
 
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
+}
+
+void MindRTBackend::RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+                                               const device::DeviceAddressPtrList &input_addr_list,
+                                               const TensorStorageInfoPtrList &input_storage_list,
+                                               const device::DeviceAddressPtrList &output_addr_list) {
+  static auto kernel_task_func =
+    [](const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+       const TensorStorageInfoPtrList &input_storage_list, const device::DeviceAddressPtrList &output_addr_list,
+       DeviceContext *device_context) {
+      runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+    };
+
+  auto kernel_task = std::make_shared<pynative::KernelDeviceTask>(
+    kernel_task_func, task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  op_executor.PushSimpleOpRunTask(kernel_task);
+}
+
+void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info,
+                                      const pynative::KernelTaskType &task_type, bool enable_async) {
+  device::DeviceAddressPtrList input_addr_list;
+  TensorStorageInfoPtrList input_storage_list;
+  device::DeviceAddressPtrList output_addr_list;
+
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  for (size_t idx = 0; idx < base_op_run_info.input_tensor.size(); idx++) {
+    auto input_tensor = base_op_run_info.input_tensor[idx];
+    if (input_tensor->device_address() == nullptr) {
+      if (idx == 0) {
+        MS_LOG(EXCEPTION) << "First tensor can not be nullptr";
+      }
+      auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
+      auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape());
+
+      input_tensor->set_device_address(input_addr);
+      RunAllocMemTask(device_context, input_tensor, enable_async);
+      (void)input_addr_list.emplace_back(input_addr);
+    } else {
+      (void)input_addr_list.emplace_back(
+        std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address()));
+    }
+    (void)input_storage_list.emplace_back(input_tensor->storage_info());
+  }
+
+  std::transform(base_op_run_info.output_tensors.begin(), base_op_run_info.output_tensors.end(),
+                 std::back_inserter(output_addr_list), [](const auto &tensor) {
+                   return std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+                 });
+
+  if (enable_async) {
+    RunViewKernelTaskAsyncImpl(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+  } else {
+    WaitTaskFinish();
+    runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+  }
+}
+
+void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) {
+  MS_EXCEPTION_IF_NULL(tensor);
+
+  auto old_storage_info = tensor->storage_info();
+  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto new_device_address = RunContiguousTaskByAddress(old_device_address, old_storage_info, enable_async);
+  MS_EXCEPTION_IF_NULL(new_device_address);
+
+  tensor->set_device_address(new_device_address);
+  tensor->set_storage_info(nullptr);
+}
+
+device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
+                                                                   const TensorStorageInfoPtr &old_storage_info,
+                                                                   bool enable_async) {
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  MS_EXCEPTION_IF_NULL(old_storage_info);
+
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {old_device_address->device_name(), old_device_address->device_id()});
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, address_size, kOpFormat_DEFAULT, old_device_address->type_id(), old_storage_info->shape);
+  new_device_address->set_device_shape(old_storage_info->shape);
+
+  if (enable_async) {
+    RunViewKernelTaskAsyncImpl(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
+                               {old_storage_info}, {new_device_address});
+  } else {
+    WaitTaskFinish();
+    runtime::LaunchKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
+                              {old_storage_info}, {new_device_address});
+  }
+  return new_device_address;
+}
+
+void MindRTBackend::RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async) {
+  if (!enable_async) {
+    WaitTaskFinish();
+    return AllocateMemForTensor(tensor, device_context);
+  }
+
+  static auto alloc_mem_func = [](DeviceContext *device_context, const tensor::TensorPtr &tensor) {
+    AllocateMemForTensor(tensor, device_context);
+  };
+
+  auto view_task = std::make_shared<pynative::AllocViewMemDeviceTask>(alloc_mem_func, device_context, tensor);
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  op_executor.PushSimpleOpRunTask(view_task);
 }
 
 void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,

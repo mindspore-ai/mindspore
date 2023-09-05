@@ -32,6 +32,7 @@
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
+#include "runtime/pynative/async/task.h"
 
 namespace mindspore {
 namespace device {
@@ -254,6 +255,13 @@ class BACKEND_EXPORT KernelExecutor {
   virtual uint32_t GetRankID() const { return 0; }
 
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
+
+  virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+                                 const device::DeviceAddressPtrList &input_addr_list,
+                                 const TensorStorageInfoPtrList &input_storage_list,
+                                 const device::DeviceAddressPtrList &output_addr_list) const {
+    return false;
+  };
 
  protected:
   DeviceContext *device_context_{nullptr};

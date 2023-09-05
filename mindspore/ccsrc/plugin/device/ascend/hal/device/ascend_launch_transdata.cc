@@ -92,6 +92,17 @@ void AscendLaunchTransData::FreeLaunchDeviceMem() {
   FreeOutputAndWorkspaceDeviceMem();
 }
 
+void AscendLaunchTransData::FreeWorkspaceDeviceMem() {
+  input_addr_ = nullptr;
+  for (size_t i = 0; i < workspaces_addr_.size(); ++i) {
+    if (workspaces_addr_[i] != nullptr) {
+      FreeDeviceMem(workspaces_addr_[i]);
+      workspaces_addr_[i] = nullptr;
+    }
+  }
+  workspaces_addr_.clear();
+}
+
 std::shared_ptr<session::KernelGraph> AscendLaunchTransData::ObtainTransDataKernelGraph() {
   std::vector<TypeId> input_dtypes = {dtype_};
   std::vector<TypeId> output_dtypes = {dtype_};

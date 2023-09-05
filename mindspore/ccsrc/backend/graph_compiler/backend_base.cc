@@ -902,6 +902,46 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
   }
 }
 
+void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
+  auto dispatch_contiguous_task = [this](const tensor::TensorPtr &t) {
+    MS_EXCEPTION_IF_NULL(t);
+    if (t->storage_info() == nullptr) {
+      return;
+    }
+
+    const auto &storage_info = t->storage_info();
+    if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
+      MS_LOG(DEBUG) << "Tensor is already contiguous.";
+      return;
+    }
+    MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
+    RunContiguousTask(t, false);
+  };
+
+  for (const auto &arg : args) {
+    if (utils::isa<tensor::TensorPtr>(arg)) {
+      auto value = utils::cast<tensor::TensorPtr>(arg);
+      dispatch_contiguous_task(value);
+    } else if (utils::isa<ValuePtr>(arg)) {
+      auto value = utils::cast<ValuePtr>(arg);
+      MS_EXCEPTION_IF_NULL(value);
+      if (!value->isa<ValueSequence>()) {
+        return;
+      }
+      auto value_tuple = value->cast<ValueSequencePtr>();
+      MS_EXCEPTION_IF_NULL(value_tuple);
+      auto tuple_value = value_tuple->value();
+      for (const auto &v : tuple_value) {
+        if (!v->isa<tensor::Tensor>()) {
+          continue;
+        }
+        auto t = v->cast<tensor::TensorPtr>();
+        dispatch_contiguous_task(t);
+      }
+    }
+  }
+}
+
 void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
@@ -926,6 +966,8 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   // For pynative and graph mix execution.
+
+  ContiguousArgs(args);
   WaitTaskFinish();
 
   // Run in the pynative mode.

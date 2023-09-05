@@ -1094,4 +1094,17 @@ void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const O
                         vector<device::DeviceAddressPtr> *device_address_list) {
   LaunchKernelsDynamic(op_compiler_info, op_run_info, device_address_list);
 }
+
+void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+                      const device::DeviceAddressPtrList &input_addr_list,
+                      const TensorStorageInfoPtrList &input_storage_list,
+                      const device::DeviceAddressPtrList &output_addr_list) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_LOG(DEBUG) << "Start, task_type:" << task_type;
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(task_type, input_addr_list, input_storage_list,
+                                                                   output_addr_list)) {
+    MS_LOG(EXCEPTION) << "InputContiguous failed";
+  }
+  MS_LOG(DEBUG) << "End";
+}
 }  // namespace mindspore::runtime

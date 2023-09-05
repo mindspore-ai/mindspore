@@ -2324,6 +2324,8 @@ void ClearResAtexit() {
   }
   ClearResPart1();
   ClearResPart2();
+
+  mindspore::trans::FormatHelper::GetInstance().Clear();
   ClearResPart3();
   ClearSingleton();
   MS_LOG(INFO) << "Start unload dynamic lib...";

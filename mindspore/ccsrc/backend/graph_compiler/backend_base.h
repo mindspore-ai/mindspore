@@ -103,6 +103,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   virtual void WaitTaskFinish() const {}
   virtual void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                    const VectorRef &args, VectorRef *outputs) {}
+  virtual void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) {}
 
  protected:
   // Convert the nodes which are not supported in the backend.
@@ -141,6 +142,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
   void UpdateGraphCompilerInfo(const ActorInfo &actor_info);
 
+  void ContiguousArgs(const VectorRef &args);
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.

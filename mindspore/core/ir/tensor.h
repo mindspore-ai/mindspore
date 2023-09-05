@@ -36,6 +36,7 @@
 #include "utils/os.h"
 #include "ir/quantization_param.h"
 #include "ir/meta_grad_data.h"
+#include "ir/tensor_storage_info.h"
 
 // brief mindspore namespace.
 //
@@ -755,6 +756,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] lazy_callback The callback from backend when lazy build is enabled
   void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
 
+  /// \brief Set contiguous callback function to this Tensor
+  ///
+  /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
+  void set_contiguous_callback(
+    const std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> &contiguous_callback) {
+    contiguous_callback_ = contiguous_callback;
+  }
+
   /// \brief Get the memory chunk pointer and offset if memory chunk for this tensor exists.
   ///
   /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
@@ -833,6 +842,11 @@ class MS_CORE_API Tensor : public MetaTensor {
     address_future_ = address_future;
   }
 
+  /// \brief Get tensor future.
+  ///
+  /// \return The future to get device address.
+  const std::shared_ptr<FutureBase<DeviceSync>> address_future() const { return address_future_; }
+
   /// \brief Set tensor quant param.
   ///
   /// \param[in] quant_param The tensor quant param.
@@ -854,6 +868,16 @@ class MS_CORE_API Tensor : public MetaTensor {
   ///
   /// \return offload file path, or empty string if tensor has not offload.
   const std::string GetOffloadFilePath() const;
+
+  /// \brief Set tensor storage info.
+  ///
+  /// \param[in] tensors The tensors to be processed.
+  void set_storage_info(const TensorStorageInfoPtr &storage_info) const { storage_info_ = storage_info; }
+
+  /// \brief Get tensor storage info.
+  ///
+  /// \return Tensor storage info, the value is nullptr default.
+  const TensorStorageInfoPtr storage_info() const { return storage_info_; }
 
   /// \brief pin tensor memory.
   ///
@@ -888,12 +912,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
+  std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> contiguous_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
   AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
-  std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
+  mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
+  mutable TensorStorageInfoPtr storage_info_{nullptr};
 };
 
 // CSRTensor entity class
