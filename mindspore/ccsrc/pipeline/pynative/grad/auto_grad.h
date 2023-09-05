@@ -153,8 +153,6 @@ class VariableAdjoint {
   AnfNodePtr k_node_{nullptr};
 };
 using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
-using VariableAdjointPtrList = std::vector<VariableAdjointPtr>;
-using VariableAdjointWeakPtr = std::weak_ptr<VariableAdjoint>;
 using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
 
 struct AdParam {
@@ -218,7 +216,7 @@ class AutoGradCellImpl {
 
   AbstractBasePtr BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
-  ParameterPtr NewWeightParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
+  ParameterPtr CreateTapeParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
   ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor) const;

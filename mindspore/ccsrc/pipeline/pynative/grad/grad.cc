@@ -129,6 +129,8 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
   } else if (v->isa<IntegerImm>()) {
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
+  } else if (v->isa<ValueDictionary>()) {
+    return PyNativeAlgo::DataConvert::ConvertValueDictToValueTuple(v);
   } else {
     MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
                   << PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract());
@@ -1079,7 +1081,8 @@ void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const 
       // determined by user input, which could not be dynamic shape.
       if (param_node->debug_info()->name() != "sens" || !ir_abs->BuildShape()->IsDynamic()) {
         MS_EXCEPTION(ValueError) << "The shape should be " << ir_shape << ", but got " << input_shape << ", "
-                                 << param_node->DebugString();
+                                 << param_node->DebugString() << ", ir_abs " << ir_abs->ToString() << ", input_abs "
+                                 << input_abs->ToString();
       }
     }
     const auto &ir_dtype = ir_abs->BuildType()->ToString();

@@ -609,6 +609,11 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
     const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
     const auto &indices_tensor = csr_tensor->GetIndices();
     return SetValueGradInfo(indices_tensor, top_cell, grad_type);
+  } else if (value->isa<ValueDictionary>()) {
+    const auto &dic_v = value->cast<ValueDictionaryPtr>()->value();
+    for (const auto &v : dic_v) {
+      SetValueGradInfo(v.second, top_cell, grad_type);
+    }
   }
   return grad_type;
 }
@@ -971,6 +976,16 @@ void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_i
   auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
+}
+
+ValuePtr DataConvert::ConvertValueDictToValueTuple(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  const auto &dic_v = v->cast<ValueDictionaryPtr>();
+  MS_EXCEPTION_IF_NULL(dic_v);
+  std::vector<ValuePtr> v_list;
+  (void)std::transform(dic_v->value().begin(), dic_v->value().end(), std::back_inserter(v_list),
+                       [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
+  return std::make_shared<ValueTuple>(v_list);
 }
 
 void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
