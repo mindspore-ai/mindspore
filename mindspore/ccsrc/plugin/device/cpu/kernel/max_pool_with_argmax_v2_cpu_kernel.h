@@ -71,6 +71,7 @@ class MaxPoolWithArgmaxV2CpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> strides_list_;
   std::vector<int64_t> pads_list_;
   std::vector<int64_t> dilation_list_;
+  int64_t input_size_;
   TypeId x_dtype_{kTypeUnknown};
   TypeId argmax_dtype_{kTypeUnknown};
 };
