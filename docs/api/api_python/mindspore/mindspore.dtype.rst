@@ -29,6 +29,7 @@ mindspore.dtype
       ``mindspore.float16`` ,  ``mindspore.half``      16位浮点数
       ``mindspore.float32`` ,  ``mindspore.single``    32位浮点数
       ``mindspore.float64`` ,  ``mindspore.double``    64位浮点数
+      ``mindspore.bfloat16``                           16位脑浮点数
       ``mindspore.complex64``                          64位复数
       ``mindspore.complex128``                         128位复数
       ==============================================   =============================
