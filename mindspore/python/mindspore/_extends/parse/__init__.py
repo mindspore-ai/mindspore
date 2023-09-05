@@ -26,7 +26,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      convert_to_ms_tensor, get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
                      is_class_type, check_obj_bool, python_isinstance, ms_isinstance, convert_to_ms_csrtensor,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
-                     get_obj_from_sequence, get_type, is_class_member_recursive, merge_global_params, get_global_params,
+                     get_obj_from_sequence, get_type, is_class_member_recursive, get_global_params,
                      get_adapter_tensor_attr, get_obj_defined_from_obj_type,
                      is_from_third_party_library, get_const_abs, get_const_round,
                      get_const_len, is_adapter_tensor_class, is_adapter_parameter_class)

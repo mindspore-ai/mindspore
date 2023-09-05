@@ -36,30 +36,163 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 namespace {
-py::object CallPythonPushGlobalParams(const py::object &dict) {
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  constexpr auto python_merge_dict = "merge_global_params";
-  return python_adapter::CallPyModFn(mod, python_merge_dict, dict);
+CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager);
+AnfNodePtr NewValueNodeWithAbstract(const ValuePtr &value) {
+  auto value_node = NewValueNode(value);
+  value_node->set_abstract(value->ToAbstract());
+  return value_node;
 }
 
-void FuncGraphToPyData(const ValueDictionaryPtr &value_dict, py::object *global_params_dict) {
-  MS_EXCEPTION_IF_NULL(value_dict);
-  MS_EXCEPTION_IF_NULL(global_params_dict);
-  for (const auto &element : value_dict->value()) {
-    const auto &element_name = element.first;
-    const auto &element_abs = element.second;
-    if (element_abs->IsFromTypeId(FuncGraph::kTypeId)) {
-      auto fg = element_abs->cast<FuncGraphPtr>();
-      MS_EXCEPTION_IF_NULL(fg);
-      auto wrapper_obj = fg->python_obj();
-      if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
-        auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
-        (*global_params_dict)[ValueToPyData(element_name)] = fn_py_obj;
-        MS_LOG(DEBUG) << "Found python function object for " << element_name << ", add it to global dict.";
-      }
+AnfNodePtr FuncGraphToPyData(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<ValueNode>()) {
+    return node;
+  }
+  auto value_node = node->cast_ptr<ValueNode>();
+  auto value = value_node->value();
+  if (value->IsFromTypeId(FuncGraph::kTypeId)) {
+    auto fg = value->cast_ptr<FuncGraph>();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto wrapper_obj = fg->python_obj();
+    if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+      return NewValueNode(
+        std::make_shared<parse::InterpretedObject>(wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj()));
     }
   }
-  return;
+  return node;
+}
+
+std::vector<AnfNodePtr> ConvertValueTupleToList(const AnfNodePtr &node) {
+  if ((!IsValueNode<ValueTuple>(node) && !IsPrimitiveCNode(node, prim::kPrimMakeTuple))) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The dictionary's keys and values should be a tuple, but got " << node->DebugString();
+  }
+  std::vector<AnfNodePtr> node_list;
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    auto cnode = node->cast_ptr<CNode>();
+    auto inputs = cnode->inputs();
+    std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(node_list));
+    return node_list;
+  }
+  auto tuple_value = GetValueNode<ValueTuplePtr>(node);
+  auto value_list = tuple_value->value();
+  std::transform(value_list.begin(), value_list.end(), std::back_inserter(node_list),
+                 [](const ValuePtr &value) -> AnfNodePtr { return NewValueNodeWithAbstract(value); });
+  return node_list;
+}
+
+std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnZippedDict(const AnfNodePtr &dict_node) {
+  MS_EXCEPTION_IF_NULL(dict_node);
+  if (dict_node->isa<ValueNode>()) {
+    auto dict_value = GetValueNode<ValueDictionaryPtr>(dict_node);
+    if (dict_node == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict or global dict should be a dictionary, but got "
+                                 << dict_node->DebugString();
+    }
+    std::vector<AnfNodePtr> keys;
+    std::vector<AnfNodePtr> values;
+    for (auto item : dict_value->value()) {
+      (void)keys.emplace_back(NewValueNodeWithAbstract(item.first));
+      (void)values.emplace_back(NewValueNodeWithAbstract(item.second));
+    }
+    return std::make_pair(keys, values);
+  }
+
+  auto make_dict_node = dict_node->cast_ptr<CNode>();
+  if (!IsPrimitiveCNode(dict_node, prim::kPrimMakeDict)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict or global dict should be a dictionary, but got "
+                               << dict_node->DebugString();
+  }
+  constexpr auto kMakeDictKeysInputIndex = 1;
+  constexpr auto kMakeDictValueInputIndex = 2;
+  auto keys_input = make_dict_node->input(kMakeDictKeysInputIndex);
+  auto values_input = make_dict_node->input(kMakeDictValueInputIndex);
+
+  auto keys_list = ConvertValueTupleToList(keys_input);
+  auto values_list = ConvertValueTupleToList(values_input);
+  return std::make_pair(keys_list, values_list);
+}
+
+std::set<std::string> GetLocalKeySet(const std::vector<AnfNodePtr> &key_node_list) {
+  std::set<std::string> key_set;
+  std::transform(key_node_list.begin(), key_node_list.end(), std::inserter(key_set, key_set.begin()),
+                 [](const AnfNodePtr &node) -> std::string {
+                   auto abs = node->abstract();
+                   MS_EXCEPTION_IF_NULL(abs);
+                   auto value = abs->BuildValue();
+                   MS_EXCEPTION_IF_NULL(value);
+                   return GetValue<std::string>(value);
+                 });
+  return key_set;
+}
+
+// Merge global dict to local dict and return merged key and value
+std::pair<AnfNodePtr, AnfNodePtr> MergeGlobalDictToLocal(const AnfNodePtr &global_dict_node,
+                                                         const AnfNodePtr &local_dict_node,
+                                                         const FuncGraphPtr &func_graph,
+                                                         const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(global_dict_node);
+  MS_EXCEPTION_IF_NULL(local_dict_node);
+  auto [global_keys, global_values] = UnZippedDict(global_dict_node);
+  auto [local_keys, local_values] = UnZippedDict(local_dict_node);
+
+  auto local_dict_keys_set = GetLocalKeySet(local_keys);
+
+  std::vector<AnfNodePtr> local_keys_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  std::vector<AnfNodePtr> local_value_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t index = 0; index < global_keys.size(); ++index) {
+    auto global_key = global_keys.at(index);
+    MS_EXCEPTION_IF_NULL(global_key);
+    auto key = GetValueNode<StringImmPtr>(global_key);
+    if (local_dict_keys_set.find(GetValue<std::string>(key)) != local_dict_keys_set.end()) {
+      MS_LOG(INFO) << "The global dict has the same name with local dict.:" << key->ToString();
+      continue;
+    }
+    MS_LOG(DEBUG) << "The global key " << global_key->DebugString() << ", value "
+                  << global_values.at(index)->DebugString() << ". merged in local dict.";
+    (void)local_keys_inputs.emplace_back(global_key);
+    (void)local_value_inputs.emplace_back(FuncGraphToPyData(global_values.at(index)));
+  }
+  std::copy(local_keys.begin(), local_keys.end(), std::back_inserter(local_keys_inputs));
+  std::transform(local_values.begin(), local_values.end(), std::back_inserter(local_value_inputs),
+                 [&manager, &func_graph](const AnfNodePtr &node) -> AnfNodePtr {
+                   if (!IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
+                     return node;
+                   }
+                   auto trans_node = Transform(node->cast<CNodePtr>(), manager);
+                   (void)manager->Replace(node, trans_node);
+                   return trans_node;
+                 });
+  return std::make_pair(func_graph->NewCNode(local_keys_inputs), func_graph->NewCNode(local_value_inputs));
+}
+
+CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager) {
+  constexpr auto input_index_one = 1;
+  constexpr auto input_index_two = 2;
+  constexpr auto input_index_three = 3;
+  auto new_cnode = std::make_shared<CNode>(*cnode);
+  new_cnode->CloneUserData(cnode);
+  new_cnode->set_input(0, NewValueNode(prim::kPrimPyExecute));
+
+  if (!IsValueNode<parse::Script>(cnode->input(input_index_one))) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The first input should be a Script, but got "
+                               << cnode->input(input_index_one)->DebugString();
+  }
+  const auto &script = GetValueNode<std::shared_ptr<parse::Script>>(cnode->input(input_index_one));
+  const auto &script_str = script->script();
+  const auto &script_strimm_node = NewValueNode(std::make_shared<StringImm>(script_str));
+  new_cnode->set_input(input_index_one, script_strimm_node);
+  auto global_dict_node = cnode->input(input_index_two);
+  auto local_dict_node = cnode->input(input_index_three);
+
+  auto [local_dict_keys, local_dict_values] =
+    MergeGlobalDictToLocal(global_dict_node, local_dict_node, cnode->func_graph(), manager);
+
+  new_cnode->set_input(input_index_two, local_dict_keys);
+  new_cnode->set_input(input_index_three, local_dict_values);
+
+  // Record the PyExecute node.
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(new_cnode);
+  return new_cnode;
 }
 }  // namespace
 
@@ -68,109 +201,19 @@ void FuncGraphToPyData(const ValueDictionaryPtr &value_dict, py::object *global_
 //   -->
 //   PyExecute(script, local_dict_keys, local_dict_values),
 //   with side-effect operation:
-//     Push global_dict into global parameters list.
-//     (So it requires no same key name.)
+//     Merge global_dict to local dict.
+//     If there are arguments in global dict and local dict use local dict argument instead of global dict.
 bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   auto manager = resource->manager();
-  const auto &all_nodes = manager->all_nodes();
+  MS_EXCEPTION_IF_NULL(manager);
   auto transact = manager->Transact();
-  constexpr auto input_index_one = 1;
-  constexpr auto input_index_two = 2;
-  constexpr auto input_index_three = 3;
-  for (const auto &node : all_nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
-      continue;
+  const auto all_nodes = manager->all_nodes();
+  for (const auto node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
+      auto trans_node = Transform(node->cast<CNodePtr>(), manager);
+      transact.Replace(node, trans_node);
     }
-    const auto &cnode = node->cast<CNodePtr>();
-    MS_LOG(DEBUG) << "cnode: " << cnode->DebugString();
-    auto new_cnode = std::make_shared<CNode>(*cnode);
-    new_cnode->CloneUserData(cnode);
-    new_cnode->set_input(0, NewValueNode(prim::kPrimPyExecute));
-
-    if (!IsValueNode<parse::Script>(cnode->input(input_index_one))) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The first input should be a Script, but got "
-                                 << cnode->input(input_index_one)->DebugString();
-    }
-    const auto &script = GetValueNode<std::shared_ptr<parse::Script>>(cnode->input(input_index_one));
-    const auto &script_str = script->script();
-    const auto &script_strimm_node = NewValueNode(std::make_shared<StringImm>(script_str));
-    new_cnode->set_input(input_index_one, script_strimm_node);
-
-    if (!IsValueNode<ValueDictionary>(cnode->input(input_index_two))) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The second input should be a dictionary, but got "
-                                 << cnode->input(input_index_two)->DebugString();
-    }
-    const auto &global_dict = GetValueNode<ValueDictionaryPtr>(cnode->input(input_index_two));
-    auto value_dict = global_dict->cast<ValueDictionaryPtr>();
-    py::object py_global_dict = ValueToPyData(global_dict);
-    FuncGraphToPyData(value_dict, &py_global_dict);
-    MS_LOG(DEBUG) << "py_global_dict: " << py::str(py_global_dict);
-    (void)CallPythonPushGlobalParams(py_global_dict);
-
-    const auto &three_input = cnode->input(input_index_three);
-    if (!IsPrimitiveCNode(three_input, prim::kPrimMakeDict) && !IsValueNode<ValueDictionary>(three_input)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The 3rd input should be a dictionary, but got " << three_input->DebugString();
-    }
-    AnfNodePtr local_dict_keys = nullptr;
-    AnfNodePtr local_dict_values = nullptr;
-    if (IsValueNode<ValueDictionary>(three_input)) {
-      const auto &local_dict = GetValueNode<ValueDictionaryPtr>(three_input);
-      auto value_local_dict = local_dict->cast<ValueDictionaryPtr>();
-      if (value_local_dict->value().empty()) {
-        auto str_value = std::make_shared<StringImm>("None");
-        std::vector<ValuePtr> none_value{str_value};
-        const auto none_tuple = std::make_shared<ValueTuple>(none_value);
-        auto none_tuple_node = NewValueNode(none_tuple);
-        local_dict_keys = none_tuple_node;
-        local_dict_values = none_tuple_node;
-      } else {
-        std::vector<ValuePtr> key_vec;
-        std::vector<ValuePtr> value_vec;
-        for (auto key_value : value_local_dict->value()) {
-          (void)key_vec.emplace_back(key_value.first);
-          (void)value_vec.emplace_back(key_value.second);
-        }
-        local_dict_keys = NewValueNode(std::make_shared<ValueTuple>(key_vec));
-        local_dict_values = NewValueNode(std::make_shared<ValueTuple>(value_vec));
-      }
-    } else {
-      const auto &local_dict_cnode = dyn_cast<CNode>(three_input);
-      MS_EXCEPTION_IF_NULL(local_dict_cnode);
-      local_dict_keys = local_dict_cnode->input(input_index_one);
-      local_dict_values = local_dict_cnode->input(input_index_two);
-    }
-
-    if ((!IsValueNode<ValueTuple>(local_dict_keys) && !IsPrimitiveCNode(local_dict_keys, prim::kPrimMakeTuple)) ||
-        (!IsValueNode<ValueTuple>(local_dict_values) && !IsPrimitiveCNode(local_dict_values, prim::kPrimMakeTuple))) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
-                                 << three_input->DebugString();
-    }
-
-    if (local_dict_values->isa<CNode>()) {
-      // Handle values and convert InterpretedObject element.
-      const auto &make_tuple_cnode = dyn_cast<CNode>(local_dict_values);
-      MS_EXCEPTION_IF_NULL(make_tuple_cnode);
-      const auto fg = make_tuple_cnode->func_graph();
-      for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
-        // Convert InterpretedObject value node to PyExecute CNode.
-        const auto &input = make_tuple_cnode->input(i);
-        const auto &value = GetValueNode<parse::InterpretedObjectPtr>(input);
-        if (value != nullptr) {
-          const auto interpreted_value = dyn_cast<parse::InterpretedObject>(value);
-          const std::string &key = interpreted_value->name();
-          const py::object &obj = interpreted_value->obj();
-          const auto &interpreted_node = fallback::ConvertPyObjectToPyExecute(fg, key, obj, input, true);
-          interpreted_node->set_debug_info(input->debug_info());
-          (void)transact.Replace(input, interpreted_node);
-        }
-      }
-    }
-    new_cnode->set_input(input_index_two, local_dict_keys);
-    new_cnode->set_input(input_index_three, local_dict_values);
-    (void)transact.Replace(cnode, new_cnode);
-
-    // Record the PyExecute node.
-    InterpretNodeRecorder::GetInstance().PushPyExecuteNode(new_cnode);
   }
   transact.Commit();
   return true;
