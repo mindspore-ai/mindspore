@@ -1497,7 +1497,9 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       auto info = kernel_graph_partial_map_[sub_kernel_graph.get()];
       call_node->set_abstract(info.abstract);
       (void)cnode_inputs.emplace_back(info.sub_graph);
-      if (common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
+      auto context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      if (context->CellReuseLevel() == CellReuseLevel::kLazyInline) {
         // call_graph and info.sub_graph need inline when cell reuse.
         sub_kernel_graph->set_need_inline(true);
         auto partial_sub_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(info.sub_graph);
@@ -1889,7 +1891,9 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
   MS_EXCEPTION_IF_NULL(graph);
-  if (func_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline) {
     MS_LOG(INFO) << "Need backend inline: " << graph->graph_id();
     graph->set_need_inline(true);
   }

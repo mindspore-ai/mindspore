@@ -272,9 +272,10 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return;
   }
-  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
-  if (graph_reuse) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (cell_reuse) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);

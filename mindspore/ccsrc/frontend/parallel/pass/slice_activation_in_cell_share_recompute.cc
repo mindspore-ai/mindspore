@@ -148,9 +148,10 @@ bool is_step_in() {
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return false;
   }
-  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
-  return graph_reuse;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  return cell_reuse;
 }
 
 CNodePtr SliceRelyNode(const std::shared_ptr<FuncGraphManager> &manager, const CNodePtr &node,

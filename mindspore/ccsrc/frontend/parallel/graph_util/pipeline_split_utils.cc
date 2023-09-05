@@ -93,21 +93,22 @@ static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
 }
 
 static bool EnableShareCell() {
-  const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  auto is_reuse = cell_reuse_env == "1" || cell_reuse_env == "2";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   const auto &comm_reuse_env = common::GetEnv("MS_COMM_COMPILER_OPT");
-  if (!comm_reuse_env.empty() && is_reuse) {
+  if (!comm_reuse_env.empty() && cell_reuse) {
     MS_LOG(EXCEPTION) << "The cell reuse cannot be used with communication reuse,"
                          " please unset environment variable 'MS_COMM_COMPILER_OPT'";
   }
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
-  if (grad_accumulation_shard && is_reuse) {
+  if (grad_accumulation_shard && cell_reuse) {
     MS_LOG(EXCEPTION)
       << "The cell reuse cannot be used with sharding accumulate grad parameter with optimizer parallel,"
          " please set_auto_parallel_context(parallel_optimizer_config={'gradient_accumulation_shard':False})";
   }
-  return is_reuse;
+  return cell_reuse;
 }
 
 static AnfNodePtr GetCallBackwardEndNext(const AnfNodePtr &node) {

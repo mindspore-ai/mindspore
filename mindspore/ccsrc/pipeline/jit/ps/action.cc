@@ -564,8 +564,12 @@ void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
 bool GraphReusingAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   const auto &obj_map = parse::data_converter::GetObjGraphs();
+  bool cell_reused = false;
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
+    if (graphs.size() <= 1) {
+      continue;
+    }
     const auto &fg = graphs[0];
     // fg->parameter_obj_nodes().empty() have been handled by combine like.
     if (!fg->parameter_obj_nodes().empty()) {
@@ -581,8 +585,15 @@ bool GraphReusingAction(const ResourcePtr &resource) {
     (void)std::for_each(graphs.begin(), graphs.end(), [&reusing_graph](const auto &origin_graph) {
       ReplaceWithReusingGraph(reusing_graph, origin_graph);
     });
-
+    cell_reused = true;
     MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const bool enable_ge = context->backend_policy() == "ge";
+  if (cell_reused) {
+    auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;
 }
@@ -1515,12 +1526,7 @@ static std::vector<ActionItem> CommonPipeline() {
   }
 
   // Make the reusable cell to be the reusable function graph
-  static const bool enable_graph_reusing =
-    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
-  if (enable_graph_reusing) {
-    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
-  }
-
+  (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
   static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
   if (enable_pre_lift) {
