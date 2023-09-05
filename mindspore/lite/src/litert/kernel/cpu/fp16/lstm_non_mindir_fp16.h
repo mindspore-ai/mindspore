@@ -48,6 +48,7 @@ class LstmNonMindirFp16CPUKernel : public LstmFp16BaseCPUKernel {
   ~LstmNonMindirFp16CPUKernel() override = default;
 
   int Prepare() override;
+  int ReSize() override;
 
  protected:
   int InitInputWeightBias() override;
