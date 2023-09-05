@@ -1127,8 +1127,9 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   // 2nd input tensor is {}, means reduce all axis.
   if (axis_shape.size() == 1 && axis_shape[0] == 0) {
     auto size = input_tensors[0]->shape().size();
-    std::vector<int64_t> axis;
-    for (size_t i = 0; i < size; ++i) {
+    // For example, input 0 is Tensor(shape=[], value=1), the axis to reduce is 0.
+    std::vector<int64_t> axis = {0};
+    for (size_t i = 1; i < size; ++i) {
       axis.push_back(SizeToLong(i));
     }
     op_run_info->base_op_run_info.input_tensor[1] = std::make_shared<tensor::Tensor>(axis);
