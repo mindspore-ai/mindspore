@@ -289,6 +289,7 @@ class DfGraphConvertor {
   std::shared_ptr<DfGraph> restore_ckp_graph_{nullptr};
   std::shared_ptr<DfGraph> broadcast_graph_{nullptr};
   mindspore::HashMap<AnfNode *, DfGraph> branches_map_;
+  mindspore::HashMap<std::string, size_t> branches_repeat_times_;
   mindspore::HashMap<AnfNode *, OperatorPtr> op_cache_;
   /* record "getnext"<->"out_handler" mapping */
   mindspore::HashMap<AnfNode *, OutHandler> out_handle_cache_;

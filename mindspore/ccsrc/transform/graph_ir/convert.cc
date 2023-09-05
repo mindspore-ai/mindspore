@@ -2661,7 +2661,14 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
     }
   }
 
-  (void)converter.ConvertAllNode().BuildGraph(anf_graph->ToString());
+  std::string graph_name = anf_graph->ToString();
+  if (branches_repeat_times_.count(graph_name) == 0) {
+    branches_repeat_times_[graph_name] = 1;
+  } else {
+    branches_repeat_times_[graph_name] += 1;
+    graph_name = graph_name + "_" + std::to_string(branches_repeat_times_[graph_name]);
+  }
+  (void)converter.ConvertAllNode().BuildGraph(graph_name);
 #ifdef ENABLE_DUMP_IR
   std::string name = graph_node->ToString() + "_ge_graph.dot";
   auto context = MsContext::GetInstance();
@@ -2672,7 +2679,6 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
 #endif
   branches_map_[branch_node.get()] = *(converter.df_graph_);
   MS_LOG(INFO) << "ProcessSubgraph end.";
-  return;
 }
 
 // Update GE op's shape and type info
