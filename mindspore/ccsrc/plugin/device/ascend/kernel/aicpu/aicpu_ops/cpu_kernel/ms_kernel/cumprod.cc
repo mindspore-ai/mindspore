@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cumprod.h"
+#include "cpu_kernel/ms_kernel/cumprod.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -63,7 +66,7 @@ uint32_t CumprodCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t CumprodCpuKernel::CumprodCheck(CpuKernelContext &ctx) {
+uint32_t CumprodCpuKernel::CumprodCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input failed.");
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
   KERNEL_CHECK_NULLPTR(ctx.GetAttr("exclusive"), KERNEL_STATUS_PARAM_INVALID, "get exclusive failed.");
@@ -88,7 +91,7 @@ uint32_t CumprodCpuKernel::CumprodCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t CumprodCpuKernel::CumprodCompute(CpuKernelContext &ctx) {
+uint32_t CumprodCpuKernel::CumprodCompute(const CpuKernelContext &ctx) {
   auto input_data = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto axis_data = reinterpret_cast<int32_t *>(ctx.Input(1)->GetData());
   int32_t axis = *axis_data;

@@ -17,8 +17,11 @@
 #ifndef AICPU_KERNELS_NORMALIZED_DENSE_TO_DENSE_SET_OPERATION_H_
 #define AICPU_KERNELS_NORMALIZED_DENSE_TO_DENSE_SET_OPERATION_H_
 
+#include <map>
 #include <set>
-#include "cpu_ops_kernel.h"
+#include <vector>
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 namespace aicpu {
 enum SetOperation { A_MINUS_B = 0, B_MINUS_A = 1, INTERSECTION = 2, UNION = 3 };
 
@@ -30,10 +33,10 @@ class DenseToDenseSetOperationCpuKernel : public CpuKernel {
  private:
   uint32_t Check(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t OutputSparseTensor(CpuKernelContext &ctx, const std::vector<int64_t> &output_shape, const int64_t num_values,
-                              const std::map<std::vector<int64_t>, std::set<T>> &sets);
+  uint32_t OutputSparseTensor(const CpuKernelContext &ctx, const std::vector<int64_t> &output_shape,
+                              const int64_t num_values, const std::map<std::vector<int64_t>, std::set<T>> &sets);
   template <typename T>
   void ApplySetOperation(const std::set<T> &set1, const std::set<T> &set2, std::set<T> &result);
 

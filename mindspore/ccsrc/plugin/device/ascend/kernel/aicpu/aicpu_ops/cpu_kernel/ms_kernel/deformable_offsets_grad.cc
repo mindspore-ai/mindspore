@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "./deformable_offsets_grad.h"
+#include "cpu_kernel/ms_kernel/deformable_offsets_grad.h"
+
 #include <Eigen/Dense>
+
 #include <cmath>
 #include <utility>
 #include <set>
-#include <algorithm>
-#include <mutex>
-#include <map>
+
 #include <functional>
 #include <thread>
 #include <tuple>
-#include "cpu_kernel_utils.h"
-#include "securec.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "securec/include/securec.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {

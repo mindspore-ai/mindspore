@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CUMPROD_H_
 #define AICPU_KERNELS_NORMALIZED_CUMPROD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class CumprodCpuKernel : public CpuKernel {
@@ -28,10 +28,10 @@ class CumprodCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumprodCheck(CpuKernelContext &ctx);
+  uint32_t CumprodCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CumprodCompute(CpuKernelContext &ctx);
+  uint32_t CumprodCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

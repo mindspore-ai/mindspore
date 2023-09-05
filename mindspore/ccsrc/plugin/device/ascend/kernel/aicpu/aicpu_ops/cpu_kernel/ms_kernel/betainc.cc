@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "betainc.h"
+#include "cpu_kernel/ms_kernel/betainc.h"
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-using namespace std;
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -112,7 +112,7 @@ uint32_t RunParallel(const CpuKernelContext &ctx, std::vector<T *> data_pointers
 }
 
 template <typename T>
-uint32_t BetaincCpuKernel::BetaincCompute(CpuKernelContext &ctx) {
+uint32_t BetaincCpuKernel::BetaincCompute(const CpuKernelContext &ctx) {
   auto input_a = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_b = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto input_x = reinterpret_cast<T *>(ctx.Input(2)->GetData());
@@ -140,7 +140,7 @@ uint32_t BetaincCpuKernel::BetaincCompute(CpuKernelContext &ctx) {
     for (size_t i = 0; i < bcast_shape.size(); i++) {
       bcast_size *= bcast_shape[i];
     }
-    cout << "bcast_size = " << bcast_size << endl;
+    std::cout << "bcast_size = " << bcast_size << std::endl;
 
     if (a_shape.empty()) {
       a_data = new T[bcast_size];

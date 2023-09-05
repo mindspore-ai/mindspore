@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-#include "coalesce.h"
+#include "cpu_kernel/ms_kernel/coalesce.h"
 
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
 #include <Eigen/Dense>
+
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kInputNum = 3;
@@ -45,7 +48,7 @@ uint32_t CoalesceCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CoalesceCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t CoalesceCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   Tensor *x_indices = ctx.Input(0);
   Tensor *x_values = ctx.Input(1);
   Tensor *x_shape = ctx.Input(2);

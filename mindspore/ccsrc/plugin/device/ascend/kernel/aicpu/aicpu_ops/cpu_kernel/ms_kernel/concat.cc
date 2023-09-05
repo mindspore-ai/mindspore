@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-#include "concat.h"
+#include "cpu_kernel/ms_kernel/concat.h"
+
+#include <algorithm>
+#include <complex>
+#include <utility>
 
 #include "utils/kernel_util.h"
-
-using namespace std;
+#include "common/kernel_log.h"
 
 namespace {
 const char *const Concat = "Concat";
 }
 
 namespace aicpu {
-uint32_t ConcatCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
+uint32_t ConcatCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
   if (ctx.GetAttr("N") == nullptr) {
     n_ = 1;
   } else {
@@ -121,9 +124,9 @@ uint32_t ConcatCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_UINT64:
       return DoCompute<uint64_t>(ctx);
     case DT_COMPLEX64:
-      return DoCompute<complex<float>>(ctx);
+      return DoCompute<std::complex<float>>(ctx);
     case DT_COMPLEX128:
-      return DoCompute<complex<double>>(ctx);
+      return DoCompute<std::complex<double>>(ctx);
     default:
       KERNEL_LOG_ERROR("unsupported datatype[%d]", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -131,7 +134,7 @@ uint32_t ConcatCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ConcatCpuKernel::PrepareInput(CpuKernelContext &ctx,
+uint32_t ConcatCpuKernel::PrepareInput(const CpuKernelContext &ctx,
                                        std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> &inputs) {
   inputs.reserve(n_);
   output_concat_dim_ = 0;
@@ -175,7 +178,8 @@ uint32_t ConcatCpuKernel::PrepareInput(CpuKernelContext &ctx,
 }
 
 template <typename T>
-uint32_t ConcatCpuKernel::PrepareOutput(CpuKernelContext &ctx, std::shared_ptr<typename TTypes<T>::Matrix> &output) {
+uint32_t ConcatCpuKernel::PrepareOutput(const CpuKernelContext &ctx,
+                                        std::shared_ptr<typename TTypes<T>::Matrix> &output) {
   Tensor *output_ptr = ctx.Output(0);
   KERNEL_CHECK_NULLPTR(output_ptr, KERNEL_STATUS_PARAM_INVALID, "Get output failed.");
   auto output_data_ptr = output_ptr->GetData();
@@ -189,7 +193,7 @@ uint32_t ConcatCpuKernel::PrepareOutput(CpuKernelContext &ctx, std::shared_ptr<t
 }
 
 template <typename T>
-uint32_t ConcatCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t ConcatCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> inputs;
   KERNEL_CHECK_FALSE((PrepareInput<T>(ctx, inputs) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                      "PrepareInput failed.");
@@ -203,7 +207,7 @@ uint32_t ConcatCpuKernel::DoCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ConcatCpuKernel::ConcatCompute(CpuKernelContext &ctx,
+uint32_t ConcatCpuKernel::ConcatCompute(const CpuKernelContext &ctx,
                                         const std::vector<std::shared_ptr<typename TTypes<T>::ConstMatrix>> &inputs,
                                         std::shared_ptr<typename TTypes<T>::Matrix> &output) {
   size_t num_inputs = inputs.size();
@@ -261,9 +265,8 @@ uint32_t ConcatCpuKernel::ConcatCompute(CpuKernelContext &ctx,
     // Copy remaining data.
     std::vector<const T *> inp;
     inp.reserve(num_inputs);
-    for (const auto &input : inputs) {
-      inp.push_back(&(*input)(skipped_rows, 0));
-    }
+    std::transform(inputs.begin(), inputs.end(), std::back_inserter(inp),
+                   [&skipped_rows](auto input) { return &(*input)(skipped_rows, 0); });
     const int64_t dim0 = output->dimension(0);
     for (int64_t i = skipped_rows; i < dim0; ++i) {
       for (int64_t j = 0; j < static_cast<int64_t>(num_inputs); ++j) {
@@ -277,7 +280,9 @@ uint32_t ConcatCpuKernel::ConcatCompute(CpuKernelContext &ctx,
         }
         out += size;
         inp[j] += size;
-        KERNEL_CHECK_FALSE_EXEC((out != out_end), return );
+        if (!(out != out_end)) {
+          return;
+        }
       }
     }
   };

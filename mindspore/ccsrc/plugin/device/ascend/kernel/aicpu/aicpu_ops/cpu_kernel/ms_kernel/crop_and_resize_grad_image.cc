@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "crop_and_resize_grad_image.h"
-
-#include "cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
+#include "cpu_kernel/ms_kernel/crop_and_resize_grad_image.h"
 
 #include <cmath>
 #include <iostream>
+#include <string>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 constexpr uint32_t kInputNum = 4;
@@ -29,13 +30,14 @@ const char *kCropAndResizeGradImage = "CropAndResizeGradImage";
 }  // namespace
 
 namespace aicpu {
-uint32_t CropAndResizeGradImageCpuKernel::cheakInputTypeAndGetDatas(CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradImageCpuKernel::cheakInputTypeAndGetDatas(const CpuKernelContext &ctx) {
   Tensor *grads = ctx.Input(0);
   Tensor *boxes = ctx.Input(1);
   Tensor *box_index = ctx.Input(2);
   Tensor *image_size = ctx.Input(3);
   Tensor *output = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CropAndResizeGradImage check params failed.");
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                      "CropAndResizeGradImage check params failed.");
   grads_shape_ = grads->GetTensorShape()->GetDimSizes();
   boxes_shape_ = boxes->GetTensorShape()->GetDimSizes();
   box_ind_shape_ = box_index->GetTensorShape()->GetDimSizes();
@@ -84,7 +86,7 @@ uint32_t CropAndResizeGradImageCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CropAndResizeGradImageCpuKernel::GradOfImageCompute(CpuKernelContext &ctx, int64_t start, int64_t end) {
+uint32_t CropAndResizeGradImageCpuKernel::GradOfImageCompute(const CpuKernelContext &ctx, int64_t start, int64_t end) {
   Tensor *grads_tensor = ctx.Input(0);
   Tensor *boxes_tensor = ctx.Input(1);
   Tensor *box_index_tensor = ctx.Input(2);
@@ -96,10 +98,10 @@ uint32_t CropAndResizeGradImageCpuKernel::GradOfImageCompute(CpuKernelContext &c
   T *outputDatas = reinterpret_cast<T *>(output_tensor->GetData());
   int32_t *box_index = reinterpret_cast<int32_t *>(box_index_tensor->GetData());
 
-  const int64_t image_batch = *(image_size + 0);
-  const int64_t image_height = *(image_size + 1);
-  const int64_t image_width = *(image_size + 2);
-  const int64_t depth = *(image_size + 3);
+  const int64_t image_batch = static_cast<int64_t>(*(image_size + 0));
+  const int64_t image_height = static_cast<int64_t>(*(image_size + 1));
+  const int64_t image_width = static_cast<int64_t>(*(image_size + 2));
+  const int64_t depth = static_cast<int64_t>(*(image_size + 3));
   const int64_t crop_height = grads_shape_[1];
   const int64_t crop_width = grads_shape_[2];
   const int64_t crop_depth = grads_shape_[3];
@@ -114,7 +116,7 @@ uint32_t CropAndResizeGradImageCpuKernel::GradOfImageCompute(CpuKernelContext &c
     const float x1 = *(boxes + b * boxesCoordinateNum + 1);
     const float y2 = *(boxes + b * boxesCoordinateNum + 2);
     const float x2 = *(boxes + b * boxesCoordinateNum + 3);
-    const int64_t b_in = *(box_index + b);
+    const int64_t b_in = static_cast<int64_t>(*(box_index + b));
     if (b_in < 0 || b_in > image_batch - 1) {
       continue;
     }
@@ -181,15 +183,15 @@ uint32_t CropAndResizeGradImageCpuKernel::GradOfImageCompute(CpuKernelContext &c
 }
 
 template <typename T>
-uint32_t CropAndResizeGradImageCpuKernel::GradOfImageComputeShared(CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradImageCpuKernel::GradOfImageComputeShared(const CpuKernelContext &ctx) {
   Tensor *image_size_tensor = ctx.Input(3);
   Tensor *output_tensor = ctx.Output(0);
   int32_t *image_size = reinterpret_cast<int32_t *>(image_size_tensor->GetData());
   T *outputDatas = reinterpret_cast<T *>(output_tensor->GetData());
 
-  const int64_t image_height = *(image_size + 1);
-  const int64_t image_width = *(image_size + 2);
-  const int64_t depth = *(image_size + 3);
+  const int64_t image_height = static_cast<int64_t>(*(image_size + 1));
+  const int64_t image_width = static_cast<int64_t>(*(image_size + 2));
+  const int64_t depth = static_cast<int64_t>(*(image_size + 3));
   KERNEL_CHECK_FALSE((image_height > 0 && image_width > 0), KERNEL_STATUS_PARAM_INVALID,
                      "image dimensions must be positive.");
   const int64_t nums_boxes = grads_shape_[0];

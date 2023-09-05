@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "data_format_vec_permute.h"
+#include "cpu_kernel/ms_kernel/data_format_vec_permute.h"
 
 #include <string>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/kernel_util.h"
-using namespace std;
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -92,9 +92,9 @@ uint32_t DataFormatVecPermute::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t DataFormatVecPermute::DataFormatVecPermuteCompute(const int32_t dim, const string &src_format_str,
-                                                           const string &dst_format_str, Tensor *x, Tensor *y,
-                                                           CpuKernelContext &ctx) {
+uint32_t DataFormatVecPermute::DataFormatVecPermuteCompute(const int32_t dim, const std::string &src_format_str,
+                                                           const std::string &dst_format_str, Tensor *x, Tensor *y,
+                                                           const CpuKernelContext &ctx) {
   T *x_addrs = reinterpret_cast<T *>(x->GetData());
   T *y_addrs = reinterpret_cast<T *>(y->GetData());
 

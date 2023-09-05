@@ -17,7 +17,9 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BINCOUNT_H_
 #define AICPU_KERNELS_NORMALIZED_BINCOUNT_H_
 
-#include "cpu_ops_kernel.h"
+#include <map>
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class BincountCpuKernel : public CpuKernel {

@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "csr_sparse_matrix_to_dense.h"
+
+#include "cpu_kernel/ms_kernel/csr_sparse_matrix_to_dense.h"
+
 #include <securec.h>
+#include <algorithm>
 #include <complex>
 #include <numeric>
 #include <string>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
-
-using namespace std;
 
 namespace {
 const uint32_t kInputNum = 5;
@@ -58,8 +60,8 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
   switch (value_type) {
     SWITCH_CASE(indice_type, DT_FLOAT, float_t, status, ctx)
     SWITCH_CASE(indice_type, DT_DOUBLE, double_t, status, ctx)
-    SWITCH_CASE(indice_type, DT_COMPLEX64, complex<float_t>, status, ctx)
-    SWITCH_CASE(indice_type, DT_COMPLEX128, complex<double_t>, status, ctx)
+    SWITCH_CASE(indice_type, DT_COMPLEX64, std::complex<float_t>, status, ctx)
+    SWITCH_CASE(indice_type, DT_COMPLEX128, std::complex<double_t>, status, ctx)
     default:
       KERNEL_LOG_ERROR("CSRSparseMatrixToDense values type [%s] not support.", DTypeStr(value_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -69,7 +71,7 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT, typename valueT>
-uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   indiceT batch_size = ctx.Input(1)->NumElements() - 1;
   auto rank = ctx.Input(0)->NumElements();
   int shift = (rank == 2) ? 0 : 1;

@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bincount.h"
+#include "cpu_kernel/ms_kernel/bincount.h"
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include <iostream>
+
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
@@ -39,16 +43,15 @@ const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 int64_t get_tensor_length(aicpu::Tensor *t) {
   std::vector<int64_t> dim_sizes = t->GetTensorShape()->GetDimSizes();
   int64_t length = 1;
-  for (auto x : dim_sizes) {
-    length *= x;
-  }
+  length = std::accumulate(dim_sizes.begin(), dim_sizes.end(), 1, std::multiplies<int64_t>());
   return length;
 }
 }  // namespace
 
 namespace aicpu {
 template <typename T_in, typename T_out>
-void BincountTask(Tensor *input_arr, int32_t num_bins, Tensor *input_weights, Tensor *output, CpuKernelContext &ctx) {
+void BincountTask(Tensor *input_arr, int32_t num_bins, Tensor *input_weights, Tensor *output,
+                  const CpuKernelContext &ctx) {
   auto bin_array = reinterpret_cast<T_in *>(input_arr->GetData());
   T_out *bin_weights = nullptr;
   if (input_weights != nullptr) {

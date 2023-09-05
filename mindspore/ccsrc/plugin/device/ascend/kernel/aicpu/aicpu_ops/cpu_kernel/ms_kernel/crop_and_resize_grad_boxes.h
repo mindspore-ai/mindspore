@@ -16,8 +16,11 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CROPANDRESIZEGRADBOXES_H_
 #define AICPU_KERNELS_NORMALIZED_CROPANDRESIZEGRADBOXES_H_
 
+#include <vector>
+
 #include "Eigen/Core"
-#include "cpu_ops_kernel.h"
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,10 +34,10 @@ class CropAndResizeGradBoxesCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t cheakInputTypeAndGetDatas(CpuKernelContext &ctx);
+  uint32_t cheakInputTypeAndGetDatas(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t GradOfBoxesCompute(CpuKernelContext &ctx);
+  uint32_t GradOfBoxesCompute(const CpuKernelContext &ctx);
 
   std::vector<int64_t> grads_shape_;
   std::vector<int64_t> image_shape_;

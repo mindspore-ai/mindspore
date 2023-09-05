@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "densetosparsesetoperation.h"
+
+#include "cpu_kernel/ms_kernel/densetosparsesetoperation.h"
 #include <algorithm>
 #include <atomic>
 #include <mutex>
 #include <numeric>
 #include <set>
 #include <string>
-#include <vector>
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 
 namespace {
 const char *kDenseToSparseSetOperation = "DenseToSparseSetOperation";
@@ -221,7 +222,7 @@ uint32_t DenseToSparseSetOperationCpuKernel::OutputSparseTensor(
   return KERNEL_STATUS_OK;
 }
 
-uint32_t DenseToSparseSetOperationCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
+uint32_t DenseToSparseSetOperationCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
   databank.set1 = ctx.Input(kIndex0);
   databank.set2_indices = ctx.Input(kIndex1);
   databank.set2_values = ctx.Input(kIndex2);
@@ -229,7 +230,7 @@ uint32_t DenseToSparseSetOperationCpuKernel::NullptrAndMatVecCheck(CpuKernelCont
   databank.result_indices = ctx.Output(kIndex0);
   databank.result_values = ctx.Output(kIndex1);
   databank.result_shape = ctx.Output(kIndex2);
-  databank.ctx = &ctx;
+  databank.ctx = &const_cast<CpuKernelContext &>(ctx);
   AttrValue *validate_indices = ctx.GetAttr("validate_indices");
   if (validate_indices == nullptr) {
     databank.validate_indices_ = true;

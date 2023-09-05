@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bucketize.h"
+#include "cpu_kernel/ms_kernel/bucketize.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -39,9 +44,7 @@ const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 int64_t get_tensor_length(aicpu::Tensor *t) {
   std::vector<int64_t> dim_sizes = t->GetTensorShape()->GetDimSizes();
   int64_t length = 1;
-  for (auto x : dim_sizes) {
-    length *= x;
-  }
+  length = std::accumulate(dim_sizes.begin(), dim_sizes.end(), 1, std::multiplies<int64_t>());
   return length;
 }
 }  // namespace
@@ -89,7 +92,7 @@ uint32_t BucketizeCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BucketizeCpuKernel::BucketizeCompute(CpuKernelContext &ctx) {
+uint32_t BucketizeCpuKernel::BucketizeCompute(const CpuKernelContext &ctx) {
   const int64_t data_num = get_tensor_length(ctx.Input(0));
   auto boundaries = ctx.GetAttr("boundaries");
   std::vector<float> boundaries_data = boundaries->GetListFloat();

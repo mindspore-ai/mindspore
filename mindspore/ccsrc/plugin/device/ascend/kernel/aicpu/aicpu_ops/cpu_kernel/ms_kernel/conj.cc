@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "conj.h"
+#include "cpu_kernel/ms_kernel/conj.h"
 
+#include <algorithm>
 #include <complex>
 #include <functional>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -41,8 +42,8 @@ constexpr int64_t kParallelDataNums = 512 * 1024;
 
 namespace aicpu {
 uint32_t ConjCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kConj);
-  KERNEL_HANDLE_ERROR(ConjCheck(ctx), "[%s] check params failed.", kConj);
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                      "[%s] check input and output failed.", kConj);
   DataType dataType = ctx.Input(0)->GetDataType();
   switch (dataType) {
     CONJ_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)

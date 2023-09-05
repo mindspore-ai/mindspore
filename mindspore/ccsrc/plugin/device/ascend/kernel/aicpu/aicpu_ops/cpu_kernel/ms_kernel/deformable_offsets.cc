@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "./deformable_offsets.h"
-#include <memory>
+#include "cpu_kernel/ms_kernel/deformable_offsets.h"
+
 #include <Eigen/Dense>
+
 #include <map>
+#include <memory>
 #include <functional>
 #include <thread>
-#include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {

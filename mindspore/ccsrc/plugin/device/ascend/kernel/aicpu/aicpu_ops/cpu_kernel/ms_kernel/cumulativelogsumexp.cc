@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-#include "cumulativelogsumexp.h"
+#include "cpu_kernel/ms_kernel/cumulativelogsumexp.h"
 
+#include <algorithm>
+#include <vector>
+#include <string>
 #include "cmath"
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -57,7 +61,7 @@ uint32_t CumulativeLogsumexpCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCheck(CpuKernelContext &ctx) {
+uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((ctx.Input(1)->GetDataType() == DT_INT16 || ctx.Input(1)->GetDataType() == DT_INT32),
                      KERNEL_STATUS_PARAM_INVALID, "Data type of axis is not support, axis data type is [%u].",
                      ctx.Input(1)->GetDataType())
@@ -152,7 +156,7 @@ void CumulativeProcess(uint32_t outer, uint32_t inner, uint32_t depth, bool reve
   }
 }
 template <typename T>
-uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(CpuKernelContext &ctx) {
+uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(const CpuKernelContext &ctx) {
   auto input_data = static_cast<T *>(ctx.Input(0)->GetData());
   bool exclusive = false;
   bool reverse = false;

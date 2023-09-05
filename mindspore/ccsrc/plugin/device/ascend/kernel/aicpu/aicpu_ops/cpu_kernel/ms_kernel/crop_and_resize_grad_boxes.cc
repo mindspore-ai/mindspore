@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "crop_and_resize_grad_boxes.h"
+#include "cpu_kernel/ms_kernel/crop_and_resize_grad_boxes.h"
 
 #include <cmath>
 #include <iostream>
-#include "cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
 
 #include <chrono>
 #include <cstdlib>
 #include <vector>
 #include "Eigen/Dense"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 constexpr uint32_t kInputNum = 4;
@@ -33,14 +34,15 @@ const char *kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 }  // namespace
 
 namespace aicpu {
-uint32_t CropAndResizeGradBoxesCpuKernel::cheakInputTypeAndGetDatas(CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradBoxesCpuKernel::cheakInputTypeAndGetDatas(const CpuKernelContext &ctx) {
   Tensor *input_data0 = ctx.Input(0);
   Tensor *input_data1 = ctx.Input(1);
   Tensor *input_data2 = ctx.Input(2);
   Tensor *input_data3 = ctx.Input(3);
   Tensor *output = ctx.Output(0);
 
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CropAndResizeGradBoxes check params failed.");
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                      "CropAndResizeGradBoxes check params failed.");
   image_shape_ = input_data1->GetTensorShape()->GetDimSizes();
   boxes_shape_ = input_data2->GetTensorShape()->GetDimSizes();
   box_in_shape_ = input_data3->GetTensorShape()->GetDimSizes();
@@ -110,7 +112,7 @@ uint32_t CropAndResizeGradBoxesCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(const CpuKernelContext &ctx) {
   Tensor *grads_tensor = ctx.Input(0);
   Tensor *image_tensor = ctx.Input(1);
   Tensor *boxes_tensor = ctx.Input(2);

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-#include "cauchy.h"
-#include "cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
+#include "cpu_kernel/ms_kernel/cauchy.h"
+
+#include <algorithm>
 #include <vector>
 #include <random>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
 
 namespace {
 const char *kCauchy = "Cauchy";
@@ -53,7 +56,7 @@ uint32_t CauchyCpuKernel::Compute(CpuKernelContext &ctx) {
 };
 
 template <typename T>
-uint32_t CauchyCpuKernel::CauchyCompute(CpuKernelContext &ctx) {
+uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
   AttrValue *median = ctx.GetAttr("median");
   if (median != nullptr) {
     median_ = median->GetFloat();
