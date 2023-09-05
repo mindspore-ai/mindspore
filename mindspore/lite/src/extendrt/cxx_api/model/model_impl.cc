@@ -659,11 +659,11 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     MSTensor session_output(session_outputs[i]);
     auto &execute_output = outputs->at(i);
     session_output.SetShape(execute_output.Shape());
-    if (session_output.Data().get() != execute_output.Data().get()) {
-      session_output.SetData(execute_output.MutableData(), false);
-    }
     if (session_output.GetDeviceData() != execute_output.GetDeviceData()) {
       session_output.SetDeviceData(execute_output.GetDeviceData());
+    }
+    if (execute_output.GetDeviceData() == nullptr && session_output.Data().get() != execute_output.Data().get()) {
+      session_output.SetData(execute_output.MutableData(), false);
     }
   }
   return kSuccess;
