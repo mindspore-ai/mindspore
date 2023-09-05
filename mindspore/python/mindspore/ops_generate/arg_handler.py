@@ -14,6 +14,8 @@
 # ============================================================================
 """Operator argument handle function."""
 
+from mindspore._c_expression import typing
+
 
 def to_kernel_size(kernel_size):
     if isinstance(kernel_size, int):
@@ -99,3 +101,7 @@ def to_3d_paddings(pad):
     if isinstance(pad, (tuple, list)):
         return pad
     raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
+
+
+def dtype_to_enum(ms_type):
+    return typing.type_to_type_id(ms_type)

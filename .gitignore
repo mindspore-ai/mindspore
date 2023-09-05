@@ -117,6 +117,7 @@ mindspore/lite/test/do_test/
 mindspore/core/ops/gen_lite_ops.h
 mindspore/core/ops/gen_ops_name.h
 mindspore/core/ops/gen_ops_primitive.h
+mindspore/core/ops/gen_enum_def.h
 mindspore/core/ops/gen_ops_def.cc
 mindspore/python/mindspore/ops/auto_generate/gen_labels.py
 mindspore/python/mindspore/ops/auto_generate/arg_handler.py

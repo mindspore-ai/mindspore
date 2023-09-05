@@ -217,6 +217,8 @@ size_t GetTypeByte(const TypePtr &type_ptr) {
   }
 }
 
+int GetTypeId(const TypeId &type_id) { return type_id; }
+
 bool Type::operator==(const Value &other) const {
   if (!other.isa<Type>()) {
     return false;
