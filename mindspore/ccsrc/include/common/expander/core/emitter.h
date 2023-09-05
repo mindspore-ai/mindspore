@@ -250,6 +250,7 @@ class COMMON_EXPORT Emitter {
   /// \param[in] inputs The input tensors.
   /// \param[in] value_depend If index i exists in 'value_depend', the value of inputs[i] is sent to 'functor'.
   ///                         otherwise the shape of inputs[i] is sent.
+  /// \param[in] valid_func The function to check whether the index and input shape is valid.
   /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
   /// otherwise CNode tensors are returned.
   NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,

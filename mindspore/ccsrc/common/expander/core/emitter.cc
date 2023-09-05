@@ -379,34 +379,34 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
 
 NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
                                const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "ShapeCalc got empty inputs";
+  ShapeArray const_args;
+  const_args.reserve(inputs.size());
+  std::vector<bool> value_index(inputs.size());
+  for (auto &i : value_depend) {
+    value_index[i] = true;
   }
-  std::unordered_set<size_t> const_args_indices;
-  ShapeArray const_args(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(inputs[i]);
-    if (std::find(value_depend.begin(), value_depend.end(), static_cast<int64_t>(i)) == value_depend.end()) {
+    if (!value_index[i]) {
       // input[i]'s shape is used
       auto input_shape = inputs[i]->shape();
       auto input_valid = valid_func ? valid_func(i, input_shape) : !IsDynamic(input_shape);
-      if (input_valid) {
-        (void)const_args_indices.insert(i);
-        const_args[i] = input_shape;
+      if (!input_valid) {
+        break;
       }
+      (void)const_args.emplace_back(input_shape);
     } else {
       // input[i]'s value is used
       auto [success, vec] = GetIntList(inputs[i]);
-      if (success) {
-        (void)const_args_indices.insert(i);
-        const_args[i] = std::move(vec);
+      if (!success) {
+        break;
       }
+      (void)const_args.emplace_back(std::move(vec));
     }
   }
 
   NodePtrList res;
   // all inputs are static-shape tensors,
-  if (const_args_indices.size() == inputs.size()) {
+  if (const_args.size() == inputs.size()) {
     auto out = functor->Calc(const_args);
     res.reserve(out.size());
     (void)std::transform(out.begin(), out.end(), std::back_inserter(res),
@@ -414,17 +414,7 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
     return res;
   }
 
-  NodePtrList args(inputs.size());
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    if (const_args_indices.count(i) != 0) {
-      args[i] = Value(const_args[i]);
-    } else if (std::find(value_depend.begin(), value_depend.end(), static_cast<int64_t>(i)) == value_depend.end()) {
-      args[i] = Emit("TensorShape", {inputs[i]});
-    } else {
-      args[i] = inputs[i];
-    }
-  }
-  auto out = Emit(kShapeCalcOpName, args, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_depend)}});
+  auto out = Emit(kShapeCalcOpName, inputs, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_index)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
