@@ -68,6 +68,7 @@ int MaxPoolWithArgmaxV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
   argmax_shape_ = outputs[kIndex1]->GetShapeVector();
+  input_size_ = SizeOf(x_shape_);
   return KRET_OK;
 }
 
@@ -151,7 +152,11 @@ void MaxPoolWithArgmaxV2CpuKernelMod::MaxPoolWithArgmaxV2SingleCompute(DATA_T *i
   for (int cur_h = start_h; cur_h < end_h; cur_h += dH) {
     for (int cur_w = start_w; cur_w < end_w; cur_w += dW) {
       INDICES_T input_idx = stride + cur_h * iW + cur_w;
-      DATA_T input_data = input[input_start + input_idx];
+      int index = input_start + input_idx;
+      DATA_T input_data = static_cast<DATA_T>(0);
+      if (index >= 0 && index < input_size_) {
+        input_data = input[index];
+      }
       if (input_data > max_data) {
         max_idx = input_idx - stride;
         max_data = input_data;
