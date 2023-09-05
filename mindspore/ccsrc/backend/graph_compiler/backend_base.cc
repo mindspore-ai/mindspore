@@ -561,7 +561,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   if ((ms_execution_mode_ == kGraphMode ||
-       (ms_execution_mode_ == kPynativeMode && context_ptr->backend_policy() == "ge")) &&
+       (ms_execution_mode_ == kPynativeMode && pynative::GraphAdapter::IsPynativeGeGraphSink(root_graph_))) &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);
@@ -931,7 +931,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a jit of PyNative Mode.
-  if (ms_execution_mode_ == kPynativeMode && !pynative::GraphAdapter::IsPynativeGeGraphSink(graph_compiler_info)) {
+  if (ms_execution_mode_ == kPynativeMode && !pynative::GraphAdapter::IsPynativeGeGraphSink(root_graph_)) {
     RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
   }
