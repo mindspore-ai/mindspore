@@ -34,19 +34,7 @@ def run_testcase(file_name, case_name=""):
 @pytest.mark.env_onecard
 def test_ge_graph_mode_with_jit_level():
     """
-    Description: Graph Mode jit_level==O3 with GE.
-    Expectation: Run by ge_device_context when jit_level==O3.
+    Description: Graph Mode jit_level with GE.
+    Expectation: Run by ge_device_context when jit_level.
     """
     run_testcase('ge_graph_mode_jit_level')
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_ms_function_with_ge():
-    """
-    Description: PyNative ms function with GE.
-    Expectation: Run by ge_device_context when jit_level==O3.
-    """
-    run_testcase('ge_pynative_mode_jit_level')

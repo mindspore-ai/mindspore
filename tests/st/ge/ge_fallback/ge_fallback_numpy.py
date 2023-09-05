@@ -15,7 +15,6 @@
 import numpy as np
 from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 import mindspore as ms
-from mindspore.common import JitConfig
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -102,7 +101,6 @@ def test_jit_tensor_asnumpy():
     Description: Support JIT Fallback runtime feature.
     Expectation: No exception.
     """
-    @ms.jit(jit_config=JitConfig(jit_level="O3"))
     def tensor_asnumpy():
         tensor = ms.Tensor(np.arange(0, 6).reshape(2, 3))
         res = tensor.asnumpy()

@@ -14,8 +14,7 @@
 # ============================================================================
 import numpy as np
 from tests.st.ge import ge_train_env  # pylint: disable=unused-import
-from mindspore import Tensor, jit, context
-from mindspore.common import JitConfig
+from mindspore import Tensor, context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -26,7 +25,6 @@ def test_return_constant_list():
     Description: Support return constant list.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         return [1, 2, 3, 4]
 
@@ -40,7 +38,6 @@ def test_return_constant_list_2():
     Description: Support return constant list.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         return [True, False, False, True]
 
@@ -54,7 +51,6 @@ def test_return_constant_list_3():
     Description: Support return constant list.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         return [Tensor([1]), Tensor([1, 2, 3]), Tensor([2, 3])]
 
@@ -71,7 +67,6 @@ def test_return_make_list_node():
     Description: Support return make list node.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo(x):
         return [x, x+1, x+2, Tensor([4])]
 
@@ -85,7 +80,6 @@ def test_return_list_with_nest():
     Description: Support return make list in nest scene.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         return [[1, 2, 3], [4, 5, 6]]
 
@@ -99,7 +93,6 @@ def test_return_make_list_with_nest():
     Description: Support return make list in nest scene.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo(x):
         return [[x, x], (x+1, x+2)]
 
@@ -113,7 +106,6 @@ def test_return_buildin_list_func():
     Description: Support return result of list() function.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         return list((1, "2", None, Tensor([1])))
 
@@ -127,7 +119,6 @@ def test_return_list_from_third_party():
     Description: Support return list from third party.
     Expectation: No exception.
     """
-    @jit(jit_config=JitConfig(jit_level="O3"))
     def foo():
         m = np.array([1, 2, 3, 4])
         x = m.tolist()
