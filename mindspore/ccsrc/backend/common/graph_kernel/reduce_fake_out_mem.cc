@@ -19,12 +19,13 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include "mindspore/core/ops/sequence_ops.h"
+
+#include "ir/anf.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore::graphkernel {
-constexpr auto kFakeOut = "fake_output";
 void ReduceFakeOutMem::ModifyAbstract(const AnfNodePtr &composite_node, const std::set<size_t> &fake_real_indices,
                                       const AnfNodePtrList &output_list) const {
   if (fake_real_indices.empty()) {
@@ -82,8 +83,7 @@ bool ReduceFakeOutMem::Run(const FuncGraphPtr &func_graph) {
       auto &out = output_list[i];
       auto out_cnode = out->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_cnode);
-      if (common::AnfAlgo::HasNodeAttr(kFakeOut, out_cnode) &&
-          common::AnfAlgo::GetNodeAttr<bool>(out_cnode, kFakeOut)) {
+      if (GetCNodePrimitive(out_cnode)->name() == prim::kPrimAssign->name()) {
         (void)fake_real_indices.insert(i);
       }
     }

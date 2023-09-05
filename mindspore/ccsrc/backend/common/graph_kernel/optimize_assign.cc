@@ -156,54 +156,6 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-
-bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto todos = TopoSort(func_graph->get_return());
-  bool changed = false;
-  for (const auto &n : todos) {
-    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) {
-      continue;
-    }
-    changed = true;
-    auto cnode = n->cast<CNodePtr>();
-    AnfNodePtrList inputs = {NewValueNode(prim::kPrimInplaceAssign), cnode->input(1), cnode->input(2), cnode->input(2)};
-    auto new_cnode = func_graph->NewCNode(inputs);
-    SetNodeAttrSafely("fake_output", MakeValue(true), new_cnode);
-    new_cnode->set_abstract(inputs.back()->abstract());
-    new_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-    std::vector<std::string> input_formats = AnfAlgo::GetAllInputFormats(cnode);
-    std::vector<TypeId> input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
-    input_formats.push_back(input_formats.back());
-    input_types.push_back(input_types.back());
-    std::vector<std::string> output_formats = {input_formats.back()};
-    std::vector<TypeId> output_types = {input_types.back()};
-    auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types,
-                                                     AnfAlgo::GetProcessor(cnode));
-    AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, new_cnode.get());
-    (void)mng->Replace(cnode, new_cnode);
-  }
-  return changed;
-}
-
-bool RepalceAssignByInplaceAssign(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto todos = TopoSort(func_graph->get_return());
-
-  auto changed = false;
-  for (const auto &n : todos) {
-    if (!common::AnfAlgo::IsGraphKernel(n)) {
-      continue;
-    }
-    auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(n);
-    MS_EXCEPTION_IF_NULL(graph_kernel_fg);
-    changed = ReplaceAssignByInplaceAssignInGraphkernel(graph_kernel_fg) || changed;
-  }
-  return changed;
-}
 }  // namespace
 
 bool OptimizeAssign::Run(const FuncGraphPtr &func_graph) {
@@ -217,6 +169,6 @@ bool OptimizeAssign::Run(const FuncGraphPtr &func_graph) {
     mng->RemoveRoots();
     mng->KeepRoots({func_graph});
   }
-  return RepalceAssignByInplaceAssign(func_graph);
+  return res;
 }
 }  // namespace mindspore::graphkernel

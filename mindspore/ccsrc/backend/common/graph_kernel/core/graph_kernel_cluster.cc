@@ -50,7 +50,6 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterOps() {
     {kAllTarget, OpLevel_0, prim::kPrimCast},
     {kAllTarget, OpLevel_0, prim::kPrimEqual},
     {kAllTarget, OpLevel_0, prim::kPrimExp},
-    {kAllTarget, OpLevel_0, prim::kPrimInplaceAssign},
     {kAllTarget, OpLevel_0, prim::kPrimLog},
     {kAllTarget, OpLevel_0, prim::kPrimMaximum},
     {kAllTarget, OpLevel_0, prim::kPrimMinimum},

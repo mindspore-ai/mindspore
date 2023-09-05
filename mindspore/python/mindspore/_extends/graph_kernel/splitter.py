@@ -36,7 +36,6 @@ def split_with_json(json_str, flags_str):
         subgraphs, graph_mode = model.split(comp.graph, target, flags)
         is_multi_graph = len(subgraphs) > 1
         graph_list = list(map(comp.dump, subgraphs))
-        _reset_graphmode_for_inplaceassign(graph_list, graph_mode)
         result = {"multi_graph": is_multi_graph,
                   "graph_desc": graph_list,
                   "graph_mode": graph_mode}
@@ -112,13 +111,6 @@ def _load_repository(graph, flags):
     if flags.get("dump_as_text", False):
         _dump_split_info(True, json.dumps(graph), model.load_composite(graph).graph, subgraphs, graph_mode, None)
     return result
-
-
-def _reset_graphmode_for_inplaceassign(graph_list, graph_mode):
-    """Operator with InplaceAssign should always be composite op"""
-    for i, g in enumerate(graph_list):
-        if any((op['name'] == 'InplaceAssign' for op in g['op_desc'])):
-            graph_mode[i] = 'composite'
 
 
 def _dump_split_info(use_repo, graph_str, graph, subgraphs, graph_mode, graph_list):
