@@ -373,6 +373,29 @@ STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara>
   return RET_OK;
 }
 
+bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
+  bool is_ptq_quant = (param->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                       param->fullQuantParam.target_device == lite::quant::ASCEND) ||
+                      (param->commonQuantParam.quant_type == lite::quant::QUANT_WEIGHT &&
+                       param->weightQuantParam.dequant_strategy == lite::quant::ON_THE_FLY);
+  if (is_ptq_quant) {
+    return true;
+  }
+  // Check if the model contains fakequant nodes
+  const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto op_name = cnode->fullname_with_scope();
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(primitive);
+    for (const auto &type : fake_quant_types) {
+      if (opt::CheckPrimitiveType(cnode, type)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
@@ -392,14 +415,18 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
 
   if (param->provider == "ge") {
     MS_LOG(INFO) << "It will run ge optimize";
-    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
-    if (acl_pass_ptr == nullptr) {
-      MS_LOG(ERROR) << "Failed to create acl pass";
-      return RET_ERROR;
-    }
-    if (!acl_pass_ptr->Run(func_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
-      return RET_ERROR;
+    if (CheckNeedQuant(param, func_graph)) {
+      MS_LOG(INFO) << "It will run quant optimize";
+      auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+      if (acl_pass_ptr == nullptr) {
+        MS_LOG(ERROR) << "Failed to create acl pass";
+        return RET_ERROR;
+      }
+      if (!acl_pass_ptr->Run(func_graph)) {
+        MS_LOG(ERROR) << "Acl pass failed.";
+        return RET_ERROR;
+      }
+      return RET_OK;
     }
     return OptimizeForGE(param, func_graph);
   }
