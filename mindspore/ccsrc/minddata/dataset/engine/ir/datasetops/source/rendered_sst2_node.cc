@@ -93,7 +93,8 @@ Status RenderedSST2Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter>
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t sample_size, num_rows;
+  int64_t sample_size;
+  int64_t num_rows;
   RETURN_IF_NOT_OK(RenderedSST2Op::CountRowsAndClasses(dataset_dir_, usage_, kExts, &num_rows, nullptr));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
@@ -108,7 +109,8 @@ Status RenderedSST2Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter>
 }
 
 Status RenderedSST2Node::to_json(nlohmann::json *out_json) {
-  nlohmann::json args, sampler_args;
+  nlohmann::json args;
+  nlohmann::json sampler_args;
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;

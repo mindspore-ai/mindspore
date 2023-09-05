@@ -129,6 +129,7 @@ void GetPathFiles(const std::string &path, std::vector<std::string> &fileVec) {
         (void)fileVec.emplace_back(fullPath);
       }
     }
+    closedir(dir);
   } else {
     (void)fileVec.emplace_back(path);
   }

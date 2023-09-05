@@ -66,7 +66,8 @@ Status CenterCropOp::CenterCropImg(const std::shared_ptr<Tensor> &input, std::sh
 Status CenterCropOp::ConstructShape(const TensorShape &in_shape, std::shared_ptr<TensorShape> *out_shape) const {
   RETURN_UNEXPECTED_IF_NULL(out_shape);
   auto in_shape_vec = in_shape.AsVector();
-  const int h_index = -3, w_index = -2;
+  const int h_index = -3;
+  const int w_index = -2;
   in_shape_vec[in_shape_vec.size() + h_index] = crop_het_;
   in_shape_vec[in_shape_vec.size() + w_index] = crop_wid_;
 

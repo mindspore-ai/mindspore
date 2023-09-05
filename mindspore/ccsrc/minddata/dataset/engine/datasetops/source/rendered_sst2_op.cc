@@ -87,7 +87,8 @@ Status RenderedSST2Op::PrepareData() {
 Status RenderedSST2Op::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   RETURN_UNEXPECTED_IF_NULL(trow);
   ImageLabelPair pair_ptr = image_label_pairs_[row_id];
-  std::shared_ptr<Tensor> image, label;
+  std::shared_ptr<Tensor> image;
+  std::shared_ptr<Tensor> label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(pair_ptr->second, &label));
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_prefix_[row_id] + pair_ptr->first, &image));
 

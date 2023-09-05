@@ -148,7 +148,8 @@ Status SST2Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows, sample_size;
+  int64_t num_rows;
+  int64_t sample_size;
   std::vector<std::string> dataset_files;
 
   RETURN_IF_NOT_OK(WalkAllFiles(dataset_dir_, usage_, &dataset_files));

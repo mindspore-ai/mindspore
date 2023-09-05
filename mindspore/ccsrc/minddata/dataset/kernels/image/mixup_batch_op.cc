@@ -64,7 +64,8 @@ Status MixUpBatchOp::ComputeLabels(const std::shared_ptr<Tensor> &label, std::sh
         std::vector<int64_t> second_index = label_shape.size() == kMaxLabelShapeSize
                                               ? std::vector{(*rand_indx)[static_cast<size_t>(i)], j, k}
                                               : std::vector{(*rand_indx)[static_cast<size_t>(i)], k};
-        float first_value, second_value;
+        float first_value;
+        float second_value;
         RETURN_IF_NOT_OK(float_label->GetItemAt(&first_value, first_index));
         RETURN_IF_NOT_OK(float_label->GetItemAt(&second_value, second_index));
         RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
