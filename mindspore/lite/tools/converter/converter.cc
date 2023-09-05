@@ -697,9 +697,9 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
 
 int CheckFmkType(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr) {
-    std::set valid_values = {FmkType::kFmkTypeTf,    FmkType::kFmkTypeCaffe,  FmkType::kFmkTypeOnnx,
-                             FmkType::kFmkTypeMs,    FmkType::kFmkTypeTflite, FmkType::kFmkTypePytorch,
-                             FmkType::kFmkTypeMsLite};
+    std::set valid_values = {FmkType::kFmkTypeTf,     FmkType::kFmkTypeCaffe,  FmkType::kFmkTypeOnnx,
+                             FmkType::kFmkTypeMs,     FmkType::kFmkTypeTflite, FmkType::kFmkTypePytorch,
+                             FmkType::kFmkTypeMsLite, FmkType::kFmkTypeOM};
     if (std::find(valid_values.begin(), valid_values.end(), param->fmk_type) == valid_values.end()) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: fmk_type must be "
                        "kFmkTypeTf|kFmkTypeCaffe|kFmkTypeOnnx|kFmkTypeMs|kFmkTypeTflite|kFmkTypeMsLite"

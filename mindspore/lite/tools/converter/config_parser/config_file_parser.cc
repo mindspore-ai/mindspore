@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -466,6 +466,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
   }
   (void)ParseGraphKernelString(*maps);
   (void)maps->erase(kGraphKernelParam);
+  ret = ParseOMConverterString(*maps);
+  (void)maps->erase(kOMConverterOptionsSection);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseOMConverterString failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -693,6 +699,25 @@ int ConfigFileParser::ParseGraphKernelString(const std::map<std::string, std::ma
       std::stringstream oss;
       oss << "--" << item.first << "=" << item.second;
       (void)graph_kernel_string_.emplace_back(oss.str());
+    }
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseOMConverterString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kOMConverterOptionsSection) != maps.end()) {
+    const auto &map = maps.at(kOMConverterOptionsSection);
+    std::map<std::string, std::string &> parse_map{
+      {"input_name_vector", om_converter_string_.input_name_vector},
+      {"input_shape_vector", om_converter_string_.input_shape_vector},
+      {"input_data_type_vector", om_converter_string_.input_data_type_vector},
+      {"output_name_vector", om_converter_string_.output_name_vector},
+      {"output_shape_vector", om_converter_string_.output_shape_vector},
+      {"output_data_type_vector", om_converter_string_.output_data_type_vector}};
+    auto ret = SetMapData(map, parse_map, kOMConverterOptionsSection);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set map data failed.";
+      return ret;
     }
   }
   return RET_OK;

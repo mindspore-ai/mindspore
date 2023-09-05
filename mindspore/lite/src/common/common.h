@@ -133,6 +133,8 @@ static const char *const kAoeTuningOptionsSection = "aoe_tuning_options";
 static const char *const kAclOptionParam = "acl_option_cfg_param";
 static const char *const kAclInitOptionParam = "acl_init_options";
 static const char *const kAclBuildOptionParam = "acl_build_options";
+// om converter options
+static const char *const kOMConverterOptionsSection = "om_converter";
 }  // namespace lite
 }  // namespace mindspore
 

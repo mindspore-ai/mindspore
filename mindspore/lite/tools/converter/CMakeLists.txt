@@ -70,6 +70,7 @@ add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
 add_subdirectory(parser/tf)
+add_subdirectory(parser/om)
 if(ENABLE_CONVERT_PYTORCH_MODEL)
     add_subdirectory(parser/pytorch)
 endif()
@@ -367,6 +368,7 @@ target_link_libraries(mindspore_converter
         tf_parser_mid
         caffe_parser_mid
         onnx_parser_mid
+        om_parser_mid
         lite_exporter_mid
         graph_pass_mid
         fusion_mid
