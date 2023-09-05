@@ -89,9 +89,9 @@ class AscendMsprofExporter:
     def _msprof_command_generator(self, output, model_id=None, iter_id=None):
         """msprof export helper"""
         export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
-        if model_id:
+        if isinstance(model_id, int) and model_id >= 0:
             export_cmd.append("--model-id={}".format(model_id))
-        if iter_id:
+        if isinstance(iter_id, int) and iter_id >= 0:
             export_cmd.append("--iteration-id={}".format(iter_id))
         return export_cmd
 
