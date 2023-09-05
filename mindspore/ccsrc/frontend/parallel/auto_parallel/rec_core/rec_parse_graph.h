@@ -37,7 +37,8 @@ static const std::set<OperatorType> EliminateOpType = {
   OperatorType::kRecReshape,      OperatorType::kRecGatherV2,      OperatorType::kRecArgWithValue,
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
   OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
-  OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone};
+  OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone,
+  OperatorType::kRecPadV3};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -111,6 +112,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {CHOLESKY, OperatorType::kRecSoftmax},
   {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
   {FLATTEN, OperatorType::kRecFlatten},
+  {PAD_V3, OperatorType::kRecPadV3},
   {CUM_SUM, OperatorType::kRecCum},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},

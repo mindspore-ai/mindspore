@@ -38,6 +38,7 @@
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "ir/anf.h"
@@ -893,7 +894,7 @@ static void FixReturnRedistribution(const FuncGraphPtr &root, const size_t devic
 }
 
 bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, size_t device_num,
-                          size_t rank_id) {
+                          size_t rank_id, bool sapp) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
@@ -922,6 +923,14 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
   }
 
   MarkForwardCNode(root);
+
+  if (sapp) {
+    if (ParallelStrategyRecSearch(all_nodes, root, rank_id, device_num) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
+    }
+    root->set_flag(AUTO_PARALLEL_RUN_ONCE_ONLY, true);
+  }
+
   InitRefMap(root);
   // extract shape and strategy, set operator_info
   ExtractGraphInformation(all_nodes);

@@ -38,6 +38,10 @@ size_t GetLengthOfDataType(const TypePtr &type);
 
 std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node);
 
+std::string ExtractInputParameterNameByNode(const CNodePtr &node);
+
+std::vector<size_t> ExtractInputElementLength(const CNodePtr &node, std::vector<AnfNodePtr> node_inputs);
+
 std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node);
 
 std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node);
