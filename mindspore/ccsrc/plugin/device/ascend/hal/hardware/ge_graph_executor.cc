@@ -771,6 +771,9 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   SetDynamicShapeAttr(graph);
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(EXCEPTION) << "Ge graph " << graph->ToString() << " is not support for dynamic shape";
+  }
   transform::RunOptions run_options;
   run_options.name = GetGraphName(graph);
   auto graph_runner = transform::GetGraphRunner();
@@ -831,6 +834,9 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
       (void)BuildDFGraph(kg, tensor_order_map, false);
     }
     SetDynamicShapeAttr(kg);
+    if (kg->is_dynamic_shape()) {
+      MS_LOG(EXCEPTION) << "Ge graph " << kg->ToString() << "is not support for dynamic shape";
+    }
     AllocInputHostMemory(kg);
     AllocOutputHostMemory(kg);
     kg->set_run_mode(RunMode::kGraphMode);
