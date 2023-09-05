@@ -465,6 +465,7 @@ constexpr const char kNameGridSampler3D[] = "GridSampler3D";
 constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 constexpr const char kNameIm2Col[] = "Im2Col";
+constexpr const char kNameAffineGrid[] = "AffineGrid";
 
 class OpAdapterDesc;
 

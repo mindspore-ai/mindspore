@@ -369,7 +369,16 @@ bool ModelProcess::InitOutputsBuffer() {
       MS_LOG(ERROR) << "Get output shape failed";
       return true;
     }
-    auto buffer_size = aclmdlGetOutputSizeByIndex(model_desc_, i);
+    bool is_dynamic_output = false;
+    for (size_t dim_idx = 0; dim_idx < dims.dimCount; dim_idx++) {
+      if (dims.dims[dim_idx] == -1) {
+        is_dynamic_output = true;
+      }
+    }
+    size_t buffer_size = 0;
+    if (!is_dynamic_output) {
+      buffer_size = aclmdlGetOutputSizeByIndex(model_desc_, i);
+    }
     void *data_mem_buffer = nullptr;
     if (!CreateDataBuffer(&data_mem_buffer, buffer_size, outputs_)) {
       MS_LOG(ERROR) << "Add output data buffer failed, buffer size " << buffer_size;

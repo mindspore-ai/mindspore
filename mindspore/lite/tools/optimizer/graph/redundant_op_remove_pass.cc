@@ -406,7 +406,7 @@ int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, 
     return lite::RET_NO_CHANGE;
   }
   auto index_node = cnode->inputs()[kInputIndexTwo]->cast<ParameterPtr>();
-  if (index_node == nullptr) {
+  if (index_node == nullptr || !index_node->has_default()) {
     return RET_OK;
   }
   auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(index_node->default_param());
