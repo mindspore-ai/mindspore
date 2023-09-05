@@ -16,9 +16,11 @@
 
 #include "runtime/graph_scheduler/actor/control_flow/switch_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
+#include "plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "abstract/utils.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "utils/log_adapter.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace runtime {
@@ -79,6 +81,18 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
   int64_t index = 0;
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
+  if (device_tensor->user_data() != nullptr && device_tensor->sync_user_data_handler() != nullptr &&
+      device_tensor->user_data()->has(kernel::PyExecuteOutputUserData::key)) {
+    const auto &user_data_obj =
+      device_tensor->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
+    MS_EXCEPTION_IF_NULL(user_data_obj);
+    const auto &obj = user_data_obj->obj;
+    py::gil_scoped_acquire gil_acquire;
+    if (py::isinstance<py::bool_>(obj)) {
+      MS_LOG(DEBUG) << "Index:" << py::cast<bool>(obj) << " for actor:" << GetAID();
+      return index = static_cast<int64_t>(py::cast<bool>(obj) ? 1 : 0);
+    }
+  }
   if (!device_tensor->SyncDeviceToHost(host_shape, size, type_id, static_cast<void *>(buf))) {
     MS_LOG(ERROR) << GetAID().Name() << " get index from device address failed, type id:" << type_id;
     return 0;

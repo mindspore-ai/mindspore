@@ -88,11 +88,6 @@ bool ContainStubTensor(const py::object &obj) {
 
 abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
   // This function will be moved to runtime compile pass later.
-  if (py::isinstance<tensor::Tensor>(obj) || IsStubTensor(obj)) {
-    const auto &tensor = IsStubTensor(obj) ? ConvertStubTensor(obj) : obj.cast<tensor::TensorPtr>();
-    const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
-    return tensor->ToAbstract();
-  }
   static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
   if (!allow_inplace_ops) {
     return nullptr;
@@ -185,6 +180,11 @@ class PyExecuteInitializer {
       }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
       fallback::PushPyExecuteOutput(output);
+      if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
+        const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
+        const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
+        return tensor->ToAbstract();
+      }
       static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
       if (!allow_runtime_compile) {
         auto ret = GenerateAbstractFromPyObject(output);

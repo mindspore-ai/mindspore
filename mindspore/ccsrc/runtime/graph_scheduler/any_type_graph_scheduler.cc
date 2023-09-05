@@ -424,16 +424,43 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
                     << " is a parameter in subgraph and Link data arrow from any type kernel actor:"
                     << any_type_kernel_actor->GetAID() << " to actor:" << actor->GetAID();
       size_t from_index = any_type_kernel_actor->FetchInputNodePosition(pair.second);
-      auto data_arrow = std::make_shared<DataArrow>(from_index, actor->GetAID(), pair.first);
-      auto data = std::make_unique<OpData<DeviceTensor>>(actor->GetAID(), nullptr, pair.first);
-      any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
-      MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
-                    << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString();
-      any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(real_graph->GetBackendAnfByFrontAnf(pair.second));
-      any_type_kernel_actor->graph_input_data_[id].emplace_back(std::make_pair(std::move(data), kOutputDataFlagInit));
-      actor->input_datas_num_++;
-      (void)actor->input_data_arrow_aids_.emplace_back(
-        std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
+
+      if (actor->parent_fusion_actor() != nullptr) {
+        auto base_actor = actor->parent_fusion_actor_;
+        auto fusion_actor = dynamic_cast<FusionActor *>(base_actor);
+        MS_EXCEPTION_IF_NULL(fusion_actor);
+        auto data_arrow = std::make_shared<DataArrow>(from_index, fusion_actor->GetAID(), pair.first);
+        auto data = std::make_unique<OpData<DeviceTensor>>(fusion_actor->GetAID(), nullptr, pair.first);
+        any_type_kernel_actor->graph_input_data_[id].emplace_back(
+          std::make_pair(std::move(data), kOutputDataFlagToFusion));
+        fusion_actor->real_input_data_.emplace_back(actor.get(), pair.first);
+        any_type_kernel_actor->data_arrow_to_graph_input_actor_indexs_[id][data_arrow.get()] =
+          fusion_actor->input_data_arrow_aids_.size();
+        (void)fusion_actor->input_data_arrow_aids_.emplace_back(
+          std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
+        any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
+        MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
+                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
+                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
+          real_graph->GetBackendAnfByFrontAnf(pair.second));
+        actor->input_datas_num_++;
+        (void)actor->input_data_arrow_aids_.emplace_back(
+          std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
+      } else {
+        auto data_arrow = std::make_shared<DataArrow>(from_index, actor->GetAID(), pair.first);
+        auto data = std::make_unique<OpData<DeviceTensor>>(actor->GetAID(), nullptr, pair.first);
+        any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
+        MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
+                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
+                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
+          real_graph->GetBackendAnfByFrontAnf(pair.second));
+        any_type_kernel_actor->graph_input_data_[id].emplace_back(std::make_pair(std::move(data), kOutputDataFlagInit));
+        actor->input_datas_num_++;
+        (void)actor->input_data_arrow_aids_.emplace_back(
+          std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
+      }
     }
     actor->device_tensor_store_keys_.swap(device_tensor_store_keys);
   }

@@ -151,7 +151,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
           device_address->UpdateFlag(device::kDeviceAddressFlagNotUsed);
         }
       }
-
+      device_address->SetNodeIndex(item, index);
       device_address->set_from_persistent_mem(item->isa<Parameter>());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
                     << " addr:" << device_address << " type:" << device_address->type_id();

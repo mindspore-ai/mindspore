@@ -59,7 +59,8 @@ bool CheckScalarValid(const AbstractBasePtr &input_abstract) {
   // Now, only scalar with int/float/uint will be used as the output of operator, so only add them to list.
   if (input_abstract->isa<abstract::AbstractScalar>()) {
     auto scalar_id = NormalizeTypeId(input_abstract->BuildType()->type_id());
-    return (scalar_id == kNumberTypeInt || scalar_id == kNumberTypeFloat || scalar_id == kNumberTypeUInt);
+    return (scalar_id == kNumberTypeBool || scalar_id == kNumberTypeInt || scalar_id == kNumberTypeFloat ||
+            scalar_id == kNumberTypeUInt);
   }
   return false;
 }

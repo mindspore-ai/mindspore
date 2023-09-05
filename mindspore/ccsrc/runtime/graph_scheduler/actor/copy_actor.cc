@@ -99,7 +99,6 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
                                            input_device_tensor_[0]->node_index().second);
     output_device_tensor_[0]->set_user_data(input_device_tensor_[0]->user_data());
     output_device_tensor_[0]->set_sync_user_data_handler(input_device_tensor_[0]->sync_user_data_handler());
-    output_device_tensor_[0]->set_need_sync_user_data(input_device_tensor_[0]->need_sync_user_data());
   }
 
   PostRun(context);
