@@ -35,6 +35,7 @@
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/system/env.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
 
 namespace mindspore::graphkernel {
 bool SaveJsonInfo(const std::string &json_name, const std::string &info) {
@@ -160,6 +161,12 @@ ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std:
   auto param_node = func_graph->add_parameter();
   MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
   param_node->set_name(kernel_name);
+  if (path.empty()) {
+    return nullptr;
+  }
+  if (!Common::FileExists(path)) {
+    return nullptr;
+  }
   auto akg_fd = open(path.c_str(), O_RDONLY);
   struct stat sb;
   if (akg_fd < 0) {
@@ -229,13 +236,14 @@ bool RetStatus(const int status) {
 }
 
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list) {
-  auto thread_num = std::min(PROCESS_LIMIT, json_list.size());
+  auto json_list_size = static_cast<int>(json_list.size());
+  auto thread_num = std::min(PROCESS_LIMIT, json_list_size);
   if (thread_num == 0) {
     return true;
   }
   auto func = [&](void *cdata, int task_id, float lhs_scale, float rhs_scale) -> int {
     bool all_pass{true};
-    for (size_t j = task_id; j < json_list.size(); j += PROCESS_LIMIT) {
+    for (int j = task_id; j < json_list_size; j += PROCESS_LIMIT) {
       auto res = CompileSingleJson(dir_path + "/" + json_list[j] + ".info");
       if (!res) {
         all_pass = false;
