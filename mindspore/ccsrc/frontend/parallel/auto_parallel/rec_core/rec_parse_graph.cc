@@ -190,6 +190,7 @@ std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo
 
   for (size_t iter_ops = 0; iter_ops < ops.size(); iter_ops++) {
     Graph::NodeType NewOp = MakeNewOperator(ops, iter_ops);
+    NewOp.param_name = ops[iter_ops]->get_involved_param_name();
     graph->nodes.push_back(NewOp);
   }
   MakeEdge(input_tensor_names, graph);
@@ -227,7 +228,14 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
   std::vector<size_t> eli;
   eli.push_back(node_index);
   for (size_t i = 0; i < graph->nodes[node_index].node_out.size(); i++) {
-    eli.push_back(graph->nodes[node_index].node_out[i]);
+    auto outgoing_node_idx = graph->nodes[node_index].node_out[i];
+    eli.push_back(outgoing_node_idx);
+    if (!graph->nodes[node_index].param_name.empty() &&
+        graph->nodes[node_index].apply.op_type == OperatorType::kRecCast &&
+        (graph->nodes[outgoing_node_idx].apply.op_type == OperatorType::kRecMatMul ||
+         graph->nodes[outgoing_node_idx].apply.op_type == OperatorType::kRecBatchMatMul)) {
+      graph->nodes[outgoing_node_idx].param_name = graph->nodes[node_index].param_name;
+    }
   }
   eli_list->push_back(eli);
 

@@ -158,8 +158,6 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
     new_redis_cost = tensor_size * REDIS_COEF;
   }
 
-  MS_LOG(INFO) << "redis_cost = " << new_redis_cost;
-
   return new_redis_cost;
 }
 
@@ -185,7 +183,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   if (node.apply.arguments[0].tensor_str.str_h == 0) {
     MS_LOG(EXCEPTION) << "str_h cannot be 0!";
   }
-  if (LongToSize(edge_i) < SIZE_TWO || edge_i % SIZE_TWO != 0 ||
+  if (edge_i < SizeToLong(SIZE_TWO) || edge_i % SizeToLong(SIZE_TWO) != 0 ||
       (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -194,14 +192,16 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   }
 
   // Do not partition the J-axis and K-axis for the same MatMul
-  if (LongToSize(edge_j) < SIZE_TWO || edge_j % SIZE_TWO != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
+  if (edge_j < SizeToLong(SIZE_TWO) || edge_j % SizeToLong(SIZE_TWO) != 0 ||
+      node.apply.arguments[0].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
     cost_op.push_back(cost_if_cut_j + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (LongToSize(edge_k) < SIZE_TWO || edge_k % SIZE_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
+  if (edge_k < SizeToLong(SIZE_TWO) || edge_k % SizeToLong(SIZE_TWO) != 0 ||
+      node.apply.arguments[1].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
@@ -333,6 +333,13 @@ double CostBatchMatMul::cost(Axis a, const Graph::NodeType &node) {
   return 1;
 }
 
+bool SplitOnlyOneDimension(const Graph &graph, float str) {
+  if (graph.dyn_shape_tmp_fix && str < 1) {
+    return true;
+  }
+  return false;
+}
+
 // Get optimal strategy for BatchMatMul
 StrategyRec CostBatchMatMul::GetOptimalStr(
   const Graph::NodeType &node, const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -352,7 +359,7 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
   if (node.apply.arguments[0].tensor_str.str_n == 0) {
     MS_LOG(EXCEPTION) << "str_n cannot be 0!";
   }
-  if (LongToSize(edge_b) < SIZE_TWO || edge_b % SIZE_TWO != 0 ||
+  if (edge_b < SizeToLong(SIZE_TWO) || edge_b % SizeToLong(SIZE_TWO) != 0 ||
       1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -360,28 +367,33 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back(cost(B, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (LongToSize(edge_x) < SIZE_TWO || edge_x % SIZE_TWO != 0) {
+  if (edge_x < SizeToLong(SIZE_TWO) || edge_x % SizeToLong(SIZE_TWO) != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}};
     cost_op.push_back(cost(X, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (LongToSize(edge_i) < SIZE_TWO || edge_i % SIZE_TWO != 0) {
+  if (edge_i < SizeToLong(SIZE_TWO) || edge_i % SizeToLong(SIZE_TWO) != 0 ||
+      SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
     cost_op.push_back(cost(I, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (LongToSize(edge_j) < SIZE_TWO || edge_j % SIZE_TWO != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
+  if (edge_j < SizeToLong(SIZE_TWO) || edge_j % SizeToLong(SIZE_TWO) != 0 ||
+      node.apply.arguments[0].tensor_str.str_w < 1 ||
+      SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
     cost_op.push_back((cost(J, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
   }
 
-  if (LongToSize(edge_k) < SIZE_TWO || edge_k % SIZE_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
+  if (edge_k < SizeToLong(SIZE_TWO) || edge_k % SizeToLong(SIZE_TWO) != 0 ||
+      node.apply.arguments[1].tensor_str.str_w < 1 ||
+      SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};

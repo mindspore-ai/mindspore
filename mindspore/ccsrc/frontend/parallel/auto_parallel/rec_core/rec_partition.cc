@@ -137,18 +137,92 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
 }
 
 // Get optimal strategy to partition the target node
-StrategyRec PartitionNode(const Graph::NodeType &node,
+StrategyRec PartitionNode(Graph::NodeType node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                           const std::shared_ptr<Graph> &graph, const bool isTraining) {
   bool enable_conv_chw_partition = false;
   MS_EXCEPTION_IF_NULL(graph);
 
   if (node.apply.op_type == OperatorType::kRecMatMul) {
+    if (graph->dyn_shape_tmp_fix) {
+      if (node.param_name.find(".projection.weight") != std::string::npos) {
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
+        return node.apply.str;
+      }
+      if (node.param_name.find(".mapping.weight") != std::string::npos) {
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
+        return node.apply.str;
+      }
+      if (node.param_name.find(".attention.dense2.weight") != std::string::npos) {
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
+        return node.apply.str;
+      }
+    }
+
     // For MatMul
     auto cost_ptr = std::make_shared<CostMatMul>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
   } else if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
+    if (graph->dyn_shape_tmp_fix) {
+      if (node.param_name.find(".projection.weight") != std::string::npos) {
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
+        return node.apply.str;
+      }
+      if (node.param_name.find(".mapping.weight") != std::string::npos) {
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
+        return node.apply.str;
+      }
+
+      bool same_inputs = false;
+      bool projection_bias_bmm = false;
+      bool mapping_bias_bmm = false;
+      for (size_t idx = 0; idx < node.node_in.size(); idx++) {
+        if (idx == node.node_in.size() - 1) {
+          break;
+        }
+        for (size_t idx_bis = idx + 1; idx_bis < node.node_in.size(); idx_bis++) {
+          if (node.node_in[idx] == node.node_in[idx_bis]) {
+            same_inputs = true;
+            break;
+          }
+        }
+        if (same_inputs) {
+          break;
+        }
+      }
+      if (same_inputs) {
+        return node.apply.str;
+      }
+
+      for (size_t idx = 0; idx < node.node_in.size(); idx++) {
+        auto incoming_node_idx = node.node_in[idx];
+        if (graph->nodes[incoming_node_idx].param_name.find(".projection.bias") != std::string::npos) {
+          projection_bias_bmm = true;
+          break;
+        }
+        if (graph->nodes[incoming_node_idx].param_name.find(".mapping.bias") != std::string::npos) {
+          mapping_bias_bmm = true;
+          break;
+        }
+      }
+      if (projection_bias_bmm) {
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
+        return node.apply.str;
+      }
+      if (mapping_bias_bmm) {
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
+        return node.apply.str;
+      }
+    }
+
     // For BatchMatMul
     auto cost_ptr = std::make_shared<CostBatchMatMul>();
 

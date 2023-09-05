@@ -46,7 +46,8 @@ Status IgnoreOperatorsInCostGraph();
 
 Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
-Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, size_t rank_id = 0,
+                                 const size_t device_num = 0);
 
 std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::string, std::string>::iterator &it,
                                                           std::vector<std::vector<std::string>> input_tensor_names);

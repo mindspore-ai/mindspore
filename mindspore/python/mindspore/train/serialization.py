@@ -713,7 +713,7 @@ def load(file_name, **kwargs):
     return graph
 
 
-def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True):
+def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=True):
     """
     Auto Split MindIR.
 
@@ -724,6 +724,7 @@ def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True):
         device_num (int): device number.
         rank_id (int): rank id.
         dynamic (bool): Indicates whether the model is a dynamic shape mindir model.
+        sapp (bool): Indicates whether to automatically generate split strategy through SAPP.
 
     Raises:
         ValueError: MindIR file does not exist or `file_name` is not a string.
@@ -750,7 +751,7 @@ def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True):
     logger.info("Execute the process of export and split mindir.")
     dynamic = True
     if dynamic:
-        graph = split_dynamic_mindir(file_name, device_num, rank_id)
+        graph = split_dynamic_mindir(file_name, device_num, rank_id, sapp)
     else:
         graph = split_mindir(file_name)
 

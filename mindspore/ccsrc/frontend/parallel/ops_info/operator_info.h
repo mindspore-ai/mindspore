@@ -81,6 +81,8 @@ class OperatorInfo {
 
   virtual ~OperatorInfo() = default;
 
+  void set_involved_param_name(std::string name) { involved_param_name_ = name; }
+  std::string get_involved_param_name() { return involved_param_name_; }
   Status set_is_parameter(const std::vector<bool> &is_parameter);
   Status SetInputAndOutputTypeLength(const std::vector<size_t> &input_lengths,
                                      const std::vector<size_t> &output_lengths);
@@ -307,6 +309,7 @@ class OperatorInfo {
   std::vector<size_t> corrected_input_indices_;
   // Given a parallelization strategy, there is a cost.
   std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost_;
+  std::string involved_param_name_;
   // For each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
   std::vector<bool> is_parameter_;
   // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of

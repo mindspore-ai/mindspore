@@ -357,6 +357,12 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // Set the data type for inputs and outputs of this OperatorInfo
   auto inputs_type_length = ExtractInputTypeLengthByNode(cnode);
   auto outputs_type = ExtractOutputTypeByNode(cnode);
+  if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
+    std::string param_name = ExtractInputParameterNameByNode(cnode);
+    if (!param_name.empty()) {
+      operator_info->set_involved_param_name(param_name);
+    }
+  }
   std::vector<size_t> outputs_type_length;
   outputs_type_length.reserve(outputs_type.size());
   (void)std::transform(outputs_type.begin(), outputs_type.end(), std::back_inserter(outputs_type_length),
@@ -1334,7 +1340,7 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
   }
 }
 
-void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, bool dyn_shape_tmp_fix) {
   InitCostGraph();
 
   if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
@@ -1353,10 +1359,35 @@ void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPt
     }
   }
 
-  ReshapeCostCompute(all_nodes);
+  if (!dyn_shape_tmp_fix) {
+    ReshapeCostCompute(all_nodes);
+  }
 }
 
-Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+void WriteStrategiesBackToAnfGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops) {
+  for (auto &op : ops) {
+    auto op_type = op->type();
+    if (op_type == CAST || op_type == RESHAPE) {
+      continue;
+    }
+    auto op_strategy = op->selected_strategy()->GetInputDim();
+    if (!op_strategy.empty()) {
+      std::vector<ValuePtr> strategies;
+      (void)std::transform(op_strategy.begin(), op_strategy.end(), std::back_inserter(strategies),
+                           [](const Dimensions &dim) { return MakeValue(dim); });
+      ValueTuplePtr var = std::make_shared<ValueTuple>(strategies);
+      op->cnode()->AddPrimalAttr(parallel::IN_STRATEGY, var);
+    }
+  }
+}
+
+Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, size_t rank_id,
+                                 const size_t device_num) {
+  bool dyn_shape_tmp_fix = false;
+  if (device_num > 0) {
+    dyn_shape_tmp_fix = true;
+  }
+
   InitCostGraph();
   if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
     if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
@@ -1373,7 +1404,10 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
       MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
     }
   }
-  ReshapeCostCompute(all_nodes);
+  if (!dyn_shape_tmp_fix) {
+    ReshapeCostCompute(all_nodes);
+  }
+
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   // Needed by rec_parser 2
@@ -1383,12 +1417,13 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
+
   std::vector<std::vector<size_t>> param_users_ops_index =
     GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
-
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list = std::make_shared<std::vector<std::vector<size_t>>>();
   std::shared_ptr<std::vector<size_t>> index_list = std::make_shared<std::vector<size_t>>();
   graph = EliminateGraph(graph, eli_list, index_list);
+  graph->dyn_shape_tmp_fix = dyn_shape_tmp_fix;
 
   CalculateRealBatchSize(graph, root);
 
@@ -1405,10 +1440,16 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   // Needed when changing stage number
-  if (ParallelInit() != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+  if (!graph->dyn_shape_tmp_fix) {
+    if (ParallelInit() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+    }
+  } else {
+    if (ParallelInit(rank_id, device_num) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Parallel init failed";
+    }
   }
-  ReInitCostGraph(all_nodes, root);
+  ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
   ops = entire_costgraph->GetOperators();
 
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, isTraining, param_users_ops_index, root);
@@ -1419,6 +1460,15 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     if (s_strategy != nullptr) {
       MS_LOG(INFO) << op->name() << ": The strategy is: " << s_strategy->ToString();
     }
+  }
+
+  if (graph->dyn_shape_tmp_fix) {
+    (void)WriteStrategiesBackToAnfGraph(ops);
+    (void)IgnoreOperatorsInCostGraph();
+    ops_in_a_loop_.clear();
+    configured_stra_ops_.clear();
+    ignore_candidate_.clear();
+    return SUCCESS;
   }
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
