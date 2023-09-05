@@ -568,13 +568,16 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
 
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(output_node);
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
-  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+
+  const auto &user_data = device_tensor->user_data();
+  bool is_map_tensor_output = user_data && user_data->get<UserDataType>(kUserDataType) &&
+                              *(user_data->get<UserDataType>(kUserDataType)) == UserDataType::kUserTypeHashTable;
+  if (is_map_tensor_output) {
     return AnfAlgo::CreateMapTensor(output_node, output_index);
   }
 
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
   device_tensor->SetNodeIndex(output_node, output_index);
   const auto &kernel_tensor = device_tensor->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
