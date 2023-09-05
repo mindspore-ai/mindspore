@@ -507,7 +507,8 @@ class CellDict(_CellDictBase, Cell):
 
     Args:
         args (iterable, optional): An iterable of key-value pairs of type(string, Cell) or
-                                   a mapping(dictionary) from string to Cell.
+                                   a mapping(dictionary) from string to Cell, the type of Cell should not be CellDict,
+                                   CellList or SequentialCell.
                                    The key of type string is used to search corresponding Cell in the CellDict.
         kwargs (dict): Reserved for keyword argument to be expanded.
 
@@ -589,6 +590,12 @@ class CellDict(_CellDictBase, Cell):
             raise TypeError(f"For '{cls_name}', the type of key should be string "
                             f"but got {type(key).__name__}.")
 
+    def _validate_cell_type(self, cell):
+        cls_name = self.__class__.__name__
+        if isinstance(cell, (CellDict, CellList, SequentialCell)):
+            raise TypeError(f"For '{cls_name}', the type of cell should not be CellDict, CellList or SequentialCell, "
+                            f"but got {type(cell).__name__}.")
+
     def _update_cell_para_name(self, key, cell):
         if self._auto_prefix:
             prefix, _ = _get_prefix_and_index(self._cells)
@@ -608,8 +615,8 @@ class CellDict(_CellDictBase, Cell):
             key (string): key to pop from the CellDict.
 
         Raises:
-            TypeError: If the key is not string.
-            KeyError: If the key not exist in CellDict when attempt to access cell.
+            TypeError: If `key` is not string.
+            KeyError: If `key` not exist in CellDict when attempt to access cell.
         """
         self._validate_key_type(key)
         value = self[key]
@@ -619,18 +626,27 @@ class CellDict(_CellDictBase, Cell):
     def keys(self):
         """
         Return an iterable of the CellDict keys.
+
+        Returns:
+            An iterable object.
         """
         return self._cells.keys()
 
     def values(self):
         """
         Return an iterable of the CellDict values.
+
+        Returns:
+            An iterable object.
         """
         return self._cells.values()
 
     def items(self):
         """
         Return an iterable of the CellDict key-value pairs.
+
+        Returns:
+            An iterable object.
         """
         return self._cells.items()
 
@@ -640,11 +656,18 @@ class CellDict(_CellDictBase, Cell):
 
         Args:
             cells (iterable): An iterable of key-value pairs of type(string, Cell) or
-                              a mapping(dictionary) from string to Cell.
+                              a mapping(dictionary) from string to Cell, the type of Cell should not be CellDict,
+                              CellList or SequentialCell.
 
         Note:
             If the `cells` is a CellDict, an OrderedDict or an iterable containing key-value pairs,
             the order of newly added elements is maintained.
+
+        Raises:
+            TypeError: If `cells` is not an iterable object.
+            TypeError: If key-value pairs in `cells` are not iterable objects.
+            ValueError: If the length of key-value pairs is not 2.
+            TypeError: If the type of Cell in key-value pairs is CellDict, CellList or SequentialCell.
         """
         if not isinstance(cells, abc.Iterable):
             raise TypeError("CellDict.update() should be called with an "
@@ -652,6 +675,7 @@ class CellDict(_CellDictBase, Cell):
                             type(cells).__name__)
         if isinstance(cells, (OrderedDict, CellDict, abc.Mapping)):
             for key, cell in cells.items():
+                self._validate_cell_type(cell)
                 self[key] = cell
         else:
             for id, k_v in enumerate(cells):
@@ -663,6 +687,7 @@ class CellDict(_CellDictBase, Cell):
                     raise ValueError("CellDict update sequence element "
                                      "#" + str(id) + ", length should be 2; but has length " +
                                      "str(len(k_v))")
+                self._validate_cell_type(k_v[1])
                 self[k_v[0]] = k_v[1]
 
     def construct(self, *inputs):

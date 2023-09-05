@@ -147,7 +147,7 @@ class TestContainsMethodNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celldict_contains_method(mode):
     """
     Feature: CellDict.__contains__()
@@ -253,7 +253,7 @@ class TestKeysMethodNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celldict_keys_method(mode):
     """
     Feature: CellDict.keys()
@@ -286,7 +286,7 @@ class TestValuesMethodNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celldict_values_method(mode):
     """
     Feature: CellDict.values()
@@ -328,7 +328,7 @@ class TestItemsMethodNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celldict_items_method(mode):
     """
     Feature: CellDict.items()
@@ -437,6 +437,50 @@ def test_celldict_update_method(mode):
     assert np.allclose(expect_output.shape, output2.shape)
     assert np.allclose(expect_output.shape, output3.shape)
 
+
+class TestUpdateMethodEmbeddedNet(nn.Cell):
+    def __init__(self):
+        super(TestUpdateMethodEmbeddedNet, self).__init__()
+        self.cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 16, 5, pad_mode='same')],
+                                      ['relu', nn.ReLU()],
+                                      ['max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4)]]
+                                     )
+    def construct(self, object_list):
+        self.cell_dict.update(object_list)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_celldict_update_method_embedded_case(mode):
+    """
+    Feature: CellDict.update()
+    Description: Verify the result of CellDict.update() in embedded_case.
+    Expectation: success
+    """
+    net = TestUpdateMethodEmbeddedNet()
+    cell_dict = nn.CellDict({'conv': nn.Conv2d(1, 1, 3), 'Dense': nn.Dense(2, 2)})
+    cell_list = nn.CellList([nn.Dense(2, 2)])
+    conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
+    relu = nn.ReLU()
+    seq_cell = nn.SequentialCell([conv, relu])
+
+    celldict_embedded_list = [['cell_dict', cell_dict]]
+    celllist_embedded_list = [['cell_list', cell_list]]
+    seqcell_embedded_list = [['seq_cell', seq_cell]]
+
+    with pytest.raises(TypeError):
+        net(celldict_embedded_list)
+
+    with pytest.raises(TypeError):
+        net(celllist_embedded_list)
+
+    with pytest.raises(TypeError):
+        net(seqcell_embedded_list)
 
 class DupParaNameNet1(nn.Cell):
     def __init__(self):
