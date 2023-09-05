@@ -832,7 +832,7 @@ class Parameter(Tensor_):
             >>> import numpy as np
             >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
             >>> x.set_data(Tensor(np.array([[6, 6], [6, 6]], dtype=np.float32)))
-            Parameter (name=param, shape=(2, 2), dtype=float32, requires=True)
+            Parameter (name=param, shape=(2, 2), dtype=Float32, requires_grad=True)
         """
         if not isinstance(data, (Tensor, int, float)):
             raise TypeError(f"Parameter data must be [`Tensor`, `int`, `float`] or a kind of `Tensor` "
