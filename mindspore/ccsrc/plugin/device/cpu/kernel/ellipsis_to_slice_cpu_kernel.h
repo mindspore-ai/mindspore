@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ELLIPSIS_TO_SLICE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ELLIPSIS_TO_SLICE_CPU_KERNEL_H_
 #include <vector>
 #include <map>
 #include <utility>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class GetSqueezeSliceShapeCpuKernelMod : public NativeCpuKernelMod {
+class EllipsisToSliceCpuKernelMod : public NativeCpuKernelMod {
  public:
-  GetSqueezeSliceShapeCpuKernelMod() = default;
-  ~GetSqueezeSliceShapeCpuKernelMod() override = default;
+  EllipsisToSliceCpuKernelMod() = default;
+  ~EllipsisToSliceCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -45,12 +44,12 @@ class GetSqueezeSliceShapeCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  using GetSqueezeSliceShapeFunc =
-    std::function<bool(GetSqueezeSliceShapeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using EllipsisToSliceFunc =
+    std::function<bool(EllipsisToSliceCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
-  static std::vector<std::pair<KernelAttr, GetSqueezeSliceShapeFunc>> func_list_;
-  GetSqueezeSliceShapeFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, EllipsisToSliceFunc>> func_list_;
+  EllipsisToSliceFunc kernel_func_;
 
  private:
   std::vector<std::vector<int64_t>> data_shapes_;
@@ -58,4 +57,4 @@ class GetSqueezeSliceShapeCpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ELLIPSIS_TO_SLICE_CPU_KERNEL_H_

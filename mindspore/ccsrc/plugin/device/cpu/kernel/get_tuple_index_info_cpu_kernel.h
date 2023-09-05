@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_TUPLE_INDEX_INFO_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_TUPLE_INDEX_INFO_CPU_KERNEL_H_
 #include <vector>
 #include <map>
 #include <utility>
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class GetSqueezeSliceShapeCpuKernelMod : public NativeCpuKernelMod {
+class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
  public:
-  GetSqueezeSliceShapeCpuKernelMod() = default;
-  ~GetSqueezeSliceShapeCpuKernelMod() override = default;
+  GetTupleIndexInfoCpuKernelMod() = default;
+  ~GetTupleIndexInfoCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -45,17 +45,32 @@ class GetSqueezeSliceShapeCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  using GetSqueezeSliceShapeFunc =
-    std::function<bool(GetSqueezeSliceShapeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  void SyncOutputShape() override {
+    for (size_t i = 0; i < out_shapes_.size(); i++) {
+      const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
+      if (i == 4) {
+        outputs_[i]->SetShapeVector(out_shapes_[i]);
+      } else if (out_size != 0) {
+        outputs_[i]->SetShapeVector({SizeToLong(out_shapes_[i].size())});
+      } else {
+        outputs_[i]->SetShapeVector({});
+      }
+    }
+  }
 
-  static std::vector<std::pair<KernelAttr, GetSqueezeSliceShapeFunc>> func_list_;
-  GetSqueezeSliceShapeFunc kernel_func_;
+  using GetTupleIndexInfoFunc =
+    std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, GetTupleIndexInfoFunc>> func_list_;
+  GetTupleIndexInfoFunc kernel_func_;
 
  private:
+  std::vector<std::vector<int64_t>> out_shapes_;
   std::vector<std::vector<int64_t>> data_shapes_;
   std::vector<int64_t> tuple_index_types_;
+  string tuple_index_info_type_;
+  int64_t expand_dims_count_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_SQUEEZE_SLICE_SHAPE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GET_TUPLE_INDEX_INFO_CPU_KERNEL_H_
