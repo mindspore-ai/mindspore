@@ -943,8 +943,32 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   }
 }
 
+bool CheckFp16(const CNodePtr &cnode, bool check_input) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  // check output
+  for (size_t output_index = 0; output_index < AnfUtils::GetOutputTensorNum(cnode); ++output_index) {
+    if (common::AnfAlgo::GetOutputInferDataType(cnode, output_index) == kNumberTypeFloat16) {
+      return true;
+    }
+  }
+
+  // check input
+  if (check_input) {
+    for (size_t input_index = 0; input_index < common::AnfAlgo::GetInputTensorNum(cnode); ++input_index) {
+      std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
+      if (std::any_of(inputs_type.cbegin(), inputs_type.cend(),
+                      [](const TypeId &type_id) { return type_id == kNumberTypeFloat16; })) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> ApplyForceFP32Strategy(
-  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list,
+  bool *raise_fp32) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> result;
   static std::string precision_mode;
   if (precision_mode.empty()) {
@@ -963,13 +987,22 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> ApplyForceFP32Strategy(
     }
     return origin_type;
   };
+
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> res;
   if (IsCubeKernel(cnode)) {
     // for cube op, select fp16-in & fp32-out first if origin type is fp16
-    return FilteredKernelInfoByDtype(cnode, kernel_info_list, kDefaultOriginTypeConverter, fp32_converter);
+    res = FilteredKernelInfoByDtype(cnode, kernel_info_list, kDefaultOriginTypeConverter, fp32_converter);
+    if (!res.empty() && CheckFp16(cnode, false)) {
+      *raise_fp32 = true;
+    }
   } else {
     // for vector op, select fp32-in & fp32-out first
-    return FilteredKernelInfoByDtype(cnode, kernel_info_list, fp32_converter, fp32_converter);
+    res = FilteredKernelInfoByDtype(cnode, kernel_info_list, fp32_converter, fp32_converter);
+    if (!res.empty() && CheckFp16(cnode, true)) {
+      *raise_fp32 = true;
+    }
   }
+  return res;
 }
 
 KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
@@ -983,21 +1016,24 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   kernel::KernelBuildInfoPtr selected_kernel_info = nullptr;
   // Matched kernel info
   // Apply force_fp32 strategy if it is set in context
-  auto filtered_kernel_info_list = ApplyForceFP32Strategy(kernel_node, kernel_info_list);
-  // Filter kernel info matched with me inferred type
-  if (filtered_kernel_info_list.empty()) {
-    filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
-  }
-  if (filtered_kernel_info_list.empty()) {
-    // selected kernel info using raised precision or reduce precision
-    filtered_kernel_info_list =
-      FilterRaisedOrReducePrecisionMatchedKernelInfo(kernel_node, kernel_info_list, &precision_reduce);
-    if (filtered_kernel_info_list.empty()) {
-      return kNoMatched;
-    }
-    select_status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
+  bool raise_fp32 = false;
+  auto filtered_kernel_info_list = ApplyForceFP32Strategy(kernel_node, kernel_info_list, &raise_fp32);
+  if (!filtered_kernel_info_list.empty()) {
+    select_status = raise_fp32 ? kStatusRaisePrecision : kStatusAllMatched;
   } else {
-    select_status = kStatusAllMatched;
+    // Filter kernel info matched with me inferred type
+    filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
+    if (filtered_kernel_info_list.empty()) {
+      // selected kernel info using raised precision or reduce precision
+      filtered_kernel_info_list =
+        FilterRaisedOrReducePrecisionMatchedKernelInfo(kernel_node, kernel_info_list, &precision_reduce);
+      if (filtered_kernel_info_list.empty()) {
+        return kNoMatched;
+      }
+      select_status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
+    } else {
+      select_status = kStatusAllMatched;
+    }
   }
 
   // filter object_type and adjust tuple_unfold condition
