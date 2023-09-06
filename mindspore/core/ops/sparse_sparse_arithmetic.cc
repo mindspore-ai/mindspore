@@ -36,7 +36,7 @@
 #include "ops/primitive_c.h"
 #include "ops/sparse_sparse_arithmetic.h"
 #include "ops/sparse_sparse_minimum.h"
-#include "ops/sparsesparsemaximum.h"
+#include "ops/sparse_sparse_maximum.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"

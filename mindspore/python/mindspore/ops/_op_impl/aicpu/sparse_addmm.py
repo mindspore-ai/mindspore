@@ -16,7 +16,7 @@
 """SparseAddmm op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-sparseaddmm_op_info = AiCPURegOp("SparseAddmm") \
+sparse_addmm_op_info = AiCPURegOp("SparseAddmm") \
     .fusion_type("OPAQUE") \
     .input(0, "x1_indices", "required") \
     .input(1, "x1_values", "required") \
@@ -81,7 +81,7 @@ sparseaddmm_op_info = AiCPURegOp("SparseAddmm") \
     .get_op_info()
 
 
-@op_info_register(sparseaddmm_op_info)
+@op_info_register(sparse_addmm_op_info)
 def _sparse_addmm_aicpu():
     """SparseAddmm AiCPU register"""
     return

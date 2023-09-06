@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""sparsesparsemaximum op"""
+"""sparse_sparse_maximum op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-sparsesparsemaximum_op_info = AiCPURegOp("SparseSparseMaximum") \
+sparse_sparse_maximum_op_info = AiCPURegOp("SparseSparseMaximum") \
     .fusion_type("OPAQUE") \
     .input(0, "x1_indices", "required") \
     .input(1, "x1_values", "required") \
@@ -47,7 +47,7 @@ sparsesparsemaximum_op_info = AiCPURegOp("SparseSparseMaximum") \
     .get_op_info()
 
 
-@op_info_register(sparsesparsemaximum_op_info)
-def _sparsesparsemaximum_aicpu():
+@op_info_register(sparse_sparse_maximum_op_info)
+def _sparse_sparse_maximum_aicpu():
     """SparseSparseMaximum AiCPU register"""
     return

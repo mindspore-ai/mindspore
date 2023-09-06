@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/sparseaddmm.h"
+#include "inc/sparse_addmm.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"

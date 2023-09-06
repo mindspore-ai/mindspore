@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include "mindspore/core/ops/sparsesparsemaximum.h"
+#include "mindspore/core/ops/sparse_sparse_maximum.h"
 #include "mindspore/core/ops/sparse_sparse_minimum.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
