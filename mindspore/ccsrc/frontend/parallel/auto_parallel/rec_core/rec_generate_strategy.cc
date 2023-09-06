@@ -452,17 +452,6 @@ Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
     s.push_back(1);
   }
 
-  // When input dimension is > 1, axis must be -1, and strategy must be data parallel.
-  if (ops[iter_ops]->outputs_shape()[0].size() > 1) {
-    size_t i;
-    for (i = 1; i < s.size(); i++) {
-      s[i] = 1;
-    }
-    for (size_t j = i; j < ops[iter_ops]->outputs_shape()[0].size(); j++) {
-      s.push_back(1);
-    }
-  }
-
   // Partition number should not exceed the number of devices
   for (size_t i = 0; i < ops[iter_ops]->outputs_shape()[0].size(); i++) {
     if (s[i] > ops[iter_ops]->outputs_shape()[0][i]) {
