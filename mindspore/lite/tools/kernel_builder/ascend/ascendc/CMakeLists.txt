@@ -9,7 +9,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/func.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/intf.cmake)
 
-execute_process(COMMAND rm -rf ${PKG_PATH})
+execute_process(COMMAND rm -r ${PKG_PATH})
 execute_process(COMMAND mkdir -p ${PKG_PATH})
 execute_process(COMMAND mkdir -p ${PKG_PATH}/packages)
 
