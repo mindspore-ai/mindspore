@@ -2972,7 +2972,9 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
     fusion = kHcclFusionDefault;
   }
 
-  if (!common::GetEnv("MS_DEV_CELL_REUSE").empty()) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }

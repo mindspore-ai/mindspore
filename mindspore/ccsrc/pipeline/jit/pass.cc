@@ -677,8 +677,9 @@ bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource,
 bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 
 bool AddRecomputationPass(const ResourcePtr &resource) {
-  static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  static const auto cell_reuse = (cell_reuse_env == "1" || cell_reuse_env == "2");
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (cell_reuse) {
     return true;
   }

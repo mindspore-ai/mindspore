@@ -1041,9 +1041,10 @@ void CacheFuncGraph(const ResourcePtr &resource) {
     return;
   }
   // Disable cache graph when the cell reusing is enable.
-  static bool enable_graph_reusing =
-    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
-  if (enable_graph_reusing) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (cell_reuse) {
     return;
   }
 #ifdef ENABLE_PROFILE
