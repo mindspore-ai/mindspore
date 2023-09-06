@@ -24,10 +24,10 @@ import mindspore.ops.operations.sparse_ops as P
 class SparseSparseMaximumNet(nn.Cell):
     def __init__(self):
         super(SparseSparseMaximumNet, self).__init__()
-        self.sparsesparsemaximum = P.SparseSparseMaximum()
+        self.sparse_sparse_maximum = P.SparseSparseMaximum()
 
     def construct(self, x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape):
-        return self.sparsesparsemaximum(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape)
+        return self.sparse_sparse_maximum(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape)
 
 
 def sparse_sparse_maximum(loss):

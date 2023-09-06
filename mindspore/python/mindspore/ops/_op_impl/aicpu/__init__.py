@@ -164,7 +164,7 @@ from .sparse_segment_sqrt_n_grad import _sparse_segment_sqrt_n_grad_aicpu
 from .sparse_segment_sum import _sparse_segment_sum_aicpu
 from .sparse_segment_sum_with_num_segments import _sparse_segment_sum_with_num_segments_aicpu
 from .sparse_softmax_cross_entropy_with_logits_v2 import _sparse_softmax_cross_entropy_with_logits_v2_aicpu
-from .sparsesparsemaximum import _sparsesparsemaximum_aicpu
+from .sparse_sparse_maximum import _sparse_sparse_maximum_aicpu
 from .split import _split_aicpu
 from .transpose import _transpose_aicpu
 from .tril_indices import _tril_indices_aicpu
