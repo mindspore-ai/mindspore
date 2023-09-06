@@ -158,6 +158,11 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name);
   ShapeVector infer_shape;
   for (size_t i = 0; i < hypothesis_shape_value.size() - 1; ++i) {
+    if (hypothesis_shape_value[i] < 0 || truth_shape_value[i] < 0) {
+      MS_EXCEPTION(ValueError) << "Value in hypothesis_shape and truth_shape can not be negative, but got "
+                               << "hypothesis_shape: " << hypothesis_shape_value << ", "
+                               << "truth_shape: " << truth_shape_value << ".";
+    }
     infer_shape.push_back(std::max(hypothesis_shape_value[i], truth_shape_value[i]));
   }
   return std::make_shared<abstract::Shape>(infer_shape);
