@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "combined_non_max_suppression.h"
+#include "cpu_kernel/ms_kernel/combined_non_max_suppression.h"
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <queue>
 #include <vector>
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -30,7 +32,7 @@ const char *kCombinedNonMaxSuppression = "CombinedNonMaxSuppression";
 
 void alloc_zeros(float *arr, int arr_len) {
   for (int i = 0; i < arr_len; i++) {
-    arr[i] = (float)0.0;
+    arr[i] = 0.0;
   }
 }
 
@@ -51,11 +53,10 @@ void CombinedNonMaxSuppressionCpuKernel::regular_input2buffer(float **boxes_buff
    * ways to visit box_src[i][class_idx][k] which stored by 1-dimension
    * box_src[i][class_idx][k]=box_src[i*q*4+class_idx*4+k]
    */
-  int box_len1;
   int sub_box_len1 = q * 4;
   int box_len2 = (class_idx << 2);
   for (int i = 0; i < num_boxes; i++) {
-    box_len1 = i * sub_box_len1 + box_len2;
+    int box_len1 = i * sub_box_len1 + box_len2;
     if (box_src[box_len1] > box_src[box_len1 + 2]) {
       boxes_buffer[i][0] = box_src[box_len1 + 2];
       boxes_buffer[i][2] = box_src[box_len1 + 0];
@@ -116,12 +117,11 @@ void CombinedNonMaxSuppressionCpuKernel::non_max_suppression(float **boxes_buffe
   }
 
   float similarity;
-  float original_score;
   non_max_suppression_local::score_index next_si;
 
-  while (((int)selected.size() < size_per_class) && (!pq.empty())) {
+  while ((static_cast<int>(selected.size()) < size_per_class) && (!pq.empty())) {
     next_si = pq.top();
-    original_score = next_si.score;
+    float original_score = next_si.score;
     pq.pop();
     bool should_hard_suppress = false;
 
@@ -181,7 +181,7 @@ void CombinedNonMaxSuppressionCpuKernel::nms_perclass(
     }
     std::vector<int> selected;
     non_max_suppression(boxes_buffer, scores_buffer, selected);
-    for (int i = 0; i < (int)selected.size(); i++) {
+    for (int i = 0; i < static_cast<int>(selected.size()); i++) {
       box_idx = selected[i];
       boxe_len1 = box_idx * sub_box_len1 + box_len2;
       sub_result_vec[k++] = {box_idx,
@@ -199,7 +199,7 @@ void CombinedNonMaxSuppressionCpuKernel::nms_perclass(
   return;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(CpuKernelContext &ctx, float *boxes, float *scores,
+uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(const CpuKernelContext &ctx, float *boxes, float *scores,
                                                          float *nmsed_boxes, float *nmsed_scores, float *nmsed_class,
                                                          int *valid_detection) {
   alloc_zeros(nmsed_boxes, num_bath * num_detection * 4);
@@ -216,7 +216,7 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(CpuKernelContext &ctx, 
   int score_len2 = num_boxes * num_class;
   int boxes_len2 = num_boxes * q * 4;
   auto shard_nms = [&](size_t start, size_t end) {
-    for (int i = start; i < (int)end; i++) {
+    for (int i = start; i < static_cast<int>(end); i++) {
       int per_detections = 0;
       int scores_index = 0;
       int result_size = 0;
@@ -237,14 +237,14 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(CpuKernelContext &ctx, 
           nmsed_boxes[(scores_index << 2) + 2] = std::max(std::min(result_vec[k].box_coord[2], box_max), box_min);
           nmsed_boxes[(scores_index << 2) + 3] = std::max(std::min(result_vec[k].box_coord[3], box_max), box_min);
           nmsed_scores[scores_index] = result_vec[k].score;
-          nmsed_class[scores_index] = (float)result_vec[k].class_idx;
+          nmsed_class[scores_index] = static_cast<float>(result_vec[k].class_idx);
         } else {
           nmsed_boxes[(scores_index << 2) + 0] = result_vec[k].box_coord[0];
           nmsed_boxes[(scores_index << 2) + 1] = result_vec[k].box_coord[1];
           nmsed_boxes[(scores_index << 2) + 2] = result_vec[k].box_coord[2];
           nmsed_boxes[(scores_index << 2) + 3] = result_vec[k].box_coord[3];
           nmsed_scores[scores_index] = result_vec[k].score;
-          nmsed_class[scores_index] = (float)result_vec[k].class_idx;
+          nmsed_class[scores_index] = static_cast<float>(result_vec[k].class_idx);
         }
         scores_index++;
       }
@@ -270,7 +270,7 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCheck(CpuKernelContext &ctx) {
+uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
   KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
   KERNEL_CHECK_NULLPTR(ctx.Input(2)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.");
@@ -385,24 +385,24 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCheck(CpuK
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(CpuKernelContext &ctx) {
+uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(const CpuKernelContext &ctx) {
   float *boxes = reinterpret_cast<float *>(ctx.Input(0)->GetData());
   float *scores = reinterpret_cast<float *>(ctx.Input(1)->GetData());
   max_output_size_per_class = *(reinterpret_cast<int *>(ctx.Input(2)->GetData()));
   max_total_size = *(reinterpret_cast<int *>(ctx.Input(3)->GetData()));
   iou_threshold = *(reinterpret_cast<float *>(ctx.Input(4)->GetData()));
   score_threshold = *(reinterpret_cast<float *>(ctx.Input(5)->GetData()));
-  num_bath = (int)(ctx.Input(0)->GetTensorShape()->GetDimSize(0));
-  num_boxes = (int)(ctx.Input(0)->GetTensorShape()->GetDimSize(1));
-  q = (int)(ctx.Input(0)->GetTensorShape()->GetDimSize(2));
-  num_class = (int)(ctx.Input(1)->GetTensorShape()->GetDimSize(2));
+  num_bath = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(0));
+  num_boxes = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(1));
+  q = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(2));
+  num_class = static_cast<int>(ctx.Input(1)->GetTensorShape()->GetDimSize(2));
   pad_per_class = false;
   clip_boxes = true;
   if (ctx.GetAttr("pad_per_class") != nullptr) {
-    pad_per_class = (bool)(ctx.GetAttr("pad_per_class")->GetBool());
+    pad_per_class = static_cast<bool>(ctx.GetAttr("pad_per_class")->GetBool());
   }
   if (ctx.GetAttr("clip_boxes") != nullptr) {
-    clip_boxes = (bool)(ctx.GetAttr("clip_boxes")->GetBool());
+    clip_boxes = static_cast<bool>(ctx.GetAttr("clip_boxes")->GetBool());
   }
   float *nmsed_boxes = reinterpret_cast<float *>(ctx.Output(0)->GetData());
   float *nmsed_scores = reinterpret_cast<float *>(ctx.Output(1)->GetData());
@@ -433,11 +433,11 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(Cp
                      max_total_size);
   KERNEL_CHECK_FALSE((iou_threshold >= 0 && iou_threshold <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "iou_threshold [%f] must be in [0,1]", iou_threshold);
-  KERNEL_CHECK_FALSE(((int)output0_shape->GetDimSize(1) == num_detection), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((static_cast<int>(output0_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
                      "The output0's 2nd dims [%d] need be same with %d", output0_shape->GetDimSize(1), num_detection);
-  KERNEL_CHECK_FALSE(((int)output1_shape->GetDimSize(1) == num_detection), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((static_cast<int>(output1_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
                      "The output1's 2nd dims [%d] need be same with %d", output1_shape->GetDimSize(1), num_detection);
-  KERNEL_CHECK_FALSE(((int)output2_shape->GetDimSize(1) == num_detection), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((static_cast<int>(output2_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
                      "The output2's 2nd dims [%d] need be same with %d", output2_shape->GetDimSize(1), num_detection);
   nms_perbath(ctx, boxes, scores, nmsed_boxes, nmsed_scores, nmsed_class, valid_detection);
   return KERNEL_STATUS_OK;

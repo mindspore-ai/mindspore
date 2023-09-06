@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cholesky.h"
+#include "cpu_kernel/ms_kernel/cholesky.h"
+
 #include <Eigen/Cholesky>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 1;
@@ -52,7 +55,7 @@ uint32_t CholeskyCpuKernel::Compute(CpuKernelContext &ctx) {
 REGISTER_CPU_KERNEL(Cholesky, CholeskyCpuKernel);
 
 template <typename T>
-uint32_t CholeskyCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &upper) {
+uint32_t CholeskyCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &upper) {
   auto inputptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto outputptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   std::vector<int64_t> dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();

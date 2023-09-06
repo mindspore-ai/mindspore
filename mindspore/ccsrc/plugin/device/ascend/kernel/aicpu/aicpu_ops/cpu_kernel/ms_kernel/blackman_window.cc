@@ -15,13 +15,17 @@
  */
 
 // 引入声明算子类的头文件
-#include "blackman_window.h"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/blackman_window.h"
+
+#include <math.h>
+#include <iostream>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <iostream>
+
 namespace {
 // 输入输出的个数
 const uint32_t kOutputNum = 1;
@@ -95,7 +99,7 @@ uint32_t BlackmanWindowCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename T2>
-uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
+uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(const CpuKernelContext &ctx) {
   // 输入数据
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto window_length = *input;
@@ -113,7 +117,6 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
   std::vector<int64_t> dim_vector;
   dim_vector.push_back(window_length);
   output_shape->SetDimSizes(dim_vector);
-  std::vector<int64_t> output_shape_value = output_shape->GetDimSizes();
 
   if (window_length == 0) {
     T2 output_temp = (T2)0;
@@ -130,10 +133,10 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
   }
 
   T2 end = (T2)0.42;
-  T2 temp = (T2)1.0;
+
   for (int i = 0; i < pre_window_length; i++) {
-    temp = (T2)0.08 * (T2)cos((T2)((T2)4 * (T2)M_PI * (T2)i) / ((T2)window_length - (T2)1)) -
-           (T2)0.5 * (T2)cos((T2)((T2)2 * (T2)M_PI * (T2)i) / ((T2)window_length - (T2)1)) + end;
+    T2 temp = (T2)0.08 * (T2)cos((T2)((T2)4 * (T2)M_PI * (T2)i) / ((T2)window_length - (T2)1)) -
+              (T2)0.5 * (T2)cos((T2)((T2)2 * (T2)M_PI * (T2)i) / ((T2)window_length - (T2)1)) + end;
     *(output + i) = temp;
   }
 
@@ -141,7 +144,7 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename T2>
-uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(CpuKernelContext &ctx) {
+uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(const CpuKernelContext &ctx) {
   // 输入数据
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto window_length = *input;
@@ -160,7 +163,6 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(CpuKernelContext &ctx) 
   std::vector<int64_t> dim_vector;
   dim_vector.push_back(window_length);
   output_shape->SetDimSizes(dim_vector);
-  std::vector<int64_t> output_shape_value = output_shape->GetDimSizes();
 
   if (window_length == 0) {
     *output = (Eigen::half)0;
@@ -174,12 +176,10 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(CpuKernelContext &ctx) 
     window_length += 1;
   }
 
-  float end = (float)0.42;
-  float temp = (float)1.0;
+  float end = 0.42;
   for (int i = 0; i < pre_window_length; i++) {
-    temp = (float)0.08 * (float)cos((float)((float)4 * (float)M_PI * (float)i) / ((float)window_length - (float)1)) -
-           (float)0.5 * (float)cos((float)((float)2 * (float)M_PI * (float)i) / ((float)window_length - (float)1)) +
-           end;
+    float temp =
+      0.08 * cos((4 * M_PI * i) / (window_length - 1)) - 0.5 * cos((2 * M_PI * i) / (window_length - 1)) + end;
     *(output + i) = (Eigen::half)temp;
   }
 

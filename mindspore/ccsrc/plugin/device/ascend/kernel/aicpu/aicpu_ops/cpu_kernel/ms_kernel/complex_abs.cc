@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
-#include "complex_abs.h"
+#include "cpu_kernel/ms_kernel/complex_abs.h"
 
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -85,11 +87,6 @@ inline std::uint32_t ExtraCheckComplexAbs(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckComplexAbs(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
-  return NormalCheck(ctx, kComplexAbsInputNum, kComplexAbsOutputNum) ? KERNEL_STATUS_PARAM_INVALID
-                                                                     : ExtraCheckComplexAbs(ctx);
-}
-
 inline std::uint32_t ComputeComplexAbs(const CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
@@ -105,8 +102,9 @@ inline std::uint32_t ComputeComplexAbs(const CpuKernelContext &ctx) {
 }  // namespace detail
 
 std::uint32_t ComplexAbsCpuKernel::Compute(CpuKernelContext &ctx) {
-  return detail::CheckComplexAbs(ctx, kComplexAbsInputNum, kComplexAbsOutputNum) ? KERNEL_STATUS_PARAM_INVALID
-                                                                                 : detail::ComputeComplexAbs(ctx);
+  std::uint32_t check = NormalCheck(ctx, kComplexAbsInputNum, kComplexAbsOutputNum) ? KERNEL_STATUS_PARAM_INVALID
+                                                                                    : detail::ExtraCheckComplexAbs(ctx);
+  return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeComplexAbs(ctx);
 }
 
 REGISTER_CPU_KERNEL(kComplexAbs, ComplexAbsCpuKernel);

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
+#include "cpu_kernel/ms_kernel/broadcast_to.h"
+#include <algorithm>
 #include <iostream>
-#include "broadcast_to.h"
+#include <string>
+#include <vector>
 
 #include "Eigen/Core"
 
-#include <algorithm>
-#include <vector>
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -45,7 +45,7 @@ const char *kBroadcastTo = "BroadcastTo";
 namespace aicpu {
 
 uint32_t BroadcastToCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(BroadcastToParamCheck(ctx), "BroadcastTo check params failed.");
+  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BroadcastTo check input and output number failed.");
 
   DataType input_data_type = ctx.Input(0)->GetDataType();
   std::string input1_data_type = "DT_INT32";
@@ -74,10 +74,7 @@ uint32_t BroadcastToCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t BroadcastToCpuKernel::BroadcastToParamCheck(CpuKernelContext &ctx) {
-  // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BroadcastTo check input and output number failed.");
-
+uint32_t BroadcastToCpuKernel::BroadcastToParamCheck(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *shape = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -96,7 +93,7 @@ uint32_t BroadcastToCpuKernel::BroadcastToParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t BroadcastToCpuKernel::BcastCompute(CpuKernelContext &ctx) {
+uint32_t BroadcastToCpuKernel::BcastCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
 

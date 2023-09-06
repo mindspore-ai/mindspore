@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#include "cholesky_inverse.h"
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
+#include "cpu_kernel/ms_kernel/cholesky_inverse.h"
+
 #include <Eigen/Dense>
+
 #include <iostream>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/kernel_util.h"
+
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
@@ -62,7 +66,7 @@ uint32_t CholeskyInverseCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t CholeskyInverseCpuKernel::CholeskyInverseCompute(CpuKernelContext &ctx) {
+uint32_t CholeskyInverseCpuKernel::CholeskyInverseCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto inputShape = ctx.Input(0)->GetTensorShape();

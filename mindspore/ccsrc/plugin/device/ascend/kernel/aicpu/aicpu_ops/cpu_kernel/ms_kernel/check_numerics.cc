@@ -15,15 +15,18 @@
  * limitations under the License.
  */
 
-#include "check_numerics.h"
+#include "cpu_kernel/ms_kernel/check_numerics.h"
+
+#include "securec/include/securec.h"
 
 #include <securec.h>
+#include <algorithm>
 #include "unsupported/Eigen/CXX11/Tensor"
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -105,11 +108,6 @@ inline std::uint32_t ExtraCheckCheckNumerics(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckCheckNumerics(CpuKernelContext &ctx) {
-  return NormalCheck(ctx, kCheckNumericsInputNum, kCheckNumericsOutputNum) ? KERNEL_STATUS_PARAM_INVALID
-                                                                           : ExtraCheckCheckNumerics(ctx);
-}
-
 inline std::uint32_t ComputeCheckNumerics(const CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
@@ -127,7 +125,10 @@ inline std::uint32_t ComputeCheckNumerics(const CpuKernelContext &ctx) {
 }  // namespace detail
 
 std::uint32_t CheckNumericsCpuKernel::Compute(CpuKernelContext &ctx) {
-  return detail::CheckCheckNumerics(ctx) ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCheckNumerics(ctx);
+  std::uint32_t check = NormalCheck(ctx, kCheckNumericsInputNum, kCheckNumericsOutputNum)
+                          ? KERNEL_STATUS_PARAM_INVALID
+                          : detail::ExtraCheckCheckNumerics(ctx);
+  return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCheckNumerics(ctx);
 }
 
 REGISTER_CPU_KERNEL(kCheckNumerics, CheckNumericsCpuKernel);

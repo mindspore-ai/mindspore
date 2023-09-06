@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <map>
 #include <set>
-#include "cpu_ops_kernel.h"
+#include <vector>
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/sparse_group.h"
 #include "utils/sparse_tensor.h"
 // 定义命名空间aicpu
@@ -51,7 +53,7 @@ class DenseToSparseSetOperationCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
   uint32_t ComputeDenseToSparse(DataBank &databank);

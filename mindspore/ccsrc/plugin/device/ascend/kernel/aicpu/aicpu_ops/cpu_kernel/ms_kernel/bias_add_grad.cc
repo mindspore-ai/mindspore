@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bias_add_grad.h"
+#include "cpu_kernel/ms_kernel/bias_add_grad.h"
 
+#include <algorithm>
 #include <iostream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <unordered_map>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -76,7 +78,7 @@ uint32_t BiasAddGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(CpuKernelContext &ctx) {
+uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "col2im.h"
+#include "cpu_kernel/ms_kernel/col2im.h"
 
 #include <vector>
 #include <complex>
 
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "status.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -41,6 +41,7 @@ const char *kCol2im = "Col2im";
 
 namespace aicpu {
 uint32_t Col2imCpuKernel::Compute(CpuKernelContext &ctx) {
+  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kCol2imInputNum, kCol2imOutputNum), "[%s] check params failed.", kCol2im);
   KERNEL_HANDLE_ERROR(Col2imParamCheck(ctx), "[%s] check params failed.", kCol2im);
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
@@ -79,8 +80,7 @@ static inline T div_rtn(T x, T y) {
   return q;
 }
 
-uint32_t Col2imCpuKernel::Col2imParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kCol2imInputNum, kCol2imOutputNum), "[%s] check params failed.", kCol2im);
+uint32_t Col2imCpuKernel::Col2imParamCheck(const CpuKernelContext &ctx) {
   Tensor *input_ = ctx.Input(0);
   Tensor *output_size_ = ctx.Input(1);
   KERNEL_CHECK_NULLPTR(ctx.GetAttr("kernel_size"), KERNEL_STATUS_PARAM_INVALID,
@@ -190,7 +190,7 @@ void Col2imCpuKernel::InnerCompute(int64_t c_col, int64_t input_offset, int64_t 
 }
 
 template <typename T>
-uint32_t Col2imCpuKernel::Col2imCompute(CpuKernelContext &ctx) {
+uint32_t Col2imCpuKernel::Col2imCompute(const CpuKernelContext &ctx) {
   Tensor *input_ = ctx.Input(0);
   Tensor *output_size_ = ctx.Input(1);
   Tensor *output_ = ctx.Output(0);

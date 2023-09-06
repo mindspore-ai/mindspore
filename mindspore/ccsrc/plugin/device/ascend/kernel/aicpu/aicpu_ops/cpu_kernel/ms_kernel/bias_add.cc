@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bias_add.h"
+#include "cpu_kernel/ms_kernel/bias_add.h"
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include <algorithm>
+#include <string>
 #include "iomanip"
 #include "iostream"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
+#include "securec/include/securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -104,7 +107,7 @@ uint32_t BiasAddCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BiasAddCpuKernel::BiasAddCompute(CpuKernelContext &ctx) {
+uint32_t BiasAddCpuKernel::BiasAddCompute(const CpuKernelContext &ctx) {
   BCalcInfo calc_info;
   calc_info.input_0 = ctx.Input(kFirstInputIndex);
   calc_info.input_1 = ctx.Input(kSecondInputIndex);

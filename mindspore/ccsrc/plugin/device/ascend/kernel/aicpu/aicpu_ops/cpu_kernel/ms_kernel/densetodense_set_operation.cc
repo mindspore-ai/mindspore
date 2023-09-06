@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "densetodense_set_operation.h"
+#include "cpu_kernel/ms_kernel/densetodense_set_operation.h"
 
 #include <algorithm>
 #include <atomic>
@@ -24,12 +24,13 @@
 #include <string>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+
+#include "common/kernel_log.h"
+#include "common/status.h"
 
 namespace {
 const uint32_t kOutputNum = 3;
@@ -201,7 +202,7 @@ void DenseToDenseSetOperationCpuKernel::ApplySetOperation(const std::set<T> &set
 
 template <typename T>
 uint32_t DenseToDenseSetOperationCpuKernel::OutputSparseTensor(
-  CpuKernelContext &ctx, const std::vector<int64_t> &output_shape, const int64_t num_values,
+  const CpuKernelContext &ctx, const std::vector<int64_t> &output_shape, const int64_t num_values,
   const std::map<std::vector<int64_t>, std::set<T>> &sets) {
   Tensor *out_indices_t, *out_values_t, *out_shape_t;
 
@@ -256,7 +257,7 @@ uint32_t DenseToDenseSetOperationCpuKernel::OutputSparseTensor(
 }
 
 template <typename T>
-uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *set1_t = ctx.Input(0);
   Tensor *set2_t = ctx.Input(1);
   std::vector<int64_t> group_shape;

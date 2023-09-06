@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
-#include "cos.h"
+#include "cpu_kernel/ms_kernel/cos.h"
 
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -91,10 +93,6 @@ inline std::uint32_t ExtraCheckCos(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckCos(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
-  return NormalCheck(ctx, kCosInputNum, kCosOutputNum) ? KERNEL_STATUS_PARAM_INVALID : ExtraCheckCos(ctx);
-}
-
 inline std::uint32_t ComputeCos(const CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
@@ -116,7 +114,10 @@ inline std::uint32_t ComputeCos(const CpuKernelContext &ctx) {
 }  // namespace detail
 
 std::uint32_t CosCpuKernel::Compute(CpuKernelContext &ctx) {
-  return detail::CheckCos(ctx, kCosInputNum, kCosOutputNum) ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCos(ctx);
+  std::uint32_t check = NormalCheck(const_cast<CpuKernelContext &>(ctx), kCosInputNum, kCosOutputNum)
+                          ? KERNEL_STATUS_PARAM_INVALID
+                          : detail::ExtraCheckCos(ctx);
+  return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCos(ctx);
 }
 
 REGISTER_CPU_KERNEL(kCos, CosCpuKernel);

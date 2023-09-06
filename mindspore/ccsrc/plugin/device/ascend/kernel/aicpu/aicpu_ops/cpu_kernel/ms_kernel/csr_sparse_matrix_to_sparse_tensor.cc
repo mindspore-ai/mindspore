@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "csr_sparse_matrix_to_sparse_tensor.h"
+#include "cpu_kernel/ms_kernel/csr_sparse_matrix_to_sparse_tensor.h"
 
+#include <algorithm>
 #include <complex>
 #include <iostream>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -135,7 +136,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
 REGISTER_CPU_KERNEL(CSRSparseMatrixToSparseTensor, CSRSparseMatrixToSparseTensorCpuKernel);
 
 template <typename indicesT, typename dataT>
-uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(0);
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
   auto dense_shape_ptr = static_cast<indicesT *>(ctx.Output(2)->GetData());
@@ -183,7 +184,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(CpuKernelContext 
 
 template <typename indicesT>
 void CSRSparseMatrixToSparseTensorCpuKernel::SpecialCompute(int64_t batch_begin, int64_t batch_end,
-                                                            CpuKernelContext &ctx) {
+                                                            const CpuKernelContext &ctx) {
   auto x_dense_shape = ctx.Input(0);
   const int rank = x_dense_shape->NumElements();
   auto x_dense_shape_ptr = static_cast<indicesT *>(x_dense_shape->GetData());
@@ -212,7 +213,7 @@ void CSRSparseMatrixToSparseTensorCpuKernel::SpecialCompute(int64_t batch_begin,
 }
 
 template <typename indicesT>
-void CSRSparseMatrixToSparseTensorCpuKernel::IndicesCompute(CpuKernelContext &ctx, int64_t indices_offset,
+void CSRSparseMatrixToSparseTensorCpuKernel::IndicesCompute(const CpuKernelContext &ctx, int64_t indices_offset,
                                                             const int64_t batch_idx, const int64_t row_idx,
                                                             const int64_t col_idx) {
   const int rank = ctx.Input(0)->NumElements();

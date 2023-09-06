@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#include "cholesky_grad.h"
+#include "cpu_kernel/ms_kernel/cholesky_grad.h"
+
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 2;
@@ -79,14 +81,14 @@ uint32_t CholeskyGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CholeskyGradCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &reverse) {
+uint32_t CholeskyGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &reverse) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto lptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto gradptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto outputptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int n = ctx.Input(0)->GetTensorShape()->GetDimSize(dims - 1);
   int64_t data_num = ctx.Input(0)->NumElements();
-  const int64_t mat_size = n * n;
+  const int64_t mat_size = static_cast<int64_t>(n * n);
   const int64_t batch = data_num / mat_size;
   const int64_t kParallelDataNum = 16 * mat_size;
   const int64_t kParallelDataNumMid = 72 * mat_size;

@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "complex.h"
+#include "cpu_kernel/ms_kernel/complex.h"
+
+#include <algorithm>
+
 #include "Eigen/Eigen"
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -54,7 +58,8 @@ constexpr int64_t kDoubleMaxNums = 16 * 128 * 1024;
 
 namespace aicpu {
 uint32_t ComplexCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kComplex);
+  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                      "[%s] check input and output failed.", kComplex);
   DataType input_type = ctx.Input(0)->GetDataType();
   switch (input_type) {
     Complex_COMPUTE_CASE(DT_FLOAT, float, DT_COMPLEX64, ctx)
@@ -65,7 +70,7 @@ uint32_t ComplexCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 template <typename T, typename t>
-uint32_t ComplexCpuKernel::ComplexCompute(CpuKernelContext &ctx) {
+uint32_t ComplexCpuKernel::ComplexCompute(const CpuKernelContext &ctx) {
   auto input0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());

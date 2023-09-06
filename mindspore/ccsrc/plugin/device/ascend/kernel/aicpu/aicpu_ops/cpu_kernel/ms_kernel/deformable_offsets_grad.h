@@ -18,10 +18,12 @@
 #define AICPU_OPS_AICPU_DEFORMABLE_OFFSETS_GRAD_KERNELS_H_
 
 #include <algorithm>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <utility>
-#include "cpu_ops_kernel.h"
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 struct DeformableOffsetGradDims {

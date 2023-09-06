@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cholesky_solve.h"
+#include "cpu_kernel/ms_kernel/cholesky_solve.h"
+
+#include <Eigen/Dense>
+
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include <Eigen/Dense>
+#include <vector>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 2;
@@ -51,7 +55,7 @@ uint32_t CholeskySolveCpuKernel::Compute(CpuKernelContext &ctx) {
 REGISTER_CPU_KERNEL(CholeskySolve, CholeskySolveCpuKernel);
 
 template <typename T>
-uint32_t CholeskySolveCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &upper) {
+uint32_t CholeskySolveCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &upper) {
   auto rhsptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto lhsptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto outptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());

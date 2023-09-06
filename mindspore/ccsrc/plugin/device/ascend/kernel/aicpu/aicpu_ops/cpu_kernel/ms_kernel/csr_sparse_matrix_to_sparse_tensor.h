@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CSRSPARSEMATRIXTOSPARSETENSOR_H_
 #define AICPU_KERNELS_NORMALIZED_CSRSPARSEMATRIXTOSPARSETENSOR_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class CSRSparseMatrixToSparseTensorCpuKernel : public CpuKernel {
@@ -28,14 +28,14 @@ class CSRSparseMatrixToSparseTensorCpuKernel : public CpuKernel {
 
  private:
   template <typename indicesT, typename dataT>
-  uint32_t ComputeKernel(CpuKernelContext &ctx);
+  uint32_t ComputeKernel(const CpuKernelContext &ctx);
 
   template <typename indicesT>
-  void SpecialCompute(int64_t batch_begin, int64_t batch_end, CpuKernelContext &ctx);
+  void SpecialCompute(int64_t batch_begin, int64_t batch_end, const CpuKernelContext &ctx);
 
   template <typename indicesT>
-  void IndicesCompute(CpuKernelContext &ctx, int64_t indices_offset, const int64_t batch_idx, const int64_t row_idx,
-                      const int64_t col_idx);
+  void IndicesCompute(const CpuKernelContext &ctx, int64_t indices_offset, const int64_t batch_idx,
+                      const int64_t row_idx, const int64_t col_idx);
 };
 }  // namespace aicpu
 #endif

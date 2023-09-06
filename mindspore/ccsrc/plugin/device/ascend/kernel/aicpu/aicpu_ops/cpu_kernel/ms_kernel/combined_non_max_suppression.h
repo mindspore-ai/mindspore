@@ -16,7 +16,10 @@
 #ifndef AICPU_KERNELS_NORMALIZED_COMBINEDNONMAXSUPPRESSION_H_
 #define AICPU_KERNELS_NORMALIZED_COMBINEDNONMAXSUPPRESSION_H_
 
-#include "cpu_ops_kernel.h"
+#include <vector>
+
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+
 #include "utils/bcast.h"
 
 namespace non_max_suppression_local {
@@ -38,7 +41,7 @@ struct result_para {
   float box_coord[4];
 };
 
-bool result_cmp(result_para &a, result_para &b) { return a.score > b.score; }
+bool result_cmp(const result_para &a, const result_para &b) { return a.score > b.score; }
 }  // namespace non_max_suppression_local
 
 namespace aicpu {
@@ -52,10 +55,10 @@ class CombinedNonMaxSuppressionCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CombinedNonMaxSuppressionCheck(CpuKernelContext &ctx);
+  uint32_t CombinedNonMaxSuppressionCheck(const CpuKernelContext &ctx);
 
-  uint32_t CombinedNonMaxSuppressionCompute(CpuKernelContext &ctx);
-  uint32_t nms_perbath(CpuKernelContext &, float *, float *, float *, float *, float *, int *);
+  uint32_t CombinedNonMaxSuppressionCompute(const CpuKernelContext &ctx);
+  uint32_t nms_perbath(const CpuKernelContext &, float *, float *, float *, float *, float *, int *);
   void regular_input2buffer(float **, float *, const int);
   float IOU(float **, int, int);
   void non_max_suppression(float **, float *, std::vector<int> &);

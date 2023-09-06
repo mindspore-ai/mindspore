@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dense_to_csr_sparse_matrix.h"
+#include "cpu_kernel/ms_kernel/dense_to_csr_sparse_matrix.h"
+
 #include <complex>
 #include <numeric>
-#include "cpu_kernel_utils.h"
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -81,7 +83,7 @@ uint32_t DenseToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
 REGISTER_CPU_KERNEL(DenseToCSRSparseMatrix, DenseToCSRSparseMatrixCpuKernel);
 
 template <typename indiceT, typename valueT>
-uint32_t DenseToCSRSparseMatrixCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
+uint32_t DenseToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   auto dense_input_ptr = reinterpret_cast<valueT *>(ctx.Input(0)->GetData());
   auto indices_ptr = reinterpret_cast<indiceT *>(ctx.Input(1)->GetData());
   auto y_dense_shape_ptr = reinterpret_cast<indiceT *>(ctx.Output(0)->GetData());
