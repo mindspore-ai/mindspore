@@ -613,8 +613,6 @@ def update_akg_info(args, info_path, kernel_name=None):
         desc = json.loads(info_str)
         desc["op_ori"] = desc["op"]
         desc["op"] = kernel_name if kernel_name else desc["op"]
-        if "target_info" in desc:  # to delete
-            del desc["target_info"]
         tensor_desc = {}  # {tensor_name: tensor_desc}
 
         # Update input_desc
