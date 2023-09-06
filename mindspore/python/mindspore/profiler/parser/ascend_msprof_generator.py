@@ -37,7 +37,7 @@ class AscendMsprofDataGenerator:
             'Op Name': {'index': self.invalid_index, 'dtype': ('Op Name', object)},
             'OP Type': {'index': self.invalid_index, 'dtype': ('Op Type', object)},
             'Task Type': {'index': self.invalid_index, 'dtype': ('Task Type', object)},
-            'Task Start Time': {'index': self.invalid_index, 'dtype': ('Task Start Time', float)},
+            'Task Start Time(us)': {'index': self.invalid_index, 'dtype': ('Task Start Time', float)},
             'Task Duration(us)': {'index': self.invalid_index, 'dtype': ('Task Duration', float)},
             'Task Wait Time(us)': {'index': self.invalid_index, 'dtype': ('Task Wait Time', float)},
             'Input Shapes': {'index': self.invalid_index, 'dtype': ('Input Shapes', object)},
@@ -61,9 +61,9 @@ class AscendMsprofDataGenerator:
 
         self.steptrace_name = {
             'Iteration ID': {'index': self.invalid_index, 'dtype': ('Iteration ID', int)},
-            'FP Start': {'index': self.invalid_index, 'dtype': ('FP Start', float)},
-            'BP End': {'index': self.invalid_index, 'dtype': ('BP End', float)},
-            'Iteration End': {'index': self.invalid_index, 'dtype': ('Iteration End', float)},
+            'FP Start(us)': {'index': self.invalid_index, 'dtype': ('FP Start', float)},
+            'BP End(us)': {'index': self.invalid_index, 'dtype': ('BP End', float)},
+            'Iteration End(us)': {'index': self.invalid_index, 'dtype': ('Iteration End', float)},
             'Iteration Time(us)': {'index': self.invalid_index, 'dtype': ('Iteration Time', float)},
             'FP to BP Time(us)': {'index': self.invalid_index, 'dtype': ('FP to BP Time', float)},
             'Iteration Refresh(us)': {'index': self.invalid_index, 'dtype': ('Iteration Refresh', float)},

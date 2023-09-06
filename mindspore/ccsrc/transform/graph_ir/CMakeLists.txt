@@ -41,6 +41,7 @@ if(ENABLE_D OR ENABLE_ACL)
     # remove god.h
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/all_ops.h")
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn.h")
+    list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn_math.h")
     # remove repeated head file
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/outfeed_ops.h")
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn_pooling_ops.h")
