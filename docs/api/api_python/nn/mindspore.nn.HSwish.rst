@@ -22,4 +22,4 @@ mindspore.nn.HSwish
         Tensor，具有与 `x` 相同的数据类型和shape。
 
     异常：
-        - **TypeError** - `x` 的数据类型不支持。
+        - **TypeError** - `x` 的数据类型不为Tensor。

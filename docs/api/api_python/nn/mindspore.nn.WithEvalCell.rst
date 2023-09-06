@@ -12,8 +12,8 @@ mindspore.nn.WithEvalCell
         - **add_cast_fp32** (bool) - 是否将数据类型调整为float32。默认值： ``False`` 。
 
     输入：
-        - **data** （Tensor） - shape为 :math:`(N, \ldots)` 的Tensor。
-        - **label** （Tensor） - shape为 :math:`(N, \ldots)` 的Tensor。
+        - **data** (Tensor) - shape为 :math:`(N, \ldots)` 的Tensor。
+        - **label** (Tensor) - shape为 :math:`(N, \ldots)` 的Tensor。
 
     输出：
         Tuple(Tensor)，包括标量损失函数、shape为 :math:`(N, \ldots)` 的网络输出和shape为 :math:`(N, \ldots)` 的标签。

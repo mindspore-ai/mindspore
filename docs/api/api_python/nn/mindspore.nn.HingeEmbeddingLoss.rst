@@ -43,4 +43,4 @@ mindspore.nn.HingeEmbeddingLoss
         - **TypeError** - `labels` 不是Tensor。
         - **TypeError** - `margin` 不是float或int。
         - **ValueError** - `labels` 和 `logits` shape不一致且不能广播。
-        - **ValueError** - `reduction` 不是"none"、"mean"或者"sum"。
+        - **ValueError** - `reduction` 不是 ``"none"`` 、 ``"mean"`` 或者 ``"sum"`` 。

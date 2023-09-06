@@ -179,7 +179,6 @@ class RNNCell(RNNCellBase):
     Here :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
     previous layer at time :math:`t-1` or the initial hidden state at time `0`.
-    If `nonlinearity` is `relu`, then `relu` is used instead of `tanh`.
 
     Args:
         input_size (int): Number of features of input.

@@ -18,4 +18,4 @@ mindspore.nn.ChannelShuffle
         - **TypeError** - `groups` 非正整数。
         - **ValueError** - `groups` 小于1。
         - **ValueError** - `x` 的维度小于3。
-        - **ValueError** - Tensor的通道数不能被 `groups` 整除。
+        - **ValueError** - `x` 的通道数不能被 `groups` 整除。

@@ -179,6 +179,7 @@ class Softmax2d(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
+          The input of Softmax with data type of float16 or float32.
 
     Outputs:
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
@@ -393,8 +394,11 @@ class ReLU(Cell):
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
 
-    It returns element-wise :math:`\max(0, x)`. Specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
+    It returns element-wise :math:`\max(0, x)`.
+
+    .. note::
+        The neurons with the negative output
+        will be suppressed and the active neurons will stay the same.
 
     ReLU Activation Function Graph:
 
@@ -444,9 +448,7 @@ class ReLU6(Cell):
 
     .. math::
 
-        Y = \min(\max(0, x), 6).
-
-    The input is a Tensor of any valid shape.
+        Y = \min(\max(0, x), 6)
 
     ReLU6 Activation Function Graph:
 
@@ -454,7 +456,8 @@ class ReLU6(Cell):
         :align: center
 
     Inputs:
-        - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32.
+        - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32 and that
+          is a Tensor of any valid shape.
 
     Outputs:
         Tensor, which has the same type as `x`.

@@ -578,9 +578,7 @@ class _RNNBase(Cell):
 
 class RNN(_RNNBase):
     r"""
-    Stacked Elman RNN layers.
-
-    Apply RNN layer with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to the input.
+    Stacked Elman RNN layers, applying RNN layer with :math:`\tanh` or :math:`\text{ReLU}` non-linearity to the input.
 
     For each element in the input sequence, each layer computes the following function:
 

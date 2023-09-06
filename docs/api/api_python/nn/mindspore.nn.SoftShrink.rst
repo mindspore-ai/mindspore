@@ -19,7 +19,7 @@ mindspore.nn.SoftShrink
         :align: center
 
     参数：
-        - **lambd** (float) - Softshrink公式中的 :math:`\lambda` ，必须不小于零。默认值： ``0.5`` 。
+        - **lambd** (float) - SoftShrink公式中的 :math:`\lambda` ，必须不小于零。默认值： ``0.5`` 。
 
     输入：
         - **input_x** (Tensor) - SoftShrink的输入，任意维度的Tensor，数据类型为float16或float32。

@@ -17,10 +17,10 @@ mindspore.nn.thor
             \otimes\left(G_{i}^{(k)}+\lambda I\right)^{-1}\right) \nabla_{w_{i}} J^{(k)}
         \end{array}
 
-    :math:`a_{i-1}` 表示第i层的输入，它是上一层的激活。
-    :math:`D_{s_i}` 表示第i层输出的loss函数的导数。
+    :math:`a_{i-1}` 表示第 :math:`i` 层的输入，它是上一层的激活。
+    :math:`D_{s_i}` 表示第 :math:`i` 层输出的loss函数的导数。
     :math:`I` 代表单位矩阵。
-    :math:`\lambda` 表示 :math:`damping` 参数， :math:`g_i` 表示第i层的梯度。
+    :math:`\lambda` 表示 :math:`damping` 参数， :math:`g_i` 表示第 :math:`i` 层的梯度。
     :math:`\otimes` 表示克罗内克尔积， :math:`\gamma` 表示学习率。
 
     .. note::
@@ -41,7 +41,7 @@ mindspore.nn.thor
         - **batch_size** (int) - batch的大小。默认值： ``32`` 。
         - **use_nesterov** (bool) - 启用Nesterov动量。默认值： ``False`` 。
         - **decay_filter** (function) - 用于确定权重衰减应用于哪些层的函数，只有在weight_decay>0时才有效。默认值：lambda x: x.name not in []。
-        - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。ResNet50作为一个样本，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值： ``None`` 。
+        - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。以ResNet50为例，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值： ``None`` 。
         - **enable_clip_grad** (bool) - 是否剪切梯度。默认值： ``False`` 。
         - **frequency** (int) - A/G和 :math:`A^{-1}/G^{-1}` 的更新间隔。当frequency等于N(N必须大于1)，每隔frequency个step，A/G和 :math:`A^{-1}/G^{-1}` 将更新一次。其他step将使用之前的A/G和 :math:`A^{-1}/G^{-1}` 来更新权重。默认值： ``100`` 。
 
