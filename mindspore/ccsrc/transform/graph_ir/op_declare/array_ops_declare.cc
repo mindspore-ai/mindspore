@@ -332,4 +332,10 @@ CUST_INPUT_MAP(NoRepeatNGram) = {{1, INPUT_DESC(state_seq)}, {2, INPUT_DESC(log_
 CUST_ATTR_MAP(NoRepeatNGram) = {{"ngram_size", ATTR_DESC(ngram_size, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(NoRepeatNGram) = {{0, OUTPUT_DESC(out)}};
 REG_ADPT_DESC(NoRepeatNGram, prim::kPrimNoRepeatNGram->name(), CUST_ADPT_DESC(NoRepeatNGram));
+
+// NonZero
+INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
+OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
 }  // namespace mindspore::transform

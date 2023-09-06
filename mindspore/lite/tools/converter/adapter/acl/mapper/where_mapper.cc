@@ -38,6 +38,10 @@ STATUS WhereMapper::Mapper(const CNodePtr &cnode) {
   PrimitivePtr dst_prim = nullptr;
   if (inputs.size() == C2NUM) {
     dst_prim = std::make_shared<acl::Where>();
+    auto attr_value = src_prim->GetAttr("is_nonzero");
+    if (attr_value != nullptr && GetValue<bool>(attr_value)) {
+      dst_prim = std::make_shared<acl::NonZeroV2>();
+    }
   } else {
     dst_prim = std::make_shared<acl::SelectV2>();
   }
