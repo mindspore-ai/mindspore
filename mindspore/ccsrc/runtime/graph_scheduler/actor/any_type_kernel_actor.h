@@ -38,7 +38,6 @@ using ControlArrowGroupMap = mindspore::HashMap<std::string, std::vector<AID *>>
 using TransformFunc =
   std::function<std::vector<AbstractActorPtr>(const KernelGraphPtr &, const KernelGraphPtr &, const DeviceContext *)>;
 using ScheduleFunc = std::function<void(const std::vector<AbstractActorPtr> &)>;
-using InferHandler = bool (*)(const py::object &, ValuePtr *);
 // The Any Type kernel actor is used to represent the graph whose data type is uncertain and need compiler when
 // the actor run.
 // The execution is as follows:
@@ -56,8 +55,6 @@ class AnyTypeKernelActor : public SuperKernelActor {
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
   const std::string &current_data_type() const { return current_data_type_; }
-  static void set_infer_handler(const InferHandler &infer_handler) { py_data_convert_handler_ = infer_handler; }
-  inline static InferHandler py_data_convert_handler_{nullptr};
 
  protected:
   void Init() override;
@@ -71,7 +68,7 @@ class AnyTypeKernelActor : public SuperKernelActor {
   // 4. send graph inputs to kernel actor of current graph
   void RunForGraphInput(OpContext<DeviceTensor> *const context);
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) override;
-  void UpdataDynamicShapeParameter(OpContext<DeviceTensor> *const context);
+  void UpdataDynamicShapeParameterForGraphInput(OpContext<DeviceTensor> *const context);
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
@@ -82,6 +79,7 @@ class AnyTypeKernelActor : public SuperKernelActor {
   void RunForGraphOutput(OpContext<DeviceTensor> *const context);
   void FetchGraphOutput(OpContext<DeviceTensor> *const context);
   void EraseGraphOutput(OpContext<DeviceTensor> *const context);
+  void UpdataDynamicShapeParameterForGraphOutput(OpContext<DeviceTensor> *const context);
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 
@@ -126,6 +124,8 @@ class AnyTypeKernelActor : public SuperKernelActor {
   mindspore::HashMap<std::string, size_t> graph_output_control_num_;
 
   AnyTypeKernelActorState actor_state_{kAnyTypeKernelActorInit};
+
+  static std::mutex instance_lock_;
 
   CompileFunc compile_func_;
   TransformFunc transform_func_;

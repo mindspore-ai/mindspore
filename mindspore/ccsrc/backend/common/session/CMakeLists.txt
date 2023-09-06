@@ -8,6 +8,7 @@ file(GLOB_RECURSE _SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "executor.cc"
     "executor_manager.cc"
     "anf_runtime_algorithm.cc"
+    "py_execute_utils.cc"
     "debug_register.cc"
     "single_kernel_graph.cc"
 )

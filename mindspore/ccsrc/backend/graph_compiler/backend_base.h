@@ -31,6 +31,7 @@
 #include "backend/graph_compiler/segment_runner.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "include/common/profiler.h"
+#include "include/backend/py_execute_utils.h"
 
 namespace mindspore {
 namespace compile {
@@ -71,7 +72,7 @@ class BACKEND_EXPORT Backend {
   bool is_multi_graph_sink_;
 };
 
-BACKEND_EXPORT void set_infer_handler(const runtime::InferHandler &infer_handler);
+BACKEND_EXPORT void set_pydata_converter(const pyexecute::PyDataConverter &pydata_converter);
 
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node = nullptr);
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,

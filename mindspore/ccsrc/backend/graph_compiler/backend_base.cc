@@ -22,6 +22,7 @@
 #include <windows.h>
 #endif
 
+#include "pipeline/jit/ps/parse/data_converter.h"
 #include "backend/graph_compiler/transform.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/callbacks.h"
@@ -55,8 +56,8 @@ Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(fa
   convert_fn_ = MsVmConvert;
 }
 
-void set_infer_handler(const runtime::InferHandler &infer_handler) {
-  runtime::AnyTypeKernelActor::set_infer_handler(infer_handler);
+void set_pydata_converter(const pyexecute::PyDataConverter &pydata_converter) {
+  pyexecute::set_pydata_converter(pydata_converter);
 }
 
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
