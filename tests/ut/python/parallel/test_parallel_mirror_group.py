@@ -139,7 +139,8 @@ def test_mirror_group_parallel_optimizer_not_full_shard():
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_parallel_optimizer_not_full_shard.pb"
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32,
-                                      parallel_optimizer_config={"parallel_optimizer_threshold": 2},
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 2,
+                                                                 "optimizer_weight_shard_size": 2},
                                       enable_parallel_optimizer=True, optimizer_weight_shard_size=2)
     auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
     group_info_list = restore_group_info_list("./test_mirror_group_parallel_optimizer_not_full_shard.pb")

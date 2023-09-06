@@ -773,8 +773,7 @@ def set_auto_parallel_context(**kwargs):
         grad_accumulation_step (int): This interface is deprecated. Default: ``1`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
-                        when parallel optimizer is enabled. Currently it supports the key `gradient_accumulation_shard`.
-                        The configure will be effective when we use
+                        when parallel optimizer is enabled. The configure will be effective when we use
                         mindspore.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
@@ -791,6 +790,10 @@ def set_auto_parallel_context(**kwargs):
                           optimizer is enabled, parameters with size smaller than this threshold will not be sharded
                           across the devices. Parameter size = shape[0] \* ... \* shape[n] \* size(dtype). Non-negative.
                           Unit: KB. Default: ``64`` .
+
+                        - optimizer_weight_shard_size(int): Set the optimizer weight shard group size. When the
+                          parallel optimizer is enabled, if you want to specific the maximum group size across devices.
+                          The numerical range can be (0, device_num]. Default: ``-1`` .
 
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
@@ -852,7 +855,8 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(enable_alltoall=False)
         >>> ms.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> ms.set_auto_parallel_context(pipeline_stages=2)
-        >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24}
+        >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24,
+        ...                    "optimizer_weight_shard_size": 2}
         >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
         >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
         >>> ms.set_auto_parallel_context(comm_fusion=config)
@@ -1100,7 +1104,7 @@ def set_context(**kwargs):
             Available values are:
 
             - False or 0: disable saving of intermediate compilation graphs.
-            - 1: some intermediate files will be generated during graph compliation.
+            - 1: some intermediate files will be generated during graph compilation.
             - True or 2: Generate more ir files related to backend process.
             - 3: Generate visualization computing graphs and detailed frontend ir graphs.
 
@@ -1300,7 +1304,7 @@ def set_context(**kwargs):
                 Default: False.
               - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
                 Default: False.
-              - enable_task_opt (bool): Enable the optimizaton of the number of tasks for each communication if True.
+              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
               - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.

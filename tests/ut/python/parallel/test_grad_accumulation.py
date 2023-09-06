@@ -123,7 +123,7 @@ def test_grad_accumulation_opt_shard_not_full():
     Expectation: success
     '''
     context.set_auto_parallel_context(device_num=32, global_rank=0, enable_parallel_optimizer=True,
-                                      optimizer_weight_shard_size=4)
+                                      parallel_optimizer_config={'optimizer_weight_shard_size': 4})
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
