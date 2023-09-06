@@ -22,6 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.common.api import jit
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as Validator
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -43,6 +44,16 @@ partial_op = _get_cache_prim(P.Partial)()
 expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
+
+
+@jit
+def _cal_total_norm(x, norm_type):
+    if norm_type == float('inf'):
+        func = lambda data: data.abs().max()
+        total_norm = max(hyper_map(func, x))
+    else:
+        total_norm = F.norm(F.stack(hyper_map(F.norm, x)))
+    return total_norm
 
 
 def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
@@ -75,19 +86,20 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
          [0.14695495 0.07773139 0.0105063 ]
          [0.8826814  0.0554626  0.40198016]]
     """
+    is_tensor = False
     if isinstance(x, Tensor):
         x = [x]
-    if norm_type == float('inf'):
-        total_norm = max(i.abs().max() for i in x)
-    else:
-        total_norm = F.norm(F.stack([F.norm(i) for i in x]))
+        is_tensor = True
+    total_norm = _cal_total_norm(x, norm_type)
     if error_if_nonfinite and F.logical_or(total_norm.isnan(), total_norm.isinf()):
         raise RuntimeError(f"For clip_by_norm, the total norm of order {norm_type} from input is non-finite.")
     clip_coef = max_norm / (total_norm + 1e-6)
-    ret = []
     if clip_coef < 1:
-        for i in x:
-            ret.append(i.mul(clip_coef))
+        ret = hyper_map(partial_op(F.mul, clip_coef), x)
+    else:
+        ret = x
+    if is_tensor:
+        return ret[0]
     return ret
 
 
