@@ -1141,7 +1141,11 @@ class Parser:
         """Get mindspore builtin namespace and symbol."""
         if var in self.closure_namespace:
             logger.debug(f"Found '{var}' in closure_namespace {self.closure_namespace.__str__()}.")
-            return self.closure_namespace, var
+            try:
+                value = self.closure_namespace[var]
+                return self.closure_namespace, var, value
+            except UnboundLocalError:
+                return self.closure_namespace, var, None
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
@@ -1154,7 +1158,7 @@ class Parser:
             return support_info
 
         logger.debug(f"The name '{var}' is an undefined symbol.")
-        return None, None
+        return None, None, None
 
     def check_third_party_library_side_effect(self, var, attr):
         """Check if value is from a third-party library."""
