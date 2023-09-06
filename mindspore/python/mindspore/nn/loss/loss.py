@@ -1896,28 +1896,17 @@ class BCEWithLogitsLoss(LossBase):
         """Initialize BCEWithLogitsLoss."""
         super(BCEWithLogitsLoss, self).__init__()
         self.reduction = reduction
-        self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
         if isinstance(weight, Parameter):
             raise TypeError(f"For '{self.cls_name}', the 'weight' can not be a Parameter.")
         if isinstance(pos_weight, Parameter):
             raise TypeError(f"For '{self.cls_name}', the 'pos_weight' can not be a Parameter.")
         self.weight = weight
         self.pos_weight = pos_weight
-        self.ones = P.OnesLike()
 
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        ones_input = self.ones(logits)
-        if self.weight is not None:
-            weight = self.weight
-        else:
-            weight = ones_input
-        if self.pos_weight is not None:
-            pos_weight = self.pos_weight
-        else:
-            pos_weight = ones_input
-        loss = self.bce_with_logits_loss(logits, labels, weight, pos_weight)
+        loss = ops.binary_cross_entropy_with_logits(logits, labels, self.weight, self.pos_weight, self.reduction)
         return loss
 
 
