@@ -168,6 +168,8 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
                thrust::device_pointer_cast(output));
   // Do transpose.
   size_t shape_size = input_shape.size();
+  cudaMemcpyAsync(dev_input_shape, input_shape.data(), sizeof(size_t) * shape_size, cudaMemcpyHostToDevice,
+                  cuda_stream);
   // Used for transpose: dev_input_axis={0, 1, ..., axis, ...} -> dev_input_axis[0]=axis, dev_input_axis[axis]=0
   TransposeInfo info;
   for (size_t i = 0; i < input_shape.size(); ++i) {
