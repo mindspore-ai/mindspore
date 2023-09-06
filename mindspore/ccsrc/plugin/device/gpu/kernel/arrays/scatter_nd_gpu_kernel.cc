@@ -96,34 +96,33 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   return true;
 }
 
-bool ScatterNdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool ScatterNdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   return true;
 }
 
-int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ScatterNdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  if (!TryGetIntValue(inputs, kShapeIndex_, kernel_name_, &attr_shape_)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << "can't get shape input!";
-    return KRET_RESIZE_FAILED;
-  }
+  auto shape = inputs[kShapeIndex_]->GetValue<ShapeVector>();
 
+  if (!shape.has_value()) {
+    MS_LOG(WARNING) << "For " << kernel_name_ << "can't get the value of input [shape] at current stage!";
+    return KRET_UNKNOWN_SHAPE;
+  }
+  attr_shape_ = shape.value();
   CalSize(inputs, outputs);
   return KRET_OK;
 }
 
-void ScatterNdGpuKernelMod::CalSize(const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+void ScatterNdGpuKernelMod::CalSize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto indices_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
 

@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "mindspore/core/ops/betainc.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,22 +26,13 @@ constexpr size_t kBetaincInputsNum = 3;
 constexpr size_t kBetaincOutputsNum = 1;
 }  // namespace
 
-bool BetaincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Betainc>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Betainc ops failed!";
-    return false;
-  }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool BetaincCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int BetaincCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+int BetaincCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();

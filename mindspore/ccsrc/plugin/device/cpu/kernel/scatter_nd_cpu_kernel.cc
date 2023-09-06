@@ -81,10 +81,9 @@ void ComputeOutput(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *pa
 }
 }  // namespace
 
-bool ScatterNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool ScatterNdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   constexpr size_t kDynamicInputNum = 3;
-  kernel_name_ = base_operator->GetPrim()->name();
   if (inputs.size() != kDynamicInputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                   << " input(s).";
@@ -103,10 +102,9 @@ bool ScatterNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ScatterNdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

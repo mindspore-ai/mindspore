@@ -94,6 +94,44 @@ inline bool IsShapeEmpty(const ShapeVector &shape) {
   return shape.size() == kOne && shape[0] == kZero;
 }
 
+// use for the op with the constraint that output shape must be same as input shape
+inline ShapeVector InferOutShapeSameAsInShape(const ShapeArray &input_shapes) {
+  ShapeVector out_shape{};
+  for (size_t i = 0; i < input_shapes.size(); i++) {
+    auto in_shape = input_shapes[i];
+    // scalar case
+    if (in_shape.empty()) {
+      return out_shape;
+    }
+    // skip to next input shape if current shape is dynamic rank
+    if (IsDynamicRank(in_shape)) {
+      continue;
+    }
+    // initialize output shape
+    auto rank = in_shape.size();
+    if (out_shape.empty()) {
+      out_shape.resize(rank, abstract::Shape::kShapeDimAny);
+    }
+    if (out_shape.size() != rank) {
+      MS_EXCEPTION(ValueError) << "Ranks of inputs must be all same if they are not dynamic.";
+    }
+    for (size_t j = 0; j < rank; j++) {
+      if (out_shape[j] != abstract::Shape::kShapeDimAny && in_shape[j] != abstract::Shape::kShapeDimAny &&
+          out_shape[j] != in_shape[j]) {
+        MS_EXCEPTION(ValueError) << "Corresponding axis of input shapes must be same if they are not dynamic.";
+      }
+      if (out_shape[j] == abstract::Shape::kShapeDimAny && in_shape[j] != abstract::Shape::kShapeDimAny) {
+        out_shape[j] = in_shape[j];
+      }
+    }
+  }
+  // if all input shapes are dynamic rank, return dynamic rank output
+  if (out_shape.empty()) {
+    return {abstract::Shape::kShapeRankAny};
+  }
+  return out_shape;
+}
+
 template <typename T>
 std::string VectorToString(const std::vector<T> &values) {
   std::stringstream ss;

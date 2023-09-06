@@ -25,6 +25,9 @@
 #include "abstract/abstract_value.h"
 
 namespace mindspore::ops {
+namespace{
+constexpr int64_t kUnknown = 0;
+}
 class TestOps : public UT::Common {
  public:
   TestOps() {}

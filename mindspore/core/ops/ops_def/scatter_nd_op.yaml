@@ -1,0 +1,12 @@
+#operator scatter_nd
+scatter_nd:
+    args:
+        indices:
+            dtype: tensor
+        updates:
+            dtype: tensor
+        shape:
+            dtype: tuple[int]
+    returns:
+        output:
+            dtype: tensor
