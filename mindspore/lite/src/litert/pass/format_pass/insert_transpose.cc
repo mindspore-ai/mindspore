@@ -82,7 +82,7 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
       }
 
       if (kernel->in_tensors().at(index)->IsConst()) {
-        TransposeConstData(kernel, index);
+        (void)TransposeConstData(kernel, index);
         continue;
       }
       auto ret = InsertPreTranspose(graph, kernel, tensors, TransInfoPair(format_, kernel_format), index,

@@ -19,7 +19,7 @@
 
 #include "nnacl/matmul_parameter.h"
 
-typedef struct MicroMatmulParameter {
+typedef struct {
   ActType act_type_;
   int thread_num_;
   int row_;

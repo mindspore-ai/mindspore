@@ -45,7 +45,6 @@ class SoftmaxBaseCoder : public OperatorCoder {
 
   SoftmaxQuantArg quant_params_{};
 
- protected:
   int n_dim_;
   int element_size_;
   int32_t input_shape_[DIMENSION_5D];
