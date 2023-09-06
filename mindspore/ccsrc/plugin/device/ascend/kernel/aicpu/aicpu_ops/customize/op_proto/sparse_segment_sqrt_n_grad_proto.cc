@@ -30,7 +30,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
 
   auto x_desc = op_desc->MutableInputDesc(0);
   GeShape x_ge_shape;
-  if (WithRankAtLeast(x_desc, 1, x_ge_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtLeast(x_desc, 1, x_ge_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(0, DebugString(x_desc->GetShape().GetDims()), "at least 1D");
     err_msg = string("failed to call WithRankAtLeast function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
@@ -39,7 +39,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
 
   auto indices_desc = op_desc->MutableInputDesc(1);
   GeShape indices_shape;
-  if (WithRank(indices_desc, 1, indices_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(indices_desc, 1, indices_shape, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(1, DebugString(indices_desc->GetShape().GetDims()), "1D");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
@@ -48,7 +48,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
 
   GeShape unused;
   GeShape segment_ids_shape(op_desc->MutableInputDesc(2)->GetShape());
-  if (Merge(segment_ids_shape, indices_shape, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (Merge(segment_ids_shape, indices_shape, unused, op) != GRAPH_SUCCESS) {
     err_msg = ConcatString("failed to call Merge function to merge input[segment_ids]'s shape",
                            DebugString(op_desc->MutableInputDesc(2)->GetShape().GetDims()),
                            " and input[indices]'s shape", DebugString(indices_shape.GetDims()));
@@ -56,7 +56,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
     return GRAPH_FAILED;
   }
   auto unused_desc = op_desc->MutableInputDesc(3);
-  if (WithRank(unused_desc, 0, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(unused_desc, 0, unused, op) != GRAPH_SUCCESS) {
     err_msg = GetShapeErrMsg(3, DebugString(unused_desc->GetShape().GetDims()), "scalar");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
@@ -66,7 +66,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
   auto x_shape_dims = x_ge_shape.GetDims();
   Shape x_shape(x_shape_dims);
   Shape subshape;
-  if (SubShape(x_shape, 1, x_shape.GetDimNum(), 1, subshape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (SubShape(x_shape, 1, x_shape.GetDimNum(), 1, subshape, op) != GRAPH_SUCCESS) {
     err_msg = ConcatString("failed to call SubShape function to get subshape from ", x_shape.GetDimNum(),
                            " to 1 in input[x] shape", DebugString(x_shape.GetDims()));
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);

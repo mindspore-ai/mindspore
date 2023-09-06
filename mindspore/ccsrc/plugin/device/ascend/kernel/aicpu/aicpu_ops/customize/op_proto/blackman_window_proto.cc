@@ -26,29 +26,34 @@ CUST_IMPLEMT_VERIFIER(BlackmanWindow, BlackmanWindowVerify) { return GRAPH_SUCCE
 IMPLEMT_COMMON_INFERFUNC(BlackmanWindowInferShape) {
   Shape shape;
   Shape unused;
+  Operator::OpType dtype;
+  if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr dtype failed.");
+  }
 
-  if (WithRank(op.GetInputDesc(0), 0, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(op.GetInputDesc(0), 0, unused, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
+  std::vector<std::string> input_infer_depends = {"window_length"};
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  op_desc->SetOpInferDepends(input_infer_depends);
   Tensor window_length_tensor;
   if (op.GetInputConstData("window_length", window_length_tensor) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
+    auto output_desc = op.GetOutputDescByName("y");
+    output_desc.SetDataType(dtype);
+    output_desc.SetShape(Shape(ge::UNKNOWN_SHAPE));
+    return op.UpdateOutputDesc("y", output_desc);
   }
   int64_t length;
-  if (MakeDimForScalarInput(window_length_tensor, length, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (MakeDimForScalarInput(window_length_tensor, length, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   if (Vector(length, shape) != GRAPH_SUCCESS) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), string("fail to gen vector shape according dim bins."));
     return GRAPH_FAILED;
   }
-  Operator::OpType type;
-  if (op.GetAttr("dtype", type) != GRAPH_SUCCESS) {
-    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("get attr[dtype] failed"));
-    return GRAPH_FAILED;
-  }
   TensorDesc output_desc = op.GetOutputDescByName("y");
-  output_desc.SetDataType(type);
+  output_desc.SetDataType(dtype);
   output_desc.SetShape(shape);
   return op.UpdateOutputDesc("y", output_desc);
 }

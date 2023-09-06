@@ -18,8 +18,8 @@
  * \file error_code.h
  * \brief
  */
-#ifndef OPS_COMMON_INC_ERROR_CODE_H_
-#define OPS_COMMON_INC_ERROR_CODE_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTILS_ERROR_CODE_H_
+#define CUSTOMIZE_OP_PROTO_UTILS_ERROR_CODE_H_
 
 namespace ge {
 // error code for report purpose.
@@ -59,4 +59,4 @@ enum ViewErrorCode {
 };
 }  // namespace ge
 
-#endif  // OPS_COMMON_INC_ERROR_CODE_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTILS_ERROR_CODE_H_

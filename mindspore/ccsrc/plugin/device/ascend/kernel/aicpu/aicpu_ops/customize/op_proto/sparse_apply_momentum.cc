@@ -90,7 +90,7 @@ CUST_IMPLEMT_VERIFIER(SparseApplyMomentum, SparseApplyMomentumVerify) {
   }
 
   Shape indices_shape;
-  if (WithRank(op.GetInputDesc(4), 1, indices_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(op.GetInputDesc(4), 1, indices_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input indices must be 1-D.");
     return GRAPH_FAILED;
   }

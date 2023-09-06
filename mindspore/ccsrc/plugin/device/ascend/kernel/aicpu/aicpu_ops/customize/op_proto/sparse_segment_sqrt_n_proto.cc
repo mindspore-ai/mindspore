@@ -24,32 +24,32 @@ graphStatus SparseSegmentReductionShapeFn(Operator &op) {
   auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
   GeShape x_shapes;
   auto x_desc = op_desc->MutableInputDesc(0);
-  if (WithRankAtLeast(x_desc, 1, x_shapes, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtLeast(x_desc, 1, x_shapes, op) != GRAPH_SUCCESS) {
     AICPU_OP_LOGE(TbeGetName(op).c_str(), "Input x should be at least 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape indices_shapes;
   auto indices_desc = op_desc->MutableInputDesc(1);
-  if (WithRank(indices_desc, 1, indices_shapes, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(indices_desc, 1, indices_shapes, op) != GRAPH_SUCCESS) {
     AICPU_OP_LOGE(TbeGetName(op).c_str(), "Input indices must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape segment_ids_shapes;
   auto segment_ids_desc = op_desc->MutableInputDesc(2);
-  if (WithRank(segment_ids_desc, 1, segment_ids_shapes, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(segment_ids_desc, 1, segment_ids_shapes, op) != GRAPH_SUCCESS) {
     AICPU_OP_LOGE(TbeGetName(op).c_str(), "Input segment_ids must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape unuse;
-  if (Merge(indices_shapes, segment_ids_shapes, unuse, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (Merge(indices_shapes, segment_ids_shapes, unuse, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
 
   GeShape subshapes;
-  if (SubShape(x_shapes, 1, x_shapes.GetDimNum(), 1, subshapes, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (SubShape(x_shapes, 1, x_shapes.GetDimNum(), 1, subshapes, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
 

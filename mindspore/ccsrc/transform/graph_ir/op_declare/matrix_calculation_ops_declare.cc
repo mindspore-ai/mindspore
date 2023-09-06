@@ -234,4 +234,19 @@ INPUT_MAP(Tril) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Tril) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Tril) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
+
+// Eye
+INPUT_MAP(Eye) = EMPTY_INPUT_MAP;
+ATTR_MAP(Eye) = {{"num_rows", ATTR_DESC(num_rows, AnyTraits<int64_t>())},
+                 {"num_columns", ATTR_DESC(num_columns, AnyTraits<int64_t>())},
+                 {"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Eye) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Eye, kNameEye, ADPT_DESC(Eye));
+
+// FillDiagonal
+INPUT_MAP(FillDiagonal) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(FillDiagonal) = {{"fill_value", ATTR_DESC(fill_value, AnyTraits<float>())},
+                          {"wrap", ATTR_DESC(wrap, AnyTraits<bool>())}};
+OUTPUT_MAP(FillDiagonal) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FillDiagonal, kNameFillDiagonal, ADPT_DESC(FillDiagonal));
 }  // namespace mindspore::transform

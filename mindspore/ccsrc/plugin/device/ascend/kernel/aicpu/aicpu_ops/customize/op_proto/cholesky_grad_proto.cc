@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-#include "inc/index_fill.h"
+#include "inc/ops/linalg_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
+#include "utils/linalg_ops_shape_fns.h"
+
 namespace ge {
-// ----------------IndexFill-------------------
-// Obtains the processing function of the output tensor description.
-IMPLEMT_COMMON_INFERFUNC(IndexFillInferShape) {
-  TensorDesc v_output_desc = op.GetOutputDescByName("y");
+IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  auto x_desc = op_desc->MutableInputDesc(0);
 
-  DataType input_dtype = op.GetInputDescByName("x").GetDataType();
-  Format input_format = op.GetInputDescByName("x").GetFormat();
-  // shape of output y is the same as input x
-  ge::Shape shape_input = op.GetInputDescByName("x").GetShape();
-
-  v_output_desc.SetShape(shape_input);
-  v_output_desc.SetDataType(input_dtype);
-  v_output_desc.SetFormat(input_format);
-
-  if (op.UpdateOutputDesc("y", v_output_desc) != GRAPH_SUCCESS) {
+  GeShape y_shape;
+  if (MakeBatchSquareMatrix(x_desc, y_shape, op) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(),
+            "Op CholeskyGrad first input x tensor make batch square matrix "
+            "failed.");
     return GRAPH_FAILED;
   }
+
+  DataType type = x_desc->GetDataType();
+  auto y_desc = op_desc->MutableOutputDesc(0);
+  y_desc->SetShape(y_shape);
+  y_desc->SetDataType(type);
+
   return GRAPH_SUCCESS;
 }
 
-// Registered inferfunction
-CUST_COMMON_INFER_FUNC_REG(IndexFill, IndexFillInferShape);
-// ----------------IndexFill END-------------------
+INFER_FUNC_REG(CholeskyGrad, CholeskyGradInfer);
 }  // namespace ge

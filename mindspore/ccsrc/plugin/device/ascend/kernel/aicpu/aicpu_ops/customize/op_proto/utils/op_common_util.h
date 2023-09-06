@@ -19,8 +19,8 @@
  * \brief common util for op, in this file only original type or class in C++ allowed
  */
 
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_OP_COMMON_UTIL_H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_OP_COMMON_UTIL_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_OP_COMMON_UTIL_H_
+#define CUSTOMIZE_OP_PROTO_UTIL_OP_COMMON_UTIL_H_
 
 #include <set>
 #include <string>
@@ -69,4 +69,4 @@ std::string to_string(const std::set<T> &items) {
 }
 }  // namespace ops
 
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_OP_COMMON_UTIL_H_
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_OP_COMMON_UTIL_H_

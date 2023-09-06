@@ -256,4 +256,21 @@ ATTR_MAP(MVNV2) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())},
                    {"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(MVNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MVNV2, kNameMVNV2, ADPT_DESC(MVNV2))
+
+// MultiMarginLossGrad
+CUST_INPUT_MAP(MultiMarginLossGrad) = {
+  {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(weight)}};
+CUST_ATTR_MAP(MultiMarginLossGrad) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
+                                      {"margin", ATTR_DESC(margin, AnyTraits<float>())},
+                                      {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MultiMarginLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(MultiMarginLossGrad, prim::kPrimMultiMarginLossGrad->name(), CUST_ADPT_DESC(MultiMarginLossGrad));
+
+// MultiMarginLoss
+CUST_INPUT_MAP(MultiMarginLoss) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}};
+CUST_ATTR_MAP(MultiMarginLoss) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
+                                  {"margin", ATTR_DESC(margin, AnyTraits<float>())},
+                                  {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MultiMarginLoss) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MultiMarginLoss, prim::kPrimMultiMarginLoss->name(), CUST_ADPT_DESC(MultiMarginLoss));
 }  // namespace mindspore::transform

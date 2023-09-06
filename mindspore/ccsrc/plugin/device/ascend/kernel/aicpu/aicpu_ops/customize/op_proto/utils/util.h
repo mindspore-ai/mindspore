@@ -18,8 +18,8 @@
  * \file util.h
  * \brief
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_UTIL_H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_UTIL_H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_UTIL_H_
+#define CUSTOMIZE_OP_PROTO_UTIL_UTIL_H_
 
 #include <memory.h>
 #include <string>
@@ -641,4 +641,16 @@ const int32_t INDEX_VALUE5 = 5;
 const int32_t INDEX_VALUE6 = 6;
 const int32_t INDEX_VALUE7 = 7;
 const int32_t INDEX_VALUE8 = 8;
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_UTIL_H_
+
+template <typename T>
+inline std::string VectorToString(const std::vector<T> &values) {
+  std::stringstream ss;
+  for (auto iter = values.begin(); iter != values.end(); ++iter) {
+    ss << *iter;
+    if (iter != values.end() - 1) {
+      ss << ", ";
+    }
+  }
+  return ss.str();
+}
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_UTIL_H_

@@ -222,4 +222,96 @@ ATTR_MAP(STFT) = {{"hop_length", ATTR_DESC(hop_length, AnyTraits<int64_t>())},
                   {"return_complex", ATTR_DESC(return_complex, AnyTraits<bool>())},
                   {"n_fft", ATTR_DESC(n_fft, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(STFT, prim::kPrimSTFT->name(), ADPT_DESC(STFT))
+
+// Complex
+INPUT_MAP(Complex) = {{1, INPUT_DESC(real)}, {2, INPUT_DESC(imag)}};
+ATTR_MAP(Complex) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Complex) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(Complex, prim::kPrimComplex->name(), ADPT_DESC(Complex));
+
+// Betainc
+INPUT_MAP(Betainc) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(b)}, {3, INPUT_DESC(x)}};
+ATTR_MAP(Betainc) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Betainc) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Betainc, prim::kPrimBetainc->name(), ADPT_DESC(Betainc));
+
+// CholeskySolve
+CUST_INPUT_MAP(CholeskySolve) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_ATTR_MAP(CholeskySolve) = {{"upper", ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(CholeskySolve) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CholeskySolve, prim::kPrimCholeskySolve->name(), CUST_ADPT_DESC(CholeskySolve));
+
+// ComplexAbs
+INPUT_MAP(ComplexAbs) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ComplexAbs) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ComplexAbs) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ComplexAbs, prim::kPrimComplexAbs->name(), ADPT_DESC(ComplexAbs));
+
+// Bucketize
+INPUT_MAP(Bucketize) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Bucketize) = {{"boundaries", ATTR_DESC(boundaries, AnyTraits<std::vector<float>>())}};
+OUTPUT_MAP(Bucketize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Bucketize, prim::kPrimBucketize->name(), ADPT_DESC(Bucketize));
+
+// Cauchy
+CUST_INPUT_MAP(Cauchy) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(Cauchy) = {{"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())},
+                         {"sigma", ATTR_DESC(sigma, AnyTraits<float>())},
+                         {"median", ATTR_DESC(median, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(Cauchy) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cauchy, prim::kPrimCauchy->name(), CUST_ADPT_DESC(Cauchy));
+
+// Bincount
+INPUT_MAP(Bincount) = {{1, INPUT_DESC(array)}, {2, INPUT_DESC(size)}, {3, INPUT_DESC(weights)}};
+ATTR_MAP(Bincount) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Bincount) = {{0, OUTPUT_DESC(bins)}};
+REG_ADPT_DESC(Bincount, kNameBincount, ADPT_DESC(Bincount));
+
+// CholeskyInverse
+CUST_INPUT_MAP(CholeskyInverse) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(CholeskyInverse) = {{"upper", ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(CholeskyInverse) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DESC(CholeskyInverse));
+
+// Eig
+CUST_INPUT_MAP(Eig) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Eig) = {{"compute_v", ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(Eig) = {{0, OUTPUT_DESC(eigen_values)}, {1, OUTPUT_DESC(eigen_vectors)}};
+REG_ADPT_DESC(Eig, prim::kPrimEig->name(), CUST_ADPT_DESC(Eig));
+
+// Hypot
+CUST_INPUT_MAP(Hypot) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_ATTR_MAP(Hypot) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Hypot) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Hypot, prim::kPrimHypot->name(), CUST_ADPT_DESC(Hypot));
+
+// MatrixLogarithm
+CUST_INPUT_MAP(MatrixLogarithm) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(MatrixLogarithm) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(MatrixLogarithm) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixLogarithm, prim::kPrimMatrixLogarithm->name(), CUST_ADPT_DESC(MatrixLogarithm));
+
+// Lcm
+CUST_INPUT_MAP(Lcm) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_ATTR_MAP(Lcm) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Lcm) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Lcm, prim::kPrimLcm->name(), CUST_ADPT_DESC(Lcm));
+
+// MatrixExp
+CUST_INPUT_MAP(MatrixExp) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(MatrixExp) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(MatrixExp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixExp, prim::kPrimMatrixExp->name(), CUST_ADPT_DESC(MatrixExp));
+
+// Heaviside
+CUST_INPUT_MAP(Heaviside) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(values)}};
+CUST_ATTR_MAP(Heaviside) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Heaviside) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Heaviside, prim::kPrimHeaviside->name(), CUST_ADPT_DESC(Heaviside));
+
+// Gcd
+CUST_INPUT_MAP(Gcd) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+CUST_ATTR_MAP(Gcd) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Gcd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Gcd, prim::kPrimGcd->name(), CUST_ADPT_DESC(Gcd));
 }  // namespace mindspore::transform

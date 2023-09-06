@@ -17,8 +17,9 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_OP_ADAPTER_MAP_H_
 #define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_OP_ADAPTER_MAP_H_
 
-#include <string>
 #include <memory>
+#include <string>
+
 #include "utils/hash_map.h"
 
 namespace mindspore {
@@ -28,12 +29,15 @@ constexpr const char kNameConst[] = "Const";
 constexpr const char kNameParam[] = "parameter";
 constexpr const char kNameRandomUniform[] = "RandomUniform";
 constexpr const char kNameUniformReal[] = "UniformReal";
+constexpr const char kNameLogNormalReverse[] = "LogNormalReverse";
 constexpr const char kNameSimpleMean[] = "SimpleMean";
 constexpr const char kNameSimpleMeanGrad[] = "SimpleMeanGrad";
 constexpr const char kNameAllReduce[] = "AllReduce";
 constexpr const char kNameBroadcast[] = "Broadcast";
 constexpr const char kNameBroadcastTo[] = "BroadcastTo";
 constexpr const char kNameBroadcastToD[] = "BroadcastToD";
+constexpr const char kNameBlackmanWindow[] = "BlackmanWindow";
+constexpr const char kNameBartlettWindow[] = "BartlettWindow";
 constexpr const char kNameAllgather[] = "AllGather";
 constexpr const char kNameAllToAllv[] = "AllToAllv";
 constexpr const char kNameReduceScatter[] = "ReduceScatter";
@@ -47,6 +51,7 @@ constexpr const char kNameSquaredDifference[] = "SquaredDifference";
 constexpr const char kNamePow[] = "Pow";
 constexpr const char kNameBatchMatMul[] = "BatchMatMul";
 constexpr const char kNameBatchMatMulV2[] = "BatchMatMulV2";
+constexpr const char kNameBincount[] = "Bincount";
 constexpr const char kNameStridedSlice[] = "StridedSlice";
 constexpr const char kNameStridedSliceGrad[] = "StridedSliceGrad";
 constexpr const char kNameExpandDims[] = "ExpandDims";
@@ -54,6 +59,7 @@ constexpr const char kNameLog[] = "Log";
 constexpr const char kNameLogicalAnd[] = "LogicalAnd";
 constexpr const char kNameLogicalNot[] = "LogicalNot";
 constexpr const char kNameLogicalOr[] = "LogicalOr";
+constexpr const char kNameListDiff[] = "ListDiff";
 constexpr const char kNameExp[] = "Exp";
 constexpr const char kNameLessEqual[] = "LessEqual";
 constexpr const char kNameGreaterEqual[] = "GreaterEqual";
@@ -61,6 +67,8 @@ constexpr const char kNameApproximateEqual[] = "ApproximateEqual";
 constexpr const char kNameEqual[] = "Equal";
 constexpr const char kNameNotEqual[] = "NotEqual";
 constexpr const char kNameFlattenGrad[] = "FlattenGrad";
+constexpr const char kNameFillDiagonal[] = "FillDiagonal";
+constexpr const char kNameEye[] = "Eye";
 constexpr const char kNameConvolution[] = "Convolution";
 constexpr const char kNameMaxPool3D[] = "MaxPool3D";
 constexpr const char kNameMaxPool3DGrad[] = "MaxPool3DGrad";
@@ -80,6 +88,7 @@ constexpr const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
 constexpr const char kNameMaxPoolGradWithArgmaxV2[] = "MaxPoolGradWithArgmaxV2";
 constexpr const char kNameApplyMomentum[] = "ApplyMomentum";
 constexpr const char kNameDropoutDoMask[] = "DropoutDoMask";
+constexpr const char kNameDropout2D[] = "Dropout2D";
 constexpr const char kNameDropOutDoMaskV3[] = "DropOutDoMaskV3";
 constexpr const char kNameDropOutDoMaskV3D[] = "DropOutDoMaskV3D";
 constexpr const char kNameDropOutGenMaskV4[] = "DropOutGenMaskV4";
@@ -441,6 +450,7 @@ constexpr const char kNameViewCopy[] = "ViewCopy";
 constexpr const char kNameSend[] = "Send";
 constexpr const char kNameReceive[] = "Receive";
 constexpr const char kNameIndexAdd[] = "IndexAdd";
+constexpr const char kNameIndexFill[] = "IndexFill";
 constexpr const char kNameUnique[] = "Unique";
 constexpr const char kNameDynamicBroadcastGradientArgs[] = "DynamicBroadcastGradientArgs";
 constexpr const char kNameDynamicStitch[] = "DynamicStitch";

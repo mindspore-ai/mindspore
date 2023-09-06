@@ -168,4 +168,25 @@ INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},
 ATTR_MAP(NonMaxSuppressionV3) = {{"offset", ATTR_DESC(offset, AnyTraits<int>())}};
 OUTPUT_MAP(NonMaxSuppressionV3) = {{0, OUTPUT_DESC(selected_indices)}};
 REG_ADPT_DESC(NonMaxSuppressionV3, prim::kPrimNonMaxSuppressionV3->name(), ADPT_DESC(NonMaxSuppressionV3))
+
+// AdjustSaturation
+INPUT_MAP(AdjustSaturation) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(scale)}};
+ATTR_MAP(AdjustSaturation) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdjustSaturation) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdjustSaturation, prim::kPrimAdjustSaturation->name(), ADPT_DESC(AdjustSaturation));
+
+// AdjustHue
+INPUT_MAP(AdjustHue) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(delta)}};
+ATTR_MAP(AdjustHue) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdjustHue) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdjustHue, prim::kPrimAdjustHue->name(), ADPT_DESC(AdjustHue));
+
+// ExtractGlimpse
+INPUT_MAP(ExtractGlimpse) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}, {3, INPUT_DESC(offsets)}};
+ATTR_MAP(ExtractGlimpse) = {{"noise", ATTR_DESC(noise, AnyTraits<std::string>())},
+                            {"normalized", ATTR_DESC(normalized, AnyTraits<bool>())},
+                            {"centered", ATTR_DESC(centered, AnyTraits<bool>())},
+                            {"uniform_noise", ATTR_DESC(uniform_noise, AnyTraits<bool>())}};
+OUTPUT_MAP(ExtractGlimpse) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ExtractGlimpse, prim::kPrimExtractGlimpse->name(), ADPT_DESC(ExtractGlimpse));
 }  // namespace mindspore::transform

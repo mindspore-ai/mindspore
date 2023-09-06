@@ -25,21 +25,21 @@ CUST_IMPLEMT_INFERFUNC(SparseTensorToCSRSparseMatrix, SparseTensorToCSRSparseMat
 
   GeShape x_indices_shape;
   auto x_indices_desc = op_desc->MutableInputDesc(0);
-  if (WithRank(x_indices_desc, 2, x_indices_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_indices_desc, 2, x_indices_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_indices_desc must be 2-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_values_shape;
   auto x_values_desc = op_desc->MutableInputDesc(1);
-  if (WithRank(x_values_desc, 1, x_values_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_values_desc, 1, x_values_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_values must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape x_dense_shape_shape;
   auto x_dense_shape_desc = op_desc->MutableInputDesc(2);
-  if (WithRank(x_dense_shape_desc, 1, x_dense_shape_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(x_dense_shape_desc, 1, x_dense_shape_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x_dense_shape must be 1-D.");
     return GRAPH_FAILED;
   }

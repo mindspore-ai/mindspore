@@ -18,8 +18,8 @@
  * \file vector_proto_profiling.h
  * \brief
  */
-#ifndef OPS_BUILT_IN_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_
-#define OPS_BUILT_IN_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_
+#ifndef CUSTOMIZE_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_
+#define CUSTOMIZE_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_
 
 #include <memory>
 #include <string>
@@ -66,4 +66,4 @@ const bool vector_prof_switch = std::getenv("VECTOR_PROF") != nullptr;
       }                                                                                                            \
     }                                                                                                              \
   }
-#endif  // OPS_BUILT_IN_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_
+#endif  // CUSTOMIZE_OP_PROTO_UTIL_VECTOR_PROTO_PROFILING_H__H_

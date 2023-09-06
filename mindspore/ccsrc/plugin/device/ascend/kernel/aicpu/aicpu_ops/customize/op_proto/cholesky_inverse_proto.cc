@@ -22,8 +22,7 @@ namespace ge {
 // -----------------------CholeskyInverse---------------------
 IMPLEMT_COMMON_INFERFUNC(CholeskyInverseInferShape) {
   TensorDesc out_desc = op.GetOutputDescByName("x");
-  out_desc.SetDataType(op.GetInputDescByName("x").GetDataType());
-  if (op.UpdateOutputDesc("x", out_desc) != GRAPH_SUCCESS) {
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   return GRAPH_SUCCESS;

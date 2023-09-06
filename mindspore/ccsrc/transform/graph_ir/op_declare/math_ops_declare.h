@@ -19,6 +19,7 @@
 
 #include "inc/ops/math_ops.h"
 #include "inc/ops/spectral_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
@@ -103,4 +104,49 @@ DECLARE_OP_USE_OUTPUT(STFT)
 
 DECLARE_OP_ADAPTER(Histogram)
 DECLARE_OP_USE_OUTPUT(Histogram)
+
+DECLARE_OP_ADAPTER(Complex)
+DECLARE_OP_USE_OUTPUT(Complex)
+
+DECLARE_OP_ADAPTER(Betainc)
+DECLARE_OP_USE_OUTPUT(Betainc)
+
+DECLARE_CUST_OP_ADAPTER(CholeskySolve)
+DECLARE_CUST_OP_USE_OUTPUT(CholeskySolve)
+
+DECLARE_OP_ADAPTER(ComplexAbs)
+DECLARE_OP_USE_OUTPUT(ComplexAbs)
+
+DECLARE_OP_ADAPTER(Bucketize)
+DECLARE_OP_USE_OUTPUT(Bucketize)
+
+DECLARE_CUST_OP_ADAPTER(Cauchy)
+DECLARE_CUST_OP_USE_OUTPUT(Cauchy)
+
+DECLARE_OP_ADAPTER(Bincount)
+DECLARE_OP_USE_OUTPUT(Bincount)
+
+DECLARE_CUST_OP_ADAPTER(CholeskyInverse)
+DECLARE_CUST_OP_USE_OUTPUT(CholeskyInverse)
+
+DECLARE_CUST_OP_ADAPTER(Eig)
+DECLARE_CUST_OP_USE_OUTPUT(Eig)
+
+DECLARE_CUST_OP_ADAPTER(Hypot)
+DECLARE_CUST_OP_USE_OUTPUT(Hypot)
+
+DECLARE_CUST_OP_ADAPTER(MatrixLogarithm)
+DECLARE_CUST_OP_USE_OUTPUT(MatrixLogarithm)
+
+DECLARE_CUST_OP_ADAPTER(Lcm)
+DECLARE_CUST_OP_USE_OUTPUT(Lcm)
+
+DECLARE_CUST_OP_ADAPTER(MatrixExp)
+DECLARE_CUST_OP_USE_OUTPUT(MatrixExp)
+
+DECLARE_CUST_OP_ADAPTER(Heaviside)
+DECLARE_CUST_OP_USE_OUTPUT(Heaviside)
+
+DECLARE_CUST_OP_ADAPTER(Gcd)
+DECLARE_CUST_OP_USE_OUTPUT(Gcd)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

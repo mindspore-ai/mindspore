@@ -57,5 +57,52 @@ REG_CUST_OP(GatherDGradV2)
   .OUTPUT(output, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
                               DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
   .CUST_OP_END_FACTORY_REG(GatherDGradV2)
+
+REG_CUST_OP(AffineGridGrad)
+  .INPUT(y_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(x_size, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(x_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(align_corners, Bool)
+  .CUST_OP_END_FACTORY_REG(AffineGridGrad)
+REG_CUST_OP(HammingWindow)
+  .INPUT(length, TensorType({DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(periodic, Bool)
+  .REQUIRED_ATTR(alpha, Float)
+  .REQUIRED_ATTR(beta, Float)
+  .REQUIRED_ATTR(dtype, Int)
+  .CUST_OP_END_FACTORY_REG(HammingWindow)
+
+REG_CUST_OP(IndexFill)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                        DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(dim, TensorType({DT_INT32}))
+  .INPUT(indices, TensorType({DT_INT32}))
+  .INPUT(value, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                            DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                         DT_UINT32, DT_UINT64, DT_UINT8}))
+  .CUST_OP_END_FACTORY_REG(IndexFill)
+
+REG_CUST_OP(Mvlgamma)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .REQUIRED_ATTR(p, Int)
+  .CUST_OP_END_FACTORY_REG(Mvlgamma)
+
+REG_CUST_OP(MvlgammaGrad)
+  .INPUT(y_grad, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .OUTPUT(x_grad, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .REQUIRED_ATTR(p, Int)
+  .CUST_OP_END_FACTORY_REG(MvlgammaGrad)
+
+REG_CUST_OP(LogSpace)
+  .INPUT(start, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(end, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(y, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(steps, Int)
+  .REQUIRED_ATTR(base, Int)
+  .CUST_OP_END_FACTORY_REG(LogSpace)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_

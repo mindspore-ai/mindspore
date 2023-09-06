@@ -24,39 +24,39 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNWithNumSegments, SparseSegmentSqrtNWith
   auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
   GeShape x_shape;
   auto x_desc = op_desc->MutableInputDesc(0);
-  if (WithRankAtLeast(x_desc, 1, x_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtLeast(x_desc, 1, x_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input x should be at least 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape indices_shape;
   auto indices_desc = op_desc->MutableInputDesc(1);
-  if (WithRank(indices_desc, 1, indices_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(indices_desc, 1, indices_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input indices must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape segment_ids_shape;
   auto segment_ids_desc = op_desc->MutableInputDesc(2);
-  if (WithRank(segment_ids_desc, 1, segment_ids_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRank(segment_ids_desc, 1, segment_ids_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input segment_ids must be 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape num_segments_shape;
   auto num_segments_desc = op_desc->MutableInputDesc(3);
-  if (WithRankAtMost(num_segments_desc, 1, num_segments_shape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtMost(num_segments_desc, 1, num_segments_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Input nums_segments should be at most 1-D.");
     return GRAPH_FAILED;
   }
 
   GeShape unused;
-  if (Merge(indices_shape, segment_ids_shape, unused, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (Merge(indices_shape, segment_ids_shape, unused, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
 
   GeShape subshape;
-  if (SubShape(x_shape, 1, x_shape.GetDimNum(), 1, subshape, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (SubShape(x_shape, 1, x_shape.GetDimNum(), 1, subshape, op) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
 
@@ -67,7 +67,7 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNWithNumSegments, SparseSegmentSqrtNWith
   }
 
   if (nums != UNKNOWN_DIM) {
-    if (MakeDimForScalarInput(tensor, nums, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+    if (MakeDimForScalarInput(tensor, nums, op) != GRAPH_SUCCESS) {
       AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("fail to get dim from tensor of input[num_segments]."));
       return GRAPH_FAILED;
     }

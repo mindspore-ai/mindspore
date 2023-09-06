@@ -28,7 +28,7 @@ CUST_IMPLEMT_INFERFUNC(TridiagonalMatMul, TridiagonalMatMulInfer) {
   Shape rhs;
   TensorDesc rhs_desc = op.GetInputDesc(3);
   auto rhs_shape = rhs_desc.GetShape().GetDims();
-  if (WithRankAtLeast(rhs_desc, 2, rhs, TbeGetName(op).c_str()) != GRAPH_SUCCESS) {
+  if (WithRankAtLeast(rhs_desc, 2, rhs, op) != GRAPH_SUCCESS) {
     error_msg =
       ConcatString("failed to call WithRankatleast function, ", "the rank of input[rhs] must at least be 2, but get ",
                    rhs_desc.GetShape().GetDimNum(), ".");

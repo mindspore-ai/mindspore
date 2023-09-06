@@ -19,8 +19,8 @@
  * \brief
  */
 
-#ifndef CANN_OPS_BUILT_IN_OP_UTIL_H_
-#define CANN_OPS_BUILT_IN_OP_UTIL_H_
+#ifndef CANN_CUSTOMIZE_OP_UTIL_H_
+#define CANN_CUSTOMIZE_OP_UTIL_H_
 
 #include <memory>
 #include <utility>
@@ -218,4 +218,4 @@ inline bool IsConstTensor(const gert::Tensor *input_tensor) {
   return (input_tensor != nullptr) && (input_tensor->GetAddr() != nullptr);
 }
 }  // namespace ops
-#endif  // CANN_OPS_BUILT_IN_OP_UTIL_H_
+#endif  // CANN_CUSTOMIZE_OP_UTIL_H_

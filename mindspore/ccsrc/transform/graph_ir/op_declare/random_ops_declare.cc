@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/random_ops_declare.h"
+
 #include "ops/math_op_name.h"
 #include "ops/nn_op_name.h"
 #include "ops/random_ops.h"
@@ -103,4 +104,17 @@ ATTR_MAP(RandomUniform) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
                            {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(RandomUniform) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UniformReal, kNameUniformReal, ADPT_DESC(RandomUniform))
+
+// LogNormalReverse
+CUST_INPUT_MAP(LogNormalReverse) = {{1, INPUT_DESC(input)}};
+CUST_ATTR_MAP(LogNormalReverse) = {{"mean", ATTR_DESC(mean, AnyTraits<float>())},
+                                   {"std", ATTR_DESC(std, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(LogNormalReverse) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LogNormalReverse, kNameLogNormalReverse, CUST_ADPT_DESC(LogNormalReverse));
+
+// Dropout2D
+CUST_INPUT_MAP(Dropout2D) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Dropout2D) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(Dropout2D) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
+REG_ADPT_DESC(Dropout2D, kNameDropout2D, CUST_ADPT_DESC(Dropout2D))
 }  // namespace mindspore::transform

@@ -19,7 +19,6 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 lu_unpack_grad_op_info = AiCPURegOp("LuUnpackGrad") \
     .fusion_type("OPAQUE") \
     .attr("L_grad_flag", "bool") \
-    .attr("L_grad_flag", "bool") \
     .input(0, "L_grad", "required") \
     .input(1, "U_grad", "required") \
     .input(2, "LU_data", "required") \

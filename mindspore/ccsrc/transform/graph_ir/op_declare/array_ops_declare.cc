@@ -253,4 +253,57 @@ ATTR_INPUT_MAP(ViewCopy) = {
 ATTR_MAP(ViewCopy) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ViewCopy) = {{0, OUTPUT_DESC(dst)}};
 REG_ADPT_DESC(ViewCopy, kNameViewCopy, ADPT_DESC(ViewCopy))
+
+// CheckNumerics
+INPUT_MAP(CheckNumerics) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(CheckNumerics) = {{"message", ATTR_DESC(message, AnyTraits<std::string>())}};
+OUTPUT_MAP(CheckNumerics) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CheckNumerics, prim::kPrimCheckNumerics->name(), ADPT_DESC(CheckNumerics));
+
+// HammingWindow
+CUST_INPUT_MAP(HammingWindow) = {{1, INPUT_DESC(length)}};
+CUST_ATTR_MAP(HammingWindow) = {{"periodic", ATTR_DESC(periodic, AnyTraits<bool>())},
+                                {"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
+                                {"beta", ATTR_DESC(beta, AnyTraits<float>())},
+                                {"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(HammingWindow) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(HammingWindow, prim::kPrimHammingWindow->name(), CUST_ADPT_DESC(HammingWindow));
+
+// LowerBound
+INPUT_MAP(LowerBound) = {{1, INPUT_DESC(sorted_x)}, {2, INPUT_DESC(values)}};
+ATTR_MAP(LowerBound) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LowerBound) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LowerBound, prim::kPrimLowerBound->name(), ADPT_DESC(LowerBound));
+
+// ListDiff
+INPUT_MAP(ListDiff) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+ATTR_MAP(ListDiff) = {{"out_idx", ATTR_DESC(out_idx, AnyTraits<GEType>())}};
+OUTPUT_MAP(ListDiff) = {{0, OUTPUT_DESC(out)}, {1, OUTPUT_DESC(idx)}};
+REG_ADPT_DESC(ListDiff, kNameListDiff, ADPT_DESC(ListDiff));
+
+// IndexFill
+CUST_INPUT_MAP(IndexFill) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(dim)}, {3, INPUT_DESC(indices)}, {4, INPUT_DESC(value)}};
+CUST_ATTR_MAP(IndexFill) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IndexFill) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IndexFill, kNameIndexFill, CUST_ADPT_DESC(IndexFill));
+
+// Mvlgamma
+CUST_INPUT_MAP(Mvlgamma) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Mvlgamma) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Mvlgamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Mvlgamma, prim::kPrimMvlgamma->name(), CUST_ADPT_DESC(Mvlgamma));
+
+// MvlgammaGrad
+CUST_INPUT_MAP(MvlgammaGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}};
+CUST_ATTR_MAP(MvlgammaGrad) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(MvlgammaGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(MvlgammaGrad, prim::kPrimMvlgammaGrad->name(), CUST_ADPT_DESC(MvlgammaGrad));
+
+// LogSpace
+CUST_INPUT_MAP(LogSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(end)}};
+CUST_ATTR_MAP(LogSpace) = {{"steps", ATTR_DESC(steps, AnyTraits<int64_t>())},
+                           {"base", ATTR_DESC(base, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(LogSpace) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LogSpace, prim::kPrimLogSpace->name(), CUST_ADPT_DESC(LogSpace));
 }  // namespace mindspore::transform

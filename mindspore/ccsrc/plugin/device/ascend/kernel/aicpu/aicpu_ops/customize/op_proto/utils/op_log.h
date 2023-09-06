@@ -18,8 +18,8 @@
  * \file op_log.h
  * \brief
  */
-#ifndef GE_OP_LOG_H
-#define GE_OP_LOG_H
+#ifndef CUSTOMIZE_OP_PROTO_UTILS_OP_LOG_H
+#define CUSTOMIZE_OP_PROTO_UTILS_OP_LOG_H
 
 #include <string>
 #include <type_traits>
@@ -69,6 +69,12 @@ template <class T>
 typename std::enable_if<std::is_same<ge::OpDescPtr, typename std::decay<T>::type>::value, const char *>::type get_cstr(
   const T &op_desc) {
   return op_desc != nullptr ? op_desc->GetName().c_str() : "nil";
+}
+
+template <class T>
+typename std::enable_if<std::is_same<ge::Operator, typename std::decay<T>::type>::value, const char *>::type get_cstr(
+  const T &op) {
+  return op.GetName().c_str();
 }
 
 template <typename T>
@@ -222,30 +228,35 @@ std::string TbeGetOpType(const T &op) {
 #define D_FUSION_PASS_LOGD(fmt, ...)
 #endif
 
-#define OP_LOGE_IF(condition, return_value, op_name, fmt, ...)                                                   \
-  do {                                                                                                           \
-    static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
-    if (condition) {                                                                                             \
-      OP_LOGE(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                            \
-      return return_value;                                                                                       \
-    }                                                                                                            \
+#define OP_LOGE_IF(condition, return_value, op_name, fmt, ...)                                                 \
+  static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
+  do {                                                                                                         \
+    if (condition) {                                                                                           \
+      OP_LOGE(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                          \
+      return return_value;                                                                                     \
+    }                                                                                                          \
   } while (0)
 
-#define OP_LOGW_IF(condition, op_name, fmt, ...)                                                                 \
-  do {                                                                                                           \
-    static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
-    if (condition) {                                                                                             \
-      OP_LOGW(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                            \
-    }                                                                                                            \
+#define OP_LOGW_IF(condition, op_name, fmt, ...)                                                               \
+  static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
+  do {                                                                                                         \
+    if (condition) {                                                                                           \
+      OP_LOGW(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                          \
+    }                                                                                                          \
   } while (0)
 
-#define OP_LOGI_IF_RETURN(condition, return_value, op_name, fmt, ...)                                            \
-  do {                                                                                                           \
-    static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
-    if (condition) {                                                                                             \
-      OP_LOGI(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                            \
-      return return_value;                                                                                       \
-    }                                                                                                            \
+#define OP_LOGI_IF_RETURN(condition, return_value, op_name, fmt, ...)                                          \
+  static_assert(std::is_same<bool, std::decay<decltype(condition)>::type>::value, "condition should be bool"); \
+  do {                                                                                                         \
+    if (condition) {                                                                                           \
+      OP_LOGI(get_cstr(op_name), fmt, ##__VA_ARGS__);                                                          \
+      return return_value;                                                                                     \
+    }                                                                                                          \
   } while (0)
 
-#endif  // GE_OP_LOG_H
+inline std::ostream &operator<<(std::ostream &os, const ge::Operator &op) {
+  os << op.GetName();
+  return os;
+}
+
+#endif  // CUSTOMIZE_OP_PROTO_UTILS_OP_LOG_H
