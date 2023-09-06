@@ -22,6 +22,7 @@
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
 #include "ir/anf.h"
+#include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"
 
@@ -113,7 +114,7 @@ ValueNodePtr GetAxisNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   auto range = GetAxis(node);
-  auto axis_node = CreateValueNode(graph, MakeValue(range));
+  auto axis_node = CreateValueNode(graph, MakeValue(std::make_shared<tensor::Tensor>(range)));
   MS_EXCEPTION_IF_NULL(axis_node);
   return axis_node;
 }
