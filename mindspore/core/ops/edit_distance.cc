@@ -198,6 +198,12 @@ TypePtr EditDistanceInferType(const PrimitivePtr &prim, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(truth_shape_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_shape", truth_shape_type, indices_valid_types, prim_name);
 
+  if (*hypothesis_values_type != *truth_values_type) {
+    MS_EXCEPTION(TypeError) << "Dtype of hypothesis_values and truth_values must be the same, but got "
+                            << "hypothesis_values: " << hypothesis_values_type->ToString() << ", "
+                            << "truth_values: " << truth_values_type->ToString() << ".";
+  }
+
   return kFloat32;
 }
 }  // namespace
