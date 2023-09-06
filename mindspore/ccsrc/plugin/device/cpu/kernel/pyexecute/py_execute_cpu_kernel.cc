@@ -226,7 +226,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       PyExecuteOutputToRawMemory(output, outputs);
     } else {

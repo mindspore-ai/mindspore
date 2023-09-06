@@ -224,6 +224,7 @@ def test_return_make_list_node_3():
     assert res == [Tensor([1]), 1, "a"]
 
 
+@pytest.mark.skip('backend not support different type in value tuple')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

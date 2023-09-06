@@ -185,7 +185,7 @@ class PyExecuteInitializer {
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return tensor->ToAbstract();
       }
-      static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+      static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
       if (!allow_runtime_compile) {
         auto ret = GenerateAbstractFromPyObject(output);
         if (ret != nullptr) {
