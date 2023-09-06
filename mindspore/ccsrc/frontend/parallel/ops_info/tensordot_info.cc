@@ -280,7 +280,8 @@ Status TensorDotInfo::InferTensorMap() {
     size = dev_matrix_shape_.size() - 1;
   }
 
-  TensorMap tensor_map_index, input_a_tensor_map;
+  TensorMap tensor_map_index;
+  TensorMap input_a_tensor_map;
   // such as 5: tensor_map_index [4, 3, 2, 1, 0]
   for (size_t i = 0; i < size; ++i) {
     tensor_map_index.push_back(SizeToLong(LAST_INDEX(size) - i));

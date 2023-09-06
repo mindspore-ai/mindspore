@@ -394,7 +394,10 @@ Status StridedSliceInfo::InferMirrorOps() {
     return SUCCESS;
   }
 
-  OperatorVector input_op, begin_op, end_op, strides_op;
+  OperatorVector input_op;
+  OperatorVector begin_op;
+  OperatorVector end_op;
+  OperatorVector strides_op;
   input_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
   mirror_ops_.push_back(input_op);
   mirror_ops_.push_back(begin_op);

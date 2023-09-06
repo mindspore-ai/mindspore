@@ -380,7 +380,8 @@ Status ReduceMethod::InferTensorInfo() {
   Shape input_shape = inputs_shape_.at(0);
   Shape output_shape = outputs_shape_.at(0);
 
-  TensorLayout input_tensor_layout, output_tensor_layout;
+  TensorLayout input_tensor_layout;
+  TensorLayout output_tensor_layout;
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
       (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS)) {
     return FAILED;
@@ -477,7 +478,8 @@ Status ArgMaxWithValueInfo::InferTensorInfo() {
   Shape input_shape = inputs_shape_.at(0);
   Shape output_shape = outputs_shape_.at(0);
 
-  TensorLayout input_tensor_layout, output_tensor_layout;
+  TensorLayout input_tensor_layout;
+  TensorLayout output_tensor_layout;
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
       (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS)) {
     return FAILED;

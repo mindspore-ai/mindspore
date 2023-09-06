@@ -199,7 +199,11 @@ Status MaxPool3DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_
     return SUCCESS;
   }
 
-  int64_t h_or_w_input_shape = 0, h_or_w_output_shape = 0, h_or_w_kernel_size = 0, h_or_w_stride = 0, pad_all = 0;
+  int64_t h_or_w_input_shape = 0;
+  int64_t h_or_w_output_shape = 0;
+  int64_t h_or_w_kernel_size = 0;
+  int64_t h_or_w_stride = 0;
+  int64_t pad_all = 0;
   if (dimension_id == 2) {
     h_or_w_input_shape = inputs_shape_[0][2];
     h_or_w_output_shape = outputs_shape_[0][2];

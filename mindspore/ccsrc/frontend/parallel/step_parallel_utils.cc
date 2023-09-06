@@ -1012,7 +1012,7 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
       (attrs.find(KAttrAsLossDivisor) == attrs.end() || attrs.find(KAttrDevMatrixShape) == attrs.end() ||
        attrs.find(KAttrInputsTensorMap) == attrs.end() || attrs.find(KAttrOutputsTensorMap) == attrs.end())) {
     MS_LOG(WARNING) << "The attr for parallelization settings is not found in the custom op."
-                    << "To enable auto parallelization, set the attrs includeing [" << KAttrAsLossDivisor << ", "
+                    << "To enable auto parallelization, set the attrs including [" << KAttrAsLossDivisor << ", "
                     << KAttrDevMatrixShape << ", " << KAttrInputsTensorMap << ", " << KAttrOutputsTensorMap << "]";
     return nullptr;
   }

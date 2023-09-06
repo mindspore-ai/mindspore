@@ -738,7 +738,8 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
       u->SetSelectedStrategyAndCost(decision_f->u_strategy_, decision_f->u_cost_);
       MS_LOG(INFO) << "Searching the strategy for the component " << k << " final graph ended.";
     } else if (connected_components[k]->GetOperators().size() == 2) {
-      OperatorInfoPtr u = nullptr, v = nullptr;
+      OperatorInfoPtr u = nullptr;
+      OperatorInfoPtr v = nullptr;
       auto first_op = connected_components[k]->GetOperators()[0];
       auto second_op = connected_components[k]->GetOperators()[1];
       MS_EXCEPTION_IF_NULL(first_op);
@@ -1050,7 +1051,8 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
       new_edge =
         std::make_shared<Edge>(new_edge_name, op1, ith_edge->next_operator(), output_indexs, input_indexs, true);
     } else {
-      size_t output_index, input_index;
+      size_t output_index;
+      size_t input_index;
       output_index = ith_edge->prev_op_output_index();
       input_index = ith_edge->next_op_input_index();
       new_edge =
@@ -1076,7 +1078,8 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
       input_indexs = ith_edge->next_op_input_indexs();
       new_edge = std::make_shared<Edge>(new_edge_name, op1, destination, output_indexs, input_indexs, true);
     } else {
-      size_t output_index, input_index;
+      size_t output_index;
+      size_t input_index;
       output_index = ith_edge->prev_op_output_index();
       input_index = ith_edge->next_op_input_index();
       new_edge = std::make_shared<Edge>(new_edge_name, op1, destination, output_index, input_index, false);
@@ -1242,7 +1245,8 @@ std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr &op) const 
   MS_EXCEPTION_IF_NULL(edge_op_v);
   auto u = edge_u_op->prev_operator();
   auto v = edge_op_v->next_operator();
-  std::vector<size_t> output_indexs, input_indexs;
+  std::vector<size_t> output_indexs;
+  std::vector<size_t> input_indexs;
   size_t output_index, input_index;
   MS_EXCEPTION_IF_NULL(u);
   MS_EXCEPTION_IF_NULL(v);

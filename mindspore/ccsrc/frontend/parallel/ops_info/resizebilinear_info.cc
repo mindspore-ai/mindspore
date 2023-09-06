@@ -298,8 +298,14 @@ void ResizeBilinearInfo::InferCommunicationAttrs() {
   // recv rank ids: [-1, -1, recv_right_rank, -1, -1, -1, recv_left_rank, -1]
   // send lens: [0, 0, send_left_len, send_right_len]
   // recv lens: [0, 0, recv_left_len, recv_right_len]
-  int64_t send_right_rank = -1, send_left_rank = -1, recv_right_rank = -1, recv_left_rank = -1;
-  int64_t send_left_len = 0, send_right_len = 0, recv_left_len = 0, recv_right_len = 0;
+  int64_t send_right_rank = -1;
+  int64_t send_left_rank = -1;
+  int64_t recv_right_rank = -1;
+  int64_t recv_left_rank = -1;
+  int64_t send_left_len = 0;
+  int64_t send_right_len = 0;
+  int64_t recv_left_len = 0;
+  int64_t recv_right_len = 0;
 
   if (rank_bias_ == 0) {
     // the first rank
