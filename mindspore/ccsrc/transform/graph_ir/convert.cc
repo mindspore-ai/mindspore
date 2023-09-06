@@ -2113,6 +2113,7 @@ OutHandler DfGraphConvertor::GetNormalOpInput(const AnfNodePtr &node, const AnfN
                     << ". Please check whether the node is Partial node or successor node of Partial in sub-graph.";
   }
   out_handler.op = op;
+  out_handler.node = pred;
   return out_handler;
 }
 
