@@ -8154,28 +8154,28 @@ class Conv3D(Primitive):
         >>> output = conv3d(x, weight)
         >>> print(output.shape)
         (10, 40, 34, 34, 34)
-         >>> # case 5: dilation=(2, 4, 4), other parameters being default.
+         >>> # case 5: dilation=(1, 1, 1), other parameters being default.
         >>> x = Tensor(np.ones([10, 20, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([40, 20, 3, 3, 3]), mindspore.float32)
-        >>> conv3d = ops.Conv3D(out_channel=40, kernel_size=3, dilation=(2, 4, 4))
+        >>> conv3d = ops.Conv3D(out_channel=40, kernel_size=3, dilation=(1, 1, 1))
         >>> output = conv3d(x, weight)
         >>> print(output.shape)
-        (10, 40, 28, 24, 24)
-        >>> # case 6: group=4, other parameters being default.
-        >>> x = Tensor(np.ones([10, 80, 32, 32, 32]), mindspore.float32)
+        (10, 40, 30, 30, 30)
+        >>> # case 6: group=1, other parameters being default.
+        >>> x = Tensor(np.ones([10, 20, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([40, 20, 3, 3, 3]), mindspore.float32)
-        >>> conv3d = ops.Conv3D(out_channel=40, kernel_size=3, group=4)
+        >>> conv3d = ops.Conv3D(out_channel=40, kernel_size=3, group=1)
         >>> output = conv3d(x, weight)
         >>> print(output.shape)
         (10, 40, 30, 30, 30)
         >>> # case 7: All parameters are specified.
-        >>> x = Tensor(np.ones([10, 80, 32, 32, 32]), mindspore.float32)
+        >>> x = Tensor(np.ones([10, 20, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([40, 20, 3, 3, 3]), mindspore.float32)
         >>> conv3d = ops.Conv3D(out_channel=40, kernel_size=3, stride=(1, 2, 3), pad_mode="pad",
-        ...                     pad=2, dilation=(2, 4, 4), group=4)
+        ...                     pad=2, dilation=(1), group=1)
         >>> output = conv3d(x, weight)
         >>> print(output.shape)
-        (10, 40, 32, 14, 10)
+        (10, 40, 32, 17, 12)
     """
 
     @prim_attr_register
