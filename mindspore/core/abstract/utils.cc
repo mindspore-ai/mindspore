@@ -162,6 +162,17 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     }
     MS_INTERNAL_EXCEPTION(TypeError) << "Unknown AbstractSequence type:" << abs->ToString();
   }
+  if (abs->isa<AbstractDictionary>()) {
+    auto abs_dict = abs->cast<AbstractDictionaryPtr>();
+    const auto &origin_kv = abs_dict->elements();
+    std::vector<AbstractElementPair> kv;
+    (void)std::transform(origin_kv.cbegin(), origin_kv.cend(), std::back_inserter(kv),
+                         [](const AbstractElementPair &item) {
+                           MS_EXCEPTION_IF_NULL(item.second);
+                           return std::make_pair(item.first, AbstractBroaden(item.second));
+                         });
+    return std::make_shared<AbstractDictionary>(kv);
+  }
   if (abs->isa<AbstractScalar>()) {
     auto arg_type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(arg_type);

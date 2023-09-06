@@ -24,11 +24,48 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "abstract/param_validator.h"
 #include "frontend/optimizer/opt.h"
+#include "pipeline/jit/ps/fallback.h"
 #include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
+FuncGraphPtr DictSetItem::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
+  constexpr size_t dict_setitem_args_size = 3;
+  abstract::CheckArgsSize("DictSetItem", args_list, dict_setitem_args_size);
+
+  constexpr size_t dict_index = 0;
+  auto data_abs = args_list[dict_index];
+  MS_EXCEPTION_IF_NULL(data_abs);
+  auto dict_abs = data_abs->cast<abstract::AbstractDictionaryPtr>();
+  MS_EXCEPTION_IF_NULL(dict_abs);
+
+  FuncGraphPtr ret = std::make_shared<FuncGraph>();
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ret->debug_info()->set_name("setitem");
+
+  auto dict_param = ret->add_parameter();
+  auto index_param = ret->add_parameter();
+  auto target_param = ret->add_parameter();
+  std::vector<AnfNodePtr> inputs = {dict_param, index_param, target_param};
+
+  if (fallback::HasObjInExtraInfoHolder(dict_abs) && !fallback::GetCreateInGraphFromExtraInfoHolder(dict_abs)) {
+    // The dict input has attached python object and the object is not created in graph.
+    // Convert the DictSetItem to InplaceDictSetItem node.
+    inputs.insert(inputs.begin(), NewValueNode(prim::kPrimDictInplaceSetItem));
+    auto dict_inplace_setitem_node = ret->NewCNode(inputs);
+    dict_inplace_setitem_node->set_has_side_effect_node(true);
+    ret->set_output(dict_inplace_setitem_node);
+    ret->set_has_side_effect_node(true);
+    return ret;
+  }
+
+  inputs.insert(inputs.begin(), NewValueNode(prim::kPrimDictSetItem));
+  auto dict_setitem_node = ret->NewCNode(inputs);
+  ret->set_output(dict_setitem_node);
+  return ret;
+}
+
 FuncGraphPtr DictClear::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   constexpr size_t dict_clear_args_size = 1;
   abstract::CheckArgsSize("DictClear", args_list, dict_clear_args_size);

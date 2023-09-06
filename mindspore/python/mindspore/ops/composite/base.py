@@ -28,7 +28,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
-    ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_
+    ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -1044,6 +1044,25 @@ class _ListExtend(ListExtend_):
 
 
 _extend = _ListExtend("extend")
+
+
+class _DictSetItem(DictSetItem_):
+    """
+    A metafuncgraph class that setitem for the dict.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictClear."""
+        DictSetItem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_dict_setitem = _DictSetItem("setitem")
 
 
 class _DictClear(DictClear_):

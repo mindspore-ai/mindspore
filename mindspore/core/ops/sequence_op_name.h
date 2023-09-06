@@ -47,6 +47,9 @@ constexpr auto kListGreaterEqualOpName = "list_greater_equal";
 constexpr auto kListEqualOpName = "list_equal";
 constexpr auto kListDiffOpName = "ListDiff";
 
+// Dict
+constexpr auto kDictInplaceSetItemOpName = "DictInplaceSetItem";
+
 // Sequence and Tensor
 constexpr auto kTupleToTensorOpName = "TupleToTensor";
 constexpr auto kTensorToTupleOpName = "TensorToTuple";

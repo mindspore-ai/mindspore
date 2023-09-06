@@ -156,7 +156,7 @@ BuiltInTypeMap &GetMethodMap() {
      {
        {"__len__", prim::kPrimDictLen},                  // P.dict_len
        {"__getitem__", prim::kPrimDictGetItem},          // P.dict_getitem
-       {"__setitem__", prim::kPrimDictSetItem},          // P.dict_setitem,
+       {"__setitem__", std::string("dict_setitem")},     // C.dict_setitem,
        {"__ms_iter__", prim::kPrimDictGetKeys},          // P.dict_getkeys,
        {"__ms_hasnext__", std::string("dict_hasnext")},  // C.array_hasnext
        {"__ms_next__", std::string("dict_next")},        // C.array_next

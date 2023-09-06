@@ -72,10 +72,10 @@ using StringSetPtr = std::shared_ptr<StringSet>;
 constexpr auto kInternalDictSelfStr = "__internal_dict_self__";
 constexpr auto kInternalDictKeyStr = "__internal_dict_key__";
 constexpr auto kInternalDictValueStr = "__internal_dict_value__";
-static const PrimitiveSet inplace_prim_set{
-  prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
-  prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
-};
+static const PrimitiveSet inplace_prim_set{prim::kPrimPyExecute,          prim::kPrimListInplaceAppend,
+                                           prim::kPrimListInplaceReverse, prim::kPrimListInplaceExtend,
+                                           prim::kPrimListInplaceInsert,  prim::kPrimListInplacePop,
+                                           prim::kPrimDictInplaceSetItem};
 
 namespace {
 static constexpr size_t kMaxSeqRecursiveDepth = 6;
@@ -1139,28 +1139,28 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // x.insert(index, y) --> PyExecute(_jit_fallback_list_inplace_insert(x, index, y))
-  AnfNodePtr ConvertListInplaceInsert(const CNodePtr &node) const {
+  AnfNodePtr ConvertDictInplaceSetItem(const CNodePtr &node) const {
     if (!fallback::EnableFallbackList()) {
       return nullptr;
     }
     auto abs = node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
+    auto dict_abs = abs->cast<abstract::AbstractDictionaryPtr>();
+    MS_EXCEPTION_IF_NULL(dict_abs);
 
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    constexpr auto internal_list_input = "__internal_list_input__";
-    constexpr auto internal_index_input = "__internal_index_input__";
+    constexpr auto internal_dict_input = "__internal_dict_input__";
+    constexpr auto internal_key_input = "__internal_key_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_insert(" << internal_list_input
-                  << ", " << internal_index_input << ", " << internal_target_input << ")";
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.dict_inplace_setitem(" << internal_dict_input
+                  << ", " << internal_key_input << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
-    (void)key_value_names_list.emplace_back(NewValueNode(internal_index_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_dict_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_key_input));
     (void)key_value_names_list.emplace_back(NewValueNode(internal_target_input));
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
 
@@ -1169,21 +1169,14 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr size_t max_node_inputs_size = 5;
     size_t inputs_size = node_inputs.size();
     if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to ListInplaceInsert should be " << min_node_inputs_size << " or "
+      MS_LOG(EXCEPTION) << "The size of input to DictInplaceSetItem should be " << min_node_inputs_size << " or "
                         << max_node_inputs_size << " but got " << inputs_size;
     }
     constexpr size_t node_list_index = 1;
     constexpr size_t node_index_index = 2;
     constexpr size_t node_target_index = 3;
-    auto list_input_node = node_inputs[node_list_index];
-    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
-      TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
-      auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
-      (void)manager_->Replace(list_input_node, new_node);
-      list_input_node = new_node;
-    }
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_list.emplace_back(list_input_node);
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
     (void)key_value_list.emplace_back(node_inputs[node_index_index]);
     (void)key_value_list.emplace_back(node_inputs[node_target_index]);
     const auto key_value_tuple = fg->NewCNode(key_value_list);
@@ -1196,15 +1189,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
-
-    MS_LOG(DEBUG) << "Convert list inplace insert node to PyExecute node: " << res->DebugString();
+    MS_LOG(DEBUG) << "Convert dict inplace setitem node to PyExecute node: " << res->DebugString();
     return res;
   }
 
@@ -1387,6 +1372,76 @@ class AfterOptARewriter : public BaseRewriter {
     }
 
     MS_LOG(DEBUG) << "Convert list inplace clear node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // data[key] = target --> PyExecute(_jit_fallback_dict_inplace_setitem(data, key, target))
+  AnfNodePtr ConvertListInplaceInsert(const CNodePtr &node) const {
+    if (!fallback::EnableFallbackList()) {
+      return nullptr;
+    }
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    constexpr auto internal_index_input = "__internal_index_input__";
+    constexpr auto internal_target_input = "__internal_target_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_insert(" << internal_list_input
+                  << ", " << internal_index_input << ", " << internal_target_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_index_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_target_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t min_node_inputs_size = 4;
+    constexpr size_t max_node_inputs_size = 5;
+    size_t inputs_size = node_inputs.size();
+    if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceInsert should be " << min_node_inputs_size << " or "
+                        << max_node_inputs_size << " but got " << inputs_size;
+    }
+    constexpr size_t node_list_index = 1;
+    constexpr size_t node_index_index = 2;
+    constexpr size_t node_target_index = 3;
+    auto list_input_node = node_inputs[node_list_index];
+    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
+      TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
+      auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
+      (void)manager_->Replace(list_input_node, new_node);
+      list_input_node = new_node;
+    }
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(list_input_node);
+    (void)key_value_list.emplace_back(node_inputs[node_index_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    if (inputs_size == max_node_inputs_size) {
+      res->add_input(node_inputs[max_node_inputs_size - 1]);
+    }
+
+    res->set_debug_info(node->debug_info());
+
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    if (!allow_runtime_compile) {
+      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
+      // be inferred as AbstractAny.
+      fallback::SetRealType(res, list_abs->BuildType());
+      fallback::SetRealShape(res, list_abs->BuildShape());
+    }
+
+    MS_LOG(DEBUG) << "Convert list inplace insert node to PyExecute node: " << res->DebugString();
     return res;
   }
 
@@ -1815,6 +1870,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimListInplacePop, &ThisClass::ConvertListInplacePop},
     {prim::kPrimListInplaceReverse, &ThisClass::ConvertListInplaceReverse},
     {prim::kPrimListInplaceClear, &ThisClass::ConvertListInplaceClear},
+    {prim::kPrimDictInplaceSetItem, &ThisClass::ConvertDictInplaceSetItem},
     {prim::kPrimListGetItem, &ThisClass::ConvertSequenceGetItem},
     {prim::kPrimTupleGetItem, &ThisClass::ConvertSequenceGetItem},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
