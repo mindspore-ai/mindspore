@@ -917,6 +917,8 @@ void KernelGraphMgr::ClearGraph() {
 void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
   MS_EXCEPTION_IF_NULL(out_node);
   MS_EXCEPTION_IF_NULL(parameter);
+  MS_LOG(DEBUG) << "parameter:" << parameter->DebugString()
+                << " abstract:" << (parameter->abstract() != nullptr ? parameter->abstract()->ToString() : "null");
   auto graph_id = GetGraphIdByNode(out_node);
   if (graph_id == kInvalidGraphId) {
     return;
@@ -957,6 +959,9 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     // Update the kernel build info.
     auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
     auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);
+    if (type == TypeId::kTypeUnknown) {
+      return;
+    }
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetOutputsDeviceType({type});
     builder.SetOutputsFormat({format});
@@ -1158,7 +1163,10 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       }
       MS_EXCEPTION_IF_NULL(parameter_from_cnode);
       MS_LOG(DEBUG) << "graph:" << graph->ToString() << " front node:" << anf->DebugString()
-                    << " parameter:" << parameter_from_cnode->DebugString();
+                    << " abstract:" << (anf->abstract() != nullptr ? anf->abstract()->ToString() : "null")
+                    << " parameter:" << parameter_from_cnode->DebugString() << " abstract:"
+                    << (parameter_from_cnode->abstract() != nullptr ? parameter_from_cnode->abstract()->ToString()
+                                                                    : "null");
       if (parameter_from_cnode->isa<Parameter>() && IsPrimitiveCNode(anf, prim::kPrimLoad)) {
         auto para = parameter_from_cnode->cast<ParameterPtr>();
         auto load_cnode = anf->cast<CNodePtr>();

@@ -283,6 +283,10 @@ abstract::AbstractBasePtr MakeNewAbstractByScalar(const tensor::TensorPtr &depen
     auto tensor_data = reinterpret_cast<double *>(depended_value->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data);
     new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+  } else if (type == kNumberTypeBool) {
+    auto tensor_data = reinterpret_cast<bool *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << type;
   }

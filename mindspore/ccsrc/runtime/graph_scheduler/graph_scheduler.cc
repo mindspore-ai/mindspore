@@ -1648,7 +1648,17 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
                                   [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
                                     return internal_parameter == internal_parameter_weakptr.lock();
                                   });
-    if (repeat_it == internal_parameters.end()) {
+    MS_LOG(DEBUG) << "Check internal parameter:" << internal_parameter->DebugString()
+                  << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
+                  << " actor:" << dynamic_shape_actor->GetAID();
+    // Any type input of graph cannot update shape, it would be fixed in any type kernel actor.
+    if ((common::GetEnv("MS_RUNTIME_COMPILE") != "1" ||
+         (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
+          (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()))) &&
+        repeat_it == internal_parameters.end()) {
+      MS_LOG(DEBUG) << "Add internal parameter:" << internal_parameter->DebugString()
+                    << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
+                    << " actor:" << dynamic_shape_actor->GetAID();
       (void)internal_parameters.emplace_back(internal_parameter);
     }
   }

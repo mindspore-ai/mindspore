@@ -441,7 +441,7 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
   MS_EXCEPTION_IF_NULL(input_node);
   MS_EXCEPTION_IF_NULL(graph);
   // Graph mode does not support dynamic shape and ref node.
-  if (graph->is_graph_run_mode()) {
+  if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
     return;
   }
 

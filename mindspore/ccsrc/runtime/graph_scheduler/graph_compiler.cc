@@ -412,6 +412,7 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
   }
   MS_LOG(DEBUG) << "Pre construct any type input kernel graph:" << graph->ToString();
   graph->set_is_any_type_input(true);
+  opt::OptimizationForAnyTypeKernelGraph(graph);
   graph->SetInputNodes();
   for (const auto &input : graph->input_nodes()) {
     MS_LOG(DEBUG) << "input node:" << input->DebugString() << " abstract:" << input->abstract()->ToString();
