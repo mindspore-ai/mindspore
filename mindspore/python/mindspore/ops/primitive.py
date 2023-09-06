@@ -758,9 +758,7 @@ def _check_contains_variable(item_dtype, item_value):
 
 
 def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=True):
-    """
-    Creates a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function
-    to compute constant value using the constants in the constructor.
+    """Used to calculate constant in graph copmpiling process and improve compile performance in GRAPH_MODE.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator. Default: ``None`` .
@@ -774,22 +772,27 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
             and the warning message will raised if the parameter is not const value. Default: ``True`` .
 
     Examples:
-        >>> from mindspore.ops import constexpr
-        >>> a = (1, 2)
-        >>> # make an operator to calculate tuple len
-        >>> @constexpr
-        ... def tuple_len(x):
-        ...     return len(x)
+
+        >>> import mindspore as ms
+        >>> # define a constant calculate function with for loop inside and use use constexpr to accelerate the compile
+        >>> # process.
+        >>> @ms.constexpr
+        ... def for_loop_calculate(range_num):
+        ...     out = 0
+        ...     for i in range(range_num):
+        ...         if i %2 == 0 and i % 7 != 0:
+        ...             out = out + i
+        ...     return out // range_num
         ...
-        >>> print(tuple_len(a))
-        2
-        >>> # make an operator class to calculate tuple len
-        >>> @constexpr(get_instance=False, name="TupleLen")
-        ... def tuple_len_class(x):
-        ...     return len(x)
+        >>> # construct a net and run with GRAPH_MODE.
+        >>> @ms.jit
+        ... def my_func(x):
+        ...     new_shape = for_loop_calculate(100000)
+        ...     return ms.ops.broadcast_to(x, (new_shape, ))
         ...
-        >>> print(tuple_len_class()(a))
-        2
+        >>> out = my_func(ms.Tensor([1]))
+        >>> print(out.shape)
+        >>> (21428, )
     """
 
     def deco(fn):
@@ -846,6 +849,7 @@ def _primexpr(fn=None, get_instance=True, name=None, reuse_result=True):
         reuse_result (bool): If ``True`` , the operator will be executed once and reuse the result next time,
                              otherwise the operator will always be executed. Default: ``True`` .
     """
+
     def deco(fn):
         """Decorator for CompileOp."""
 
