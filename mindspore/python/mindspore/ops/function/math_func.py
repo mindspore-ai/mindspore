@@ -12037,9 +12037,11 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     if not isinstance(keepdim, bool):
         raise TypeError("For 'sum', 'keepdim' must be bool.")
 
+    if input.dtype == mstype.bool_:
+        input = input.astype(mstype.int64)
     if dtype is not None:
         input = input.astype(dtype)
-    reduce_sum = P.ReduceSum(keep_dims=keepdim)
+    reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims=keepdim)
     if dim is not None:
         out = reduce_sum(input, dim)
     else:

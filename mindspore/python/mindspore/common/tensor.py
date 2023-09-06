@@ -1990,10 +1990,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.squeeze`.
         """
         self._init_check()
-        if axis is None:
-            return tensor_operator_registry.get('squeeze')(self)
-        new_shape = validator.prepare_shape_for_squeeze(self.shape, axis)
-        return tensor_operator_registry.get('reshape')()(self, new_shape)
+        return tensor_operator_registry.get('squeeze')(self, axis)
 
     def slogdet(self):
         """
@@ -3238,7 +3235,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         x_mean = tensor_operator_registry.get('mean')(True)(self, axis)
         x_sub = tensor_operator_registry.get('__sub__')(self, x_mean)
         x_pow = tensor_operator_registry.get('__pow__')(x_sub, 2)
-        x_sum = tensor_operator_registry.get('sum')(bool(keepdims))(x_pow, axis)
+        x_sum = tensor_operator_registry.get('reduce_sum')(bool(keepdims))(x_pow, axis)
         nums = 1
         if axis == ():
             nums = self.size
@@ -3263,11 +3260,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             `extobj` are not supported.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: ``None`` .
+            axis (Union[None, int, tuple(int), list(int)]): Axis or axes along which a sum is performed.
+                Default: ``None`` .
                 If None, sum all the elements of the input tensor.
                 If the axis is negative, it counts from the last to the first axis.
-                If the axis is a tuple of ints, a sum is performed on all the axes specified in the tuple
-                instead of a single axis or all the axes as before.
+                If the axis is a tuple or list of ints, a sum is performed on all the axes specified in the tuple
+                or list instead of a single axis or all the axes as before.
             dtype (:class:`mindspore.dtype`, optional): defaults to ``None`` . Overrides the dtype of the
                 output Tensor.
             keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
@@ -3282,7 +3280,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             If the input tensor is a 0-d array, or if the axis is ``None`` , a scalar is returned.
 
         Raises:
-            TypeError: If input is not array_like, or `axis` is not int or tuple of ints,
+            TypeError: If input is not array_like, or `axis` is not int, tuple of ints or list of ints,
                 or `keepdims` is not integer, or `initial` is not scalar.
             ValueError: If any axis is out of range or duplicate axes exist.
 
@@ -3302,27 +3300,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """
-        input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
-        dtype = input_x.dtype if dtype is None else dtype
-        if not isinstance(keepdims, int):
-            raise TypeError("For 'Tensor.sum', the type of the argument 'keepdims' must be int, but "
-                            "got {}.".format(type(keepdims)))
         if initial is not None and not isinstance(initial, (int, float, bool)):
-            raise TypeError("For 'Tensor.sum', when the argument 'initial' is not None, it must be int, "
-                            "float or bool, but got {}.".format(type(initial)))
-        if axis is None:
-            axis = ()
-        else:
-            axis = validator.check_and_canonicalize_axes(axis, self.ndim)
-
-        if not validator.check_type_support(input_x.dtype, 'GPU', (mstype.float64, mstype.float32, mstype.float16)):
-            input_x = input_x.astype(mstype.float32)
-        if 0 in self.shape:
-            input_x = tensor_operator_registry.get('make_tensor')([0], self.dtype)
-        res = tensor_operator_registry.get('sum')(bool(keepdims))(input_x, axis)
+            raise TypeError(f"For Tensor.sum, initial must be int, float or bool, but got {type(initial)}.")
+        res = tensor_operator_registry.get("sum")(self, axis, keepdims)
         if initial is not None:
             res += initial
-        return res.astype(dtype)
+        if dtype is not None:
+            res = res.astype(dtype)
+        return res
 
     def sum_to_size(self, *size):
         r"""
