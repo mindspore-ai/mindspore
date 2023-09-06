@@ -218,7 +218,9 @@ inline aclTensor *ConvertType(const device::ascend::AscendDeviceAddressPtr &tens
     strides.erase(strides.begin());
   }
   strides.push_back(1);
-
+  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+    strides[i] = strides[i] * strides[i + 1];
+  }
   auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
                                     shape_size, tensor->GetMutablePtr());
   return acl_tensor;
