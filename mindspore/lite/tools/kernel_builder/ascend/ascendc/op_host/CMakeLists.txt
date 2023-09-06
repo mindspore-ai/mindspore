@@ -1,12 +1,30 @@
+
+set(BUILD_INC_910A_DIR ${TOP_DIR}/graphengine/910/metadef/inc/external)
+set(BUILD_INC_910B_DIR ${TOP_DIR}/graphengine/910b/metadef/inc/external)
+set(SECUREC_INC_DIR ${TOP_DIR}/third_party/securec/include)
+
+include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
+include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
+include_directories(${TOP_DIR}/graphengine/910/inc)
+include_directories(${TOP_DIR}/graphengine/910/inc/external)
+include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
+include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
+include_directories(${TOP_DIR}/graphengine/910b/metadef/inc/external)
+include_directories(${TOP_DIR}/graphengine/910b/metadef/inc)
+include_directories(${TOP_DIR}/graphengine/910b/inc)
+include_directories(${TOP_DIR}/graphengine/910b/inc/external)
+include_directories(${TOP_DIR}/graphengine/910b/third_party/fwkacllib)
+include_directories(${TOP_DIR}/graphengine/910b/third_party/fwkacllib/inc)
+
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ops_srcs)
+opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR ${BUILD_INC_910A_DIR}
+        SEC_INC ${SECUREC_INC_DIR})
 
-opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH})
-
-add_library(cust_op_proto SHARED ${ops_srcs} ${ASCEND_AUTOGEN_PATH}/op_proto.cc)
-target_compile_definitions(cust_op_proto PRIVATE OP_PROTO_LIB)
-target_compile_options(cust_op_proto PRIVATE -fvisibility=hidden)
+add_library(cust_ascendc_op_proto SHARED ${ops_srcs} ${ASCEND_AUTOGEN_PATH}/op_proto.cc)
+target_compile_definitions(cust_ascendc_op_proto PRIVATE OP_PROTO_LIB)
+target_compile_options(cust_ascendc_op_proto PRIVATE -fvisibility=hidden)
 target_link_libraries(
-  cust_op_proto
+  cust_ascendc_op_proto
   PRIVATE intf_pub
           exe_graph
           register
@@ -14,7 +32,7 @@ target_link_libraries(
           -Wl,--whole-archive
           rt2_registry
           -Wl,--no-whole-archive)
-set_target_properties(cust_op_proto PROPERTIES OUTPUT_NAME cust_opsproto_rt2.0)
+set_target_properties(cust_ascendc_op_proto PROPERTIES OUTPUT_NAME cust_opsproto_rt2.0)
 
 add_library(cust_optiling SHARED ${ops_srcs})
 target_compile_definitions(cust_optiling PRIVATE OP_TILING_LIB)
@@ -43,23 +61,23 @@ add_custom_target(
     ${CMAKE_CURRENT_BINARY_DIR}/liboptiling.so)
 
 install(
-  TARGETS cust_op_proto
+  TARGETS cust_ascendc_op_proto
   LIBRARY
     DESTINATION
-      packages/vendors/${vendor_name}/op_proto/lib/linux/${CMAKE_SYSTEM_PROCESSOR}
+      ${PKG_PATH}/packages/vendors/${vendor_name}/op_proto/lib/linux/${CMAKE_SYSTEM_PROCESSOR}
 )
 install(FILES ${ASCEND_AUTOGEN_PATH}/op_proto.h
-        DESTINATION packages/vendors/${vendor_name}/op_proto/inc)
+        DESTINATION ${PKG_PATH}/packages/vendors/${vendor_name}/op_proto/inc)
 install(
   TARGETS cust_optiling
   LIBRARY
     DESTINATION
-      packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_tiling/lib/linux/${CMAKE_SYSTEM_PROCESSOR}
+      ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_tiling/lib/linux/${CMAKE_SYSTEM_PROCESSOR}
 )
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/liboptiling.so
-  DESTINATION packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_tiling)
+  DESTINATION ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_tiling)
 install(TARGETS cust_opapi
-        LIBRARY DESTINATION packages/vendors/${vendor_name}/op_api/lib)
+        LIBRARY DESTINATION ${PKG_PATH}/packages/vendors/${vendor_name}/op_api/lib)
 install(FILES ${aclnn_inc}
-        DESTINATION packages/vendors/${vendor_name}/op_api/include)
+        DESTINATION ${PKG_PATH}/packages/vendors/${vendor_name}/op_api/include)

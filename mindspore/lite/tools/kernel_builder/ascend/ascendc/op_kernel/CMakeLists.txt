@@ -1,3 +1,6 @@
+include_directories(${TOP_DIR}/graphengine/910/inc/external)
+include_directories(${TOP_DIR}/graphengine/910b/inc/external)
+
 set(tikreplaylib_DIR
     ${ASCEND_TENSOR_COMPILER_PATH}/tikcpp/tikreplaylib/lib/cmake)
 find_package(tikreplaylib REQUIRED)
@@ -18,7 +21,7 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
     OPS_INFO
     ${ASCEND_AUTOGEN_PATH}/aic-${compute_unit}-ops-info.ini
     INSTALL_DIR
-    packages/vendors/${vendor_name}/op_impl/ai_core/tbe/config/${compute_unit})
+    ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/config/${compute_unit})
 
   # generate ascendc impl py once
   if(NOT TARGET ascendc_impl_gen)
@@ -36,7 +39,7 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
       OUT_DIR
       ${CMAKE_CURRENT_BINARY_DIR}/tbe
       INSTALL_DIR
-      packages/vendors/${vendor_name}/op_impl/ai_core/tbe/${vendor_name}_impl)
+      ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/${vendor_name}_impl)
   endif()
 
   # dynamic shape binary compile
@@ -53,7 +56,7 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
       OUT_DIR
       ${CMAKE_CURRENT_BINARY_DIR}/binary/${compute_unit}
       INSTALL_DIR
-      packages/vendors/${vendor_name}/op_impl/ai_core/tbe/kernel
+      ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/kernel
       COMPUTE_UNIT
       ${compute_unit})
     add_dependencies(ascendc_bin_${compute_unit} ascendc_impl_gen)
@@ -72,7 +75,7 @@ foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
     OUT_DIR
     ${CMAKE_CURRENT_BINARY_DIR}/tbe/replay/${compute_unit}
     INSTALL_DIR
-    packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_replay
+    ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_replay
     COMPUTE_UNIT
     ${compute_unit})
 endforeach()
@@ -86,7 +89,7 @@ add_npu_support_target(
   OUT_DIR
   ${CMAKE_CURRENT_BINARY_DIR}/tbe/op_info_cfg/ai_core
   INSTALL_DIR
-  packages/vendors/${vendor_name}/framework/${ASCEND_FRAMEWORK_TYPE})
+  ${PKG_PATH}/packages/vendors/${vendor_name}/framework/${ASCEND_FRAMEWORK_TYPE})
 
 if(ENABLE_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testcases)
   add_subdirectory(testcases)
@@ -99,6 +102,6 @@ if(${ENABLE_SOURCE_PACKAGE})
   install(
     FILES ${KERNEL_FILES}
     DESTINATION
-      packages/vendors/${vendor_name}/op_impl/ai_core/tbe/${vendor_name}_impl/dynamic
+      ${PKG_PATH}/packages/vendors/${vendor_name}/op_impl/ai_core/tbe/${vendor_name}_impl/dynamic
   )
 endif()
