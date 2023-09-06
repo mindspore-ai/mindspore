@@ -6509,12 +6509,8 @@ def topk(input, k, dim=None, largest=True, sorted=True):
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
-    Note:
-        Currently, Ascend/CPU supported all common data types except bool and complex type,
-        but GPU only supports float16, float32 currently.
-
     Args:
-        input (Tensor): Input to be computed.
+        input (Tensor): Input to be computed, data type must be float16, float32 or int32.
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: ``None`` .
         largest (bool, optional): If largest is ``False``  then the k smallest elements are returned.
@@ -6532,6 +6528,7 @@ def topk(input, k, dim=None, largest=True, sorted=True):
         TypeError: If `sorted` is not a bool.
         TypeError: If `input` is not a Tensor.
         TypeError: If `k` is not an int.
+        TypeError: If dtype of `input` is not one of the following: float16, float32 or int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

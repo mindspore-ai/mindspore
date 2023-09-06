@@ -10,7 +10,10 @@ mindspore.ops.erf
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     参数：
-        - **input** (Tensor) - 高斯误差函数的输入Tensor。数据类型必须为float16、float32或float64。
+        - **input** (Tensor) - 高斯误差函数的输入Tensor。支持数据类型：
+
+          - Ascend： float16、float32。
+          - GPU/CPU： float16、float32、float64。
 
     返回：
         Tensor，具有与 `input` 相同的数据类型和shape。

@@ -438,7 +438,10 @@ class Softmax(Primitive):
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16, float32 or float64(CPU, GPU) data type.
+          additional dimensions. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -2779,9 +2782,13 @@ class BiasAdd(Primitive):
             Default is ``"NCHW"`` .
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
+        - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
+
+          - Ascend/CPU: all Number type.
+          - GPU: float16, float32, int8.
+
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-          `input_x`.
+          `input_x`. It has the same type as `input_x`.
 
     Outputs:
         Tensor, with the same shape and data type as `input_x`.
@@ -2790,7 +2797,7 @@ class BiasAdd(Primitive):
         TypeError: If `data_format` is not a str.
         ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
         TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` or `bias` is inconsistent.
+        TypeError: If dtype of `input_x` and `bias` is inconsistent.
         TypeError: If dimension of `input_x` is not in the range [2, 5].
 
     Supported Platforms:
@@ -10394,8 +10401,12 @@ class GridSampler2D(Primitive):
             and output tensors are aligned. When set to ``False`` , it is not aligned. Default: ``False`` .
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor with dtype of float16, float32 or float64 and shape of
-          :math:`(N, C, H_{in}, W_{in})`.
+        - **input_x** (Tensor) - A 4-D tensor with shape
+          :math:`(N, C, H_{in}, W_{in})`. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64.
+
         - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is
           :math:`(N, H_{out}, W_{out}, 2)`.
           Used to specify the sampling pixel locations normalized by the input spatial

@@ -11,7 +11,10 @@ mindspore.ops.erfinv
     其中 :math:`x` 代表输入Tensor。
 
     参数：
-        - **input** (Tensor) - 输入Tensor，数据类型必须为float16、float32、float64。
+        - **input** (Tensor) - 输入Tensor。支持数据类型：
+
+          - Ascend： float16、float32。
+          - GPU/CPU： float16、float32、float64。
 
     返回：
         Tensor，具有与 `input` 相同的数据类型和shape。
