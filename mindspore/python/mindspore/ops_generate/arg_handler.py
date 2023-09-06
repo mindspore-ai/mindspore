@@ -35,6 +35,16 @@ def to_strides(stride):
     raise ValueError(f"For arg 'stride', the value is invalid: {stride}.")
 
 
+def to_rates(rates):
+    if isinstance(rates, int):
+        return (rates, rates)
+    if isinstance(rates, (tuple, list)):
+        if len(rates) == 4:
+            return (rates[2], rates[3])
+        return rates
+    raise ValueError(f"For arg 'rate', the value is invalid: {rates}.")
+
+
 def to_dilations(dilation):
     if isinstance(dilation, int):
         return (dilation, dilation)
