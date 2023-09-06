@@ -3,10 +3,10 @@ floor_mod:
   args:
     x:
       dtype: tensor
-      type_cast: scalar
+      type_cast: number
     y:
       dtype: tensor
-      type_cast: scalar
+      type_cast: number
   returns:
     output:
       dtype: tensor

@@ -28,14 +28,17 @@ enum OP_DTYPE {
   DT_BOOL,
   DT_INT,
   DT_FLOAT,
+  DT_NUMBER,
   DT_TENSOR,
-  DT_SCALAR,
   DT_STR,
+  DT_ANY,
   DT_ARRAY_BOOL,
   DT_ARRAY_INT,
   DT_ARRAY_FLOAT,
+  DT_ARRAY_NUMBER,
   DT_ARRAY_TENSOR,
-  DT_ARRAY_STR
+  DT_ARRAY_STR,
+  DT_ARRAY_ANY,
 };
 
 struct OpArg {
@@ -43,7 +46,8 @@ struct OpArg {
   OP_DTYPE arg_dtype_;
   bool as_init_arg_;  // true if this is a primitive init arg.
   std::string arg_handler_;
-  std::string type_cast_;
+  std::vector<std::string> src_cast_dtype_;
+  std::string dst_cast_dtype_;
 };
 
 struct OpDef {

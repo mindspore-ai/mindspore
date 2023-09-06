@@ -103,5 +103,7 @@ def to_3d_paddings(pad):
     raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
 
 
-def dtype_to_enum(ms_type):
-    return typing.type_to_type_id(ms_type)
+def dtype_to_enum(dtype):
+    if not isinstance(dtype, typing.Type):
+        raise TypeError(f"For dtype_to_enum function, the input arg should be mindpsore dtype.")
+    return typing.type_to_type_id(dtype)

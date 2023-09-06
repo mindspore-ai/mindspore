@@ -2,7 +2,7 @@
 bool_not:
   args:
     x:
-      dtype: Scalar
+      dtype: number
   returns:
     output:
-      dtype: Scalar
+      dtype: number

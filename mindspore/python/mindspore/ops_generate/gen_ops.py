@@ -45,7 +45,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import signature as sig
 from mindspore.common import dtype as mstype
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops_generate.arg_dtype_cast import TypeCastKind, type_it
+from mindspore.ops_generate.arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 """
 cc_license_str = f"""/**
@@ -234,31 +234,29 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     return gen_py
 
 
-def get_type_cast_str(type_cast_set, dtype):
+def get_type_str(type_str):
     """
-    get type cast kind str
+    get type kind str
     """
-    if not type_cast_set or not dtype:
-        return ""
     # add more type cast kind here
-    type_cast_kind_dict = {
-        'int': 'INT',
-        'tuple[int]': 'TUPLE',
-        'list[int]': 'LIST',
-        'scalar': 'SCALAR',
-        'tensor': 'TENSOR'
+    type_kind_dict = {
+        'int': 'int',
+        'tuple[int]': 'tuple',
+        'list[int]': 'list',
+        'float': 'float',
+        'tuple[float]': 'tuple',
+        'list[float]': 'list',
+        'bool': 'bool',
+        'tuple[bool]': 'tuple',
+        'list[bool]': 'list',
+        'number': 'Number',
+        'tensor': 'Tensor',
+        'tuple[tensor]': 'tuple',
+        'list[tensor]': 'list',
     }
-    assign_str = ""
-    type_cast_list = []
-    for kind in type_cast_kind_dict:
-        if kind in type_cast_set:
-            type_cast_list.append(type_cast_kind_dict[kind])
-
-    assign_str += 'TypeCastKind.' + '_OR_'.join(ct for ct in type_cast_list)
-    for kind in type_cast_kind_dict:
-        if dtype == kind:
-            assign_str += '_TO_' + type_cast_kind_dict[kind] + ')'
-    return assign_str
+    if type_str in type_kind_dict:
+        return type_kind_dict[type_str]
+    raise TypeError(f"""Unsupported type {type_str} for args.""")
 
 
 def process_args(args):
@@ -277,8 +275,6 @@ def process_args(args):
         elif init_value == 'None':
             init_args_with_default.append(f"""{arg_name}={init_value}""")
         else:
-            if dtype == 'str':
-                init_value = '"' + init_value + '"'
             init_args_with_default.append(f"""{arg_name}={init_value}""")
         args_name.append(arg_name)
 
@@ -288,8 +284,8 @@ def process_args(args):
         if type_cast:
             type_cast_set = {ct.strip() for ct in type_cast.split(",")}
         if type_cast_set:
-            assign_str += f'type_it({arg_name}, '
-            assign_str += get_type_cast_str(type_cast_set, dtype)
+            assign_str += f'type_it({arg_name}, ' + '[' + ', '.join(get_type_str(ct) for ct in type_cast_set) + '], ' \
+                          + get_type_str(dtype) + ')'
         else:
             assign_str += arg_name
 
@@ -404,8 +400,6 @@ namespace mindspore::prim {{
 #endif  // MINDSPORE_CORE_OPS_GEN_OPS_PRIMITIVE_H_
 """
 
-    #
-
     ops_prim_gen = ''
     ops_prim_gen += ops_prim_head
     for operator_name, operator_data in yaml_data.items():
@@ -509,12 +503,25 @@ OpDef g{class_name} = {{
 
             cc_index_str += f"""
                 {{"{arg_name}", {i}}},"""
-            cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').replace('tuple', 'array').replace(
-                'list', 'array').upper()
-            cc_dtype_str.replace('TUPLE', 'ARRAY').replace('LIST', 'ARRAY')
+            cc_dtype_str = 'DT_' + dtype.replace('[', '_').\
+                replace(']', '').\
+                replace('tuple', 'array').\
+                replace('list', 'array').upper()
+
+            type_cast = arg_info.get('type_cast')
+            type_cast_set = None
+            if type_cast:
+                type_cast_set = {ct.strip() for ct in type_cast.split(",")}
+            if type_cast_set:
+                src_type_str = "\"" + '", "'.join(get_type_str(ct) for ct in type_cast_set) + "\""
+                dst_type_str = get_type_str(dtype)
+            else:
+                src_type_str = ""
+                dst_type_str = ""
 
             opdef_cc += f"""
-                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}"}},"""
+                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", 
+                .src_cast_dtype_ = {{{src_type_str}}}, .dst_cast_dtype_ = "{dst_type_str}"}},"""
         opdef_cc += f"""
     }},"""
 

@@ -2452,7 +2452,7 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
         (void)new_cnode_inputs.emplace_back(input);
       } else {
         auto new_input =
-          ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.type_cast_, fg, input);
+          ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.dst_cast_dtype_, fg, input);
         new_input =
           ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE, op_arg.arg_handler_, fg, new_input);
         (void)new_cnode_inputs.emplace_back(new_input);
@@ -2460,7 +2460,7 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
     } else {
       // Handle primitive inputs.
       auto new_input =
-        ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.type_cast_, fg, input);
+        ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.dst_cast_dtype_, fg, input);
       (void)new_cnode_inputs.emplace_back(new_input);
     }
   }

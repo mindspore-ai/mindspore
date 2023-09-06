@@ -3,10 +3,10 @@ floor_div:
   args:
     input:
       dtype: tensor
-      type_cast: scalar
+      type_cast: number
     other:
       dtype: tensor
-      type_cast: scalar
+      type_cast: number
   returns:
     output:
       dtype: tensor

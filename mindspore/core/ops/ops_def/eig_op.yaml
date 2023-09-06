@@ -4,7 +4,7 @@ eig:
     x:
       dtype: tensor
     compute_v:
-      dtype: Bool
+      dtype: bool
       init: False
   returns:
     eigen_values:

@@ -46,6 +46,7 @@ mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:matrix_norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:multinomial
+mindspore/mindspore/python/mindspore/ops_generate/arg_dtype_cast.py:type_it
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
