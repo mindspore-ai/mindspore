@@ -77,6 +77,8 @@ GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("JoinedStr"))
 GVAR_DEF(PrimitivePtr, kPrimTileSize, std::make_shared<Primitive>("TileSize"));
 GVAR_DEF(PrimitivePtr, kPrimNormalizeSlice, std::make_shared<Primitive>("NormalizeSlice"));
 GVAR_DEF(PrimitivePtr, kPrimNormalizeDimIndex, std::make_shared<Primitive>("NormalizeDimIndex"));
+GVAR_DEF(PrimitivePtr, kPrimRemakeTupleIndex, std::make_shared<Primitive>("RemakeTupleIndex"));
+GVAR_DEF(PrimitivePtr, kPrimNormalizeTupleIndex, std::make_shared<Primitive>("NormalizeTupleIndex"));
 GVAR_DEF(PrimitivePtr, kPrimEllipsisToSlice, std::make_shared<Primitive>("EllipsisToSlice"));
 GVAR_DEF(PrimitivePtr, kPrimGetSqueezeSliceShape, std::make_shared<Primitive>("GetSqueezeSliceShape"));
 GVAR_DEF(PrimitivePtr, kPrimRemoveExpandedDims, std::make_shared<Primitive>("RemoveExpandedDims"));
