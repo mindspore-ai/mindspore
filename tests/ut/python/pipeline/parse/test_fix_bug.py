@@ -76,29 +76,6 @@ def test_ME_assignment_operator_0020():
     assignment_operator_base((1, 3))
 
 
-class unsupported_method_net(nn.Cell):
-    """ unsupported_method_net definition """
-
-    def __init__(self):
-        super().__init__()
-        self.relu = nn.ReLU()
-
-    def construct(self, x):
-        with open("a.txt") as f:
-            f.read()
-        return x
-
-
-def test_compile_unspported():
-    """ test_compile_unspported """
-    input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
-    input_me = Tensor(input_np)
-    net = unsupported_method_net()
-    with pytest.raises(TypeError,
-                       match="'<built-in function open>' is not supported both in JIT Fallback and graph mode."):
-        _cell_graph_executor.compile(net, input_me)
-
-
 def test_parser_map_0002():
     class NetMap0002(nn.Cell):
         def __init__(self):

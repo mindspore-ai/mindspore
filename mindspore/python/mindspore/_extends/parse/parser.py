@@ -122,8 +122,7 @@ _hybrid_type = (
 
 # Unsupported python builtin type in JIT Fallback.
 _fallback_unsupported_python_builtin_type = (
-    compile, eval, exec, input, open, delattr, setattr, super, staticmethod, classmethod, __import__,
-    memoryview, property,
+    compile, eval, exec
 )
 
 _modules_from_mindspore = (
