@@ -30,6 +30,8 @@ namespace acl {
 namespace {
 constexpr size_t kBatchSizeNum = 1;
 constexpr size_t kImageSizeHwNum = 2;
+constexpr char kINFOLogLevel = '1';
+constexpr char kDEBUGLogLevel = '0';
 }  // namespace
 static TypeId TransToDataType(aclDataType data_type) {
   static const std::map<aclDataType, enum TypeId> data_type_map = {
@@ -65,6 +67,31 @@ ModelProcess::~ModelProcess() {
     delete[] dynamic_dims_;
     dynamic_dims_ = nullptr;
   }
+}
+
+aclError ModelProcess::AclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind) {
+  struct timeval start_time;
+  auto env = std::getenv("GLOG_v");
+  if (env != nullptr && (env[0] == kDEBUGLogLevel)) {
+    (void)gettimeofday(&start_time, nullptr);
+  }
+  auto ret = aclrtMemcpy(dst, destMax, src, count, kind);
+  if (env != nullptr && (env[0] == kDEBUGLogLevel)) {
+    struct timeval end_time;
+    (void)gettimeofday(&end_time, nullptr);
+    constexpr uint64_t kUSecondInSecond = 1000000;
+    uint64_t cost =
+      (kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec) + static_cast<uint64_t>(end_time.tv_usec)) -
+      (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
+    if (kind == ACL_MEMCPY_DEVICE_TO_HOST) {
+      MS_LOG(DEBUG) << "Device to Host copy in " << cost << " us";
+    } else if (kind == ACL_MEMCPY_HOST_TO_DEVICE) {
+      MS_LOG(DEBUG) << "Host to Device copy in " << cost << " us";
+    } else if (kind == ACL_MEMCPY_DEVICE_TO_DEVICE) {
+      MS_LOG(DEBUG) << "Device to Device copy in " << cost << " us";
+    }
+  }
+  return ret;
 }
 
 bool ModelProcess::PreInitModelResource() {
@@ -371,9 +398,7 @@ bool ModelProcess::InitOutputsBuffer() {
     }
     bool is_dynamic_output = false;
     for (size_t dim_idx = 0; dim_idx < dims.dimCount; dim_idx++) {
-      if (dims.dims[dim_idx] == -1) {
-        is_dynamic_output = true;
-      }
+      is_dynamic_output = (dims.dims[dim_idx] < 0) ? true : false;
     }
     size_t buffer_size = 0;
     if (!is_dynamic_output) {
@@ -388,6 +413,9 @@ bool ModelProcess::InitOutputsBuffer() {
     MS_LOG(DEBUG) << "The output format of om is " << format;
     aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
+    if (is_dynamic_output) {
+      shape = std::vector<int64_t>({-1});
+    }
     std::string output_name = aclmdlGetOutputNameByIndex(model_desc_, i);
     if (output_name.empty()) {
       MS_LOG(WARNING) << "Get name of output " << i << " failed.";
@@ -953,7 +981,7 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs)
       auto data = host_data->addr;
       auto size = host_data->size;
       if (!is_run_on_device_) {
-        ret = aclrtMemcpy(info.device_data, info.buffer_size, data, size, ACL_MEMCPY_HOST_TO_DEVICE);
+        ret = AclrtMemcpy(info.device_data, info.buffer_size, data, size, ACL_MEMCPY_HOST_TO_DEVICE);
         if (ret != ACL_ERROR_NONE) {
           MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, src input size: " << size
                         << ", dst device buffer size: " << info.buffer_size;
@@ -1135,8 +1163,6 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   aclError acl_ret;
   struct timeval start_time;
   auto env = std::getenv("GLOG_v");
-  constexpr char kINFOLogLevel = '1';
-  constexpr char kDEBUGLogLevel = '0';
   if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
     (void)gettimeofday(&start_time, nullptr);
   }
@@ -1253,7 +1279,7 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
       }
       MS_LOG(DEBUG) << "copying to host with addr: " << host_data->addr << " with size: " << output_info.buffer_size;
       auto ret =
-        aclrtMemcpy(host_data->addr, host_data->size, output_info.cur_device_data, output_info.buffer_size, kind);
+        AclrtMemcpy(host_data->addr, host_data->size, output_info.cur_device_data, output_info.buffer_size, kind);
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Memcpy output " << i << " from " << (is_run_on_device_ ? "host" : "device")
                       << " to host failed, memory size " << output_info.buffer_size << ", ret: " << ret;
