@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef BUILD_LITE
+#ifndef _WIN32
 #ifndef ENABLE_MCU
 #include "nnacl/kernel/deconvolution_winograd.h"
 #include "nnacl/infer/common_infer.h"

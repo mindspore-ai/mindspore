@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_NNACL_KERNEL_LIB
+#ifdef _WIN32
 #include <algorithm>
 #include "src/litert/kernel/cpu/fp32/deconvolution_winograd_fp32.h"
 
