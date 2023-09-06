@@ -1,0 +1,1104 @@
+mindir:
+    deepfm_criteo_bs_16000_Ascend:
+        fmk: mindir
+        input_number: 2
+
+    efficientnetb0_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    efficientnetb1_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    efficientnetb2_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 4
+
+    efficientnetb3_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    inceptionv3_ascend:
+        fmk: mindir
+        input_number: 1
+
+    inceptionV4:
+        fmk: mindir
+        input_number: 1
+
+    mobilenetv3large_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+
+    mobilenetv3small_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+
+    pix2pix_facades_bs1:
+        fmk: mindir
+        input_number: 1
+
+    resnet101_imagenet_bs_1_Ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    resnet101_imagenet_bs_1_GPU:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    resnet18_imagenet_bs_1_Ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    resnet34_ascend_v190_imagenet2012_official_cv_top1acc73.61_top5acc91.74:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    resnet50_cifar10_bs_1_Ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    resnet50_cifar10_bs_1_GPU:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    resnet50_imagenet_bs_1_Ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    resnet50_imagenet_bs_1_GPU:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    resnet50_thor_imagenet_bs_1_ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 2
+
+    se-resnet50_imagenet_bs_1_ascend:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 3
+
+    shufflenetv1:
+        fmk: mindir
+        input_number: 1
+
+    ssimae_mvtecadbottle_bs1:
+        fmk: mindir
+        input_number: 1
+
+    unet_bs_1_input_2:
+        fmk: mindir
+        input_number: 1
+
+    unet_nested_cell_bs_1_input_2:
+        fmk: mindir
+        input_number: 1
+
+    vgg16_cifar10_bs_64_Ascend:
+        fmk: mindir
+        input_number: 1
+
+    vgg16_imagenet_bs_1_Ascend:
+        fmk: mindir
+        input_number: 1
+
+    vgg19_cifar10_bs1:
+        fmk: mindir
+        input_number: 1
+
+    vgg19_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+        acc_threshold: 1
+
+    vit_imagenet2012_bs1:
+        fmk: mindir
+        input_number: 1
+
+---
+
+tf:
+    browser_deepfm_v7:
+        fmk: tf
+        input_number: 2
+        benchmark_shapes: 200,94:200,94
+        acc_threshold: 0.5
+
+    browser_deepfm_v7_int64:
+        fmk: tf
+        input_number: 2
+        benchmark_shapes: 200,94:200,94
+        acc_threshold: 0.5
+
+    browser_v36:
+        fmk: tf
+        input_number: 2
+        benchmark_shapes: 75,190:75,9120
+        acc_threshold: 0.00002
+
+    browser_v79:
+        fmk: tf
+        input_number: 2
+        benchmark_shapes: 10,294:10,294
+        acc_threshold: 0.004
+
+    browser_v79_int32:
+        fmk: tf
+        input_number: 2
+        benchmark_shapes: 10,294:10,294
+        acc_threshold: 0.004
+
+    hiai_asr_last_e1_cpu_fast_wavenet_batch1_frame1_one_cache:
+        fmk: tf
+        input_number: 2
+
+    hiai_dress_detect:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,960,960,3
+
+    hiai_face_model_npu:
+        fmk: tf
+        input_number: 1
+
+    hiai_frozen_inference_graph:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,300,300,3
+
+    hiai_label_and_video:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,224,224,3
+
+    hiai_lm_inference_graph:
+        fmk: tf
+        input_number: 1
+
+    hiai_model_0909_kd_rot_ps_softmax:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,224,224,3
+
+    hiai_ssd_mobilenetv2_object:
+        fmk: tf
+        input_number: 1
+
+    hiai_transformer_encoder:
+        fmk: tf
+        input_number: 15
+
+    ml_ocr_jk:
+        fmk: tf
+        input_number: 1
+
+    ml_video_edit_img_segment_adaptise:
+        fmk: tf
+        input_number: 2
+
+    ml_video_edit_oneclick_adaptis:
+        fmk: tf
+        input_number: 3
+
+    ml_video_edit_video_segment_gauss_adaptis_part2:
+        fmk: tf
+        input_number: 2
+
+    mtk_age_gender:
+        fmk: tf
+        input_number: 1
+
+    squeezenet:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,224,224,3
+
+    tt_raw_h4800_mel80_ms_fe001_ex_20210506_joint_decoder:
+        fmk: tf
+        input_number: 14
+        benchmark_shapes: 4:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:4,7,64:1,640
+
+---
+
+caffe:
+    2012_ATLANTA_10class_20190131_v4.0:
+        fmk: caffe
+        input_number: 1
+
+    6c_seg_nomean_20200610:
+        fmk: caffe
+        input_number: 1
+
+    age_new:
+        fmk: caffe
+        input_number: 1
+
+    bank_card_detection_inception_tmp:
+        fmk: caffe
+        input_number: 1
+
+    bolt_deploy_color-server:
+        fmk: caffe
+        input_number: 1
+
+    deconv_test_model:
+        fmk: caffe
+        input_number: 1
+
+    deconvs_model:
+        fmk: caffe
+        input_number: 1
+
+    detect-deeper-halfdeeper-mbv1-shortcut-400-400_nopostprocess_simplified:
+        fmk: caffe
+        input_number: 1
+
+    detection_retinaface_fix:
+        fmk: caffe
+        input_number: 1
+
+    emotion:
+        fmk: caffe
+        input_number: 1
+
+    gender_res_large_deploy:
+        fmk: caffe
+        input_number: 1
+
+    hdc_age_medium:
+        fmk: caffe
+        input_number: 1
+
+    hdc_Face_Aesthetic_MTI_Aesthetic:
+        fmk: caffe
+        input_number: 1
+
+    hdc_ocr_recog_horizontal:
+        fmk: caffe
+        input_number: 1
+
+    hdc_retinaface:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cpu_face_attr:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cpu_face_detect:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cv_aestheticsEngineModel_osp:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_01:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_03:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_07:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_attr1:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_detect_rfb:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_pose_tuku:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_recognition_1:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_RFB-Epoch-170-no-transpose:
+        fmk: caffe
+        input_number: 1
+
+    hiai_human_seg:
+        fmk: caffe
+        input_number: 1
+
+    hiai_machine_vision_jfr_newmodel_2730_houduan_yolo:
+        fmk: caffe
+        input_number: 1
+
+    hiai_machine_vision_mobileNet101_nosoftce_mobilenet_resnet:
+        fmk: caffe
+        input_number: 1
+
+    hiai_semantic_seg:
+        fmk: caffe
+        input_number: 1
+
+    identify_card_detect_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_2012_ocr_detection_caffe_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_2012_ocr_rec_caffe:
+        fmk: caffe
+        input_number: 1
+
+    ml_ARengine23_bodypose:
+        fmk: caffe
+        input_number: 1
+
+    ml_bank_detect_0312_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_bank_recog:
+        fmk: caffe
+        input_number: 1
+
+    ml_bodymask:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_age:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_beard:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_div_parsing:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_glasses:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_isface:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_mnet:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_pose:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_sex:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_tracking:
+        fmk: caffe
+        input_number: 1
+
+    ml_hand_3d_detection:
+        fmk: caffe
+        input_number: 1
+
+    ml_Hand_deploy:
+        fmk: caffe
+        input_number: 1
+
+    ml_hand_detection:
+        fmk: caffe
+        input_number: 1
+
+    ml_handpose:
+        fmk: caffe
+        input_number: 1
+
+    ml_hardware_liveness:
+        fmk: caffe
+        input_number: 1
+
+    ml_hardware_pose:
+        fmk: caffe
+        input_number: 1
+
+    ml_Heatmap_depth_180240:
+        fmk: caffe
+        input_number: 2
+
+    ml_Heatmap_depth_240180:
+        fmk: caffe
+        input_number: 2
+
+    ml_lable_model_hebing_device:
+        fmk: caffe
+        input_number: 1
+
+    ml_location_scene_division:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_bank_card_detection_inception_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_bank_card_recognition_fcny:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_detect_20200305:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_identify_card_detect_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_identify_card_fcny:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_sfz_add_final_0325:
+        fmk: caffe
+        input_number: 1
+
+    ml_ocr_sfz_detect_0325_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_segmentation_atlanta_1:
+        fmk: caffe
+        input_number: 1
+
+    ml_segmentation_atlanta_10:
+        fmk: caffe
+        input_number: 1
+
+    ml_segmentation_matting:
+        fmk: caffe
+        input_number: 1
+
+    ml_tabel_recog:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_detect_20211111:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_dynamic_effect_MTI_seg5c_v1:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_hairSeg_have_imageProcessLayer_interpTo145_20210121:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_have_imageProcessLayer_interpTo145_20201015:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_img_segment:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_Mnet:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_MnetN367_extract_1010_pay:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_moon_mode_moon_seg:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_moon_mode_MTI_9c_segmentation_v12:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_person_divison_video:
+        fmk: caffe
+        input_number: 2
+
+    ml_video_edit_reid:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_seg_320:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_v10_best_model_nomean_20200723:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_video_segment_gauss_adaptis_part1:
+        fmk: caffe
+        input_number: 1
+
+    mnet:
+        fmk: caffe
+        input_number: 1
+
+    Mnet6_0312_extract_pay:
+        fmk: caffe
+        input_number: 1
+
+    model_hebing_3branch:
+        fmk: caffe
+        input_number: 1
+
+    mtk_2012_ATLANTA_10class_20190614_v41:
+        fmk: caffe
+        input_number: 1
+
+    mtk_detect_mbv1_640_480_nopostprocess_simplified:
+        fmk: caffe
+        input_number: 1
+
+    mtk_detect-deeper-halfdeeper-mbv1-lastearlySSD-shortcut-400-400_nopostprocess_simplified:
+        fmk: caffe
+        input_number: 1
+
+    mtk_detect-mbv1-shortcut-400-400_nopostprocess_simplified:
+        fmk: caffe
+        input_number: 1
+
+    mtk_face_recognition_v1:
+        fmk: caffe
+        input_number: 1
+
+    plat_isface:
+        fmk: caffe
+        input_number: 1
+
+    pose_3d:
+        fmk: caffe
+        input_number: 1
+
+    PoseNet_dla_17_x512_tmp:
+        fmk: caffe
+        input_number: 1
+
+    recognition:
+        fmk: caffe
+        input_number: 1
+
+    retinaface:
+        fmk: caffe
+        input_number: 1
+
+    Sport_Health_Tech_pose_iter:
+        fmk: caffe
+        input_number: 1
+
+---
+
+onnx:
+    adversarial_pruning:
+        fmk: onnx
+        input_number: 1
+
+    bloom_hongmo_detection_tmp:
+        fmk: onnx
+        input_number: 1
+
+    candy-9:
+        fmk: onnx
+        input_number: 1
+
+    carbu_intelligent_cockpit_fasttext_best:
+        fmk: onnx
+        input_number: 1
+
+    densenet-9:
+        fmk: onnx
+        input_number: 1
+
+    googlenet-9:
+        fmk: onnx
+        input_number: 1
+
+    gts_version-RFB-320_simplified:
+        fmk: onnx
+        input_number: 1
+
+    hdc_efficientnet_b3_1w_class:
+        fmk: onnx
+        input_number: 1
+
+    hdc_Face_Emotion_MTI_Aesthetic:
+        fmk: onnx
+        input_number: 1
+
+    hdc_Image_Aesthetic_MTI_Aesthetic:
+        fmk: onnx
+        input_number: 1
+
+    hdc_mobilenet_1w_class:
+        fmk: onnx
+        input_number: 1
+
+    hdc_ocr_detect_tmp:
+        fmk: onnx
+        input_number: 1
+
+    hdc_resnet_1w_class:
+        fmk: onnx
+        input_number: 1
+
+    inception-v1-9:
+        fmk: onnx
+        input_number: 1
+
+    inception-v2-9:
+        fmk: onnx
+        input_number: 1
+
+    Ireland_face_detector:
+        fmk: onnx
+        input_number: 1
+
+    Ireland_gaze_corrector:
+        fmk: onnx
+        input_number: 3
+        acc_threshold: 1
+
+    Ireland_gaze_estimator_ng:
+        fmk: onnx
+        input_number: 1
+
+    ml_2012_ocr_detection_tmp:
+        fmk: onnx
+        input_number: 1
+
+    ml_edu_kit_hand_detection:
+        fmk: onnx
+        input_number: 1
+
+    ml_edu_kit_hand_key_position:
+        fmk: onnx
+        input_number: 1
+
+    ml_ei_facedetection:
+        fmk: onnx
+        input_number: 1
+
+    ml_face_3d:
+        fmk: onnx
+        input_number: 1
+
+    ml_facedetector:
+        fmk: onnx
+        input_number: 1
+
+    ml_location_lane_counter:
+        fmk: onnx
+        input_number: 1
+
+    ml_location_lane_counter0:
+        fmk: onnx
+        input_number: 1
+
+    ml_motion_capture_nanodet_m_0.5x_people_0928_sim:
+        fmk: onnx
+        input_number: 1
+
+    ml_motion_capture_smpl_0916:
+        fmk: onnx
+        input_number: 3
+
+    ml_motion_capture_spin_mobile_mv3_v3_57mm_sim:
+        fmk: onnx
+        input_number: 5
+
+    ml_table_detection_fp32_tmp:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_art_generate:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_art_generate_20210513:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_art_transfer_20210513:
+        fmk: onnx
+        input_number: 3
+
+    ml_video_edit_dimming_tech_model_345000_color:
+        fmk: onnx
+        input_number: 2
+
+    ml_video_edit_dimming_tech_model_studio_20:
+        fmk: onnx
+        input_number: 2
+
+    ml_video_edit_enhance_update_tmp:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_face_edit_face3d:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_face_edit_pix2pixHD_unet:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_hair_dyeing_migrate_v2:
+        fmk: onnx
+        input_number: 4
+
+    ml_video_edit_hair_dyeing_migrate_v2_fix:
+        fmk: onnx
+        input_number: 4
+
+    ml_video_edit_judge:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_makeup_mobilenetv203:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_shot_selection_face_emotion:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_shot_selection_yolox_nano_coco_reduced:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_style_transfer_autoportrait:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_style_transfer_candy:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_style_transfer_gongnongbing:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_style_transfer_starry:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_styleCode_part1:
+        fmk: onnx
+        input_number: 1
+
+    ml_video_edit_styleCode_part2:
+        fmk: onnx
+        input_number: 9
+
+    ml_video_edit_vignet:
+        fmk: onnx
+        input_number: 1
+
+    mobilenetv2-7:
+        fmk: onnx
+        input_number: 1
+
+    mosaic-9:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect_mbv1_640_480:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-deeper-halfdeeper-mbv1-lastearlySSD-shortcut-400-400_nopostprocess_simplified_onnx:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-deeper-halfdeeper-mbv1-shortcut-400-400_nopostprocess_simplified_onnx:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-mbv1-shortcut-400-400:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-mbv1-shortcut-400-400_nopostprocess_simplified_onnx:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-mbv2-shortcut-400-400:
+        fmk: onnx
+        input_number: 1
+
+    mtk_detect-mbv2-shortcut-400-400-simplified:
+        fmk: onnx
+        input_number: 1
+
+    mtk_emotions-d2012-75:
+        fmk: onnx
+        input_number: 1
+
+    mtk_face_features_v3:
+        fmk: onnx
+        input_number: 1
+
+    mtk_face_recognition_v2:
+        fmk: onnx
+        input_number: 1
+
+    mtk_face_recognition_v3:
+        fmk: onnx
+        input_number: 1
+
+    pointilism-9:
+        fmk: onnx
+        input_number: 1
+
+    porseg_tmp:
+        fmk: onnx
+        input_number: 2
+
+    Q888_CV_face_recognition_self:
+        fmk: onnx
+        input_number: 1
+
+    Q888_face_recognition:
+        fmk: onnx
+        input_number: 1
+
+    Q888_iris_detect:
+        fmk: onnx
+        input_number: 1
+
+    rain-princess-9:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_bs_1:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_bs_32:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_cifar10_bs_1:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_cifar10_bs_32:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_res34_cifar10_bs_1_update:
+        fmk: onnx
+        input_number: 1
+
+    residual_distill_res50_cifar10_bs_1_update:
+        fmk: onnx
+        input_number: 1
+
+    rpnt_pdr_conv2d_16_fixed_last:
+        fmk: onnx
+        input_number: 1
+
+    shufflenet-9:
+        fmk: onnx
+        input_number: 1
+
+    shufflenet-v2-10:
+        fmk: onnx
+        input_number: 1
+
+    simple_IPS_model_4D_input:
+        fmk: onnx
+        input_number: 1
+
+    squeezenet1.0-9:
+        fmk: onnx
+        input_number: 1
+
+    squeezenet1.1-7:
+        fmk: onnx
+        input_number: 1
+
+    ssd-10:
+        fmk: onnx
+        input_number: 1
+
+    udnie-9:
+        fmk: onnx
+        input_number: 1
+
+    yolov5s:
+        fmk: onnx
+        input_number: 1
+
+---
+
+tflite:
+    albert_lite_base_squadv1_1:
+        fmk: tflite
+        input_number: 3
+
+    gts_detect_5k_tf115:
+        fmk: tflite
+        input_number: 1
+
+    hdc_tb_cn_neg:
+        fmk: tflite
+        input_number: 3
+        acc_threshold: 0.5
+
+    hiai_asr_last_e1_cpu_fast_wavenet_batch1_frame1_one_cache_fp32:
+        fmk: tflite
+        input_number: 2
+
+    hiai_cv_labelDetectorModel_v3:
+        fmk: tflite
+        input_number: 2
+
+    hiai_cv_saliencyDetectorModel:
+        fmk: tflite
+        input_number: 1
+
+    hiai_dress_detect:
+        fmk: tflite
+        input_number: 1
+
+    hiai_face_model_npu:
+        fmk: tflite
+        input_number: 1
+
+    hiai_frozen_inference_graph:
+        fmk: tflite
+        input_number: 1
+
+    hiai_label_and_video:
+        fmk: tflite
+        input_number: 1
+
+    hiai_lm_inference_graph:
+        fmk: tflite
+        input_number: 1
+
+    hiai_model_0909_kd_rot_ps_softmax:
+        fmk: tflite
+        input_number: 1
+
+    hiai_object_detect_814:
+        fmk: tflite
+        input_number: 1
+
+    hiai_ssd_mobilenetv2_object:
+        fmk: tflite
+        input_number: 1
+
+    hiai_vad:
+        fmk: tflite
+        input_number: 2
+
+    ide_label_retrained:
+        fmk: tflite
+        input_number: 1
+
+    lite-model_albert_lite_base_squadv1_metadata_1:
+        fmk: tflite
+        input_number: 3
+
+    lite-model_mobilebert_1_metadata_1:
+        fmk: tflite
+        input_number: 3
+
+    ml_ei_headpose_pb2tflite:
+        fmk: tflite
+        input_number: 3
+        benchmark_shapes: 1,64,64,3:16:16
+
+    ml_headpose_pb2tflite:
+        fmk: tflite
+        input_number: 3
+        benchmark_shapes: 1,64,64,3:16:16
+
+    ml_location:
+        fmk: tflite
+        input_number: 1
+
+    ml_ocr_jk:
+        fmk: tflite
+        input_number: 1
+
+    ml_ocr_jk_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    ml_tacotron_decoder_step_stf:
+        fmk: tflite
+        input_number: 9
+        benchmark_shapes: 1,80:1,256:1,1024:1,1024:1,1024:1,1024:1,8:1,1,256:1
+
+    ml_video_edit_img_segment_adaptise_pb2tflite:
+        fmk: tflite
+        input_number: 2
+
+    ml_video_edit_video_segment_gauss_adaptis_part2_pb2tflite:
+        fmk: tflite
+        input_number: 2
+
+    mobilebert_1_default_1:
+        fmk: tflite
+        input_number: 3
+
+    mtk_276landmark_0913:
+        fmk: tflite
+        input_number: 1
+
+    mtk_age_gender:
+        fmk: tflite
+        input_number: 1
+
+    Q_language_model_hrmini_Q4_b4_17w:
+        fmk: tflite
+        input_number: 1
+
+    Q888_lapa158_unet_0924:
+        fmk: tflite
+        input_number: 1
+
+    resnet_v2_101_299:
+        fmk: tflite
+        input_number: 1
+
+    scan_hms_detect:
+        fmk: tf
+        input_number: 1
+
+    unet_mbv2_05_104pts:
+        fmk: tflite
+        input_number: 1

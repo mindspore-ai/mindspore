@@ -84,6 +84,10 @@ class SubGraphKernel : public KernelExec {
       delete node;
     }
     nodes_.clear();
+    for (auto *tensor : tensors_) {
+      delete tensor;
+    }
+    tensors_.clear();
   }
 
   bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override {
@@ -124,9 +128,13 @@ class SubGraphKernel : public KernelExec {
 
   std::vector<KernelExec *> out_nodes() const { return this->out_nodes_; }
 
+  std::vector<InferTensor *> &tensors() { return this->tensors_; }
+
   void SetInNodes(const std::vector<KernelExec *> &in_nodes) { in_nodes_ = in_nodes; }
 
   void SetOutNodes(const std::vector<KernelExec *> &out_nodes) { out_nodes_ = out_nodes; }
+
+  void SetTensors(const std::vector<InferTensor *> &tensors) { tensors_ = tensors; }
 
   void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
 
@@ -156,6 +164,7 @@ class SubGraphKernel : public KernelExec {
   std::vector<KernelExec *> in_nodes_{};
   // exit nodes in nodes
   std::vector<KernelExec *> out_nodes_{};
+  std::vector<InferTensor *> tensors_{};
   mindspore::lite::Executor *executor_ = nullptr;
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
   bool graph_changed_ = false;

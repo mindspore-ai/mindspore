@@ -23,6 +23,7 @@
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "extendrt/delegate/plugin/ascend_native_executor_plugin.h"
 #include "extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace {
@@ -111,51 +112,22 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
 
 SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context) {
   if (context != nullptr) {
-    auto &device_contexts = context->MutableDeviceInfo();
-    constexpr auto mindrt_cpu_provider = "mindrt";
-    for (auto device_context : device_contexts) {
-      MS_EXCEPTION_IF_NULL(device_context);
-      if (device_context->GetDeviceType() == kAscend) {
-        if (device_context->GetProvider() == "ge") {
-          return kDelegateSession;
-        }
-        if (device_context->GetProvider() == "ascend_native") {
-          return kDefaultSession;
-        }
-        if (device_context->GetProvider() == mindrt_cpu_provider) {
-          if (!kernel::AscendKernelPlugin::Register()) {
-            MS_LOG(ERROR) << "Failed to register Ascend plugin";
-            return kNoneSession;
+    static const char *const env = std::getenv("ENABLE_MULTI_BACKEND_RUNTIME");
+    bool use_experimental_rts = env != nullptr && strcmp(env, "on") == 0;
+    if (MS_LIKELY((!use_experimental_rts))) {
+      auto &device_contexts = context->MutableDeviceInfo();
+      for (const auto &device_context : device_contexts) {
+        MS_EXCEPTION_IF_NULL(device_context);
+        if (device_context->GetDeviceType() == kAscend) {
+          if (device_context->GetProvider() == "ge") {
+            return kDelegateSession;
           }
-          return kDefaultSession;
+          return kSingleOpSession;
         }
-        if (device_context->GetProvider() == mindrt_cpu_provider) {
-          if (!kernel::AscendKernelPlugin::Register()) {
-            MS_LOG(ERROR) << "Failed to register Ascend plugin";
-            return kNoneSession;
-          }
-          return kDefaultSession;
-        }
-        return kSingleOpSession;
-      }
-      if (device_context->GetDeviceType() == kGPU) {
         return kDelegateSession;
       }
-      if (device_context->GetDeviceType() == kCPU) {
-        auto cpu_device = device_context->Cast<CPUDeviceInfo>();
-        if (!cpu_device) {
-          return kDelegateSession;
-        }
-        auto provider = cpu_device->GetProvider();
-        if (provider == mindrt_cpu_provider) {
-          return kDefaultSession;
-        }
-      }
-      if (device_context->GetDeviceType() == kAllDevice) {
-        // Default Session support auto device context
-        return kDefaultSession;
-      }
-      return kDelegateSession;
+    } else {
+      return kDefaultSession;
     }
   }
   return kDefaultSession;

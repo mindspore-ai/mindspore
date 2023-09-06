@@ -310,6 +310,7 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
     if (MS_UNLIKELY(kernel->out_tensors().size() != segments_outputs[i].size())) {
       MS_LOG(ERROR) << "Subgraph has " << kernel->in_tensors().size() << " outputs while segment has "
                     << segments_outputs[i].size() << " outputs.";
+      delete output_isolate_map;
       return kLiteError;
     }
     for (size_t j = 0; j < kernel->out_tensors().size(); j++) {
@@ -335,12 +336,14 @@ Status DefaultGraphCompiler::IsolateSubGraphs() {
       auto anf_node = subgraph_input_map_.find(input);
       if (anf_node == subgraph_input_map_.end()) {
         MS_LOG(ERROR) << "Can not find corresponding anf_node for " << i << "th input of subgraph " << kernel->name();
+        delete subgraph_isolate_map;
         return kLiteError;
       }
       auto output = subgraph_output_map_.find(anf_node->second);
       if (output == subgraph_output_map_.end()) {
         MS_LOG(ERROR) << "Can not find corresponding output tensor for anf_node: "
                       << anf_node->second->fullname_with_scope();
+        delete subgraph_isolate_map;
         return kLiteError;
       }
       (*subgraph_isolate_map)[input] = output->second;

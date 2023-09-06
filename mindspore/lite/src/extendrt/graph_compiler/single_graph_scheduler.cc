@@ -59,10 +59,9 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
     return nullptr;
   }
   kernel->set_context(context_.get());
-  DrawDot(reinterpret_cast<kernel::SubGraphKernel *>(kernel), "select_kernel");
+  DrawDot(kernel, "select_kernel");
 
-  std::vector<kernel::KernelExec *> subkernels = {kernel};
-  auto ret = OptimizeTranspose(&subkernels);
+  auto ret = OptimizeTranspose(kernel);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Optimize format of executionplan failed.";
     return nullptr;
@@ -195,9 +194,10 @@ kernel::KernelExec *CreateFormatTransFunc(InferTensor *input, InferTensor *outpu
 }
 }  // namespace
 
-Status SingleGraphScheduler::OptimizeTranspose(std::vector<InferKernel *> *kernels) {
-  auto tensors = execution_flow_->GetTensors();
-  auto ret = pass::DoFormatPass(kernels, &tensors, compile_option_->graph_format, CreateFormatTransFunc);
+Status SingleGraphScheduler::OptimizeTranspose(kernel::SubGraphKernel *kernel) {
+  std::vector<kernel::KernelExec *> subgraph_list = {kernel};
+  auto ret =
+    pass::DoFormatPass(&subgraph_list, &kernel->tensors(), compile_option_->graph_format, CreateFormatTransFunc);
   if (ret != RET_OK) {
     MS_LOG(INFO) << "Run Optimize transpose pass failed.";
     return kLiteError;

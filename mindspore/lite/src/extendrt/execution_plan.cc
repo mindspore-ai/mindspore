@@ -24,18 +24,17 @@
 
 namespace mindspore::infer {
 ExecutionPlan::~ExecutionPlan() {
-  FreeInputIsolateMap();
-  FreeOutputIsolateMap();
+  delete input_isolate_map_;
+  delete output_isolate_map_;
 
   for (auto tensor : inputs_) {
-    if (tensor != nullptr) {
-      delete tensor;
-    }
+    delete tensor;
   }
   for (auto tensor : outputs_) {
-    if (tensor != nullptr) {
-      delete tensor;
-    }
+    delete tensor;
+  }
+  for (auto kernel : kernel_list_) {
+    delete kernel;
   }
 }
 

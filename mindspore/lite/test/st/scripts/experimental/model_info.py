@@ -95,15 +95,15 @@ class ModelInfo:
         else:
             raise ValueError(f"model({self.model_name}) has unsupported fmk: {self.fmk}")
         context = Context.instance()
-        self.model_file = os.path.join(context.model_dir, self.model_name + self.network_suffix)
+        self.model_file = os.path.join(context.model_dir_func(self.fmk), self.model_name + self.network_suffix)
         if self.fmk == Fmk.caffe:
-            self.weight_file = os.path.join(context.model_dir, self.model_name + self.weight_suffix)
+            self.weight_file = os.path.join(context.model_dir_func(self.fmk), self.model_name + self.weight_suffix)
         else:
             self.weight_file = ""
         input_name = self.model_name + self.input_suffix
         output_name = self.model_name + self.output_suffix
-        self.input_file = os.path.join(context.input_dir, input_name)
-        self.output_file = os.path.join(context.output_dir, output_name)
+        self.input_file = os.path.join(context.input_dir_func(self.fmk), input_name)
+        self.output_file = os.path.join(context.output_dir_func(self.fmk), output_name)
 
     def convert_cmd(self, input_shapes="", output_name=""):
         context = Context.instance()
@@ -128,8 +128,7 @@ class ModelInfo:
             self.converted_model_file += "_graph"  # when FuncGraph split-export
         args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}.mindir",
                 f"--inDataFile={input_bin_str}", f"--benchmarkDataFile={self.output_file}",
-                f"--inputShapes={input_shapes}", f"--accuracyThreshold={acc_threshold}", f"--provider=mindrt",
-                f"--device=CPU"]
+                f"--inputShapes={input_shapes}", f"--accuracyThreshold={acc_threshold}", "--device=CPU"]
         return context.benchmark_file, args
 
     def benchmark_performance_cmd(self, input_shapes="", warmup_loop=3, loop=10, num_threads=2):
@@ -140,5 +139,5 @@ class ModelInfo:
             self.converted_model_file += "_graph"  # when FuncGraph split-export
         args = [f"--enableParallelPredict=false", f"--modelFile={self.converted_model_file}.mindir",
                 f"--inputShapes={input_shapes}", f"--warmUpLoopCount={warmup_loop}", f"--loopCount={loop}",
-                f"--numThreads={num_threads}", f"--provider=mindrt", f"--device=CPU"]
+                f"--numThreads={num_threads}", f"--device=CPU"]
         return context.benchmark_file, args

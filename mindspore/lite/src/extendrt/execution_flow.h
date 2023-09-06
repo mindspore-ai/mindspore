@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "infer/execution_flow.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::infer {
 class ExecutionFlow : public abstract::ExecutionFlow {
@@ -53,7 +54,7 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
 
-  InferKernel *ConstructFusionKernel() override;
+  kernel::SubGraphKernel *ConstructFusionKernel() override;
 
   std::vector<InferTensor *> GetTensors() { return tensors_; }
 

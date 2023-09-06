@@ -112,11 +112,11 @@ class Context:
         self.data_dir = ""
         self.work_dir = ""
         self.model_subdir = "model"
-        self.model_dir = "model"
+        self.model_dir_func = None
         self.input_subdir = "input"
-        self.input_dir = "input"
+        self.input_dir_func = None
         self.output_subdir = "output"
-        self.output_dir = "output"
+        self.output_dir_func = None
         self.package_path = ""
         self.config_file = ""
         self.mode: TestMode = TestMode()
@@ -133,11 +133,11 @@ class Context:
         self.log_level: LogLevel = LogLevel.summary
         self.exit_on_failed = True
 
-        self.fmk = Fmk.mindir
+        self.fmk_filter = []
 
         self.arg_parser = argparse.ArgumentParser(description='Test config.')
-        self.arg_parser.add_argument('-f', "--fmk", type=str, required=True, help="framework of model",
-                                     choices=['mindir', 'tf', 'tflite', 'onnx', 'caffe'])
+        self.arg_parser.add_argument('-f', "--fmk", type=str, default="all", help="framework of model",
+                                     choices=['mindir', 'tf', 'tflite', 'onnx', 'caffe', 'all'])
         self.arg_parser.add_argument('-d', "--data_dir", type=str, default="",
                                      help="path to model, input and output, for example: data_dir/onnx/model, "
                                           "data_dir/caffe/input")
@@ -161,12 +161,12 @@ class Context:
 
     def __str__(self):
         return "*" * 10 + "MindSpore Lite Test Context:" + "*" * 10 + "\r\n" + \
-               f"fmk: {str(self.fmk)}\r\n" + \
+               f"fmk: {str(self.fmk_filter)}\r\n" + \
                f"mode: {str(self.mode)}\r\n" + \
                f"exit on failed: {str(self.exit_on_failed)}\r\n" + \
-               f"model dir: {self.model_dir}\r\n" + \
-               f"input dir: {self.input_dir}\r\n" + \
-               f"calib file dir: {self.output_dir}\r\n" + \
+               f"model dir: {self.model_dir_func('xxfmk')}\r\n" + \
+               f"input dir: {self.model_dir_func('xxfmk')}\r\n" + \
+               f"calib file dir: {self.output_dir_func('xxfmk')}\r\n" + \
                f"work dir: {self.work_dir}\r\n" + \
                f"config file: {self.config_file}\r\n" + \
                f"library path: {self.export_lib_paths.get('LD_LIBRARY_PATH')}\r\n" + \
@@ -180,23 +180,29 @@ class Context:
 
     def init(self):
         args = self.arg_parser.parse_args()
-        self.fmk = Fmk.from_str(args.fmk)
+        fmk_str = args.fmk
+        if fmk_str == 'all':
+            self.fmk_filter = [Fmk.mindir, Fmk.tf, Fmk.caffe, Fmk.onnx, Fmk.tflite]
+        else:
+            self.fmk_filter = [Fmk.from_str(fmk_str)]
         self.data_dir = os.path.join(args.data_dir)
-        self.model_dir = os.path.join(args.model_dir)
-        self.input_dir = os.path.join(args.input_dir)
-        self.output_dir = os.path.join(args.output_dir)
         self.work_dir = os.path.join(args.work_dir)
         if not self.data_dir:
-            if not self.model_dir or not self.input_dir or not self.output_dir or not self.work_dir:
-                raise ValueError(f"Please set data_dir, if not, please set model_dir({self.model_dir}), "
-                                 f"input_dir({self.input_dir}), output_dir({self.output_dir}) and "
-                                 f"work_dir({self.work_dir})")
-        if not self.model_dir:
-            self.model_dir = os.path.join(self.data_dir, str(self.fmk), self.model_subdir)
-        if not self.input_dir:
-            self.input_dir = os.path.join(self.data_dir, str(self.fmk), self.input_subdir)
-        if not self.output_dir:
-            self.output_dir = os.path.join(self.data_dir, str(self.fmk), self.output_subdir)
+            if not self.model_dir_func or not self.input_dir_func or not self.output_dir_func or not self.work_dir:
+                raise ValueError("Please set data_dir, if not, please set model_dir, input_dir, output_dir and "
+                                 "work_dir")
+        if not args.model_dir:
+            self.model_dir_func = lambda fmk: os.path.join(self.data_dir, str(fmk), self.model_subdir)
+        else:
+            self.model_dir_func = lambda fmk: os.path.join(args.model_dir)
+        if not args.input_dir:
+            self.input_dir_func = lambda fmk: os.path.join(self.data_dir, str(fmk), self.input_subdir)
+        else:
+            self.input_dir_func = lambda fmk: os.path.join(args.input_dir)
+        if not args.output_dir:
+            self.output_dir_func = lambda fmk: os.path.join(self.data_dir, str(fmk), self.output_subdir)
+        else:
+            self.output_dir_func = lambda fmk: os.path.join(args.output_dir)
         if not self.work_dir:
             self.work_dir = os.path.join(self.data_dir, "test_workspace")
         self.package_path = os.path.join(args.pkg_dir)

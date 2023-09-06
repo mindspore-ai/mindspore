@@ -174,22 +174,9 @@ TensorAdapterPtr TensorAdapter::Create(const ParameterPtr &param_node, Format fo
     return nullptr;
   }
   adapter->compress_type_ = tensor_info->compression_type();
-  auto data_size = tensor_info->Size();
-  if (data_size > 0) {
-    adapter->data_ = malloc(data_size);
-    if (adapter->data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc const tensor data failed.";
-      return nullptr;
-    }
-    auto ret = memcpy_s(adapter->data_, data_size, tensor_info->data_c(), data_size);
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
-      free(adapter->data_);
-      return nullptr;
-    }
-    adapter->data_len_ = data_size;
-    adapter->own_data_ = true;
-  }
+  adapter->data_ = tensor_info->data_c();
+  adapter->data_len_ = tensor_info->Size();
+  adapter->own_data_ = false;
   return adapter;
 }
 
@@ -217,22 +204,9 @@ TensorAdapterPtr TensorAdapter::CreateFromTensorValueNode(const ValueNodePtr &va
     MS_LOG(ERROR) << "Value of tensor-type value-node is not a Tensor, " << value_node->fullname_with_scope();
     return nullptr;
   }
-  auto data_size = data->Size();
-  if (data_size > 0) {
-    adapter->data_ = malloc(data_size);
-    if (adapter->data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc const tensor data failed.";
-      return nullptr;
-    }
-    auto ret = memcpy_s(adapter->data_, data_size, data->data_c(), data_size);
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy const tensor data failed: " << ret;
-      free(adapter->data_);
-      return nullptr;
-    }
-    adapter->data_len_ = data_size;
-    adapter->own_data_ = true;
-  }
+  adapter->data_ = data->data_c();
+  adapter->data_len_ = data->Size();
+  adapter->own_data_ = false;
   return adapter;
 }
 
