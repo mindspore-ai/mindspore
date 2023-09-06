@@ -48,6 +48,18 @@ constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  if (IsDynamicShapeGraph(func_graph)) {
+    auto nodes = TopoSort(func_graph->get_return());
+    bool all_support = true;
+    for (const auto &node : nodes) {
+      auto cnode = node->cast<CNodePtr>();
+      if (cnode != nullptr && !transform::ConvertCheck(node)) {
+        all_support = false;
+        cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>("CPU"));
+      }
+    }
+    return all_support;
+  }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
