@@ -873,7 +873,7 @@ def test_sparse_attention_parallel_mp():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
                               search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(model_parallel=8)
@@ -898,7 +898,7 @@ def test_sparse_attention_parallel_mix():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
                               search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=2, model_parallel=4)
@@ -923,7 +923,7 @@ def test_sparse_attention_parallel_mix1():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
                               search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=4, model_parallel=2)
@@ -948,7 +948,7 @@ def test_sparse_attention_parallel_dp():
     Description: Test sparse attention
     Expectation: Compile ok.
     """
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
                               search_mode="dynamic_programming")
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=8, model_parallel=1)
@@ -1100,7 +1100,7 @@ class TestCrossEntropyLoss(BasicValidator):
                  be used for each subgraph. And there should be only one Virtual dataset.
         Expectation: When there are many virtual datasets, or there are no forward operators.
         """
-        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, 
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL,
                                   search_mode="dynamic_programming")
         net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
         net = NetWithLossThreeInputs(net, config.dp_mp_config)
@@ -1208,3 +1208,25 @@ class TestCrossEntropyLoss(BasicValidator):
         model.train(1, dataset, dataset_sink_mode=False)
         self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
         self.validate_pattern_from_ir("= _redistribution_op", target_count=19, file_name="step_parallel_end")
+
+    def test_parallel_cross_entropy_loss_auto_parallel_rec_pipeline_global_rank4(self):
+        """
+        Feature: test pipeline auto parallel
+        Description: test pipeline auto parallel
+        Expectation: compile success. run success.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=4, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                  search_mode="recursive_programming", pipeline_stages=2)
+
+        dp_mp_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=2, vocab_emb_dp=False)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=dp_mp_config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, dp_mp_config.dp_mp_config)
+        net.network.pipeline_stage = 0
+        net.network.loss = 1
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net, optimizer=AdamWeightDecay(net.trainable_params()))
+        model.train(1, dataset, dataset_sink_mode=False)
