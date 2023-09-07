@@ -110,7 +110,7 @@ class Metric(metaclass=ABCMeta):
         >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.6, 0.9], [0.1, 0.2, 0.6, 0.9]]), ms.float32)
         >>> y = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]]), ms.float32)
         >>> y2 = ms.Tensor(np.array([[0.1, 0.25, 0.7, 0.9], [0.1, 0.25, 0.7, 0.9]]), ms.float32)
-        >>> metric = MyMAE()
+        >>> metric = MyMAE().set_indexes([0, 2])
         >>> metric.clear()
         >>> # indexes is [0, 2], using x as logits, y2 as label.
         >>> metric.update(x, y, y2)

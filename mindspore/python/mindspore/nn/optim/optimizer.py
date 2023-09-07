@@ -140,6 +140,57 @@ class Optimizer(Cell):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import nn
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import nn, ops, Tensor
+        >>>
+        >>> class MyMomentum(nn.Optimizer):
+        ...     def __init__(self, params, learning_rate, momentum=0.9):
+        ...         super(MyMomentum, self).__init__(learning_rate, params)
+        ...         self.moments = self.parameters.clone(prefix="moments", init="zeros")
+        ...         self.momentum = momentum
+        ...         self.opt = ops.ApplyMomentum()
+        ...
+        ...     def construct(self, gradients):
+        ...         params = self.parameters
+        ...         lr = self.get_lr()
+        ...         gradients = self.flatten_gradients(gradients)
+        ...         gradients = self.decay_weight(gradients)
+        ...         gradients = self.gradients_centralization(gradients)
+        ...         gradients = self.scale_grad(gradients)
+        ...
+        ...         success = None
+        ...         for param, mom, grad in zip(params, self.moments, gradients):
+        ...             success = self.opt(param, mom, lr, grad, self.momentum)
+        ...         return success
+        >>>
+        >>> net = nn.Dense(2, 3)
+        >>> loss_fn = nn.MAELoss()
+        >>> opt = MyMomentum(net.trainable_params(), 0.01)
+        >>>
+        >>> device_target = opt.target
+        >>> opt_unique = opt.unique
+        >>> weight_decay_value = opt.get_weight_decay()
+        >>>
+        >>> def forward_fn(data, label):
+        ...     logits = net(data)
+        ...     loss = loss_fn(logits, label)
+        ...     return loss, logits
+        >>>
+        >>> grad_fn = mindspore.value_and_grad(forward_fn, None, opt.parameters, has_aux=True)
+        >>>
+        >>> def train_step(data, label):
+        ...     (loss, _), grads = grad_fn(data, label)
+        ...     opt(grads)
+        ...     return loss
+        >>>
+        >>> data = Tensor(np.random.rand(4, 10, 2), mindspore.dtype.float32)
+        >>> label = Tensor(np.random.rand(4, 10, 3), mindspore.dtype.float32)
+        >>> train_step(data, label)
     """
     _support_parallel_optimizer = False
 
