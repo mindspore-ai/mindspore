@@ -168,7 +168,7 @@ public class Model {
         Object[] bufferArray = new Object[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
-            Object obj = this.getTensorBuffer(inputs.get(i));
+            Object obj = inputs.get(i).getData();
             if (Array.getLength(obj) == 0) {
                 return false;
             }
@@ -426,32 +426,6 @@ public class Model {
             this.inputTensors = null;
         }
         this.free(modelPtr, isModelSharePtr);
-    }
-
-    /**
-    * get buffer based on tensor dataType
-    **/
-    private Object getTensorBuffer(MSTensor tensor) {
-        int dataType = tensor.getDataType();
-        Object ret = null;
-        switch(dataType) {
-            case DataType.kNumberTypeFloat32:
-            case DataType.kNumberTypeFloat16:
-                ret = tensor.getFloatData();
-                break;
-            case DataType.kNumberTypeInt32:
-                ret = tensor.getIntData();
-                break;
-            case DataType.kNumberTypeInt64:
-                ret = tensor.getLongData();
-                break;
-            default:
-                return ret;
-        }
-        if (ret == null) {
-            return tensor.getByteData();
-        }
-        return ret;
     }
 
     private native long createModel();
