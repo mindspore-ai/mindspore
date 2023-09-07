@@ -339,7 +339,8 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
 
 // Map a morphism.
 AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
-  MS_LOG(DEBUG) << "start MapMorphism:" << morph->DebugString(4);
+  constexpr int recursive_level = 4;
+  MS_LOG(DEBUG) << "start MapMorphism:" << morph->DebugString(recursive_level);
   // MapMorphism All type except CNode should already be mapped by MapObject.
   if (!morph->isa<CNode>()) {
     return nullptr;

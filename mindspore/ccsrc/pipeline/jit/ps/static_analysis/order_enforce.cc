@@ -360,7 +360,7 @@ class OrderEnforcer {
     for (auto &user : iter->second) {
       auto &user_node = user.first;
       if (pred == nullptr || pred(user_node)) {
-        (void)users.insert(user_node);
+        users.insert(user_node);
       }
     }
     return users;

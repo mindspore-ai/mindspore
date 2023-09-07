@@ -1100,7 +1100,7 @@ def set_context(**kwargs):
             Available values are:
 
             - False or 0: disable saving of intermediate compilation graphs.
-            - 1: some intermediate files will be generated during graph compliation.
+            - 1: some intermediate files will be generated during graph compilation.
             - True or 2: Generate more ir files related to backend process.
             - 3: Generate visualization computing graphs and detailed frontend ir graphs.
 
@@ -1300,7 +1300,7 @@ def set_context(**kwargs):
                 Default: False.
               - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
                 Default: False.
-              - enable_task_opt (bool): Enable the optimizaton of the number of tasks for each communication if True.
+              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
               - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
@@ -1448,7 +1448,7 @@ def set_context(**kwargs):
                 value = 0
             if value > 3:
                 raise ValueError(f"value for save_graphs should be 0-3 but got '{value}'")
-        if key == 'jit_syntax_level' and value != STRICT and value != COMPATIBLE and value != LAX:
+        if key == 'jit_syntax_level' and value not in (STRICT, COMPATIBLE, LAX):
             raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
                              f" or context.LAX, but got {value}.")
         if not _check_target_specific_cfgs(device, key):
