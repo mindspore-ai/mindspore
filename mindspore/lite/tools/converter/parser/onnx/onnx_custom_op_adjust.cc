@@ -81,7 +81,7 @@ STATUS AdjustRot90(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool *
     MS_LOG(ERROR) << "Cast Rot90 failed!";
     return false;
   }
-  auto axis_value = primitive_c->GetAttr(ops::kDims);
+  auto axis_value = primitive_c->GetAttr(ops::kAxis);
   MS_CHECK_TRUE_RET(axis_value != nullptr, -1);
   reversev2_op->set_axis(GetValue<std::vector<int64_t>>(axis_value));
   auto reversev2_cnode = NewCNode(cnode, reversev2_op->GetPrim(), {inputs[1]}, cnode->abstract()->Clone(),
