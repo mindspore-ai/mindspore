@@ -334,18 +334,21 @@ bool ParseAction(const ResourcePtr &resource) {
   parse::Parser::InitParserEnvironment(input);
   parse::Parser::EnableDeferResolve(false);
   py::module path = py::module::import("os.path");
-  std::string dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
+  auto dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
 
   python_adapter::set_python_env_flag(true);
   python_adapter::SetPythonPath(dir);
 
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(input, &converted_ret, true);
-  if (!converted) {
+  ValuePtrList args_value_list;
+  (void)std::transform(resource->args_abs().begin(), resource->args_abs().end(), std::back_inserter(args_value_list),
+                       [](const AbstractBasePtr &abs) { return abs->BuildValue(); });
+  parse::DataConverter data_converter(args_value_list, true);
+  auto converted_ret = data_converter.ConvertData(input);
+  if (converted_ret == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
   }
 
-  FuncGraphPtr top_graph = converted_ret->cast<FuncGraphPtr>();
+  auto top_graph = converted_ret->cast<FuncGraphPtr>();
   if (top_graph == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
   }

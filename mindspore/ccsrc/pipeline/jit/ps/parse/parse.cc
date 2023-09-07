@@ -45,7 +45,8 @@
 
 namespace mindspore {
 namespace parse {
-FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method) {
+FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method,
+                             const ValuePtrList &args_value_list) {
   (void)python_adapter::set_python_scoped();
   py::gil_scoped_acquire gil;
 
@@ -63,7 +64,7 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     return nullptr;
   }
 
-  auto parser = std::make_shared<Parser>(ast);
+  auto parser = std::make_shared<Parser>(ast, args_value_list);
 
   FuncGraphPtr func_graph = parser->ParseFuncGraph();
   if (func_graph == nullptr) {
@@ -76,7 +77,10 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
 
 FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
 
-Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast) : ast_(ast), errcode_(PARSE_SUCCESS) { BuildMethodMap(); }
+Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast, ValuePtrList args_value_list)
+    : ast_(ast), errcode_(PARSE_SUCCESS), args_value_list_(std::move(args_value_list)) {
+  BuildMethodMap();
+}
 
 void Parser::BuildMethodMap() {
   stmt_method_map_["Return"] = &Parser::ParseReturn;
@@ -1514,6 +1518,19 @@ bool Parser::CompareLessEqual(const FunctionBlockPtr &block, const py::object &l
   return true;
 }
 
+ValuePtr Parser::GetParameterValue(const AnfNodePtr &parameter) const {
+  if (args_value_list_.empty()) {
+    return nullptr;
+  }
+  const auto &parameters = func_graph_->parameters();
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    if (parameters.at(i) == parameter && i < args_value_list_.size()) {
+      return args_value_list_[i];
+    }
+  }
+  return nullptr;
+}
+
 bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const {
   MS_EXCEPTION_IF_NULL(bool_res);
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
@@ -1549,12 +1566,24 @@ bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::ob
     if (!py::isinstance<py::str>(id)) {
       return false;
     }
-    auto v_node = block->ReadVariable(id.cast<std::string>());
-    if (v_node == nullptr || !v_node->isa<ValueNode>()) {
+
+    auto anf_node = block->ReadVariable(id.cast<std::string>());
+    if (anf_node == nullptr) {
       return false;
     }
-    MS_LOG(DEBUG) << "left value node: " << v_node->DebugString();
-    left_obj = ValueToPyData(v_node->cast_ptr<ValueNode>()->value());
+    if (anf_node->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << "left value node: " << anf_node->DebugString();
+      left_obj = ValueToPyData(anf_node->cast_ptr<ValueNode>()->value());
+    } else if (anf_node->isa<Parameter>()) {
+      MS_LOG(DEBUG) << "left parameter node: " << anf_node->DebugString();
+      auto value = GetParameterValue(anf_node);
+      if (value == nullptr || value == kValueAny) {
+        return false;
+      }
+      left_obj = ValueToPyData(value);
+    } else {
+      return false;
+    }
   }
   MS_LOG(DEBUG) << "left_obj: " << py::str(left_obj);
 
@@ -2527,11 +2556,26 @@ bool Parser::CheckNameConstantCond(const FunctionBlockPtr &block, const py::obje
   if (!py::isinstance<py::str>(id)) {
     return false;
   }
-  auto v_node = dyn_cast<ValueNode>(block->ReadVariable(id.cast<std::string>()));
-  if (v_node == nullptr || v_node->value() == nullptr || !v_node->value()->isa<BoolImm>()) {
+  auto anf_node = block->ReadVariable(id.cast<std::string>());
+  if (anf_node == nullptr) {
     return false;
   }
-  *is_true_cond = GetValue<bool>(v_node->value());
+  MS_LOG(DEBUG) << "CheckNameConstantCond anf_node: " << anf_node->DebugString();
+  ValuePtr value = nullptr;
+  if (anf_node->isa<ValueNode>()) {
+    value = anf_node->cast<ValueNodePtr>()->value();
+  } else if (anf_node->isa<Parameter>()) {
+    value = GetParameterValue(anf_node);
+    if (value == nullptr || value == kValueAny) {
+      return false;
+    }
+    MS_LOG(DEBUG) << "Found constant value: " << value->ToString() << " for anf_node: " << anf_node;
+  }
+  if (value == nullptr || !value->isa<BoolImm>()) {
+    return false;
+  }
+  MS_LOG(DEBUG) << "CheckNameConstantCond value: " << value->ToString();
+  *is_true_cond = GetValue<bool>(value);
   return true;
 }
 

@@ -21,6 +21,7 @@
 
 #include <deque>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 #include "utils/ordered_map.h"
@@ -58,6 +59,25 @@ ValuePtr PyDataToStubNode(const py::object &obj);
 void SetFuncGraphByCellObj(const FuncGraphPtr &func_graph, const py::object &obj);
 void ClearObjectCache();
 }  // namespace data_converter
+
+class DataConverter {
+ public:
+  DataConverter(ValuePtrList args_value_list, bool use_signature)
+      : args_value_list_(std::move(args_value_list)),
+        use_signature_(use_signature),
+        dtype_(nullptr),
+        forbid_reuse_(false) {}
+
+  virtual ~DataConverter() = default;
+
+  ValuePtr ConvertData(const py::object &obj);
+
+ private:
+  ValuePtrList args_value_list_;
+  bool use_signature_;
+  TypePtr dtype_;
+  bool forbid_reuse_;
+};
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj);
 }  // namespace parse
