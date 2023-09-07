@@ -476,6 +476,7 @@ constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 constexpr const char kNameIm2Col[] = "Im2Col";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
+constexpr const char kNameMoeFFN[] = "MoeFFN";
 
 class OpAdapterDesc;
 

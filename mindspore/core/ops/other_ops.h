@@ -101,6 +101,9 @@ GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatus, std::make_shared<Primitive>("NP
 GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatusV2, std::make_shared<Primitive>("NPUGetFloatStatusV2"));
 GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatusV2, std::make_shared<Primitive>("NPUClearFloatStatusV2"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
+
+// Fusion Inference OP
+GVAR_DEF(PrimitivePtr, kPrimMoeFFN, std::make_shared<Primitive>("MoeFFN"));
 }  // namespace prim
 }  // namespace mindspore
 

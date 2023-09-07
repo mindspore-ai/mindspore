@@ -2727,3 +2727,65 @@ class CopyWithSlice(Primitive):
     def __init__(self):
         self.add_prim_attr('side_effect_mem', True)
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])
+
+
+class MoeFFN(Primitive):
+    r"""
+    The MoeFFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
+
+    Args:
+        activation (string): The activation type, set to 'fastgelu' or 'gelu'.
+        Only support 'fastgelu' for now. Default: "fastgelu".
+
+    Inputs:
+        - **x** (Tensor) - The input tensor with data type of int8, float16.
+          Input tensor of shape :math:`(batch\_size * seq\_length, hidden\_size)`.
+        - **expert_tokens** (Tensor]) - The expert tokens tensor with data type of int64.
+          Expert tokens tensor of shape :math:`(16,)`. For example, `(2, 1, 0, .., 9)`
+          indicate that the 0th expert deals with 2 tokens, the 1th expert deals with 1 tokens,
+          the 2th expert do noting and so on.
+        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
+          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
+        - **bias1** (Tensor) - The bias1 tensor with data type of float16.
+          Bias1 tensor of shape :math:`(expert\_num, ffn\_hidden\_size)`.
+        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
+          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
+        - **bias2** (Tensor) - The bias2 tensor with data type of float16.
+          Bias2 tensor of shape :math:`(expert\_num, hidden\_size)`.
+        - **scale** (Tensor) - The scale tensor with data type of float16. Not enable now.
+        - **offset** (Tensor) - The offset tensor with data type of float16. Not enable now.
+        - **deq_scale1** (Tensor) - The deq_scale1 tensor with data type of float16. Not enable now.
+        - **deq_scale2** (Tensor) - The deq_scale2 tensor with data type of float16. Not enable now.
+
+    Outputs:
+        Tensor of shape :math:`(batch\_size * seq\_length, hidden\_size)`. With data type of float16.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> b = 4
+        >>> s = 128
+        >>> h = 1024
+        >>> h_f = 4 * h
+        >>> e = 16
+        >>> x = Tensor(np.random.randn(b * s, h).astype(np.float16))
+        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
+        >>> w1 = Tensor(np.random.randn(e, h, h_f).astype(np.float16))
+        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
+        >>> w2 = Tensor(np.random.randn(e, h_f, h).astype(np.float16))
+        >>> bias2 = Tensor(np.random.randn(e, h).astype(np.float16))
+        >>> moe_ffn = _inner_ops.MoeFFN("fastgelu")
+        >>> output = moe_ffn(x, w1, bias1, w2, bias2)
+        >>> print(output)
+    """
+
+    @prim_attr_register
+    def __init__(self, activation):
+        """Initialize MoeFFN."""
+        self.init_prim_io_names(inputs=["x", "expert_tokens", "weight1", "bias1",
+                                        "weight2", "bias2", "scale", "offset", "deq_scale1"
+                                        "deq_scale2"],
+                                outputs=["y"])
+        self.activation = activation
