@@ -22,6 +22,8 @@ import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.DataType;
 
 import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
+import java.nio.FloatBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -120,6 +122,38 @@ public class MSTensor {
     }
 
     /**
+     * Get output data of MSTensor, data type is the same as the type data is set.
+     *
+     * @return The byte array containing all MSTensor output data.
+     */
+    public Object getData() {
+        Object ret = null;
+        if (this.buffer != null) {
+            return this.buffer;
+        } else {
+            int dataType = this.getDataType();
+            switch(dataType) {
+                case DataType.kNumberTypeFloat32:
+                    ret = this.getFloatData(this.tensorPtr);
+                    break;
+                case DataType.kNumberTypeFloat16:
+                    ret = this.getFloat16Data(this.tensorPtr);
+                    break;
+                case DataType.kNumberTypeInt32:
+                    ret = this.getIntData(this.tensorPtr);
+                    break;
+                case DataType.kNumberTypeInt64:
+                    ret = this.getLongData(this.tensorPtr);
+                    break;
+                default:
+                    LOGGER.warning("Do not support data type: " + dataType + ", would return byte[] data");
+                    ret = this.getByteData(this.tensorPtr);
+            }
+        }
+        return ret;
+    }
+
+    /**
      * Get output data of MSTensor, the data type is byte.
      *
      * @return The byte array containing all MSTensor output data.
@@ -131,7 +165,8 @@ public class MSTensor {
         if (this.buffer instanceof byte[]) {
             return (byte[]) this.buffer;
         }
-        return null;
+        byte[] ret = new byte[0];
+        return ret;
     }
 
     /**
@@ -149,7 +184,16 @@ public class MSTensor {
         if (this.buffer instanceof float[]) {
             return (float[]) this.buffer;
         }
-        return null;
+        int dataType = this.getDataType();
+        float[] floatArray = new float[0];
+        if (this.buffer instanceof byte[]
+            && (dataType == DataType.kNumberTypeFloat16 || dataType == DataType.kNumberTypeFloat32)) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap((byte[]) this.buffer);
+            FloatBuffer floatBuffer = byteBuffer.asFloatBuffer();
+            floatArray = new float[floatBuffer.remaining()];
+            floatBuffer.get(floatArray);
+        }
+        return floatArray;
     }
 
     /**
@@ -164,7 +208,17 @@ public class MSTensor {
         if (this.buffer instanceof int[]) {
             return (int[]) this.buffer;
         }
-        return null;
+        int dataType = this.getDataType();
+        int[] intArray = new int[0];
+        if (this.buffer instanceof byte[]
+            && (dataType == DataType.kNumberTypeInt32)) {
+            byte[] byteArray = (byte[]) this.buffer;
+            intArray = new int[byteArray.length];
+            for (int i = 0; i < byteArray.length; i++) {
+                intArray[i] = byteArray[i] & 0xff;
+            }
+        }
+        return intArray;
     }
 
     /**
@@ -179,7 +233,16 @@ public class MSTensor {
         if (this.buffer instanceof long[]) {
             return (long[]) this.buffer;
         }
-        return null;
+        int dataType = this.getDataType();
+        long[] longArray = new long[0];
+        if (this.buffer instanceof byte[]
+            && (dataType == DataType.kNumberTypeFloat16 || dataType == DataType.kNumberTypeFloat32)) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap((byte[]) this.buffer);
+            LongBuffer longBuffer = byteBuffer.asLongBuffer();
+            longArray = new long[longBuffer.remaining()];
+            longBuffer.get(longArray);
+        }
+        return longArray;
     }
 
     /**
