@@ -149,6 +149,7 @@ Serialization
     mindspore.load
     mindspore.load_checkpoint
     mindspore.load_distributed_checkpoint
+    mindspore.load_mindir
     mindspore.load_param_into_net
     mindspore.merge_pipeline_strategys
     mindspore.merge_sliced_parameter
@@ -157,6 +158,7 @@ Serialization
     mindspore.rank_list_for_transform
     mindspore.restore_group_info_list
     mindspore.save_checkpoint
+    mindspore.save_mindir
     mindspore.transform_checkpoint_by_rank
     mindspore.transform_checkpoints
 
