@@ -36,7 +36,7 @@ class Matcher {
   Matcher() {}
   virtual ~Matcher() = default;
 
-  virtual bool Match(const MetaFuncGraphPtr &meta_fg_ptr) const = 0;
+  virtual bool Match(const ValuePtr &meta_fg_ptr) const = 0;
   virtual bool Match(const AnfNodePtr &node) const = 0;
 };
 using MatcherPtr = std::shared_ptr<Matcher>;
@@ -48,7 +48,7 @@ class MetaFgMatcher : public Matcher {
   MetaFgMatcher() {}
   ~MetaFgMatcher() override = default;
 
-  bool Match(const MetaFuncGraphPtr &meta_fg_ptr) const override { return meta_fg_ptr->isa<T>(); }
+  bool Match(const ValuePtr &meta_fg_ptr) const override { return meta_fg_ptr->isa<T>(); }
 
   bool Match(const AnfNodePtr &node) const override {
     if (node == nullptr) {
@@ -58,11 +58,7 @@ class MetaFgMatcher : public Matcher {
     if (value == nullptr) {
       return false;
     }
-    auto meta_func_graph_ptr = value->cast<MetaFuncGraphPtr>();
-    if (meta_func_graph_ptr == nullptr) {
-      return false;
-    }
-    return meta_func_graph_ptr->isa<T>();
+    return value->isa<T>();
   }
 };
 

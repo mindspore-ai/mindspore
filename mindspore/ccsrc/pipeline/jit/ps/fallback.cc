@@ -1041,6 +1041,7 @@ std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node,
   MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
 }
 
+namespace {
 bool HasVariableCondition(const FuncGraphPtr &cur_graph, std::vector<FuncGraphPtr> *prev_graph) {
   if (cur_graph == nullptr) {
     return false;
@@ -1064,6 +1065,12 @@ bool HasVariableCondition(const FuncGraphPtr &cur_graph, std::vector<FuncGraphPt
     return true;
   }
   return false;
+}
+}  // namespace
+
+bool HasVariableCondition(const FuncGraphPtr &cur_graph) {
+  std::vector<FuncGraphPtr> prev_graph;
+  return HasVariableCondition(cur_graph, &prev_graph);
 }
 }  // namespace raiseutils
 }  // namespace mindspore

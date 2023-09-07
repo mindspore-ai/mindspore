@@ -536,6 +536,14 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   return (value == nullptr) || ((prim->Hash() == value->Hash()) && (prim->name() == value->name()));
 }
 
+bool IsPrimitiveCNodeWithoutDoSignature(const AnfNodePtr &node, const PrimitivePtr &value) {
+  auto prim = GetCNodePrimitiveWithoutDoSignature(node);
+  if (prim == nullptr) {
+    return false;
+  }
+  return (value == nullptr) || ((prim->Hash() == value->Hash()) && (prim->name() == value->name()));
+}
+
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
   auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr || cnode->size() == 0) {

@@ -34,20 +34,6 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   return abs_base;
 }
 
-void SetVariableFlag(const AbstractBasePtr &abs) {
-  if (abs->isa<abstract::AbstractFunction>()) {
-    const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
-    MS_EXCEPTION_IF_NULL(func_abs);
-    auto closure_abs = func_abs->cast<abstract::FuncGraphAbstractClosurePtr>();
-    if (closure_abs) {
-      auto func = closure_abs->func_graph();
-      MS_EXCEPTION_IF_NULL(func);
-      func->set_is_tensor_condition_branch(true);
-      MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
-    }
-  }
-}
-
 void CheckTensorCondValid(const AbstractBasePtr &cond) {
   // Tensor condition must be one element or dynamic shape.
   auto base_shape = cond->BuildShape();

@@ -201,7 +201,8 @@ FuncGraphPtr GetFuncGraphFromPartialAbstract(const abstract::AbstractBasePtr &ab
   if (func_graph_abstract != nullptr) {
     MS_EXCEPTION_IF_NULL(func_graph_abstract);
     if (!func_graph_abstract->specialized()) {
-      MS_LOG(ERROR) << "Unspecialized func graph, " << abs->ToString();
+      MS_LOG(DEBUG) << "Unspecialized func graph, partial abs: " << abs->ToString()
+                    << ", partial fn abs: " << func_graph_abstract->ToString();
       return nullptr;
     }
     return func_graph_abstract->func_graph();

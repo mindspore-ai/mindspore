@@ -45,11 +45,29 @@ class ExpandVmapPrim : public ExpandMetaFgPrim {
   bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const override;
 
  private:
+  using VisitedHashSetPair = std::pair<mindspore::HashSet<FuncGraphPtr>, mindspore::HashSet<AnfNodePtr>>;
+  void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
+                           VisitedHashSetPair *visited_pair, int axis_size);
+  void ExpandVmapFreeVariable(const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
+                              const mindspore::HashSet<AnfNodePtr> &visited_node);
+  void ExpandVmapPartialInputs(const FuncGraphPtr &vmap_fg, const FuncGraphManagerPtr &manager,
+                               const mindspore::HashSet<AnfNodePtr> &visited_node);
+  FuncGraphPtr ExpandVmapFuncGraph(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
+                                   int axis_size, VisitedHashSetPair *visited_pair);
+  // Entry to perform Vmap transformation.
+  AnfNodePtr ExpandVmap(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource, int axis_size);
+  AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const AnfNodePtrList &partial_inputs, const ValuePtr &in_axes,
+                        size_t *u_monad_offset, size_t *io_monad_offset);
   AnfNodePtr PostProcessVmap(const AnfNodePtr &expanded_vmap_node, const AnfNodePtrList &partial_inputs,
                              const std::vector<size_t> &orig_fg_param_info, const ValuePtr &out_axes, int axis_size);
+
+  FuncGraphPtr top_func_graph_{nullptr};
   // Record the stacked parameters, and the corresponding origin parameters from each cell, preserved
   // for future feedback.
   ParamMappingVector param_mapping_table_;
+  mindspore::HashMap<std::string, ParameterPtr> stacked_params_;
+  // The pre-lifted parameters in partial inputs.
+  AnfNodePtrList partial_inputs_;
 };
 using ExpandVmapPrimPtr = std::shared_ptr<ExpandVmapPrim>;
 }  // namespace irpass

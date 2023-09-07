@@ -394,20 +394,6 @@ void CheckTensorCondValid(const AbstractBasePtr &cond) {
     }
   }
 }
-
-void SetVariableFlag(const AbstractBasePtr &abs) {
-  if (abs->isa<abstract::AbstractFunction>()) {
-    const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
-    MS_EXCEPTION_IF_NULL(func_abs);
-    auto closure_abs = func_abs->cast<abstract::FuncGraphAbstractClosurePtr>();
-    if (closure_abs) {
-      auto func = closure_abs->func_graph();
-      MS_EXCEPTION_IF_NULL(func);
-      func->set_is_tensor_condition_branch(true);
-      MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
-    }
-  }
-}
 }  // namespace
 
 EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -3151,8 +3137,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(cnode);
 
     // Return Any directly if meet variable condition or content.
-    std::vector<FuncGraphPtr> prev_graph;
-    bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph, &prev_graph);
+    bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
     auto &inputs = cnode->inputs();
     bool has_variable = false;
     size_t index_begin = 2;
