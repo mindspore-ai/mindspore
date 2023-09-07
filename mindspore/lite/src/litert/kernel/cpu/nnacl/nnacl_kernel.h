@@ -35,7 +35,6 @@ class NNACLKernel : public kernel::LiteKernel {
   int ReSize() override;
   int Run() override;
 
- public:
   /* Execute after NNACLKernel creation
    * Create KernelBase */
   int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);

@@ -91,8 +91,8 @@ int DoFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
   for (const auto &subgraph : *subgraph_list) {
     FormatOptimizePtr optimize = std::make_shared<FormatOptimize>();
 
-    optimize->AddPass(std::make_shared<InsertTranspose>(graph_format, create_format_transpose_func));
-    optimize->AddPass(std::make_shared<EliminateTranspose>(graph_format, create_format_transpose_func));
+    (void)optimize->AddPass(std::make_shared<InsertTranspose>(graph_format, create_format_transpose_func));
+    (void)optimize->AddPass(std::make_shared<EliminateTranspose>(graph_format, create_format_transpose_func));
 
     auto graph = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     auto ret = optimize->RunPass(graph, tensors);

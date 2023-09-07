@@ -345,6 +345,10 @@ KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
     kernel = CreateGroupConvolution(conv_param, data_type);
   }
 
+  if (kernel == NULL) {
+    return NULL;
+  }
+
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)kernel;
   (void)ConvBaseUpdateParamInfo(&conv->compute_, conv_param);
 
