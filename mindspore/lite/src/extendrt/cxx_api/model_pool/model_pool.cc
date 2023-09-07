@@ -1160,7 +1160,7 @@ ModelPool::~ModelPool() {
     auto model_workers = item.second;
     for (auto &model_worker : model_workers) {
       while (!model_worker->ModelIsNull()) {
-        MS_LOG(INFO) << "wait model of model worker destroy";
+        MS_LOG(DEBUG) << "wait model of model worker destroy";
         std::this_thread::yield();
       }
     }
