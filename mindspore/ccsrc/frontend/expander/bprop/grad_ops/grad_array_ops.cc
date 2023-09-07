@@ -1289,13 +1289,26 @@ REG_BPROP_BUILDER("NormalizeDimIndex").SetUnusedInputs({i0, i1, i2}).SetBody(BOD
   return {ib->ZerosLike(data)};
 });
 
-REG_BPROP_BUILDER("SliceToIndices").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
-  auto data_shape = ib->GetInput(kIndex0);
-  auto start = ib->GetInput(kIndex1);
-  auto stop = ib->GetInput(kIndex2);
-  auto step = ib->GetInput(kIndex3);
-  return {ib->ZerosLike(data_shape), ib->ZerosLike(start), ib->ZerosLike(stop), ib->ZerosLike(step)};
+REG_BPROP_BUILDER("NormalizeTupleIndex").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("GetSqueezeSliceShape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto data = ib->GetInput(kIndex0);
+  return {ib->ZerosLike(data)};
 });
+
+REG_BPROP_BUILDER("EllipsisToSlice").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("RemakeTupleIndex")
+  .SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10})
+  .SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("GetTupleIndexInfo")
+  .SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10})
+  .SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("RemoveExpandedDims").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("SliceToIndices").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Fills").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
