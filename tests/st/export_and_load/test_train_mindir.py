@@ -112,9 +112,10 @@ def decrypt_func(cipher_file, key):
     return plain_data
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_export_lenet_grad_mindir():
     """
@@ -122,7 +123,7 @@ def test_export_lenet_grad_mindir():
     Description: Test export API to export network into MindIR
     Expectation: export successfully
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     network = LeNet5()
     network.set_train()
     predict = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
@@ -133,9 +134,12 @@ def test_export_lenet_grad_mindir():
     assert os.path.exists(verify_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_load_mindir_and_run():
     """
@@ -143,7 +147,7 @@ def test_load_mindir_and_run():
     Description: Test load API to load network into MindIR
     Expectation: load successfully
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     network = LeNet5()
     network.set_train()
 
