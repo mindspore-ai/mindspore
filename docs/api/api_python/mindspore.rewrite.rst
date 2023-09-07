@@ -41,7 +41,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
             - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ScopedValue类型。
 
-    .. py:method:: create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None):
+    .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None)
         :staticmethod:
 
         通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
