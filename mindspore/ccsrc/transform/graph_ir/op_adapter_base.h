@@ -209,6 +209,8 @@ enum AttrType {
 struct GeEnum {};
 struct TFType {};
 struct GEType {};
+struct GEDataFormat {};
+struct GEPadMod {};
 
 // declare Any type
 template <typename T>

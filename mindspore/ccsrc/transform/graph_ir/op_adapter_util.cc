@@ -170,6 +170,40 @@ std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<st
   return data;
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>) {
+  MS_EXCEPTION_IF_NULL(value);
+  int64_t format_id = -1;
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  } else if (value->isa<Int32Imm>()) {
+    format_id = static_cast<int64_t>(GetValue<int32_t>(value));
+  } else if (value->isa<UInt32Imm>()) {
+    format_id = static_cast<int64_t>(GetValue<uint32_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    format_id = static_cast<int64_t>(GetValue<int64_t>(value));
+  } else if (value->isa<UInt64Imm>()) {
+    format_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  }
+  return CheckAndConvertUtils::GetFormatStringVal(format_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>) {
+  MS_EXCEPTION_IF_NULL(value);
+  int64_t pad_id = -1;
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  } else if (value->isa<Int32Imm>()) {
+    pad_id = static_cast<int64_t>(GetValue<int32_t>(value));
+  } else if (value->isa<UInt32Imm>()) {
+    pad_id = static_cast<int64_t>(GetValue<uint32_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    pad_id = static_cast<int64_t>(GetValue<int64_t>(value));
+  } else if (value->isa<UInt64Imm>()) {
+    pad_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  }
+  return CheckAndConvertUtils::GetPadModStringVal(pad_id, true);
+}
+
 template <typename T1, typename T2>
 GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
   const auto &vec_item =

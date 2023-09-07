@@ -420,6 +420,16 @@ class OpAdapter : public BaseOpAdapter {
     return GetValue<S>(value);
   }
 
+  template <typename S>
+  static std::vector<S> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<S>> &, size_t size,
+                                   S default_val) {
+    auto v = GetValue<std::vector<S>>(value);
+    if (v.size() < size) {
+      v.insert(v.begin(), size - v.size(), default_val);
+    }
+    return v;
+  }
+
   // specialization for reverse bool
   static bool ConvertAny(const ValuePtr &value, const AnyTraits<bool> &, bool reverse) {
     return reverse != GetValue<bool>(value);
@@ -598,6 +608,14 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::vector<GeDataType> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<GEType>> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEDataFormat> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEPadMod> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
