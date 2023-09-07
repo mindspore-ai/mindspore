@@ -26,7 +26,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/fft_with_size.h"
+#include "ops/gen_enum_def.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fft_with_size_impl.cuh"
@@ -41,8 +41,10 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   ~FFTWithSizeGpuKernelMod() override { ResetResource(); };
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
-
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (!FFTVarietyInResize(inputs, outputs)) {
+      return RET_FAILED;
+    }
     return resize_func_(this, inputs, outputs);
   }
 
@@ -54,6 +56,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool FFTVarietyInResize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void ResetResource() noexcept;
   bool MakeCufftPlan(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   int ResizeBase(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
@@ -86,7 +89,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   int64_t rank_{1};
   bool is_inverse_{false};  // 0: forward, 1: inverse
   bool is_real_{false};
-  std::string norm_type_{"backward"};  // forward, backward, ortho
+  ops::NormMode norm_type_{ops::NormMode::BACKWARD};  // forward, backward, ortho
   // is_onesided controls whether frequency is halved when signal is real, which means is_real_ is true.
   // The default value is true. cufft does not support full freq with real signal. We use cast as a temporary solution.
   bool is_onesided_{true};
@@ -102,6 +105,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> y_shape_;
   int x_elements_{0};
   int y_elements_{0};
+  int fit_index_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

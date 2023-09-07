@@ -18,13 +18,13 @@
 #include <cmath>
 #include <utility>
 #include <algorithm>
+#include "ops/op_utils.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr int RANK_MIN = 1;
 constexpr int RANK_MAX = 3;
-constexpr int N_INPUTS = 1;
-constexpr int N_OUTPUTS = 1;
 constexpr int K_HALF = 2;
 
 #ifndef CHECK_CUBLAS_RET_WITH_ERROR_RET_FALSE
@@ -55,21 +55,21 @@ enum class FFTNormMode {
   by_root_n,  // same as above, but sqrt the product
 };
 
-FFTNormMode GetNormModeFromString(const std::string &norm_type, const bool is_inverse) {
-  if (norm_type == "forward") {
+FFTNormMode GetNormModeFromString(const ops::NormMode &norm_type, const bool is_inverse) {
+  if (norm_type == ops::NormMode::FORWARD) {
     return is_inverse ? FFTNormMode::none : FFTNormMode::by_n;
   }
-  if (norm_type == "backward") {
+  if (norm_type == ops::NormMode::BACKWARD) {
     return is_inverse ? FFTNormMode::by_n : FFTNormMode::none;
   }
-  if (norm_type == "ortho") {
+  if (norm_type == ops::NormMode::ORTHO) {
     return FFTNormMode::by_root_n;
   }
   MS_LOG(ERROR) << "For 'FFTWithSize', the fft norm type " << norm_type << " is unsupported!";
   return FFTNormMode::none;
 }
 
-double GetNormScale(const std::string &norm_type, const bool is_inverse, const int n) {
+double GetNormScale(const ops::NormMode &norm_type, const bool is_inverse, const int n) {
   FFTNormMode norm_mode = GetNormModeFromString(norm_type, is_inverse);
   if (norm_mode == FFTNormMode::none) {
     return 1.0;
@@ -98,23 +98,30 @@ FFTVariety GetFFTVariety(const bool &is_inverse, const bool &is_real) {
 
 bool FFTWithSizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
-  // Get attribute
-  rank_ = GetValue<int64_t>(primitive_->GetAttr("signal_ndim"));
-  is_inverse_ = GetValue<bool>(primitive_->GetAttr("inverse"));
-  is_real_ = GetValue<bool>(primitive_->GetAttr("real"));
-  norm_type_ = GetValue<std::string>(primitive_->GetAttr("norm"));
-  is_onesided_ = GetValue<bool>(primitive_->GetAttr("onesided"));
-  fft_variety_ = GetFFTVariety(is_inverse_, is_real_);
-
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
+  fit_index_ = index;
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
+  return true;
+}
+
+bool FFTWithSizeGpuKernelMod::FFTVarietyInResize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  rank_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  is_inverse_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  is_real_ = inputs[kIndex3]->GetValueWithCheck<bool>();
+  norm_type_ = static_cast<ops::NormMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+  is_onesided_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto index = fit_index_;
+  fft_variety_ = GetFFTVariety(is_inverse_, is_real_);
+
   switch (fft_variety_) {
     case FFTVariety::fft:
       resize_func_ = &FFTWithSizeGpuKernelMod::ResizeFFT;
@@ -172,8 +179,6 @@ bool FFTWithSizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
       return false;
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  data_type_bytes_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   return true;
 }
 
@@ -191,7 +196,6 @@ void FFTWithSizeGpuKernelMod::ResetResource() noexcept {
   y_elements_ = 0;
   x_shape_.clear();
   y_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -241,8 +245,6 @@ bool FFTWithSizeGpuKernelMod::MakeCufftPlan(const std::vector<KernelTensor *> &i
 int FFTWithSizeGpuKernelMod::ResizeBase(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
   int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -475,14 +477,25 @@ bool FFTWithSizeGpuKernelMod::LaunchIRFFT(const std::vector<KernelTensor *> &inp
   return true;
 }
 
+#define FFT_GPU_REG(MS_I, MS_O)                                           \
+  KernelAttr()                                                            \
+    .AddInputAttr(MS_I)                                /* x */            \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* signal_ndim */  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* inverse */      \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* real */         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* norm */         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* onesided */     \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  /* signal_sizes */ \
+    .AddOutputAttr(MS_O)
+
 std::vector<KernelAttr> FFTWithSizeGpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),     // R2C, rfft
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),    // D2Z
-    KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),     // C2R, irfft
-    KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),    // Z2D
-    KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),   // C2C, fft & ifft
-    KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)  // Z2Z
+    FFT_GPU_REG(kNumberTypeFloat32, kNumberTypeComplex64),     // R2C, rfft
+    FFT_GPU_REG(kNumberTypeFloat64, kNumberTypeComplex128),    // D2Z
+    FFT_GPU_REG(kNumberTypeComplex64, kNumberTypeFloat32),     // C2R, irfft
+    FFT_GPU_REG(kNumberTypeComplex128, kNumberTypeFloat64),    // Z2D
+    FFT_GPU_REG(kNumberTypeComplex64, kNumberTypeComplex64),   // C2C, fft & ifft
+    FFT_GPU_REG(kNumberTypeComplex128, kNumberTypeComplex128)  // Z2Z
   };
   return support_list;
 }

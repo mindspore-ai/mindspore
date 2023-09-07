@@ -44,7 +44,7 @@ interpolation_mode:
 
 # enum NormMode
 norm_mode:
-  BCAKWARD: 0
+  BACKWARD: 0
   FORWARD: 1
   ORTHO: 2
 

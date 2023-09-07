@@ -38,8 +38,8 @@ class FFTWithSizeCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
-              const std::vector<KernelTensor *> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -50,8 +50,8 @@ class FFTWithSizeCpuKernelMod : public NativeCpuKernelMod {
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
-  using FFTWithSizeFunc = std::function<bool(FFTWithSizeCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
-                                             const std::vector<kernel::KernelTensor *> &)>;
+  using FFTWithSizeFunc = std::function<bool(FFTWithSizeCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FFTWithSizeFunc>> func_list_;
   FFTWithSizeFunc kernel_func_;
   bool real_;
