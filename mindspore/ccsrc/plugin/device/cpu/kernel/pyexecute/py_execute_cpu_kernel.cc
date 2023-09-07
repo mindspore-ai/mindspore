@@ -188,7 +188,7 @@ void PyExecuteOutputToRawMemory(const py::object &obj, const std::vector<Address
   // Tuple object will to raw memory later.
   if (py::isinstance<py::list>(obj)) {
     auto output_sequence = py::sequence(obj);
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
     if (allow_inplace_ops) {
       SequenceToRawMemory(output_sequence, outputs);
     }

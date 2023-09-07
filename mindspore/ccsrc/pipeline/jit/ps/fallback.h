@@ -71,7 +71,7 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 
 std::string GetPyObjectPtrStr(const py::object &obj);
-bool EnableFallbackList();
+bool EnableFallbackListDictInplace();
 
 // Generate python object according to abstract.
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);

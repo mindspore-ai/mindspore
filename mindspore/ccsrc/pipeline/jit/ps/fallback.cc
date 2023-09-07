@@ -645,9 +645,9 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
   return ValueToPyData(abs->BuildValue());
 }
 
-bool EnableFallbackList() {
+bool EnableFallbackListDictInplace() {
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
   return allow_fallback_runtime && allow_inplace_ops;
 }
 
@@ -714,7 +714,7 @@ bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
 
 // Nested attach list and dict object to corresponding abstract.
 void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph) {
-  if (!EnableFallbackList()) {
+  if (!EnableFallbackListDictInplace()) {
     return;
   }
   if (abs->isa<abstract::AbstractNamedTuple>()) {
@@ -781,7 +781,7 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
 
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!EnableFallbackList()) {
+  if (!EnableFallbackListDictInplace()) {
     return;
   }
   constexpr auto py_obj_str = "__py_object__";
