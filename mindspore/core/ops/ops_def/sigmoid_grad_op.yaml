@@ -1,0 +1,10 @@
+#operator sigmoid_grad
+sigmoid_grad:
+    args:
+        y:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor

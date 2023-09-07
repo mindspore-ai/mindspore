@@ -72,15 +72,15 @@ REG_ADPT_DESC(SeLU, kNameSeLU, ADPT_DESC(Selu))
 REG_ADPT_DESC(Selu, kSeluOpName, ADPT_DESC(Selu))
 
 // Sigmoid
-INPUT_MAP(Sigmoid) = {{1, INPUT_DESC(x)}};
+INPUT_MAP(Sigmoid) = {{kIndex1, INPUT_DESC(x)}};
 ATTR_MAP(Sigmoid) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Sigmoid) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(Sigmoid) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sigmoid, kNameSigmoid, ADPT_DESC(Sigmoid))
 
 // SigmoidGrad
-INPUT_MAP(SigmoidGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+INPUT_MAP(SigmoidGrad) = {{kIndex1, INPUT_DESC(y)}, {kIndex2, INPUT_DESC(dy)}};
 ATTR_MAP(SigmoidGrad) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(SigmoidGrad) = {{0, OUTPUT_DESC(z)}};
+OUTPUT_MAP(SigmoidGrad) = {{kIndex0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(SigmoidGrad, kNameSigmoidGrad, ADPT_DESC(SigmoidGrad))
 
 // Swish

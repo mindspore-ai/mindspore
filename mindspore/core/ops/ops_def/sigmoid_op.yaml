@@ -1,0 +1,8 @@
+#sigmoid operator
+sigmoid:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
