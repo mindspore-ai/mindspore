@@ -870,7 +870,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         try:
             from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
         except ImportError:
-            logger.warning("Print nodes' topological relation relies on the library `tabulate`, "
+            logger.warning("print_node_tabulate relies on the library `tabulate`, "
                            "which could not be found on this machine. Run `pip "
                            "install tabulate` to install the library.")
             return ""

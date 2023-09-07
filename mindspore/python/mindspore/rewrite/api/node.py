@@ -116,7 +116,7 @@ class Node:
                              kwargs: {str: ScopedValue}=None) -> 'Node':
         """
         Create a node that corresponds to a function call. The `function` object is saved into network, and used via
-        getting object from `self` .
+        getting object from `self.` .
 
         Args:
             function (FunctionType): The function to be called.
@@ -140,6 +140,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree, ScopedValue
             >>> import mindspore.nn as nn
+            >>> import mindspore.ops as ops
             >>> # Define the network structure of LeNet5. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
