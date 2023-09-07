@@ -12,50 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""CallFunction Node."""
+"""ControlFlow Node."""
+from typing import List
 import ast
-from .node import Node
+from .node import Node, TreeNode
 from .node_manager import NodeManager
 from ..api.scoped_value import ScopedValue
 from ..api.node_type import NodeType
 from ..ast_helpers import AstModifier
 
 
-class CallFunction(Node, NodeManager):
-    """CallFunction is used for class internal function."""
-    def __init__(self, targets: [ScopedValue], func_name: ScopedValue, args: [ScopedValue],
-                 kwargs: {str: ScopedValue}, node_name: str, ast_node: ast.AST, ast_functiondef: ast.FunctionDef,
-                 stree, instance):
+class ControlFlow(Node, NodeManager):
+    """ControlFlow node is used for statements like loops and `if` ."""
+    def __init__(self, node_name: str, ast_body: List[ast.AST], stree):
         """
-        Constructor of CallFunction.
+        Constructor of ControlFlow.
 
         Args:
-            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func_name ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
             node_name (str): A string represents name of node. Name of node will be unique when inserted into
                 SymbolTree. Name of node also used as field name in network class.
-            ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
-            ast_functiondef (ast.FunctionDef): An instance of ast.FunctionDef represents corresponding function
-                definition in ast.
+            ast_node (ast.AST): An instance of ast.AST represents control flow statements, can be one of ast.If,
+                ast.Ifexp, ast.For, ast.While.
+            is_orelse (bool): Whether process else branch of node.
             stree (SymbolTree): Symbol tree used to get node_namer.
-            instance: Object in network corresponding to this node.
         """
-        if isinstance(func_name, str):
-            func_name = ScopedValue.create_naming_value(func_name)
-        Node.__init__(self, NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, instance)
+        Node.__init__(self, NodeType.ControlFlow, ast_body, None, node_name, [], [], node_name, None)
         NodeManager.__init__(self, stree.get_node_namer())
-        NodeManager.set_ast_functiondef(self, ast_functiondef)
-        NodeManager.set_manager_name(self, func_name.value)
+        NodeManager.set_manager_name(self, node_name)
+        self.ast_body = ast_body
 
     def erase_node(self, node):
-        """Erase node from CallFunction."""
+        """Erase node from container."""
         NodeManager.erase_node(self, node)
-        # erase asts
-        ret = AstModifier.erase_ast_from_function(self.get_ast_functiondef(), node.get_ast())
+        # erase node's ast
+        ret = AstModifier.erase_ast_from_bodies(self.ast_body, node.get_ast())
         if not ret:
-            raise ValueError(f"erase node failed, node {node.get_name()} not in function ast tree.")
+            raise ValueError(f"Erase node failed, node {node.get_name()} is not in ControlFlow ast tree.")
 
     def insert_node(self, new_node: Node, base_node: Node, before_node: bool, insert_to_ast: bool = True):
         """
@@ -69,8 +61,24 @@ class CallFunction(Node, NodeManager):
         """
         NodeManager.insert_node(self, new_node, base_node, before_node)
         if insert_to_ast:
+            ast_assign = new_node.get_ast()
+            if ast_assign is None:
+                new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+                ast_assign = new_node.update_ast_node()
+            # Save instance into _origin_network.
             stree = self.get_belong_symbol_tree()
-            stree.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
+            setattr(stree.get_origin_network(), new_node.get_name(), new_node.get_instance())
+            # Insert ast_assign to __init__ function
+            if isinstance(new_node, TreeNode):
+                init_code = f"self.{new_node.get_name()} = " \
+                            f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
+            else:
+                init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
+            init_ast = ast.parse(init_code).body[0]
+            AstModifier.insert_assign_ast_to_function(stree.get_init_func_ast(), init_ast)
+            # Insert ast_assign to bodies
+            ast_base_node = base_node.get_ast() if base_node else None
+            AstModifier.insert_assign_ast_to_bodies(self.ast_body, ast_assign, ast_base_node, before_node)
 
     def set_belong_symbol_tree(self, symbol_tree):
         """Set the symbol tree to which node belongs."""

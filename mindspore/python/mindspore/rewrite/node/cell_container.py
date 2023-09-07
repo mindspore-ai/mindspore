@@ -54,11 +54,11 @@ class CellContainer(Node, NodeManager):
         self.insert_node(node, self.get_tail(), False, insert_to_ast)
 
     def erase(self, node):
-        """Erase node form container."""
+        """Erase node from container."""
         self.erase_node(node)
 
     def erase_node(self, node):
-        """Erase node form container."""
+        """Erase node from container."""
         # add code `del self.container_name[node_index]` into __init__ function
         _, init_ast_functiondef = self._get_stree_and_init_ast()
         if not init_ast_functiondef:

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Ast utils for create or update ast node."""
-from typing import Optional
+from typing import Optional, List
 import ast
 
 from ..api.scoped_value import ScopedValue, ValueType
@@ -34,20 +34,15 @@ class AstModifier(ast.NodeTransformer):
         Returns:
             A bool if to_erase-node been found and been erased.
         """
-        for body in ast_func.body:
+        return AstModifier.erase_ast_from_bodies(ast_func.body, to_erase)
+
+    @staticmethod
+    def erase_ast_from_bodies(ast_bodies: List[ast.AST], to_erase: ast.AST) -> bool:
+        """Erase ast node from ast bodies."""
+        for body in ast_bodies:
             if id(body) == id(to_erase):
-                ast_func.body.remove(body)
+                ast_bodies.remove(body)
                 return True
-            # hardcode for ast.If
-            if isinstance(body, ast.If):
-                for if_body in body.body:
-                    if id(if_body) == id(to_erase):
-                        body.body.remove(if_body)
-                        return True
-                for else_body in body.orelse:
-                    if id(else_body) == id(to_erase):
-                        body.orelse.remove(else_body)
-                        return True
         return False
 
     @staticmethod
@@ -170,52 +165,38 @@ class AstModifier(ast.NodeTransformer):
         Raises:
             RuntimeError: If 'index_ast' is not contained in 'ast_func'.
         """
-        # Append ast to function body when index_ast is None
-        if index_ast is None:
-            ast_func.body.append(ast_assign)
-            ast.fix_missing_locations(ast_func)
-            return ast_assign
         # Insert ast at the frontmost position of function body when index_ast is an argument of function
         arguments: ast.arguments = ast_func.args
-        if arguments.args:
+        if index_ast and arguments.args:
             for arg in arguments.args:
                 if id(arg) == id(index_ast):
                     ast_func.body.insert(0, ast_assign)
                     ast.fix_missing_locations(ast_func)
                     return ast_assign
         # Insert ast at position specified by index_ast in function body
-        for index in range(0, len(ast_func.body)):
-            body = ast_func.body[index]
+        ast_assign = AstModifier.insert_assign_ast_to_bodies(ast_func.body, ast_assign, index_ast, insert_before)
+        ast.fix_missing_locations(ast_assign)
+        return ast_assign
+
+    @staticmethod
+    def insert_assign_ast_to_bodies(ast_bodies: List[ast.AST], ast_assign: ast.Assign,
+                                    index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
+        """Insert ast at position specified by index_ast of ast_bodies"""
+        # Append ast_assign to ast_bodies when index_ast is None
+        if index_ast is None:
+            ast_bodies.append(ast_assign)
+            return ast_assign
+        # Append ast_assign to ast_bodies
+        for index, body in enumerate(ast_bodies):
             if id(body) == id(index_ast):
-                if insert_before:
-                    ast_func.body.insert(index, ast_assign)
-                else:
-                    ast_func.body.insert(index + 1, ast_assign)
-                ast.fix_missing_locations(ast_func)
-                return ast_assign
-            # hardcode for ast.If
-            if isinstance(body, ast.If):
-                for if_index in range(0, len(body.body)):
-                    if_body = body.body[if_index]
-                    if id(if_body) != id(index_ast):
-                        continue
-                    if insert_before:
-                        body.body.insert(if_index, ast_assign)
-                    else:
-                        body.body.insert(if_index + 1, ast_assign)
-                    ast.fix_missing_locations(body)
-                    return ast_assign
-                for if_index in range(0, len(body.orelse)):
-                    else_body = body.orelse[if_index]
-                    if id(else_body) != id(index_ast):
-                        continue
-                    if insert_before:
-                        body.orelse.insert(if_index, ast_assign)
-                    else:
-                        body.orelse.insert(if_index + 1, ast_assign)
-                    ast.fix_missing_locations(body)
-                    return ast_assign
-        raise RuntimeError("insert position is not contained in ast_func")
+                if not insert_before:
+                    index += 1
+                ast_bodies.insert(index, ast_assign)
+                ast.fix_missing_locations(body)
+                break
+        else:
+            raise ValueError("insert position is not contained in ast_bodies")
+        return ast_assign
 
     @staticmethod
     def append_arg_to_function(ast_func: ast.FunctionDef, ast_arg: ast.arg) -> ast.AST:

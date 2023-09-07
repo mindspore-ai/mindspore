@@ -19,3 +19,4 @@ from mindspore.rewrite.node.node import Node, TreeNode
 from mindspore.rewrite.node.node_manager import NodeManager
 from mindspore.rewrite.node.call_function import CallFunction
 from mindspore.rewrite.node.cell_container import CellContainer
+from mindspore.rewrite.node.control_flow import ControlFlow
