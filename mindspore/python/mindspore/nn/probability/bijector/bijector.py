@@ -165,7 +165,7 @@ class Bijector(Cell):
             self.common_dtype = None
         # cast value to a tensor if it is not None
         if isinstance(value, bool) or value is None:
-            raise TypeError("{} cannot be type {}".format(name, type(value)))
+            raise TypeError(f"{name} cannot be type {type(value)}")
         value_t = Tensor(value)
         # if the bijector's dtype is not specified
         if self.dtype is None:

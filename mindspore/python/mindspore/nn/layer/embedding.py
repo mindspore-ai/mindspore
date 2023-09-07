@@ -145,9 +145,8 @@ class Embedding(Cell):
         return output
 
     def extend_repr(self):
-        s = 'vocab_size={}, embedding_size={}, use_one_hot={}, embedding_table={}, dtype={}, padding_idx={}'.format(
-            self.vocab_size, self.embedding_size, self.use_one_hot, self.embedding_table, self.dtype, self.padding_idx)
-        return s
+        return f'vocab_size={self.vocab_size}, embedding_size={self.embedding_size}, use_one_hot={self.use_one_hot}, ' \
+            f'embedding_table={self.embedding_table}, dtype={self.dtype}, padding_idx={self.padding_idx}'
 
 
 @_primexpr
@@ -310,8 +309,8 @@ class EmbeddingLookup(Cell):
         else:
             if is_auto_parallel:
                 support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
-                raise ValueError("For '{}', the 'slice_mode' must be in {}, "
-                                 "but got \"{}\".".format(self.cls_name, support_mode, slice_mode))
+                raise ValueError(f"For '{self.cls_name}', the 'slice_mode' must be in {support_mode}, "
+                                 f"but got \"{slice_mode}\".")
         if self.cache_enable and not enable_ps:
             raise ValueError(f"For '{self.cls_name}', haven't supported cache enable for not ps mode.")
         self.embedding_table.unique = self.forward_unique
@@ -622,8 +621,9 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
                 self.inf_add.shard(((1, 1, get_group_size()), (1, 1, 1)))
         else:
             if is_auto_parallel:
-                raise ValueError("For '{}', the 'slice_mode' must be in ['table_row_slice', 'batch_slice' and \
-                                       'table_column_slice'], but got {}".format(self.cls_name, str(slice_mode)))
+                raise ValueError(
+                    f"For '{self.cls_name}', the 'slice_mode' must be in ['table_row_slice', 'batch_slice' "
+                    f"and 'table_column_slice'], but got {str(slice_mode)}.")
 
         # Min value for fp32
         self.negative_inf_value = -3.402823466E+38

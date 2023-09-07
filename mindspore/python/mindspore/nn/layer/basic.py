@@ -314,7 +314,7 @@ class Dropout2d(Cell):
         return out
 
     def extend_repr(self):
-        return 'p={}'.format(self.keep_prob)
+        return f"p={self.keep_prob}"
 
 
 class Dropout3d(Cell):
@@ -365,7 +365,7 @@ class Dropout3d(Cell):
         return out
 
     def extend_repr(self):
-        return 'p={}'.format(self.keep_prob)
+        return f'p={self.keep_prob}'
 
 
 class Upsample(Cell):
@@ -635,12 +635,11 @@ class Dense(Cell):
         return x
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}'.format(
-            self.in_channels, self.out_channels)
+        s = f'input_channels={self.in_channels}, output_channels={self.out_channels}'
         if self.has_bias:
-            s += ', has_bias={}'.format(self.has_bias)
+            s += f', has_bias={self.has_bias}'
         if self.activation_flag:
-            s += ', activation={}'.format(self.activation)
+            s += f', activation={self.activation}'
         return s
 
 
@@ -753,7 +752,7 @@ class Norm(Cell):
         return x
 
     def extend_repr(self):
-        return 'axis={}, keep_dims={}'.format(self.axis, self.keep_dims)
+        return f'axis={self.axis}, keep_dims={self.keep_dims}'
 
 
 class OneHot(Cell):
