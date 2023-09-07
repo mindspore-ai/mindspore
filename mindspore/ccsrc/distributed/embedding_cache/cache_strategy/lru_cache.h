@@ -20,6 +20,7 @@
 #include <list>
 #include <vector>
 #include <utility>
+#include <functional>
 
 #include "distributed/embedding_cache/cache_strategy/cache.h"
 #include "utils/hash_map.h"
@@ -31,7 +32,8 @@ namespace distributed {
 // accessed recently, it is more likely to be accessed in the future."
 // The LRUCache implementation uses a linked list to hold elements and a hash table to quickly find the location of an
 // element in linked list.
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Hash = std::hash<KeyType>,
+          typename KeyEqual = std::equal_to<KeyType>>
 class LRUCache : public Cache<KeyType, ValueType> {
  public:
   // The elements in cache are stored as key-value pairs.
@@ -140,7 +142,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
   std::list<Element> elements_;
 
   // The hash table used to quickly find the location of an element in linked list.
-  mindspore::HashMap<KeyType, Iter> element_keys_to_iters_;
+  mindspore::HashMap<KeyType, Iter, Hash, KeyEqual> element_keys_to_iters_;
 };
 }  // namespace distributed
 }  // namespace mindspore

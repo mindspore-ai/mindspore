@@ -45,23 +45,11 @@ __global__ void GatherGradKernel(const size_t num, const T *index, const S *grad
   return;
 }
 
-template <typename S>
-__global__ void InitOutput(const size_t size, S *output) {
-  S zero = 0;
-  for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < size; id += blockDim.x * gridDim.x) {
-    output[id] = zero;
-  }
-  return;
-}
-
 template <typename T, typename S>
 cudaError_t GatherGrad(const T *index, const S *grad, S *output, const size_t dim_before_axis,
                        const size_t dim_at_axis_index, const size_t dim_at_axis_output, const size_t dim_after_axis,
                        cudaStream_t stream) {
-  size_t size = dim_before_axis * dim_at_axis_output * dim_after_axis;
-  InitOutput<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(size, output);
-
-  size = dim_before_axis * dim_at_axis_index * dim_after_axis;
+  size_t size = dim_before_axis * dim_at_axis_index * dim_after_axis;
   GatherGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(size, index, grad, output, dim_before_axis,
                                                                  dim_at_axis_index, dim_at_axis_output, dim_after_axis);
   return GetCudaStatus();
