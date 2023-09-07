@@ -82,6 +82,7 @@ GVAR_DEF(PrimitivePtr, kPrimNormalizeTupleIndex, std::make_shared<Primitive>("No
 GVAR_DEF(PrimitivePtr, kPrimEllipsisToSlice, std::make_shared<Primitive>("EllipsisToSlice"));
 GVAR_DEF(PrimitivePtr, kPrimGetSqueezeSliceShape, std::make_shared<Primitive>("GetSqueezeSliceShape"));
 GVAR_DEF(PrimitivePtr, kPrimRemoveExpandedDims, std::make_shared<Primitive>("RemoveExpandedDims"));
+GVAR_DEF(PrimitivePtr, kPrimGetTupleIndexInfo, std::make_shared<Primitive>("GetTupleIndexInfo"));
 
 // Debug ops
 GVAR_DEF(PrimitivePtr, kPrimAssert, std::make_shared<Primitive>("Assert"));
