@@ -117,6 +117,21 @@ void DumpJsonParser::PyNativeModeCheck() {
   }
 }
 
+void DumpJsonParser::CheckGEBackend() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
+      MS_LOG(EXCEPTION) << "Cell dump is not supported on 1980B. Please set dump_mode to 0 or 1.";
+    }
+    if (saved_data_ == "full") {
+      MS_LOG(EXCEPTION)
+        << "On 1980B, saved_data only support to save tensor or statistic, not support to save both of them.";
+    }
+  }
+}
+
 /*
  * Feature group: Dump.
  * Target device group: Ascend, GPU and CPU.
@@ -163,6 +178,7 @@ void DumpJsonParser::Parse() {
   ParseE2eDumpSetting(j);
   ParseCommonDumpSetting(j);
   PyNativeModeCheck();
+  CheckGEBackend();
   JudgeDumpEnabled();
 }
 
@@ -606,12 +622,19 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     MS_LOG(INFO) << "Dump config field <" << kKernels << "> is not used as the dump mode is not 1.";
     return;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
   for (const auto &kernel : content) {
     bool ret;
     auto kernel_str = kernel.dump();
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
     if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
+      if (backend == "ge") {
+        MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
+                        << " maybe not take effect.";
+      }
       ret = kernel_types_.try_emplace({kernel_str, 0}).second;
     } else {
       ret = kernels_.try_emplace({kernel_str, 0}).second;
