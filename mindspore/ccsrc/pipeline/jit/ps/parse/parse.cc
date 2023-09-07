@@ -3616,10 +3616,7 @@ void Parser::HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::ob
 bool Parser::IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const {
   auto attr_name = target_obj.attr("attr").cast<std::string>();
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-    MS_EXCEPTION(TypeError)
-      << "'" << attr_name
-      << "' should be initialized as a member variable in the '__init__' function before assigning.\n\n"
-      << trace::GetDebugInfo(target_node->debug_info());
+    return false;
   }
 
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));

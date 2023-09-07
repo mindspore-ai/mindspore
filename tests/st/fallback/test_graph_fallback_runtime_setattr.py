@@ -755,3 +755,76 @@ def test_global_setattr_in_control_flow_2():
     obj = SetattrNet()
     ret = foo()
     assert ret == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_for_attribute_no_exist():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def construct(self):
+            self.x = 4
+            return self.x
+
+    net = SetattrNet()
+    ret = net()
+    assert ret == 4
+    assert net.x == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_for_attribute_no_exist_2():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    @jit_class
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        obj.y = obj.x + 1
+
+    obj = Inner()
+    foo()
+    assert hasattr(obj, "y")
+    assert obj.y == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_for_attribute_no_exist_3():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        obj.y = obj.x + 1
+
+    obj = Inner()
+    foo()
+    assert hasattr(obj, "y")
+    assert obj.y == 2
