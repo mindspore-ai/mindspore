@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "ops/sequence_ops.h"
@@ -29,9 +30,11 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr const char kNeedAllGather[] = "parallel_optimizer_allgather";
-constexpr const char kNodeCloseFollowing[] = "node_close_following";
-constexpr const char kNodeWithoutOutput[] = "node_without_output";
+
+bool IsSendRecvOps(const AnfNodePtr &node) {
+  static const PrimitiveSet kSendRecvOpsPrim = {prim::kPrimSend, prim::kPrimReceive};
+  return IsOneOfPrimitiveCNode(node, kSendRecvOpsPrim);
+}
 
 bool IsCommOps(const AnfNodePtr &node) {
   static const PrimitiveSet kCommunicationOpsPrim = {
@@ -40,6 +43,68 @@ bool IsCommOps(const AnfNodePtr &node) {
     prim::kPrimAllToAllv, prim::kPrimNeighborExchange, prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad,
     prim::kPrimBarrier};
   return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim);
+}
+
+std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, const CNodePtr &old_node, bool) {
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> params;
+
+  auto old_prim = GetValueNode<PrimitivePtr>(old_node->input(0));
+  auto prim_name = old_prim->name();
+  params.push_back(NewValueNode(std::make_shared<Primitive>(prim_name)));
+
+  for (size_t i = 1; i < old_node->inputs().size(); i++) {
+    auto param = fg->add_parameter();
+    params.push_back(param);
+    param->set_abstract(old_node->input(i)->abstract());
+  }
+
+  CNodePtr new_node = fg->NewCNode(params);
+  new_node->set_abstract(old_node->abstract());
+
+  std::ostringstream ss;
+  if (IsSendRecvOps(old_node)) {
+    ss << old_prim->name() << old_prim->GetAttr(parallel::SR_TAG)->ToString();
+  } else {
+    ss << old_prim->name();
+  }
+  fg->debug_info()->set_name(ss.str());
+
+  for (auto &kv : old_prim->attrs()) {
+    common::AnfAlgo::SetNodeAttr(kv.first, kv.second, new_node);
+  }
+  new_node->set_primal_attrs(old_node->primal_attrs());
+  return {fg, new_node};
+}
+
+void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto [fg, new_send] = CreateNewCNode(manager, node, true);
+
+  auto value_node = NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(1)));
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto value_abs = value_node->value()->ToAbstract();
+  MS_EXCEPTION_IF_NULL(value_abs);
+  value_node->set_abstract(value_abs);
+  MS_EXCEPTION_IF_NULL(fg);
+  auto depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), value_node, new_send});
+  MS_EXCEPTION_IF_NULL(depend);
+  depend->set_abstract(value_abs);
+  fg->set_output(depend);
+
+  std::vector<AnfNodePtr> call_params;
+  call_params.push_back(NewValueNode(fg));
+  for (size_t i = 1; i < node->inputs().size(); i++) {
+    call_params.push_back(node->input(i));
+  }
+  auto call = graph->NewCNode(call_params);
+  MS_EXCEPTION_IF_NULL(call);
+  call->set_abstract(value_abs);
+
+  manager->AddFuncGraph(fg);
+  (void)manager->Replace(node, call);
 }
 
 void ProcessNodeWithoutOutput(const FuncGraphPtr &graph, const CNodePtr &node) {
@@ -61,9 +126,9 @@ void ProcessNodeWithoutOutput(const FuncGraphPtr &graph, const CNodePtr &node) {
   depend->set_abstract(value_abs);
   auto tensor_move = graph->NewCNode({NewValueNode(prim::kPrimTensorMove), depend});
   tensor_move->set_abstract(value_abs);
-  node->AddPrimalAttr(kNodeWithoutOutput, MakeValue(true));
-  depend->AddPrimalAttr(kNodeCloseFollowing, MakeValue(true));
-  tensor_move->AddPrimalAttr(kNodeCloseFollowing, MakeValue(true));
+  node->AddPrimalAttr(kAttrNodeWithoutOutput, MakeValue(true));
+  depend->AddPrimalAttr(kAttrNodeCloseFollowing, MakeValue(true));
+  tensor_move->AddPrimalAttr(kAttrNodeCloseFollowing, MakeValue(true));
   (void)manager->Replace(node, tensor_move);
 }
 
@@ -82,7 +147,7 @@ void AddAllGatherRecvDepend(const FuncGraphPtr &graph) {
       auto cnode = node->cast<CNodePtr>();
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
       const auto &instance_name = prim->instance_name();
-      if (instance_name.find(kNeedAllGather) != std::string::npos) {
+      if (instance_name.find(kAttrNeedAllGather) != std::string::npos) {
         (void)all_gather_nodes.emplace_back(cnode);
       }
     } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
@@ -211,6 +276,35 @@ void AddSendClosureDepend(const FuncGraphPtr &graph) {
     }
   }
 }
+
+void ProcessSpecialNodes(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &all_nodes, size_t send_cnt) {
+  size_t now_send_cnt = 0;
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+      now_send_cnt++;
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimSend) && now_send_cnt == send_cnt) {
+      // cut last send
+      ProcessSend(graph, node->cast<CNodePtr>());
+    } else if (IsOneOfPrimitiveCNode(node, {prim::kPrimSend, prim::kPrimNPUClearFloatStatusV2})) {
+      ProcessNodeWithoutOutput(graph, node->cast<CNodePtr>());
+    }
+
+    auto not_cut_env = common::GetEnv("GE_NOT_CUT");
+    if (IsOneOfPrimitiveCNode(node, {prim::kPrimPartial, prim::kPrimSwitch}) && !not_cut_env.empty()) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
+    } else if (utils::isa<CNodePtr>(node) && !not_cut_env.empty()) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto primitive_input = cnode->input(kAnfPrimitiveIndex);
+      if (IsPrimitiveCNode(primitive_input, prim::kPrimSwitch)) {
+        cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
+      }
+    }
+  }
+}
 }  // namespace
 
 void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
@@ -240,6 +334,8 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
 
+  size_t send_cnt = 0;
+
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->func_graph() != graph) {
@@ -247,6 +343,10 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     }
     if (!utils::isa<CNodePtr>(node)) {
       continue;
+    }
+
+    if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+      send_cnt++;
     }
 
     if (IsCommOps(node) || IsClosure(node)) {
@@ -262,10 +362,6 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     }
   }
 
-  for (auto &node : all_nodes) {
-    if (IsOneOfPrimitiveCNode(node, {prim::kPrimSend, prim::kPrimNPUClearFloatStatusV2})) {
-      ProcessNodeWithoutOutput(graph, node->cast<CNodePtr>());
-    }
-  }
+  ProcessSpecialNodes(graph, all_nodes, send_cnt);
 }
 }  // namespace mindspore::opt

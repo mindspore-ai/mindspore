@@ -1115,6 +1115,18 @@ void KernelGraphMgr::GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr>
   }
 }
 
+ValueNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph) {
+  MS_EXCEPTION_IF_NULL(child_func_graph);
+  std::vector<KernelGraphPtr> all_graphs;
+  FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(child_func_graph);
+  if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
+    (void)ConstructKernelGraph(child_graph, &all_graphs, graph->device_target());
+  }
+  auto new_value_node = CreateValueNodeKernelGraph(child_func_graph, graph);
+  MS_EXCEPTION_IF_NULL(new_value_node);
+  return new_value_node;
+}
+
 void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                                        mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1126,25 +1138,27 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
+  AnfNodePtr child_func_graph = nullptr;
+  std::vector<AnfNodePtr> params;
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
     auto anf = origin_inputs[input_idx];
     MS_EXCEPTION_IF_NULL(anf);
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-      (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+      (void)params.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
     } else if ((is_depend && input_idx > kRealInputIndexInDepend && !enable_ge)) {
-      cnode_inputs->push_back(graph->NewValueNode(std::make_shared<Tensor>(SizeToInt(input_idx))));
+      (void)params.emplace_back(graph->NewValueNode(std::make_shared<Tensor>(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
-      cnode_inputs->push_back((*other_graph_cnode)[anf]);
+      (void)params.emplace_back((*other_graph_cnode)[anf]);
       continue;
     } else if (anf->isa<ValueNode>() && !IsValueNode<FuncGraph>(anf)) {
       // if input is a value node,
       auto new_value_node = CreateNewValueNode(anf, graph);
       if (new_value_node != nullptr) {
-        (void)cnode_inputs->emplace_back(new_value_node);
+        (void)params.emplace_back(new_value_node);
       }
       continue;
     } else if (anf->isa<Parameter>()) {
@@ -1152,8 +1166,13 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       MS_EXCEPTION_IF_NULL(new_parameter);
       MS_LOG(DEBUG) << "Create new parameter:" << new_parameter->DebugString()
                     << " by front parameter:" << anf->DebugString();
-      cnode_inputs->push_back(new_parameter);
+      (void)params.emplace_back(new_parameter);
       graph->FrontBackendMapAdd(anf, new_parameter);
+      continue;
+    } else if (IsValueNode<FuncGraph>(anf) && cnode->HasPrimalAttr(kAttrNotCut)) {
+      MS_EXCEPTION_IF_CHECK_FAIL(input_idx == 1, "Graph input index is not 1, anf: " + anf->DebugString() +
+                                                   ", index: " + std::to_string(input_idx));
+      child_func_graph = anf;
       continue;
     } else {
       // the input node is a cnode from other graph
@@ -1172,10 +1191,15 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
         auto load_cnode = anf->cast<CNodePtr>();
         para->set_name(load_cnode->fullname_with_scope());
       }
-      cnode_inputs->push_back(parameter_from_cnode);
+      (void)params.emplace_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
     }
   }
+
+  if (child_func_graph != nullptr) {
+    (void)cnode_inputs->emplace_back(GetChildGraph(graph, child_func_graph));
+  }
+  (void)std::copy(params.begin(), params.end(), std::back_inserter(*cnode_inputs));
 }
 
 CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
@@ -1875,7 +1899,11 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     // create a new cnode object
-    auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
+    auto primitive_input = cnode->input(kAnfPrimitiveIndex);
+    auto new_cnode = (IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) && cnode->HasPrimalAttr(kAttrNotCut))
+                       ? CreateNewCNode(cnode, graph.get())
+                       : CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
+
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());

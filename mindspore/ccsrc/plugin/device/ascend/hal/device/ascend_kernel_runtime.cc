@@ -954,19 +954,21 @@ void AscendKernelRuntime::GetLastNodesOnStream(const std::vector<CNodePtr> &kern
 
 void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &graph,
                                                   std::map<AnfNodePtr, AnfNodePtr> *shadow_backend_node_map) {
-  auto input_nodes = graph.input_nodes();
+  auto &input_nodes = graph.input_nodes();
   MS_EXCEPTION_IF_NULL(shadow_backend_node_map);
+  std::map<AnfNodePtr, AnfNodePtr> front_nodes_map;
   for (auto &node : input_nodes) {
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(node, graph);
-    for (auto &knode : input_nodes) {
-      if (knode == node) {
-        break;
+    if (front_node == nullptr || common::AnfAlgo::IsTupleOutput(front_node)) {
+      continue;
+    }
+    auto iter = front_nodes_map.find(front_node);
+    if (iter != front_nodes_map.end()) {
+      if (node != iter->second) {
+        (void)shadow_backend_node_map->emplace(node, iter->second);
       }
-      if (!common::AnfAlgo::IsTupleOutput(front_node) && front_node != nullptr &&
-          front_node == AnfAlgo::FetchFrontNodeByBackendNode(knode, graph)) {
-        (void)shadow_backend_node_map->emplace(node, knode);
-        break;
-      }
+    } else {
+      (void)front_nodes_map.emplace(front_node, node);
     }
   }
 }

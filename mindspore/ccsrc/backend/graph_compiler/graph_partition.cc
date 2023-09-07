@@ -33,9 +33,6 @@
 namespace mindspore {
 namespace compile {
 namespace {
-constexpr const char kNodeCloseFollowing[] = "node_close_following";
-constexpr const char kNodeWithoutOutput[] = "node_without_output";
-
 std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -631,7 +628,7 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
     return;
   }
   auto cnode = dyn_cast_ptr<CNode>(cut_node);
-  if (cnode == nullptr || !cnode->HasPrimalAttr(kNodeWithoutOutput)) {
+  if (cnode == nullptr || !cnode->HasPrimalAttr(kAttrNodeWithoutOutput)) {
     return;
   }
 
@@ -660,7 +657,7 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
         continue;
       }
       auto next_cnode = dyn_cast_ptr<CNode>(next_node);
-      if (next_cnode != nullptr && next_cnode->HasPrimalAttr(kNodeCloseFollowing)) {
+      if (next_cnode != nullptr && next_cnode->HasPrimalAttr(kAttrNodeCloseFollowing)) {
         node_queue.push(next_node);
       }
     }
@@ -700,7 +697,13 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
       if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, cnode)) {
         return false;
       }
+      if (IsPrimitiveCNode(fn, prim::kPrimSwitch) && fn->cast<CNodePtr>()->HasPrimalAttr(kAttrNotCut)) {
+        return false;
+      }
       return true;
+    }
+    if (cnode->HasPrimalAttr(kAttrNotCut)) {
+      return false;
     }
     auto node_prim = GetValueNode<PrimitivePtr>(fn);
     for (auto &prim : cut_list_) {

@@ -28,6 +28,7 @@
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "utils/ms_context.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
@@ -115,11 +116,14 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     if (inps.empty()) {
       MS_LOG(EXCEPTION) << "Input is empty";
     }
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    static const bool is_enable_ge = (ms_context->backend_policy() == "ge");
     bool is_graph_kernel =
       (IsValueNode<FuncGraph>(inps[0]) &&
        inps[0]->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
     bool is_pynative_jit_call_node = common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, n->cast<CNodePtr>());
-    if (!IsValueNode<Primitive>(inps[0]) && !is_graph_kernel && !is_pynative_jit_call_node) {
+    if (!IsValueNode<Primitive>(inps[0]) && !is_graph_kernel && !is_pynative_jit_call_node && !is_enable_ge) {
       MS_LOG(EXCEPTION) << "Input[0] must be a Primitive ValueNode, but get " << inps[0]->DebugString();
     }
     auto fn = inps[0];
