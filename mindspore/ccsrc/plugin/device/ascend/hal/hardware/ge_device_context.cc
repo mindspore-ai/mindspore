@@ -186,7 +186,19 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_EXCEPTION_IF_NULL(ge_options);
 
-  (*ge_options)["ge.topoSortingMode"] = "0";
+  std::string topo_sorting_mode = "0";
+  auto topo_sorting_env = common::GetEnv("GE_TOPO_SORTING_MODE");
+  MS_LOG(INFO) << "GE topo sorting mode is: " << topo_sorting_env;
+  if (topo_sorting_env == "bfs") {
+    topo_sorting_mode = "0";
+  } else if (topo_sorting_env == "dfs") {
+    topo_sorting_mode = "1";
+  } else if (topo_sorting_env == "dfs_postorder" ||
+             ms_context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    topo_sorting_mode = "2";
+  }
+
+  (*ge_options)["ge.topoSortingMode"] = topo_sorting_mode;
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
 

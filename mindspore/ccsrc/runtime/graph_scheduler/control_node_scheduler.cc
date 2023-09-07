@@ -100,6 +100,14 @@ bool IsControlArrowExistForCallNode(const AnfNodePtr &node, const AbstractActor 
   const auto &arrows = arrow_iter->second;
   return std::find(arrows.begin(), arrows.end(), to_actor->GetAID()) != arrows.end();
 }
+
+bool IsNotCut(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  return cnode->HasPrimalAttr(kAttrNotCut);
+}
 }  // namespace
 
 ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -898,7 +906,7 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
 
     // Fetch the arrow type of input.
     if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr && from_node->isa<CNode>() &&
-        (!common::AnfAlgo::IsCallNode(from_node)) &&
+        (!common::AnfAlgo::IsCallNode(from_node) || IsNotCut(from_node)) &&
         (!common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) &&
         to_actor->GetAID().Name().find(
           parser->FetchGroupNameByKernelGraph(parser->FetchKernelGraphByFrontNode(from_node))) != std::string::npos) {
@@ -937,7 +945,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
   } else if (from_node->isa<Parameter>()) {
     LinkArrowByParameter(from_node, to_actor, real_from_node_with_index, to_node_with_index,
                          graph_compiler_info.control_node_parser_);
-  } else if (common::AnfAlgo::IsCallNode(from_node)) {
+  } else if (common::AnfAlgo::IsCallNode(from_node) && !IsNotCut(from_node)) {
     // Link arrow by call node.
     LinkArrowByCallNode(from_node, to_actor, real_from_node_with_index, to_node_with_index,
                         graph_compiler_info.control_node_parser_);
@@ -1449,7 +1457,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
     auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
 
     std::vector<AbstractActor *> from_actors;
-    if (common::AnfAlgo::IsCallNode(depend_node)) {
+    if (common::AnfAlgo::IsCallNode(depend_node) && !IsNotCut(depend_node)) {
       // If the actor already exists with control arrow, skip it.
       if (IsControlArrowExistForCallNode(depend_node, to_actor, parser)) {
         MS_LOG(DEBUG) << "Control arrow from call node:" << depend_node << " to actor:" << to_actor->GetAID()

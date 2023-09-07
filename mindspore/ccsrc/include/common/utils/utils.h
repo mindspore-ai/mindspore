@@ -346,6 +346,10 @@ constexpr auto kSetitemByTuple = "setitem_by_tuple";
 constexpr auto kPreSetitemByTuple = "pre_setitem_by_tuple";
 constexpr auto kAttrTupleIndexInfoType = "tuple_index_info_type";
 constexpr auto kAttrSimpleSliceInfo = "simple_slice_info";
+constexpr auto kAttrNotCut = "not_cut";
+constexpr const char kAttrNeedAllGather[] = "parallel_optimizer_allgather";
+constexpr const char kAttrNodeCloseFollowing[] = "node_close_following";
+constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
