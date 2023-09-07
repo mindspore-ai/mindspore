@@ -1477,8 +1477,7 @@ class AfterOptARewriter : public BaseRewriter {
     }
     auto target_node = node_inputs[target_index];
     auto target_abs = target_node->abstract();
-    MS_EXCEPTION_IF_NULL(target_abs);
-    if (target_abs->BuildValue() != kValueAny) {
+    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
       return nullptr;
     }
 
