@@ -282,7 +282,7 @@ std::string NodeDebugInfo::debug_name() {
   std::string prefix = "";
   if (node_.lock() != nullptr) {
     std::ostringstream oss;
-    oss << "[" << node_.lock()->type_name() << "]";
+    oss << node_.lock()->type_name() << "_";
     prefix = oss.str();
   }
   name_ = prefix + std::to_string(get_id());

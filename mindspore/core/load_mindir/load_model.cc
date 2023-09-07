@@ -54,7 +54,6 @@ using std::vector;
 namespace mindspore {
 namespace {
 static constexpr char kConstantValueNode[] = "Constant";
-static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
 static constexpr char kQuantParam[] = "quant_param";
 static constexpr char kGraphInputQuantParam[] = "graph_input_quant_param";
 

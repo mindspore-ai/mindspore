@@ -465,10 +465,6 @@ void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrLis
 
 // Avoid to create nested partial CNode.
 CNodePtr Cloner::SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FuncGraphTransaction *tx) {
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
-  if (!enable_pre_lift) {
-    return nullptr;
-  }
   if (!IsPrimitiveCNode(cnode, prim::kPrimPartial) || !IsValueNode<FuncGraph>(cnode->input(1))) {
     return nullptr;
   }
@@ -515,7 +511,7 @@ CNodePtr Cloner::SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr 
                 << ", partial_cnode: " << partial_cnode->DebugString() << ", new_node: " << new_cnode->DebugString()
                 << ", new_node abs: " << (new_cnode->abstract() != nullptr ? new_cnode->abstract()->ToString() : "null")
                 << ", partial " << graph->ToString() << " in " << func_graph->ToString();
-  tx->Replace(cnode, new_cnode);
+  (void)tx->Replace(cnode, new_cnode);
   return new_cnode;
 }
 

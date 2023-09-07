@@ -705,12 +705,14 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     // Exclude class prefix and suffix.
     auto class_name =
       py_class_name.substr(py_class_prefix_len, py_class_len - py_class_prefix_len - py_class_suffix_len);
-    std::replace(class_name.begin(), class_name.end(), '.', '_');
-    std::replace(class_name.begin(), class_name.end(), '<', '_');
-    std::replace(class_name.begin(), class_name.end(), '>', '_');
     function_name = class_name + '_' + cell_construct;
     MS_LOG(DEBUG) << "The generated function full name: " << function_name;
   }
+  // Normalize the name.
+  std::replace(function_name.begin(), function_name.end(), '.', '_');
+  std::replace(function_name.begin(), function_name.end(), '<', '_');
+  std::replace(function_name.begin(), function_name.end(), '>', '_');
+
   // Save the function node to block
   func_block->WriteVariable(function_name, NewValueNode(current_fg));
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
@@ -787,6 +789,10 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
 
   MS_EXCEPTION_IF_NULL(current_fg);
   auto lambda_function_name = ast_->function_name();
+  // Normalize the name.
+  std::replace(lambda_function_name.begin(), lambda_function_name.end(), '.', '_');
+  std::replace(lambda_function_name.begin(), lambda_function_name.end(), '<', '_');
+  std::replace(lambda_function_name.begin(), lambda_function_name.end(), '>', '_');
   constexpr auto lambda_prefex = "lambda_";
   auto function_name = lambda_prefex + lambda_function_name;
   MS_LOG(DEBUG) << "The function name is " << function_name;

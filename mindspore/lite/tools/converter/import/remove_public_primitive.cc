@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
+constexpr char kDoSignaturePrimitivePrefix[] = "S_Prim_";
 constexpr char kHyperMapPrefix[] = "hyper_map";
 constexpr auto offset = 2;
 }  // namespace

@@ -13,23 +13,25 @@
 # limitations under the License.
 # ============================================================================
 """ test map for lambda with fv. """
+import os
 import pytest
 import mindspore as ms
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Need pre-lift feature")
 def test_map_lambda_with_fv():
     """
     Feature: Support map for lambda with FV.
     Description: Support map for lambda with FV.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_PRE_LIFT'] = '1'
     @ms.jit()
     def map_lambda_with_fv(x, y, z):
         number_add = lambda x, y: x + y + z
         return map(number_add, (x,), (y,))
 
     res = map_lambda_with_fv(1, 5, 9)
+    del os.environ['MS_DEV_PRE_LIFT']
     assert res == (15,)

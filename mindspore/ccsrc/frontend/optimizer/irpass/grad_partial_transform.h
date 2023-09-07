@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-// {S-Prim-grad, {UpackGraph, Partial{fg, args},}} -> {Partial{{S-Prim-grad, ...}, args}}
+// {S_Prim_grad, {UpackGraph, Partial{fg, args},}} -> {Partial{{S_Prim_grad, ...}, args}}
 class GradPartialTransform : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {

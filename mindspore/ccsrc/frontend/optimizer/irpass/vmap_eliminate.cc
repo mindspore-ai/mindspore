@@ -103,7 +103,7 @@ AnfNodePtr UpdateParam(const FuncGraphPtr &vmap_fg, const AnfNodePtr &u_monad_no
                        const ParamMappingVector &param_mapping_table) {
   MS_EXCEPTION_IF_NULL(u_monad_node);
   AnfNodePtrList attach_tuple{NewValueNode(prim::kPrimMakeTuple)};
-  for (auto &param_pair : param_mapping_table) {
+  for (const auto &param_pair : param_mapping_table) {
     auto ref = param_pair.first;
     auto each_cell_params = param_pair.second;
     AnfNodePtrList vmap_assign;
@@ -210,7 +210,7 @@ int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes) {
     size_t parameters_size = abs_sequence->size();
     auto in_axes_seq = GetInAxesSeq(*in_axes, parameters_size);
     int index = 0;
-    for (auto sub_abs : abs_list) {
+    for (const auto &sub_abs : abs_list) {
       if (sub_abs->isa<abstract::AbstractMonad>()) {
         break;
       }
@@ -318,9 +318,9 @@ ValuePtr CreatePrimtivePy(const mindspore::HashMap<std::string, ValuePtr> &attrs
   const auto op_path = "mindspore.ops.primitive";
   const auto func = "_get_primitivec";
   py::dict attrs_py = py::dict();
-  for (auto &v : attrs) {
-    py::str name = v.first;
-    attrs_py[name] = ValueToPyData(v.second);
+  for (const auto &attr : attrs) {
+    py::str name = attr.first;
+    attrs_py[name] = ValueToPyData(attr.second);
   }
   py::object obj = python_adapter::CallPyFn(op_path, func, op_name, attrs_py);
   ValuePtr op_instance = nullptr;
@@ -429,12 +429,9 @@ AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph
       if (user_set.front().first->func_graph() != func_graph || user_set.back().first->func_graph() != func_graph) {
         need_copy = true;
       } else {
-        for (auto pair : user_set) {
-          if (pair.first->func_graph() != func_graph) {
-            need_copy = true;
-            break;
-          }
-        }
+        need_copy = std::any_of(
+          user_set.cbegin(), user_set.cend(),
+          [&func_graph](const std::pair<AnfNodePtr, int> &pair) { return (pair.first->func_graph() != func_graph); });
       }
       if (need_copy) {
         MS_LOG(DEBUG) << "Copy the " << node->DebugString() << " so that it can only be used in this graph.";
@@ -443,7 +440,7 @@ AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph
         auto value = value_node->value();
         MS_EXCEPTION_IF_NULL(value);
         auto copy_node = NewValueNode(value);
-        for (auto pair : user_set) {
+        for (const auto &pair : user_set) {
           if (pair.first->func_graph() == func_graph) {
             auto user_node = pair.first->cast<CNodePtr>();
             manager->SetEdge(user_node, pair.second, copy_node);
@@ -465,7 +462,7 @@ void BindAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const Func
     return;
   }
   auto user_set = user->second;
-  for (auto pair : user_set) {
+  for (const auto &pair : user_set) {
     const auto user_func_graph = pair.first->func_graph();
     MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", user_func_graph: " << user_func_graph->ToString();
     if (user_func_graph != func_graph && user_func_graph != top_func_graph) {
@@ -486,7 +483,7 @@ void BindAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const Func
     }
     if (IsPrimitiveCNode(user_node, prim::kPrimMakeTuple) && pair.second == 1) {
       // For Partial Inputs.
-      manager->Replace(user_node, replace_node);
+      (void)manager->Replace(user_node, replace_node);
     } else {
       manager->SetEdge(user_node, pair.second, replace_node);
     }
@@ -516,7 +513,7 @@ void BindParamAxis(const AnfNodePtr &node, const FuncGraphPtr &vmap_fg, const Fu
 std::string GetShapeString(const ShapeVector &tensor_shape) {
   std::ostringstream oss;
   oss << " Shape:";
-  for (auto &dim : tensor_shape) {
+  for (const auto &dim : tensor_shape) {
     oss << " " << dim;
   }
   return oss.str();
@@ -585,7 +582,7 @@ void GetCellParams(const FuncGraphPtr &vmap_fg, AnfNodePtrList *param_nodes) {
   std::set<AnfNodePtr> memo;
   auto scan_fn = [&memo, param_nodes](const FuncGraphPtr &vmap_fg) {
     auto fv_nodes = vmap_fg->free_variables();
-    for (auto &pair : fv_nodes) {
+    for (const auto &pair : fv_nodes) {
       auto node = pair.first;
       if (node->isa<Parameter>() && node->cast<ParameterPtr>()->has_default() && memo.emplace(node).second) {
         (void)param_nodes->emplace_back(node);
@@ -595,7 +592,7 @@ void GetCellParams(const FuncGraphPtr &vmap_fg, AnfNodePtrList *param_nodes) {
 
   scan_fn(vmap_fg);
   auto used_fgs = vmap_fg->func_graphs_used_total();
-  for (auto &fg : used_fgs) {
+  for (const auto &fg : used_fgs) {
     scan_fn(fg);
   }
 }
@@ -709,7 +706,7 @@ void ExpandVmapPrim::ExpandVmapFreeVariable(const FuncGraphPtr &vmap_fg, const F
   // Map free variable.
   auto free_variables_nodes = vmap_fg->free_variables();
   MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", fv size: " << vmap_fg->free_variables().size();
-  for (auto &pair : free_variables_nodes) {
+  for (const auto &pair : free_variables_nodes) {
     auto node = pair.first;
     if (visited_node.count(node) > 0 || node->isa<CNode>()) {
       continue;
@@ -730,7 +727,7 @@ void ExpandVmapPrim::ExpandVmapPartialInputs(const FuncGraphPtr &vmap_fg, const 
                                              const mindspore::HashSet<AnfNodePtr> &visited_node) {
   // Map partial inputs.
   MS_LOG(DEBUG) << "vmap_fg: " << vmap_fg->ToString() << ", partial_inputs_ size: " << partial_inputs_.size();
-  for (auto &node : partial_inputs_) {
+  for (const auto &node : partial_inputs_) {
     if (visited_node.count(node) > 0 || node->isa<CNode>()) {
       continue;
     }
@@ -755,7 +752,7 @@ FuncGraphPtr ExpandVmapPrim::ExpandVmapFuncGraph(const FuncGraphPtr &vmap_fg, co
   // The parameters of the current graph will be transformed in the upper graph, and recorded in
   // `visited_node` to avoid being repeatedly transformed refer as a free variable in other graph.
   auto parameter_nodes = vmap_fg->parameters();
-  for (auto &node : parameter_nodes) {
+  for (const auto &node : parameter_nodes) {
     MS_LOG(DEBUG) << "parameter_nodes" << node->DebugString() << ".";
     (void)visited_node.insert(node);
   }
@@ -949,7 +946,7 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
   MS_EXCEPTION_IF_NULL(resource);
   top_func_graph_ = resource->func_graph();
   MS_EXCEPTION_IF_NULL(top_func_graph_);
-  for (auto &vmap_node : prim_nodes_) {
+  for (const auto &vmap_node : prim_nodes_) {
     MS_LOG(DEBUG) << "vmap_node: " << vmap_node->DebugString();
     auto vmap_prim = GetValueNode<PrimitivePtr>(vmap_node->input(0));
     MS_EXCEPTION_IF_NULL(vmap_prim);
@@ -990,7 +987,7 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
                                << ".";
     }
 
-    for (auto &user : users) {
+    for (const auto &user : users) {
       // When `vmap_node` has more than one user or `fn` has more than one user, the original function graph
       // cannot be modified directly.
       auto vmap_fg_copy = BasicClone(vmap_fg, true);
