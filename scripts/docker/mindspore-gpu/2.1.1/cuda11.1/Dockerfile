@@ -90,7 +90,7 @@ RUN cd /tmp \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
 # Install MindSpore cuda-11.1, MindInsight, Serving whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/unified/x86_64/mindspore-2.1.1-cp37-cp37m-linux_x86_64.whl \
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/unified/x86_64/mindspore-2.1.1-cp37-cp37m-linux_x86_64.whl \
     && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindInsight/any/mindinsight-2.1.0-py3-none-any.whl \
     && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/Serving/x86_64/mindspore_serving-2.0.0-cp37-cp37m-linux_x86_64.whl \
-    pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/lite/release/linux/x86_64/cloud_fusion/python37/mindspore_lite-2.1.0-cp37-cp37m-linux_x86_64.whl
+    pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/lite/release/linux/x86_64/cloud_fusion/python37/mindspore_lite-2.1.1-cp37-cp37m-linux_x86_64.whl
