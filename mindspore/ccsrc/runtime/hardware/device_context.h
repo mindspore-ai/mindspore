@@ -33,6 +33,9 @@
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "runtime/pynative/async/task.h"
+#ifdef __APPLE__
+#include "mindrt/include/async/spinlock.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -104,7 +107,12 @@ class DeviceContext {
   std::unique_ptr<GraphExecutor> graph_executor_;
 
  protected:
+#ifdef __APPLE__
+  // There are some problems with using mutex on Mac, use spinlocks instead.
+  inline static SpinLock init_lock_;
+#else
   inline static std::mutex init_mutex_;
+#endif
 
  private:
   std::shared_ptr<KernelExecutor> kernel_executor_;
