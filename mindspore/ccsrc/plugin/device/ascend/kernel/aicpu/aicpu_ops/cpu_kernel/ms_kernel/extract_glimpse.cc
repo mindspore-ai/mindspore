@@ -52,7 +52,8 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t image_height = x->GetTensorShape()->GetDimSize(1);
   int64_t image_width = x->GetTensorShape()->GetDimSize(2);
   int64_t channels = x->GetTensorShape()->GetDimSize(3);
-  uint64_t g_height = ss_data[0], g_width = ss_data[1];
+  uint64_t g_height = ss_data[0];
+  uint64_t g_width = ss_data[1];
   uint64_t size1 = image_width * image_height * channels;
   uint64_t size2 = image_width * channels;
   uint64_t size3 = g_height * g_width * channels;
@@ -64,7 +65,8 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
     max_core = min(max_core, (uint64_t)batch_cnt);
     auto fun = [&](size_t st, size_t ed) {
       for (auto i = st; i < ed; i++) {
-        float x = offsets_data[i << 1], y = offsets_data[1 + (i << 1)];
+        float x = offsets_data[i << 1];
+        float y = offsets_data[1 + (i << 1)];
         if (normalized->GetBool()) {
           x *= image_height;
           y *= image_width;
@@ -78,8 +80,10 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
         x -= g_height / 2.0f;
         y -= g_width / 2.0f;
         for (int64_t v = 0; v < g_size; v++) {
-          int64_t j = v / g_width, k = v % g_width;
-          int64_t a = (int64_t)x + j, b = (int64_t)y + k;
+          int64_t j = v / g_width;
+          int64_t k = v % g_width;
+          int64_t a = (int64_t)x + j;
+          int64_t b = (int64_t)y + k;
           uint64_t pos_y = i * size3 + j * size4 + k * channels;
           if (a < 0 || a >= image_height || b < 0 || b >= image_width) {
             for (int u = 0; u < channels; u++) {
@@ -123,8 +127,10 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
       y -= g_width / 2.0f;
       if (g_size < SHED) {
         for (int64_t v = 0; v < g_size; v++) {
-          int64_t j = v / g_width, k = v % g_width;
-          int64_t a = (int64_t)x + j, b = (int64_t)y + k;
+          int64_t j = v / g_width;
+          int64_t k = v % g_width;
+          int64_t a = (int64_t)x + j;
+          int64_t b = (int64_t)y + k;
           uint64_t pos_y = i * size3 + j * size4 + k * channels;
           if (a < 0 || a >= image_height || b < 0 || b >= image_width) {
             for (int u = 0; u < channels; u++) {
@@ -152,8 +158,10 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
         max_core = min(max_core, (uint64_t)g_size);
         auto fun = [&](size_t st, size_t ed) {
           for (auto v = st; v < ed; v++) {
-            int64_t j = v / g_width, k = v % g_width;
-            int64_t a = (int64_t)x + j, b = (int64_t)y + k;
+            int64_t j = v / g_width;
+            int64_t k = v % g_width;
+            int64_t a = (int64_t)x + j;
+            int64_t b = (int64_t)y + k;
             uint64_t pos_y = i * size3 + j * size4 + k * channels;
             if (a < 0 || a >= image_height || b < 0 || b >= image_width) {
               for (int u = 0; u < channels; u++)

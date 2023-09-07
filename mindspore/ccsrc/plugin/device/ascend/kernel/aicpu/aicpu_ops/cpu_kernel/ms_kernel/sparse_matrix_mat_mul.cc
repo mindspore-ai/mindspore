@@ -265,9 +265,8 @@ uint32_t SparseMatrixMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
     "SparseMatrixMatMul Compute failed.");
 
   // computer result_row_pointers|result_col_indices|result_values data
-  indiceT row_output, col_output;
-  row_output = results[0].rows();
-  col_output = results[0].cols();
+  indiceT row_output = results[0].rows();
+  indiceT col_output = results[0].cols();
   for (int i = 0; i < batch_size; i++) {
     valueT *output_values_data = static_cast<valueT *>(ctx.Output(0)->GetData());
     std::copy(results[i].data(), results[i].data() + row_output * col_output,

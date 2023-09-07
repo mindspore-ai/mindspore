@@ -78,21 +78,18 @@ void CombinedNonMaxSuppressionCpuKernel::regular_input2buffer(float **boxes_buff
 float CombinedNonMaxSuppressionCpuKernel::IOU(float **boxes_buffer, int i, int j) {
   const float *box_a = boxes_buffer[i];
   const float *box_b = boxes_buffer[j];
-  float lx, ly, rx, ry;
-  float w, h;
-  float area;
   float area_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1]);
   float area_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1]);
   if (area_a <= 0 || area_b <= 0) {
     return 0.0;
   }
-  lx = box_a[0] > box_b[0] ? box_a[0] : box_b[0];
-  ly = box_a[1] > box_b[1] ? box_a[1] : box_b[1];
-  rx = box_a[2] < box_b[2] ? box_a[2] : box_b[2];
-  ry = box_a[3] < box_b[3] ? box_a[3] : box_b[3];
-  w = rx > lx ? (rx - lx) : 0;
-  h = ry > ly ? (ry - ly) : 0;
-  area = w * h;
+  float lx = box_a[0] > box_b[0] ? box_a[0] : box_b[0];
+  float ly = box_a[1] > box_b[1] ? box_a[1] : box_b[1];
+  float rx = box_a[2] < box_b[2] ? box_a[2] : box_b[2];
+  float ry = box_a[3] < box_b[3] ? box_a[3] : box_b[3];
+  float w = rx > lx ? (rx - lx) : 0;
+  float h = ry > ly ? (ry - ly) : 0;
+  float area = w * h;
   return area / (area_a + area_b - area);
 }
 

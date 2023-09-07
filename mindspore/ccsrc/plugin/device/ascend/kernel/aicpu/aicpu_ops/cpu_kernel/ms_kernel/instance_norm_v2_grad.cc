@@ -209,12 +209,14 @@ uint32_t InstanceNormV2GradCpuKernel::DoCompute(CpuKernelContext &ctx) {
     for (int64_t idx = begin; idx < end; ++idx) {
       for (int64_t c_idx = 0; c_idx < channel; ++c_idx) {
         float w = weight_matrix(idx, c_idx);
-        float mean = float_init_zero, invstd = float_init_zero;
+        float mean = float_init_zero;
+        float invstd = float_init_zero;
         mean = is_training_ ? save_mean_matrix(idx, c_idx) : running_mean_matrix(idx, c_idx);
         float _invstd_ = std::sqrt(running_var_matrix(idx, c_idx) + epsilon_);
         invstd = is_training_ ? save_invstd_matrix(idx, c_idx) : float_init_one / _invstd_;
 
-        double sum = double_init_zero, dotp = double_init_zero;
+        double sum = double_init_zero;
+        double dotp = double_init_zero;
         for (int64_t img_idx = 0; img_idx < image_size; ++img_idx) {
           sum += static_cast<double>(dy_3d(idx, img_idx, c_idx));
           dotp += (static_cast<double>(in_x_3d(idx, img_idx, c_idx)) - FloatToDouble(mean)) *

@@ -71,7 +71,9 @@ void HSVToRGBCpuKernel::ConvertOnePixel(T h, T s, T v, T *r, T *g, T *b) {
   T c = s * v;
   T m = v - c;
   T dh = h * 6;
-  T rr, gg, bb;
+  T rr;
+  T gg;
+  T bb;
   const int32_t h_category = static_cast<int32_t>(std::floor(dh));
   T fmodu = dh;
   if (fmodu <= 0 || fmodu >= 2) {

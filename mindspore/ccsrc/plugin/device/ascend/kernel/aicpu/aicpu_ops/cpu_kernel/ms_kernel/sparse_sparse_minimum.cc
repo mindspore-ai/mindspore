@@ -135,7 +135,8 @@ uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(const CpuKerne
   EigenTensor x2_values_ET(ctx.Input(4), ctx.Input(4)->GetData());
   auto x1_values = x1_values_ET.vec<T>();
   auto x2_values = x2_values_ET.vec<T>();
-  int64_t i = 0, j = 0;
+  int64_t i = 0;
+  int64_t j = 0;
   T s;
   while (i < x1_nnz && j < x2_nnz) {
     switch (cmp(x1_indices_mat, i, num_dims, x2_indices_mat, j)) {

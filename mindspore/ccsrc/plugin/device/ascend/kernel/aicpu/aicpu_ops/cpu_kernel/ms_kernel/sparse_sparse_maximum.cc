@@ -91,7 +91,8 @@ void SparseMaximumCpuKernel::UnionSparseIndicesAndValues(typename TTypes<int64_t
   a_augmented_values->reserve(a_nnz);
   b_augmented_values->reserve(b_nnz);
 
-  int64_t i = 0, j = 0;
+  int64_t i = 0;
+  int64_t j = 0;
   const T kZero = T(0);
   while (i < a_nnz && j < b_nnz) {
     switch (cmp(a_indices_mat, b_indices_mat, i, j, num_dims)) {
@@ -167,7 +168,8 @@ uint32_t SparseMaximumCpuKernel::EigenedSparseMax(const DataBank &databank) {
                        "Operands' shapes do not match: got [%d] and [%d] for dimension [%d]", a_shape(i), b_shape(i), i)
   }
 
-  std::vector<T> a_augmented_values, b_augmented_values;
+  std::vector<T> a_augmented_values;
+  std::vector<T> b_augmented_values;
   std::vector<std::pair<bool, int64_t>> entries_to_copy;  // from_a?, idx
   UnionSparseIndicesAndValues(a_indices_mat, a_values, a_nnz, b_indices_mat, b_values, b_nnz, num_dims,
                               &a_augmented_values, &b_augmented_values, &entries_to_copy);

@@ -131,10 +131,9 @@ void CumulativeProcess(uint32_t outer, uint32_t inner, uint32_t depth, bool reve
           } else {
             output_data[index] = static_cast<t>(temp);
             double a = temp;
-            double b, min0, max0;
-            b = static_cast<double>(input_data[index]);
-            min0 = (a < b) ? a : b;
-            max0 = (a > b) ? a : b;
+            double b = static_cast<double>(input_data[index]);
+            double min0 = (a < b) ? a : b;
+            double max0 = (a > b) ? a : b;
             temp = log(one + exp(min0 - max0)) + max0;
           }
         } else {
@@ -143,10 +142,9 @@ void CumulativeProcess(uint32_t outer, uint32_t inner, uint32_t depth, bool reve
             temp = static_cast<double>(input_data[index]);
           } else {
             double a = temp;
-            double b, min0, max0;
-            b = static_cast<double>(input_data[index]);
-            min0 = (a < b) ? a : b;
-            max0 = (a > b) ? a : b;
+            double b = static_cast<double>(input_data[index]);
+            double min0 = (a < b) ? a : b;
+            double max0 = (a > b) ? a : b;
             output_data[index] = static_cast<t>(log(one + exp(min0 - max0)) + max0);
             temp = log(one + exp(min0 - max0)) + max0;
           }

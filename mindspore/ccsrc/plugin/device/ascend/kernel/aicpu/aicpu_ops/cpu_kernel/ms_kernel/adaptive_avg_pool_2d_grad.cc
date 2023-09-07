@@ -96,9 +96,8 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalc
             continue;
           }
           float grad_delta = static_cast<float>(input_offset_ptr[ih * args.in_stride_h + iw]) / step_h / step_w;
-          int64_t oh = 0, ow = 0;
-          for (oh = out_start_h; oh < out_end_h; oh++) {
-            for (ow = out_start_w; ow < out_end_w; ow++) {
+          for (int64_t oh = out_start_h; oh < out_end_h; oh++) {
+            for (int64_t ow = out_start_w; ow < out_end_w; ow++) {
               int64_t output_idx = oh * args.out_stride_h + ow;
               output_offset_ptr[output_idx] += grad_delta;
             }
