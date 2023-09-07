@@ -93,6 +93,11 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
 using mindspore::kernel::KernelBuildInfo;
 
 void CPUDeviceContext::Initialize() {
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(init_lock_);
+#else
+  std::lock_guard<std::mutex> lock(init_mutex_);
+#endif
   if (initialized_) {
     return;
   }

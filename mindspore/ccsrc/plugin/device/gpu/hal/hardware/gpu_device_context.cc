@@ -111,6 +111,7 @@ using KernelGraph = mindspore::session::KernelGraph;
 static thread_local bool cur_thread_device_inited{false};
 
 void GPUDeviceContext::Initialize() {
+  std::lock_guard<std::mutex> lock(init_mutex_);
   if (initialized_) {
     if (!device_res_manager_->BindDeviceToCurrentThread(false)) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
