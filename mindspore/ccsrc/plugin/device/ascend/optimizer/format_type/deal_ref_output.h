@@ -26,8 +26,7 @@ namespace mindspore {
 namespace opt {
 class DealRefOutput : public PatternProcessPass {
  public:
-  explicit DealRefOutput(bool multigraph = true, bool is_ge = false)
-      : PatternProcessPass("deal_ref_output", multigraph), is_ge_(is_ge) {}
+  explicit DealRefOutput(bool multigraph = true) : PatternProcessPass("deal_ref_output", multigraph) {}
   ~DealRefOutput() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
@@ -42,16 +41,12 @@ class DealRefOutput : public PatternProcessPass {
                                       const std::shared_ptr<kernel::OpInfo> &op_info) const;
   AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t output_index,
                                       size_t input_index, const AnfNodePtr &get_item) const;
-  AnfNodePtr AddAdditionalToRefOutputForGe(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t output_index,
-                                           size_t input_index, const AnfNodePtr &get_item) const;
   void AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &get_item,
                                const AnfNodePtr &final_node, size_t final_index,
                                const session::KernelWithIndex &origin_pair) const;
   void AddRefNodePairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const size_t output_index,
                                    const size_t input_index) const;
   session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) const;
-
-  bool is_ge_;
 };
 }  // namespace opt
 }  // namespace mindspore

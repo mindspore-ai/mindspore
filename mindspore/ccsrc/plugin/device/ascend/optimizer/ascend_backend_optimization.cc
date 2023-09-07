@@ -657,7 +657,6 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
-  opt_ge_pm->AddPass(std::make_shared<DealRefOutput>(true, true));
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
