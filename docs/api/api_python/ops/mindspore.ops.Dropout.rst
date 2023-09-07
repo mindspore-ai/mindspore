@@ -17,4 +17,13 @@
 
     输出：
         - **output** (Tensor) - shape和数据类型与 `x` 相同。
-        - **mask** (Tensor) - shape与 `x` 相同。
+        - **mask** (Tensor) - 应用于 `x` 的掩码。
+        
+          - 在GPU和CPU上， `mask` 具有与 `x` 相同的shape和数据类型。
+          - 在Ascend上，为了获得更好的性能，它被表示为一个具有Uint8数据类型的一维Tensor。其shape为 :math:`(byte_counts, )` ， 其中 :math:`byte_counts` 为覆盖 `x` 的shape所需的字节数。通过下面的公式计算其大小：
+
+            .. math::
+
+                byte\_counts = \text{ceil}(\text{cumprod}(x.shape) / 128) * 16
+
+            若 `x` 的shape为 :math:`(2, 3, 4, 5, 6)` ，则 `mask` 的shape为 :math:`(96, )` 。
