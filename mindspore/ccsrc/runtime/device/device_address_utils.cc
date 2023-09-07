@@ -220,17 +220,22 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
     auto input_num = common::AnfAlgo::GetInputNum(node);
     mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
     if (op_def == nullptr) {
-      MS_LOG(INFO) << op_name << " is not found in OpDef.";
+      MS_LOG(DEBUG) << op_name << " is not found in OpDef.";
       for (size_t i = 0; i < input_num; i++) {
         auto input = common::AnfAlgo::GetInputNode(node, i);
         (void)nodes.insert(input);
       }
-      return nodes;
+      continue;
     }
     auto args = op_def->args_;
     if (input_num != args.size()) {
-      MS_LOG(EXCEPTION) << "Node " << op_name << ", has " << input_num << " inputs, but has " << args.size()
-                        << " inputs in op_def ";
+      MS_LOG(DEBUG) << "Node " << op_name << ", has " << input_num << " inputs, but has " << args.size()
+                    << " inputs in op_def, it means allsame input";
+      size_t total = (args[args.size() - 1].as_init_arg_ == 1) ? input_num - 2 : input_num - 1;
+      for (size_t i = 0; i < total; i++) {
+        (void)nodes.insert(node->input(i));
+      }
+      continue;
     }
     for (size_t i = 0; i < input_num; i++) {
       if (args[i].as_init_arg_ == 0) {
@@ -246,7 +251,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
                                                       const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
-  // store node without init args
+  // store node without init args, means need device addr
   auto value_nodes_without_init_args = FetchValueNodesNeedDevicePtr(graph);
   for (const ValueNodePtr &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
