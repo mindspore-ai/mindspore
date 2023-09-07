@@ -122,6 +122,17 @@ ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) { return AC
 
 /**
  * @ingroup AscendCL
+ * @brief Set the timeout interval for executing of op
+ *
+ * @param timeout [IN]    op execute timeout
+ *
+ * @retval ACL_SUCCESS The function is successfully executed.
+ * @retval OtherValues Failure
+ */
+ACL_FUNC_VISIBILITY aclError aclrtSetOpExecuteTimeOut(uint32_t timeout) { return ACL_SUCCESS; }
+
+/**
+ * @ingroup AscendCL
  * @brief Initialize memory and set contents of memory to specified value
  *
  * @par Function

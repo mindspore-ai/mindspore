@@ -94,7 +94,7 @@ mindspore.set_context
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值： ``1024GB`` 。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。 `max_device_memory` 需要在程序运行之前设置。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
         - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值： ``1GB`` 。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
-        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着无限等待。默认值： ``1900`` 。
+        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着使用默认值， AI Core和AICPU算子在不同硬件上的默认值有差异， 详细信息请查看 `昇腾社区 <https://hiascend.com/document/detail/zh/CANNCommunityEdition/70RC1alpha003/infacldevg/aclcppdevg/aclcppdevg_03_0606.html>`。MindSpore默认设置值： ``900`` 。
         - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认值： ``0`` 。可用的选项为：
 
           - False或0：不保存中间编译图。
@@ -124,7 +124,7 @@ mindspore.set_context
           内存重用：
 
           - **mem_Reuse**：表示内存复用功能是否打开。设置为 ``True`` 时，将打开内存复用功能。设置为 ``False`` 时，将关闭内存复用功能。
-            
+
           配置详细信息，请查看 `Running Data Recorder <https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/rdr.html>`_ 和 `内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/optimize/mem_reuse.html>`_ 。
 
         - **precompile_only** (bool) - 表示是否仅预编译网络。默认值： ``False`` 。设置为 ``True`` 时，仅编译网络，而不执行网络。

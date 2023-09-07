@@ -70,6 +70,7 @@
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 using std::vector;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
+constexpr uint32_t kDefaultHcclExecTimeout = 1800;
 
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
@@ -333,10 +334,35 @@ bool AscendKernelRuntime::Init() {
     }
     // for tiling rt2 operator to register
     ::ge::OppSoManager::GetInstance().LoadOppPackage();
-    uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
-    auto acl_ret = aclrtSetOpWaitTimeout(op_timeout);
+    uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
+    std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");
+    uint32_t notify_wait_timeout;
+    if (hccl_exec_timeout.empty()) {
+      notify_wait_timeout = kDefaultHcclExecTimeout;
+    } else {
+      try {
+        notify_wait_timeout = std::stoi(hccl_exec_timeout);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Parse environment variable HCCL_EXEC_TIMEOUT failed, value" << hccl_exec_timeout
+                      << ", msg: " << e.what();
+        return false;
+      }
+    }
+    if (op_execute_timeout >= notify_wait_timeout) {
+      MS_LOG(WARNING) << "OpExecuteTimeout should be less than NotifyWaitTimeout, but got OpExecuteTimeout "
+                      << op_execute_timeout << ", notify_wait_timeout " << notify_wait_timeout << "."
+                      << "1. You can set OpExecuteTimeout via mindspore.set_context(op_timeout=int)."
+                      << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
+    }
+    const uint32_t reserve_time = 180;
+    uint32_t op_wait_timeout = kDefaultHcclExecTimeout + reserve_time;
+    auto acl_ret = aclrtSetOpWaitTimeout(op_wait_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
+    }
+    acl_ret = aclrtSetOpExecuteTimeOut(op_execute_timeout);
+    if (acl_ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
     }
   } catch (const std::exception &e) {
     if (init_device) {
