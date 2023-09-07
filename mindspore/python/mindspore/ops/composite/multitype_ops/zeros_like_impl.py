@@ -41,6 +41,15 @@ def _zeros_like_bool(x):
     """Returns False if x is a bool."""
     return False
 
+@zeros_like_leaf.register("String")
+def _zeros_like_string(x):
+    """Returns False if x is a string."""
+    return 0
+
+@zeros_like_leaf.register("Tuple")
+def _zeros_like_tuple(x):
+    """Returns False if x is a tuple."""
+    return 0
 
 @zeros_like_leaf.register("Function")
 def _zeros_like_func(x):
