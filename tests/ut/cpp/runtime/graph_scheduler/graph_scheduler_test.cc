@@ -19,6 +19,7 @@
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+
 namespace mindspore {
 namespace runtime {
 using namespace test;
@@ -150,6 +151,78 @@ TEST_F(GraphSchedulerTest, Transform) {
   auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
 
   const auto backend = std::make_shared<compile::MindRTBackend>("vm", device_name, 0);
+  const auto actor_info = backend->CompileGraphs(func_graph);
+  ASSERT_EQ(actor_info.find("kernel_graph") != std::string::npos, true);
+
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, last_execution_mode);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, last_enable_mindrt);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, last_device_id);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, last_device_target);
+}
+
+FuncGraphPtr BuildAnyTypeGraph() {
+  auto func_graph = BuildFuncGraph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  // root graph.
+  auto parameters = func_graph->parameters();
+
+  // PyExecute.
+  auto script_value = MakeValue("___test_script___");
+  auto script_value_node = NewValueNode(script_value);
+  script_value_node->set_abstract(script_value->ToAbstract());
+
+  auto key_value = MakeValue("___test_key___");
+  auto key_value_node = NewValueNode(key_value);
+  key_value_node->set_abstract(key_value->ToAbstract());
+  std::vector<AnfNodePtr> pyexecute_input{NewValueNode(prim::kPrimPyExecute), script_value_node, key_value_node,
+                                          parameters[0]};
+  auto pyexecute_node = func_graph->NewCNode(pyexecute_input);
+  auto pyexecute_abs = std::make_shared<abstract::AbstractAny>();
+  pyexecute_node->set_abstract(pyexecute_abs);
+
+  // Add.
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd), pyexecute_node, parameters[1]};
+  auto add_node = func_graph->NewCNode(add_inputs);
+  auto add_abs = std::make_shared<abstract::AbstractAny>();
+  add_node->set_abstract(add_abs);
+
+  // Return.
+  std::vector<AnfNodePtr> return_inputs{NewValueNode(prim::kPrimReturn), add_node};
+  auto return_node = func_graph->NewCNode(return_inputs);
+  auto return_abs = std::make_shared<abstract::AbstractAny>();
+  return_node->set_abstract(return_abs);
+  func_graph->set_return(return_node);
+  return func_graph;
+}
+
+/// Feature: Pyexecute any type output.
+/// Description: Test the compile of any type.
+/// Expectation: As expected.
+TEST_F(GraphSchedulerTest, AnyTypeKernelGraphTransform) {
+  const char device_name[] = "CPU";
+  uint32_t device_id = 0;
+
+  auto ms_context = MsContext::GetInstance();
+  int last_execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  bool last_enable_mindrt = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+  uint32_t last_device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string last_device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, device_name);
+
+  FuncGraphPtr func_graph = BuildAnyTypeGraph();
+  std::vector<FuncGraphPtr> graphs{func_graph};
+  FuncGraphManagerPtr manager = std::make_shared<FuncGraphManager>(graphs);
+  manager->AddFuncGraph(func_graph);
+  MS_REGISTER_DEVICE(device_name, TestDeviceContext);
+  DeviceContextKey device_context_key{device_name, device_id};
+  auto device_context = std::make_shared<TestDeviceContext>(device_context_key);
+
+  const auto backend = std::make_shared<compile::MindRTBackend>("ms", device_name, 0);
   const auto actor_info = backend->CompileGraphs(func_graph);
   ASSERT_EQ(actor_info.find("kernel_graph") != std::string::npos, true);
 
