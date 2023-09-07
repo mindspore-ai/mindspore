@@ -126,3 +126,9 @@ padding_mode:
 pool_mode:
   MAX_POOLING: 0
   MEAN_POOLING: 1
+
+# enum NormMode
+norm_mode:
+  BACKWARD: 0
+  FORWARD: 1
+  ORTHO: 2
