@@ -225,17 +225,17 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // Return the valid device ptr.
   virtual void *GetValidPtr(size_t) {
-    if (user_data_ == nullptr || need_sync_user_data_ == false) {
+    if (user_data_ == nullptr || sync_user_data_handler_ == nullptr) {
       return ptr_;
     }
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    if (need_sync_user_data_ == false) {
+    if (sync_user_data_handler_ == nullptr) {
       return ptr_;
     }
     if (sync_user_data_handler_ != nullptr) {
       sync_user_data_handler_(this);
     }
-    need_sync_user_data_ = true;
+    sync_user_data_handler_ = nullptr;
     return ptr_;
   }
 
@@ -268,7 +268,6 @@ class DeviceAddress : public mindspore::DeviceSync {
     other->from_mem_pool_ = from_mem_pool_;
     other->set_deleter(deleter());
     other->set_sync_user_data_handler(sync_user_data_handler_);
-    other->set_need_sync_user_data(need_sync_user_data_);
     ptr_ = nullptr;
     from_mem_pool_ = false;
     deleter_ = nullptr;
@@ -293,10 +292,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool is_view() { return is_view_; }
 
   using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
+  // For output of pyexecute kernel, the input data is stored in user data and the handler is used to sync data from
+  // user data to device ptr.
   SyncUserDataHandler sync_user_data_handler() { return sync_user_data_handler_; }
   void set_sync_user_data_handler(SyncUserDataHandler handler) { sync_user_data_handler_ = handler; }
-  bool need_sync_user_data() { return need_sync_user_data_; }
-  void set_need_sync_user_data(bool need_sync_user_data) { need_sync_user_data_ = need_sync_user_data; }
 
  protected:
   const void *ptr() const { return ptr_; }
@@ -338,7 +337,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
   // Handler for sync data from user data.
   SyncUserDataHandler sync_user_data_handler_{nullptr};
-  bool need_sync_user_data_{false};
   // The specified deleter to release memory
   std::function<void(uint8_t *)> deleter_;
   friend class KernelRuntime;

@@ -27,6 +27,7 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/python_fallback_running.h"
+#include "include/backend/py_execute_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/pipeline/jit/ps/parse/resolve.h"
 #include "utils/trace_base.h"
@@ -233,7 +234,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
       const auto &device_address = AnfAlgo::GetMutableOutputAddr(kernel_node_, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
-      device_address->set_need_sync_user_data(true);
+      device_address->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
     }
     AttachPyOutputData(output);
     return true;
