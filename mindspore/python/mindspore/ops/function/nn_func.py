@@ -233,7 +233,7 @@ def adaptive_avg_pool3d(input, output_size):
 def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
     """Checks the type of avgpool1d input"""
     validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
-    validator.check_value_type('stride', stride, [int], 'avg_pool1d')
+    validator.check_value_type('stride', stride, (int, tuple), 'avg_pool1d')
     validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
     validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
     validator.check_int(kernel_size, 1, validator.GE, "kernel_size", 'avg_pool1d')
@@ -264,12 +264,10 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
         kernel_size (int): The size of kernel window used to take the average value. Default: ``1`` .
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents the height and
-            width of movement are both strides, or a tuple of two int numbers that represent height and width of
-            movement respectively. Default: ``1`` .
-        padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
-            and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
-            equal to `padding[0]` and `padding[1]` correspondingly. Default: ``0`` .
+        stride (Union(int, tuple[int])): The distance of kernel moving. `stride` can either be an int
+            number or a tuple of one int number. Default: ``1`` .
+        padding (Union(int, tuple[int])): The pad value to be filled. `padding` can either be an integer
+            or a tuple of one integer. Default: ``0`` .
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
 
@@ -308,13 +306,18 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         check_non_negative_int(padding, 'padding', 'avg_pool1d')
         padding = (0, 0, 0, 0, padding, padding)
     elif isinstance(padding, tuple):
-        if len(padding) != 2:
-            raise ValueError("For avg_pool1d, padding should be int or tuple of length 2.")
+        if len(padding) != 1:
+            raise ValueError("For avg_pool1d, padding should be int or tuple of length 1.")
         for item in padding:
             check_non_negative_int(item, 'padding', 'avg_pool1d')
-        padding = (0, 0, 0, 0, padding[0], padding[1])
+        padding = (0, 0, 0, 0, padding[0], padding[0])
     else:
-        raise TypeError("For avg_pool1d, padding should be int or tuple of length 2.")
+        raise TypeError("For avg_pool1d, padding should be int or tuple of length 1.")
+
+    if isinstance(stride, tuple):
+        if len(stride) != 1:
+            raise ValueError("For avg_pool1d, stride should be int or tuple of length 1.")
+        stride = stride[0]
 
     expand_op = _get_cache_prim(P.ExpandDims)()
     squeeze_op = _get_cache_prim(P.Squeeze)((2, 3))
