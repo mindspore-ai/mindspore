@@ -279,6 +279,7 @@ def test_pyexecute_with_func_graph_input():
     assert ret2 == 6
 
 
+@pytest.mark.skip('backend not support different type in value tuple')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

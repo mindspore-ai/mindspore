@@ -159,11 +159,8 @@ def test_format_with_list_index():
 
     x = Tensor([1])
     y = Tensor([0])
-    # TODO(LianLiguang,LiangZhibo) remove error when list is supported in backend
-    with pytest.raises(IndexError) as info:
-        result_st = foo(x, y)
-        assert result_st == "hello {0[1]},It's me {0[0]}".format([x, y])
-    assert "index 1 is out of bounds for dimension with size 1." in str(info.value)
+    result_st = foo(x, y)
+    assert result_st == "hello {0[1]},It's me {0[0]}".format([x, y])
 
 
 

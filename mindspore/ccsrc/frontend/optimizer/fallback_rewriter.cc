@@ -1060,7 +1060,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -1126,7 +1126,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -1248,7 +1248,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -1309,7 +1309,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -1363,7 +1363,7 @@ class AfterOptARewriter : public BaseRewriter {
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -1433,7 +1433,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
@@ -2305,7 +2305,7 @@ class AfterOptARewriter : public BaseRewriter {
     auto list_obj_str = list_obj_str_prefix + list_obj_id + "_";
     auto res = fallback::ConvertPyObjectToPyExecute(fg, list_obj_str, list_object, value_node, false);
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") == "1";
+    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.

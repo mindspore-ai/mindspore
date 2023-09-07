@@ -730,7 +730,7 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
 
 namespace {
 bool IsAnyTypeCut(const AnfNodePtr &node) {
-  return common::GetEnv("MS_RUNTIME_COMPILE") == "1" &&
+  return common::GetEnv("MS_RUNTIME_COMPILE") != "1" &&
          common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute) && common::AnfAlgo::IsAnyTypeOutput(node);
 }
 }  // namespace

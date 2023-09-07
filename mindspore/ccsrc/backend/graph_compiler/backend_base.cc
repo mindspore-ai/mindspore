@@ -669,7 +669,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
                      << ", debug name:" << cnode->DebugString();
       }
 
-      if (common::GetEnv("MS_RUNTIME_COMPILE") != "1") {
+      if (common::GetEnv("MS_RUNTIME_COMPILE") == "1") {
         SetPyExecuteSyncAttr(cnode);
       }
     }
