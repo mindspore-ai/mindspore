@@ -100,6 +100,7 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto all_attrs = op_info_ptr->attrs_ptr();
   bool need_update = false;
+  std::vector<std::string> missing_optional_attrs;
   for (const auto &attr : all_attrs) {
     auto attr_name = attr->name();
     if (missing_attrs.find(attr_name) == missing_attrs.end()) {
@@ -107,9 +108,16 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
     }
     auto default_value = attr->default_value();
     if (default_value.empty()) {
+      if (attr->param_type() == "optional") {
+        missing_optional_attrs.push_back(attr_name);
+      }
       continue;
     }
     ParseAttrDefaultValue(op_name, attr_name, default_value, attr->type(), primitive);
+    need_update = true;
+  }
+  if (!missing_optional_attrs.empty()) {
+    primitive->set_attr("missing_optional_attrs", MakeValue(missing_optional_attrs));
     need_update = true;
   }
   if (need_update) {
