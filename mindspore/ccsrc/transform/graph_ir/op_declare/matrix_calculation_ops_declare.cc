@@ -40,6 +40,18 @@ ATTR_MAP(ScatterNdUpdate) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bo
 OUTPUT_MAP(ScatterNdUpdate) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterNdUpdate, kNameScatterNdUpdate, ADPT_DESC(ScatterNdUpdate))
 
+// ScatterNdMax
+INPUT_MAP(ScatterNdMax) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterNdMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterNdMax) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterNdMax, kScatterNdMaxOpName, ADPT_DESC(ScatterNdMax))
+
+// ScatterNdMin
+INPUT_MAP(ScatterNdMin) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterNdMin) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterNdMin) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterNdMin, kScatterNdMinOpName, ADPT_DESC(ScatterNdMin))
+
 // ScatterMax
 INPUT_MAP(ScatterMax) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
 ATTR_MAP(ScatterMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
