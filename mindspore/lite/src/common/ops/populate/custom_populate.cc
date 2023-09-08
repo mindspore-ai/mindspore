@@ -52,7 +52,9 @@ OpParameter *PopulateSplitReduceConcatFusionParam(const schema::Custom *value) {
     return nullptr;
   }
 
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(param->num_split_, static_cast<int>(sizeof(int)), nullptr);
   auto split_sizes_size = static_cast<size_t>(param->num_split_) * sizeof(int);
+  MS_CHECK_TRUE_RET(split_sizes_size < MAX_MALLOC_SIZE, nullptr);
   param->split_sizes_ = reinterpret_cast<int *>(malloc(split_sizes_size));
   if (param->split_sizes_ == nullptr) {
     MS_LOG(ERROR) << "malloc split_sizes_ failed.";

@@ -84,7 +84,11 @@ inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name,
 
 inline void DLSoClose(void *handle) {
   if (handle != nullptr) {
-    (void)dlclose(handle);
+    try {
+      (void)dlclose(handle);
+    } catch (const std::exception &ex) {
+      MS_LOG(WARNING) << "dlclose so failed.";
+    }
   }
 }
 

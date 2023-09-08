@@ -93,7 +93,7 @@ int ArithmeticSelfInt8Runs(void *cdata, int task_id, float, float) {
 }
 
 int ArithmeticSelfInt8CPUKernel::DoArithmeticSelf(int task_id) {
-  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
+  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_) - task_id * thread_sz_stride_);
   if (size <= 0) {
     return RET_OK;
   }

@@ -247,7 +247,10 @@ Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::T
   }
   if (is_data_flow_graph_) {
     DelegateGraphInfo graph_info;
-    UpdateGraphInputsOutputs(graph_id, &graph_info);
+    if (UpdateGraphInputsOutputs(graph_id, &graph_info) != kSuccess) {
+      MS_LOG(ERROR) << "Update graph inputs and outputs failed for data flow graph.";
+      return kCoreFailed;
+    }
     graph_infos_[graph_id] = graph_info;
   }
   return kSuccess;

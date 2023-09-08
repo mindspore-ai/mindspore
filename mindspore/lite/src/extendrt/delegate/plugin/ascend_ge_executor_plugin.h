@@ -40,7 +40,7 @@ class MS_API AscendGeExecutorPlugin {
  public:
   static AscendGeExecutorPlugin &GetInstance();
   bool Register();
-  void AdaptGraph(FuncGraphPtr graph);
+  void AdaptGraph(const FuncGraphPtr &graph);
   bool AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
                  const ConfigInfos &config_infos);
 
