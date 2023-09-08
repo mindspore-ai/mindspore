@@ -24,6 +24,7 @@
 #include <limits>
 #include <algorithm>
 #include <vector>
+#include <tuple>
 
 #include "utils/hash_map.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
@@ -47,6 +48,34 @@ class TensorIndex : public MetaFuncGraph {
  protected:
   AnfNodePtrList ParseSlice(const AnfNodePtr &index_node, const abstract::AbstractSlicePtr &abs_slice_ptr,
                             std::vector<int64_t> *init_by_one);
+  IndexHandleLevel PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs);
+  AnfNodePtr IntIndexToTensor(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                              const AbstractBasePtr &int_index_abs, const std::vector<int64_t> &tuple_index_types,
+                              size_t dim_index, int64_t expand_dims_mask);
+  AnfNodePtr SequenceIndexToTensor(const AnfNodePtr &data_node, const AnfNodePtr &sequence_index_node,
+                                   const std::vector<int64_t> &tuple_index_types,
+                                   const AbstractBasePtr &sequence_index_abs, const size_t dim_index,
+                                   int64_t expand_dims_mask, bool *empty_sequence);
+  AnfNodePtr SliceIndexToTensor(const AnfNodePtr &data_node, const std::vector<int64_t> &tuple_index_types,
+                                const AnfNodePtr &slice_index_node, const abstract::AbstractSlicePtr &slice_abs,
+                                const size_t dim_index, const IndexHandleLevel index_handle_level,
+                                int64_t expand_dims_mask);
+
+  AnfNodePtr NoneIndexToTensor(const AnfNodePtr &data_node, const std::vector<int64_t> &tuple_index_types,
+                               const AnfNodePtr &none_index_node, const size_t dim_index);
+  AnfNodePtr EllipsisIndexToTensor(const AnfNodePtr &data_node, const std::vector<int64_t> &tuple_index_types,
+                                   const AnfNodePtr &none_index_node, const size_t dim_index);
+  std::vector<AnfNodePtr> NormalizeTupleIndex(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                                              const std::vector<int64_t> &tuple_index_types,
+                                              const IndexHandleLevel index_handle_level, const bool has_ellipsis,
+                                              const abstract::AbstractTuplePtr &tuple_abs_ptr, bool *all_empty_tensors);
+  void RemakeTupleIndex(bool has_ellipsis, const std::vector<int64_t> &tuple_index_types, const AnfNodePtr &data_node,
+                        const std::vector<AnfNodePtr> &new_normalized_tensors, size_t not_ellipsis_position_cnt,
+                        size_t ellipsis_position);
+  std::vector<CNodePtr> GetTupleIndexInfo(const AnfNodePtr &data_node,
+                                          const std::vector<AnfNodePtr> &normalized_tensors,
+                                          const mindspore::HashMap<std::string, ValuePtr> &attrs);
+
   FuncGraphPtr res_graph_;
   ShapeVector data_shape_;
 };
@@ -61,9 +90,26 @@ class TensorIndexGetitem : public TensorIndex {
     return lhs.name_ == rhs.name_;
   }
 
+ protected:
+  AnfNodePtr ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node, const abstract::AbstractTuplePtr &tuple_abs_ptr,
+                                    const std::vector<int64_t> &tuple_index_types, size_t expand_dims_cnt);
+
  private:
   void GetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
                       const abstract::AbstractSlicePtr &abs_slice_ptr);
+  void GetItemByTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
+                      const abstract::AbstractTuplePtr &tuple_abs_ptr);
+  std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr> NormalizeStrideInfoFromTuple(
+    const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
+    const std::vector<int64_t> &tuple_index_types, size_t tuple_index);
+  void ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                                   const std::vector<int64_t> &tuple_index_types, bool has_ellipsis,
+                                   const abstract::AbstractTuplePtr &tuple_abs_ptr, size_t not_ellipsis_position_cnt,
+                                   size_t ellipsis_position);
+  void GetStrideInfoFromTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                              const std::vector<int64_t> &tuple_index_types, const IndexHandleLevel index_handle_level,
+                              bool has_ellipsis, const abstract::AbstractTuplePtr &tuple_abs_ptr,
+                              size_t not_ellipsis_position_cnt, size_t ellipsis_position);
 };
 
 class TensorIndexSetitem : public TensorIndex {
@@ -80,7 +126,48 @@ class TensorIndexSetitem : public TensorIndex {
   void SetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AnfNodePtr &value_node,
                       const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice_ptr,
                       const AbstractBasePtr &value);
+  void SetItemByTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AnfNodePtr &value_node,
+                      const AnfNodePtr &fancy_position_node, const AbstractBasePtr &data,
+                      const abstract::AbstractTuplePtr &abs_slice_ptr, const AbstractBasePtr &value,
+                      const AbstractBasePtr &fancy_position);
 };
+
+class HandleEmptySlice : public TensorIndexGetitem {
+ public:
+  explicit HandleEmptySlice(const std::string &name) : TensorIndexGetitem(name) {}
+  ~HandleEmptySlice() override = default;
+  MS_DECLARE_PARENT(HandleEmptySlice, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const HandleEmptySlice &lhs, const HandleEmptySlice &rhs) { return lhs.name_ == rhs.name_; }
+  void HandleEmptySliceByTupleIndex(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                                    const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs_ptr);
+};
+
+class HandleBoolTensor : public TensorIndex {
+ public:
+  explicit HandleBoolTensor(const std::string &name) : TensorIndex(name) {}
+  ~HandleBoolTensor() override = default;
+  MS_DECLARE_PARENT(HandleBoolTensor, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const HandleBoolTensor &lhs, const HandleBoolTensor &rhs) { return lhs.name_ == rhs.name_; }
+};
+
+class PreSetitemByTuple : public TensorIndex {
+ public:
+  explicit PreSetitemByTuple(const std::string &name) : TensorIndex(name) {}
+  ~PreSetitemByTuple() override = default;
+  MS_DECLARE_PARENT(PreSetitemByTuple, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const PreSetitemByTuple &lhs, const PreSetitemByTuple &rhs) { return lhs.name_ == rhs.name_; }
+  AnfNodePtr FormatIndex(const abstract::AbstractBasePtr &index_abs, const AnfNodePtr &data_node,
+                         const AnfNodePtr &index_node, size_t cur_dim, const std::vector<int64_t> &tuple_index_types,
+                         int64_t expand_dims_mask, bool *empty_sequence);
+  void RemoveExpandedDims(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AnfNodePtr &value_node,
+                          const std::vector<int64_t> &tuple_index_types, const IndexHandleLevel index_handle_level,
+                          const bool has_ellipsis, const abstract::AbstractTuplePtr &tuple_abs_ptr,
+                          int64_t expand_dims_mask);
+};
+
 }  // namespace prim
 }  // namespace mindspore
 
