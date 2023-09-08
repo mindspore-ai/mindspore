@@ -27,16 +27,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.PrimitiveWithCheck
     mindspore.ops.PrimitiveWithInfer
 
-装饰器
---------
-
-.. mscnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.constexpr
-
 神经网络层算子
 ----------------
 

@@ -28,16 +28,6 @@ Operator Primitives
     mindspore.ops.PrimitiveWithCheck
     mindspore.ops.PrimitiveWithInfer
 
-Decorators
-----------
-
-.. autosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.constexpr
-
 Neural Network Layer Operators
 ------------------------------
 
