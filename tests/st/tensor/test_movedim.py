@@ -39,7 +39,7 @@ def test_net(mode):
     Expectation: assertion success
     """
     ms.set_context(mode=mode)
-    x = Tensor(np.array([[[-0.3362], [-0.8437]], [[-0.9627], [0.1727]], [[0.5173], [-0.1398]]]))
+    x = Tensor(np.array([[[-0.3362], [-0.8437]], [[-0.9627], [0.1727]], [[0.5173], [-0.1398]]]), ms.float32)
     movedim = Net()
     output = movedim(x)
     np_out = np.array([[[-0.3362], [-0.9627], [0.5173]], [[-0.8437], [0.1727], [-0.1398]]])

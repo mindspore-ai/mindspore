@@ -658,8 +658,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   auto strides_calc_info =
     ops::ViewStridesCalcFactory::GetInstance().GetStridesCalcFunc(op_run_info->base_op_run_info.op_name);
   // Ascend Op not support, We will remove it next week;
-  if (!(op_run_info->base_op_run_info.device_target == kAscendDevice) && strides_calc_info.has_value() &&
-      ProcessViewOp(op_run_info, strides_calc_info.value())) {
+  if (strides_calc_info.has_value() && ProcessViewOp(op_run_info, strides_calc_info.value())) {
     return;
   }
 #endif
@@ -1140,10 +1139,17 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
   if (storage_info == nullptr) {
     return device_addr;
   }
+
+  if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
+    MS_LOG(DEBUG) << "Tensor is already contiguous.";
+    return device_addr;
+  }
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   // as_numpy sync promise contiguous run_sync
-  return cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, false);
+  auto ret = cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, false);
+  runtime::OpExecutor::GetInstance().WaitAll();
+  return ret;
 }
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
