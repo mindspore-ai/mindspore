@@ -52,67 +52,76 @@ using MapTensor = mindspore::tensor::MapTensor;
 using MapTensorPtr = mindspore::tensor::MapTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
-using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
+using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &, const ValuePtrList &)>;
 static constexpr int kBit8 = 8;
 static constexpr int kBit16 = 16;
 static constexpr int kBit32 = 32;
 static constexpr int kBit64 = 64;
 
-class DataConverter {
+class DataConvertFunc {
  public:
-  explicit DataConverter(InstanceConvertFunc convert_func) : convert_func_(std::move(convert_func)) {}
+  explicit DataConvertFunc(InstanceConvertFunc convert_func) : convert_func_(std::move(convert_func)) {}
 
-  virtual ~DataConverter() = default;
+  virtual ~DataConvertFunc() = default;
 
   virtual bool Matched(const py::object &obj) = 0;
 
-  virtual ValuePtr ConvertPyObject(const py::object &obj, bool use_sig, const TypePtr &dtype) {
+  ValuePtr ConvertPyObject(const py::object &obj, bool use_sig, const TypePtr &dtype,
+                           const ValuePtrList &args_value_list = {}) {
     if (convert_func_ == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "convert func is null";
     }
-    return convert_func_(obj, use_sig, dtype);
+    return convert_func_(obj, use_sig, dtype, args_value_list);
   }
 
  private:
   InstanceConvertFunc convert_func_ = nullptr;
 };
 
-using DataConverterPtr = std::shared_ptr<DataConverter>;
+using DataConvertFuncPtr = std::shared_ptr<DataConvertFunc>;
 
 using ArgsObjConvertFunc = std::function<ValuePtr(const py::object &)>;
 using ArgsObjSigConvertFunc = std::function<ValuePtr(const py::object &, bool)>;
-using ArgsOjbTypeConvertFunc = std::function<ValuePtr(const py::object &, const TypePtr &)>;
+using ArgsObjTypeConvertFunc = std::function<ValuePtr(const py::object &, const TypePtr &)>;
+using ArgsObjArgsValueConvertFunc = std::function<ValuePtr(const py::object &, const ValuePtrList &)>;
 
 // Convert the data according to instance type
 template <typename T>
-class ByTypeDataConverter : public DataConverter {
+class ByTypeDataConvertFunc : public DataConvertFunc {
  public:
-  explicit ByTypeDataConverter(const InstanceConvertFunc &convert_func)
-      : DataConverter(convert_func), check_func_(py::isinstance<T>) {}
+  explicit ByTypeDataConvertFunc(const InstanceConvertFunc &convert_func)
+      : DataConvertFunc(convert_func), check_func_(py::isinstance<T>) {}
 
-  explicit ByTypeDataConverter(const ValuePtr &converted_type)
-      : DataConverter(
-          [converted_type](const py::object &, bool, const TypePtr &) -> ValuePtr { return converted_type; }),
-        check_func_(py::isinstance<T>) {}
-
-  explicit ByTypeDataConverter(const ArgsObjConvertFunc &convert_func)
-      : DataConverter(
-          [convert_func](const py::object &obj, bool, const TypePtr &) -> ValuePtr { return convert_func(obj); }),
-        check_func_(py::isinstance<T>) {}
-
-  explicit ByTypeDataConverter(const ArgsObjSigConvertFunc &convert_func)
-      : DataConverter([convert_func](const py::object &obj, bool use_sig, const TypePtr &) -> ValuePtr {
-          return convert_func(obj, use_sig);
+  explicit ByTypeDataConvertFunc(const ValuePtr &converted_type)
+      : DataConvertFunc([converted_type](const py::object &, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+          return converted_type;
         }),
         check_func_(py::isinstance<T>) {}
 
-  explicit ByTypeDataConverter(const ArgsOjbTypeConvertFunc &convert_func)
-      : DataConverter([convert_func](const py::object &obj, bool, const TypePtr &dtype) -> ValuePtr {
-          return convert_func(obj, dtype);
+  explicit ByTypeDataConvertFunc(const ArgsObjConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+          return convert_func(obj);
         }),
         check_func_(py::isinstance<T>) {}
 
-  ~ByTypeDataConverter() override = default;
+  explicit ByTypeDataConvertFunc(const ArgsObjSigConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+        check_func_(py::isinstance<T>) {}
+
+  explicit ByTypeDataConvertFunc(const ArgsObjTypeConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &dtype,
+                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, dtype); }),
+        check_func_(py::isinstance<T>) {}
+
+  explicit ByTypeDataConvertFunc(const ArgsObjArgsValueConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &,
+                                       const ValuePtrList &args_value_list) -> ValuePtr {
+          return convert_func(obj, args_value_list);
+        }),
+        check_func_(py::isinstance<T>) {}
+
+  ~ByTypeDataConvertFunc() override = default;
 
   bool Matched(const py::object &obj) override { return check_func_ != nullptr ? check_func_(obj) : false; }
 
@@ -121,20 +130,20 @@ class ByTypeDataConverter : public DataConverter {
 };
 
 // Convert the data according to object attribute.
-class ByAttrDataConverter : public DataConverter {
+class ByAttrDataConvertFunc : public DataConvertFunc {
  public:
-  ByAttrDataConverter(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
-      : DataConverter(
-          [convert_func](const py::object &obj, bool, const TypePtr &) -> ValuePtr { return convert_func(obj); }),
-        attr_name_(attr_name) {}
-
-  ByAttrDataConverter(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
-      : DataConverter([convert_func](const py::object &obj, bool use_sig, const TypePtr &) -> ValuePtr {
-          return convert_func(obj, use_sig);
+  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+          return convert_func(obj);
         }),
         attr_name_(attr_name) {}
 
-  ~ByAttrDataConverter() override = default;
+  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+        attr_name_(attr_name) {}
+
+  ~ByAttrDataConvertFunc() override = default;
 
   bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_.c_str()); }
 
@@ -143,20 +152,20 @@ class ByAttrDataConverter : public DataConverter {
 };
 
 // Convert the data according to match function.
-class ByFuncDataConverter : public DataConverter {
+class ByFuncDataConvertFunc : public DataConvertFunc {
  public:
-  ByFuncDataConverter(const InstanceCheckFunc &match_func, const ArgsObjConvertFunc &convert_func)
-      : DataConverter(
-          [convert_func](const py::object &obj, bool, const TypePtr &) -> ValuePtr { return convert_func(obj); }),
-        match_func_(match_func) {}
-
-  ByFuncDataConverter(const InstanceCheckFunc &match_func, const ArgsObjSigConvertFunc &convert_func)
-      : DataConverter([convert_func](const py::object &obj, bool use_sig, const TypePtr &) -> ValuePtr {
-          return convert_func(obj, use_sig);
+  ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+          return convert_func(obj);
         }),
         match_func_(match_func) {}
 
-  ~ByFuncDataConverter() override = default;
+  ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjSigConvertFunc &convert_func)
+      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+        match_func_(match_func) {}
+
+  ~ByFuncDataConvertFunc() override = default;
 
   bool Matched(const py::object &obj) override { return match_func_ != nullptr ? match_func_(obj) : false; }
 
@@ -429,8 +438,8 @@ ValuePtr ConvertSlice(const py::object &obj) {
   return std::make_shared<ValueSlice>(start, stop, step);
 }
 
-ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
-  FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
+ValuePtr ConvertCellObjToFuncGraph(const py::object &obj, const ValuePtrList &args_value_list) {
+  FuncGraphPtr func_graph = ConvertToFuncGraph(obj, args_value_list);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse resolve function error.";
     return nullptr;
@@ -516,7 +525,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
       }
     }
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
-    FuncGraphPtr func_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_PARSE_METHOD, forbid_reuse);
+    FuncGraphPtr func_graph = ConvertToFuncGraph(obj, {}, PYTHON_MOD_GET_PARSE_METHOD, forbid_reuse);
     if (func_graph == nullptr) {
       MS_LOG(ERROR) << "Parse resolve function error.";
       return nullptr;
@@ -628,58 +637,58 @@ ValuePtr ObjCast(const py::object &obj) {
   return obj.cast<T>();
 }
 
-static const std::vector<DataConverterPtr> &GetDataConverters() {
+static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
   // Convert data by python object type.
-  static const std::vector<DataConverterPtr> data_converters{
+  static const std::vector<DataConvertFuncPtr> data_convert_funcs{
     // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
-    std::make_shared<ByFuncDataConverter>(IsStubTensor, ConvertStubTensor),
-    std::make_shared<ByFuncDataConverter>(IsNamedTuple, ConvertNamedTuple),
-    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
-    std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
-    std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
-    std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),
-    std::make_shared<ByTypeDataConverter<py::int_>>(ConvertIntegerWithType),
-    std::make_shared<ByTypeDataConverter<py::float_>>(ConvertFloatWithType),
-    std::make_shared<ByTypeDataConverter<py::str>>(PyCast<StringImm, string>),
-    std::make_shared<ByTypeDataConverter<py::none>>(kNone),
-    std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
-    std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
-    std::make_shared<ByTypeDataConverter<COOTensor>>(ObjCast<COOTensorPtr>),
-    std::make_shared<ByTypeDataConverter<MapTensor>>(ObjCast<MapTensorPtr>),
-    std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
-    std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
-    std::make_shared<ByAttrDataConverter>(PYTHON_MS_CLASS, ConvertMsClass),
-    std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
-    std::make_shared<ByTypeDataConverter<UMonad>>(ObjCast<UMonadPtr>),
-    std::make_shared<ByTypeDataConverter<IOMonad>>(ObjCast<IOMonadPtr>),
-    std::make_shared<ByAttrDataConverter>(PYTHON_CLASS_MEMBER_NAMESPACE,
-                                          [](const py::object &obj) -> ValuePtr {
-                                            auto res =
-                                              std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
-                                            MS_LOG(DEBUG) << "name_space: " << res->ToString();
-                                            return res;
-                                          }),
-    std::make_shared<ByTypeDataConverter<py::dict>>(ConvertDict),
-    std::make_shared<ByAttrDataConverter>(PYTHON_CELL_AS_DICT, ConvertDict),
-    std::make_shared<ByTypeDataConverter<py::slice>>(ConvertSlice),
-    std::make_shared<ByAttrDataConverter>(PYTHON_CELL_AS_LIST, ConvertCellList),
-    std::make_shared<ByTypeDataConverter<Cell>>(ConvertCellObjToFuncGraph),
-    std::make_shared<ByAttrDataConverter>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
-    std::make_shared<ByTypeDataConverter<MetaFuncGraph>>(ConvertMetaFuncGraph),
-    std::make_shared<ByTypeDataConverter<FuncGraph>>(ConvertFuncGraph),
+    std::make_shared<ByFuncDataConvertFunc>(IsStubTensor, ConvertStubTensor),
+    std::make_shared<ByFuncDataConvertFunc>(IsNamedTuple, ConvertNamedTuple),
+    std::make_shared<ByTypeDataConvertFunc<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<py::tuple>>(ConvertTuple),
+    std::make_shared<ByTypeDataConvertFunc<py::list>>(ConvertList),
+    std::make_shared<ByTypeDataConvertFunc<py::bool_>>(PyCast<BoolImm, bool>),
+    std::make_shared<ByTypeDataConvertFunc<py::int_>>(ConvertIntegerWithType),
+    std::make_shared<ByTypeDataConvertFunc<py::float_>>(ConvertFloatWithType),
+    std::make_shared<ByTypeDataConvertFunc<py::str>>(PyCast<StringImm, string>),
+    std::make_shared<ByTypeDataConvertFunc<py::none>>(kNone),
+    std::make_shared<ByTypeDataConvertFunc<MetaTensor>>(ObjCast<MetaTensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<CSRTensor>>(ObjCast<CSRTensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<COOTensor>>(ObjCast<COOTensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<MapTensor>>(ObjCast<MapTensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<py::ellipsis>>(kEllipsis),
+    std::make_shared<ByTypeDataConvertFunc<py::module>>(ConvertModuleNameSpace),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_MS_CLASS, ConvertMsClass),
+    std::make_shared<ByTypeDataConvertFunc<Type>>(ObjCast<TypePtr>),
+    std::make_shared<ByTypeDataConvertFunc<UMonad>>(ObjCast<UMonadPtr>),
+    std::make_shared<ByTypeDataConvertFunc<IOMonad>>(ObjCast<IOMonadPtr>),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CLASS_MEMBER_NAMESPACE,
+                                            [](const py::object &obj) -> ValuePtr {
+                                              auto res =
+                                                std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
+                                              MS_LOG(DEBUG) << "name_space: " << res->ToString();
+                                              return res;
+                                            }),
+    std::make_shared<ByTypeDataConvertFunc<py::dict>>(ConvertDict),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_DICT, ConvertDict),
+    std::make_shared<ByTypeDataConvertFunc<py::slice>>(ConvertSlice),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_LIST, ConvertCellList),
+    std::make_shared<ByTypeDataConvertFunc<Cell>>(ConvertCellObjToFuncGraph),
+    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
+    std::make_shared<ByTypeDataConvertFunc<MetaFuncGraph>>(ConvertMetaFuncGraph),
+    std::make_shared<ByTypeDataConvertFunc<FuncGraph>>(ConvertFuncGraph),
   };
-  return data_converters;
+  return data_convert_funcs;
 }
 
-static const std::vector<DataConverterPtr> &GetStubDataConverters() {
+static const std::vector<DataConvertFuncPtr> &GetStubDataConvertFuncs() {
   // Convert data by python object type.
-  static const std::vector<DataConverterPtr> data_converters{
-    std::make_shared<ByFuncDataConverter>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
-                                          PyStubNodeCast),
-    std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertStubTuple),
-    std::make_shared<ByTypeDataConverter<py::list>>(ConvertStubList),
+  static const std::vector<DataConvertFuncPtr> data_convert_funcs{
+    std::make_shared<ByFuncDataConvertFunc>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
+                                            PyStubNodeCast),
+    std::make_shared<ByTypeDataConvertFunc<py::tuple>>(ConvertStubTuple),
+    std::make_shared<ByTypeDataConvertFunc<py::list>>(ConvertStubList),
   };
-  return data_converters;
+  return data_convert_funcs;
 }
 }  // namespace
 
@@ -691,7 +700,7 @@ bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, cons
   }
   ValuePtr converted = nullptr;
   bool matched = false;
-  const auto &converters = GetDataConverters();
+  const auto &converters = GetDataConvertFuncs();
   for (auto &converter : converters) {
     if (converter->Matched(obj)) {
       converted = converter->ConvertPyObject(obj, use_signature, dtype);
@@ -713,10 +722,10 @@ bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature, 
     return false;
   }
   ValuePtr converted = nullptr;
-  const auto &converters = GetStubDataConverters();
-  for (auto &converter : converters) {
-    if (converter->Matched(obj)) {
-      converted = converter->ConvertPyObject(obj, use_signature, dtype);
+  const auto &convert_funcs = GetStubDataConvertFuncs();
+  for (auto &convert_func : convert_funcs) {
+    if (convert_func->Matched(obj)) {
+      converted = convert_func->ConvertPyObject(obj, use_signature, dtype);
       *data = converted;
       return converted != nullptr;
     }
@@ -725,8 +734,8 @@ bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature, 
 }
 
 // Convert data to graph
-FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python_mod_get_parse_method,
-                                bool forbid_reuse) {
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_value_list,
+                                const std::string &python_mod_get_parse_method, bool forbid_reuse) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_id = results[0] + python_mod_get_parse_method;
   std::string obj_key = results[1];
@@ -745,7 +754,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     }
   }
 
-  func_graph = ParsePythonCode(obj, python_mod_get_parse_method);
+  func_graph = ParsePythonCode(obj, python_mod_get_parse_method, args_value_list);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse resolve function error.";
     return nullptr;
@@ -906,7 +915,7 @@ void SetFuncGraphByCellObj(const FuncGraphPtr &func_graph, const py::object &obj
   if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
     bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
     FuncGraphPtr bprop_graph =
-      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
+      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, {}, PYTHON_MOD_GET_BPROP_METHOD);
     if (bprop_graph != nullptr) {
       (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
       (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
@@ -935,5 +944,15 @@ void ClearObjectCache() {
   object_graphs_map_.clear();
 }
 }  // namespace data_converter
+
+ValuePtr DataConverter::ConvertData(const py::object &obj) {
+  const auto &convert_funcs = GetDataConvertFuncs();
+  for (auto &convert_func : convert_funcs) {
+    if (convert_func->Matched(obj)) {
+      return convert_func->ConvertPyObject(obj, use_signature_, dtype_, args_value_list_);
+    }
+  }
+  return ConvertOtherObj(obj, forbid_reuse_);
+}
 }  // namespace parse
 }  // namespace mindspore

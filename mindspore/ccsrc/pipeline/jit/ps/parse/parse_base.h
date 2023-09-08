@@ -226,13 +226,14 @@ bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature =
                      bool forbid_reuse = false);
 
 // Convert python obj to graph.
-FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_value_list = {},
                                 const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
                                 bool forbid_reuse = false);
 
 // Parse the python object to graph.
 FuncGraphPtr ParsePythonCode(const py::object &obj,
-                             const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+                             const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
+                             const ValuePtrList &args_value_list = {});
 }  // namespace parse
 }  // namespace mindspore
 

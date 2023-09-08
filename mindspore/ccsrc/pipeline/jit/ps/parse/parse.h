@@ -116,7 +116,7 @@ struct ArgsContext {
 // Parser to parse python function.
 class Parser {
  public:
-  explicit Parser(const std::shared_ptr<ParseFunctionAst> &ast);
+  explicit Parser(const std::shared_ptr<ParseFunctionAst> &ast, ValuePtrList args_value_list);
 
   ~Parser() {}
   FuncGraphPtr ParseFuncGraph();
@@ -391,6 +391,7 @@ class Parser {
   // If the node is Parameter member of class.
   bool IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const;
 
+  ValuePtr GetParameterValue(const AnfNodePtr &parameter) const;
   bool CheckAttributeConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
   bool CheckNameConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
   bool CheckUnaryOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
@@ -457,6 +458,8 @@ class Parser {
   std::map<std::string, std::map<std::string, AnfNodePtr>> setattr_nodes_map_;
   // Record all getattr node for specific object and attribute name.
   std::map<std::string, std::map<std::string, std::vector<AnfNodePtr>>> getattr_nodes_map_;
+  // Store the values for input args of top graph.
+  ValuePtrList args_value_list_;
 };
 
 // AST node type define code to ast.
