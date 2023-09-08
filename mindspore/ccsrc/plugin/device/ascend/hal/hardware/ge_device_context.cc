@@ -366,11 +366,6 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
       (*ge_options)["ge.exec.dumpLayer"] = dump_parser.dump_layer();
       MS_LOG(INFO) << "Set dumplayer to: " << (*ge_options)["ge.exec.dumpLayer"];
     }
-    if (dump_parser.IsTensorDump()) {
-      (*ge_options)["ge.exec.dumpData"] = "tensor";
-    } else {
-      (*ge_options)["ge.exec.dumpData"] = "stats";
-    }
     if (dump_parser.op_debug_mode() > 0) {
       (*ge_options)["ge.exec.enableDump"] = "0";
       (*ge_options)["ge.exec.enableDumpDebug"] = "1";
@@ -480,7 +475,7 @@ void GeDeviceContext::InitDump() const {
   if (!dump_parser.async_dump_enabled()) {
     return;
   }
-  if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
+  if (dump_parser.FileFormatIsNpy()) {
     (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
   }
   if (AdxDataDumpServerInit() != 0) {

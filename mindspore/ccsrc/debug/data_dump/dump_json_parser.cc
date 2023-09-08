@@ -125,10 +125,6 @@ void DumpJsonParser::CheckGEBackend() {
     if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
       MS_LOG(EXCEPTION) << "Cell dump is not supported on 1980B. Please set dump_mode to 0 or 1.";
     }
-    if (saved_data_ == "full") {
-      MS_LOG(EXCEPTION)
-        << "On 1980B, saved_data only support to save tensor or statistic, not support to save both of them.";
-    }
   }
 }
 
