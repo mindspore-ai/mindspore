@@ -320,6 +320,7 @@ StatusCode CompileResultBuilder::AppendInputParameterToInputs(const ParameterPtr
   auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_param);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Append input tensor for node failed, node: " << compile_node->GetName();
+    delete tensor_from_param;
     return ret;
   }
   return kSuccess;
@@ -353,6 +354,7 @@ StatusCode CompileResultBuilder::AppendInputValueNodeToInputs(const ValueNodePtr
   auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_value);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Append input tensor for node failed, node: " << compile_node->GetName();
+    delete tensor_from_value;
     return ret;
   }
   return kSuccess;

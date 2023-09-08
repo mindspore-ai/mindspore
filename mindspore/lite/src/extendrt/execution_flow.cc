@@ -27,7 +27,7 @@ ExecutionFlow::~ExecutionFlow() {
   kernels_.clear();
 }
 
-InferKernel *ExecutionFlow::ConstructFusionKernel() {
+kernel::SubGraphKernel *ExecutionFlow::ConstructFusionKernel() {
   kernel::KernelExecUtil::FindAllInoutKernels(kernels_);
   if (kernels_.size() == 0) {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, kernels size is 0";
@@ -43,7 +43,9 @@ InferKernel *ExecutionFlow::ConstructFusionKernel() {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
     return nullptr;
   }
+  subgraph_kernel->SetTensors(this->tensors_);
   this->kernels_.clear();
+  this->tensors_.clear();
   return subgraph_kernel;
 }
 

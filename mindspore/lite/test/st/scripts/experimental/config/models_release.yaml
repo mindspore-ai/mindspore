@@ -1,0 +1,423 @@
+tf:
+    densenet:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,224,224,3
+
+    fsr_270_mindspore:
+        fmk: tf
+        input_number: 1
+
+    fsr_360_mindspore:
+        fmk: tf
+        input_number: 1
+
+    fsr_720_mindspore:
+        fmk: tf
+        input_number: 1
+
+    hiai_cpu_face_emotion:
+        fmk: tf
+        input_number: 1
+
+    hiai_cpu_face_gazing:
+        fmk: tf
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_08:
+        fmk: tf
+        input_number: 1
+
+    hiai_detectmodel_06_23_960_480_1180700:
+        fmk: tf
+        input_number: 1
+
+    hiai_ghostnet:
+        fmk: tf
+        input_number: 1
+
+    hiai_iMaxDN_RGB:
+        fmk: tf
+        input_number: 1
+
+    hiai_iMaxSR_RGB:
+        fmk: tf
+        input_number: 1
+
+    hiai_latin_ocr:
+        fmk: tf
+        input_number: 1
+
+    ml_ei_headpose:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,64,64,3
+
+    ml_face_openclose:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,32,32,3
+
+    ml_ocr_latin:
+        fmk: tf
+        input_number: 1
+
+    ml_video_edit_shot_selection_opticalFlow:
+        fmk: tf
+        input_number: 1
+
+    mobilenet_v1_0.25_128_frozen:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,128,128,3
+
+    Q_crnn_ori_75w_slim_norm:
+        fmk: tf
+        input_number: 1
+
+    Q_crnn_screen_slim400w_more_20w:
+        fmk: tf
+        input_number: 1
+
+    Q_dila-small-mix-full-fineturn-390000-nopixel-nosigmoid:
+        fmk: tf
+        input_number: 1
+
+    scan_hms_angle:
+        fmk: tf
+        input_number: 1
+
+    siteAI_trans_nonlinear40g:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,271
+
+    siteAI_wireless_depress_w:
+        fmk: tf
+        input_number: 1
+        benchmark_shapes: 1,36
+
+---
+
+caffe:
+    2012_ATLANTA_1class_20190621_v4.x_nomean:
+        fmk: caffe
+        input_number: 1
+
+    bank_card_recognition_fcny:
+        fmk: caffe
+        input_number: 1
+
+    hdc_contour_pose_128:
+        fmk: caffe
+        input_number: 1
+
+    hdc_fivembnet:
+        fmk: caffe
+        input_number: 1
+
+    hdc_resnet:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cpu_face_hat:
+        fmk: caffe
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_06:
+        fmk: caffe
+        input_number: 1
+
+    hiai_face_landmark:
+        fmk: caffe
+        input_number: 1
+
+    hiai_video_seg:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_compare:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_contour:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_hat:
+        fmk: caffe
+        input_number: 1
+
+    ml_face_landmark:
+        fmk: caffe
+        input_number: 1
+
+    ml_hand_3d_regression:
+        fmk: caffe
+        input_number: 1
+
+    ml_hardware_eyeclose:
+        fmk: caffe
+        input_number: 1
+
+    ml_liveness_detect_landmark_tmp:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_hair_dyeing_segmodel_20211119:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_hair_dyeing_segmodel_v3:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_hairSeg_have_imageProcessLayer_interpTo145:
+        fmk: caffe
+        input_number: 1
+
+    ml_video_edit_person_divison_pic:
+        fmk: caffe
+        input_number: 1
+
+---
+
+onnx:
+    01-face_det_400_400:
+        fmk: onnx
+        input_number: 1
+        input_suffix: .onnx.bin
+        output_suffix: .onnx.out
+        benchmark_shapes: 1,400,400,3
+        acc_threshold: 4.5
+
+    emotion-ferplus-8:
+        fmk: onnx
+        input_number: 1
+
+    gender_lstm_scd:
+        fmk: onnx
+        input_number: 1
+
+    gender_lstm_vad:
+        fmk: onnx
+        input_number: 1
+
+    gender_resnet34_lzl:
+        fmk: onnx
+        input_number: 1
+
+    hdc_Face_Landmark5_MTI_Aesthetic:
+        fmk: onnx
+        input_number: 1
+
+    ml_table_segment:
+        fmk: onnx
+        input_number: 1
+
+    mnist-8:
+        fmk: onnx
+        input_number: 1
+
+    rcnn-ilsvrc13-9:
+        fmk: onnx
+        input_number: 1
+
+---
+
+tflite:
+    bloom_model_age_gender:
+        fmk: tflite
+        input_number: 1
+
+    bloom_new_detect:
+        fmk: tflite
+        input_number: 1
+
+    hiai_bigmodel_ghost_2_1_no_normalized_no_trans_tflite:
+        fmk: tflite
+        input_number: 1
+
+    hiai_bigmodel_ghost_5_1_no_normalized_no_trans_tflite:
+        fmk: tflite
+        input_number: 1
+
+    hiai_cpu_face_emotion:
+        fmk: tflite
+        input_number: 1
+
+    hiai_cpu_face_gazing:
+        fmk: tflite
+        input_number: 1
+
+    hiai_cpu_face_headpose:
+        fmk: tflite
+        input_number: 1
+
+    hiai_cv_focusShootOCRModel_08:
+        fmk: tflite
+        input_number: 1
+
+    hiai_cv_labelDetectorModel_v4:
+        fmk: tflite
+        input_number: 1
+
+    hiai_detectmodel_06_23_960_480_1180700:
+        fmk: tflite
+        input_number: 1
+
+    hiai_ghostnet:
+        fmk: tflite
+        input_number: 1
+
+    hiai_iMaxDN_RGB:
+        fmk: tflite
+        input_number: 1
+
+    hiai_iMaxSR_RGB:
+        fmk: tflite
+        input_number: 1
+
+    hiai_latin_ocr:
+        fmk: tflite
+        input_number: 1
+
+    hiai_latin_ocr_1:
+        fmk: tflite
+        input_number: 1
+
+    lite-model_on_device_vision_classifier_popular_us_products_V1_1:
+        fmk: tflite
+        input_number: 1
+
+    lite-model_on_device_vision_classifier_popular_wine_V1_1:
+        fmk: tflite
+        input_number: 1
+
+    lma_tsec_shallow_channels16_ds2.1.1_model-best-f1:
+        fmk: tflite
+        input_number: 1
+
+    ml_ei_headpose:
+        fmk: tflite
+        input_number: 1
+
+    ml_ei_landmark:
+        fmk: tflite
+        input_number: 1
+
+    ml_ei_landmark_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    ml_face_openclose:
+        fmk: tflite
+        input_number: 1
+
+    ml_face_openclose_tflite:
+        fmk: tflite
+        input_number: 1
+
+    ml_ocr_latin:
+        fmk: tflite
+        input_number: 1
+
+    ml_ocr_latin_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    ml_pic_shopping_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    ml_text_correction:
+        fmk: tflite
+        input_number: 1
+
+    mnasnet_0.50_224_1_metadata_1:
+        fmk: tflite
+        input_number: 1
+
+    mobilenet:
+        fmk: tflite
+        input_number: 1
+
+    mobilenet_v1_0.25_128:
+        fmk: tflite
+        input_number: 1
+
+    mtk_face_recognition:
+        fmk: tflite
+        input_number: 1
+
+    mtk_model_face_dress:
+        fmk: tflite
+        input_number: 1
+
+    mtk_new_detect:
+        fmk: tflite
+        input_number: 1
+
+    Q_convert:
+        fmk: tflite
+        input_number: 1
+
+    Q_crnn_ori_75w_slim_norm_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    Q_crnn_screen_slim400w_more_20w_pb2tflite:
+        fmk: tflite
+        input_number: 1
+
+    Q_dila-small-mix-full-fineturn-390000-nopixel-nosigmoid_tflite:
+        fmk: tflite
+        input_number: 1
+
+    Q_focusocr_cn_recog:
+        fmk: tflite
+        input_number: 1
+
+    Q_focusocr_jk_recog:
+        fmk: tflite
+        input_number: 1
+
+    Q888_age_gender_orderd:
+        fmk: tflite
+        input_number: 1
+
+    Q888_face_emo_dress_mv3_orderd:
+        fmk: tflite
+        input_number: 1
+
+    Q888_isface:
+        fmk: tflite
+        input_number: 1
+
+    Q888_new_detect:
+        fmk: tflite
+        input_number: 1
+
+    Q888_pose:
+        fmk: tflite
+        input_number: 1
+
+    resnet:
+        fmk: tflite
+        input_number: 1
+
+    siteAI_digcom_g2v_keras:
+        fmk: tflite
+        input_number: 1
+
+    siteAI_wireless_depress_w:
+        fmk: tflite
+        input_number: 1
+
+    squeezenet:
+        fmk: tflite
+        input_number: 1
+
+    text_classification:
+        fmk: tflite
+        input_number: 1

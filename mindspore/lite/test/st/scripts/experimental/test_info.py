@@ -40,6 +40,7 @@ class TestInfo:
         self.num_threads = 2
 
         self.cmd_envs = Context.instance().export_lib_paths
+        self.cmd_envs["ENABLE_MULTI_BACKEND_RUNTIME"] = "on"
 
         self.convert_ret: ExecRet = ExecRet.idle
         self.bench_acc_ret: ExecRet = ExecRet.idle
@@ -55,9 +56,9 @@ class TestInfo:
         return self.__str__()
 
     @classmethod
-    def create(cls, model_name, info: dict):
+    def create(cls, model_fmk: Fmk, model_name, info: dict):
         config = cls()
-        fmk = Fmk.from_str(info.get("fmk"))
+        fmk = model_fmk
         network_suffix = info.get("network_suffix", "")
         weight_suffix = info.get("weight_suffix", "")
         config.model = ModelInfo(model_name, fmk, network_suffix, weight_suffix)

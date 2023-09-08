@@ -28,6 +28,7 @@
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 #include "src/infer/context.h"
 #include "src/extendrt/delegate/type.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,7 +43,7 @@ class SingleGraphScheduler {
  private:
   int SelectKernel(const CompileResultPtr &node_list);
   bool HandleWeightForKernels();
-  Status OptimizeTranspose(std::vector<kernel::KernelExec *> *kernels);
+  Status OptimizeTranspose(kernel::SubGraphKernel *kernels);
 
  private:
   InferContextPtr context_{nullptr};
