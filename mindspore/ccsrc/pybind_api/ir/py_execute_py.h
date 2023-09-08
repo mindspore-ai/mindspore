@@ -88,7 +88,7 @@ bool ContainStubTensor(const py::object &obj) {
 
 abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
   // This function will be moved to runtime compile pass later.
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
   if (!allow_inplace_ops) {
     return nullptr;
   }

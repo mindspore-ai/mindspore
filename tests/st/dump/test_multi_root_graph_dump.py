@@ -134,9 +134,9 @@ def test_GPU_e2e_multi_root_graph_dump():
     Expectation:
         Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
     """
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "0"
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
     run_multi_root_graph_dump("GPU", "e2e_dump", "test_GPU_e2e_multi_root_graph_dump")
-    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE']
 
 
 @pytest.mark.level0
@@ -153,9 +153,9 @@ def test_Ascend_e2e_multi_root_graph_dump():
     Expectation:
         Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
     """
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "0"
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
     run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
-    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE']
 
 
 @pytest.mark.level1
@@ -172,9 +172,9 @@ def test_Ascend_async_multi_root_graph_dump():
     Expectation:
         Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
     """
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "0"
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
     run_multi_root_graph_dump("Ascend", "async_dump", "test_Ascend_async_multi_root_graph_dump")
-    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE']
 
 
 @pytest.mark.level0
@@ -191,8 +191,8 @@ def test_ascend_multi_root_graph_dump_kernel_by_kernel():
     Expectation:
         Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
     """
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "0"
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
     os.environ['GRAPH_OP_RUN'] = "1"
     run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
     del os.environ['GRAPH_OP_RUN']
-    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE']

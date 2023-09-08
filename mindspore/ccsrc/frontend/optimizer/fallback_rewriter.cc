@@ -1011,7 +1011,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeList(x1, x2, ...) --> PyExecute('[x1, x2, ...]', ...)
   AnfNodePtr ConvertMakeList(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
 
@@ -1074,7 +1074,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // x.extend(y) --> PyExecute(_jit_fallback_list_inplace_extend(x, y))
   AnfNodePtr ConvertListInplaceExtend(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
     auto abs = node->abstract();
@@ -1140,7 +1140,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // x.insert(index, y) --> PyExecute(_jit_fallback_list_inplace_insert(x, index, y))
   AnfNodePtr ConvertDictInplaceSetItem(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
     auto abs = node->abstract();
@@ -1195,7 +1195,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // x.pop(index) --> PyExecute(_jit_fallback_list_inplace_pop(x, index, y))
   AnfNodePtr ConvertListInplacePop(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
 
@@ -1262,7 +1262,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // x.reverse() --> PyExecute(_jit_fallback_list_inplace_reverse(x))
   AnfNodePtr ConvertListInplaceReverse(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
     auto abs = node->abstract();
@@ -1327,7 +1327,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return nullptr;
     }
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") == "1";
     if (!allow_inplace_ops) {
       return nullptr;
     }
@@ -1377,7 +1377,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // data[key] = target --> PyExecute(_jit_fallback_dict_inplace_setitem(data, key, target))
   AnfNodePtr ConvertListInplaceInsert(const CNodePtr &node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
     auto abs = node->abstract();
@@ -1988,7 +1988,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   bool IsValueListWithInplace(const ValueNodePtr &value_node) const {
-    if (!fallback::EnableFallbackList()) {
+    if (!fallback::EnableFallbackListDictInplace()) {
       return false;
     }
 
