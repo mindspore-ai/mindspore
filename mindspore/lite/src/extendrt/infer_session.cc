@@ -43,6 +43,14 @@ void AscendPluginRegistration(const std::shared_ptr<AscendDeviceInfo> &ascend_de
       return;
     }
   }
+  static const char *const env = std::getenv("ENABLE_MULTI_BACKEND_RUNTIME");
+  bool use_experimental_rts = env != nullptr && strcmp(env, "on") == 0;
+  if (use_experimental_rts) {
+    if (!kernel::AscendKernelPlugin::Register()) {
+      MS_LOG(ERROR) << "Failed to register Ascend plugin";
+      return;
+    }
+  }
 }
 }  // namespace
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
