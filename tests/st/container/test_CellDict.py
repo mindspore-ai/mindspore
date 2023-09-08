@@ -83,7 +83,7 @@ def test_celldict_setitem_method(mode):
     Description: Verify the result of CellDict.__setitem__().
     Expectation: success
     """
-    net = TestGetitemMethodNet()
+    net = TestSetitemMethodNet()
     x = Tensor(np.ones([1, 6, 16, 5]), ms.float32)
     conv2d_op = nn.Conv2d(6, 16, 5, pad_mode='valid')
     expect_output = conv2d_op(x)
@@ -91,6 +91,65 @@ def test_celldict_setitem_method(mode):
     output = net_op(x)
     assert np.allclose(output.shape, expect_output.shape)
 
+
+class TestSetitemMethodErrCaseNet(nn.Cell):
+    def __init__(self):
+        super(TestSetitemMethodErrCaseNet, self).__init__()
+        self.cell_dict = nn.CellDict([['conv', nn.Conv2d(10, 16, 5, pad_mode='valid')],
+                                      ['relu', nn.ReLU()],
+                                      ['max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4)]]
+                                     )
+
+    def construct(self, key, cell):
+        self.cell_dict[key] = cell
+        return self.cell_dict[key]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_celldict_setitem_error_case_method(mode):
+    """
+    Feature: CellDict.__setitem__()
+    Description: Verify the result of CellDict.__setitem__() in error input.
+    Expectation: success
+    """
+    net = TestSetitemMethodErrCaseNet()
+
+    cell = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
+    key = 1
+    with pytest.raises(TypeError):
+        net(key, cell)
+
+    cell = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
+    key = "_scope"
+    with pytest.raises(KeyError):
+        net(key, cell)
+
+    cell = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
+    key = ".conv1d"
+    with pytest.raises(KeyError):
+        net(key, cell)
+
+    cell = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
+    key = ""
+    with pytest.raises(KeyError):
+        net(key, cell)
+
+    cell = None
+    key = "conv1d"
+    with pytest.raises(TypeError):
+        net(key, cell)
+
+    cell = 1
+    key = "conv1d"
+    with pytest.raises(TypeError):
+        net(key, cell)
 
 class TestDelitemMethodNet(nn.Cell):
     def __init__(self):

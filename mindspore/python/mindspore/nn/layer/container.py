@@ -506,9 +506,11 @@ class CellDict(_CellDictBase, Cell):
     `CellDict` can be used like a regular Python dictionary.
 
     Args:
-        args (iterable, optional): An iterable of key-value pairs of type(string, Cell) or
-                                   a mapping(dictionary) from string to Cell, the type of Cell should not be CellDict,
-                                   CellList or SequentialCell.
+        args (iterable, optional): An iterable of key-value pairs of (key, cell), or a mapping(dictionary) from string
+                                   to Cell. The type of key-value pairs is (string, Cell).
+                                   The type of cell can not be CellDict, CellList or SequentialCell.
+                                   The key can not be same with the attributes of class Cell, can not contain '.',
+                                   can not be an empty string.
                                    The key of type string is used to search corresponding Cell in the CellDict.
         kwargs (dict): Reserved for keyword argument to be expanded.
 
@@ -563,16 +565,15 @@ class CellDict(_CellDictBase, Cell):
             self.update(args[0])
 
     def __getitem__(self, key):
-        self._validate_key_type(key)
         return self._cells[key]
 
     def __setitem__(self, key, cell):
-        self._validate_key_type(key)
+        self._validate_key(key)
+        self._validate_cell_type(cell)
         self._update_cell_para_name(key, cell)
         self._cells[key] = cell
 
     def __delitem__(self, key):
-        self._validate_key_type(key)
         del self._cells[key]
 
     def __len__(self):
@@ -584,19 +585,36 @@ class CellDict(_CellDictBase, Cell):
     def __contains__(self, key):
         return key in self._cells
 
-    def _validate_key_type(self, key):
+    def _validate_key(self, key):
+        """validate key."""
         cls_name = self.__class__.__name__
         if not isinstance(key, str):
             raise TypeError(f"For '{cls_name}', the type of key should be string "
                             f"but got {type(key).__name__}.")
+        if hasattr(self, key) and key not in self._cells:
+            raise KeyError(f"For '{cls_name}', the key can not be same with the attributes of Cell, "
+                           f"but got key {key}.")
+        if '.' in key:
+            raise KeyError(f"For '{cls_name}', key can not contain \".\", "
+                           f"but got key {key}")
+        if key == '':
+            raise KeyError(f"For '{cls_name}', key can not be empty string \"\", "
+                           f"but got key {key}")
 
     def _validate_cell_type(self, cell):
+        """validate cell type."""
         cls_name = self.__class__.__name__
+        if cell is None:
+            raise TypeError(f"For '{cls_name}', cell can not be None.")
+        if not isinstance(cell, Cell):
+            raise TypeError(f"For '{cls_name}', the type of cell should be Cell, "
+                            f"but got {type(cell).__name__}.")
         if isinstance(cell, (CellDict, CellList, SequentialCell)):
-            raise TypeError(f"For '{cls_name}', the type of cell should not be CellDict, CellList or SequentialCell, "
+            raise TypeError(f"For '{cls_name}', the type of cell can not be CellDict, CellList or SequentialCell, "
                             f"but got {type(cell).__name__}.")
 
     def _update_cell_para_name(self, key, cell):
+        """update cell para name."""
         if self._auto_prefix:
             prefix, _ = _get_prefix_and_index(self._cells)
             cell.update_parameters_name(prefix + key + ".")
@@ -615,10 +633,8 @@ class CellDict(_CellDictBase, Cell):
             key (string): key to pop from the CellDict.
 
         Raises:
-            TypeError: If `key` is not string.
             KeyError: If `key` not exist in CellDict when attempt to access cell.
         """
-        self._validate_key_type(key)
         value = self[key]
         del self[key]
         return value
@@ -655,9 +671,11 @@ class CellDict(_CellDictBase, Cell):
         Update the CellDict by overwriting the existing keys with the key-value pairs from a mapping or an iterable.
 
         Args:
-            cells (iterable): An iterable of key-value pairs of type(string, Cell) or
-                              a mapping(dictionary) from string to Cell, the type of Cell should not be CellDict,
-                              CellList or SequentialCell.
+            cells (iterable): An iterable of key-value pairs of (key, cell),
+                              or a mapping(dictionary) from string to Cell. The type of key-value pairs is
+                              (string, Cell).The type of cell can not be CellDict, CellList or SequentialCell.
+                              The key can not be same with the attributes of class Cell, can not contain '.',
+                              can not be an empty string.
 
         Note:
             If the `cells` is a CellDict, an OrderedDict or an iterable containing key-value pairs,
@@ -666,8 +684,14 @@ class CellDict(_CellDictBase, Cell):
         Raises:
             TypeError: If `cells` is not an iterable object.
             TypeError: If key-value pairs in `cells` are not iterable objects.
-            ValueError: If the length of key-value pairs is not 2.
-            TypeError: If the type of Cell in key-value pairs is CellDict, CellList or SequentialCell.
+            ValueError: If the length of key-value pairs in `cells` is not 2.
+            TypeError: If the cell in `cells` is None.
+            TypeError: If the type of cell in `cells` is not Cell.
+            TypeError: If the type of cell in `cells` is CellDict, CellList or SequentialCell.
+            TypeError: If the type of key in `cells` is not string.
+            KeyError: If the key in `cells` is same with the attributes of class Cell.
+            KeyError: If the key in `cells` contain ".".
+            KeyError: If the key in `cells` is an empty string.
         """
         if not isinstance(cells, abc.Iterable):
             raise TypeError("CellDict.update() should be called with an "
@@ -675,7 +699,6 @@ class CellDict(_CellDictBase, Cell):
                             type(cells).__name__)
         if isinstance(cells, (OrderedDict, CellDict, abc.Mapping)):
             for key, cell in cells.items():
-                self._validate_cell_type(cell)
                 self[key] = cell
         else:
             for id, k_v in enumerate(cells):
@@ -687,7 +710,6 @@ class CellDict(_CellDictBase, Cell):
                     raise ValueError("CellDict update sequence element "
                                      "#" + str(id) + ", length should be 2; but has length " +
                                      "str(len(k_v))")
-                self._validate_cell_type(k_v[1])
                 self[k_v[0]] = k_v[1]
 
     def construct(self, *inputs):
