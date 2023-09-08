@@ -16,9 +16,9 @@
 
 #include "transform/graph_ir/op_declare/matrix_calculation_ops_declare.h"
 #include <string>
-#include "ops/math_op_name.h"
 #include "ops/array_op_name.h"
 #include "ops/ascend_op_name.h"
+#include "ops/math_op_name.h"
 #include "ops/math_ops.h"
 
 namespace mindspore::transform {
@@ -103,42 +103,32 @@ OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
 REG_ADPT_DESC(MatMulV2Duplicate, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2))
 
-// MatrixDiag
-INPUT_MAP(MatrixDiag) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(MatrixDiag) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(MatrixDiag) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiag, kNameMatrixDiag, ADPT_DESC(MatrixDiag))
-REG_ADPT_DESC(MatrixDiagD, kMatrixDiagDOpName, ADPT_DESC(MatrixDiag))
+// MatrixDiagD
+INPUT_MAP(MatrixDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
+ATTR_MAP(MatrixDiagD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixDiagD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiag, kMatrixDiagOpName, ADPT_DESC(MatrixDiagD))
+REG_ADPT_DESC(MatrixDiagD, kMatrixDiagDOpName, ADPT_DESC(MatrixDiagD))
 
 // MatrixDiagPartD
 INPUT_MAP(MatrixDiagPartD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
 ATTR_MAP(MatrixDiagPartD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDiagPartD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiagPartD, kNameMatrixDiagPartD, ADPT_DESC(MatrixDiagPartD))
+REG_ADPT_DESC(MatrixDiagPartD, kMatrixDiagPartDOpName, ADPT_DESC(MatrixDiagPartD))
+REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartOpName, ADPT_DESC(MatrixDiagPartD))
 
 // MatrixSetDiagD
 INPUT_MAP(MatrixSetDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(diagonal)}, {3, INPUT_DESC(assist)}};
 ATTR_MAP(MatrixSetDiagD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixSetDiagD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixSetDiagD, kNameMatrixSetDiagD, ADPT_DESC(MatrixSetDiagD))
-
-// MatrixDiagPart
-INPUT_MAP(MatrixDiagPart) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(MatrixDiagPart) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(MatrixDiagPart) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartOpName, ADPT_DESC(MatrixDiagPart))
+REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagOpName, ADPT_DESC(MatrixSetDiagD))
 
 // MatrixDiagPartV3
 INPUT_MAP(MatrixDiagPartV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(k)}, {3, INPUT_DESC(padding_value)}};
 ATTR_MAP(MatrixDiagPartV3) = {{"align", ATTR_DESC(align, AnyTraits<std::string>())}};
 OUTPUT_MAP(MatrixDiagPartV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixDiagPartV3, kMatrixDiagPartV3OpName, ADPT_DESC(MatrixDiagPartV3))
-
-// MatrixSetDiag
-INPUT_MAP(MatrixSetDiag) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(diagonal)}};
-ATTR_MAP(MatrixSetDiag) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(MatrixSetDiag) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagOpName, ADPT_DESC(MatrixSetDiag))
 
 // MatrixSetDiagV3
 INPUT_MAP(MatrixSetDiagV3) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(diagonal)}, {3, INPUT_DESC(k)}};
