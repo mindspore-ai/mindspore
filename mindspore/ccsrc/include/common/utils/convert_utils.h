@@ -30,6 +30,7 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/kernel_tensor_value.h"
 #include "include/common/visible.h"
 
 namespace mindspore {
@@ -80,6 +81,8 @@ COMMON_EXPORT void TensorValueToTensor(const ValuePtr &value, std::vector<tensor
 COMMON_EXPORT size_t CountValueNum(const ValueSequencePtr &value_sequence);
 
 COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
+
+COMMON_EXPORT KernelTensorValuePtr ConvertValueToKernelTensorValue(const ValuePtr &value);
 
 COMMON_EXPORT tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBasePtr &abs_sparse,
                                                                    const tensor::TensorPtrList &tensor_list);

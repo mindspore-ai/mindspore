@@ -31,6 +31,7 @@
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "ir/value.h"
+#include "ir/kernel_tensor_value.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_name.h"
@@ -912,7 +913,43 @@ std::optional<T> GetScalarValue(const ValuePtr &value) {
   if (value->isa<ValueAny>()) {
     return std::nullopt;
   }
+
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+
+    MS_EXCEPTION_IF_CHECK_FAIL((kernel_tensor_value->GetDataSize() == sizeof(T)),
+                               "The data size in kernel tensor value which contains a scalar [" +
+                                 std::to_string(kernel_tensor_value->GetDataSize()) +
+                                 "] is not equal to the data type size [" + std::to_string(sizeof(T)) + "]");
+
+    const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    return *data_ptr;
+  }
+
   return GetValue<T>(value);
+}
+
+// Specialization for std::string type.
+template <>
+std::optional<std::string> GetScalarValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
+
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+    const char *data_ptr = reinterpret_cast<const char *>(kernel_tensor_value->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    size_t str_len = kernel_tensor_value->GetDataSize();
+
+    return std::string(data_ptr, data_ptr + str_len);
+  }
+
+  return GetValue<std::string>(value);
 }
 
 template std::optional<int64_t> GetScalarValue(const ValuePtr &value);
@@ -939,7 +976,16 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
   std::vector<T> array_data;
   std::set<size_t> unknown_value_indexes;
 
-  if (value->isa<ValueSequence>()) {
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+
+    const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
+    array_data.reserve(element_size);
+    array_data.assign(data_ptr, data_ptr + element_size);
+  } else if (value->isa<ValueSequence>()) {
     // Sequence structure: Data is stored discretely.
     auto value_seq = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_seq);

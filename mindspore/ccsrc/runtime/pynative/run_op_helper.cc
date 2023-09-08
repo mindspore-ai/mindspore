@@ -185,57 +185,34 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   }
 }
 
-void CopyValueNodeTensorToDevice(const ValueNodePtr &node, const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto &node_value = node->value();
-  MS_EXCEPTION_IF_NULL(node_value);
-
-  std::vector<tensor::TensorPtr> tensors;
-  TensorValueToTensor(node_value, &tensors);
-  for (size_t i = 0; i < tensors.size(); i++) {
-    const auto &tensor = tensors[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-
-    const auto &node_address = AnfAlgo::GetMutableOutputAddr(node, i, false);
-    MS_EXCEPTION_IF_NULL(node_address);
-    node_address->SetNodeIndex(node, i);
-    if (node_address->GetPtr() != nullptr) {
-      return;
-    }
-    tensor->set_device_address(node_address);
-    CopyTensorDataToDevice(tensor, node, device_context);
-  }
-}
-
-void CopyValueNodeStringToDevice(const ValueNodePtr &node, const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  const auto &node_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
-  MS_EXCEPTION_IF_NULL(node_address);
-  // Break copy string data to device address if has the device_address has flag ignore.
-  if (TEST_FLAG(node_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
-    MS_LOG(DEBUG) << "Node " << node->DebugString() << " with address " << node_address
+void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const AnfNodePtr &node,
+                           const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  // Break copy data to device address if has the device_address has flag ignore.
+  if (TEST_FLAG(device_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
+    MS_LOG(DEBUG) << "Node " << node->DebugString() << " with address " << device_address
                   << " has flag ignore device address, so skip copy tensor to device";
     return;
   }
-  if (node_address->GetPtr() != nullptr) {
-    return;
-  }
 
-  if (!device_context->device_res_manager_->AllocateMemory(node_address.get())) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  if ((device_address->GetPtr() == nullptr) &&
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
 
-  auto &node_value = node->value();
+  // Copy data from host to device.
+  const auto &kernel_tensor = device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const void *node_value = kernel_tensor->GetValuePtr();
   MS_EXCEPTION_IF_NULL(node_value);
-  // Copy data to device.
-  auto value = GetValue<std::string>(node_value);
-  size_t tensor_size = value.size();
-  ShapeVector shape = {1, SizeToLong(tensor_size)};
-  if (!node_address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {
+  auto data_size = kernel_tensor->size();
+  auto data_type_id = kernel_tensor->dtype_id();
+  auto format = kernel_tensor->GetStringFormat();
+  MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
+  if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), data_size, data_type_id, node_value,
+                                        format)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -246,15 +223,14 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
   const auto &value_nodes = graph->graph_value_nodes();
   for (const auto &value_node : value_nodes) {
     MS_EXCEPTION_IF_NULL(value_node);
-    auto &node_value = value_node->value();
-    MS_EXCEPTION_IF_NULL(node_value);
-    if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-      CopyValueNodeTensorToDevice(value_node, device_context);
-    } else if (node_value->isa<StringImm>()) {
-      CopyValueNodeStringToDevice(value_node, device_context);
-    } else {
-      MS_LOG(INFO) << "Unknown value node type:" << value_node->DebugString();
+    const auto &node_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+    MS_EXCEPTION_IF_NULL(node_address);
+    node_address->SetNodeIndex(value_node, 0);
+    if (node_address->GetPtr() != nullptr) {
+      continue;
     }
+
+    CopyNodeValueToDevice(node_address, value_node, device_context);
   }
   MS_LOG(DEBUG) << "End";
 }

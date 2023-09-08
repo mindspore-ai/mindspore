@@ -28,9 +28,11 @@
 #include "include/api/format.h"
 #include "include/backend/visible.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
+#include "ir/kernel_tensor_value.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
@@ -117,7 +119,7 @@ class KernelAttr;
 template <typename T>
 struct ValidContainerChecker : std::false_type {};
 
-// A ValidContainerChecker's specialization to detect whether the type is std::vector.
+// A ValidContainerChecker's specialization to detect whether the type is std::vector whose element is scalar.
 template <typename... Args>
 struct ValidContainerChecker<std::vector<Args...>> : std::true_type {};
 
@@ -275,29 +277,41 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set the data enum type id of the KernelTensor.
   void set_dtype_id(TypeId dtype_id) { dtype_id_ = dtype_id; }
 
-  // Get the value of the KernelTensor.
-  ValuePtr GetValue() const override { return value_; }
-
   // Set the value for the KernelTensor.
   void SetValue(const ValuePtr &value) { value_ = value; }
+
+  // Get the address of the value converted to continuous memory storage.
+  const void *GetValuePtr() const {
+    if (value_ == nullptr) {
+      return nullptr;
+    }
+
+    if (kernel_tensor_value_ == nullptr) {
+      kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
+      return kernel_tensor_value_ ? kernel_tensor_value_->GetDataPtr() : nullptr;
+    }
+
+    return kernel_tensor_value_->GetDataPtr();
+  }
 
   // Get the scalar value store in KernelTensor if exists.
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
   template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
+    // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
-      // Get value store in a scalar tensor.
-      if (value_->isa<tensor::Tensor>()) {
-        auto tensor_ptr = value_->cast<tensor::TensorPtr>();
-        MS_EXCEPTION_IF_NULL(tensor_ptr);
-        size_t element_size = tensor_ptr->DataSize();
-        MS_EXCEPTION_IF_CHECK_FAIL((element_size == 1), "The element number of a scalar tensor should be 1, but got: " +
-                                                          std::to_string(element_size));
-        T *data_ptr = reinterpret_cast<T *>(tensor_ptr->data_c());
-        MS_EXCEPTION_IF_NULL(data_ptr);
-        return *data_ptr;
+      if (kernel_tensor_value_ == nullptr) {
+        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
-      return mindspore::GetValue<T>(value_);
+      MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+      MS_EXCEPTION_IF_CHECK_FAIL((kernel_tensor_value_->GetDataSize() == sizeof(T)),
+                                 "The data size in kernel tensor value which contains a scalar [" +
+                                   std::to_string(kernel_tensor_value_->GetDataSize()) +
+                                   "] is not equal to the data type size [" + std::to_string(sizeof(T)) + "]");
+
+      const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value_->GetDataPtr());
+      MS_EXCEPTION_IF_NULL(data_ptr);
+      return *data_ptr;
     }
 
     if (host_value_.empty() && device_ptr_ == nullptr) {
@@ -310,20 +324,23 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
   template <typename T, typename std::enable_if<IsValidContainer<T>::value>::type * = nullptr>
   std::optional<T> GetValue() {
+    if (!std::is_scalar_v<typename T::value_type>) {
+      MS_LOG(EXCEPTION) << "The element of std::vector to get kernel tensor's value should be scalar type.";
+    }
+
+    // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
-      // Get array(vector or string) value store in a tensor.
-      if (value_->isa<tensor::Tensor>()) {
-        auto tensor_ptr = value_->cast<tensor::TensorPtr>();
-        MS_EXCEPTION_IF_NULL(tensor_ptr);
-        size_t element_size = tensor_ptr->DataSize();
-        T ret;
-        ret.reserve(element_size);
-        typename T::value_type *tensor_data = reinterpret_cast<typename T::value_type *>(tensor_ptr->data_c());
-        MS_EXCEPTION_IF_NULL(tensor_data);
-        ret.assign(tensor_data, tensor_data + element_size);
-        return ret;
+      if (kernel_tensor_value_ == nullptr) {
+        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
-      return mindspore::GetValue<T>(value_);
+      MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+
+      const typename T::value_type *data_ptr =
+        reinterpret_cast<const typename T::value_type *>(kernel_tensor_value_->GetDataPtr());
+      MS_EXCEPTION_IF_NULL(data_ptr);
+      size_t element_num = kernel_tensor_value_->GetDataSize() / sizeof(typename T::value_type);
+
+      return T(data_ptr, data_ptr + element_num);
     }
 
     if (host_value_.empty() && device_ptr_ == nullptr) {
@@ -353,7 +370,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Get the value for type which is not scalar, std::vector, std::string and pointer type store in KernelTensor
   // if exists.
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
-  template <typename T, typename std::enable_if<!IsValidContainer<T>::value &&
+  template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
     if (value_ && !value_->isa<ValueAny>()) {
@@ -500,6 +517,21 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
+  // Get the value of the KernelTensor.
+  // Note: To avoid calling the interface by mistake in KernelMod, declare the interface private in the subclass and
+  // public in the parent class.
+  ValuePtr GetValue() const override {
+    if (value_ == nullptr) {
+      return kValueAny;
+    }
+
+    if (kernel_tensor_value_ == nullptr) {
+      kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
+      return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
+    }
+    return kernel_tensor_value_;
+  }
+
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
 
@@ -520,6 +552,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   TypePtr dtype_{kTypeNone};
   // The data enum type id of the KernelTensor.
   TypeId dtype_id_{kTypeUnknown};
+
+  // Saves the contents after the value is converted to continuous memory storage.
+  mutable KernelTensorValuePtr kernel_tensor_value_{nullptr};
 
   // The data format of the KernelTensor.
   mindspore::Format format_{Format::DEFAULT_FORMAT};

@@ -167,18 +167,11 @@ std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateDeviceAddressFor
   MS_EXCEPTION_IF_NULL(value_node);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::vector<TensorPtr> tensors;
-  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0) {
-    (void)tensors.emplace_back(AnfAlgo::SequenceToTensor(node_value));
-  } else {
-    TensorValueToTensor(node_value, &tensors);
-  }
+
   std::vector<device::DeviceAddressPtr> address_list;
-  for (const auto &tensor : tensors) {
-    if (tensor == nullptr) {
-      MS_LOG(WARNING) << "Tensor is null";
-      return address_list;
-    }
+  if (node_value->isa<tensor::Tensor>()) {
+    auto tensor = node_value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr) {
       if (output_address->GetDeviceType() == device_context->GetDeviceType()) {
@@ -187,28 +180,30 @@ std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateDeviceAddressFor
         AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                                value_node.get());
         (void)address_list.emplace_back(output_address);
-        continue;
+        return address_list;
       }
       tensor->data_sync();
     }
-
-    size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
-    TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
-    if (output_type_id == kTypeUnknown) {
-      output_type_id = common::AnfAlgo::GetOutputInferDataType(value_node, output_idx);
-    }
-    std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
-
-    device::DeviceAddressPtr address = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, output_format, output_type_id, tensor->shape());
-    MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address
-                  << " size:" << tensor_size << " format:" << output_format << " type:" << output_type_id
-                  << " shape:" << tensor->shape();
-    MS_EXCEPTION_IF_NULL(address);
-    address->set_from_persistent_mem(true);
-    AnfAlgo::SetOutputAddr(address, output_idx++, value_node.get());
-    (void)address_list.emplace_back(address);
   }
+
+  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
+  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
+  if (output_type_id == kTypeUnknown) {
+    output_type_id = common::AnfAlgo::GetOutputInferDataType(value_node, output_idx);
+  }
+  std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
+
+  const auto &kernel_tensor = AnfAlgo::GetOrCreateOutputKernelTensor(value_node, 0);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  device::DeviceAddressPtr address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, tensor_size, output_format, output_type_id, kernel_tensor->GetShapeVector());
+  MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address
+                << " size:" << tensor_size << " format:" << output_format << " type:" << output_type_id
+                << " shape:" << kernel_tensor->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(address);
+  address->set_from_persistent_mem(true);
+  AnfAlgo::SetOutputAddr(address, output_idx++, value_node.get());
+  (void)address_list.emplace_back(address);
   return address_list;
 }
 
@@ -612,7 +607,8 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   MS_LOG(INFO) << "Ref node pair: origin kernel is " << origin_pair.first->fullname_with_scope() << ", index is "
                << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope() << ", index is "
                << cur_pair.second;
-  // If the output of ref node is parameter, need add the monad attr(for example Transdata/Cast node to ref parameter).
+  // If the output of ref node is parameter, need add the monad attr(for example Transdata/Cast node to ref
+  // parameter).
   if (!common::AnfAlgo::HasMonadInput(cur_pair.first) && origin_pair.first->isa<Parameter>()) {
     MS_LOG(INFO) << cur_pair.first->fullname_with_scope() << "with index " << cur_pair.second
                  << " ref node to parameter " << origin_pair.first->fullname_with_scope() << " and add the monad attr.";
