@@ -62,6 +62,7 @@ class _ParallelOptimizerConfig:
     """
     GRADIENT_ACCUMULATION_SHARD = "gradient_accumulation_shard"
     PARALLEL_OPTIMIZER_THRESHOLD = "parallel_optimizer_threshold"
+    OPTIMIZER_WEIGHT_SHARD_SIZE = "optimizer_weight_shard_size"
 
 
 class _AutoParallelContext:
@@ -790,8 +791,6 @@ class _AutoParallelContext:
         r"""
         Set the configure for parallel optimizer. The configure provides more detailed behavior control about parallel
         training when parallel optimizer is enabled.
-        Currently it supports the key `gradient_accumulation_shard`. The configure will be effective
-        when we use context.set_auto_parallel_context(enable_parallel_optimizer=True).
 
         Args:
             parallel_optimizer_config(dict): A dict contains the keys and values for setting the parallel optimizer
@@ -809,14 +808,19 @@ class _AutoParallelContext:
                                                  enabled, parameters with size smaller than this threshold will not be
                                                  sharded across the devices. Parameter size = shape[0] \* ... \*
                                                  shape[n] \* size(dtype). Non-negative. Unit: KB. Default: 64.
+            - optimizer_weight_shard_size(int): Set the optimizer weight shard group size if you want to specific the
+                                                maximum group size across devices when the parallel optimizer is
+                                                enabled. The numerical range can be (0, device_num]. Default -1.
+
         """
         self.check_context_handle()
         grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
         threshold_name = _ParallelOptimizerConfig.PARALLEL_OPTIMIZER_THRESHOLD
+        optimizer_weight_shard_size_name = _ParallelOptimizerConfig.OPTIMIZER_WEIGHT_SHARD_SIZE
 
         for config_name in parallel_optimizer_config:
             unknown_config = []
-            if config_name not in [grad_shard_name, threshold_name]:
+            if config_name not in [grad_shard_name, threshold_name, optimizer_weight_shard_size_name]:
                 unknown_config.append(config_name)
 
             if unknown_config:
@@ -833,6 +837,11 @@ class _AutoParallelContext:
                 parallel_optimizer_config[threshold_name])
             self._context_handle.set_parallel_optimizer_threshold(
                 parallel_optimizer_config[threshold_name])
+
+        if optimizer_weight_shard_size_name in parallel_optimizer_config:
+            value = parallel_optimizer_config[optimizer_weight_shard_size_name]
+            Validator.check_positive_int(value)
+            self.set_optimizer_weight_shard_size(value)
 
     def get_grad_accumulation_shard(self):
         """Get grad accumulation shard."""

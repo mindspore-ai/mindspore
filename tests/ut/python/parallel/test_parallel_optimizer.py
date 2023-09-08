@@ -161,8 +161,8 @@ def test_auto_parallel_momentum_6():
     # test not fully use parallel optimizer with optimizer_weight_shard_size
     # weight1 could not be shard and weight2 is repeated
     param_shard_group_size = 2
-    context.set_auto_parallel_context(optimizer_weight_shard_size=param_shard_group_size)
-    context.set_auto_parallel_context(parallel_optimizer_config={"parallel_optimizer_threshold": 1})
+    context.set_auto_parallel_context(parallel_optimizer_config={"parallel_optimizer_threshold": 1,
+                                                                 "optimizer_weight_shard_size": param_shard_group_size})
     train_network = auto_parallel_compile_net("semi_auto_parallel", 32, Net2, ((4, 8), (8, 1)), ((4, 4), (4, 2)))
     param_dict = train_network.parameter_layout_dict
     # validate opt_shard_group

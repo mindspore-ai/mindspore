@@ -102,5 +102,5 @@ def test_auto_parallel_momentum_4():
 
 def test_auto_parallel_momentum_5():
     # test not fully use parallel optimizer with mix precision case
-    context.set_auto_parallel_context(optimizer_weight_shard_size=2)
+    context.set_auto_parallel_context(parallel_optimizer_config={'optimizer_weight_shard_size': 2})
     auto_parallel_compile_net("semi_auto_parallel", 8, Net2, ((8, 1), (1, 1)), ((8, 1), (1, 1)), True)
