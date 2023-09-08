@@ -16,6 +16,7 @@ function Convert() {
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size save_type \
         input_format elapsed_time ret
   cfg_file_list=$1
+  mkdir full_quant_debug
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       if [[ $line == \#* || $line == "" ]]; then

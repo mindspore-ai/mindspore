@@ -221,6 +221,7 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
     SaveInfo(out_file, compared_info);
   }
   out_file.close();
+  ChangeFileMode(file_path, S_IRUSR);
   std::cout << "Success save debug info to " + file_path << "\n";
   return RET_OK;
 }
