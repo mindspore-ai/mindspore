@@ -228,7 +228,7 @@ public class NativeLibrary {
             String dependLibName = libResourceName.substring(libResourceName.lastIndexOf("/") + 1);
             final File tmpDependFile = new File(targetDir.getCanonicalPath(), dependLibName);
             LOGGER.info(String.format("extract %d bytes to %s", copyLib(dependLibRes, tmpDependFile), tmpDependFile));
-            deleteFile(tmpDependFile);
+            tmpDependFile.deleteOnExit();
         } catch (IOException e) {
             LOGGER.warning(String.format("extract library into tmp file (%s) failed.", e.toString()));
         }
