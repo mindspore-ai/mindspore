@@ -89,16 +89,6 @@ std::string MetaTensor::ToString() const {
   return buf.str();
 }
 
-std::string MetaTensor::DumpText() const {
-  std::ostringstream oss;
-  oss << type_name() << "(" << static_cast<int>(data_type_) << ")[";
-  for (size_t i = 0; i < shape_.size(); ++i) {
-    oss << (i > 0 ? ", " : "") << shape_[i];
-  }
-  oss << "]";
-  return oss.str();
-}
-
 MetaSparseTensor::MetaSparseTensor() : data_type_(TypeId::kTypeUnknown) {}
 
 MetaSparseTensor::MetaSparseTensor(TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}

@@ -253,11 +253,6 @@ class MS_CORE_API DebugInfo {
   /// \return The debug name of the DebugInfo.
   virtual std::string debug_name() { return name_; }
 
-  /// \brief Get the python function name that this DebugInfo belongs to.
-  ///
-  /// \return The python function name that this DebugInfo belongs to.
-  virtual std::string get_python_func_belonged() { return ""; }
-
   virtual DebugInfoPtr Copy() const;
 
   bool inlined() const { return inlined_; }
@@ -283,22 +278,12 @@ class MS_CORE_API DebugInfo {
 class MS_CORE_API NodeDebugInfo : public DebugInfo {
  public:
   /// \brief Construct a default NodeDebugInfo.
-  NodeDebugInfo() : DebugInfo() {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      py_func_belonged_ = top->func_name();
-    }
-  }
+  NodeDebugInfo() : DebugInfo() {}
 
   /// \brief Construct NodeDebugInfo with a given name.
   ///
   /// \param[in] name the name of the NodeDebugInfo.
-  explicit NodeDebugInfo(const std::string &name) : DebugInfo(name) {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      py_func_belonged_ = top->func_name();
-    }
-  }
+  explicit NodeDebugInfo(const std::string &name) : DebugInfo(name) {}
 
   /// \brief Construct NodeDebugInfo with the given trace info.
   ///
@@ -320,37 +305,19 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
   /// \return The node.
   AnfNodePtr get_node() const { return node_.lock(); }
 
-  /// \brief Set python function name that this NodeDebugInfo belongs to.
-  ///
-  /// \param[in] name The python function name to be set.
-  void set_py_func_belonged(const std::string &name) { py_func_belonged_ = name; }
-
-  std::string get_python_func_belonged() override { return py_func_belonged_; }
-
   DebugInfoPtr Copy() const override;
 
  private:
   AnfNodeWeakPtr node_;
-  std::string py_func_belonged_;
 };
 
 using NodeDebugInfoPtr = std::shared_ptr<NodeDebugInfo>;
 
 class MS_CORE_API GraphDebugInfo : public DebugInfo {
  public:
-  GraphDebugInfo() : DebugInfo() {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      py_func_name_ = top->func_name();
-    }
-  }
+  GraphDebugInfo() : DebugInfo() {}
 
-  explicit GraphDebugInfo(const std::string &name) : DebugInfo(name) {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      py_func_name_ = top->func_name();
-    }
-  }
+  explicit GraphDebugInfo(const std::string &name) : DebugInfo(name) {}
 
   explicit GraphDebugInfo(TraceInfoPtr &&trace_info) : DebugInfo(std::move(trace_info)) {}
 
@@ -361,16 +328,11 @@ class MS_CORE_API GraphDebugInfo : public DebugInfo {
   LocationPtr deco_location() { return deco_loc_; }
   void set_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
   FuncGraphPtr get_graph() const { return func_graph_.lock(); }
-  void set_full_name(const std::string &name) { full_name_ = name; }
-  std::string get_full_name() { return full_name_; }
   void set_deco_location(const LocationPtr &deco_list_loc);
-  std::string get_python_func_belonged() override { return py_func_name_; }
 
  private:
   FuncGraphWeakPtr func_graph_;
   LocationPtr deco_loc_;
-  std::string py_func_name_;
-  std::string full_name_;
 };
 
 using GraphDebugInfoPtr = std::shared_ptr<GraphDebugInfo>;

@@ -162,36 +162,7 @@ std::string GetPrimitiveText(const PrimitivePtr &prim) {
   return oss.str();
 }
 
-std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst,
-                                       const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(sym_inst);
-  AnfNodePtr sym_node = sym_inst->node();
-  MS_EXCEPTION_IF_NULL(sym_node);
-  std::ostringstream oss;
-  if (sym_node->isa<Parameter>()) {
-    auto idx = -1;
-    if (gsub->local_var_map.find(sym_node) != gsub->local_var_map.end()) {
-      idx = gsub->local_var_map[sym_node];
-    }
-    if (idx < 0) {
-      ParameterPtr p = dyn_cast<Parameter>(sym_node);
-      if (p == nullptr) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Sym_inst's node could not cast to parameter";
-      }
-      MS_LOG(WARNING) << "Can not find SymbolicKeyInstance: " << p->name();
-    }
-    oss << "SymInst(%para" << idx << ")";
-  } else {
-    MS_LOG(WARNING) << "SymbolicKeyInstance does not embed a parameter: " << sym_node->ToString();
-    oss << "SymInst(cnode_" << sym_node->ToString() << ")";
-  }
-
-  return oss.str();
-}
-
-std::string GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value,
-                            const std::shared_ptr<SubGraphIRInfo> &gsub) {
+std::string GetSequenceText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   std::ostringstream oss;
   // Output ValueList, ValueTuple
   ValueSequencePtr seq = dyn_cast<ValueSequence>(value);
@@ -206,14 +177,13 @@ std::string GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &valu
     } else {
       oss << ", ";
     }
-    oss << GetValueText(func_graph, elem, gsub);
+    oss << GetValueText(elem, gsub);
   }
   oss << (is_tuple ? ")" : "]");
   return oss.str();
 }
 
-std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
-                        const std::shared_ptr<SubGraphIRInfo> &gsub) {
+std::string GetDictText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   std::ostringstream oss;
   ValueDictionaryPtr dict = value->cast<ValueDictionaryPtr>();
   oss << "{";
@@ -224,7 +194,7 @@ std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
     } else {
       oss << ", ";
     }
-    oss << "\"" << elem.first->ToString() << "\": " << GetValueText(func_graph, elem.second, gsub);
+    oss << "\"" << elem.first->ToString() << "\": " << GetValueText(elem.second, gsub);
   }
   oss << "}";
   return oss.str();
@@ -239,14 +209,11 @@ std::string GetOtherValueText(const ValuePtr &value) {
 static bool CanUseDumpText(const ValuePtr &value) {
   return (value->isa<RefKey>() || value->isa<Scalar>() || value->isa<StringImm>() || value->isa<tensor::Tensor>() ||
           value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>() || value->isa<ValueSlice>() ||
-          value->isa<Type>() || value->isa<KeywordArg>());
+          value->isa<Type>() || value->isa<KeywordArg>() || value->isa<SymbolicKeyInstance>());
 }
 
-std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
-                         const std::shared_ptr<SubGraphIRInfo> &gsub) {
-  if (func_graph == nullptr || value == nullptr) {
-    return "";
-  }
+std::string GetValueText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<Primitive>()) {
     return GetPrimitiveText(value->cast<PrimitivePtr>());
   }
@@ -254,14 +221,11 @@ std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
     MetaFuncGraphPtr meta_func_graph = value->cast<MetaFuncGraphPtr>();
     return GetMetaFuncGraphText(meta_func_graph);
   }
-  if (value->isa<SymbolicKeyInstance>()) {
-    return GetSymbolicKeyInstanceText(func_graph, value->cast<SymbolicKeyInstancePtr>(), gsub);
-  }
   if (value->isa<ValueSequence>()) {
-    return GetSequenceText(func_graph, value, gsub);
+    return GetSequenceText(value, gsub);
   }
   if (value->isa<ValueDictionary>()) {
-    return GetDictText(func_graph, value, gsub);
+    return GetDictText(value, gsub);
   }
   if (CanUseDumpText(value)) {
     return value->DumpText();
@@ -507,7 +471,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
       if (value->isa<Primitive>()) {
         gsub->buffer << value->ToString();
       } else {
-        gsub->buffer << GetValueText(node->func_graph(), value, gsub);
+        gsub->buffer << GetValueText(value, gsub);
       }
     }
   } else {
@@ -582,7 +546,7 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
         // ValueNode except FuncGraph.
-        gsub->buffer << GetValueNode(in)->ToString();
+        gsub->buffer << GetValueText(GetValueNode(in), gsub);
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
         gsub->buffer << "@" << fg->ToString();
