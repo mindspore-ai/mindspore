@@ -100,6 +100,12 @@ void Task::ShutdownGroup() {  // Wake up watch dog and shutdown the engine.
         rcLock.unlock();
         TaskManager::InterruptMaster(rc_);
         TaskManager::InterruptGroup(*this);
+        if (vg->rc_.IsError()) {
+          // InterruptMaster miss sink pyfunc scenario, thus add print here.
+          if (vg->has_dataqueue_ && vg->rc_.StatusCode() == mindspore::StatusCode::kMDPyFuncException) {
+            MS_LOG(ERROR) << "MindSpore dataset is terminated with err msg: " << vg->rc_;
+          }
+        }
       }
     }
   }

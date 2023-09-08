@@ -200,11 +200,15 @@ Status ExecutionTree::Launch() {
     // require a thread to execute.  Instead, the work of this operator is executed inlined
     // from the tree node directly above it (or in the case of a root node, it runs from within
     // the launching tree/user thread.  Do not exec any thread for an inlined op.
+    // Set the state of the Operator as running. This only matters in Leaf ops, CacheOp and TakeOp
     itr->state_ = DatasetOp::OpState::kDeOpRunning;
     itr->Launch();
     if (!itr->inlined()) {
       RETURN_IF_NOT_OK(tg_->CreateAsyncTask(itr->NameWithID(), std::ref(*itr), nullptr, itr->id()));
-      // Set the state of the Operator as running. This only matters in Leaf ops, CacheOp and TakeOp
+      // Set if this task group has data queue op
+      if (itr->Name() == kDeviceQueueOp) {
+        tg_->HasDataQueue(true);
+      }
     }
   }
 
