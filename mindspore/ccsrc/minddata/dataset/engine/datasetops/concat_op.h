@@ -18,12 +18,14 @@
 
 #include <memory>
 #include <string>
+#include <random>
 #include <unordered_map>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 
 namespace mindspore {
 namespace dataset {
@@ -34,7 +36,8 @@ class ConcatOp : public PipelineOp {
   // @param op_connector_size - connector size
   ConcatOp();
   ConcatOp(const std::shared_ptr<SamplerRT> &sampler, const std::vector<std::pair<int, int>> &children_flag_and_nums,
-           const std::vector<std::pair<int, int>> &children_start_end_index);
+           const std::vector<std::pair<int, int>> &children_start_end_index,
+           const std::vector<int64_t> &children_sizes);
 
   // Destructor
   ~ConcatOp() = default;
@@ -76,6 +79,10 @@ class ConcatOp : public PipelineOp {
 
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+  Status SampleInSequence(TensorRow *row, bool is_pipeline_mode = true);
+
+  Status SampleInGlobal(TensorRow *row, bool is_pipeline_mode = true);
+
   /// Check if the current sample will be taken or dropped
   /// \return bool
   bool IgnoreSample();
@@ -93,6 +100,9 @@ class ConcatOp : public PipelineOp {
   std::vector<dsize_t> data_rank_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
+  std::vector<int64_t> children_sizes_;
+  std::vector<int64_t> children_sizes_ori_;
+  std::vector<bool> children_exhausted_;
 
   size_t cur_child_;
   bool verified_;
@@ -100,6 +110,11 @@ class ConcatOp : public PipelineOp {
 
   int32_t num_shard_;
   int32_t shard_index_;
+
+  std::unique_ptr<std::discrete_distribution<>> discrete_random_;
+  bool global_shuffle_;
+  uint32_t seed_;
+  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

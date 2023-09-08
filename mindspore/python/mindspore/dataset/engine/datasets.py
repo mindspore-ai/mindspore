@@ -1254,6 +1254,12 @@ class Dataset:
         Concatenate the dataset objects in the input list.
         Performing "+" operation on dataset objects can achieve the same effect.
 
+        For a dataset concatenated by many other dataset objects, it returns the data in the order of
+        datasets passed in. If you want to change the data order(such as random selection from each dataset
+        instead of in sequence), apply `use_sampler` method on the concatenated dataset object.
+        Currently `use_sampler` supports `dataset.DistributedSampler` for sharding selection from each dataset
+        or `dataset.RandomSampler` for random selection from each dataset, see examples below.
+
         Note:
             The column name, and rank and type of the column data must be the same in the input datasets.
 
@@ -1266,13 +1272,41 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1")
-            >>> dataset_2 = ds.GeneratorDataset([2, 3, 4], "column1")
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1", shuffle=False)
+            >>> dataset_2 = ds.GeneratorDataset([4, 5, 6], "column1", shuffle=False)
             >>>
             >>> # Create a dataset by concatenating dataset_1 and dataset_2 with "+" operator
             >>> dataset = dataset_1 + dataset_2
             >>> # Create a dataset by concatenating dataset_1 and dataset_2 with concat operation
             >>> dataset = dataset_1.concat(dataset_2)
+            >>>
+            >>> # Check the data order of dataset
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1", shuffle=False)
+            >>> dataset_2 = ds.GeneratorDataset([4, 5, 6], "column1", shuffle=False)
+            >>> dataset = dataset_1 + dataset_2
+            >>> result = list(dataset)
+            >>> # [[Tensor(shape=[], dtype=Int64, value= 1)], [Tensor(shape=[], dtype=Int64, value= 2)],
+            >>> #  [Tensor(shape=[], dtype=Int64, value= 3)], [Tensor(shape=[], dtype=Int64, value= 4)],
+            >>> #  [Tensor(shape=[], dtype=Int64, value= 5)], [Tensor(shape=[], dtype=Int64, value= 6)]]
+            >>>
+            >>> # Change the data order of concatenated dataset with sharding selection
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1", shuffle=False)
+            >>> dataset_2 = ds.GeneratorDataset([4, 5, 6], "column1", shuffle=False)
+            >>> dataset = dataset_1.concat(dataset_2)
+            >>> dataset.use_sampler(ds.DistributedSampler(num_shards=2, shard_id=1, shuffle=False))
+            >>> result = list(dataset)
+            >>> # [[Tensor(shape=[], dtype=Int64, value= 2)], [Tensor(shape=[], dtype=Int64, value= 4)],
+            >>> #  [Tensor(shape=[], dtype=Int64, value= 6)]]
+            >>>
+            >>> # Change the data order of concatenated dataset with random selection
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1", shuffle=False)
+            >>> dataset_2 = ds.GeneratorDataset([4, 5, 6], "column1", shuffle=False)
+            >>> dataset = dataset_1.concat(dataset_2)
+            >>> dataset.use_sampler(ds.RandomSampler())
+            >>> result = list(dataset)
+            >>> # [[Tensor(shape=[], dtype=Int64, value= 1)], [Tensor(shape=[], dtype=Int64, value= 4)],
+            >>> #  [Tensor(shape=[], dtype=Int64, value= 2)], [Tensor(shape=[], dtype=Int64, value= 5)],
+            >>> #  [Tensor(shape=[], dtype=Int64, value= 6)], [Tensor(shape=[], dtype=Int64, value= 3)]]
         """
         if isinstance(datasets, Dataset):
             datasets = [self] + [datasets]
@@ -3929,6 +3963,8 @@ class ConcatDataset(UnionBaseDataset):
                                  "valid samples in the dataset." % child_index)
             child_index += 1
 
+        self._children_sizes = self.children_sizes_.copy()
+
         # _children_flag_and_nums: A list of pair<int ,int>.The first element of pair is flag that characterizes
         # whether the dataset is mappable. The second element of pair is length of the dataset
         self._children_flag_and_nums = []
@@ -3952,7 +3988,8 @@ class ConcatDataset(UnionBaseDataset):
                 self._children_flag_and_nums.append((1, dataset_len))
 
     def parse(self, children=None):
-        return cde.ConcatNode(children, self._sampler, self._children_flag_and_nums, self._children_start_end_index_)
+        return cde.ConcatNode(children, self._sampler, self._children_flag_and_nums, self._children_start_end_index_,
+                              self._children_sizes)
 
     def use_sampler(self, sampler):
         """
@@ -3968,8 +4005,19 @@ class ConcatDataset(UnionBaseDataset):
             ValueError: If the parameter NumSamples of sampler is not None.
             ValueError: If num_shards <=0.
         """
-        if not isinstance(sampler, samplers.DistributedSampler):
-            raise TypeError("The parameter %s of concat must be DistributedSampler!" % sampler)
+        if not isinstance(sampler, (samplers.DistributedSampler, samplers.RandomSampler)):
+            raise TypeError("The parameter %s of concat must be DistributedSampler or RandomSampler!" % sampler)
+
+        if isinstance(sampler, samplers.RandomSampler):
+            if sampler.replacement:
+                raise ValueError("The parameter replacement of RandomSampler must be False!")
+
+            if sampler.get_num_samples() is not None:
+                raise ValueError("The parameter num_samples of RandomSampler is not support to be set!")
+
+            self._sampler = sampler
+            self._children_sizes = [c.get_dataset_size() for c in self.children]
+            return
 
         if sampler.is_shuffled():
             raise ValueError("The parameter shuffle of DistributedSampler must be False!")

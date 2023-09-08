@@ -82,6 +82,15 @@ std::vector<pid_t> toIntVector(const py::list input_list) {
   return vector;
 }
 
+std::vector<int64_t> toInt64Vector(const py::list input_list) {
+  std::vector<int64_t> vector;
+  if (!input_list.empty()) {
+    std::transform(input_list.begin(), input_list.end(), std::back_inserter(vector),
+                   [&](const py::handle &handle) { return static_cast<int64_t>(toInt64(handle)); });
+  }
+  return vector;
+}
+
 std::unordered_map<int32_t, std::vector<pid_t>> toIntMap(const py::dict input_dict) {
   std::unordered_map<int32_t, std::vector<pid_t>> map;
   if (!input_dict.empty()) {

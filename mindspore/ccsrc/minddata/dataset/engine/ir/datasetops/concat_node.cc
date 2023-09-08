@@ -34,10 +34,12 @@ namespace dataset {
 ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets,
                        const std::shared_ptr<SamplerObj> &sampler,
                        const std::vector<std::pair<int, int>> &children_flag_and_nums,
-                       const std::vector<std::pair<int, int>> &children_start_end_index)
+                       const std::vector<std::pair<int, int>> &children_start_end_index,
+                       const std::vector<int64_t> &children_sizes)
     : sampler_(sampler),
       children_flag_and_nums_(children_flag_and_nums),
-      children_start_end_index_(children_start_end_index) {
+      children_start_end_index_(children_start_end_index),
+      children_sizes_(children_sizes) {
   nary_op_ = true;
   for (auto const &child : datasets) {
     AddChild(child);
@@ -48,7 +50,7 @@ std::shared_ptr<DatasetNode> ConcatNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   // create an empty vector to copy a concat
   auto node = std::make_shared<ConcatNode>(std::vector<std::shared_ptr<DatasetNode>>(), sampler,
-                                           children_flag_and_nums_, children_start_end_index_);
+                                           children_flag_and_nums_, children_start_end_index_, children_sizes_);
   return node;
 }
 
@@ -132,7 +134,7 @@ Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   } else {
     std::shared_ptr<SamplerRT> sampler_rt = nullptr;
     RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
-    op = std::make_shared<ConcatOp>(sampler_rt, children_flag_and_nums_, children_start_end_index_);
+    op = std::make_shared<ConcatOp>(sampler_rt, children_flag_and_nums_, children_start_end_index_, children_sizes_);
   }
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
@@ -159,6 +161,7 @@ Status ConcatNode::to_json(nlohmann::json *out_json) {
   args["sampler"] = sampler_args;
   args["children_flag_and_nums"] = children_flag_and_nums_;
   args["children_start_end_index"] = children_start_end_index_;
+  args["children_sizes"] = children_sizes_;
   *out_json = args;
   return Status::OK();
 }
