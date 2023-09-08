@@ -687,6 +687,7 @@ namespace mindspore::ops {{
         class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
         enum_py_code = f"""
 def {enum_name}_to_enum({enum_name}_str):
+    {enum_name}_str = {enum_name}_str.upper()
 """
         enum_cc_code = f"""enum class {class_name} : int64_t {{
 """

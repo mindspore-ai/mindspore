@@ -77,18 +77,18 @@ activation_type:
 
 # enum ReduceMode
 reduce_mode:
-  Reduce_Mean: 0
-  Reduce_Max: 1
-  Reduce_Min: 2
-  Reduce_Prod: 3
-  Reduce_Sum: 4
-  Reduce_Sum_Square: 5
-  Reduce_ASum: 6
-  Reduce_All: 7
-  Reduce_L2: 8
-  Reduce_L1: 9
-  Reduce_Log_Sum: 10
-  Reduce_Log_Sum_Exp: 1
+  REDUCE_MEAN: 0
+  REDUCE_MAX: 1
+  REDUCE_MIN: 2
+  REDUCE_PROD: 3
+  REDUCE_SUM: 4
+  REDUCE_SUM_SQUARE: 5
+  REDUCE_ASUM: 6
+  REDUCE_ALL: 7
+  REDUCE_L2: 8
+  REDUCE_L1: 9
+  REDUCE_LOG_SUM: 10
+  REDUCE_LOG_SUM_EXP: 11
 
 # enum EltwiseMode
 eltwise_mode:
@@ -99,9 +99,10 @@ eltwise_mode:
 
 # enum Reduction
 reduction:
-  REDUCTION_SUM: 0
+  NONE: 0
   MEAN: 1
-  NONE: 2
+  SUM: 2
+  ADD: 3
 
 # enum PadMode
 pad_mode:
