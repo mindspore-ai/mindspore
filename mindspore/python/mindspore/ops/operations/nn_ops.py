@@ -7143,7 +7143,19 @@ class Dropout(PrimitiveWithCheck):
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x`.
+        - **mask** (Tensor) - The mask applied to `x`.
+
+          - On GPU and CPU, `mask` has the same shape and data type as `x`.
+          - On Ascend, to achieve a better performance, it is denoted as a 1-D Tensor
+            with Uint8 data type. It has shape :math:`(byte_counts, )` where :math:`byte_counts` is the
+            number of bytes needed to mask the input `x`, :math:`byte_counts` is calculated using the
+            following formula:
+
+            .. math::
+
+                byte\_counts = \text{ceil}(\text{cumprod}(x.shape) / 128) * 16
+
+            If shape of `x` is :math:`(2, 3, 4, 5, 6)`, the shape of `mask` will be :math:`(96, )`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8182,7 +8194,7 @@ class Conv3D(Primitive):
         ...                     pad=2, dilation=(1), group=1)
         >>> output = conv3d(x, weight)
         >>> print(output.shape)
-        (10, 40, 32, 17, 12)
+        (10, 40, 34, 17, 12)
     """
 
     @prim_attr_register
