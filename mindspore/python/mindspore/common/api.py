@@ -49,7 +49,8 @@ from mindspore._checkparam import is_stub_tensor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
-from mindspore.common.auto_dynamic_shape import _AutoIdentifyDynamicShape
+from mindspore.common.auto_dynamic_shape import get_auto_dynamic_shape_args, update_auto_dynamic_shape_phase, \
+    get_auto_dynamic_shape_args_with_check_input_signature, update_auto_dynamic_shape_phase_with_check_input_signature
 
 # Store ms_function class compiled pipeline cache.
 ms_compile_cache = set()
@@ -324,7 +325,7 @@ class _MindsporeFunctionExecutor:
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
-        self.auto_identify_dynamic_shape = _AutoIdentifyDynamicShape()
+
 
     @_wrap_func
     def __call__(self, *args, **kwargs):
@@ -353,6 +354,7 @@ class _MindsporeFunctionExecutor:
 
         return output
 
+
     def compile(self, method_name, *args, **kwargs):
         """Returns pipeline for the given args."""
         # Check whether hook function registered on Cell object.
@@ -363,17 +365,24 @@ class _MindsporeFunctionExecutor:
                                f"pynative mode and remove 'jit' decorator.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
         compile_args = self._generate_compile_args(args)
+        if isinstance(self.obj, ms.nn.Cell):
+            key_id = str(id(self.obj)) + str(self.obj.create_time)
+        else:
+            key_id = str(id(self.obj)) + str(self._create_time)
+
+        if _pynative_executor.grad_flag():
+            key_id = key_id + ".grad"
+
+        compile_args = get_auto_dynamic_shape_args_with_check_input_signature(compile_args, key_id,
+                                                                              self.input_signature)
+
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
-        generate_name = self.fn.__code__.co_filename + ".line" + \
-            str(self.fn.__code__.co_firstlineno) + "." + self.fn.__name__
-        if _pynative_executor.grad_flag():
-            generate_name = generate_name + ".grad"
-        if _is_pynative_parallel():
-            generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
+        generate_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
         create_time = ''
+
         # Add key with obj
         if self.obj is not None:
             if self.obj.__module__ != self.fn.__module__:
@@ -403,7 +412,9 @@ class _MindsporeFunctionExecutor:
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(self.fn, compile_args, kwargs, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
-        self.auto_identify_dynamic_shape.update_phase_and_compile_args(compile_args, phase, False)
+
+        update_auto_dynamic_shape_phase_with_check_input_signature(compile_args, key_id, phase, self.input_signature)
+
         if phase in ms_compile_cache:
             return phase
 
@@ -462,6 +473,17 @@ class _MindsporeFunctionExecutor:
                 opt_param.init_data()
 
 
+    def _get_generate_name(self):
+        """get generate name."""
+        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
+            str(self.fn.__code__.co_firstlineno)
+        if _pynative_executor.grad_flag():
+            generate_name = generate_name + ".grad"
+        if _is_pynative_parallel():
+            generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
+        return generate_name
+
+
     def _set_compile_cache_dep_files(self):
         # If enable compile cache, get the dependency files list
         enable_compile_cache = context.get_context("enable_compile_cache")
@@ -510,8 +532,6 @@ class _MindsporeFunctionExecutor:
             else:
                 if not verify_inputs_signature(self.input_signature, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
-        else:
-            compile_args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args_list, False)
         return compile_args
 
     def _generate_run_args(self, args_list, kwargs):
@@ -1376,7 +1396,6 @@ class _CellGraphExecutor:
         self._graph_executor = GraphExecutor_.get_instance()
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self.auto_identify_dynamic_shape = _AutoIdentifyDynamicShape()
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
                      input_indexs, phase='dataset', need_run=True):
@@ -1469,17 +1488,19 @@ class _CellGraphExecutor:
         if not hasattr(obj, obj.__parse_method__):
             raise AttributeError(
                 'The class {} dose not have method {}'.format(obj.__class__.__name__, obj.__parse_method__))
+        key_id = str(id(obj)) + str(obj.create_time)
+        args = get_auto_dynamic_shape_args(args, key_id)
 
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
         logger.debug("Convert the network.", do_convert)
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args, False)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
-        self.auto_identify_dynamic_shape.update_phase_and_compile_args(args, phase, False)
+        update_auto_dynamic_shape_phase(args, key_id, phase)
+
         if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
             return phase, False

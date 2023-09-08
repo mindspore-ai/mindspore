@@ -16,7 +16,6 @@
 # ============================================================================
 """Providing auto dynamic shape interface methods."""
 
-import os
 from mindspore import log as logger
 from mindspore._c_expression import GraphExecutor_, Tensor
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
@@ -24,6 +23,7 @@ from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 SHAPE_DIM_ANY = -1
 SHAPE_RANK_ANY = -2
 
+auto_dynamic_shepe_dict = {}
 
 class _AutoDynamicShapeManager:
     """
@@ -35,6 +35,13 @@ class _AutoDynamicShapeManager:
         self.real_phase_and_compile_args_dict = {}
         self.generalize_phase_and_compile_args_dict = {}
         self._graph_executor = GraphExecutor_.get_instance()
+
+
+    def __del__(self):
+        self.real_shape_cache = []
+        self.generalize_shape_cache = []
+        self.real_phase_and_compile_args_dict = {}
+        self.generalize_phase_and_compile_args_dict = {}
 
 
     @staticmethod
@@ -90,22 +97,26 @@ class _AutoDynamicShapeManager:
         return shape_cache
 
 
+    def get_compile_args_shape_without_sink(self, input_args, res_shape):
+        """get compile args shape with out sink mode"""
+        for input in input_args:
+            if isinstance(input, Tensor):
+                res_shape.append(input.shape)
+            elif isinstance(input, (int, float)):
+                res_shape.append([])
+            elif isinstance(input, (tuple, list)):
+                tmp_shape = []
+                self.get_compile_args_shape_without_sink(input, tmp_shape)
+                res_shape.append(tmp_shape)
+
+
     def get_compile_args_shape(self, input_args, is_sink_mode):
         """get compile args shape"""
         if is_sink_mode:
             return input_args
 
         res_shape = []
-        for input in input_args:
-            if isinstance(input, Tensor):
-                res_shape.append(input.shape)
-            elif isinstance(input, (tuple, list)):
-                if self._check_tuple_of_scalar(input):
-                    shape = []
-                    shape.append(len(input))
-                    res_shape.append(shape)
-            elif isinstance(input, int):
-                res_shape.append([])
+        self.get_compile_args_shape_without_sink(input_args, res_shape)
         return res_shape
 
 
@@ -160,10 +171,18 @@ class _AutoDynamicShapeManager:
             self.generalize_shape_cache.remove(delete_compile_args)
 
         # step3 save phase and compile args into cache
-        logger.debug(f'The generalize shape cache number is {len(self.generalize_shape_cache)}, is less than '
-                     f'{max_save_cache_number}, phase=%r should be saved in generalize shape cache.', phase)
+        logger.info(f'The generalize shape cache number is {len(self.generalize_shape_cache)}, is less than '
+                    f'{max_save_cache_number}, phase=%r should be saved in generalize shape cache.', phase)
         self.generalize_phase_and_compile_args_dict[phase] = compile_args
         self.generalize_shape_cache.append(compile_args)
+
+
+    def check_tuple_of_scalar(self, input):
+        """check tuple of scalar"""
+        for elem in input:
+            if not isinstance(elem, int):
+                return False
+        return True
 
 
     def _compare_input_args_and_cache_args(self, input_args, cache_args):
@@ -181,14 +200,6 @@ class _AutoDynamicShapeManager:
         return True
 
 
-    def _check_tuple_of_scalar(self, input):
-        """check tuple of scalar"""
-        for elem in input:
-            if not isinstance(elem, int):
-                return False
-        return True
-
-
 class _AutoIdentifyDynamicShape:
     """
     Represents a function auto identify dynamic shape.
@@ -199,25 +210,75 @@ class _AutoIdentifyDynamicShape:
         self.is_enable_auto_dynamic_shape = True
         self.save_cache_number = 3
         self.auto_dynamic_shape_manager = _AutoDynamicShapeManager()
-        self.enable_auto_identify = os.getenv('MS_AUTO_DYNAMIC_SHAPE_ENABLE')
 
 
-    def _is_enable_auto_dynamic_shape(self, args_list):
-        """is enable auto identify shape"""
-        if not self.enable_auto_identify:
-            self.enable_auto_identify = "0"
+    def __del__(self):
+        self.all_shape_cache = {}
+        self.is_sink_mode = False
+        self.is_enable_auto_dynamic_shape = True
+        self.save_cache_number = 3
 
-        if self.enable_auto_identify == "0":
+
+    def _check_input_args_number(self, args_list):
+        """check input arg number"""
+        if self.auto_dynamic_shape_manager.get_real_shape_cache_number() > 0:
+            first_real_cache = self.auto_dynamic_shape_manager.get_real_shape_cache()[0]
+            if len(first_real_cache) != len(args_list):
+                return False
+        return True
+
+
+    def _check_input_tensor_type(self, args_list, cache_list):
+        """check input args type"""
+        for (input, cache) in zip(args_list, cache_list):
+            if isinstance(input, Tensor) and isinstance(cache, Tensor):
+                if input.dtype != cache.dtype:
+                    logger.debug((f'input tensor type = {input.dtype}, cache tensor type = {cache.dtype}, '
+                                  f'tensor types are not same.'))
+                    return False
+            elif isinstance(input, (tuple, list)) and isinstance(cache, (tuple, list)):
+                res = self._check_input_tensor_type(input, cache)
+                if not res:
+                    return False
+            elif (isinstance(input, int) and isinstance(cache, int)) or \
+                 (isinstance(input, float) and isinstance(cache, float)):
+                if input != cache:
+                    return False
+            elif (isinstance(input, Tensor) and not isinstance(cache, Tensor)) or \
+                 (isinstance(input, (int, float)) and not isinstance(cache, (int, float))) or \
+                 (isinstance(input, (tuple, list))) and not isinstance(cache, (tuple, list)):
+                return False
+        return True
+
+
+    def _check_input_number_and_type(self, args_list):
+        """check input number and type"""
+        res = self._check_input_args_number(args_list)
+        if not res:
             return False
 
-        if not args_list:
+        if self.auto_dynamic_shape_manager.get_real_shape_cache_number() > 0:
+            cache_list = self.auto_dynamic_shape_manager.get_real_shape_cache()[0]
+            res = self._check_input_tensor_type(args_list, cache_list)
+            if not res:
+                return False
+        return True
+
+
+    def _is_enable_auto_dynamic_shape(self, args_list, is_sink_mode):
+        """is enable auto identify shape"""
+        if not is_sink_mode and not args_list:
             return False
 
         for elem in args_list:
             if elem is None:
                 return False
-            if isinstance(elem, Tensor) and is_shape_unknown(elem.shape):
+            if not isinstance(elem, (list, tuple, Tensor, int, float)):
                 return False
+            if isinstance(elem, Tensor) and (is_shape_unknown(elem.shape) or (not elem.shape)):
+                return False
+            if not is_sink_mode and isinstance(elem, (list, tuple)):
+                return self._is_enable_auto_dynamic_shape(elem, is_sink_mode)
         return True
 
 
@@ -225,8 +286,7 @@ class _AutoIdentifyDynamicShape:
     def _do_generalize_in_sink(input, cache, input_index, cache_index, cache_type):
         """do generalize in sink, input rank must be 2"""
         if not input:
-            raise ValueError("In sink mode, cell input can not be scalar, please close auto dynamic shape, "
-                             "export MS_AUTO_DYNAMIC_SHAPE_ENABLE=0, and run again.")
+            raise ValueError("In sink mode, cell input can not be scalar.")
 
         if input == cache:
             return cache
@@ -249,31 +309,38 @@ class _AutoIdentifyDynamicShape:
                                                                       is_sink_mode, aux)
 
 
+
     def auto_dynamic_generate_compile_args(self, args_list, is_sink_mode):
         """generate compile args in auto dynamic shape"""
-        if not self._is_enable_auto_dynamic_shape(args_list):
+        if not self._check_input_number_and_type(args_list) or \
+            not self._is_enable_auto_dynamic_shape(args_list, is_sink_mode):
             self.is_enable_auto_dynamic_shape = False
             return args_list
         self.is_sink_mode = is_sink_mode
 
-        res = self.auto_dynamic_shape_manager.get_compile_args_shape(args_list, is_sink_mode)
-        logger.debug((f'input args list={res}.'))
+        res_shape = self.auto_dynamic_shape_manager.get_compile_args_shape(args_list, is_sink_mode)
+        logger.debug((f'input args list shape = {res_shape}.'))
 
         # step1: find cache in real_shape_cache.
-        if self.auto_dynamic_shape_manager.get_real_shape_cache_number() < 2:
-            logger.debug((f'real shape cache cap is smaller than 2, compile args shape={res}.'))
+        real_cache_number = self.auto_dynamic_shape_manager.get_real_shape_cache_number()
+        if real_cache_number < 2:
+            logger.info((f'real shape cache cap is {real_cache_number}, smaller than 2, '
+                         f'compile args shape={res_shape}.'))
             return args_list
 
         is_real_shape_exist = self.auto_dynamic_shape_manager.find_compile_args_in_shape_cache(args_list, "real")
         if is_real_shape_exist:
-            logger.debug((f'find compile args in real shape cache, compile args shape={res}'))
+            logger.debug((f'find compile args in real shape cache, compile args shape={res_shape}'))
             return args_list
 
         # step2: if can not find cache in real_shape_cache, then generate it
-        generalize_shape_args = self._do_generalize_shape("real", args_list, is_sink_mode)
+        generalize_shape_args, can_generalize = self._do_generalize_shape("real", args_list, is_sink_mode)
+        if not can_generalize:
+            return args_list
+
         if self.auto_dynamic_shape_manager.get_generalize_shape_cache_number() == 0:
-            res = self.auto_dynamic_shape_manager.get_compile_args_shape(generalize_shape_args, is_sink_mode)
-            logger.debug((f'generalize shape cache cap is smaller than 1, compile args shape={res}.'))
+            res_shape = self.auto_dynamic_shape_manager.get_compile_args_shape(generalize_shape_args, is_sink_mode)
+            logger.info((f'generalize shape cache cap is smaller than 1, compile args shape = {res_shape}.'))
             return generalize_shape_args
 
         # step3: find generalize_shape in generalize_shape_cache
@@ -282,13 +349,17 @@ class _AutoIdentifyDynamicShape:
 
         # step 4: if can not find cache in generalize_shape_cache, then generate it again
         if not is_generalize_shape_exist:
-            new_generalize_shape = self._do_generalize_shape("generalize", generalize_shape_args, is_sink_mode)
-            res = self.auto_dynamic_shape_manager.get_compile_args_shape(new_generalize_shape, is_sink_mode)
-            logger.info((f'generalize with generalize shape cache, compile args shape={res}'))
+            new_generalize_shape, can_generalize = self._do_generalize_shape("generalize", generalize_shape_args,
+                                                                             is_sink_mode)
+            if not can_generalize:
+                return args_list
+
+            res_shape = self.auto_dynamic_shape_manager.get_compile_args_shape(new_generalize_shape, is_sink_mode)
+            logger.info((f'generalize with generalize shape cache, compile args shape = {res_shape}'))
             return new_generalize_shape
 
-        res = self.auto_dynamic_shape_manager.get_compile_args_shape(generalize_shape_args, is_sink_mode)
-        logger.debug((f'find compile args in generalize shape cache, compile args shape={res}'))
+        res_shape = self.auto_dynamic_shape_manager.get_compile_args_shape(generalize_shape_args, is_sink_mode)
+        logger.debug((f'find compile args in generalize shape cache, compile args shape={res_shape}'))
         return generalize_shape_args
 
 
@@ -301,12 +372,16 @@ class _AutoIdentifyDynamicShape:
                 rank_count, shape_count = self._cal_unknown_shape_count(elem, is_sink_mode)
                 unknown_rank_count = unknown_rank_count + rank_count
                 unknown_shape_count = unknown_shape_count + shape_count
-            elif isinstance(elem, Tensor) and is_shape_unknown(elem.shape):
-                unknown_shape_count = unknown_shape_count + 1
-            elif isinstance(elem, Tensor) and is_dim_unknown(elem.shape):
-                unknown_rank_count = unknown_rank_count + 1
-            elif isinstance(elem, int) and elem == SHAPE_DIM_ANY:
-                unknown_shape_count = unknown_shape_count + 1
+            if isinstance(elem, Tensor):
+                if is_shape_unknown(elem.shape):
+                    unknown_shape_count = unknown_shape_count + 1
+                if is_dim_unknown(elem.shape):
+                    unknown_rank_count = unknown_rank_count + 1
+            if is_sink_mode and isinstance(elem, int):
+                if elem == SHAPE_DIM_ANY:
+                    unknown_shape_count = unknown_shape_count + 1
+                if elem == SHAPE_RANK_ANY:
+                    unknown_rank_count = unknown_rank_count + 1
         return unknown_rank_count, unknown_shape_count
 
 
@@ -343,10 +418,10 @@ class _AutoIdentifyDynamicShape:
                 if input == cache:
                     generalize_one_shape.append(input)
                 else:
-                    raise ValueError("In auto dynamic shape mode, scalar/tuple/list must be equal, it can not be "
-                                     "generalize. Please close dynamic shape mode, "
-                                     "export MS_AUTO_DYNAMIC_SHAPE_ENABLE=0, and run again.")
-        return generalize_one_shape
+                    logger.info("In auto dynamic shape mode, scalar/tuple/list must be equal, it can not be " \
+                                "generalize.")
+                    return input_args, False
+        return generalize_one_shape, True
 
 
     def _do_generalize_shape(self, cache_type, input_args, is_sink_mode):
@@ -354,8 +429,10 @@ class _AutoIdentifyDynamicShape:
         shape_cache = self.auto_dynamic_shape_manager.get_cache_by_type(cache_type)
         all_generalize_shape_args = []
         for index, cache_args in enumerate(shape_cache):
-            generalize_shape = self._do_generalize_one_input_shape(input_args, cache_args, cache_type, index,
-                                                                   is_sink_mode)
+            generalize_shape, can_generalize = self._do_generalize_one_input_shape(input_args, cache_args, cache_type,
+                                                                                   index, is_sink_mode)
+            if not can_generalize:
+                return generalize_shape, False
             all_generalize_shape_args.append(tuple(generalize_shape))
 
         unknown_shape_dict = {}
@@ -368,6 +445,34 @@ class _AutoIdentifyDynamicShape:
         keys = list(unknown_shape_dict.keys())
         keys.sort(key=lambda x: (x[0], x[1]))
         index = keys[0]
-        return unknown_shape_dict.get(index)
+        return unknown_shape_dict.get(index), True
 
 _auto_dynamic_shape = _AutoIdentifyDynamicShape()
+
+
+def get_auto_dynamic_shape_args(compile_args, key_id):
+    """get auto dynamic shape args."""
+    if key_id not in auto_dynamic_shepe_dict:
+        auto_dynamic_shepe_dict[key_id] = _AutoIdentifyDynamicShape()
+    compile_args = auto_dynamic_shepe_dict[key_id].auto_dynamic_generate_compile_args(compile_args, False)
+    return compile_args
+
+
+def update_auto_dynamic_shape_phase(compile_args, key_id, phase):
+    """update auto dynamic shape phase."""
+    if key_id in auto_dynamic_shepe_dict:
+        auto_dynamic_shepe_dict[key_id].update_phase_and_compile_args(compile_args, phase, False)
+
+
+def get_auto_dynamic_shape_args_with_check_input_signature(compile_args, key_id, input_signature):
+    """get auto dynamic shape args."""
+    if input_signature is None:
+        return get_auto_dynamic_shape_args(compile_args, key_id)
+    return compile_args
+
+
+def update_auto_dynamic_shape_phase_with_check_input_signature(compile_args, key_id, phase, input_signature):
+    """update auto dynamic shape phase."""
+    if input_signature is None:
+        if key_id in auto_dynamic_shepe_dict:
+            auto_dynamic_shepe_dict[key_id].update_phase_and_compile_args(compile_args, phase, False)
