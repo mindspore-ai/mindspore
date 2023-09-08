@@ -2451,16 +2451,12 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
         (void)new_cnode_inputs.emplace_back(input);
       } else {
         auto new_input =
-          ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.dst_cast_dtype_, fg, input);
-        new_input =
-          ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE, op_arg.arg_handler_, fg, new_input);
+          ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE, op_arg.arg_handler_, fg, input);
         (void)new_cnode_inputs.emplace_back(new_input);
       }
     } else {
       // Handle primitive inputs.
-      auto new_input =
-        ConvertInputInPrimitive(parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE, op_arg.dst_cast_dtype_, fg, input);
-      (void)new_cnode_inputs.emplace_back(new_input);
+      (void)new_cnode_inputs.emplace_back(input);
     }
   }
   auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
