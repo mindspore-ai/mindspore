@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/opapi/abs_aclnn_kernel.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn/abs_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <set>
+#include <memory>
 #include <functional>
 #include "ir/tensor.h"
 #include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
-#include "transform/acl_ir/op_api_exec.h"
 #include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
@@ -32,7 +31,7 @@ namespace kernel {
 constexpr size_t kInputIndex = 0;
 constexpr size_t kOutputIndex = 0;
 
-bool AbsAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool AbsAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
@@ -43,7 +42,15 @@ bool AbsAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
     std::make_shared<device::ascend::AscendDeviceAddress>(outputs[kOutputIndex]->addr, outputs[kOutputIndex]->size,
                                                           kOpFormat_DEFAULT, output_params_[kOutputIndex].data_type);
   output_device->set_host_shape(output_params_[kOutputIndex].ori_shape);
-  EXEC_NPU_CMD(aclnnAbs, stream_ptr, input_device, output_device);
+
+  // TODO(ruige): Move to build and resize.
+  ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, input_device, output_device));
+
+  if (workspace_size_list_.empty()) {
+    RUN_OP_API(aclnnAbs, stream_ptr, nullptr, 0, executor_, after_launch_func_);
+    return true;
+  }
+  RUN_OP_API(aclnnAbs, stream_ptr, workspaces[0]->addr, workspace_size_list_[0], executor_, after_launch_func_);
   return true;
 }
 MS_ACLLNN_KERNEL_FACTORY_REG(Abs, AbsAclnnKernelMod);

@@ -19,14 +19,19 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <tuple>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
+#include "transform/acl_ir/op_api_exec.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 using TensorParams = transform::TensorParams;
+using aclOpExecutor = transform::aclOpExecutor;
+using CallBackFunc = std::function<void()>;
 
 class AclnnKernelMod : public AscendKernelMod {
  public:
@@ -44,9 +49,15 @@ class AclnnKernelMod : public AscendKernelMod {
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &, uint32_t) override;
 
+  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
+  bool IsNeedRetrieveOutputShape() override { return false; }
+
  protected:
   std::vector<TensorParams> input_params_;
   std::vector<TensorParams> output_params_;
+
+  aclOpExecutor *executor_{nullptr};
+  CallBackFunc after_launch_func_{nullptr};
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;

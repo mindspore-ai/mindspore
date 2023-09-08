@@ -49,7 +49,10 @@ int AclnnKernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std
     MS_EXCEPTION_IF_NULL(output);
     auto shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "In Resize function, output shape must be valid!";
+      shape = output->GetMaxShape();
+      if (shape.empty()) {
+        MS_LOG(EXCEPTION) << "The max_shape should not be empty when input shape is known.";
+      }
     }
     output_params_[i].ori_shape = shape;
   }
@@ -60,6 +63,22 @@ bool AclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::ve
                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   return true;
+}
+
+void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
+  auto workspace_size = static_cast<size_t>(std::get<0>(args));
+  if (workspace_size != 0) {
+    std::vector<size_t> workspace_size_list = {workspace_size};
+    SetWorkspaceSizeList(workspace_size_list);
+  }
+  executor_ = std::get<1>(args);
+  if (executor_ == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
+  }
+  after_launch_func_ = std::get<2>(args);
+  if (after_launch_func_ == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's call back func!";
+  }
 }
 
 void AclnnKernelMod::SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes) {

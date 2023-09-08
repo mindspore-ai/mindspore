@@ -16,13 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ABS_ACLNN_KERNEL_MOD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ABS_ACLNN_KERNEL_MOD_H_
 #include <vector>
-#include <memory>
-#include <map>
-#include <string>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
-#include "plugin/factory/ms_factory.h"
-#include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 
 namespace mindspore {
