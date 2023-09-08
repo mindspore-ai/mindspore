@@ -61,7 +61,7 @@ class SingleOpInferSession : public InferSession {
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
   uint32_t device_id_ = 0;
-  bool dyn_outshape_ = false;
+  std::vector<bool> dyn_outshape_;
 
   kernel::KernelModPtr kernel_mod_ = nullptr;
   kernel::KernelArgs kernel_args_;
