@@ -534,18 +534,18 @@ class CellDict(_CellDictBase, Cell):
         0
         >>> ordered_cells = OrderedDict([('conv', nn.Conv2d(10, 6, 5, pad_mode='valid')),
         ...                              ('relu', nn.ReLU()),
-        ...                              ('max_pool2d', nn.MaxPool2d(kernel_size=4, stride=4))])
+        ...                              ('max_pool2d', nn.MaxPool2d(kernel_size=2, stride=2))])
         >>> cell_dict.update(ordered_cells)
         >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
         >>> for cell in cell_dict.values():
         ...     x = cell(x)
         >>> print(x.shape)
-        (1, 6, 1, 1)
+        (1, 6, 1, 3)
         >>> x = Tensor(np.ones([1, 10, 6, 10]), ms.float32)
         >>> for item in cell_dict.items():
         ...     x = item[1](x)
         >>> print(x.shape)
-        (1, 6, 1, 1)
+        (1, 6, 1, 3)
         >>> print(cell_dict.keys())
         odict_keys(['conv', 'relu', 'max_pool2d'])
         >>> pop_cell = cell_dict.pop('conv')
