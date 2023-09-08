@@ -81,15 +81,26 @@ def set_env(func):
     """set env for Ascend custom opp"""
     def warpper(*args, **kwargs):
         current_path = os.path.dirname(os.path.abspath(__file__))
-        mslite_ascend_custom_kernel_path = os.path.join(current_path,
-                                                        "custom_kernels",
-                                                        "ascend", "packages", "vendors", "mslite_tbe_and_aicpu")
-        if os.path.exists(mslite_ascend_custom_kernel_path):
+        mslite_ascend_ascendc_custom_kernel_path = os.path.join(current_path,
+                                                                "custom_kernels",
+                                                                "ascend", "ascendc",
+                                                                "packages", "vendors", "mslite_ascendc")
+        mslite_ascend_tbe_custom_kernel_path = os.path.join(current_path,
+                                                            "custom_kernels",
+                                                            "ascend", "tbe_and_aicpu", "packages",
+                                                            "vendors", "mslite_tbe_and_aicpu")
+        if os.path.exists(mslite_ascend_tbe_custom_kernel_path):
             if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
-                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_custom_kernel_path + ":" + \
-                                                    os.environ['ASCEND_CUSTOM_OPP_PATH']
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_tbe_custom_kernel_path + ":" + \
+                    os.environ['ASCEND_CUSTOM_OPP_PATH']
             else:
-                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_custom_kernel_path
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_tbe_custom_kernel_path
+        if os.path.exists(mslite_ascend_ascendc_custom_kernel_path):
+            if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path + ":" + \
+                    os.environ['ASCEND_CUSTOM_OPP_PATH']
+            else:
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path
         else:
             logging.warning("mslite custom kernel path not found")
         return func(*args, **kwargs)
@@ -204,17 +215,20 @@ class Model(BaseModel):
         check_isinstance("context", context, Context)
         check_isinstance("config_path", config_path, str)
         if not os.path.exists(model_path):
-            raise RuntimeError(f"build_from_file failed, model_path does not exist!")
+            raise RuntimeError(
+                f"build_from_file failed, model_path does not exist!")
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
             model_type_ = _c_lite_wrapper.ModelType.kMindIR
         if config_path:
             if not os.path.exists(config_path):
-                raise RuntimeError(f"build_from_file failed, config_path does not exist!")
+                raise RuntimeError(
+                    f"build_from_file failed, config_path does not exist!")
             ret = self._model.load_config(config_path)
             if not ret.IsOk():
-                raise RuntimeError(f"load configuration failed! Error is {ret.ToString()}")
+                raise RuntimeError(
+                    f"load configuration failed! Error is {ret.ToString()}")
 
         if config_dict:
             check_isinstance("config_dict", config_dict, dict)
@@ -230,9 +244,11 @@ class Model(BaseModel):
                     raise RuntimeError(f"update configuration failed! Error is {ret.ToString()}."
                                        f"Setcion is {key}, config is {value}")
 
-        ret = self._model.build_from_file(self.model_path_, model_type_, context._context._inner_context)
+        ret = self._model.build_from_file(
+            self.model_path_, model_type_, context._context._inner_context)
         if not ret.IsOk():
-            raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
+            raise RuntimeError(
+                f"build_from_file failed! Error is {ret.ToString()}")
 
     def get_outputs(self):
         """
@@ -335,7 +351,8 @@ class Model(BaseModel):
         """
         # pylint: disable=useless-super-delegation
         if not isinstance(inputs, (list, tuple)):
-            raise TypeError("inputs must be list or tuple, but got {}.".format(type(inputs)))
+            raise TypeError(
+                "inputs must be list or tuple, but got {}.".format(type(inputs)))
         model_input_tensors = self.get_inputs()
         if len(model_input_tensors) != len(inputs):
             raise RuntimeError(f"inputs size is wrong.")
@@ -453,15 +470,18 @@ class ModelParallelRunner:
         """
         check_isinstance("model_path", model_path, str)
         if not os.path.exists(model_path):
-            raise RuntimeError(f"ModelParallelRunner's build from file failed, model_path does not exist!")
+            raise RuntimeError(
+                f"ModelParallelRunner's build from file failed, model_path does not exist!")
         self.model_path_ = model_path
         if context is None:
             ret = self._model.init(self.model_path_, None)
         else:
             check_isinstance("context", context, Context)
-            ret = self._model.init(self.model_path_, context.parallel._runner_config)
+            ret = self._model.init(
+                self.model_path_, context.parallel._runner_config)
         if not ret.IsOk():
-            raise RuntimeError(f"ModelParallelRunner's build from file failed! Error is {ret.ToString()}")
+            raise RuntimeError(
+                f"ModelParallelRunner's build from file failed! Error is {ret.ToString()}")
 
     def get_inputs(self):
         """
@@ -584,7 +604,8 @@ class ModelParallelRunner:
             >>> print("total run time: ", total_end_time - total_start_time, " s")
         """
         if not isinstance(inputs, (list, tuple)):
-            raise TypeError("inputs must be list or tuple, but got {}.".format(type(inputs)))
+            raise TypeError(
+                "inputs must be list or tuple, but got {}.".format(type(inputs)))
         _inputs = []
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
@@ -735,6 +756,8 @@ class ModelGroup:
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
             model_type_ = _c_lite_wrapper.ModelType.kMindIR
-        ret = self._model_group.cal_max_size_of_workspace(model_type_, context._context._inner_context)
+        ret = self._model_group.cal_max_size_of_workspace(
+            model_type_, context._context._inner_context)
         if not ret.IsOk():
-            raise RuntimeError(f"ModelGroup's cal max size of workspace failed.")
+            raise RuntimeError(
+                f"ModelGroup's cal max size of workspace failed.")
