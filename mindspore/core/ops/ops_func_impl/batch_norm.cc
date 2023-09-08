@@ -20,6 +20,8 @@
 #include <utility>
 
 #include "abstract/dshape.h"
+#include "ops/manually_defined_ops_name.h"
+#include "ops/op_def.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

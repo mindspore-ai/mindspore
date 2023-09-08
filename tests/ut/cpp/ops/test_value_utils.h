@@ -68,23 +68,9 @@ static inline ValuePtr CreateList(const std::vector<NumberContainer> &values) {
   return std::make_shared<ValueList>(value_vec);
 }
 
-static inline bool CmpTupleShape(const std::vector<ShapeVector> &shapes, const abstract::BaseShapePtr &out) {
-  std::vector<abstract::BaseShapePtr> vec;
-  for (auto &shape : shapes) {
-    vec.emplace_back(std::make_shared<abstract::TensorShape>(shape));
-  }
-  auto expect = std::make_shared<abstract::TupleShape>(vec);
-  return ((*expect) == (*out));
-}
+ValuePtr CreatePyIntList(const std::vector<NumberContainer> &values);
 
-static inline ValuePtr CreatePyIntList(const std::vector<int32_t> &values) {
-  std::vector<ValuePtr> value_vec;
-  value_vec.reserve(values.size());
-  for (const auto &v : values) {
-    value_vec.push_back(CreatePyInt(v));
-  }
-  return std::make_shared<ValueList>(value_vec);
-}
+ValuePtr CreatePyIntTuple(const std::vector<NumberContainer> &values);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_TESTS_UT_CPP_OPS_TEST_NUMBER_CONTAINER_H_

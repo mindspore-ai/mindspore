@@ -23,6 +23,7 @@
 #include "ir/primitive.h"
 #include "ops/ops_func_impl/batch_norm_grad_grad.h"
 #include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
@@ -69,13 +70,12 @@ TEST_P(TestBatchNormGradGrad, dyn_shape) {
   auto is_training = param.is_training->ToAbstract();
   auto epsilon = param.epsilon->ToAbstract();
   auto data_format = param.data_format->ToAbstract();
-  auto prim = std::make_shared<Primitive>("BatchNormGradGrad");
-  auto infer = std::make_shared<ops::BatchNormGradGradFuncImpl>();
-  auto out = infer->InferShape(
-    prim, {x, dy, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, is_training, epsilon, data_format});
-  ASSERT_NE(out, nullptr);
-  std::vector<ShapeVector> expect = {param.dx_shape, param.ddy_shape, param.dscale_shape};
-  ASSERT_TRUE(CmpTupleShape(expect, out));
+  auto [expect_shape, expect_type] = MakeOutputTupleShapeAndType({param.dx_shape, param.ddy_shape, param.dscale_shape},
+                                                                 {param.x_type, param.dy_type, param.scale_type});
+  DoFuncImplInferAndCompare<BatchNormGradGradFuncImpl>(
+    "BatchNormGradGrad",
+    {x, dy, scale, mean, variance, dout_dx, dout_dscale, dout_dbias, is_training, epsilon, data_format}, expect_shape,
+    expect_type);
 }
 
 INSTANTIATE_TEST_CASE_P(TestBatchNormGradGrad, TestBatchNormGradGrad,

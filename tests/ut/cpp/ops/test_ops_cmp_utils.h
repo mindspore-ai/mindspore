@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include <string>
-#include "ops/test_ops.h"
 #include "common/common_test.h"
 #include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/test_ops.h"
 
 #ifndef MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_CMP_UTILS_H_
 #define MINDSPORE_TESTS_UT_CPP_OPS_TEST_OPS_CMP_UTILS_H_
@@ -36,6 +36,21 @@ void DoFuncImplInferAndCompare(const std::string &prim_name, const abstract::Abs
   auto inferred_type = infer_impl->InferType(prim, input_args);
   ShapeCompare(inferred_shape, expect_shape);
   TypeCompare(inferred_type, expect_type);
+}
+
+static inline std::pair<abstract::BaseShapePtr, TypePtr> MakeOutputTupleShapeAndType(
+  const std::vector<ShapeVector> &shapes, const std::vector<TypePtr> &types) {
+  std::vector<abstract::BaseShapePtr> shape_vec;
+  for (const auto &shape : shapes) {
+    shape_vec.emplace_back(std::move(std::make_shared<abstract::TensorShape>(shape)));
+  }
+  auto expect_shape = std::make_shared<abstract::TupleShape>(std::move(shape_vec));
+  std::vector<TypePtr> type_vec;
+  for (const auto &type : types) {
+    type_vec.emplace_back(std::move(std::make_shared<TensorType>(type)));
+  }
+  auto expect_type = std::make_shared<Tuple>(std::move(type_vec));
+  return std::make_pair(expect_shape, expect_type);
 }
 
 void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
@@ -58,20 +73,19 @@ static auto eltwise_op_default_cases = testing::Values(
   OP_FUNC_IMPL_TEST_DECLARE(op_name, EltwiseOpParams)         \
   OP_FUNC_IMPL_TEST_CASES(op_name, eltwise_op_default_cases);
 
-static auto binary_shape_equals_default_cases = testing::Values(
-    MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
-    MultiInputOpParams{{{2, -1}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
-    MultiInputOpParams{{{2, 3}, {2, -1}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
-    MultiInputOpParams{{{2, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
-    MultiInputOpParams{{{-1, -1}, {2, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
-    MultiInputOpParams{{{-1, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
-    MultiInputOpParams{{{-2}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
-    MultiInputOpParams{{{-1, -1}, {-2}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
-    MultiInputOpParams{{{-2}, {-2}}, {kFloat16, kFloat16}, {{-2}}, {kFloat16}, {}}
-);
+static auto binary_shape_equals_default_cases =
+  testing::Values(MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{2, -1}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{2, 3}, {2, -1}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{2, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{-1, -1}, {2, -1}}, {kFloat16, kFloat16}, {{2, -1}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{-1, -1}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{-2}, {-1, -1}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{-1, -1}, {-2}}, {kFloat16, kFloat16}, {{-1, -1}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{-2}, {-2}}, {kFloat16, kFloat16}, {{-2}}, {kFloat16}, {}});
 
 #define BINARY_SHAPE_EQUALS_TEST_WITH_DEFAULT_CASES(op_name) \
-  OP_FUNC_IMPL_TEST_DECLARE(op_name, MultiInputOpParams)         \
+  OP_FUNC_IMPL_TEST_DECLARE(op_name, MultiInputOpParams)     \
   INSTANTIATE_TEST_CASE_P(Test##op_name, Test##op_name, binary_shape_equals_default_cases);
 }  // namespace ops
 }  // namespace mindspore

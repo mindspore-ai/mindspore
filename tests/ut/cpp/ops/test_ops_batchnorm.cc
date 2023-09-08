@@ -21,8 +21,10 @@
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
+#include "ops/manually_defined_ops_name.h"
 #include "ops/ops_func_impl/batch_norm.h"
 #include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
@@ -70,15 +72,12 @@ TEST_P(TestBatchNorm, dyn_shape) {
   ASSERT_NE(epsilon, nullptr);
   ASSERT_NE(momentum, nullptr);
   ASSERT_NE(data_format, nullptr);
-
-  auto prim = std::make_shared<Primitive>(kNameBatchNorm);
-  auto infer = std::make_shared<ops::BatchNormFuncImpl>();
-  auto out = infer->InferShape(prim, {x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format});
-  ASSERT_NE(out, nullptr);
-  std::vector<ShapeVector> expect = {
-    param.y_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape,
-  };
-  ASSERT_TRUE(CmpTupleShape(expect, out));
+  auto [expect_shape, expect_type] = MakeOutputTupleShapeAndType(
+    {param.y_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape},
+    {param.x_type, param.scale_type, param.scale_type, param.scale_type, param.scale_type});
+  DoFuncImplInferAndCompare<BatchNormFuncImpl>(
+    kNameBatchNorm, {x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format}, expect_shape,
+    expect_type);
 }
 
 INSTANTIATE_TEST_CASE_P(TestBatchNorm, TestBatchNorm,

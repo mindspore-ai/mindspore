@@ -14,17 +14,11 @@
 # ============================================================================
 
 """
-Primitive operator classes and operator functional.
-
-A collection of operators to build neural networks or to compute functions.
+Manually-defined operators.
 """
 
-from . import gen_ops_def, gen_arg_handler, gen_labels
-from ..operations.manually_defined import ops_def
+from . import ops_def
 
-from .gen_ops_def import *
-from .gen_arg_handler import *
-from .gen_labels import *
-from ..operations.manually_defined.ops_def import *
+from .ops_def import *
 
 __all__ = []
