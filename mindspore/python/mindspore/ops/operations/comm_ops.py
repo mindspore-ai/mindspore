@@ -147,7 +147,7 @@ class AllReduce(Primitive):
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
 
-            This example should be run with multiple devices.
+            This example should be run with 2 devices.
 
         >>> import numpy as np
         >>> from mindspore.communication import init
@@ -756,7 +756,7 @@ class NeighborExchange(Primitive):
         ...     def construct(self, x):
         ...         out = self.neighborexchange((x,))
         ...
-        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> net = Net()
         >>> input_x = Tensor(np.ones([3, 3]), dtype = ms.float32)
@@ -854,7 +854,7 @@ class AlltoAll(PrimitiveWithInfer):
         ...         out = self.alltoall(x)
         ...         return out
         ...
-        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> net = Net()
         >>> rank_id = int(os.getenv("RANK_ID"))
@@ -961,30 +961,48 @@ class NeighborExchangeV2(Primitive):
 
         >>> import os
         >>> import mindspore as ms
-        >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> class Net(nn.Cell):
+        >>>
+        >>> class Net0(nn.Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.neighborexchangev2 = ops.NeighborExchangeV2(send_rank_ids=[-1, -1, -1, -1, 1, -1, -1, -1],
-        ...                                                          send_lens=[0, 1, 0, 0],
-        ...                                                          recv_rank_ids=[-1, -1, -1, -1, 1, -1, -1, -1],
-        ...                                                          recv_lens=[0, 1, 0, 0],
-        ...                                                          data_format="NCHW")
+        ...         super(Net0, self).__init__()
+        ...         self.neighbor_exchangev2 = ops.NeighborExchangeV2(send_rank_ids=[-1, -1, -1, -1, 1, -1, -1, -1],
+        ...                                                           send_lens=[0, 1, 0, 0],
+        ...                                                           recv_rank_ids=[-1, -1, -1, -1, 1, -1, -1, -1],
+        ...                                                           recv_lens=[0, 1, 0, 0], data_format="NCHW")
         ...
         ...     def construct(self, x):
-        ...         out = self.neighborexchangev2(x)
+        ...         out = self.neighbor_exchangev2(x)
         ...         return out
+        >>>
+        ... class Net1(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net1, self).__init__()
+        ...         self.neighbor_exchangev2 = ops.NeighborExchangeV2(send_rank_ids=[0, -1, -1, -1, -1, -1, -1, -1],
+        ...                                                           send_lens=[1, 0, 0, 0],
+        ...                                                           recv_rank_ids=[0, -1, -1, -1, -1, -1, -1, -1],
+        ...                                                           recv_lens=[1, 0, 0, 0], data_format="NCHW")
         ...
-        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+        ...     def construct(self, x):
+        ...         out = self.neighbor_exchangev2(x)
+        ...         return out
+        >>>
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
-        >>> input_x = Tensor(np.ones([1, 1, 2, 2]), dtype = ms.float32)
-        >>> net = Net()
-        >>> output = net(input_x)
-        >>> print(output)
+        >>> rank_id = int(os.getenv("RANK_ID"))
+        >>> if (rank_id % 2 == 0):
+        >>>     input_x = ms.Tensor(np.ones([1, 1, 2, 2]), dtype = ms.float32)
+        >>>     net = Net0()
+        >>>     output = net(input_x)
+        >>>     print(output)
+        >>> else:
+        >>>     input_x = ms.Tensor(np.ones([1, 1, 2, 2]) * 2, dtype = ms.float32)
+        >>>     net = Net1()
+        >>>     output = net(input_x)
+        >>>     print(output)
         [[[[1. 1.], [1. 1.], [2. 2.]]]]
 
     Tutorial Examples:
