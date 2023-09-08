@@ -285,6 +285,40 @@ PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
 #endif
 }
 
+ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v,
+                                     const TypeId &type_id) const {
+  MS_EXCEPTION_IF_NULL(v);
+  // Step 1: Cast scalar value to another scalar value with destination data type.
+  // It is used to avoid to call `cast infer value function` or launch cast op to backend.
+  ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
+  if (dst_value != nullptr) {
+    MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
+    cast_run_info->real_out = dst_value;
+    return dst_value;
+  }
+
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    if (type_id == tensor->data_type()) {
+      cast_run_info->real_out = v;
+      return cast_run_info->real_out;
+    }
+  }
+
+  MS_EXCEPTION_IF_NULL(cast_run_info);
+  constexpr auto input_size = 2;
+  cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
+  PyNativeAlgo::Common::GetConstInputToAttr(
+    cast_run_info->op_grad_info->op_prim, cast_run_info->base_op_run_info.op_name,
+    cast_run_info->base_op_run_info.device_target, false, &cast_run_info->input_to_attr);
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstType(type_id));
+  cast_run_info->input_size = input_size;
+  PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
+  return cast_run_info->real_out;
+}
+
 ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
                                    const std::string &op_name, size_t index) const {
   MS_EXCEPTION_IF_NULL(v);

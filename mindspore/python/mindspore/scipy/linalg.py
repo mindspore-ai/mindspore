@@ -461,8 +461,8 @@ def lu_pivots_to_permutation(pivots, permutation_size: int):
         loc = mnp.ix_(*(mnp.arange(0, b) for b in batch_dims))
         x = permutation[..., i]
         y = permutation[loc + (j,)]
-        permutation[..., i] = y
         permutation[loc + (j,)] = x
+        permutation[..., i] = y
     return permutation
 
 

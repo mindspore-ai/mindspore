@@ -2045,8 +2045,6 @@ const std::string FormatHelper::GetBaseFormat(const std::string &format) {
   if (iter != info.end()) {
     return iter->second.baseFormat;
   } else {
-    // TODO(wangchangheng): other format
-    // MS_LOG(EXCEPTION) << "not found:" << format;
     return "";
   }
 }
@@ -2054,8 +2052,6 @@ const std::string FormatHelper::GetBaseFormat(const std::string &format) {
 bool FormatHelper::IsBaseFormatType(const std::string &format) {
   const auto &iter = info.find(format);
   if (iter == info.end()) {
-    // 待实现
-    MS_LOG(EXCEPTION) << "not found:" << format;
     return false;
   }
 
@@ -2067,7 +2063,7 @@ bool FormatHelper::IsPadded(const std::string &format) {
   if (itr != info.end()) {
     return itr->second.isPadded;
   }
-  MS_LOG(ERROR) << "unknown format type:" << format;
+  MS_LOG(INFO) << "unknown format type:" << format;
   return true;
 }
 

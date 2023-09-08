@@ -27,6 +27,7 @@
 #include "ir/map_tensor.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "pipeline/pynative/base.h"
 
 namespace py = pybind11;
 
@@ -52,6 +53,9 @@ enum class ValueTransferType {
   kGatherND,
   kScatterNdUpdate,
   kReshape,
+  kSelectView,
+  kUnsqueeze,
+  kCopyView,
   kScatterND,
   kNumberToTensor,
   kHandleSequenceValue,
@@ -64,6 +68,7 @@ enum class ValueTransferType {
   kFormatIndexTensor,
   kGetitemByBoolTensor,
   kSetitemByBoolTensor,
+  kJustReturn,
   kRaiseIndexError
 };
 
@@ -327,13 +332,23 @@ class TensorIndex final {
   static py::object GetItemByTensor(const ShapeVector &data_shape, const TensorPtr &index);
   static py::object GetItemByList(const ShapeVector &data_shape, const TensorIndex &tensor_index);
   static py::object GetItemByTuple(const ShapeVector &data_shape, const std::vector<TensorIndex> &tensor_indexes);
-  static py::object GetItemByBool(const ShapeVector &data_shape, bool index);
+  static bool GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
+                                     const py::object &py_index, std::vector<int64_t> *data_transfer_types,
+                                     std::vector<py::object> *data_transfer_args, const TypePtr &data_type);
+  static py::object GetItemByBool(const ValuePtr &data_value, const ShapeVector &data_shape, bool index);
   static py::object GetItemByNumber(const ShapeVector &data_shape, int64_t index);
-  static py::object GetItemBySlice(const ShapeVector &data_shape, const TensorIndex &py_index);
+  static py::object GetItemByNumberWithView(const ValuePtr &data_value, const ShapeVector &data_shape, int64_t index);
+  static py::object GetItemBySlice(const ValuePtr &data_value, const ShapeVector &data_shape,
+                                   const TensorIndex &py_index);
+  static py::object GetItemIndexSimpleIndex(const py::object &py_index, const ValuePtr &data_value,
+                                            const ShapeVector &data_shape);
   static py::object GetItemIndexInfo(const py::object &data, const py::object &index, const py::bool_ &is_ascend);
 
   static py::object SetItemByNumber(const ShapeVector &data_shape, const TypePtr &data_type, bool is_parameter,
                                     const TensorIndex &tensor_index, const TensorIndexType &py_value_type);
+  static py::object SetItemByNumberWithView(const ShapeVector &data_shape, const TypePtr &data_type, bool is_parameter,
+                                            const TensorIndex &tensor_index, const TensorIndexType &py_value_type,
+                                            const ValuePtr &data_value);
   static py::object SetItemByTensor(const ShapeVector &data_shape, bool is_parameter, const TensorIndex &tensor_index,
                                     const TensorIndexType &py_value_type);
 
@@ -341,11 +356,14 @@ class TensorIndex final {
                                    const TensorIndexType &py_value_type);
 
   static py::object SetItemBySlice(const ShapeVector &data_shape, const TypePtr &data_type, const TensorIndex &py_index,
-                                   const TensorIndexType &py_value_type);
+                                   const TensorIndexType &py_value_type, const ValuePtr &data_value);
 
   static py::object SetItemIndexInfo(const py::object &data, const py::object &index, const py::object &value,
                                      const py::bool_ &is_ascend);
 
+  static py::object SetItemIndexByIndexType(const TensorIndex &index, const py::object &py_index,
+                                            const ShapeVector &data_shape, const TypePtr &data_type,
+                                            const TensorIndexType &value_type, bool is_parameter);
   static py::handle py_index_handle_;
   static py::handle py_value_handle_;
   static bool is_ascend_;
@@ -396,17 +414,13 @@ class TensorIndex final {
                              return BroadCastShape(output_shape, tensor_indexes_shape);
                            });
   }
-  static std::vector<int64_t> SliceToVector(int64_t start, int64_t stop, int64_t step, int64_t dims_size) {
+  static std::vector<int64_t> SliceToVector(int64_t start, int64_t stop, int64_t step) {
     std::vector<int64_t> slice_ele_list_index;
     if (step > 0) {
       for (int64_t j = start; j < stop; j += step) {
         (void)slice_ele_list_index.emplace_back(j);
       }
       return slice_ele_list_index;
-    }
-    if (dims_size == start) {
-      start -= 1;
-      stop -= 1;
     }
     for (int64_t j = start; j > stop; j += step) {
       (void)slice_ele_list_index.emplace_back(j);
@@ -522,7 +536,8 @@ class TensorIndex final {
   static constexpr int64_t set_item_by_non_tensor = 2;
   static constexpr int64_t int32_bytes_number = 4;
   static std::tuple<int64_t, py::object, ShapeVector> GetValueTransferType(const TensorIndexType &py_value_type,
-                                                                           int64_t op_type, const TypePtr &data_type);
+                                                                           int64_t op_type, const TypePtr &data_type,
+                                                                           bool is_view);
 
   // This is the c++ version of format_tuple_indices in
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
@@ -641,7 +656,8 @@ class TensorIndex final {
 
   static py::object SetitemBySliceWithTensor(const ShapeVector &data_shape, const TensorIndex &slice_index,
                                              std::vector<int64_t> *value_transfer_type,
-                                             std::vector<py::object> *value_transfer_args);
+                                             std::vector<py::object> *value_transfer_args, const ValuePtr &data_value,
+                                             const TypePtr &data_type);
 
   static py::array SetItemByTensorByBool(const ShapeVector &data_shape, const TensorPtr &index, int64_t data_dims,
                                          std::vector<int64_t> *value_transfer_types,

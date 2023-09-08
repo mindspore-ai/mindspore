@@ -148,6 +148,35 @@ struct InputArgsInfo {
   }
 };
 using InputArgsInfoPtr = std::shared_ptr<InputArgsInfo>;
+
+class FastValue {
+ public:
+  FastValue() = default;
+  ~FastValue() = default;
+
+  explicit FastValue(const int64_t &v) : int_value_(v), is_int_{true} {}
+  explicit FastValue(std::vector<int64_t> v) : vec_value_(std::move(v)), is_int_{false} {}
+
+  bool is_int() const { return is_int_; }
+  int64_t int_value() const { return int_value_; }
+  const std::vector<int64_t> &vec_value() const { return vec_value_; }
+
+ private:
+  int64_t int_value_;
+  std::vector<int64_t> vec_value_;
+  bool is_int_{false};
+};
+using FastValuePtr = std::shared_ptr<FastValue>;
+
+struct SliceOpInfo {
+  SliceOpInfo() = default;
+  ~SliceOpInfo() = default;
+  std::string slice_op_name;
+  std::vector<size_t> data_indexs;
+  std::vector<FastValuePtr> slice_index_inputs;
+};
+using SliceOpInfoPtr = std::shared_ptr<SliceOpInfo>;
+
 }  // namespace pynative
 }  // namespace mindspore
 

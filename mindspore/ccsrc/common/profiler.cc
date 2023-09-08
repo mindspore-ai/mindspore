@@ -123,6 +123,9 @@ ProfilerRecorder::~ProfilerRecorder() {
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
   }
+  if (data_ == nullptr) {
+    return;
+  }
   ProfilerAnalyzer::GetInstance().RecordData(
     std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_,
                                    data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));

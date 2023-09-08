@@ -91,7 +91,7 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
         output_addr[pos] = input_addr[offset + storage_offset];
       }
     };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    ParallelLaunch(task, output_size, 0, this, pool_);
   }
   return true;
 }

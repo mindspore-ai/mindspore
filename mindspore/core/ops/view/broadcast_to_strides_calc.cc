@@ -56,9 +56,6 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
   auto value_ptr = prim->GetAttr(kShape);
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
-  if (input_x.empty()) {
-    MS_EXCEPTION(ValueError) << value_ptr;
-  }
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;

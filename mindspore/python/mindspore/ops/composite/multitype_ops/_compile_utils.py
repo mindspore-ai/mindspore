@@ -24,7 +24,8 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
-    TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo
+    TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo, \
+    SelectView, CopyWithSlice
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.initializer import Zero
@@ -33,6 +34,7 @@ from mindspore.common import mutable
 from mindspore import ops
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as validator
+from mindspore.common._stub_tensor import _convert_stub
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -43,6 +45,8 @@ is_parameter = IsParameter()
 getitem_tensor_index_info = GetitemTensorIndexInfo(const_utils.is_ascend())
 setitem_tensor_index_info = SetitemTensorIndexInfo(const_utils.is_ascend())
 
+selevt_view = SelectView()
+copy_with_slice = CopyWithSlice()
 
 def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, end_mask=0, ellipsis_mask=0,
                   new_axis_mask=0, shrink_axis_mask=0):
@@ -66,19 +70,23 @@ class ValueTransferType(IntEnum):
     kGatherND = 9
     kScatterNdUpdate = 10
     kReshape = 11
-    kScatterND = 12
-    kNumberToTensor = 13
-    kHandleSequenceValue = 14
-    kByPass = 15
-    kReSetItemByIndex = 16
-    kCopySlice = 17
-    kSetItemByBool = 18
-    kEmptyTensor = 19
-    kSetItemByEllipsis = 20
-    kFormatIndexTensor = 21
-    kGetitemByBoolTensor = 22
-    kSetitemByBoolTensor = 23
-    kRaiseIndexError = 24
+    kSelectView = 12
+    kUnsqueeze = 13
+    kCopyView = 14
+    kScatterND = 15
+    kNumberToTensor = 16
+    kHandleSequenceValue = 17
+    kByPass = 18
+    kReSetItemByIndex = 19
+    kCopySlice = 20
+    kSetItemByBool = 21
+    kEmptyTensor = 22
+    kSetItemByEllipsis = 23
+    kFormatIndexTensor = 24
+    kGetitemByBoolTensor = 25
+    kSetitemByBoolTensor = 26
+    kJustReturn = 27
+    kRaiseIndexError = 28
 
 
 def data_update(transfer_types, args, data, new_index, value=None):
@@ -86,11 +94,14 @@ def data_update(transfer_types, args, data, new_index, value=None):
     We finally generate a new tensor when handling tensor getitem/setitem
     by transfer data and value with index.
     """
+    origin_data = data
     for transfer_type, arg in zip(transfer_types, args):
         if transfer_type == ValueTransferType.kUnknown:
             raise IndexError(f"Inlvaid transfer type {transfer_type}.")
         if transfer_type <= ValueTransferType.kScatterND:
-            data = data_update_by_ops(transfer_type, arg, data, new_index, value)
+            data = data_update_by_ops(transfer_type, arg, data, new_index, origin_data, value)
+        if transfer_type == ValueTransferType.kJustReturn:
+            return _convert_stub(arg)
         if transfer_type == ValueTransferType.kSetItemByBool:
             return tensor_setitem_by_bool(data, new_index, value)
         if transfer_type == ValueTransferType.kCopySlice:
@@ -114,7 +125,7 @@ def data_update(transfer_types, args, data, new_index, value=None):
     return data
 
 
-def data_update_by_ops(transfer_type, arg, data, new_index, value=None):
+def data_update_by_ops(transfer_type, arg, data, new_index, origin_data, value=None):
     """
     Generate a new tensor when handling tensor getitem/setitem
     by ops.
@@ -135,14 +146,22 @@ def data_update_by_ops(transfer_type, arg, data, new_index, value=None):
         F.scatter_nd_update(data, new_index, value)
     elif transfer_type == ValueTransferType.kSelect:
         data = F.select(Tensor(new_index), value, data)
+    elif transfer_type == ValueTransferType.kSelectView:
+        data = selevt_view(data, arg[0], arg[1])
+    elif transfer_type == ValueTransferType.kCopyView:
+        value = _broadcast(F.shape(data), F.cast(value, F.dtype(data)))
+        data = copy_with_slice(data, value)
+        return origin_data
     elif transfer_type == ValueTransferType.kReshape:
         data = F.reshape(data, arg)
     elif transfer_type == ValueTransferType.kGather:
         data = F.gather(data, new_index, 0)
     elif transfer_type == ValueTransferType.kExpandDims:
         data = F.expand_dims(data, 0)
+    elif transfer_type == ValueTransferType.kUnsqueeze:
+        data = F.unsqueeze(data, arg)
     elif transfer_type == ValueTransferType.kStrideSlice:
-        data = F.strided_slice(data, arg[0], arg[1], arg[2])
+        data = strided_slice(data, arg[0], arg[1], arg[2])
     else:
         raise IndexError(f"Inlvaid transfer type {transfer_type}.")
     return data
@@ -192,7 +211,10 @@ def _tensor_setitem(self, index, value):
     data_update_types = setitem_info[3]
     data_update_args = setitem_info[4]
     value = value_update(v_transfer_types, v_transfer_args, self, value)
-    return data_update(data_update_types, data_update_args, self, new_index, value)
+    output = data_update(data_update_types, data_update_args, self, new_index, value)
+    if new_index == "view":
+        return (self,)
+    return output
 
 
 tensor_operator_registry.register("__getitem__", _tensor_getitem)

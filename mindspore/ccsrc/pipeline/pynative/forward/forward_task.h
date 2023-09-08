@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <utility>
+#include <vector>
 #include <memory>
 #include "runtime/pynative/async/task.h"
 #include "pipeline/pynative/base.h"
@@ -37,6 +38,34 @@ class FrontendTask : public AsyncTask {
  private:
   std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func_;
   FrontendOpRunInfoPtr op_run_info_;
+};
+
+class SliceOpFrontendTask : public AsyncTask {
+ public:
+  SliceOpFrontendTask(
+    std::function<void(const std::vector<ValuePtr> &input_values, const std::vector<SliceOpInfoPtr> &slice_op_infos,
+                       bool requires_grad, const stub::StubNodePtr &stub_output)>
+      run_func,
+    std::vector<ValuePtr> input_values, std::vector<SliceOpInfoPtr> slice_op_infos, bool requires_grad,
+    const stub::StubNodePtr &stub_output)
+      : AsyncTask(kFrontendTask),
+        run_func_(std::move(run_func)),
+        input_values_(std::move(input_values)),
+        slice_op_infos_(std::move(slice_op_infos)),
+        requires_grad_(requires_grad),
+        stub_output_(stub_output) {}
+  ~SliceOpFrontendTask() override = default;
+  void Run() override;
+  void SetException(const std::exception_ptr &e) override;
+
+ private:
+  std::function<void(const std::vector<ValuePtr> &input_values, const std::vector<SliceOpInfoPtr> &slice_op_infos,
+                     bool requires_grad, const stub::StubNodePtr &stub_output)>
+    run_func_;
+  std::vector<ValuePtr> input_values_;
+  std::vector<SliceOpInfoPtr> slice_op_infos_;
+  bool requires_grad_{false};
+  stub::StubNodePtr stub_output_;
 };
 
 using BackendOpRunInfoPtr = session::BackendOpRunInfoPtr;

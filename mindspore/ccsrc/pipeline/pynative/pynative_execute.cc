@@ -122,6 +122,31 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   return node.first;
 }
 
+py::object PyNativeExecutor::RunSliceOpStub(const std::vector<ValuePtr> &input_values,
+                                            const std::vector<SliceOpInfoPtr> &slice_op_infos) const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
+  for (auto &input : input_values) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<tensor::Tensor>()) {
+      auto tensor = input->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    }
+  }
+
+  auto requires_grad = grad_executor()->RequiresGrad();
+  if (!forward_executor()->EnablePipeline("")) {
+    forward_executor()->WaitForwardTask();
+    auto ret = forward_executor()->RunSliceOpFrontend(input_values, slice_op_infos, requires_grad, nullptr);
+    return PyNativeAlgo::DataConvert::ValueToPyObj(ret);
+  }
+  auto top_type = kTensorType;
+  auto node = stub::MakeTopNode(top_type);
+  GilReleaseWithCheck release_gil;
+  forward_executor()->DispatchSilceOpFrontendTask(input_values, slice_op_infos, requires_grad, node.second);
+  return node.first;
+}
+
 py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
   StoreAsyncStatus(op_run_info);
