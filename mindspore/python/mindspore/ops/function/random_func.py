@@ -839,11 +839,11 @@ def gamma(shape, alpha, beta, seed=None):
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> print(output)
         [[[ 2.2132034  5.8855834]
-         [ 3.3981476  7.5805717]]
-        [[ 3.3981476  7.5805717]
-         [ 3.7190282 19.941492]]
-        [[ 2.9512358  2.5969937]
-         [ 3.786061   5.160872 ]]]
+          [ 3.8825176  8.6066265]]
+         [[ 3.3981476  7.5805717]
+          [ 3.7190282 19.941492 ]]
+         [[ 2.9512358  2.5969937]
+          [ 3.786061   5.160872 ]]]
         >>> # case 4: beta_shape is (2, 1), the output is different.
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
