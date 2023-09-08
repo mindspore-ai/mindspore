@@ -20,6 +20,8 @@
 #include <memory>
 
 #include "common/common_test.h"
+#define private public
+#define protected public
 #include "abstract/abstract_function.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "include/backend/optimizer/graph_optimizer.h"
@@ -30,6 +32,8 @@
 #include "kernel/ops_utils.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
+#define private public
+#define protected public
 
 namespace mindspore {
 namespace runtime {
@@ -51,6 +55,9 @@ using session::KernelGraph;
 class TestDeviceAddress : public DeviceAddress {
  public:
   TestDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
+  TestDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
+                    uint32_t device_id)
+      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
   ~TestDeviceAddress() {}
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const {
     return true;
@@ -86,7 +93,7 @@ class TestDeviceResManager : public device::DeviceResManager {
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                TypeId type_id, const ShapeVector &shape,
                                                const UserDataPtr &user_data = nullptr) const {
-    return std::make_shared<TestDeviceAddress>(device_ptr, device_size);
+    return std::make_shared<TestDeviceAddress>(device_ptr, device_size, format, type_id, "CPU", 0);
   }
 };
 
