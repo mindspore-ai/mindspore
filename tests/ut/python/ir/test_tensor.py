@@ -86,6 +86,9 @@ def test_tensor_type_bfloat16():
     assert t_bfloat16.shape == (2, 3)
     assert t_bfloat16.dtype == ms.bfloat16
     assert t_bfloat16.asnumpy().all() == np.array([[1, 2, 3], [4, 5, 6]]).all()
+    t_bfloat16 = ms.Tensor(np.array([0.9446299], dtype=np.float32), dtype=ms.bfloat16)
+    assert t_bfloat16.dtype == ms.bfloat16
+    assert np.allclose(t_bfloat16.asnumpy(), np.array([0.9453125]), 0.00001, 0.00001)
 
 
 def test_tensor_type_complex64():

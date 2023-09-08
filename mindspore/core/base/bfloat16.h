@@ -32,6 +32,7 @@ class BFloat16 {
  public:
   static constexpr uint16_t value_mask = 0x7fff;
   static constexpr uint16_t inf_value = 0x7f80;
+  static constexpr uint16_t nan_value = 0x7fc0;
   static constexpr uint16_t true_value = 0x3c00;
   static constexpr uint32_t f32_inf_value = 0x7f800000;
 
@@ -103,12 +104,17 @@ class BFloat16 {
 
  private:
   static uint16_t FromFloat32(float f32) {
-    uint32_t f32_tmp = 0;
-    auto ret_code = memcpy_s(&f32_tmp, sizeof(f32_tmp), &f32, sizeof(f32_tmp));
-    if (ret_code != 0) {
-      return inf_value;
+    if (std::isnan(f32)) {
+      return nan_value;
+    } else {
+      union {
+        uint32_t U32;
+        float F32;
+      };
+      F32 = f32;
+      uint32_t rounding_bias = ((U32 >> 16) & 1) + UINT32_C(0x7FFF);
+      return static_cast<uint16_t>((U32 + rounding_bias) >> 16);
     }
-    return f32_tmp >> 16;
   }
 
   uint16_t value_;
