@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/gather_grad_gpu_kernel.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 
@@ -42,10 +43,6 @@ constexpr size_t kDynamicGradIdx = 3;
 
 bool GatherGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_v2_) {
-    int dim = GetDimValue<int>(inputs, kIndex1, kernel_name_, dim_type_);
-    CalculateDim(dim);
-  }
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs, cuda_stream_);
 }
@@ -56,6 +53,10 @@ bool GatherGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *index_addr = GetDeviceAddress<T>(inputs, index_idx_);
   S *grad_addr = GetDeviceAddress<S>(inputs, grad_idx_);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
+
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemsetAsync(output_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "GatherGrad cudaMemSet Failed");
 
   auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
                            dims_[kIndex3], reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -138,6 +139,12 @@ int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
   grad_shapes_ = inputs.at(grad_idx_)->GetShapeVector();
   if (is_v2_) {
+    int64_t dim = 0;
+    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &dim)) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
+      return KRET_RESIZE_FAILED;
+    }
+    CalculateDim(dim);
     dim_shapes_ = inputs.at(dim_idx_)->GetShapeVector();
   }
   if (ret == KRET_OK && !is_v2_) {

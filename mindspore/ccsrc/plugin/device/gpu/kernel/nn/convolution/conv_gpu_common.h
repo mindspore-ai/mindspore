@@ -42,6 +42,18 @@ constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
 constexpr size_t k2DHeightIndexNCHW = 2;
 constexpr size_t k2DHeightIndexNHWC = 1;
+constexpr size_t kAlgoCacheSize = 100;
+constexpr int64_t kHashMagicNum = 0x9e3779b9;
+
+struct VectorLongHash {
+  std::size_t operator()(const std::vector<int64_t> &v) const {
+    std::size_t seed = v.size();
+    for (auto &i : v) {
+      seed ^= i + kHashMagicNum + (seed << 6) + (seed >> 2);
+    }
+    return seed;
+  }
+};
 
 struct ConvolutionArgs {
   std::string kernel_name{""};

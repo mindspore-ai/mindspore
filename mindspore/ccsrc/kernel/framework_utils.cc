@@ -1207,6 +1207,7 @@ static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in
   {kTransposeOpName, ShapeSet{1}},
   {kGatherDOpName, ShapeSet{1}},
   {kGatherOpName, ShapeSet{2}},
+  {kGatherDGradV2OpName, ShapeSet{1}},
   {kSparseGatherV2OpName, ShapeSet{2}},
   {kScatterNdOpName, ShapeSet{2}},
   {kStridedSliceOpName, ShapeSet{1, 2, 3}},
