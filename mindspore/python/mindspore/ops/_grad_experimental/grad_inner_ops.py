@@ -16,7 +16,6 @@
 """inner_ops"""
 from __future__ import absolute_import
 
-from mindspore.ops.operations.comm_ops import _VirtualPipelineEnd
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
@@ -40,17 +39,6 @@ def get_bprop_tensor_copy_slices(self):
         res = (x_grad, update_grad, zeros_like(begin), zeros_like(end), zeros_like(stride))
         return res
 
-    return bprop
-
-
-@bprop_getters.register(_VirtualPipelineEnd)
-def get_bprop_virtual_pipeline_end(self):
-    """Backpropagator for _VirtualPipelineEnd."""
-    grad = _VirtualPipelineEnd()
-
-    def bprop(x, out, dout):
-        dx = grad(dout)
-        return (dx,)
     return bprop
 
 
@@ -167,30 +155,6 @@ def get_bprop_matrix_set_diag(self):
     return bprop
 
 
-@bprop_getters.register(inner.DSDMatmul)
-def get_dsd_matmul_bprop(self):
-    def bprop(w1_gm, w2_gm, v_gm, out, dout):
-        d_w1_gm, d_w2_gm, d_v_gm = inner.DSDGrad()(w1_gm, w2_gm, v_gm, out, dout)
-        return d_w1_gm, d_w2_gm, d_v_gm
-
-    return bprop
-
-
-@bprop_getters.register(inner.MatmulDDS)
-def get_bprop(self):
-    """brop of the matmulDDS operator"""
-
-    def bprop(q, k, local_mask, global_mask, out, d_out):
-        lc, gc = out
-        d_lc, d_gc = d_out
-        dq, dk = inner.MatmulDDSGrad()(q, k, lc, gc, d_lc, d_gc)
-        dk = P.Transpose()(dk, (1, 0, 3, 2))
-        all_d = (dq, dk, zeros_like(local_mask), zeros_like(global_mask))
-        return all_d
-
-    return bprop
-
-
 @bprop_getters.register(inner.PsROIPooling)
 def get_bprop_ps_roi_pooling(self):
     """Grad definition for `PsROIPooling` operation."""
@@ -245,26 +209,6 @@ def get_bprop_dynamic_broadcast_to(self):
             reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
         dx = reshape(reduced_grad, x_shape)
         return dx, zeros_like(shp)
-
-    return bprop
-
-
-@bprop_getters.register(inner.ConvertToAdapterTensor)
-def get_bprop_convert_to_adapter_tensor(self):
-    """Generate bprop for ConvertToAdapterTensor"""
-
-    def bprop(x, out, dout):
-        return (dout,)
-
-    return bprop
-
-
-@bprop_getters.register(inner.ConvertToMsTensor)
-def get_bprop_convert_to_ms_tensor(self):
-    """Generate bprop for ConvertToMsTensor"""
-
-    def bprop(x, out, dout):
-        return (dout,)
 
     return bprop
 

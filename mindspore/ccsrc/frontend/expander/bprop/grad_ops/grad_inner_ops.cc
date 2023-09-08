@@ -198,5 +198,51 @@ REG_BPROP_BUILDER("SiLUGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {add3, add2};
 });
 
+REG_BPROP_BUILDER("_VirtualPipelineEnd").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("_VirtualPipelineEnd", {dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("DSDMatmul").SetBody(BODYFUNC(ib) {
+  auto w1_gm = ib->GetInput(kIndex0);
+  auto w2_gm = ib->GetInput(kIndex1);
+  auto v_gm = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto tmp = ib->Emit("DSDGrad", {w1_gm, w2_gm, v_gm, out, dout});
+  auto d_w1_gm = ib->TupleGetItem(tmp, 0);
+  auto d_w2_gm = ib->TupleGetItem(tmp, 1);
+  auto d_v_gm = ib->TupleGetItem(tmp, 2);
+  return {d_w1_gm, d_w2_gm, d_v_gm};
+});
+
+REG_BPROP_BUILDER("MatmulDDS").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+  auto q = ib->GetInput(kIndex0);
+  auto k = ib->GetInput(kIndex1);
+  auto local_mask = ib->GetInput(kIndex2);
+  auto global_mask = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto d_out = ib->GetInput(kIndex5);
+  auto lc = ib->TupleGetItem(out, 0);
+  auto gc = ib->TupleGetItem(out, 1);
+  auto d_lc = ib->TupleGetItem(d_out, 0);
+  auto d_gc = ib->TupleGetItem(d_out, 1);
+  auto tmp = ib->Emit("MatmulDDSGrad", {q, k, lc, gc, d_lc, d_gc});
+  auto dq = ib->TupleGetItem(tmp, 0);
+  auto dk = ib->TupleGetItem(tmp, 1);
+  dk = ib->Transpose(dk, {1, 0, 3, 2});
+  return {dq, dk, ib->OutZeros(local_mask), ib->OutZeros(global_mask)};
+});
+
+REG_BPROP_BUILDER("ConvertToAdapterTensor").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  return {dout};
+});
+
+REG_BPROP_BUILDER("ConvertToMsTensor").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  return {dout};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
