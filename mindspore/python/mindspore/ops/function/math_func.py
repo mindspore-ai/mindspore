@@ -1431,7 +1431,8 @@ def log(input):
         >>> print(output)
         [0.        0.6931472 1.3862944]
     """
-    return log_(input)
+    log_op = _get_cache_prim(P.Log)()
+    return log_op(input)
 
 
 def logdet(input):
@@ -2078,7 +2079,8 @@ def cos(input):
         >>> print(output)
         [0.971338 0.6748758 0.95233357 0.9959527]
     """
-    return cos_(input)
+    cos_op = _get_cache_prim(P.Cos)()
+    return cos_op(input)
 
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-08):
@@ -2617,7 +2619,8 @@ def atan(input):
         >>> print(output)
         [0.7853982 0.       ]
     """
-    return atan_(input)
+    atan_op = _get_cache_prim(P.Atan)()
+    return atan_op(input)
 
 
 def sinh(input):
@@ -4258,7 +4261,8 @@ def less(input, other):
         >>> print(output)
         [False False True]
     """
-    return tensor_lt(input, other)
+    tensor_lt_op = _get_cache_prim(P.Less)()
+    return tensor_lt_op(input, other)
 
 
 def lt(input, other):
@@ -6061,7 +6065,8 @@ def sqrt(x):
         >>> print(output)
         [1. 2. 3.]
     """
-    return sqrt_(x)
+    sqrt_op = _get_cache_prim(P.Sqrt)()
+    return sqrt_op(x)
 
 
 def square(input):

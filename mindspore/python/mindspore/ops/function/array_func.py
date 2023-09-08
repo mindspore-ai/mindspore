@@ -5586,10 +5586,10 @@ def _split_int(x, split_size_or_sections, axis):
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
     if split_size_or_sections > length_along_dim:
-        res = P.Split(axis, 1)(x)
+        res = _get_cache_prim(P.Split)(axis, 1)(x)
     elif length_along_dim % split_size_or_sections == 0:
         sections = length_along_dim // split_size_or_sections
-        res = P.Split(axis, sections)(x)
+        res = _get_cache_prim(P.Split)(axis, sections)(x)
     else:
         num_sections = length_along_dim // split_size_or_sections
         length1 = num_sections * split_size_or_sections
@@ -5598,8 +5598,8 @@ def _split_int(x, split_size_or_sections, axis):
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, num_sections)(tensor_slice(x, start1, size1)) + \
-              P.Split(axis, 1)(tensor_slice(x, start2, size2))
+        res = _get_cache_prim(P.Split)(axis, num_sections)(tensor_slice(x, start1, size1)) + \
+              _get_cache_prim(P.Split)(axis, 1)(tensor_slice(x, start2, size2))
     return res
 
 
@@ -6187,7 +6187,8 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int32))
     if axis is None:
-        return (reduce_max(input), Tensor(0, dtype=mstype.int32))
+        reduce_max_op = _get_cache_prim(P.ReduceMax)()
+        return (reduce_max_op(input), Tensor(0, dtype=mstype.int32))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
