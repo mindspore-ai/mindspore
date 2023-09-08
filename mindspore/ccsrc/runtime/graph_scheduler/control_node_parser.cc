@@ -204,7 +204,7 @@ std::vector<FuncGraphPtr> TopoSortForFuncGraph(const FuncGraphPtr &root, FuncGra
 
   FuncGraphSet subs = root->manager()->func_graphs();
   for (auto sub : subs) {
-    if (sub != root && root != nullptr) {
+    if (sub != root) {
       (void)nodes.emplace(sub);
     }
   }

@@ -43,6 +43,9 @@ int SequenceGetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != 0) {
     return ret;
   }
+  if (inputs.empty() || inputs[0] == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input is invalid, input size:" << inputs.size();
+  }
   tuple_shape_ = inputs[0]->GetShapeVector();
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
@@ -54,8 +57,10 @@ template <typename T>
 bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input_addr);
   auto index = *(GetDeviceAddress<int64_t>(inputs, 1));
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto len = static_cast<int64_t>(tuple_shape_[0]);
   if (index >= len || index < -len) {
     MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " <= index < " << len << ", but got " << index
