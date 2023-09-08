@@ -271,7 +271,8 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     This interface will automatically perform mixed-precision processing on the input network, and the cells
     and operators in the processed network will add precision conversion operations to calculate with lower
     precision: ``mstype.float16`` or ``mstype.bfloat16`` . Inputs and parameters of cells and operators are
-    converted to lower precision float, and calculation results are converted back to full precision float.
+    converted to lower precision float, and calculation results are converted back to full precision float,
+    i.e. ``mstype.float32`` .
 
     The framework has a set of built-in blacklists and whitelists, and the `amp_level` determines which cells and
     operators are specifically converted:

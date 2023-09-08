@@ -399,7 +399,7 @@ class Node:
         >>> net = LeNet5()
         >>> stree = SymbolTree.create(net)
         >>> node = stree.get_node("conv1")
-        >>> print(node.get_symbol_tree())
+        >>> print(type(node.get_symbol_tree()))
         <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
         """
         from .symbol_tree import SymbolTree
