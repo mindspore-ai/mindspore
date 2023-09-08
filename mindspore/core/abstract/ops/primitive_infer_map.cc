@@ -177,6 +177,13 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
     }
   } else if (ori.empty()) {
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
+    // if not found in infer, consider all the non-tensor inputs as value depend args.
+    size_t input_num = cnode->size();
+    for (size_t i = 1; i < input_num; i++) {
+      if (!IsValueNode<tensor::Tensor>(cnode->input(i))) {
+        (void)ori.insert(i - 1);
+      }
+    }
   }
   if (ori.empty()) {
     return ori;

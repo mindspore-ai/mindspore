@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_set>
+#include "mindspore/core/ops/op_def.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "ops/nn_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -419,12 +420,22 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
 
 std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
   std::set<int64_t> depend_list;
-  auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
-  if (op_infer_opt.has_value()) {
-    auto op_infer = op_infer_opt.value().Get();
-    MS_EXCEPTION_IF_NULL(op_infer);
-    if (op_infer != nullptr) {
-      depend_list = op_infer->GetValueDependArgIndices();
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_prim->name());
+  if (op_def == nullptr) {
+    return depend_list;
+  }
+  auto op_func_impl = op_def->func_impl_;
+  MS_EXCEPTION_IF_NULL(op_func_impl);
+  depend_list = op_func_impl->GetValueDependArgIndices();
+  if (!depend_list.empty()) {
+    return depend_list;
+  }
+  // if not defined the GetValueDependArgIndices() func in infer, consider all the no-Tensor
+  // input as value depend.
+  auto args = op_def->args_;
+  for (size_t i = 0; i < args.size(); i++) {
+    if (args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_TENSOR) {
+      (void)depend_list.insert(i);
     }
   }
   return depend_list;
