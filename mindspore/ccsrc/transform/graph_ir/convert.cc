@@ -1579,7 +1579,21 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
     auto params = anf_graph_->parameters();
     int index = 0;
     for (auto &it : params) {
-      auto name = std::static_pointer_cast<Parameter>(it)->name();
+      auto param = it->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(param);
+      auto name = param->name();
+      if (std::find(init_data_names_.begin(), init_data_names_.end(), name) == init_data_names_.end()) {
+        const auto &param_shape = param->Shape();
+        MS_EXCEPTION_IF_NULL(param_shape);
+        const auto &shape = param_shape->cast<abstract::ShapePtr>();
+        if (shape != nullptr) {
+          const auto &sv = shape->shape();
+          if (IsDynamic(sv)) {
+            dynamic_shape_inputs_ = true;
+          }
+          input_shapes_.push_back(sv);
+        }
+      }
       //  the parameters which has not been converted to var
       if (vars_.find(name) == vars_.end()) {
         if (HasAbstractMonad(it)) {

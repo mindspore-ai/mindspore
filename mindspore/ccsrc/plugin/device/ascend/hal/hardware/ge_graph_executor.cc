@@ -172,7 +172,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   std::vector<transform::GeTensorPtr> ge_outputs;
   {
     // Release GIL before calling into (potentially long-running) C++ code
-    mindspore::ScopedLongRunning long_running;
+    GilReleaseWithCheck gil_release;
     transform::Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
     if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec " << run_options.name << " graph failed.";
@@ -999,7 +999,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     std::vector<transform::GeTensorPtr> ge_outputs;
     {
       // Release GIL before calling into (potentially long-running) C++ code
-      mindspore::ScopedLongRunning long_running;
+      GilReleaseWithCheck gil_release;
       MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
       transform::Status ret = transform::RunGraphAsync(graph_runner, run_options, ge_inputs, &ge_outputs);
       MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();

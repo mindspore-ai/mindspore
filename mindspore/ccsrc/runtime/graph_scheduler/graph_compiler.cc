@@ -506,6 +506,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     kernel_graph->set_manager(manager);
   }
   auto context_ptr = MsContext::GetInstance();
+  session_->SetInputNodeUsage(kernel_graph, manager);
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->backend_policy() == "ge" && device_context->GetDeviceType() == device::DeviceType::kAscend &&
       !common::IsEnableRefMode()) {
@@ -518,7 +519,6 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     kernel_graph->set_front_outputs(outputs);
     return kernel_graph->graph_id();
   }
-  session_->SetInputNodeUsage(kernel_graph, manager);
   kernel_graph->SetOptimizerFlag();
 
   if (run_mode == device::RunMode::kUnknown) {
