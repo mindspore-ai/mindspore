@@ -3240,7 +3240,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         x_mean = tensor_operator_registry.get('mean')(True)(self, axis)
         x_sub = tensor_operator_registry.get('__sub__')(self, x_mean)
         x_pow = tensor_operator_registry.get('__pow__')(x_sub, 2)
-        x_sum = tensor_operator_registry.get('reduce_sum')(bool(keepdims))(x_pow, axis)
+        x_sum = tensor_operator_registry.get('reducesum')(bool(keepdims))(x_pow, axis)
         nums = 1
         if axis == ():
             nums = self.size
