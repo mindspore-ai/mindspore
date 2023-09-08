@@ -387,6 +387,21 @@ class ModelCheckpoint(Callback):
         ValueError: If `prefix` is not str or contains the '/' character.
         ValueError: If `directory` is not str.
         TypeError: If the config is not CheckpointConfig type.
+
+    Example:
+        >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> from mindspore import nn
+        >>> from mindspore.train import Model, ModelCheckpoint
+        >>>
+        >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+        >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
+        >>> net = nn.Dense(10, 5)
+        >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+        >>> ckpt_callback = ModelCheckpoint(prefix="myckpt")
+        >>> model = Model(network=net, optimizer=opt, loss_fn=crit)
+        >>> model.train(2, train_dataset, callbacks=[ckpt_callback])
     """
 
     def __init__(self, prefix='CKP', directory=None, config=None):

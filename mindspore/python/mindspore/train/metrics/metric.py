@@ -104,7 +104,7 @@ class Metric(metaclass=ABCMeta):
         ...         self._abs_error_sum += abs_error_sum.sum()
         ...         self._samples_num += y.shape[0]
         ...
-        ...      def eval(self):
+        ...     def eval(self):
         ...         return self._abs_error_sum / self._samples_num
         >>>
         >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.6, 0.9], [0.1, 0.2, 0.6, 0.9]]), ms.float32)
