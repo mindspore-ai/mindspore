@@ -872,7 +872,13 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+  bool enable_ge = ms_context->backend_policy() == "ge";
+  bool graph_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
+  if (enable_ge && graph_mode) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+  } else if (graph_mode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
