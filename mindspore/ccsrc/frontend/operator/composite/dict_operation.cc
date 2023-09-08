@@ -53,7 +53,7 @@ FuncGraphPtr DictSetItem::GenerateFuncGraph(const abstract::AbstractBasePtrList 
     // The dict input has attached python object and the object is not created in graph.
     // Convert the DictSetItem to InplaceDictSetItem node.
     inputs.insert(inputs.begin(), NewValueNode(prim::kPrimDictInplaceSetItem));
-    auto dict_inplace_setitem_node = ret->NewCNode(inputs);
+    auto dict_inplace_setitem_node = ret->NewCNodeInOrder(inputs);
     dict_inplace_setitem_node->set_has_side_effect_node(true);
     ret->set_output(dict_inplace_setitem_node);
     ret->set_has_side_effect_node(true);

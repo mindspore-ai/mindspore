@@ -17,6 +17,7 @@
 @Desc   : test_dictionary
 """
 import numpy as np
+import os
 import pytest
 
 from mindspore import Tensor, context
@@ -90,8 +91,10 @@ def test_dict_set_or_get_item():
             return ret
 
     net = DictNet()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(TypeError):
         net()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_dict_set_or_get_item_2():
@@ -134,8 +137,10 @@ def test_dict_set_or_get_item_3():
             return self.dict_["x"]
 
     net = DictNet()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(TypeError):
         net()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_dict_set_item():

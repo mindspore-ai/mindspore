@@ -3764,19 +3764,25 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     auto attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-      MS_EXCEPTION(TypeError)
-        << "'" << var_name
-        << "' should be initialized as a 'Parameter' in the '__init__' function before assigning.\n\n"
-        << trace::GetDebugInfo(value_node->debug_info());
+      MS_EXCEPTION(TypeError) << "'" << var_name
+                              << "' should be initialized in the '__init__' function before subscript.\n\n"
+                              << trace::GetDebugInfo(value_node->debug_info());
     }
     auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
-    auto obj_type = obj.attr("__class__").attr("__name__");
-    if (!py::hasattr(obj, "__parameter__")) {
-      MS_EXCEPTION(TypeError) << "'" << var_name
-                              << "' should be initialized as a 'Parameter' in the '__init__' function, but got '"
-                              << py::str(obj).cast<std::string>() << "' with type '"
-                              << py::str(obj_type).cast<std::string>() << "'.\n\n"
-                              << trace::GetDebugInfo(value_node->debug_info());
+    if (py::hasattr(obj, "__cell_as_list__") || py::hasattr(obj, "__cell_as_dict__")) {
+      MS_EXCEPTION(TypeError) << "CellList or CellDict object " << py::str(obj).cast<std::string>()
+                              << " is not support to do assign subscript.";
+    }
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+    if (!allow_fallback_runtime) {
+      auto obj_type = obj.attr("__class__").attr("__name__");
+      if (!py::hasattr(obj, "__parameter__")) {
+        MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is not set to LAX" << var_name
+                                << " should be initialized as a 'Parameter' in the '__init__' function"
+                                << " to perform assign subscript, but got: " << py::str(obj).cast<std::string>()
+                                << "' with type '" << py::str(obj_type).cast<std::string>() << "'.\n\n"
+                                << trace::GetDebugInfo(value_node->debug_info());
+      }
     }
     block->WriteVariable(var_name, setitem_app);
     return;

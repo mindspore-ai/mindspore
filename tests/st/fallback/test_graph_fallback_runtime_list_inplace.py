@@ -1185,7 +1185,7 @@ def test_list_inplace_with_attribute_3():
     assert id(x[0]) == id(ret)
 
 
-@pytest.mark.skip(reason="Parse assign subscript is wrong")
+@pytest.mark.skip(reason="SetItem with AbstractAny input can not convert to pyexecute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
