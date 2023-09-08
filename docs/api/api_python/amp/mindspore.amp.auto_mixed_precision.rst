@@ -1,19 +1,14 @@
 mindspore.amp.auto_mixed_precision
 ==================================
 
-.. py:function:: mindspore.amp.auto_mixed_precision(network, amp_level="O0")
+.. py:function:: mindspore.amp.auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16)
 
     返回一个经过自动混合精度处理的网络。
 
-    该接口会对输入网络进行自动混合精度处理，处理后的网络里的Cell和算子增加了精度转换操作，以float16精度进行计算。
-    Cell和算子的输入和参数被转换成float16类型，计算结果被转换回float32类型。
+    该接口会对输入网络进行自动混合精度处理，处理后的网络里的Cell和算子增加了精度转换操作，以低精度进行计算，如 ``mstype.float16`` 或 ``mstype.bfloat16`` 。
+    Cell和算子的输入和参数被转换成低精度浮点数，计算结果被转换回全精度浮点数。
 
-    框架内置了一组黑名单和白名单， `amp_level` 决定了具体对哪些Cell和算子进行精度转换：
-
-    - 当 `amp_level="O0"` 时，不进行精度转换。
-    - 当 `amp_level="O1"` 时，仅将白名单内的Cell和算子进行精度转换。
-    - 当 `amp_level="O2"` 时，将除了黑名单内的其他Cell和算子都进行精度转换。
-    - 当 `amp_level="O3"` 时，将网络里的所有Cell和算子都进行精度转换。
+    框架内置了一组黑名单和白名单， `amp_level` 决定了具体对哪些Cell和算子进行精度转换。
 
     当前的内置白名单内容为：
 
@@ -37,9 +32,13 @@ mindspore.amp.auto_mixed_precision
         - **amp_level** (str) - 支持["O0", "O1", "O2", "O3"]。默认值： ``"O0"`` 。
 
           - **"O0"** - 不变化。
-          - **"O1"** - 将白名单内的Cell和算子转换为float16精度运算，其余部分保持float32精度运算。
-          - **"O2"** - 将黑名单内的Cell和算子保持float32精度运算，其余部分转换为float16精度运算。
-          - **"O3"** - 将网络全部转为float16精度。
+          - **"O1"** - 仅将白名单内的Cell和算子转换为低精度运算，其余部分保持全精度运算。
+          - **"O2"** - 黑名单内的Cell和算子保持全精度运算，其余部分都转换为低精度运算。
+          - **"O3"** - 将网络全部转为低精度运算。
+
+        - **dtype** (Type) - 低精度计算时使用的数据类型，可以是 ``mstype.float16`` 或 ``mstype.bfloat16`` 。默认值： ``mstype.float16`` 。
 
     异常：
+        - **TypeError** - `network` 不是Cell。
         - **ValueError** - `amp_level` 不在支持范围内。
+        - **ValueError** - `dtype` 既不是 ``mstype.float16`` 也不是 ``mstype.bfloat16`` 。

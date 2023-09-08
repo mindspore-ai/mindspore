@@ -31,9 +31,10 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt8, 2},    {kNumberTypeUInt8, 3},
-                                           {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},   {kNumberTypeInt64, 6},
-                                           {kNumberTypeFloat16, 7}, {kNumberTypeFloat32, 8}, {kNumberTypeFloat64, 9}};
+const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt8, 2},     {kNumberTypeUInt8, 3},
+                                           {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},    {kNumberTypeInt64, 6},
+                                           {kNumberTypeFloat16, 7}, {kNumberTypeBFloat16, 8}, {kNumberTypeFloat32, 9},
+                                           {kNumberTypeFloat64, 10}};
 namespace {
 const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();

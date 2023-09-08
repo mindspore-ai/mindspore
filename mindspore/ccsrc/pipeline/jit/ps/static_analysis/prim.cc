@@ -276,7 +276,7 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
     auto x = node_type->cast_ptr<AbstractTensor>();
     MS_EXCEPTION_IF_NULL(x->element());
     MS_EXCEPTION_IF_NULL(x->element()->BuildType());
-    if (x->element()->BuildType()->isa<Float>()) {
+    if (x->element()->BuildType()->isa<Float>() || x->element()->BuildType()->isa<BFloat>()) {
       auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
       MS_EXCEPTION_IF_NULL(cast);
       target_node = func_graph->NewCNodeAfter(source_node, {NewValueNode(cast), source_node, target_type});

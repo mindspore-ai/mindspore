@@ -67,13 +67,14 @@ AMP_BLACK_LIST = [
 
 class _OutputTo16(nn.Cell):
     """Wrap cell for amp. Cast network output back to float16."""
-    def __init__(self, backbone):
+    def __init__(self, backbone, dtype=mstype.float16):
         super(_OutputTo16, self).__init__(auto_prefix=False)
         self._backbone = backbone
         self._jit_config_dict = backbone.jit_config_dict
+        self.dtype = dtype
 
     def construct(self, *args, **kwargs):
-        return F.cast(self._backbone(*args, **kwargs), mstype.float16)
+        return F.cast(self._backbone(*args, **kwargs), self.dtype)
 
 
 class _OutputTo32(nn.Cell):
@@ -88,38 +89,41 @@ class _OutputTo32(nn.Cell):
         return F.mixed_precision_cast(mstype.float32, out)
 
 
-def _allow_mix_precision(node, allowed_list) -> bool:
+def _allow_mix_precision(node, allowed_list, dtype) -> bool:
     """
     Check whether current node need do mix precision. Follow conditions need to be satisfied:
         1) Type of node is one of (Primitive, nn.Cell)
         2) Node is not P.Cast()
         3) to_float(mindspore.float16) is not set in Cell
     """
-    if node.get_instance() in allowed_list:
+    node_inst = node.get_instance()
+    if node_inst in allowed_list:
         return True
     if not issubclass(node.get_instance_type(), (Primitive, nn.Cell)):
         return False
-    if isinstance(node.get_instance(), P.Cast):
+    if isinstance(node_inst, P.Cast):
         return False
     if issubclass(node.get_instance_type(), nn.Cell):
-        # if cell is already in allowed_list, it means to_float(mindspore.float16) is set by amp.
-        # if cell is not in allowed_list, but has to_float(mindspore.float16),
-        # it means to_float(mindspore.float16) is set by user.
-        if hasattr(node.get_instance(), "fp16") and node.get_instance().fp16:
+        # if cell is already in allowed_list, it means to_float() is set by amp.
+        # if cell is not in allowed_list, but has to_float(),
+        # it means to_float() is set by user.
+        to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
+        if hasattr(node_inst, to_float_flag) and getattr(node_inst, to_float_flag):
             return False
     allowed_list.append(node.get_instance())
     return True
 
 
-def _insert_cast_operator_process(node, stree):
+def _insert_cast_operator_process(node, stree, dtype):
     """insert cast for operators in white_list."""
+    dtype_str = "mindspore.bfloat16" if dtype == mstype.bfloat16 else "mindspore.float16"
     new_cast_node = None
-    # insert cast float16 before the primitive operators
+    # insert cast fp16/bf16 before the primitive operators
     if issubclass(node.get_instance_type(), Primitive):
         for idx, arg in enumerate(node.get_args()):
             position = stree.before(node)
             new_node = P.Cast()
-            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, "mindspore.float16"], [arg.scope, ""])
+            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, ""])
             cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
             new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
                                                              targets=cast_targets,
@@ -127,9 +131,9 @@ def _insert_cast_operator_process(node, stree):
                                                              name='incast_{}{}'.format(node.get_name(), idx))
             stree.insert(position, new_cast_node)
             node.set_arg_by_node(idx, new_cast_node)
-    # insert cast float16 before the Cell operators
+    # insert cast fp16/bf16 before the Cell operators
     elif issubclass(node.get_instance_type(), nn.Cell):
-        node.get_instance().to_float(mstype.float16)
+        node.get_instance().to_float(dtype)
     # ignore if subclass is not one of (Primitive, nn.Cell)
     else:
         return
@@ -154,12 +158,13 @@ def _insert_cast_operator_process(node, stree):
                 user.set_arg_by_node(idx, new_cast_node)
 
 
-def _insert_cast_operator_white_list(stree, white_list):
+def _insert_cast_operator_white_list(stree, white_list, dtype):
     """insert cast for operators in white_list."""
     allowed_list = []
-    # Ignore if net called ".to_float(mindspore.float16)"
+    # Ignore if net called ".to_float(dtype)"
     net = stree.get_handler().get_origin_network()
-    if isinstance(net, nn.Cell) and hasattr(net, "fp16") and net.fp16:
+    to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
+    if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
         return
     for node in stree.nodes():
         if node.get_targets() is None:
@@ -168,17 +173,18 @@ def _insert_cast_operator_white_list(stree, white_list):
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
                     _insert_cast_operator_white_list(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)),
-                                                     white_list)
+                                                     white_list, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
-            _insert_cast_operator_white_list(substree, white_list)
-        elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list):
-            _insert_cast_operator_process(node, stree)
+            _insert_cast_operator_white_list(substree, white_list, dtype)
+        elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list, dtype):
+            _insert_cast_operator_process(node, stree, dtype)
 
 
-def _need_removed_cast_pair(node):
+def _need_removed_cast_pair(node, dtype):
     """check whether the cast pairs should be removed."""
-    cast_dtypes = ms.rewrite.ScopedValue.create_name_values(["mindspore.float16", "mindspore.float32"])
+    dtype_str = "mindspore.bfloat16" if dtype == mstype.bfloat16 else "mindspore.float16"
+    cast_dtypes = ms.rewrite.ScopedValue.create_name_values([dtype_str, "mindspore.float32"])
     cast_dtype_f16 = cast_dtypes[0]
     cast_dtype_f32 = cast_dtypes[1]
     # current node should be P.Cast()(x, mindspore.float32)
@@ -192,9 +198,8 @@ def _need_removed_cast_pair(node):
         return False
     for user in node.get_users():
         if isinstance(user.get_instance(), nn.Cell):
-            if not hasattr(user.get_instance(), "fp16"):
-                return False
-            if not user.get_instance().fp16:
+            to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
+            if not (hasattr(user.get_instance(), to_float_flag) and getattr(user.get_instance(), to_float_flag)):
                 return False
         elif user.get_instance_type() == P.Cast:
             user_cast_type = user.get_args()[1]
@@ -207,27 +212,16 @@ def _need_removed_cast_pair(node):
 
 def _removed_cast_pair_process(stree, cast_f32_node):
     """remove the duplicated cast operators."""
-    for user_node in cast_f32_node.get_users():
-        # remove cast f16 nodes
+    cast_f32_users = cast_f32_node.get_users()
+    # remove cast f16 nodes
+    for user_node in cast_f32_users:
         if user_node.get_instance_type() == P.Cast:
-            cast_f16_node = user_node
-            # modify arguments using cast_f16's target[0] to cast_f32's args[0], which is f16 type
-            for cast_f16_user in cast_f16_node.get_users():
-                for idx, arg in enumerate(cast_f16_user.get_args()):
-                    if arg == cast_f16_node.get_targets()[0]:
-                        cast_f16_user.set_arg(idx, cast_f32_node.get_args()[0])
-            stree.erase(cast_f16_node)
-        # update args of cell f16 nodes
-        elif isinstance(user_node.get_instance(), nn.Cell):
-            cell_f16_node = user_node
-            for idx, arg in enumerate(cell_f16_node.get_args()):
-                if arg == cast_f32_node.get_targets()[0]:
-                    cell_f16_node.set_arg(idx, cast_f32_node.get_args()[0])
+            stree.erase(user_node)
     # remove the cast f32 node
     stree.erase(cast_f32_node)
 
 
-def _remove_duplicated_cast(stree):
+def _remove_duplicated_cast(stree, dtype):
     """remove the duplicated cast operators."""
     for node in stree.nodes():
         if node.get_targets() is None:
@@ -235,26 +229,26 @@ def _remove_duplicated_cast(stree):
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)))
+                    _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)), dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
-            _remove_duplicated_cast(substree)
-        elif _need_removed_cast_pair(node):
+            _remove_duplicated_cast(substree, dtype)
+        elif _need_removed_cast_pair(node, dtype):
             _removed_cast_pair_process(stree, node)
 
 
-def _auto_white_list(network, white_list):
+def _auto_white_list(network, white_list, dtype):
     """process the white list of network."""
     global STREE
     STREE = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator_white_list(STREE, white_list)
-    _remove_duplicated_cast(STREE)
+    _insert_cast_operator_white_list(STREE, white_list, dtype)
+    _remove_duplicated_cast(STREE, dtype)
     return STREE.get_network()
 
 
-def _auto_black_list(network, black_list):
+def _auto_black_list(network, black_list, dtype):
     """process the black list of network."""
-    network.to_float(mstype.float16)
+    network.to_float(dtype)
     cells = network.name_cells()
     change = False
     for name in cells:
@@ -262,22 +256,22 @@ def _auto_black_list(network, black_list):
         if subcell == network:
             continue
         if isinstance(subcell, tuple(black_list)):
-            network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
+            network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32), dtype)
             change = True
         else:
-            _auto_black_list(subcell, black_list)
+            _auto_black_list(subcell, black_list, dtype)
     if isinstance(network, nn.SequentialCell) and change:
         network.cell_list = list(network.cells())
 
 
-def auto_mixed_precision(network, amp_level="O0"):
+def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     """
     Returns a network processed with auto mixed precision.
 
     This interface will automatically perform mixed-precision processing on the input network, and the cells
-    and operators in the processed network will add precision conversion operations to calculate with float16 accuracy.
-    Inputs and parameters of cells and operators are converted to float16 type, and calculation results are converted
-    back to float32 type.
+    and operators in the processed network will add precision conversion operations to calculate with lower
+    precision: ``mstype.float16`` or ``mstype.bfloat16`` . Inputs and parameters of cells and operators are
+    converted to lower precision float, and calculation results are converted back to full precision float.
 
     The framework has a set of built-in blacklists and whitelists, and the `amp_level` determines which cells and
     operators are specifically converted:
@@ -310,14 +304,19 @@ def auto_mixed_precision(network, amp_level="O0"):
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
-            - "O1": Convert cells and operators in whitelist to float16 precision operations, and keep float32
+            - "O1": Convert cells and operators in whitelist to lower precision operations, and keep full
               precision operations for the rest.
-            - "O2": Keep float32 precision operations for cells and operators in blacklist, and convert the rest
-              to float16 precision operations.
-            - "O3": Cast network to float16.
+            - "O2": Keep full precision operations for cells and operators in blacklist, and convert the rest
+              to lower precision operations.
+            - "O3": Cast network to lower precision.
+
+        dtype (Type): The type used in lower precision calculations, can be ``mstype.float16`` or ``mstype.bfloat16`` ,
+            default: ``mstype.float16`` .
 
     Raises:
-        ValueError: If amp level is not supported.
+        TypeError: If `network` is not a Cell.
+        ValueError: If `dtype` is not one of ``mstype.float16`` , ``mstype.bfloat16`` .
+        ValueError: If `amp_level` is not within the supported range.
 
     Examples:
         >>> from mindspore import amp
@@ -330,16 +329,19 @@ def auto_mixed_precision(network, amp_level="O0"):
     if not isinstance(network, nn.Cell):
         raise TypeError("The network type should be Cell.")
 
+    if dtype not in (mstype.float16, mstype.bfloat16):
+        raise ValueError(f"The dtype should be one of (mstype.float16, mstype.bfloat16), but got {dtype}.")
+
     if amp_level == "O0":
         return network
 
     if amp_level == "O1":
-        return _auto_white_list(network, AMP_WHITE_LIST)
+        return _auto_white_list(network, AMP_WHITE_LIST, dtype)
 
     if amp_level == "O2":
-        _auto_black_list(network, AMP_BLACK_LIST)
+        _auto_black_list(network, AMP_BLACK_LIST, dtype)
     elif amp_level == "O3":
-        network.to_float(mstype.float16)
+        network.to_float(dtype)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
     if amp_level in ("O2", "O3"):
@@ -613,12 +615,11 @@ def get_black_list():
     return black_list
 
 
-def custom_mixed_precision(network, *, white_list=None, black_list=None):
+def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=mstype.float16):
     """
     Custom mixed precision by setting whitelist or blacklist.
     When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
-    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision
-    conversion.
+    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision conversion.
     Only one of `white_list` and `black_list` should be provided.
 
     Note:
@@ -634,6 +635,8 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
             white list is not used.
         black_list (list[Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
             black list is not used.
+        dtype (Type): The type used in lower precision calculations, can be ``mstype.float16`` or ``mstype.bfloat16`` ,
+            default: ``mstype.float16`` .
 
     Returns:
         network (Cell), A network supporting mixed precision.
@@ -641,6 +644,7 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
     Raises:
         TypeError: The network type is not Cell.
         ValueError: Neither `white_list` nor `black_list` is provided.
+        ValueError: If `dtype` is not one of ``mstype.float16`` , ``mstype.bfloat16`` .
         ValueError: Both `white_list` and `black_list` are provided.
 
     Examples:
@@ -662,12 +666,15 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
         raise ValueError("For custom_mixed_precision, the white_list or black_list cannot be provided "
                          "at the same time, please provide one or the other.")
 
+    if dtype not in (mstype.float16, mstype.bfloat16):
+        raise ValueError(f"The dtype should be one of (mstype.float16, mstype.bfloat16), but got {dtype}.")
+
     if white_list is not None:
         _list_check(white_list, "white_list")
-        return _auto_white_list(network, white_list)
+        return _auto_white_list(network, white_list, dtype)
 
     _list_check(black_list, "black_list")
-    _auto_black_list(network, black_list)
+    _auto_black_list(network, black_list, dtype)
     network = _OutputTo32(network)
     return network
 

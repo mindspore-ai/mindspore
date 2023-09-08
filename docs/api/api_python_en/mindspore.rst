@@ -63,6 +63,7 @@ DataType
     ``mindspore.float16`` ,  ``mindspore.half``      16-bit floating-point number
     ``mindspore.float32`` ,  ``mindspore.single``    32-bit floating-point number
     ``mindspore.float64`` ,  ``mindspore.double``    64-bit floating-point number
+    ``mindspore.bfloat16``                           16-bit brain-floating-point number
     ``mindspore.complex64``                          64-bit complex number
     ``mindspore.complex128``                         128-bit complex number
     ==============================================   =============================
