@@ -290,7 +290,7 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
 }
 
 #if defined(ASCEND_910) || defined(ASCEND_910B)
-constexpr auto k910AAscendVersion = "Ascend910";
+constexpr auto k910AscendVersion = "Ascend910";
 constexpr auto k910BAscendVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
   {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
@@ -311,7 +311,7 @@ const bool SelectAscendPlugin = []() -> bool {
   }
   std::string soc_version = GetSocVersion();
   // if soc_version belongs to 310 or 710, return true
-  if (soc_version.find(k910AAscendVersion) == std::string::npos) {
+  if (soc_version.find(k910AscendVersion) == std::string::npos) {
     return true;
   }
   auto iter = kAscendSocVersions.find(soc_version);
