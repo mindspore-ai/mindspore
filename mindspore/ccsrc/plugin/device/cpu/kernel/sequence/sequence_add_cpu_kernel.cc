@@ -33,7 +33,7 @@ bool SequenceAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
+  if (!is_match || index >= func_list_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
@@ -57,6 +57,9 @@ bool SequenceAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *input_0_addr = GetDeviceAddress<T>(inputs, 0);
   T *input_1_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(input_0_addr);
+  MS_EXCEPTION_IF_NULL(input_1_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto input_0_size = inputs[0]->size;
   auto input_1_size = inputs[1]->size;
   auto output_size = outputs[0]->size;
