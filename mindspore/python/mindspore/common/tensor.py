@@ -805,6 +805,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('log_normal')(mean, std)(self)
 
+    @jit_forbidden_register
     def assign_value(self, value):
         """
         Assign another tensor value to this tensor.
