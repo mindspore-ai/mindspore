@@ -668,7 +668,10 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
     if (top_cnode == nullptr) {
       continue;
     }
-    for (auto &next : top_cnode->inputs()) {
+    const auto &inputs = top_cnode->inputs();
+    for (auto iter = inputs.begin() + 1; iter != inputs.end(); iter++) {
+      const auto &next = *iter;
+      MS_EXCEPTION_IF_NULL(next);
       if (next->seen_ == seen) {
         continue;
       }
