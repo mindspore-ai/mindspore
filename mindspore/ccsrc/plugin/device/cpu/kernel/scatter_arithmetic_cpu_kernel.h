@@ -65,6 +65,7 @@ class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod,
   bool enable_embedding_storage_{false};
   // The global unique parameter key, used to get the embedding storage instance.
   int32_t parameter_key_{-1};
+  bool has_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

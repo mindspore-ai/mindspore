@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,21 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto indices_shape = inputs[kIndex1]->GetShapeVector();
+  auto updates_shape = inputs[kIndex2]->GetShapeVector();
+  auto input_shape_null = CheckNullInput(input_shape);
+  auto indices_shape_null = CheckNullInput(indices_shape);
+  auto updates_shape_null = CheckNullInput(updates_shape);
+  has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
+  if (has_null_input_) {
+    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
+    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
+    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
+    output_size_list_.clear();
+    output_size_list_.push_back(input_size_list_[kIndex0]);
+    return KRET_OK;
+  }
   first_dim_size_ = 1;
   if (!input_shape.empty()) {
     first_dim_size_ = input_shape[0];
@@ -68,7 +82,6 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     inner_size_ *= input_shape[i];
   }
   input_size_ = first_dim_size_ * inner_size_;
-  auto indices_shape = inputs[1]->GetShapeVector();
   indices_size_ = SizeOf(indices_shape);
   updates_size_ = indices_size_ * inner_size_;
   return KRET_OK;
@@ -78,6 +91,9 @@ template <typename T, typename S>
 bool ScatterFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspace,
                                               const std::vector<AddressPtr> &outputs) {
+  if (has_null_input_) {
+    return true;
+  }
   T *input = GetDeviceAddress<T>(inputs, 0);
   S *indices = GetDeviceAddress<S>(inputs, 1);
   T *updates = GetDeviceAddress<T>(inputs, 2);
@@ -187,6 +203,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ScatterFunctorGPUKernelM
        // Data type: half
        DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, half, int),
        DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, half, int64_t),
+       // Data type: int64_t
+       DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int),
+       DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
        // Data type: int32_t
        DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int),
        DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int64_t),

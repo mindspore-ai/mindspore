@@ -66,6 +66,7 @@ class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
   size_t updates_size_;
   std::string kernel_type_;
   void *cuda_stream_{nullptr};
+  bool has_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import mindspore
 import mindspore.context as context
 import mindspore.ops.operations as P
 from mindspore.nn import Cell
@@ -82,3 +83,38 @@ def test_scatter_func_small_float32():
     out = net(indices_me, update_me)
     expect = np.array([[7590.0, 99.0, 975.0], [140.0, 252.0, 8385.0]])
     assert np.allclose(out.asnumpy(), expect.astype(np.float32), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_func_indices_out_of_range():
+    """
+    Feature: test scatter_func invalid indices.
+    Description: indices has invalid value.
+    Expectation: catch the raised error.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = Parameter(Tensor(np.zeros((2, 3)).astype(np.float32)), name="x")
+    indices = Tensor(np.array([[0, 1], [0, 4]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+    # div
+    with pytest.raises(RuntimeError):
+        _ = P.ScatterDiv()(input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_update_output():
+    """
+    Feature: test ScatterUpdate output and input_x same value.
+    Description: check output and input_x value.
+    Expectation: output and input_x have same value
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.int64), name="x")
+    indices = Tensor(np.array([0, 1]), mindspore.int32)
+    updates = Tensor(np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]]), mindspore.int64)
+    output = P.ScatterUpdate()(input_x, indices, updates)
+    assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)

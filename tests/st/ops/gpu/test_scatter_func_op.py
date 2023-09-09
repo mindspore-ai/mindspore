@@ -982,3 +982,29 @@ def test_scatter_func_updates_vmap():
     output = VmapNet(ScatterFuncVmapNet("update"), inputx, in_axes, out_axes)(indices, updates)
     expected = np.array([[1.0, 0.1, 2.2], [1.2, 1.3, 5.5]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_func_indices_out_of_range():
+    """
+    Feature: test scatter_func invalid indices.
+    Description: indices has invalid value.
+    Expectation: catch the raised error.
+    """
+    inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
+    indices = Tensor(np.array([[0, 1], [0, 4]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+
+    # update
+    with pytest.raises(RuntimeError):
+        _ = scatter_func_net("update", inputx, indices, updates)
+
+    # add
+    with pytest.raises(RuntimeError):
+        _ = scatter_func_net("add", inputx, indices, updates)
+
+    # sub
+    with pytest.raises(RuntimeError):
+        _ = scatter_func_net("sub", inputx, indices, updates)
