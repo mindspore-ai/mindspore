@@ -584,14 +584,21 @@ Status ShardReader::ReadAllRowGroup(const std::vector<std::string> &columns,
 
   std::string sql = "SELECT " + fields + " FROM INDEXES ORDER BY ROW_ID ;";
 
-  std::vector<std::thread> thread_read_db = std::vector<std::thread>(shard_count_);
+  std::vector<std::future<Status>> async_results;
+  auto status = Status::OK();
   for (int x = 0; x < shard_count_; x++) {
-    thread_read_db[x] =
-      std::thread(&ShardReader::ReadAllRowsInShard, this, x, 0, sql, columns, offset_ptr, col_val_ptr);
+    async_results.push_back(std::async(std::launch::async, &ShardReader::ReadAllRowsInShard, this, x, 0, sql, columns,
+                                       offset_ptr, col_val_ptr));
   }
 
-  for (int x = 0; x < shard_count_; x++) {
-    thread_read_db[x].join();
+  for (auto i = 0; i < async_results.size(); i++) {
+    auto res = async_results[i].get();
+    if (res.IsError() && status.IsOk()) {
+      status = res;
+    }
+  }
+  if (status.IsError()) {
+    return status;
   }
   *row_group_ptr = std::make_shared<ROW_GROUPS>(std::move(*offset_ptr), std::move(*col_val_ptr));
   return Status::OK();
