@@ -701,20 +701,6 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
       continue;
     }
 
-    // Process ref node output address.
-    if (kernel_graph->IsInRefOutputMap(output_with_index)) {
-      auto [origin_node, origin_index] = kernel_graph->GetRefCorrespondOutput(output_with_index);
-      if (origin_node->isa<Parameter>()) {
-        auto origin_output_addr = AnfAlgo::GetMutableOutputAddr(origin_node, origin_index);
-        MS_EXCEPTION_IF_NULL(origin_output_addr);
-        AnfAlgo::SetOutputAddr(origin_output_addr, index, output_node.get());
-        MS_LOG(DEBUG) << "Set DeviceAddress " << origin_output_addr.get() << " dev ptr "
-                      << origin_output_addr->GetMutablePtr() << " to RefNode " << output_node->fullname_with_scope()
-                      << " output " << index;
-        continue;
-      }
-    }
-
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
     size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
