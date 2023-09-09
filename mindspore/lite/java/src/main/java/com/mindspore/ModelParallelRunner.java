@@ -120,7 +120,7 @@ public class ModelParallelRunner {
             Object[] bufferArray = new Object[inputs.size()];
             for (int i = 0; i < inputs.size(); i++) {
                 inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
-                bufferArray[i] = this.getTensorBuffer(inputs.get(i));
+                bufferArray[i] = inputs.get(i).getData();
             }
             if(outputs.size() != 0){
                 long[] outputsPtrArray = new long[outputs.size()];
@@ -225,32 +225,6 @@ public class ModelParallelRunner {
         if (modelParallelRunnerTempPtr != 0L) {
             this.free(modelParallelRunnerTempPtr);
         }
-    }
-
-    /**
-    * get buffer based on tensor dataType
-    **/
-    private Object getTensorBuffer(MSTensor tensor) {
-        int dataType = tensor.getDataType();
-        Object ret = null;
-        switch(dataType) {
-            case DataType.kNumberTypeFloat32:
-            case DataType.kNumberTypeFloat16:
-                ret = tensor.getFloatData();
-                break;
-            case DataType.kNumberTypeInt32:
-                ret = tensor.getIntData();
-                break;
-            case DataType.kNumberTypeInt64:
-                ret = tensor.getLongData();
-                break;
-            default:
-                return ret;
-        }
-        if (ret == null) {
-            return tensor.getByteData();
-        }
-        return ret;
     }
 
     private native long init(String modelPath, long runnerConfigPtr);
