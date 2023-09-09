@@ -3274,7 +3274,6 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       // Convert hccl op for comm handle
       {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertHcomFusionId},
       {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcomFusionId},
-      {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimBroadcast->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
