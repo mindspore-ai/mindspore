@@ -83,6 +83,8 @@ class DataQueueOp : public PipelineOp {
 
   Status GetDataInfo(DATA_INFO *data_info);
 
+  std::vector<std::vector<double>> GetSendInfo();
+
   // Name: Print()
   // Description: A function that prints info about the node
   void Print(std::ostream &out,              // In: The output stream to print to
@@ -179,7 +181,25 @@ class DataQueueOp : public PipelineOp {
   Status DetectFirstBatch();
 
   // Detect the cost time of each batch, present alarm message if cost too long
-  void DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) const;
+  void DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time);
+
+  // Send information in sink mode
+  struct SendInfo {
+    double epoch = 0;
+    double fetch_data_num = 0;
+    double fetch_data_time = 0;
+    double first_data_time = 0;
+    bool init = false;
+    void record_data(double t) {
+      if (!init) {
+        first_data_time = t;
+        init = true;
+      }
+      fetch_data_time += t;
+      fetch_data_num += 1;
+    }
+  };
+  std::vector<SendInfo> send_summary_;
 #endif
 
   std::unique_ptr<ChildIterator> child_iterator_;

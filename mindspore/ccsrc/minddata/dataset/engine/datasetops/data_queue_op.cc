@@ -113,7 +113,8 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
       create_data_info_queue_(create_data_info_queue),
       data_info_queue_ptr_(nullptr),
       first_fetch_flag_(false),
-      first_push_flag_(false) {
+      first_push_flag_(false),
+      send_summary_({}) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   dynamic_shape_ = cfg->dynamic_shape();
 
@@ -501,6 +502,9 @@ Status DataQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Begin to send data to device, channel name: " << channel_name_;
 
   while (!curr_row.eof() && !is_break_loop) {
+    SendInfo send_info_per_epoch;
+    send_info_per_epoch.epoch = op_current_epochs_ + 1;
+    send_summary_.push_back(send_info_per_epoch);
     while (!curr_row.eoe() && !is_break_loop) {
       RETURN_IF_NOT_OK(FilterMetadata(&curr_row));
       RETURN_IF_NOT_OK(CheckExceptions(curr_row));
@@ -573,7 +577,7 @@ Status DataQueueOp::SendDataToAscend() {
     RETURN_IF_NOT_OK(SendEpochEndToAscend(curr_row, is_profiling_enable, &tdt_cost, &is_break_loop));
     RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend",
                                       {{"TensorRowFlags", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
-
+    UpdateRepeatAndEpochCounter();
 #ifndef ENABLE_SECURITY
     RecordProfilingData(is_profiling_enable, true, &connector_size, &connector_capacity, &send_batch);
 #endif
@@ -741,6 +745,20 @@ Status DataQueueOp::GetDataInfo(DATA_INFO *data_info) {
   RETURN_IF_NOT_OK(data_info_queue_ptr_->PopFront(data_info));
 #endif
   return Status::OK();
+}
+
+std::vector<std::vector<double>> DataQueueOp::GetSendInfo() {
+  std::vector<std::vector<double>> send_info_per_epoch;
+  (void)std::transform(send_summary_.begin(), send_summary_.end(), std::back_inserter(send_info_per_epoch),
+                       [](const SendInfo &send_info) -> std::vector<double> {
+                         return std::vector<double>{send_info.epoch, send_info.fetch_data_num,
+                                                    send_info.first_data_time, send_info.fetch_data_time};
+                       });
+  // history message control
+  while (send_info_per_epoch.size() > 5) {
+    send_info_per_epoch.erase(send_info_per_epoch.begin());
+  }
+  return send_info_per_epoch;
 }
 
 Status DataQueueOp::SetThreadDevice() {
@@ -960,6 +978,9 @@ Status DataQueueOp::SendDataToGPU() {
   MS_LOG(INFO) << "Begin to send data to device, channel name: " << channel_name_;
 
   while (!current_row.eof() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
+    SendInfo send_info_per_epoch;
+    send_info_per_epoch.epoch = op_current_epochs_ + 1;
+    send_summary_.push_back(send_info_per_epoch);
     while (!current_row.eoe() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
@@ -986,7 +1007,7 @@ Status DataQueueOp::SendDataToGPU() {
         is_break_loop = true;
       }
     }
-
+    UpdateRepeatAndEpochCounter();
     if (current_row.eoe()) {
       MS_LOG(INFO) << "EOE Detected";
       TensorRow eoe_flag(TensorRow::kFlagEOE);
@@ -1139,9 +1160,11 @@ Status DataQueueOp::DetectFirstBatch() {
   return Status::OK();
 }
 
-void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) const {
+void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) {
   *end_time = ProfilingTime::GetCurMilliSecond();
-  if (*end_time - *start_time > kTimeOutMilliSeconds) {
+  auto interval = *end_time - *start_time;
+  send_summary_.back().record_data(interval / 1000.);
+  if (interval > kTimeOutMilliSeconds) {
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
                        "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
                        " performance(with creating dataset iterator) and optimize it.";

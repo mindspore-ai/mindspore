@@ -442,6 +442,48 @@ class DatasetHelper:
         # Generally, it works in dynamic shape scenarios.
         return self.iter.get_data_info()
 
+    # pylint: disable=missing-docstring
+    def get_send_info(self, run_context):
+        # In sink mode, it returns the send information of dataset at this moment.
+        # Send information includes number of send batches, time summary of fetching data on host
+        # and time summary of sending data.
+        class InfoViewer:
+            '''
+            Inner class for parsing send info.
+            '''
+            def __init__(self, send_info, run_context):
+                self.info_ = {}
+                self.sink_size = run_context.original_args()["batch_num"]
+                if run_context.original_args().get("train_dataset", None) is not None:
+                    self.dataset_size = run_context.original_args()["train_dataset"].get_dataset_size()
+                elif run_context.original_args().get("valid_dataset", None) is not None:
+                    self.dataset_size = run_context.original_args()["valid_dataset"].get_dataset_size()
+                else:
+                    raise RuntimeError("Could not find a proper dataset to estimate dataset size.")
+                if not send_info:
+                    epoch = 1
+                    self.info_[epoch] = {'fetch_data_num': 0, 'fetch_data_time': 0, 'first_data_time': 0}
+                else:
+                    for info_per_epoch in send_info:
+                        epoch, fetch_data_num, first_data_time, fetch_data_time = info_per_epoch
+                        if fetch_data_num > 1:
+                            fetch_data_time = (fetch_data_time - first_data_time) / (fetch_data_num - 1) * 1000.
+                        self.info_[epoch] = {'fetch_data_num': fetch_data_num,
+                                             'fetch_data_time': fetch_data_time,
+                                             'first_data_time': first_data_time}
+
+            def epoch(self, epoch):
+                if self.sink_size == self.dataset_size:
+                    return self.info_[epoch]
+                global_step = epoch * self.sink_size
+                data_epoch = math.ceil(global_step / self.dataset_size)
+                return self.info_[data_epoch]
+
+        # send info struct:[epoch, data_num_per_epoch, first_data_time, accumulate_data_time]
+        # for example [1, 1875, 0.421, 0.362]
+        send_info = self.iter.get_send_info()
+        return InfoViewer(send_info, run_context)
+
 
 class _DatasetIter:
     """Base iter for dataset helper"""
@@ -473,6 +515,7 @@ class _DatasetIter:
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
+        self.get_send_info = dataset.__transfer_dataset__.get_send_info
         if hasattr(dataset.__transfer_dataset__, "_reset"):
             self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=protected-access
 

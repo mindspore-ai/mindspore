@@ -353,6 +353,18 @@ Status ToDevice::GetDataInfo(std::vector<DataType> *const types, std::vector<Ten
   return Status::OK();
 }
 
+Status ToDevice::GetSendInfo(std::vector<std::vector<double>> *send_info) {
+  RETURN_UNEXPECTED_IF_NULL(send_info);
+  // tree_.root() must be DataQueueOp
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "GetSendInfo only supported by DataQueueOp");
+  DATA_INFO data_info;
+  *send_info = op->GetSendInfo();
+  return Status::OK();
+}
+
 Status ToDevice::Terminate() {
 #ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());

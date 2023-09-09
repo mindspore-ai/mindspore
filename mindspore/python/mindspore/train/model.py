@@ -687,6 +687,7 @@ class Model:
                                                                   dataset_helper=dataset_helper)
 
             cb_params.train_network = train_network
+            cb_params.dataset_helper = dataset_helper
 
             # Perform recovery for process which is restarted.
             self._reset_training_step_for_abnormal_process(cb_params, dataset_helper)

@@ -239,6 +239,10 @@ class ToDevice : public TreeConsumer {
   /// \return  Status error code
   virtual Status GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes);
 
+  /// Get send info in sink mode
+  /// \return  Status error code
+  virtual Status GetSendInfo(std::vector<std::vector<double>> *send_info);
+
  protected:
   /// Method to return the name of the consumer
   /// \return string

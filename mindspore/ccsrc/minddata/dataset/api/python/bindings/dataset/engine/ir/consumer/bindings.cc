@@ -168,6 +168,13 @@ PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                            }
                            return py::make_tuple(types, shapes);
                          })
+                    .def("GetSendInfo",
+                         [](ToDevice &self) {
+                           std::vector<std::vector<double>> send_info;
+                           THROW_IF_ERROR(self.GetSendInfo(&send_info));
+                           py::tuple py_send_info = py::cast(send_info);
+                           return py_send_info;
+                         })
                     .def("__deepcopy__", [](py::object &to_device, py::dict memo) { return to_device; });
                 }));
 
