@@ -369,5 +369,18 @@ Status RenderedSST2Op::GetNumClasses(int64_t *num_classes) {
   num_classes_ = *num_classes;
   return Status::OK();
 }
+
+Status RenderedSST2Op::InitPullMode() {
+  // to avoid the concurrent and multi end signal in StartAsyncWalk, explicitly set num_workers_ to 1
+  num_workers_ = 1;
+  RETURN_IF_NOT_OK(folder_path_queue_->Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(image_name_queue_->Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(Name() + "::WalkDir",
+                                                      std::bind(&RenderedSST2Op::StartAsyncWalk, this), nullptr, id()));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                        std::bind(&RenderedSST2Op::PrescanWorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::PrescanWorkerEntry", id()));
+  return PrepareData();
+}
 }  // namespace dataset
 }  // namespace mindspore

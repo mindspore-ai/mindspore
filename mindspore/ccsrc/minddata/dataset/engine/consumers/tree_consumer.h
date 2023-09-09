@@ -246,37 +246,6 @@ class ToDevice : public TreeConsumer {
 };
 
 /// Consumer that is used to get some pipeline information
-class TreeGetters : public TreeConsumer {
- public:
-  TreeGetters();
-  ~TreeGetters() = default;
-  Status Init(std::shared_ptr<DatasetNode> d) override;
-
-  Status GetOutputTypes(std::vector<DataType> *types);
-  Status GetOutputShapes(std::vector<TensorShape> *shapes, bool estimate = false);
-  Status GetBatchSize(int64_t *batch_size);
-  Status GetRepeatCount(int64_t *repeat_count);
-  Status GetNumClasses(int64_t *num_classes);
-  Status GetColumnNames(std::vector<std::string> *output);
-  Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
-  std::string Name() override { return "TreeGetters"; }
-  virtual Status GetRow(TensorRow *row);
-
- private:
-  Status GetFirstRowShapeAndType();
-
-  std::shared_ptr<DatasetNode> root_;
-  int64_t dataset_size_;
-  std::vector<DataType> first_row_type_;
-  std::vector<TensorShape> first_row_shape_;
-  std::vector<TensorShape> estimated_row_shape_;
-  bool first_row_obtained_;  // whether first row (which could be empty) is obtained by TreeGetter
-  bool init_flag_;           // indicate whether the tree has initialized
-
-  Status InternalInit();
-};
-
-/// Consumer that is used to get some pipeline information
 class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_this<DatasetSizeGetter> {
  public:
   DatasetSizeGetter() : dataset_size_(-1) {}

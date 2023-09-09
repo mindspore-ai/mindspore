@@ -153,6 +153,10 @@ class RenderedSST2Op : public MappableLeafOp {
   /// @return Status The status code returned.
   Status ComputeColMap() override;
 
+  /// Initialize pull mode, calls PrepareData() within
+  /// @return Status The status code returned
+  Status InitPullMode() override;
+
   std::string folder_path_;  // directory of image folder
   std::string usage_;
   bool decode_;

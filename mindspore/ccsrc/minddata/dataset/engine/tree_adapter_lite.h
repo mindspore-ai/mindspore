@@ -44,6 +44,9 @@ class TreeAdapterLite {
 
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return tree_->root()->column_name_id_map(); }
 
+  // unique_ptr overloads operator bool(), will return false if it doesn't manage an object
+  std::weak_ptr<DatasetOp> GetRoot() const { return tree_ ? tree_->root() : nullptr; }
+
   // This function performs syntax checking, semantics checking, and then call BuildTree
   Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1);
 

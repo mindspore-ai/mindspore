@@ -586,6 +586,28 @@ def test_map_multiprocessing_with_in_out_rowsize():
         assert count == 791
 
 
+def test_map_and_generatordataset_with_multiprocessing():
+    """
+    Feature: Map op
+    Description: When map or GeneratorDataset with multiprocessing or num_parallel_workers > 1, methods of output_types
+    and output_shapes will not start multiple processes and threads
+    Expectation: The returned result is as expected
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"], python_multiprocessing=True,
+                                  num_parallel_workers=2)
+
+    def long_running_op(col1, col2):
+        data1 = np.ones([50, 3, 655, 655], dtype=np.float64)
+        data2 = np.ones([50, 3, 600, 600], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                          python_multiprocessing=True, num_parallel_workers=2, max_rowsize=10)
+    assert dataset.output_shapes() == [[50, 3, 655, 655], [50, 3, 600, 600]]
+    assert dataset.output_types() == [np.float64, np.float64]
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -601,3 +623,4 @@ if __name__ == '__main__':
     test_map_multiprocessing_with_fixed_handle()
     test_map_multiprocessing_with_in_out_rowsize()
     test_map_multiprocessing_with_in_out_rowsize_exception()
+    test_map_and_generatordataset_with_multiprocessing()
