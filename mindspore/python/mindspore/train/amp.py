@@ -594,6 +594,23 @@ def get_white_list():
 
     Returns:
         list, A copy of internal white list.
+
+    Examples:
+        >>> from mindspore import amp
+        >>> white_list = amp.get_white_list()
+        >>> print(white_list)
+        [<class 'mindspore.nn.layer.conv.Conv1d'>, <class 'mindspore.nn.layer.conv.Conv2d'>,
+         <class 'mindspore.nn.layer.conv.Conv3d'>, <class 'mindspore.nn.layer.conv.Conv1dTranspose'>,
+         <class 'mindspore.nn.layer.conv.Conv2dTranspose'>, <class 'mindspore.nn.layer.conv.Conv3dTranspose'>,
+         <class 'mindspore.nn.layer.basic.Dense'>, <class 'mindspore.nn.layer.rnn_cells.LSTMCell'>,
+         <class 'mindspore.nn.layer.rnn_cells.RNNCell'>, <class 'mindspore.nn.layer.rnn_cells.GRUCell'>,
+         <class 'mindspore.ops.operations.nn_ops.Conv2D'>, <class 'mindspore.ops.operations.nn_ops.Conv3D'>,
+         <class 'mindspore.ops.operations.nn_ops.Conv2DTranspose'>,
+         <class 'mindspore.ops.operations.nn_ops.Conv3DTranspose'>,
+         <class 'mindspore.ops.operations.nn_ops.Conv2DBackpropInput'>,
+         <class 'mindspore.ops.operations.math_ops.MatMul'>, <class 'mindspore.ops.operations.math_ops.BatchMatMul'>,
+         <class 'mindspore.ops.operations.nn_ops.PReLU'>, <class 'mindspore.ops.operations.nn_ops.ReLU'>,
+         <class 'mindspore.ops.operations.math_ops.Ger'>]
     """
     white_list = AMP_WHITE_LIST.copy()
     return white_list
@@ -610,6 +627,13 @@ def get_black_list():
 
     Returns:
         list, A copy of internal black list.
+
+    Example:
+        >>> from mindspore import amp
+        >>> black_list = amp.get_black_list()
+        >>> print(black_list)
+        [<class 'mindspore.nn.layer.normalization.BatchNorm1d'>, <class 'mindspore.nn.layer.normalization.BatchNorm2d'>,
+         <class 'mindspore.nn.layer.normalization.BatchNorm3d'>, <class 'mindspore.nn.layer.normalization.LayerNorm'>]
     """
     black_list = AMP_BLACK_LIST.copy()
     return black_list
