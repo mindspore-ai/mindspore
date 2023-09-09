@@ -33,7 +33,7 @@ class CustomInterface : public mindspore::kernel::KernelInterface {
                const mindspore::schema::Primitive *primitive) override;
 
  private:
-  Status GetCustomAttr(char *buf, uint32_t buf_size, const mindspore::schema::Custom *op, const std::string &attr_name);
+  Status GetCustomAttr(const mindspore::schema::Custom *op, const std::string &attr_name, std::vector<char> *buf);
 };
 }  // namespace lite
 }  // namespace mindspore

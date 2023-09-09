@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "tools/converter/adapter/acl/infer/custom_infer.h"
 #include <memory>
+#include <algorithm>
+#include "tools/converter/adapter/acl/infer/custom_infer.h"
 #include "include/registry/register_kernel_interface.h"
 #include "common/log_adapter.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
@@ -24,7 +25,6 @@
 namespace mindspore {
 namespace lite {
 constexpr auto kBase = 10;
-constexpr auto kBufMaxSize = 1024;
 
 Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                               const mindspore::schema::Primitive *primitive) {
@@ -42,8 +42,8 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
     return kLiteError;
   }
   auto op = primitive->value_as_Custom();
-  char buf[kBufMaxSize];
-  if (GetCustomAttr(buf, kBufMaxSize, op, acl::kOutputShapes) != kSuccess) {
+  std::vector<char> buf;
+  if (GetCustomAttr(op, acl::kOutputShapes, &buf) != kSuccess) {
     MS_LOG(ERROR) << "Get custom attr output shape failed.";
     return kLiteError;
   }
@@ -51,7 +51,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   char delims[] = ",";
   char *res = nullptr;
   char *save_ptr = nullptr;
-  res = strtok_r(buf, delims, &save_ptr);
+  res = strtok_r(buf.data(), delims, &save_ptr);
   while (res != nullptr && id < outputs->size()) {
     int64_t dims_num = strtol(res, &res, kBase);
     std::vector<int64_t> shape(dims_num);
@@ -66,9 +66,9 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   return kSuccess;
 }
 
-Status CustomInterface::GetCustomAttr(char *buf, uint32_t buf_size, const mindspore::schema::Custom *op,
-                                      const std::string &attr_name) {
-  MS_CHECK_TRUE_MSG(buf != nullptr, kLiteNullptr, "Buf is nullptr");
+Status CustomInterface::GetCustomAttr(const mindspore::schema::Custom *op, const std::string &attr_name,
+                                      std::vector<char> *buf) {
+  MS_CHECK_TRUE_MSG(buf != nullptr, kLiteNullptr, "buf is nullptr.");
   MS_CHECK_TRUE_MSG(op != nullptr, kLiteNullptr, "Op is nullptr.");
   auto attr_ptr = op->attr();
   MS_CHECK_TRUE_MSG(attr_ptr != nullptr, kLiteNullptr, "Attr ptr is nullptr.");
@@ -80,14 +80,10 @@ Status CustomInterface::GetCustomAttr(char *buf, uint32_t buf_size, const mindsp
       auto output_info = val->data();
       MS_CHECK_TRUE_MSG(output_info != nullptr, kLiteNullptr, "Output info is nullptr.");
       auto attr_size = output_info->size();
-      if (attr_size >= buf_size) {
-        MS_LOG(ERROR) << "Attr size[" << attr_size << "] is large than max size[" << buf_size << "]";
-        return kLiteError;
-      }
       for (uint32_t j = 0; j < attr_size; j++) {
-        buf[j] = static_cast<char>(output_info->Get(j));
+        buf->push_back(static_cast<char>(output_info->Get(j)));
       }
-      buf[attr_size] = 0;
+      buf->push_back(0);
       return kSuccess;
     }
   }
