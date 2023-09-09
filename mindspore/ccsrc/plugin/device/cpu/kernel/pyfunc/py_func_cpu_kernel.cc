@@ -197,9 +197,10 @@ py::tuple RawMemoryToPyObjects(const std::vector<KernelTensor *> &inputs, const 
       case PythonOjectType::kNumpyArray: {
         const tensor::TensorPtr &tensor = input_tensors[i];
         MS_EXCEPTION_IF_NULL(tensor);
-        CHECK_RET_WITH_EXCEPT(common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor->data_c()), tensor->Size(),
-                                                  reinterpret_cast<uint8_t *>(inputs[i]->device_ptr()), inputs[i]->size())),
-                              EOK, "memcpy failed.");
+        CHECK_RET_WITH_EXCEPT(
+          common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor->data_c()), tensor->Size(),
+                              reinterpret_cast<uint8_t *>(inputs[i]->device_ptr()), inputs[i]->size()),
+          EOK, "memcpy failed.");
         result[i] = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
         break;
       }

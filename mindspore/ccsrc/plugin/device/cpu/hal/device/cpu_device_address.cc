@@ -203,7 +203,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
       return ((memcpy_s(GetDevicePtr(), size, host_ptr, size) != EOK) ? false : true);
     }
     if (is_view_) {
-      return CopySameTypeMem(ptr_, size, host_ptr, size, type);
+      return CopySameTypeMem(GetDevicePtr(), size, host_ptr, size, type);
     }
 
     // Use the tensor host ptr to set the device ptr.
