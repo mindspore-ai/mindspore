@@ -23,11 +23,10 @@
 #include <memory>
 #include <limits>
 #include <algorithm>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "utils/hash_map.h"
-#include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
 #include "ir/dtype.h"
@@ -72,7 +71,7 @@ class TensorIndex : public MetaFuncGraph {
   void RemakeTupleIndex(bool has_ellipsis, const std::vector<int64_t> &tuple_index_types, const AnfNodePtr &data_node,
                         const std::vector<AnfNodePtr> &new_normalized_tensors, size_t not_ellipsis_position_cnt,
                         size_t ellipsis_position);
-  std::vector<CNodePtr> GetTupleIndexInfo(const AnfNodePtr &data_node,
+  std::vector<CNodePtr> GetTupleIndexInfo(const AnfNodePtr &data_node, const AnfNodePtr &fancy_position_node,
                                           const std::vector<AnfNodePtr> &normalized_tensors,
                                           const mindspore::HashMap<std::string, ValuePtr> &attrs);
 
@@ -110,6 +109,9 @@ class TensorIndexGetitem : public TensorIndex {
                               const std::vector<int64_t> &tuple_index_types, const IndexHandleLevel index_handle_level,
                               bool has_ellipsis, const abstract::AbstractTuplePtr &tuple_abs_ptr,
                               size_t not_ellipsis_position_cnt, size_t ellipsis_position);
+  AnfNodePtrList EllipsisIndexToSlice(const std::vector<int64_t> &tuple_index_types, const AnfNodePtr &data_node,
+                                      const AnfNodePtr &begin_stride, const AnfNodePtr &end_stride,
+                                      const AnfNodePtr &step_stride);
 };
 
 class TensorIndexSetitem : public TensorIndex {

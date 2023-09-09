@@ -850,7 +850,7 @@ def sequence_to_index(sequence, dim_size):
         return False
     if all(isinstance(i, bool) for i in sequence):
         if dim_size is None:
-            raise IndexError("Not supported to take the subscript of dynamic shape tensor using Boolean type")
+            return Tensor(sequence)
         seq_size = len(sequence)
         if seq_size != dim_size:
             raise IndexError(f'dimension is {dim_size} but corresponding boolean dimension is {seq_size}')

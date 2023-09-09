@@ -156,8 +156,8 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   std::transform(new_value_shape.begin(), new_value_shape.end(), std::back_inserter(elems),
                  [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
 
-  AbstractBasePtrList abs_list{std::make_shared<abstract::AbstractScalar>(indices_out),
-                               std::make_shared<abstract::AbstractTuple>(elems),
+  auto indices_out_tensor = std::make_shared<tensor::Tensor>(indices_out);
+  AbstractBasePtrList abs_list{indices_out_tensor->ToAbstract(), std::make_shared<abstract::AbstractTuple>(elems),
                                std::make_shared<abstract::AbstractScalar>(new_idx_advanced)};
   return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
@@ -171,6 +171,11 @@ class RemoveExpandedDimsInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     return RemoveExpandedDimsInner(prim, input_args)->BuildType();
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RemoveExpandedDimsInner(primitive, input_args);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RemoveExpandedDims, prim::kPrimRemoveExpandedDims, RemoveExpandedDimsInfer, false);
