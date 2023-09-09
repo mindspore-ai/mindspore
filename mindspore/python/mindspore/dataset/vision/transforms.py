@@ -78,7 +78,7 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
     check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, check_rotate, check_slice_patches, \
     check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, check_to_tensor, \
-    FLOAT_MAX_INTEGER
+    check_device_target, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -982,7 +982,7 @@ class Decode(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If the input image is already decoded.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1028,8 +1028,43 @@ class Decode(ImageTensorOperation, PyTensorOperation):
                             "but got {0}.".format(img.ndim))
         return super().__call__(img)
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
+            >>>
+            >>> decode_op = vision.Decode().device("Ascend")
+            >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
+            >>> transforms_list = [decode_op, resize_op]
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+            ...                                                 input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.DecodeOperation(True)
+        return cde.DecodeOperation(True, self.device_target)
 
     def _execute_py(self, img):
         """
@@ -1710,7 +1745,7 @@ class Normalize(ImageTensorOperation):
         RuntimeError: If given tensor format is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1737,8 +1772,44 @@ class Normalize(ImageTensorOperation):
         self.random = False
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
+            >>>
+            >>> decode_op = vision.Decode()
+            >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
+            >>> transforms_list = [decode_op, resize_op]
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+            ...                                                 input_columns=["image"])
+            >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]).device("Ascend")
+            >>> image_folder_dataset = image_folder_dataset.map(operations=normalize_op, input_columns=["image"])
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.NormalizeOperation(self.mean, self.std, self.is_hwc)
+        return cde.NormalizeOperation(self.mean, self.std, self.is_hwc, self.device_target)
 
 
 class NormalizePad(ImageTensorOperation):
@@ -3939,7 +4010,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -3972,10 +4043,47 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             self.implementation = Implementation.PY
         self.random = False
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
+            >>>
+            >>> decode_op = vision.Decode()
+            >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC).device("Ascend")
+            >>> transforms_list = [decode_op, resize_op]
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+            ...                                                 input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
+            raise ValueError("The InterpolationMode is not supported by DVPP. It is {}.".format(self.interpolation))
+        return self
+
     def parse(self):
         if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation))
+        return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation), self.device_target)
 
     def _execute_py(self, img):
         """

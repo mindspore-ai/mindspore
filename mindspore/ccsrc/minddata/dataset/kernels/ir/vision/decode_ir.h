@@ -33,7 +33,7 @@ constexpr char kDecodeOperation[] = "Decode";
 
 class DecodeOperation : public TensorOperation {
  public:
-  explicit DecodeOperation(bool rgb);
+  explicit DecodeOperation(bool rgb, const std::string &device_target = "CPU");
 
   ~DecodeOperation() override;
 
@@ -47,8 +47,11 @@ class DecodeOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   bool rgb_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

@@ -80,16 +80,18 @@ class GeDeviceResManager : public DeviceResManager {
     return runtime_instance_->compute_stream();
   }
 
-  bool SyncStream(size_t stream_id = 0) const override {
-    MS_EXCEPTION_IF_NULL(runtime_instance_);
-    return runtime_instance_->SyncStream();
-  }
-
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
 
   transform::GeAllocatorPtr GetAllocator() { return std::make_shared<GeAllocator>(this); }
+
+  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
+  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
+
+  bool CreateStream(size_t *stream_id) const override;
+  void *GetStream(size_t stream_id) const override;
+  bool SyncStream(size_t stream_id = 0) const override;
 
  private:
   friend class GeGraphExecutor;

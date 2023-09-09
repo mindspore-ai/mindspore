@@ -610,7 +610,8 @@ class Decode(ImageTensorOperation):
         return super().__call__(img)
 
     def parse(self):
-        return cde.DecodeOperation(self.rgb)
+        # deprecated api just support cpu device target
+        return cde.DecodeOperation(self.rgb, "CPU")
 
 
 class Equalize(ImageTensorOperation):
@@ -842,7 +843,8 @@ class Normalize(ImageTensorOperation):
         self.std = std
 
     def parse(self):
-        return cde.NormalizeOperation(self.mean, self.std, True)
+        # deprecated api just support cpu device target
+        return cde.NormalizeOperation(self.mean, self.std, True, "CPU")
 
 
 class NormalizePad(ImageTensorOperation):
@@ -2275,7 +2277,8 @@ class Resize(ImageTensorOperation):
         self.interpolation = interpolation
 
     def parse(self):
-        return cde.ResizeOperation(self.size, DE_C_INTER_MODE.get(self.interpolation))
+        # deprecated api just support cpu device target
+        return cde.ResizeOperation(self.size, DE_C_INTER_MODE.get(self.interpolation), "CPU")
 
 
 class ResizeWithBBox(ImageTensorOperation):

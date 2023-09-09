@@ -103,6 +103,7 @@ enum {
   APP_ERR_DVPP_CONFIG_FAIL = APP_ERR_DVPP_BASE + 13,  // DVPP: fail to set dvpp configuration,such as
   // resize configuration,crop configuration
   APP_ERR_DVPP_OBJ_FUNC_MISMATCH = APP_ERR_DVPP_BASE + 14,  // DVPP: DvppCommon object mismatch the function
+  APP_ERR_DVPP_NORMALIZE_FAIL = APP_ERR_DVPP_BASE + 15,     // DVPP: normalize fail
   APP_ERR_DVPP_END,                                         // Not an error code, define the range of common error code
 
   // define the error code of inference
