@@ -59,6 +59,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &InputSelector(size_t index, const AclFormatSelector &selector) {
+    (void)input_selector_.emplace(index, selector);
+    return *this;
+  }
+
   AclAdapterInfo &OutputSelector(const AclFormatSelector &selector) {
     output_selector_ = selector;
     return *this;
@@ -110,6 +115,7 @@ class AclAdapterInfo {
   const bool &is_const_input() const { return is_const_input_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
+  const std::map<size_t, AclFormatSelector> &input_selector() const { return input_selector_; }
   const AclFormatSelector &output_selector() const { return output_selector_; }
 
  private:
@@ -126,6 +132,7 @@ class AclAdapterInfo {
   std::map<size_t, std::vector<std::string>> output_info_{};
   std::map<size_t, size_t> output_index_info_{};
   std::vector<ge::DataType> extra_supported_datatype_{};
+  std::map<size_t, AclFormatSelector> input_selector_{};
   AclFormatSelector output_selector_{nullptr};
 };
 

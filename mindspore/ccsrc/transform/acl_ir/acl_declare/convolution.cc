@@ -19,14 +19,35 @@
 
 namespace mindspore {
 namespace transform {
-std::string CheckConvNdSupported(TypeId data_type, const std::vector<ShapeVector> &) {
+namespace {
+constexpr size_t kLen4 = 4;
+}
+std::string CheckConvNdSupported(TypeId data_type, const std::vector<ShapeVector> &shape) {
   if (data_type != kNumberTypeFloat16) {
-    return kOpFormat_DEFAULT;
+    if (shape.empty()) {
+      return kOpFormat_DEFAULT;
+    }
+    return shape[0].size() == kLen4 ? kOpFormat_NCHW : kOpFormat_DEFAULT;
   }
   return kOpFormat_NC1HWC0;
 }
 
-REGISTER_ACL_OP(Conv2D).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"}).OutputSelector(&CheckConvNdSupported);
+std::string SelectConvFz(TypeId data_type, const std::vector<ShapeVector> &shape) {
+  if (data_type != kNumberTypeFloat16) {
+    if (shape.empty()) {
+      return kOpFormat_DEFAULT;
+    }
+    return shape[0].size() == kLen4 ? kOpFormat_NCHW : kOpFormat_DEFAULT;
+  }
+  return kOpFormat_FRAC_Z;
+}
+
+REGISTER_ACL_OP(Conv2D)
+  .Input(0, {"NCHW"})
+  .Input(1, {"NCHW"})
+  .Input(2, {"NCHW"})
+  .InputSelector(1, &SelectConvFz)
+  .OutputSelector(&CheckConvNdSupported);
 
 REGISTER_ACL_OP(Conv3D).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
 

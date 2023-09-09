@@ -385,23 +385,27 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
   if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
       transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
     auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
-    if (acl_info.output_selector() != nullptr) {
-      auto func = acl_info.output_selector();
-      MS_EXCEPTION_IF_NULL(func);
+    if (!acl_info.input_selector().empty() || acl_info.output_selector() != nullptr) {
       if (op_info.input_tensor.size() == 0) {
         return ascend_special_info;
       }
-      auto first_tenspr = op_info.input_tensor[0];
-      MS_EXCEPTION_IF_NULL(first_tenspr);
-      auto first_dtype = first_tenspr->data_type();
       std::vector<ShapeVector> input_shapes;
       (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
                            [](const auto &tensor) {
                              MS_EXCEPTION_IF_NULL(tensor);
                              return tensor->shape();
                            });
-      auto format = func(first_dtype, input_shapes);
-      ascend_special_info += format;
+
+      auto in_func_map = acl_info.input_selector();
+      for (auto [index, in_func] : in_func_map) {
+        MS_EXCEPTION_IF_NULL(in_func);
+        ascend_special_info += in_func(op_info.input_tensor[index]->data_type(), input_shapes);
+      }
+
+      auto out_func = acl_info.output_selector();
+      MS_EXCEPTION_IF_NULL(out_func);
+      auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
+      ascend_special_info += out_format;
     }
   }
   return ascend_special_info;
