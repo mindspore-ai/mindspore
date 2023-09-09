@@ -573,9 +573,6 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   bool cell_reused = false;
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
-    if (graphs.size() <= 1) {
-      continue;
-    }
     const auto &fg = graphs[0];
     // fg->parameter_obj_nodes().empty() have been handled by combine like.
     if (!fg->parameter_obj_nodes().empty()) {
