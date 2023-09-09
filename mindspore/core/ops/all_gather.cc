@@ -66,7 +66,14 @@ class AllGatherInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input rank_size must > 0, but got: " << rank_size << ".";
     }
     auto x_shape = x->shape()->shape();
-    auto ret_shape_0 = x_shape[0] * rank_size;
+    int64_t ret_shape_0;
+    if (x_shape[0] >= 1) {
+      ret_shape_0 = x_shape[0] * rank_size;
+    } else if (x_shape[0] == -1) {
+      ret_shape_0 = -1;
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input x_shape[0] is valid: " << x_shape[0] << ".";
+    }
     ShapeVector output;
     output.push_back(ret_shape_0);
     if (x_shape.size() > 1) {
