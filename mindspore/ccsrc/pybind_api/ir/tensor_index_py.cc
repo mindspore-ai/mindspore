@@ -1291,19 +1291,18 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
   int64_t start = slice_info.start();
   int64_t stop = slice_info.stop();
   int64_t step = slice_info.step();
-  if (step != -1 && data_value != nullptr) {
+  if (step >= 0 && data_value != nullptr) {
     std::vector<int64_t> data_transfer_types;
     std::vector<py::object> data_transfer_args;
     std::vector<int64_t> begin_info(data_shape.size(), 0);
     std::vector<int64_t> end_info(data_shape);
     std::vector<int64_t> step_info(data_shape.size(), 1);
-    begin_info[0] = slice_info.start();
-    end_info[0] = slice_info.stop();
-    step_info[0] = slice_info.step();
-
     std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
 
     if (slice_info.start() != 0 || slice_info.step() != 1 || slice_info.stop() != end_info[0]) {
+      begin_info[0] = slice_info.start();
+      end_info[0] = slice_info.stop();
+      step_info[0] = slice_info.step();
       auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
       slice_op_info->slice_op_name = prim::kPrimStridedSlice->name();
       (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(begin_info));
@@ -1313,7 +1312,10 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
       (void)slice_op_infos.emplace_back(slice_op_info);
     }
     auto new_data_shape = data_shape;
-    new_data_shape[0] = (stop - start) / step;
+    if (step != 0) {
+      auto new_shape_zero = (stop - start) / step;
+      new_data_shape[0] = (new_shape_zero < 0 ? 0 : new_shape_zero);
+    }
     auto slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
     if (slice_output != py::none()) {
       data_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kJustReturn));
@@ -1705,7 +1707,7 @@ py::object TensorIndex::GetItemBySlice(const ValuePtr &data_value, const ShapeVe
     MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
   }
   Slice slice_info = Slice(py_index.slice(), data_shape[0]);
-  if (slice_info.step() != -1 && data_value != nullptr) {
+  if (slice_info.step() >= 0 && data_value != nullptr) {
     std::vector<int64_t> begin_info(data_dim, 0);
     std::vector<int64_t> end_info(data_shape);
     std::vector<int64_t> step_info(data_dim, 1);
@@ -1759,7 +1761,7 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {
     auto value_info = GetStubTensorValue(py_data);
-    if (!value_info.second && !is_ascend) {
+    if (!value_info.second) {
       data_value = value_info.first;
     }
     MS_EXCEPTION_IF_NULL(value_info.first);
@@ -2065,7 +2067,7 @@ py::object TensorIndex::SetItemBySlice(const ShapeVector &data_shape, const Type
   }
   Slice slice_info = Slice(tensor_index.slice(), data_shape[0]);
   std::tuple<int64_t, py::object, ShapeVector> value_transfer =
-    GetValueTransferType(py_value_type, set_item_by_non_tensor, data_type, slice_info.step() != -1);
+    GetValueTransferType(py_value_type, set_item_by_non_tensor, data_type, slice_info.step() >= 0);
   std::vector<int64_t> value_transfer_types = {std::get<0>(value_transfer)};
   std::vector<py::object> value_transfer_args = {std::get<1>(value_transfer)};
   return SetitemBySliceWithTensor(data_shape, tensor_index, &value_transfer_types, &value_transfer_args, data_value,
@@ -2083,7 +2085,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {  // PackTensor have not real Tensor.
     auto value_info = GetStubTensorValue(py_data);
-    if (!value_info.second && !is_ascend) {
+    if (!value_info.second) {
       data_value = value_info.first;
     }
     MS_EXCEPTION_IF_NULL(value_info.first);
@@ -2110,7 +2112,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   }
   if (data_value != nullptr && (py::isinstance<py::none>(py_index) || py::isinstance<py::ellipsis>(py_index))) {
     auto output = py::make_tuple(
-      py::str("view"), py::make_tuple(static_cast<int>(ValueTransferType::kByPass)), py::make_tuple(py::none()),
+      py::none(), py::make_tuple(static_cast<int>(ValueTransferType::kByPass)), py::make_tuple(py::none()),
       py::make_tuple(static_cast<int>(ValueTransferType::kSetItemByEllipsis)), py::make_tuple(py::none()));
     return output;
   }

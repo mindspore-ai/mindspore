@@ -49,7 +49,8 @@ void VectorEmplace(std::vector<int64_t> *vec, size_t number, size_t dst_size) {
   if ((*vec).size() >= dst_size) {
     return;
   }
-  for (size_t i = 0; i < dst_size - (*vec).size(); ++i) {
+  auto num = dst_size - vec->size();
+  for (size_t i = 0; i < num; ++i) {
     (void)vec->emplace_back(number);
   }
 }
@@ -64,7 +65,8 @@ void VectorEmplace(std::vector<int64_t> *vec, const std::vector<int64_t> &number
                       << ",  number_vec.size():" << number_vec.size();
   }
 
-  for (size_t i = 0; i < dst_size - (*vec).size(); ++i) {
+  auto begin = vec->size();
+  for (size_t i = begin; i < dst_size; ++i) {
     (void)vec->emplace_back(number_vec[i]);
   }
 }
@@ -115,6 +117,7 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
   if (IsDynamic(step) || begin.size() != end.size() || begin.size() != step.size() || HasZero(step)) {
     return {};
   }
+
   VectorEmplace(&begin, 0, size);
   VectorEmplace(&end, input_tensor->shape(), size);
   VectorEmplace(&step, 1, size);

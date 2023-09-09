@@ -755,6 +755,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   quant_params_ = tensor.quant_params_;
   updated_by_device_ = tensor.updated_by_device_;
   address_future_ = tensor.address_future_;
+  storage_info_ = tensor.storage_info_;
   return *this;
 }
 
@@ -920,8 +921,9 @@ void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_upda
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     lazy_callback_ = tensor.lazy_callback_;
-    contiguous_callback_ = tensor.contiguous_callback_;
     ExecuteLazyTask();
+    contiguous_callback_ = tensor.contiguous_callback_;
+    storage_info_ = tensor.storage_info_;
     MetaTensor::operator=(tensor);
     address_future_ = nullptr;
     device_sync_ = tensor.device_address();

@@ -229,6 +229,10 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
 
   auto input = MallocMemoryForDeviceAddressWithOffset(src_addr_info, device_context);
   auto output = MallocMemoryForDeviceAddressWithOffset(dst_addr_info, device_context);
+  if (dst_addr_info->GetSize() == 0) {
+    MS_LOG(DEBUG) << "dst_addr_info is 0";
+    return true;
+  }
 
   auto prim = std::make_shared<Primitive>(transform::kNameViewCopy);
   SetStridesAndShapeForViewCopy(prim, src_addr_info, dst_addr_info);
@@ -467,7 +471,7 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
     MS_LOG(DEBUG) << "Base format is empty, need to transdata first.";
     auto tensor_size = SizeOf(input_storage_info->ori_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
     baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, kOpFormat_DEFAULT, input_address->type_id(), input_storage_info->ori_shape);
+      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape);
     baseformat_addr->set_device_shape(input_storage_info->ori_shape);
     auto ret = LaunchTransData(input_address, input_storage_info, baseformat_addr, device_context, stream_ptr);
     if (!ret) {
