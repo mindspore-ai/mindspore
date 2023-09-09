@@ -390,6 +390,234 @@ def test_dynamic_rank_getitem_slice():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_dynamic_rank_getitem_with_single_basic_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is ellipsis/None/Integer/True.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_sum(x, axis)
+            x = x[...]
+            x = x[1:4:2]
+            x = x[None]
+            x = x[True]
+            return x
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.sum(axis=axis[0]).sum(axis=axis[0])
+            x = x[...]
+            x = x[1:4:2]
+            x = x[None]
+            x = x[True]
+            return x
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.random.randn(3, 6, 4, 5).astype(np.int64)
+    axis_np = np.array([0, 1])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_tuple_with_basic_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is tuple (integer, slice, ellipsis, None).
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_sum(x, axis)
+            x_tensor_shape = ops.dyn_shape(x)[0]
+            x_shape = x.shape[0]
+            x0 = x[1:x_shape:2, 1:x_tensor_shape:2, ..., x_shape-2, None]
+            return x0
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.sum(axis=axis[0])
+            x_shape = x.shape[0]
+            x0 = x[1:x_shape:2, 1:x_shape:2, ..., 1, None]
+            return x0
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.random.randn(2, 3, 4, 5, 6).astype(np.float32)
+    axis_np = np.array([0])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_with_tensor_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is tensor.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_min(x, axis)
+            x = x[Tensor([1, 1])]
+            x = x[Tensor([True, False])]
+            return x
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.min(axis=axis[0]).min(axis=axis[0])
+            x = x[[1, 1]]
+            x = x[[True, False]]
+            return x
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.ones((3, 6, 4, 4)).astype(np.int64)
+    axis_np = np.array([0, 1])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is multy tensors.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_min(x, axis)
+            x0 = x[Tensor(np.ones((25), int)), :,
+                   Tensor(np.ones((5, 5), bool))]
+            return x0
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.min(axis=axis[0])
+            x0 = x[np.ones((25), int), :, np.ones((5, 5), bool)]
+            return x0
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.ones((3, 6, 5, 5, 5)).astype(np.int64)
+    axis_np = np.array([0])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_with_list_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is List.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_min(x, axis)
+            x = x[[1, 2]]
+            return x
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.min(axis=axis[0]).min(axis=axis[0])
+            x = x[[1, 2]]
+            return x
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.ones((3, 6, 3, 4)).astype(np.int64)
+    axis_np = np.array([0, 1])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_tuple_with_mix_index():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is tuple
+     (integer, slice, ellipsis, tensor, bool ,list).
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_min(x, axis)
+            x0 = x[Tensor(1), 1, ..., [1, 2], None]
+            return x0
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.min(axis=axis[0])
+            x0 = x[np.array(1), 1, ..., [1, 2], None]
+            return x0
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.random.randn(3, 4, 5, 6, 7, 8).astype(np.int64)
+    axis_np = np.array([0])
+
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_dynamic_getitem_slice_001():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
