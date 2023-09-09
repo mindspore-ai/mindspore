@@ -91,13 +91,6 @@ if(MSVC AND NOT ENABLE_GPU)
     if(CCACHE_EXE)
         message(STATUS "using ccache to speed windows compilation.")
         file(COPY ${CCACHE_EXE} DESTINATION ${CMAKE_BINARY_DIR}/cl.exe)
-        set(CMAKE_VS_GLOBALS
-            "CLToolExe=cl.exe"
-            "CLToolPath=${CMAKE_BINARY_DIR}"
-            "TrackFileAccess=false"
-            "UseMultiToolTask=true"
-            "DebugInformationFormat=OldStyle"
-        )
     endif()
 endif()
 

@@ -81,11 +81,11 @@ IF "%1%" == "lite" (
         IF !errorlevel! == 0 (
             echo "use ccache to speed up compile"
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G Ninja ../..
+                -G "Visual Studio 16 2019" -A x64 ../..
         ) ELSE (
             echo "fail to find ccache"
             cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G Ninja ../..
+                -G "Visual Studio 16 2019" -A x64 ../..
         )
     ) ELSE IF "%1%" == "ms_vs_cpu_debug" (
         echo "======Start gen VS2019 Project for MS cpu debug======"
