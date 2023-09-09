@@ -189,17 +189,10 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
 
 bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
                                           const std::string &format) const {
-<<<<<<< HEAD
-  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(address:" << ptr_ << " format:" << format_
-                << ", type_id:" << TypeIdLabel(type_id_) << ", size:" << size_ << "), src(address:" << src_ptr
+  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(address:" << GetDevicePtr() << " format:" << DeviceAddress::format()
+                << ", type_id:" << TypeIdLabel(type_id()) << ", size:" << GetSize() << "), src(address:" << src_ptr
                 << "format:" << format << ", type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
-  if (ptr_ == src_ptr) {
-=======
-  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(format:" << DeviceAddress::format()
-                << ", type_id:" << TypeIdLabel(type_id()) << ", size:" << GetSize() << "), src(format:" << format
-                << ", type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   if (GetDevicePtr() == src_ptr) {
->>>>>>> refactor device address via kernel tensor
     MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
     return true;
   }
@@ -279,11 +272,7 @@ void GPUDeviceAddress::ClearDeviceMemory() {
 }
 
 void GPUDeviceAddress::ClearUserData() {
-<<<<<<< HEAD
-  if (user_data_ == nullptr || (!user_data_->has(kUserDataType))) {
-=======
-  if (user_data() == nullptr) {
->>>>>>> refactor device address via kernel tensor
+  if (user_data() == nullptr || (!user_data()->has(kUserDataType))) {
     return;
   }
 

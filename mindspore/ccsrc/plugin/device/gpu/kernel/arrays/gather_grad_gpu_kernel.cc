@@ -56,7 +56,7 @@ bool GatherGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(output_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(output_addr, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
     "GatherGrad cudaMemSet Failed");
 
   auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],

@@ -1284,7 +1284,10 @@ AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const PrimitivePtr &pr
     (void)op_def_->func_impl_->CheckValidation(primitive, args);
 
     if (frontend_func_impl_ != nullptr) {
-      return frontend_func_impl_->InferAbstract(primitive, args);
+      auto infer_result = frontend_func_impl_->InferAbstract(primitive, args);
+      if (infer_result != nullptr) {
+        return infer_result;
+      }
     }
 
     auto type = op_def_->func_impl_->InferType(primitive, args);
