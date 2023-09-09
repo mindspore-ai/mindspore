@@ -53,6 +53,7 @@ using DfGraphPtr = std::shared_ptr<DfGraph>;
 using TensorMap = mindspore::HashMap<std::string, std::shared_ptr<MeTensor>>;
 using OptionMap = std::map<std::string, std::string>;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
+using GeAllocatorPtr = ::ge::AllocatorPtr;
 
 static std::map<std::string, GeDataType> ge_str_dtype_map = {{"float", GeDataType::DT_FLOAT},
                                                              {"float32", GeDataType::DT_FLOAT},

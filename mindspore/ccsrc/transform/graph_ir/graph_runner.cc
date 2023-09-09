@@ -363,6 +363,24 @@ Status GraphRunner::RunGraphWithStreamAsync(const RunOptions &options, void *str
   return Status::SUCCESS;
 }
 
+Status GraphRunner::RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator) {
+  ge::Status ret = sess_->RegisterExternalAllocator(stream, allocator);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE RegisterExternalAllocator Failed, ret is: " << ret;
+    return Status::FAILED;
+  }
+  return Status::SUCCESS;
+}
+
+Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
+  ge::Status ret = sess_->UnregisterExternalAllocator(stream);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE UnregisterExternalAllocator Failed, ret is: " << ret;
+    return Status::FAILED;
+  }
+  return Status::SUCCESS;
+}
+
 Status GraphRunner::CompileGraph(const RunOptions &options, ::ge::CompiledGraphSummaryPtr *graph_summary) {
   MS_EXCEPTION_IF_NULL(graph_summary);
   DfGraphWrapperPtr wrap_ptr = nullptr;

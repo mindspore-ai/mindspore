@@ -103,6 +103,11 @@ Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOption
 Status RunGraphWithStreamAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options, void *stream,
                                const std::vector<GeTensor> &inputs, std::vector<GeTensor> *outputs);
 
+Status RegisterExternalAllocator(const std::shared_ptr<GraphRunner> &runner, const void *const stream,
+                                 GeAllocatorPtr allocator);
+
+Status UnregisterExternalAllocator(const std::shared_ptr<GraphRunner> &runner, const void *const stream);
+
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 }  // namespace transform
 }  // namespace mindspore

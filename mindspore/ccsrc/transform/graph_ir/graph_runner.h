@@ -41,6 +41,8 @@ class GraphRunner {
   Status SetConstMemory(const RunOptions &options, const void *const memory, size_t size);
   Status UpdateFeatureMemory(const RunOptions &options, const void *const memory, size_t size);
   static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
+  Status RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator);
+  Status UnregisterExternalAllocator(const void *const stream);
 
  private:
   Status GetWrapper(const std::string &name, DfGraphWrapperPtr *wrapper) const;

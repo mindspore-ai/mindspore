@@ -39,6 +39,20 @@ class GeHostAddress : public cpu::CPUDeviceAddress {
   DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
 };
 
+class GeDeviceResManager;
+class GeAllocator : public ::ge::Allocator {
+ public:
+  explicit GeAllocator(GeDeviceResManager *res_manager) : res_manager_(res_manager) {}
+  ~GeAllocator() { res_manager_ = nullptr; }
+  GeAllocator(const GeAllocator &) = delete;
+  GeAllocator &operator=(const GeAllocator &) = delete;
+  ::ge::MemBlock *Malloc(size_t size) override;
+  void Free(::ge::MemBlock *block) override;
+
+ private:
+  GeDeviceResManager *res_manager_{nullptr};
+};
+
 class GeDeviceResManager : public DeviceResManager {
  public:
   GeDeviceResManager() : mem_manager_(nullptr) {}
@@ -66,9 +80,16 @@ class GeDeviceResManager : public DeviceResManager {
     return runtime_instance_->compute_stream();
   }
 
+  bool SyncStream(size_t stream_id = 0) const override {
+    MS_EXCEPTION_IF_NULL(runtime_instance_);
+    return runtime_instance_->SyncStream();
+  }
+
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+
+  transform::GeAllocatorPtr GetAllocator() { return std::make_shared<GeAllocator>(this); }
 
  private:
   friend class GeGraphExecutor;

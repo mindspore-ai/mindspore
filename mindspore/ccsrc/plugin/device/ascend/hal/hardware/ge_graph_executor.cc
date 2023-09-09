@@ -633,6 +633,9 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
         MS_LOG(EXCEPTION) << "SetData failed, ge input data " << ge_inputs.size() << " name: " << name
                           << " size: " << output_addr->GetSize();
       }
+      if (kernel_graph->is_dynamic_shape()) {
+        (void)need_update_input.emplace_back(node, ge_inputs.size());
+      }
       MS_LOG(INFO) << "ge input data " << ge_inputs.size() << " name: " << name << " size: " << output_addr->GetSize();
     }
     // The device address of input tensor may change every step.
@@ -757,9 +760,6 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   SetDynamicShapeAttr(graph);
-  if (graph->is_dynamic_shape()) {
-    MS_LOG(EXCEPTION) << "Ge graph " << graph->ToString() << " is not support for dynamic shape";
-  }
   transform::RunOptions run_options;
   run_options.name = GetGraphName(graph);
   auto graph_runner = transform::GetGraphRunner();
@@ -768,21 +768,23 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   }
   // create loop var
   RunInitGraph(run_options.name);
-  ::ge::CompiledGraphSummaryPtr ge_graph_summary = nullptr;
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    GilReleaseWithCheck gil_release;
-    auto ret = graph_runner->CompileGraph(run_options, &ge_graph_summary);
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Compile graph " << run_options.name << " failed.";
+  if (!graph->is_dynamic_shape()) {
+    ::ge::CompiledGraphSummaryPtr ge_graph_summary = nullptr;
+    {
+      // Release GIL before calling into (potentially long-running) C++ code
+      GilReleaseWithCheck gil_release;
+      auto ret = graph_runner->CompileGraph(run_options, &ge_graph_summary);
+      if (ret != transform::Status::SUCCESS) {
+        MS_LOG(EXCEPTION) << "Compile graph " << run_options.name << " failed.";
+      }
     }
+    GraphSummary summary(ge_graph_summary);
+    MS_LOG(INFO) << "Graph " << run_options.name << " summary: " << summary.ToString();
+    feature_memorys[run_options.name] = summary.feature_memory_size;
+    streams[run_options.name] = summary.stream_num;
+    AllocConstMemory(run_options, graph, summary.const_memory_size);
+    AllocFeatureMemory(run_options, summary.feature_memory_size);
   }
-  GraphSummary summary(ge_graph_summary);
-  MS_LOG(INFO) << "Graph " << run_options.name << " summary: " << summary.ToString();
-  feature_memorys[run_options.name] = summary.feature_memory_size;
-  streams[run_options.name] = summary.stream_num;
-  AllocConstMemory(run_options, graph, summary.const_memory_size);
-  AllocFeatureMemory(run_options, summary.feature_memory_size);
   AllocParameterMemory(graph);
   AllocOutputMemory(graph);
   BuildInputDataGeTensor(graph);
@@ -820,9 +822,6 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
       (void)BuildDFGraph(kg, tensor_order_map, false);
     }
     SetDynamicShapeAttr(kg);
-    if (kg->is_dynamic_shape()) {
-      MS_LOG(EXCEPTION) << "Ge graph " << kg->ToString() << "is not support for dynamic shape";
-    }
     AllocInputHostMemory(kg);
     AllocOutputHostMemory(kg);
     kg->set_run_mode(RunMode::kGraphMode);
@@ -902,8 +901,18 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
+
   std::vector<GeTensor> ge_inputs = GenerateInputGeTensor(kg);
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
+
+  bool is_dynamic_shape = kg->is_dynamic_shape();
+  if (is_dynamic_shape) {
+    transform::Status ret =
+      transform::RegisterExternalAllocator(graph_runner, ResManager()->GetStream(), ResManager()->GetAllocator());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Exec graph failed";
+    }
+  }
   {
     // Release GIL before calling into (potentially long-running) C++ code
     GilReleaseWithCheck gil_release;
@@ -913,19 +922,45 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
-    MS_LOG(INFO) << "Run graph finish, outputs size is: " << ge_outputs.size() << ", " << graph_name;
   }
 
+  if (is_dynamic_shape) {
+    auto sync_ret = ResManager()->SyncStream();
+    if (!sync_ret) {
+      MS_LOG(EXCEPTION) << "Sync stream failed";
+    }
+    transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Exec graph failed";
+    }
+    MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
+  }
   // copy output from host to device
   auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   size_t real_output_size = 0;
-  for (const auto &output : graph_outputs) {
-    const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
-    MS_EXCEPTION_IF_NULL(output_with_index.first);
-    if (HasAbstractMonad(output_with_index.first)) {
+  for (size_t i = 0; i < graph_outputs.size(); ++i) {
+    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
+    MS_EXCEPTION_IF_NULL(output_node);
+    if (HasAbstractMonad(output_node)) {
       continue;
     }
     real_output_size++;
+    if (is_dynamic_shape) {
+      auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
+      auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index);
+      auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
+      output_addr->SetSize(ge_outputs[i].GetSize());
+      auto actual_shapes = ge_outputs[i].GetTensorDesc().GetShape().GetDims();
+      auto &&ge_data_uni = ge_outputs[i].ResetData();
+      auto deleter = ge_data_uni.get_deleter();
+      auto ge_data = ge_data_uni.release();
+      MS_EXCEPTION_IF_NULL(ge_data);
+      output_addr->set_is_ptr_persisted(false);
+      output_addr->set_from_mem_pool(false);
+      output_addr->set_deleter(deleter);
+      output_addr->set_ptr(ge_data);
+      UpdateOutputNodeShape(output_node, idx, host_type, actual_shapes);
+    }
   }
   if (real_output_size != ge_outputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << real_output_size << " tensor size "
@@ -1060,6 +1095,12 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   for (auto &kv : iter->second.need_update_input) {
     auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
+    auto shapes = trans::GetRuntimePaddingShape(kv.first, 0);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(kv.first, 0);
+    auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
+    MS_EXCEPTION_IF_NULL(ge_tensor_desc);
+    ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
+    (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
     if (output_addr->GetMutablePtr() == nullptr) {
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
@@ -1082,8 +1123,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     }
     MS_LOG(DEBUG) << "[ZeroCopy] Update input " << kv.first->DebugString() << " address to "
                   << output_addr->GetMutablePtr();
-    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()),
-                                       output_addr->GetSize(), [](void *) {});
+    std::vector<size_t> shape = Convert2SizeT(shapes);
+    size_t type_size = GetTypeByte(TypeIdToType(host_type));
+    size_t memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
+                                       [](void *) {});
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {
     MS_LOG(INFO) << "Input " << i << " size " << ge_inputs[i].GetSize() << ", graph: " << kernel_graph->graph_id();
@@ -1101,8 +1145,14 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
   const auto &output_datas = iter->second.ge_outputs;
   ge_outputs = output_datas;
 
+  bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
   size_t idx = 0;
   for (const auto &output : iter->second.graph_outputs) {
+    if (is_dynamic_shape) {
+      ge_outputs[idx].SetData(nullptr, 0U, [](void *) {});
+      idx++;
+      continue;
+    }
     auto &output_node = output.first;
     auto index = output.second;
     MS_EXCEPTION_IF_NULL(output_node);
