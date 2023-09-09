@@ -208,7 +208,6 @@ bool AscendKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &tas
                                              const device::DeviceAddressPtrList &input_addr_list,
                                              const TensorStorageInfoPtrList &input_storage_list,
                                              const device::DeviceAddressPtrList &output_addr_list) const {
-  // TODO(wangchangheng): Lock保护
   auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
 
   auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,

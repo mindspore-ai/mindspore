@@ -1508,6 +1508,12 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       std::vector<int64_t> end_info(new_data_shape);
       std::vector<int64_t> step_info(new_data_shape.size(), 1);
 
+      if (slice_info.step() < 0) {
+        data_transfer_types->clear();
+        data_transfer_args->clear();
+        return false;
+      }
+
       if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
         dim++;
         continue;
@@ -1755,13 +1761,23 @@ py::object TensorIndex::GetItemIndexSimpleIndex(const py::object &py_index, cons
   return py::none();
 }
 
+bool EnableView(bool is_pack_node) {
+  if (is_pack_node || pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
+    // 1. pack node will slice failed with view.
+    // 2. SelectView and CopyWithSlice has no kernel, can not enable view in high order cell.
+    return false;
+  }
+
+  return true;
+}
+
 py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::object &py_index,
                                          const py::bool_ &is_ascend) {
   ShapeVector data_shape;
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {
     auto value_info = GetStubTensorValue(py_data);
-    if (!value_info.second) {
+    if (EnableView(value_info.second)) {
       data_value = value_info.first;
     }
     MS_EXCEPTION_IF_NULL(value_info.first);
@@ -1771,7 +1787,9 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
   } else if (py::isinstance<Tensor>(py_data)) {
     auto tensor = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    data_value = tensor;
+    if (EnableView(false)) {
+      data_value = tensor;
+    }
     data_shape = tensor->shape();
   } else {
     MS_EXCEPTION(TypeError) << "First input of Tensor index must be tensor but got " << py_data;
@@ -2085,7 +2103,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {  // PackTensor have not real Tensor.
     auto value_info = GetStubTensorValue(py_data);
-    if (!value_info.second) {
+    if (EnableView(value_info.second)) {
       data_value = value_info.first;
     }
     MS_EXCEPTION_IF_NULL(value_info.first);
@@ -2097,14 +2115,16 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   } else {
     TensorPtr data = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(data);
-    data_value = data;
+    if (EnableView(false)) {
+      data_value = data;
+    }
     data_shape = data->shape();
     data_type = data->Dtype();
     is_parameter = data->is_parameter();
   }
   TensorIndex::py_value_handle_ = py_value;
   const TensorIndexType value_type = IsStubTensor(py_value) ? TensorIndexType::Tensor : TensorIndex(py_value).type();
-  if (py::isinstance<py::int_>(py_index) && !py::isinstance<py::bool_>(py_value) && data_value != nullptr) {
+  if (py::isinstance<py::int_>(py_index) && !py::isinstance<py::bool_>(py_index) && data_value != nullptr) {
     return SetItemByNumberWithView(data_shape, data_type, is_parameter, TensorIndex(py_index), value_type, data_value);
   }
   if (py::isinstance<py::slice>(py_index)) {

@@ -62,6 +62,10 @@ class GeKernelExecutor : public KernelExecutor {
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return 0; }
 
+  bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+                         const TensorStorageInfoPtrList &input_storage_list,
+                         const device::DeviceAddressPtrList &output_addr_list) const override;
+
  private:
   // Launch device aicpu library
   static void LaunchDeviceLibrary();
