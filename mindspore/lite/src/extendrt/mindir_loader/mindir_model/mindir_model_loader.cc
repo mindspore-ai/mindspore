@@ -276,7 +276,7 @@ std::shared_ptr<void> MindirModelLoader::MakePrimitiveC(const std::string &node_
     }
     return op_it->second(prim);
   } else {
-    // S-Prim-xxx or S-Prim-hyper_map[xxx] and custom node type, now not support
+    // S_Prim_xxx or S_Prim_hyper_map[xxx] and custom node type, now not support
     MS_LOG(ERROR) << "MindirModelLoader: make primitiveC failed, not support node type: " << node_type;
     return nullptr;
   }

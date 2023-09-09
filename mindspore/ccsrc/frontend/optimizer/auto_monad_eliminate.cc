@@ -215,7 +215,7 @@ void DeleteLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr 
     }
   }
   MS_EXCEPTION_IF_NULL(other_input);
-  manager->Replace(make_tuple, other_input);
+  (void)manager->Replace(make_tuple, other_input);
 }
 
 // Pattern3======================================
@@ -244,7 +244,7 @@ void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr
                        std::back_inserter(element_abstracts),
                        [](const AnfNodePtr &input) { return input->abstract(); });
   new_make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(element_abstracts));
-  manager->Replace(make_tuple, new_make_tuple);
+  (void)manager->Replace(make_tuple, new_make_tuple);
 }
 
 bool ReplaceLoadUser(const FuncGraphManagerPtr &manager, const AnfNodePtr &load) {
@@ -291,7 +291,7 @@ bool ReplaceSameGroupLoad(const FuncGraphManagerPtr &manager, const std::vector<
   const auto &main = toposet[group[0]];
   for (size_t i = 1; i < group.size(); i++) {
     change = ReplaceLoadUser(manager, toposet[group[i]]);
-    manager->Replace(toposet[group[i]], main);
+    (void)manager->Replace(toposet[group[i]], main);
   }
   return change;
 }

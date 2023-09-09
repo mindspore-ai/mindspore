@@ -48,13 +48,13 @@ def test_single_op():
     """
     Feature: vmap
     Description: The first argument of `vmap` is a single primitive.
-    Expectation: throw RuntimeError:"'VmapOperation' arg0 Prim: S-Prim-Add cast to 'FuncGraphAbstractClosure' failed."
+    Expectation: throw RuntimeError:"'VmapOperation' arg0 Prim: S_Prim_Add cast to 'FuncGraphAbstractClosure' failed."
     """
     x_hat = Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
     y_hat = Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
     with pytest.raises(RuntimeError) as ex:
         vmap(P.Add(), in_axes=(1, 1), out_axes=0)(x_hat, y_hat)
-    assert "'VmapOperation' arg0 Prim: S-Prim-Add cast to 'FuncGraphAbstractClosure' failed." in str(ex.value)
+    assert "'VmapOperation' arg0 Prim: S_Prim_Add cast to 'FuncGraphAbstractClosure' failed." in str(ex.value)
 
 
 def test_none_in_axes():

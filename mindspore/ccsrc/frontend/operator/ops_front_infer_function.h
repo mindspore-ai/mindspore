@@ -22,8 +22,8 @@
 #include "abstract/ops/primitive_infer_map.h"
 namespace mindspore {
 namespace abstract {
-const std::vector<std::string> kSparsePrimStr = {"Prim: S-Prim-MakeCSRTensor", "Prim: S-Prim-MakeCOOTensor",
-                                                 "Prim: S-Prim-MakeRowTensor"};
+const std::vector<std::string> kSparsePrimStr = {"Prim: S_Prim_MakeCSRTensor", "Prim: S_Prim_MakeCOOTensor",
+                                                 "Prim: S_Prim_MakeRowTensor"};
 // String
 AbstractBasePtr InferImplStringMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_abs_list);

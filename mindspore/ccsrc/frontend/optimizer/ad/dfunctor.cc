@@ -1013,7 +1013,7 @@ static void RemovePrimalUpdateStates(const FuncGraphManagerPtr &manager, const C
   // Remove UpdateStates by replace them with their monad input.
   for (auto &update_state : update_states) {
     auto &input_monad = update_state->inputs().at(1);
-    manager->Replace(update_state, input_monad);
+    (void)manager->Replace(update_state, input_monad);
   }
 }
 

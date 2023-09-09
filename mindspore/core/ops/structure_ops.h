@@ -26,6 +26,7 @@
 #include "utils/hash_map.h"
 
 namespace mindspore {
+static constexpr char kDoSignaturePrimitivePrefix[] = "S_Prim_";
 namespace prim {
 // String
 GVAR_DEF(PrimitivePtr, kPrimStringEq, std::make_shared<Primitive>(kStringEqOpName));
@@ -114,7 +115,7 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynam
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
-      : Primitive("S-Prim-" + name), function_(function) {}
+      : Primitive(kDoSignaturePrimitivePrefix + name), function_(function) {}
 
   ~DoSignaturePrimitive() override = default;
 

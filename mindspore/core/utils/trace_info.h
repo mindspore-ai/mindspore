@@ -61,7 +61,7 @@ class TracePhi : public TraceInfo {
   ~TracePhi() override = default;
   // phi: Φ
 #ifdef _WIN32
-  MS_DECLARE_TRACE_NAME_SYMBOL("phi", "phi-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("phi", "phi_");
 #else
   MS_DECLARE_TRACE_NAME_SYMBOL("phi", "\u0444");
 #endif
@@ -183,7 +183,7 @@ class TraceForRolledBody : public TraceInfo {
  public:
   explicit TraceForRolledBody(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceForRolledBody() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("for_rolled_body", "R-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("for_rolled_body", "R_");
   TraceInfoPtr clone() override { return std::make_shared<TraceForRolledBody>(*this); }
 };
 
@@ -405,7 +405,7 @@ class TraceCombileLikeGraphs : public TraceInfo {
   TraceCombileLikeGraphs() : TraceInfo(nullptr) {}
   explicit TraceCombileLikeGraphs(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceCombileLikeGraphs() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("CombileLike", "L-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("CombileLike", "L_");
   TraceInfoPtr clone() override { return std::make_shared<TraceCombileLikeGraphs>(*this); }
 };
 
@@ -414,7 +414,7 @@ class TraceGraphReusing : public TraceInfo {
   TraceGraphReusing() : TraceInfo(nullptr) {}
   explicit TraceGraphReusing(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGraphReusing() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("CellReusing", "CR-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("CellReusing", "CR_");
   TraceInfoPtr clone() override { return std::make_shared<TraceGraphReusing>(*this); }
 };
 
@@ -438,7 +438,7 @@ class TraceListComp : public TraceInfo {
  public:
   explicit TraceListComp(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceListComp() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("ListComp", "G-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("ListComp", "G_");
   TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*this); }
 };
 
@@ -446,14 +446,14 @@ class TraceDictComp : public TraceInfo {
  public:
   explicit TraceDictComp(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceDictComp() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("DictComp", "GD-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("DictComp", "GD_");
   TraceInfoPtr clone() override { return std::make_shared<TraceDictComp>(*this); }
 };
 
 class TraceMixedPrecision : public TraceInfo {
  public:
   explicit TraceMixedPrecision(const DebugInfoPtr &info) : TraceInfo(info) {}
-  MS_DECLARE_TRACE_NAME_SYMBOL("MixedPrecision", "C-");
+  MS_DECLARE_TRACE_NAME_SYMBOL("MixedPrecision", "C_");
   ~TraceMixedPrecision() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceMixedPrecision>(*this); }
 };

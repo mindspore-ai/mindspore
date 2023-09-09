@@ -90,7 +90,7 @@ std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
   }
 
   std::ostringstream oss;
-  oss << meta_func_graph->type_name() << "-" << meta_func_graph->name();
+  oss << meta_func_graph->type_name() << "_" << meta_func_graph->name();
 
   if (meta_func_graph->isa<prim::MultitypeFuncGraph>()) {
     prim::MultitypeFuncGraphPtr mt_func_graph = meta_func_graph->cast<prim::MultitypeFuncGraphPtr>();
