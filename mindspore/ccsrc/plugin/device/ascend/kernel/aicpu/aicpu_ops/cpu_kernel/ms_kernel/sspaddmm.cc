@@ -18,9 +18,12 @@
 #include <complex>
 #include <algorithm>
 
-namespace aicpu {
-
+namespace {
 const char *SSPADDMM = "Sspaddmm";
+constexpr uint32_t kInputDims = 2;
+}  // namespace
+
+namespace aicpu {
 #define SPADDMM_COMPUTE_CASE(DTYPE, TYPE, CTX)             \
   case (DTYPE): {                                          \
     uint32_t result = SspaddmmCompute<TYPE>(CTX);          \
@@ -455,21 +458,21 @@ uint32_t SspaddmmCpuKernel::ValidParam(const CpuKernelContext &ctx) {
 
   // sparse_indices
   // GetDims() will return dims number, uint32_t
-  if (input_indices_shape->GetDims() != 2) {
+  if (input_indices_shape->GetDims() != kInputDims) {
     KERNEL_LOG_ERROR(
       "Input sparse_indices should be 2D, got dim "
       "size [%d].",
       input_indices_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (mat1_indices_shape->GetDims() != 2) {
+  if (mat1_indices_shape->GetDims() != kInputDims) {
     KERNEL_LOG_ERROR(
       "Mat1 sparse_indices should be 2D, got dim "
       "size [%d].",
       mat1_indices_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (output_indices_shape->GetDims() != 2) {
+  if (output_indices_shape->GetDims() != kInputDims) {
     KERNEL_LOG_ERROR(
       "Output sparse_indices should be 2D, got dim "
       "size [%d].",
@@ -572,12 +575,12 @@ uint32_t SspaddmmCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t *ou_dim = reinterpret_cast<int64_t *>(output_shapes_tensor->GetData());
   if (input_shapes_tensor->GetDataType() == DT_INT32) {
     int32_t *in_dim = reinterpret_cast<int32_t *>(input_shapes_tensor->GetData());
-    for (int32_t index = 0; index < 2; ++index) {
+    for (uint32_t index = 0; index < kInputDims; ++index) {
       ou_dim[index] = in_dim[index];
     }
   } else {
     int64_t *in_dim = reinterpret_cast<int64_t *>(input_shapes_tensor->GetData());
-    for (int32_t index = 0; index < 2; ++index) {
+    for (uint32_t index = 0; index < kInputDims; ++index) {
       ou_dim[index] = in_dim[index];
     }
   }

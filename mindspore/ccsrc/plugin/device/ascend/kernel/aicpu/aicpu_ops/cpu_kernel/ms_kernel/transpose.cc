@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-#include "transpose.h"
+#include "cpu_kernel/ms_kernel/transpose.h"
 
-#include "cpu_kernel_utils.h"
-#include "securec.h"
+#include <securec.h>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
+const uint32_t kDim1 = 1;
 const uint32_t kMinDim = 2;
 const uint32_t kMaxDim = 7;
-const uint32_t kNum4 = 4;
+const uint32_t kIndex0 = 0;
+const uint32_t kIndex1 = 1;
+const uint32_t kIndex2 = 2;
+const uint32_t kIndex3 = 3;
+const uint32_t kIndex4 = 4;
+const uint32_t kIndex5 = 5;
+const uint32_t kIndex6 = 6;
 const char *kTranspose = "Transpose";
 
 #define TRANSPOSE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
@@ -87,20 +95,20 @@ uint32_t TransposeCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 uint32_t TransposeCpuKernel::TransposeParamCheck(CpuKernelContext &ctx) {
-  std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> shape_perm = ctx.Input(1)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> shape_x = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> shape_perm = ctx.Input(kIndex1)->GetTensorShape()->GetDimSizes();
 
-  auto perm_tensor = ctx.Input(1);
-  auto y_tensor = ctx.Output(0);
+  auto perm_tensor = ctx.Input(kIndex1);
+  auto y_tensor = ctx.Output(kIndex0);
 
-  KERNEL_CHECK_FALSE((shape_perm.size() == 1), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_perm.size() == kDim1), KERNEL_STATUS_PARAM_INVALID,
                      "Expected perm to be 1-D tensors , but got [%zu]-D tensors.", shape_x.size())
   KERNEL_CHECK_FALSE((perm_tensor->NumElements() == (unsigned int)shape_x.size()), KERNEL_STATUS_PARAM_INVALID,
                      "Expected the size of perm to be [%zu], but got [%zu].", shape_x.size(),
                      perm_tensor->NumElements())
   KERNEL_CHECK_FALSE((GetTransposeValue(perm_tensor, perm) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                      "perm must be either int32 or int64, but got [%s].", DTypeStr(perm_tensor->GetDataType()).c_str())
-  KERNEL_CHECK_FALSE((shape_x.size() > 1), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_x.size() > kDim1), KERNEL_STATUS_PARAM_INVALID,
                      "Expected the dimension of x to be greater than 1-D, but got [%zu].", shape_x.size())
 
   std::vector<int64_t> shape_y;
@@ -133,10 +141,10 @@ uint32_t TransposeCpuKernel::TransposeParamCheck(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
-  auto x_data = ctx.Input(0)->GetData();
-  auto y_data = ctx.Output(0)->GetData();
-  std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> shape_y = ctx.Output(0)->GetTensorShape()->GetDimSizes();
+  auto x_data = ctx.Input(kIndex0)->GetData();
+  auto y_data = ctx.Output(kIndex0)->GetData();
+  std::vector<int64_t> shape_x = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> shape_y = ctx.Output(kIndex0)->GetTensorShape()->GetDimSizes();
   auto input_data = reinterpret_cast<T *>(x_data);
   auto output_data = reinterpret_cast<T *>(y_data);
   size_t input_dims = shape_x.size();
@@ -144,20 +152,22 @@ uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
     KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kTranspose, input_dims);
     return KERNEL_STATUS_INNER_ERROR;
   }
-  size_t offset = 7 - input_dims;
-  std::vector<int64_t> bcast_shape_x(7, 1);
-  std::vector<int64_t> bcast_shape_y(7, 1);
+  size_t offset = kMaxDim - input_dims;
+  std::vector<int64_t> bcast_shape_x(kMaxDim, kDim1);
+  std::vector<int64_t> bcast_shape_y(kMaxDim, kDim1);
   for (size_t i = 0; i < input_dims; ++i) {
     bcast_shape_x[i + offset] = shape_x[i];
     bcast_shape_y[i + offset] = shape_y[i];
   }
-  using Eigen_Tensor = Eigen::TensorMap<Eigen::Tensor<T, 7, Eigen::RowMajor>, Eigen::Aligned>;
-  Eigen_Tensor input(input_data, bcast_shape_x.at(0), bcast_shape_x.at(1), bcast_shape_x.at(2), bcast_shape_x.at(3),
-                     bcast_shape_x.at(4), bcast_shape_x.at(5), bcast_shape_x.at(6));
-  Eigen_Tensor output(output_data, bcast_shape_y.at(0), bcast_shape_y.at(1), bcast_shape_y.at(2), bcast_shape_y.at(3),
-                      bcast_shape_y.at(4), bcast_shape_y.at(5), bcast_shape_y.at(6));
-  Eigen::array<Eigen::DenseIndex, 7> perm_compute;
-  for (size_t j = 0; j < 7; ++j) {
+  using Eigen_Tensor = Eigen::TensorMap<Eigen::Tensor<T, kMaxDim, Eigen::RowMajor>, Eigen::Aligned>;
+  Eigen_Tensor input(input_data, bcast_shape_x.at(kIndex0), bcast_shape_x.at(kIndex1), bcast_shape_x.at(kIndex2),
+                     bcast_shape_x.at(kIndex3), bcast_shape_x.at(kIndex4), bcast_shape_x.at(kIndex5),
+                     bcast_shape_x.at(kIndex6));
+  Eigen_Tensor output(output_data, bcast_shape_y.at(kIndex0), bcast_shape_y.at(kIndex1), bcast_shape_y.at(kIndex2),
+                      bcast_shape_y.at(kIndex3), bcast_shape_y.at(kIndex4), bcast_shape_y.at(kIndex5),
+                      bcast_shape_y.at(kIndex6));
+  Eigen::array<Eigen::DenseIndex, kMaxDim> perm_compute;
+  for (size_t j = 0; j < kMaxDim; ++j) {
     if (j < offset) {
       perm_compute[j] = j;
     } else {

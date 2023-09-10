@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "cpu_kernel/ms_kernel/hypot.h"
+
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
@@ -80,6 +81,75 @@ uint32_t HypotCpuKernel::HypotParamCheck(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
+uint32_t NoBcastComputeParallel(const CpuKernelContext &ctx, const BcastShapeType &type, T *in0, T *in1, T *out,
+                                const int64_t &data_num) {
+  uint32_t min_core_num = 1;
+  uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
+
+  if (data_num <= kParallelDataNumSameShapeMid) {
+    max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
+  }
+
+  if (max_core_num > data_num) {
+    max_core_num = data_num;
+  }
+
+  auto sharder_hypot = [&](int64_t start, int64_t end) {
+    switch (type) {
+      case BcastShapeType::SAME_SHAPE:
+        for (int64_t i = start; i < end; ++i) {
+          *(out + i) = hypot(*(in0 + i), *(in1 + i));
+        }
+        break;
+      case BcastShapeType::X_ONE_ELEMENT:
+        for (int64_t i = start; i < end; ++i) {
+          *(out + i) = hypot(*in0, *(in1 + i));
+        }
+        break;
+      case BcastShapeType::Y_ONE_ELEMENT:
+        for (int64_t i = start; i < end; ++i) {
+          *(out + i) = hypot(*(in0 + i), *in1);
+        }
+        break;
+      default:
+        KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
+        break;
+    }
+  };
+  if (max_core_num == 0) {
+    KERNEL_LOG_ERROR("max_core_num could not be 0");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_hypot),
+                      "Hypot Compute failed.");
+  return KERNEL_STATUS_OK;
+}
+
+template <typename T>
+void NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, const int64_t &data_num) {
+  switch (type) {
+    case BcastShapeType::SAME_SHAPE:
+      for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
+        *(out + i) = hypot(*(in0 + i), *(in1 + i));
+      }
+      break;
+    case BcastShapeType::X_ONE_ELEMENT:
+      for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
+        *(out + i) = hypot(*in0, *(in1 + i));
+      }
+      break;
+    case BcastShapeType::Y_ONE_ELEMENT:
+      for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
+        *(out + i) = hypot(*(in0 + i), *in1);
+      }
+      break;
+    default:
+      KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
+      break;
+  }
+}
+
+template <typename T>
 uint32_t HypotCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -96,66 +166,13 @@ uint32_t HypotCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   }
 
   if (data_num >= kParallelDataNumSameShape) {
-    uint32_t min_core_num = 1;
-    uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-
-    if (data_num <= kParallelDataNumSameShapeMid) {
-      max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
+    uint32_t res = NoBcastComputeParallel<T>(ctx, type, in0, in1, out, data_num);
+    if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+      KERNEL_LOG_ERROR("Hypot kernel NoBcastComputeParallel failed.");
+      return res;
     }
-
-    if (max_core_num > data_num) {
-      max_core_num = data_num;
-    }
-
-    auto sharder_hypot = [&](int64_t start, int64_t end) {
-      switch (type) {
-        case BcastShapeType::SAME_SHAPE:
-          for (int64_t i = start; i < end; ++i) {
-            *(out + i) = hypot(*(in0 + i), *(in1 + i));
-          }
-          break;
-        case BcastShapeType::X_ONE_ELEMENT:
-          for (int64_t i = start; i < end; ++i) {
-            *(out + i) = hypot(*in0, *(in1 + i));
-          }
-          break;
-        case BcastShapeType::Y_ONE_ELEMENT:
-          for (int64_t i = start; i < end; ++i) {
-            *(out + i) = hypot(*(in0 + i), *in1);
-          }
-          break;
-        default:
-          KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
-          break;
-      }
-    };
-    if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
-      return KERNEL_STATUS_PARAM_INVALID;
-    }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_hypot),
-                        "Hypot Compute failed.");
   } else {
-    switch (type) {
-      case BcastShapeType::SAME_SHAPE:
-        for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
-          *(out + i) = hypot(*(in0 + i), *(in1 + i));
-        }
-        break;
-      case BcastShapeType::X_ONE_ELEMENT:
-        for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
-          *(out + i) = hypot(*in0, *(in1 + i));
-        }
-        break;
-      case BcastShapeType::Y_ONE_ELEMENT:
-        for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
-          *(out + i) = hypot(*(in0 + i), *in1);
-        }
-        break;
-      default:
-        KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
-        break;
-    }
+    NoBcastComputeSingle<T>(type, in0, in1, out, data_num);
   }
 
   return KERNEL_STATUS_OK;
