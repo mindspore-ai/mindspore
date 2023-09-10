@@ -267,7 +267,6 @@ function(mindspore_add_pkg pkg_name)
     string(REPLACE ";" "-" ${pkg_name}_CONFIG_TXT ${${pkg_name}_CONFIG_TXT})
     string(SHA256 ${pkg_name}_CONFIG_HASH ${${pkg_name}_CONFIG_TXT})
 
-    message("${pkg_name} config text: ${${pkg_name}_CONFIG_TXT}")
     message("${pkg_name} config hash: ${${pkg_name}_CONFIG_HASH}")
 
     set(${pkg_name}_BASE_DIR ${_MS_LIB_CACHE}/${pkg_name}_${PKG_VER}_${${pkg_name}_CONFIG_HASH})
