@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include "histogramd.h"
+#include "cpu_kernel/ms_kernel/histogramd.h"
 
+#include <securec.h>
 #include <algorithm>
+#include <functional>
 #include <mutex>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
@@ -74,7 +75,7 @@ uint32_t HistogramDCpuKernel::ParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename InterType>
-uint32_t HistogramDCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t HistogramDCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
   auto x_data = reinterpret_cast<T *>(x->GetData());

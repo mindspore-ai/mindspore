@@ -16,9 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOG_H_
 #define AICPU_KERNELS_NORMALIZED_LOG_H_
 
-#include "cpu_ops_kernel.h"
-
-using namespace std;
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class LogCpuKernel : public CpuKernel {
@@ -28,15 +26,15 @@ class LogCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LogCheck(CpuKernelContext &ctx);
+  uint32_t LogCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogCompute(CpuKernelContext &ctx);
+  uint32_t LogCompute(const CpuKernelContext &ctx);
 
-  uint32_t LogCompute2(CpuKernelContext &ctx);
+  uint32_t LogCompute2(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogCompute3(CpuKernelContext &ctx);
+  uint32_t LogCompute3(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

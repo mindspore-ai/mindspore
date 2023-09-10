@@ -17,11 +17,11 @@
 #ifndef AICPU_KERNELS_NORMALIZED_KLDIV_H_
 #define AICPU_KERNELS_NORMALIZED_KLDIV_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class KLDivCpuKernel final : public CpuKernel {
-  virtual std::uint32_t Compute(CpuKernelContext &ctx) override final;
+  std::uint32_t Compute(CpuKernelContext &ctx) override;
 };
 }  // namespace aicpu
 #endif

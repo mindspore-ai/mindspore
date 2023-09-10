@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "is_inf.h"
+#include "cpu_kernel/ms_kernel/is_inf.h"
 
-#include "Eigen/Dense"
-#include "unsupported/Eigen/CXX11/Tensor"
-#include "cpu_kernel_utils.h"
+#include <Eigen/Dense>
+#include <algorithm>
+
+#include "common/kernel_log.h"
 #include "utils/kernel_util.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel/common/status.h"
+#include "unsupported/Eigen/CXX11/Tensor"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const char *const kIsInf = "IsInf";

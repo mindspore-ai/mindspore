@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include "instance_norm_v2.h"
+#include "cpu_kernel/ms_kernel/instance_norm_v2.h"
 
-#include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "securec.h"
+#include <securec.h>
+#include <Eigen/Dense>
+#include <map>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include <vector>
-#include <map>
-#include <algorithm>
 
 namespace {
 const char *const kInstanceNormV2 = "InstanceNormV2";
@@ -107,7 +109,7 @@ uint32_t InstanceNormV2CpuKernel::InstanceNormV2ShapeCheck(const CpuKernelContex
   auto res = CheckTensorShapeSame({{"x", x_shape_ptr}}, y_shape, kInstanceNormV2);
   if (res != KERNEL_STATUS_OK) {
     return res;
-  };
+  }
   auto x_format = x_shape_ptr->GetFormat();
   std::vector<int64_t> check_shape;
   check_shape = y_shape;
@@ -338,7 +340,7 @@ uint32_t InstanceNormV2CpuKernel::TransformInput(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t InstanceNormV2CpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t InstanceNormV2CpuKernel::DoCompute(const CpuKernelContext &ctx) {
   auto batch_mean_ptr = static_cast<float *>(ctx.Output(InstanceNormV2OutBatchMeanIndex)->GetData());
   auto batch_var_ptr = static_cast<float *>(ctx.Output(InstanceNormV2OutBatchVarianceIndex)->GetData());
   (void)std::fill_n(batch_mean_ptr, instance_num, float_init_zero);

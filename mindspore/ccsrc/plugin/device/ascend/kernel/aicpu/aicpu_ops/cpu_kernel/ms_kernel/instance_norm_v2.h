@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_H_
 #define AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_H_
 
-#include "cpu_ops_kernel.h"
 #include <vector>
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {
@@ -51,7 +51,7 @@ class InstanceNormV2CpuKernel : public CpuKernel {
   uint32_t UpdateStatsTemplate(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 
   bool is_training_ = true;
   float momentum_ = 0.1;

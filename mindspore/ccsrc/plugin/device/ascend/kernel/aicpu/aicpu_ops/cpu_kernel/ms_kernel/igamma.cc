@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "igamma.h"
+#include "cpu_kernel/ms_kernel/igamma.h"
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
-#include "igamma_utils.h"
+#include "cpu_kernel/utils/igamma_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -66,7 +67,7 @@ uint32_t IgammaCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IgammaCpuKernel::IgammaCheck(CpuKernelContext &ctx) {
+uint32_t IgammaCpuKernel::IgammaCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(kFirstInputIndex);
   auto input_1 = ctx.Input(kSecondInputIndex);
   auto output = ctx.Output(0);
@@ -95,7 +96,7 @@ uint32_t IgammaCpuKernel::IgammaCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto input_x1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_x2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -181,7 +182,7 @@ void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *in
 }
 
 template <typename T>
-uint32_t NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t NoBcastCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -211,7 +212,7 @@ uint32_t NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t IgammaCpuKernel::IgammaCompute(CpuKernelContext &ctx) {
+uint32_t IgammaCpuKernel::IgammaCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape_ptr = input0_tensor->GetTensorShape();
   KERNEL_CHECK_NULLPTR(input0_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input0_shape is nullptr.", kigamma);

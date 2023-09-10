@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LEFT_SHIFT_H_
 #define AICPU_KERNELS_NORMALIZED_LEFT_SHIFT_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,19 +30,19 @@ class LeftShiftCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LeftShiftParamCheck(CpuKernelContext &ctx);
+  uint32_t LeftShiftParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx);
+  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastCompute(CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(CpuKernelContext &ctx, Bcast &bcast);
+  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t LeftShiftCompute(CpuKernelContext &ctx);
+  uint32_t LeftShiftCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

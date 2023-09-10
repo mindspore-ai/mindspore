@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include "layer_norm_grad_grad.h"
+#include "cpu_kernel/ms_kernel/layer_norm_grad_grad.h"
 
 #include <cmath>
 #include <numeric>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-using namespace std;
 
 namespace {
 const uint32_t kOutputNum = 3;
@@ -71,7 +70,7 @@ uint32_t LayerNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(CpuKernelContext &ctx, size_t ParallelDataNums) {
+uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelContext &ctx, size_t ParallelDataNums) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_dy = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto input_var = reinterpret_cast<T *>(ctx.Input(2)->GetData());
@@ -116,17 +115,16 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(CpuKernelContext &
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
         size_t i = g_idx + sum_idx * g_num;  // value of sum_idx = i / g_num;
         sum1[sum_idx] -= inv_std[sum_idx] * input_d_dx[i] / static_cast<T>(g_num);
-        ;
+
         T cur_x_hat = (input_x[i] - input_mean[sum_idx]) * inv_std[sum_idx];
         x_hat[i] = cur_x_hat;
         sum2[sum_idx] -= cur_x_hat * inv_std[sum_idx] * input_d_dx[i] / static_cast<T>(g_num);
-        ;
+
         T cur_dy_gamma = input_dy[i] * input_gamma[g_idx];
         dy_gamma[i] = cur_dy_gamma;
         sum3[sum_idx] += cur_dy_gamma / static_cast<T>(g_num);
-        ;
+
         sum4[sum_idx] += cur_dy_gamma * cur_x_hat / static_cast<T>(g_num);
-        ;
       }
     }
   };
@@ -147,13 +145,12 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(CpuKernelContext &
         T part_sum2 = dy_gamma[i] * sum2[sum_idx] - sum4[sum_idx] * input_d_dx[i] * inv_std[sum_idx] +
                       input_dy[i] * input_d_dg[g_idx];
         sum5[sum_idx] += input_d_dx[i] * part_sum1 / static_cast<T>(g_num);
-        ;
+
         sum6[sum_idx] += (input_x[i] - input_mean[sum_idx]) * part_sum2 / static_cast<T>(g_num);
-        ;
+
         T cur_part3 = inv_std[sum_idx] * part_sum2;
         part3[i] = cur_part3;
         sum7[sum_idx] -= cur_part3 / static_cast<T>(g_num);
-        ;
       }
     }
   };

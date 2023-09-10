@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "instance_norm_v2_grad.h"
+#include "cpu_kernel/ms_kernel/instance_norm_v2_grad.h"
 
-#include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
-#include "utils/eigen_tensor.h"
-#include <vector>
+#include <securec.h>
+#include <Eigen/Dense>
 #include <map>
+#include <string>
+#include <vector>
 #include <iostream>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "utils/kernel_util.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
+#include "utils/eigen_tensor.h"
 
 namespace {
 const char *const kInstanceNormV2Grad = "InstanceNormV2Grad";
@@ -94,7 +97,7 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(const CpuKern
   auto res = CheckTensorShapeSame({{"input x", x_shape_ptr}}, dy_shape, kInstanceNormV2Grad);
   if (res != KERNEL_STATUS_OK) {
     return res;
-  };
+  }
   auto x_format = x_shape_ptr->GetFormat();
   std::vector<int64_t> check_shape;
   check_shape = dy_shape;
@@ -182,7 +185,7 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradParamCheck(const CpuKern
 }
 
 template <typename T>
-uint32_t InstanceNormV2GradCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t InstanceNormV2GradCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   const int64_t batch = dy_shape_4d_[kFormatNHWCIndexN];
   const int64_t channel = dy_shape_4d_[kFormatNHWCIndexC];
   const int64_t image_size = dy_shape_4d_[kFormatNHWCIndexH] * dy_shape_4d_[kFormatNHWCIndexW];

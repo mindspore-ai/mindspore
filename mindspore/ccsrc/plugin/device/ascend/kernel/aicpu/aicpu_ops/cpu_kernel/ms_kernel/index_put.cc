@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#include "index_put.h"
-
+#include "cpu_kernel/ms_kernel/index_put.h"
+#include <securec.h>
+#include <Eigen/Dense>
 #include <cstring>
-#include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
-#include "iostream"
-#include "securec.h"
-#include "status.h"
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -81,7 +83,7 @@ uint32_t IndexPutCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IndexPutCpuKernel::IndexPutParmCheck(CpuKernelContext &ctx) {
+uint32_t IndexPutCpuKernel::IndexPutParmCheck(const CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *indices_data = ctx.Input(2);
@@ -133,19 +135,19 @@ uint32_t IndexPutCpuKernel::IndexPutParmCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-void IndexPutCpuKernel::Transpose(std::vector<std::vector<int64_t>> &A) const {
-  uint32_t old_width = A[0].size();
-  uint32_t old_height = A.size();
+void IndexPutCpuKernel::Transpose(std::vector<std::vector<int64_t>> *A) const {
+  uint32_t old_width = (*A)[0].size();
+  uint32_t old_height = (*A).size();
   std::vector<std::vector<int64_t>> temp(old_width, std::vector<int64_t>(old_height));
   for (int64_t i = 0; (size_t)i < old_width; ++i) {
     for (int64_t j = 0; (size_t)j < old_height; ++j) {
-      temp[i][j] = A[j][i];
+      temp[i][j] = (*A)[j][i];
     }
   }
-  A = temp;
+  *A = temp;
 }
 
-int64_t IndexPutCpuKernel::Multiplicative(std::vector<int64_t> &tensorshapes, int64_t start, int64_t end) {
+int64_t IndexPutCpuKernel::Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start, int64_t end) {
   int64_t result = 1;
   for (int64_t i = start; i < end; i++) {
     result *= tensorshapes[i];
@@ -159,13 +161,12 @@ bool IndexPutCpuKernel::ComputeNospecial(std::vector<int64_t> x1_shape, T *x2, s
   size_t x1_shape_size = x1_shape.size();
   size_t idxli = indices_value.size();
   size_t idxcol = indices_value[0].size();
-  size_t offset = 0;
   if (x2_nums == 0) {
     KERNEL_LOG_ERROR("invalid x2 input, please check!");
     return false;
   }
   for (size_t i = 0; i < idxli; ++i) {
-    offset = 0;
+    size_t offset = 0;
     for (size_t j = 0; j < idxcol; ++j) {
       offset += indices_value[i][j] * Multiplicative(x1_shape, j + 1, x1_shape_size);
     }
@@ -182,29 +183,24 @@ bool IndexPutCpuKernel::ComputeSpecial(std::vector<int64_t> x1_shape, T *x2, siz
   size_t idxli = indices_value.size();
   size_t idxcol = indices_value[0].size();
   size_t strides = Multiplicative(x1_shape, indices_value.size(), x1_shape_size);
-  size_t offset = 0;
-  size_t y_idx = 0;
-  size_t v_idx = 0;
   if (x2_nums == 0) {
     KERNEL_LOG_ERROR("invalid x2 input, please check!");
     return false;
   }
   for (size_t i = 0; i < idxcol; i++) {
-    offset = 0;
+    size_t offset = 0;
     for (size_t j = 0; j < idxli; j++) {
       offset += indices_value[j][i] * Multiplicative(x1_shape, j + 1, x1_shape_size);
     }
     for (size_t j = 0; j < strides; j++) {
-      y_idx = offset + j;
-      v_idx = j % x2_nums;
-      y[y_idx] = (accumulate == 0) ? x2[v_idx] : y[y_idx] + x2[v_idx];
+      y[offset + j] = (accumulate == 0) ? x2[j % x2_nums] : y[offset + j] + x2[j % x2_nums];
     }
   }
   return true;
 }
 
 template <typename T, typename T0>
-uint32_t IndexPutCpuKernel::IndexPutCompute(CpuKernelContext &ctx) {
+uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
   AttrValue *accumulata_data = ctx.GetAttr("accumulate");
   uint64_t accumulata_value = accumulata_data->GetInt();
   auto *x1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -255,7 +251,7 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(CpuKernelContext &ctx) {
   }
   bool flag = true;
   if (indices_value.size() == shapes_size) {
-    (void)Transpose(indices_value);
+    (void)Transpose(&indices_value);
     flag = ComputeNospecial<T>(tensorshapes, x2, nums, indices_value, y, accumulata_value);
   } else {
     flag = ComputeSpecial<T>(tensorshapes, x2, nums, indices_value, y, accumulata_value);

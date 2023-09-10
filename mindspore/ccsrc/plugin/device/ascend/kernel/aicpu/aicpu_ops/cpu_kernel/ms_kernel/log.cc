@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "log.h"
+#include "cpu_kernel/ms_kernel/log.h"
 
-#include "cmath"
-#include "cpu_kernel_utils.h"
+#include <cmath>
+#include <vector>
+#include <limits>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -74,7 +78,7 @@ uint32_t LogCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogCpuKernel::LogCheck(CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
@@ -96,7 +100,7 @@ uint32_t LogCpuKernel::LogCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogCpuKernel::LogCompute(CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -144,7 +148,7 @@ uint32_t LogCpuKernel::LogCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogCpuKernel::LogCompute2(CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute2(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Eigen::half *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<Eigen::half *>(ctx.Output(0)->GetData());
   size_t data_num = ctx.Input(0)->NumElements();
@@ -201,7 +205,7 @@ uint32_t LogCpuKernel::LogCompute2(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogCpuKernel::LogCompute3(CpuKernelContext &ctx) {
+uint32_t LogCpuKernel::LogCompute3(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   size_t data_num = ctx.Input(0)->NumElements();

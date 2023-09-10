@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "im2col.h"
-
+#include "cpu_kernel/ms_kernel/im2col.h"
+#include <securec.h>
 #include <algorithm>
 #include <complex>
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -40,7 +40,7 @@ constexpr uint32_t kIndex3 = 3;
 
 namespace aicpu {
 // shape <= 2 and all values greater than 0
-bool VectorShapeAndValueCheck(std::vector<int64_t> &values) {
+bool VectorShapeAndValueCheck(const std::vector<int64_t> &values) {
   auto iter =
     std::find_if(values.begin(), values.end(), [&](const int64_t &item) -> bool { return (item <= kValue0); });
   return values.size() <= kValue2 && iter == values.end();
@@ -107,7 +107,7 @@ void Im2colCpuKernel::InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr) {
 }
 
 template <typename T>
-uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
+uint32_t Im2colCpuKernel::Im2colCompute(const CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
   std::vector<int64_t> y_shapes = y->GetTensorShape()->GetDimSizes();
@@ -116,11 +116,8 @@ uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
   is_NCHW = (FORMAT_NCHW == x_format);
 
   int64_t batch_size = x_shapes[kIndex0];
-  input_height = kValue0;
-  input_width = kValue0;
   out_height = kValue0;
   out_width = kValue0;
-  out_plane = kValue0;
 
   if (is_NCHW) {
     input_channel = x_shapes[kIndex1];

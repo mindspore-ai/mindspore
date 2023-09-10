@@ -16,9 +16,10 @@
 #ifndef AICPU_KERNELS_NORMALIZED_INDEX_FILL_H_
 #define AICPU_KERNELS_NORMALIZED_INDEX_FILL_H_
 
+#include <map>
 #include <vector>
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class IndexFillCpuKernel : public CpuKernel {
@@ -28,7 +29,7 @@ class IndexFillCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
   template <typename T>
   void SpecialCompute(int64_t start, int64_t end, const int32_t *input_dim, std::map<int32_t, bool> &index_dict);

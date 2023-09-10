@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_HISTOGRAMD_H_
 #define AICPU_KERNELS_HISTOGRAMD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class HistogramDCpuKernel : public CpuKernel {
@@ -32,7 +32,7 @@ class HistogramDCpuKernel : public CpuKernel {
   uint32_t ParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename InterType>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 
   double min_attr = 0.0;
   double max_attr = 0.0;

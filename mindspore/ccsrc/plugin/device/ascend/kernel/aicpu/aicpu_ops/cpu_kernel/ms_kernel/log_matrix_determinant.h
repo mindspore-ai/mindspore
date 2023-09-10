@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOG_MATRIX_DETERMINANT_H
 #define AICPU_KERNELS_NORMALIZED_LOG_MATRIX_DETERMINANT_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class LogMatrixDeterminantCpuKernel : public CpuKernel {
@@ -26,10 +26,10 @@ class LogMatrixDeterminantCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LogMatrixDeterminantCheck(CpuKernelContext &ctx);
+  uint32_t LogMatrixDeterminantCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogMatrixDeterminantCompute(CpuKernelContext &ctx);
+  uint32_t LogMatrixDeterminantCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

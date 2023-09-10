@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "igammagrada.h"
-#include "igamma_utils.h"
+#include "cpu_kernel/ms_kernel/igammagrada.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+
+#include "cpu_kernel/utils/igamma_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -52,7 +54,7 @@ uint32_t IgammaGradACpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "IgammaGradA check input and output number failed.");
 
   BCalcInfo calc_info;
-  KERNEL_HANDLE_ERROR(IgammaGradACheckAndBroadCast(ctx, calc_info), "IgammaGradA check params or bcast failed.");
+  KERNEL_HANDLE_ERROR(IgammaGradACheckAndBroadCast(ctx, &calc_info), "IgammaGradA check params or bcast failed.");
 
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
@@ -66,26 +68,26 @@ uint32_t IgammaGradACpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IgammaGradACpuKernel::IgammaGradACheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo &calc_info) {
-  calc_info.input_0 = ctx.Input(kFirstInputIndex);
-  calc_info.input_1 = ctx.Input(kSecondInputIndex);
-  calc_info.output = ctx.Output(0);
+uint32_t IgammaGradACpuKernel::IgammaGradACheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo *calc_info) {
+  (*calc_info).input_0 = ctx.Input(kFirstInputIndex);
+  (*calc_info).input_1 = ctx.Input(kSecondInputIndex);
+  (*calc_info).output = ctx.Output(0);
 
   // check input datatype
-  DataType input0_datatype = calc_info.input_0->GetDataType();
+  DataType input0_datatype = (*calc_info).input_0->GetDataType();
   KERNEL_CHECK_FALSE((input0_datatype == DT_DOUBLE || input0_datatype == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
                      "Input[0] data type must DT_FLOAT or DT_DOUBLE,"
                      "but got data type[%s].",
                      DTypeStr(input0_datatype).c_str());
 
-  DataType input1_datatype = calc_info.input_1->GetDataType();
+  DataType input1_datatype = (*calc_info).input_1->GetDataType();
   KERNEL_CHECK_FALSE((input0_datatype == input1_datatype), KERNEL_STATUS_PARAM_INVALID,
                      "The data type of input1 [%s] need be same with "
                      "input0 [%s].",
                      DTypeStr(input1_datatype).c_str(), DTypeStr(input0_datatype).c_str())
 
   // check output dtype
-  DataType output_datatype = calc_info.output->GetDataType();
+  DataType output_datatype = (*calc_info).output->GetDataType();
   KERNEL_CHECK_FALSE((input0_datatype == output_datatype), KERNEL_STATUS_PARAM_INVALID,
                      "The data type of output [%s] need be same with "
                      "input0 [%s].",
@@ -94,19 +96,19 @@ uint32_t IgammaGradACpuKernel::IgammaGradACheckAndBroadCast(CpuKernelContext &ct
   KERNEL_LOG_DEBUG(
     "IgammaGradACpuKernel[%s], input0: size[%llu];"
     "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), calc_info.input_0->GetDataSize(), calc_info.input_1->GetDataSize(),
-    calc_info.output->GetDataSize());
+    ctx.GetOpType().c_str(), (*calc_info).input_0->GetDataSize(), (*calc_info).input_1->GetDataSize(),
+    (*calc_info).output->GetDataSize());
 
   Bcast bcast;
-  KERNEL_HANDLE_ERROR(bcast.GenerateBcastInfo(calc_info), "Generate broadcast info failed.");
-  (void)bcast.BCastIndexes(calc_info.x_indexes, calc_info.y_indexes);
-  (void)bcast.GetBcastVec(calc_info);
+  KERNEL_HANDLE_ERROR(bcast.GenerateBcastInfo((*calc_info)), "Generate broadcast info failed.");
+  (void)bcast.BCastIndexes((*calc_info).x_indexes, (*calc_info).y_indexes);
+  (void)bcast.GetBcastVec((*calc_info));
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t IgammaGradACpuKernel::IgammaGradACompute(CpuKernelContext &ctx, BCalcInfo &calc_info) {
+uint32_t IgammaGradACpuKernel::IgammaGradACompute(const CpuKernelContext &ctx, const BCalcInfo &calc_info) {
   auto input_x1 = reinterpret_cast<T *>(calc_info.input_0->GetData());
   auto input_x2 = reinterpret_cast<T *>(calc_info.input_1->GetData());
   auto output_y = reinterpret_cast<T *>(calc_info.output->GetData());

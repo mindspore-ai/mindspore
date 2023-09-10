@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "list_diff.h"
+#include "cpu_kernel/ms_kernel/list_diff.h"
+
+#include <securec.h>
+#include <vector>
 #include <unordered_set>
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
-#include "unsupported/Eigen/CXX11/Tensor"
-#include "utils/allocator_utils.h"
-#include "utils/eigen_tensor.h"
+
 #include "utils/kernel_util.h"
+#include "utils/eigen_tensor.h"
+#include "utils/allocator_utils.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
+#include "unsupported/Eigen/CXX11/Tensor"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const char *kListDiff = "ListDiff";
@@ -78,7 +81,7 @@ uint32_t ListDiffCpuKernel::ParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename Tidx>
-uint32_t ListDiffCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t ListDiffCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Input(1);
   Tensor *out = ctx.Output(0);

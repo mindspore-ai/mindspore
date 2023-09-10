@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-#include "log_normal_reverse.h"
-#include <random>
+#include "cpu_kernel/ms_kernel/log_normal_reverse.h"
+
+#include <Eigen/Core>
+#include <ctime>
 #include <set>
-#include "cpu_kernel_utils.h"
-#include "cpu_ops_kernel.h"
+#include <iostream>
+#include <random>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include <ctime>
-#include <iostream>
-
-#include "Eigen/Core"
-using namespace std;
-using namespace Eigen;
 
 namespace {
 const uint32_t kNumInput = 1;
@@ -51,7 +50,7 @@ uint32_t LogNormalReverseCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogNormalReverseCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t LogNormalReverseCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   float input_mean = 1.0;
   float input_std = 2.0;
 
@@ -67,7 +66,7 @@ uint32_t LogNormalReverseCpuKernel::DoCompute(CpuKernelContext &ctx) {
 
   T *output_y = reinterpret_cast<T *>(outputs_[0]->GetData());
 
-  static default_random_engine random_engine(time(0));
+  static std::default_random_engine random_engine(time(0));
   static std::normal_distribution<float> normal_value(input_mean, input_std);
 
   int64_t Nums = inputs_[0]->GetTensorShape()->NumElements();

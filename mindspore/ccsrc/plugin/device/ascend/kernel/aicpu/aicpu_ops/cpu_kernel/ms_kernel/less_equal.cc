@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#include "less_equal.h"
+#include "cpu_kernel/ms_kernel/less_equal.h"
 
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -117,7 +119,7 @@ void LessEqualCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
 }
 
 template <typename T>
-uint32_t LessEqualCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t LessEqualCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
@@ -156,7 +158,7 @@ uint32_t LessEqualCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LessEqualCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t LessEqualCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
@@ -194,7 +196,7 @@ uint32_t LessEqualCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
 }
 
 template <typename T>
-uint32_t LessEqualCpuKernel::LessEqualCompute(CpuKernelContext &ctx) {
+uint32_t LessEqualCpuKernel::LessEqualCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
