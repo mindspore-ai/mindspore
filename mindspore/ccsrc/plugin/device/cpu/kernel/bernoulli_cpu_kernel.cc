@@ -127,7 +127,7 @@ bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', p can't be empty.";
   } else if (p_dims == 0 || (p_dims == 1 && p_num == 1)) {
     if (*p > 1 || *p < 0) {
-      MS_EXCEPTION(ValueError) << "For bernoulli, p should be in [0, 1].";
+      MS_EXCEPTION(ValueError) << "For bernoulli, p should be in [0, 1], but got " << *p << ".";
     }
     for (int i = 0; i < input_elements_nums; i++) {
       float a = RandFloat();
