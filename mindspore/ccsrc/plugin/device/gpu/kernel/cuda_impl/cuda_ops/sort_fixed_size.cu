@@ -64,44 +64,40 @@ __device__ __forceinline__ index_t GetLinearBlockId() {
   return blockIdx.z * gridDim.y * gridDim.x + blockIdx.y * gridDim.x + blockIdx.x;
 }
 
-template <typename T, int Dims>
-struct IndexToOffset {
-  static __device__ int64_t get(int64_t linear_id, const TensorLayoutHelper &info) {
-    int64_t offset = 0;
+template <typename T>
+static __device__ int64_t IndexToOffset0(const int dims, int64_t linear_id, const TensorLayoutHelper &info) {
+  int64_t offset = 0;
 
-    // Uses static dims
-    for (int i = Dims - 1; i > 0; --i) {
-      int64_t cur_dim_index = linear_id % info.sizes_[i];
-      int64_t cur_dim_offset = cur_dim_index * info.strides_[i];
-      offset += cur_dim_offset;
-      linear_id /= info.sizes_[i];
-    }
-
-    return offset + linear_id * info.strides_[0];
+  // Uses static dims
+  for (int i = dims - 1; i > 0; --i) {
+    int64_t cur_dim_index = linear_id % info.sizes_[i];
+    int64_t cur_dim_offset = cur_dim_index * info.strides_[i];
+    offset += cur_dim_offset;
+    linear_id /= info.sizes_[i];
   }
-};
+
+  return offset + linear_id * info.strides_[0];
+}
 
 template <typename T>
-struct IndexToOffset<T, -1> {
-  static inline __device__ int64_t get(int64_t linear_id, const TensorLayoutHelper &info) {
-    int64_t offset = 0;
+static inline __device__ int64_t IndexToOffset1(int64_t linear_id, const TensorLayoutHelper &info) {
+  int64_t offset = 0;
 
-    for (int i = info.dim_size_ - 1; i > 0; --i) {
-      int64_t cur_dim_index = linear_id % info.sizes_[i];
-      int64_t cur_dim_offset = cur_dim_index * info.strides_[i];
-      offset += cur_dim_offset;
-      linear_id /= info.sizes_[i];
-    }
-
-    return offset + linear_id * info.strides_[0];
+  for (int i = info.dim_size_ - 1; i > 0; --i) {
+    int64_t cur_dim_index = linear_id % info.sizes_[i];
+    int64_t cur_dim_offset = cur_dim_index * info.strides_[i];
+    offset += cur_dim_offset;
+    linear_id /= info.sizes_[i];
   }
-};
 
-template <int kKeyDims, int kValueDims, int kBlockSize, int kItemsPerThread, typename K, typename V>
+  return offset + linear_id * info.strides_[0];
+}
+
+template <int kBlockSize, int kItemsPerThread, typename K, typename V>
 __global__ void __launch_bounds__(MS_MAX_THREAD_PER_BLOCK(kBlockSize))
-  RadixSortKVInPlace(TensorLayoutHelper keys, K *key_data, int64_t key_slices, int64_t key_slice_size,
-                     int64_t key_slice_stride, TensorLayoutHelper values, V *value_data, int64_t value_slice_stride,
-                     bool descending) {
+  RadixSortKVInPlace(const int key_dims, TensorLayoutHelper keys, K *key_data, int64_t key_slices,
+                     int64_t key_slice_size, int64_t key_slice_stride, TensorLayoutHelper values, V *value_data,
+                     int64_t value_slice_stride, bool descending) {
   static_assert(kBlockSize > 0, "");
 
   // Find the slice of the tensor that we are sorting
@@ -112,8 +108,13 @@ __global__ void __launch_bounds__(MS_MAX_THREAD_PER_BLOCK(kBlockSize))
     return;
   }
 
-  const int64_t keyStartOffset = IndexToOffset<K, kKeyDims>::get(linearIndex, keys);
-  const int64_t valueStartOffset = IndexToOffset<V, kValueDims>::get(linearIndex, values);
+  int64_t keyStartOffset = 0;
+  if (key_dims != -1) {
+    keyStartOffset = IndexToOffset0<K>(key_dims, linearIndex, keys);
+  } else {
+    keyStartOffset = IndexToOffset1<K>(linearIndex, keys);
+  }
+  int64_t valueStartOffset = IndexToOffset1<V>(linearIndex, values);
 
   K *keys_slice = &(key_data[keyStartOffset]);
   V *values_slice = &(value_data[valueStartOffset]);
@@ -173,9 +174,9 @@ __global__ void __launch_bounds__(MS_MAX_THREAD_PER_BLOCK(kBlockSize))
   StoreValues(tmp_storage.store_values).Store(values_iter, local_values, key_slice_size);
 }
 
-template <int A, int kSortSize, int kItemsPerThread, typename K, typename V>
-CUDA_LIB_EXPORT cudaError_t SortFixedSize(const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices,
-                                          int64_t key_slice_size, int64_t key_slice_stride,
+template <int kSortSize, int kItemsPerThread, typename K, typename V>
+CUDA_LIB_EXPORT cudaError_t SortFixedSize(const int key_dims, const TensorLayoutHelper &key_info, K *key_data,
+                                          int64_t key_slices, int64_t key_slice_size, int64_t key_slice_stride,
                                           const TensorLayoutHelper &value_info, V *value_data,
                                           int64_t value_slice_stride, bool descending, cudaStream_t cuda_stream) {
   static_assert(kSortSize % kItemsPerThread == 0, "SortSize mod ItemsPerThread should be equal to zero.");
@@ -186,34 +187,24 @@ CUDA_LIB_EXPORT cudaError_t SortFixedSize(const TensorLayoutHelper &key_info, K 
     return cudaErrorNotReady;
   }
 
-  RadixSortKVInPlace<A, -1, block, kItemsPerThread>
-    <<<grid, block, 0, cuda_stream>>>(key_info, key_data, key_slices, key_slice_size, key_slice_stride, value_info,
-                                      value_data, value_slice_stride, descending);
+  RadixSortKVInPlace<block, kItemsPerThread>
+    <<<grid, block, 0, cuda_stream>>>(key_dims, key_info, key_data, key_slices, key_slice_size, key_slice_stride,
+                                      value_info, value_data, value_slice_stride, descending);
   return GetCudaStatus();
 }
 
-#define SortFixedSizeSpec(A, kSortSize, kItemsPerThread, K, V)                                                 \
-  template CUDA_LIB_EXPORT cudaError_t SortFixedSize<A, kSortSize, kItemsPerThread, K, V>(                     \
-    const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices, int64_t key_slice_size,               \
-    int64_t key_slice_stride, const TensorLayoutHelper &value_info, V *value_data, int64_t value_slice_stride, \
+#define SortFixedSizeSpec(kSortSize, kItemsPerThread, K, V)                                                          \
+  template CUDA_LIB_EXPORT cudaError_t SortFixedSize<kSortSize, kItemsPerThread, K, V>(                              \
+    const int key_dims, const TensorLayoutHelper &key_info, K *key_data, int64_t key_slices, int64_t key_slice_size, \
+    int64_t key_slice_stride, const TensorLayoutHelper &value_info, V *value_data, int64_t value_slice_stride,       \
     bool descending, cudaStream_t cuda_stream)
 
-#define SortFixedSizeSpecKV(K, V)                                                                            \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLast, kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread, K, V);       \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLast, kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread, K, V);       \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLast, kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread, K, V);       \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLast, kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread, K, V);       \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLast, kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread, K, V);       \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLastSecond, kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread, K, V); \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLastSecond, kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread, K, V); \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLastSecond, kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread, K, V); \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLastSecond, kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread, K, V); \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsLastSecond, kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread, K, V); \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsSecond, kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread, K, V);     \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsSecond, kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread, K, V);     \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsSecond, kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread, K, V);     \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsSecond, kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread, K, V);     \
-  SortFixedSizeSpec(kFixedSizeSortKeyDimsSecond, kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread, K, V);
+#define SortFixedSizeSpecKV(K, V)                                           \
+  SortFixedSizeSpec(kFixedSizeLevel1, kFixedSizeLevel1ItemPreThread, K, V); \
+  SortFixedSizeSpec(kFixedSizeLevel2, kFixedSizeLevel2ItemPreThread, K, V); \
+  SortFixedSizeSpec(kFixedSizeLevel3, kFixedSizeLevel3ItemPreThread, K, V); \
+  SortFixedSizeSpec(kFixedSizeLevel4, kFixedSizeLevel4ItemPreThread, K, V); \
+  SortFixedSizeSpec(kFixedSizeLevel5, kFixedSizeLevel5ItemPreThread, K, V);
 
 SortFixedSizeSpecKV(bool, int64_t);
 SortFixedSizeSpecKV(int8_t, int64_t);

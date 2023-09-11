@@ -18,15 +18,19 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_pub_impl.cuh"
 
 template <typename T>
-struct BinaryFunc<BinaryOpType::kGreater, T, T, bool> {
+struct BinaryFunc<BinaryOpType::kMaximum, T, T, T> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs > rhs; }
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) const { return lhs > rhs ? lhs : rhs; }
 };
-REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kGreater);
+REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kMaximum);
+REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kMaximum);
+REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kMaximum);
 
 template <typename T>
-struct BinaryFunc<BinaryOpType::kLess, T, T, bool> {
+struct BinaryFunc<BinaryOpType::kMinimum, T, T, T> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) const { return lhs < rhs; }
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) const { return lhs < rhs ? lhs : rhs; }
 };
-REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(BinaryOpType::kLess);
+REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kMinimum);
+REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kMinimum);
+REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kMinimum);

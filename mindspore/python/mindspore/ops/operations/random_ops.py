@@ -800,8 +800,8 @@ class RandomChoiceWithMask(Primitive):
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
 
-        - **index** (Tensor) - The output shape is 2-D.
-        - **mask** (Tensor) - The output shape is 1-D.
+        - **index** (Tensor) - The output shape is 2-D, its shape is :math:`(count, rank of input_x).
+        - **mask** (Tensor) - The output shape is 1-D, its shape is :math:`(count).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

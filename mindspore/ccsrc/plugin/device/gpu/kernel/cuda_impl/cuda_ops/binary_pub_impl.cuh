@@ -227,4 +227,54 @@ cudaError_t BinaryOpWithBroadcastCudaFunc(const bool is_broadcast, const std::ve
     const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,            \
     const std::vector<int64_t> &out_shape, Complex<double> *in0, double *in1, Complex<double> *out, size_t device_id, \
     cudaStream_t cuda_stream)
+
+#define REGISTER_BINARY_OP_CUDA_FUNC_COMPARE_TYPE(op)                                                          \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, double, double, bool>(                \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, double *input0, double *input1, bool *output, size_t device_id,     \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, float, float, bool>(                  \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, float *input0, float *input1, bool *output, size_t device_id,       \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, half, half, bool>(                    \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, half *input0, half *input1, bool *output, size_t device_id,         \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, bool, bool, bool>(                    \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, bool *input0, bool *input1, bool *output, size_t device_id,         \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, int8_t, int8_t, bool>(                \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, int8_t *input0, int8_t *input1, bool *output, size_t device_id,     \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, uint8_t, uint8_t, bool>(              \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, uint8_t *input0, uint8_t *input1, bool *output, size_t device_id,   \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, int16_t, int16_t, bool>(              \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, int16_t *input0, int16_t *input1, bool *output, size_t device_id,   \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, uint16_t, uint16_t, bool>(            \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, uint16_t *input0, uint16_t *input1, bool *output, size_t device_id, \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, int32_t, int32_t, bool>(              \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, int32_t *input0, int32_t *input1, bool *output, size_t device_id,   \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, uint32_t, uint32_t, bool>(            \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, uint32_t *input0, uint32_t *input1, bool *output, size_t device_id, \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, int64_t, int64_t, bool>(              \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, int64_t *input0, int64_t *input1, bool *output, size_t device_id,   \
+    cudaStream_t cuda_stream);                                                                                 \
+  template CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc<op, uint64_t, uint64_t, bool>(            \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
+    const std::vector<int64_t> &out_shape, uint64_t *input0, uint64_t *input1, bool *output, size_t device_id, \
+    cudaStream_t cuda_stream)
 #endif

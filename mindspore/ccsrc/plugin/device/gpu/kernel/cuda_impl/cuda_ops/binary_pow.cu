@@ -18,24 +18,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_pub_impl.cuh"
 
 template <typename In0_t, typename In1_t, typename Out_t>
-struct BinaryFunc<BinaryOpType::kAdd, In0_t, In1_t, Out_t> {
-  __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const { return val0 + val1; }
-};
-REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kAdd);
-REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kAdd);
-REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(BinaryOpType::kAdd);
-
-template <typename In0_t, typename In1_t, typename Out_t>
-struct BinaryFunc<BinaryOpType::kSub, In0_t, In1_t, Out_t> {
-  __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const { return val0 - val1; }
-};
-REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kSub);
-REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kSub);
-REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(BinaryOpType::kSub);
-
-template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Out_t, typename std::is_floating_point<Out_t>::type> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
   __device__ __host__ __forceinline__ Out_t operator()(const In0_t &lhs, const In1_t &rhs) const {
