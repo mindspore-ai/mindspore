@@ -77,7 +77,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         timeline_list = timeline_list.tolist()
         cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
-        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
         if cpu_timeline_list:
             timeline_list.extend(cpu_timeline_list)
             timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
