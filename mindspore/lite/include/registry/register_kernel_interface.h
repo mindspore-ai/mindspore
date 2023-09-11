@@ -30,17 +30,9 @@ class Kernel;
 }
 namespace registry {
 /// \brief KernelInterfaceCreator defined a functor to create KernelInterface.
-///
-/// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-/// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-/// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
 using KernelInterfaceCreator = std::function<std::shared_ptr<kernel::KernelInterface>()>;
 
 /// \brief RegisterKernelInterface defined registration and acquisition of KernelInterface.
-///
-/// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-/// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-/// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
 class MS_API RegisterKernelInterface {
  public:
   /// \brief Static method to register op whose primitive type is custom.
@@ -48,10 +40,6 @@ class MS_API RegisterKernelInterface {
   /// \param[in] provider Define the identification of user.
   /// \param[in] op_type Define the concrete type of a custom op.
   /// \param[in] creator Define the KernelInterface create function.
-  ///
-  /// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-  /// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-  /// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
   ///
   /// \return Status as a status identification of registering.
   inline static Status CustomReg(const std::string &provider, const std::string &op_type,
@@ -63,10 +51,6 @@ class MS_API RegisterKernelInterface {
   /// \param[in] op_type Define the ordinary op type.
   /// \param[in] creator Define the KernelInterface create function.
   ///
-  /// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-  /// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-  /// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
-  ///
   /// \return Status as a status identification of registering.
   inline static Status Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator);
 
@@ -75,10 +59,6 @@ class MS_API RegisterKernelInterface {
   /// \param[in] provider Define the identification of user.
   /// \param[in] primitive Define the attributes of a certain op.
   /// \param[in] kernel Define the kernel of a certain op.
-  ///
-  /// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-  /// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-  /// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
   ///
   /// \return Boolean value to represent registration of a certain op is existing or not.
   inline static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
@@ -102,10 +82,6 @@ class MS_API KernelInterfaceReg {
   /// \param[in] provider Define the identification of user.
   /// \param[in] op_type Define the ordinary op type.
   /// \param[in] creator Define the KernelInterface create function.
-  ///
-  /// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-  /// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-  /// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
   KernelInterfaceReg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
     (void)RegisterKernelInterface::Reg(provider, op_type, creator);
   }
@@ -115,10 +91,6 @@ class MS_API KernelInterfaceReg {
   /// \param[in] provider Define the identification of user.
   /// \param[in] op_type Define the concrete type of a custom op.
   /// \param[in] creator Define the KernelInterface create function.
-  ///
-  /// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-  /// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-  /// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
   KernelInterfaceReg(const std::string &provider, const std::string &op_type, const KernelInterfaceCreator creator) {
     (void)RegisterKernelInterface::CustomReg(provider, op_type, creator);
   }
@@ -146,10 +118,6 @@ std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInter
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the ordinary op type.
 /// \param[in] creator Define the KernelInterface create function.
-///
-/// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-/// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-/// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
 #define REGISTER_KERNEL_INTERFACE(provider, op_type, creator)                                                    \
   namespace {                                                                                                    \
   static mindspore::registry::KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator); \
@@ -160,10 +128,6 @@ std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInter
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the concrete type of a custom op.
 /// \param[in] creator Define the KernelInterface create function.
-///
-/// \note Deprecated, replace with [InferShape interface of mindspore::kernel::Kernel]
-/// (https://www.mindspore.cn/lite/api/en/master/api_cpp/mindspore_kernel.html), please refer to
-/// [custom kernel](https://www.mindspore.cn/lite/docs/en/master/use/register_kernel.html) for detail.
 #define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator)                                           \
   namespace {                                                                                                  \
   static mindspore::registry::KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, \
