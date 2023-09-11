@@ -14,7 +14,7 @@
 # ============================================================================
 """Rewrite module api: Node."""
 
-from typing import Union, Optional
+from typing import Union, Optional, List, Dict
 from types import FunctionType
 
 from mindspore.nn import Cell
@@ -51,8 +51,8 @@ class Node:
         return self._node == other._node
 
     @staticmethod
-    def create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
-                         kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False) -> 'Node':
+    def create_call_cell(cell: Cell, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None,
+                         kwargs: Dict[str, ScopedValue] = None, name: str = "", is_sub_net: bool = False) -> 'Node':
         """
         Create a node. Only support create from a `Cell` now.
 
@@ -64,10 +64,11 @@ class Node:
 
         Args:
             cell (Cell): Cell-operator of this forward-layer.
-            targets (list[ScopedValue]): Indicate output names. Used as targets of an assign statement in source code.
-            args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
+            targets (List[Union[ScopedValue, str]]): Indicate output names. Used as targets of an assign statement in
+                source code.
+            args (List[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
                 source code. Default: ``None`` , which indicates the `cell` has no args inputs.
-            kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
+            kwargs (Dict[str, ScopedValue]): Type of key must be `str` and type of value must be `ScopedValue`.
                 Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
                 code. Default: ``None`` , which indicates the `cell` has no kwargs inputs.
             name (str): Indicate the name of node. Used as field name in source code. Default is None. Rewrite will
@@ -112,18 +113,19 @@ class Node:
         return Node(NodeImpl.create_call_op(cell, None, targets, args, kwargs, name, is_sub_net))
 
     @staticmethod
-    def create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
-                             kwargs: {str: ScopedValue}=None) -> 'Node':
+    def create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]],
+                             args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None) -> 'Node':
         """
         Create a node that corresponds to a function call. The `function` object is saved into network, and used via
         getting object from `self.` .
 
         Args:
             function (FunctionType): The function to be called.
-            targets (list[str]): indicates output names. Used as targets of an assign statement in source code.
-            args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
+            targets (List[Union[ScopedValue, str]]): indicates output names. Used as targets of an assign statement in
+                source code.
+            args (List[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
                 source code. Default: ``None`` , which indicates the `function` has no args inputs.
-            kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
+            kwargs (Dict[str, ScopedValue]): Type of key must be `str` and type of value must be `ScopedValue`.
                 Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
                 code. Default: ``None`` , which indicates the `function` has no kwargs inputs.
 
@@ -162,7 +164,8 @@ class Node:
         return Node(NodeImpl._create_call_function(function, targets, args, kwargs))
 
     @staticmethod
-    def create_input(param_name: str, default: Optional[ScopedValue] = None) -> 'Node':  # pylint: disable=C0111
+    def create_input(param_name: str, default: Optional[ScopedValue] = None) -> 'Node':
+    # pylint: disable=missing-function-docstring
         Validator.check_value_type("param_name", param_name, [str], "Node")
         if default is not None:
             Validator.check_value_type("default", default, [ScopedValue], "Node")

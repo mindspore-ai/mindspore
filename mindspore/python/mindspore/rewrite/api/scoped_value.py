@@ -14,7 +14,7 @@
 # ============================================================================
 """Rewrite module api: ValueType and ScopedValue."""
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple
 from mindspore import _checkparam as Validator
 
 
@@ -121,13 +121,14 @@ class ScopedValue:
         return cls(ValueType.NamingValue, scope, name)
 
     @staticmethod
-    def create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None) -> ['ScopedValue']:
+    def create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None) \
+        -> List['ScopedValue']:
         """
         Create a list of naming `ScopedValue`.
 
         Args:
-            names (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
-            scopes (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
+            names (List[str] or Tuple[str]): List or tuple of `str` represents names of referenced variables.
+            scopes (List[str] or Tuple[str]): List or tuple of `str` represents scopes of referenced variables.
                 Default: ``None`` .
 
         Returns:
