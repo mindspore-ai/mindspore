@@ -32,7 +32,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/bce_with_logits_loss_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/resize_linear1d_fission.h"
@@ -231,8 +230,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicBroadcastToFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
-  ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
-  ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxDropoutDoMaskV3Fusion>());
   const auto &pass_creators =
@@ -435,8 +432,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicBroadcastToFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
-  ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
-  ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
