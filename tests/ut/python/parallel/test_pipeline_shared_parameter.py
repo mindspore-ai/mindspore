@@ -190,3 +190,43 @@ def test_pipeline_lazy_inline_stage1():
     model.train(2, dataset, dataset_sink_mode=False)
     exec_shell = "unset MS_DEV_CELL_REUSE"
     os.system(exec_shell)
+
+
+def test_pipeline_auto_parallel_lazy_inline_stage0():
+    """
+    Feature: share parameter in lazy inline
+    Description: two cell share one parameter
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_auto_parallel_lazy_inline_stage1():
+    """
+    Feature: share parameter in lazy inline
+    Description: two cell share one parameter
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((16, 1), (1, 1))
+    stra2 = ((8, 1), (1, 1))
+    net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell2.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
