@@ -103,6 +103,11 @@ const BaseRef AdaptiveMaxPool2DFusion::DefinePattern() const {
   return VectorRef({prim::kPrimAdaptiveMaxPool2d, X});
 }
 
+const BaseRef AdaptiveMaxPool2DGeFusion::DefinePattern() const {
+  VarPtr X = std::make_shared<Var>();
+  return VectorRef({prim::kPrimAdaptiveMaxPool2D, X});
+}
+
 const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);

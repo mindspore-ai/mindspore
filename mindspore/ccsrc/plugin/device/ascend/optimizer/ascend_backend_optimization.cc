@@ -620,6 +620,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   opt_acl_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   opt_acl_pm->AddPass(std::make_shared<ExpanderFallback>());
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
+  opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
