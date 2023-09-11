@@ -135,14 +135,14 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \brief Handle session according to context.
   ///
   /// \param[in] context Define model context, which will pass to session.
-  static void HandleContext(const std::shared_ptr<Context> &context);
+  static void HandleContext(const std::shared_ptr<Context> &context, bool use_experimental_rts = false);
 
   /// \brief Select InferSession type.
   ///
   /// \param[in] context Define model context, which will pass to session.
   ///
   /// \return The Session type, eg kSingleOpSession for Ascend, etc.
-  static SessionType SelectSession(const std::shared_ptr<Context> &context);
+  static SessionType SelectSession(const std::shared_ptr<Context> &context, bool use_experimental_rts = false);
 };  // namespace mindspore
 }  // namespace mindspore
 #endif
