@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, \
-    generate_statistic_dump_json, check_dump_structure, find_nth_pos
+    generate_statistic_dump_json, check_dump_structure, find_nth_pos, check_statistic_dump, check_data_dump
 from tests.security_utils import security_off_wrap
 
 
@@ -415,34 +415,6 @@ def test_ascend_not_overflow_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     run_not_overflow_dump()
-
-def check_statistic_dump(dump_file_path):
-    output_name = "statistic.csv"
-    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
-    real_path = os.path.realpath(output_path)
-    with open(real_path) as f:
-        reader = csv.DictReader(f)
-        stats = list(reader)
-        num_tensors = len(stats)
-        assert num_tensors == 3
-        for tensor in stats:
-            if tensor['IO'] == 'input' and tensor['Slot'] == 0:
-                assert tensor['Min Value'] == '1'
-                assert tensor['Max Value'] == '6'
-            elif tensor['IO'] == 'input' and tensor['Slot'] == 1:
-                assert tensor['Min Value'] == '7'
-                assert tensor['Max Value'] == '12'
-            elif tensor['IO'] == 'output' and tensor['Slot'] == 0:
-                assert tensor['Min Value'] == '8'
-                assert tensor['Max Value'] == '18'
-
-def check_data_dump(dump_file_path):
-    output_name = "Add.Add-op*.output.0.*.npy"
-    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
-    real_path = os.path.realpath(output_path)
-    output = np.load(real_path)
-    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
-    assert np.array_equal(output, expect)
 
 
 def run_train():

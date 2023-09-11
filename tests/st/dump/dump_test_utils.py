@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@ Utils for testing dump feature.
 
 import json
 import os
+import glob
+import csv
+import numpy as np
+
 
 async_dump_dict = {
     "common_dump_settings": {
@@ -105,7 +109,7 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     Util function to generate dump configuration json file.
     """
     data = {}
-    if test_key in ["test_async_dump", "test_async_dump_dataset_sink"]:
+    if test_key in ["test_async_dump", "test_async_dump_dataset_sink", "test_ge_dump"]:
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
     elif test_key in ("test_e2e_dump", "test_e2e_dump_trans_false"):
@@ -117,7 +121,7 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     elif test_key in ("test_GPU_e2e_multi_root_graph_dump", "test_Ascend_e2e_multi_root_graph_dump"):
         data = e2e_dump_dict_2
         data["common_dump_settings"]["path"] = dump_path
-    elif test_key == "test_Ascend_async_multi_root_graph_dump":
+    elif test_key == "test_Ascend_async_multi_root_graph_dump" or test_key == "test_ge_dump_net_multi_layer_mode1":
         data = async_dump_dict_3
         data["common_dump_settings"]["path"] = dump_path
     elif test_key == "test_async_dump_npy":
@@ -148,7 +152,7 @@ def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
     """
     Util function to generate dump configuration json file.
     """
-    if test_key == "test_async_dump":
+    if test_key == "test_async_dump" or test_key == "test_ge_dump":
         data = async_dump_dict
         common_dump_settings = data.get("common_dump_settings", "")
         if not isinstance(common_dump_settings, dict):
@@ -177,7 +181,7 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     data = {}
     if test_key == "test_gpu_e2e_dump":
         data = e2e_dump_dict
-    elif test_key == "test_async_dump":
+    elif test_key == "test_async_dump" or test_key == "test_ge_dump":
         data = async_dump_dict
         data["common_dump_settings"]["input_output"] = 0
         data["common_dump_settings"]["file_format"] = "npy"
@@ -256,3 +260,35 @@ def find_nth_pos(string, substring, n):
         start = string.find(substring, start + len(substring))
         n -= 1
     return start
+
+
+def check_statistic_dump(dump_file_path):
+    output_name = "statistic.csv"
+    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+    real_path = os.path.realpath(output_path)
+    with open(real_path) as f:
+        reader = csv.DictReader(f)
+        stats = list(reader)
+        def get_add_node(statistic):
+            return statistic['Op Type'] == 'Add'
+        add_statistics = list(filter(get_add_node, stats))
+        num_tensors = len(add_statistics)
+        assert num_tensors == 3
+        for tensor in add_statistics:
+            if tensor['IO'] == 'input' and tensor['Slot'] == 0:
+                assert tensor['Min Value'] == '1'
+                assert tensor['Max Value'] == '6'
+            elif tensor['IO'] == 'input' and tensor['Slot'] == 1:
+                assert tensor['Min Value'] == '7'
+                assert tensor['Max Value'] == '12'
+            elif tensor['IO'] == 'output' and tensor['Slot'] == 0:
+                assert tensor['Min Value'] == '8'
+                assert tensor['Max Value'] == '18'
+
+def check_data_dump(dump_file_path):
+    output_name = "Add.Add-op*.output.0.*.npy"
+    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+    real_path = os.path.realpath(output_path)
+    output = np.load(real_path)
+    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
+    assert np.array_equal(output, expect)
