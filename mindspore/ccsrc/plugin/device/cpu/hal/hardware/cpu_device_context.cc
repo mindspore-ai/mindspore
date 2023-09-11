@@ -67,6 +67,7 @@
 #endif
 #include "include/common/profiler.h"
 #include "plugin/device/cpu/hal/device/cpu_kernel_task.h"
+#include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 
 namespace mindspore {
 namespace device {
@@ -198,6 +199,7 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   if (user_data != nullptr) {
     FillUserData(user_data, device_address.get());
   }
+  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
   return device_address;
 }
 

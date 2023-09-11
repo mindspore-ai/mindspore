@@ -65,6 +65,7 @@
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
+#include "plugin/device/gpu/hal/device/gpu_device_synchronizer.h"
 #include "include/common/profiler.h"
 #include "ops/ascend_op_name.h"
 #include "runtime/pynative/async/kernel_task.h"
@@ -349,6 +350,8 @@ DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   if (user_data != nullptr) {
     SetUserData(device_address.get(), user_data);
   }
+
+  device_address->set_device_synchronizer(std::make_shared<GPUDeviceSynchronizer>());
   return device_address;
 }
 

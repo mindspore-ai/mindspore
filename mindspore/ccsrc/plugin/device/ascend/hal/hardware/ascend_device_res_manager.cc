@@ -21,6 +21,7 @@
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_pin_mem_pool.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 
 namespace mindspore {
 namespace device {
@@ -152,6 +153,7 @@ DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_
     MS_LOG(DEBUG) << "shape size is empty.";
   }
   device_address->set_host_shape(shape);
+  device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
   return device_address;
 }
 

@@ -48,6 +48,11 @@ class MS_CORE_API KernelTensorValue : public Value {
     obj_type_id_ = kObjectTypeNumber;
   }
 
+  // This constructor is used to construct the KernelTensorValue to hold any data type (such as Tensor, ValueSequence,
+  // String, Scalar) use continuous memory.
+  // This constructor only malloc raw memory to prepare store value data.
+  KernelTensorValue(size_t size, const TypePtr &t);
+
   ~KernelTensorValue() = default;
 
   KernelTensorValue(const KernelTensorValue &other) = delete;
@@ -59,18 +64,32 @@ class MS_CORE_API KernelTensorValue : public Value {
 
   bool operator==(const KernelTensorValue &other) const;
 
-  // Get the address of the value stored in KernelTensorValue.
+  // Get the const address of the value stored in KernelTensorValue.
   const void *GetDataPtr() const;
+
+  // Get the mutable address of the value stored in KernelTensorValue.
+  void *GetMutableDataPtr();
 
   // Get the buffer size in bytes of the value stored in KernelTensorValue.
   size_t GetDataSize() const;
 
+  // Change the continuous memory size.
+  void Resize(size_t size);
+
  private:
-  // Used to stores values in continuous memory for the types ValueSequence, Tensor, Scalar and String.
+  // Used to store values in continuous memory for the types ValueSequence, Tensor, Scalar and String.
+  // The data_ is read-only after assignment.
   std::variant<std::vector<uint8_t>, tensor::TensorDataPtr, StringImmPtr> data_;
 
   // The object type id for the types ValueSequence, Tensor, Scalar and String.
   TypeId obj_type_id_{TypeId::kTypeUnknown};
+
+  // Used to store values in continuous memory for the types ValueSequence, Tensor, Scalar and String.
+  // The unified_data_ can be read, written and changed size after assignment.
+  std::vector<uint8_t> unified_data_;
+
+  // Whether use unified_data_ to store any type value.
+  bool use_unified_storage_{false};
 };
 
 using KernelTensorValuePtr = std::shared_ptr<KernelTensorValue>;

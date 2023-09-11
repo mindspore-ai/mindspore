@@ -18,6 +18,14 @@
 
 namespace mindspore {
 
+KernelTensorValue::KernelTensorValue(size_t size, const TypePtr &t) : Value(t) {
+  if (t) {
+    obj_type_id_ = t->object_type();
+  }
+  unified_data_.resize(size);
+  use_unified_storage_ = true;
+}
+
 KernelTensorValue::KernelTensorValue(const tensor::TensorDataPtr &tensor_data, const TypePtr &t) : Value(t) {
   data_ = tensor_data;
   obj_type_id_ = kObjectTypeTensorType;
@@ -41,9 +49,25 @@ bool KernelTensorValue::operator==(const Value &other) const {
   }
 }
 
-bool KernelTensorValue::operator==(const KernelTensorValue &other) const { return data_ == other.data_; }
+bool KernelTensorValue::operator==(const KernelTensorValue &other) const {
+  if (use_unified_storage_) {
+    return unified_data_ == other.unified_data_;
+  }
+  return data_ == other.data_;
+}
+
+void *KernelTensorValue::GetMutableDataPtr() {
+  if (use_unified_storage_) {
+    return unified_data_.data();
+  }
+  MS_LOG(EXCEPTION) << "Can not get mutable data pointer for read-only KernelTensorValue.";
+}
 
 const void *KernelTensorValue::GetDataPtr() const {
+  if (use_unified_storage_) {
+    return unified_data_.data();
+  }
+
   switch (obj_type_id_) {
     case kObjectTypeNumber:
     case kObjectTypeTuple: {
@@ -72,6 +96,10 @@ const void *KernelTensorValue::GetDataPtr() const {
 }
 
 size_t KernelTensorValue::GetDataSize() const {
+  if (use_unified_storage_) {
+    return unified_data_.size();
+  }
+
   switch (obj_type_id_) {
     case kObjectTypeNumber:
     case kObjectTypeTuple: {
@@ -97,5 +125,12 @@ size_t KernelTensorValue::GetDataSize() const {
     default:
       MS_LOG(EXCEPTION) << "Can not get data size for type: " << TypeIdLabel(obj_type_id_);
   }
+}
+
+void KernelTensorValue::Resize(size_t size) {
+  if (use_unified_storage_) {
+    return unified_data_.resize(size);
+  }
+  MS_LOG(EXCEPTION) << "Can not resize for read-only KernelTensorValue.";
 }
 }  // namespace mindspore

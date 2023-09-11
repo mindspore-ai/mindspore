@@ -175,6 +175,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Set kernel tensor pointer.
   void set_kernel_tensor(const kernel::KernelTensorPtr &kernel_tensor) { kernel_tensor_ = kernel_tensor; }
 
+  void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
+    kernel_tensor_->set_device_synchronizer(device_synchronizer);
+  }
+
   const void *GetPtr() const {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     return GetDevicePtr();
@@ -221,6 +225,8 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   const std::string &device_name() const { return kernel_tensor_->device_name(); }
   uint32_t device_id() const { return kernel_tensor_->device_id(); }
+
+  void set_stream_id(uint32_t stream_id) { kernel_tensor_->set_stream_id(stream_id); }
 
   void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }

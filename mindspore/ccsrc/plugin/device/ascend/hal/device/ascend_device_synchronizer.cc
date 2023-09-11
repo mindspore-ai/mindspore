@@ -22,7 +22,9 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, size_t stream_id) const {
+bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, mindspore::Format format,
+                                                const ShapeVector &shape, size_t stream_id,
+                                                const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   MS_EXCEPTION_IF_NULL(device_ptr);
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
@@ -41,7 +43,9 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
   return true;
 }
 
-bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, size_t stream_id) const {
+bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, mindspore::Format format,
+                                                const ShapeVector &shape, size_t stream_id,
+                                                const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(device_ptr);
   MS_EXCEPTION_IF_NULL(host_ptr);
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);

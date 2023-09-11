@@ -28,10 +28,14 @@ class AscendDeviceSynchronizer : public DeviceSynchronizer {
   ~AscendDeviceSynchronizer() override = default;
 
   // Copy device memory to host side synchronously.
-  bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, size_t stream_id) const override;
+  bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, mindspore::Format format,
+                        const ShapeVector &shape, size_t stream_id,
+                        const UserDataPtr &user_data = nullptr) const override;
 
   // Copy host memory to device side synchronously.
-  bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, size_t stream_id) const override;
+  bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, mindspore::Format format,
+                        const ShapeVector &shape, size_t stream_id,
+                        const UserDataPtr &user_data = nullptr) const override;
 };
 }  // namespace ascend
 }  // namespace device

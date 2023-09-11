@@ -17,8 +17,12 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_DEVICE_SYNCHRONIZER_H
 #define MINDSPORE_CCSRC_INCLUDE_DEVICE_SYNCHRONIZER_H
 
+#include <memory>
 #include <cstddef>
+#include "include/api/format.h"
+#include "base/user_data.h"
 #include "include/backend/visible.h"
+#include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
 namespace device {
@@ -29,11 +33,16 @@ class BACKEND_EXPORT DeviceSynchronizer {
   virtual ~DeviceSynchronizer() = default;
 
   // Copy device memory to host side synchronously.
-  virtual bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, size_t stream_id) const = 0;
+  virtual bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, mindspore::Format format,
+                                const ShapeVector &shape, size_t stream_id,
+                                const UserDataPtr &user_data = nullptr) const = 0;
 
   // Copy host memory to device side synchronously.
-  virtual bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, size_t stream_id) const = 0;
+  virtual bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, mindspore::Format format,
+                                const ShapeVector &shape, size_t stream_id,
+                                const UserDataPtr &user_data = nullptr) const = 0;
 };
+using DeviceSynchronizerPtr = std::shared_ptr<DeviceSynchronizer>;
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_DEVICE_SYNCHRONIZER_H

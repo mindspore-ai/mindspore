@@ -29,6 +29,7 @@
 #include "include/backend/visible.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/backend/device_synchronizer.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -91,6 +92,7 @@ using AddressPtr = std::shared_ptr<Address>;
 using AddressPtrList = std::vector<AddressPtr>;
 using StreamType = void *;
 using abstract::AbstractBase;
+using device::DeviceSynchronizerPtr;
 // The memory info of kernel launch.
 struct KernelLaunchInfo {
   AddressPtrList inputs_;
@@ -283,15 +285,19 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Get the address of the value converted to continuous memory storage.
   const void *GetValuePtr() const {
-    if (value_ == nullptr) {
-      return nullptr;
+    // There is a origin value in KernelTensor(maybe come from a ValueNode).
+    if (value_ && !value_->isa<ValueAny>()) {
+      if (kernel_tensor_value_ == nullptr) {
+        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
+      }
+      MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+      return kernel_tensor_value_->GetDataPtr();
     }
 
-    if (kernel_tensor_value_ == nullptr) {
-      kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
-      return kernel_tensor_value_ ? kernel_tensor_value_->GetDataPtr() : nullptr;
+    // Sync value data from device.
+    if (!SyncDataFromDevieToHost()) {
+      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
     }
-
     return kernel_tensor_value_->GetDataPtr();
   }
 
@@ -304,21 +310,23 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
-      MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
-      MS_EXCEPTION_IF_CHECK_FAIL((kernel_tensor_value_->GetDataSize() == sizeof(T)),
-                                 "The data size in kernel tensor value which contains a scalar [" +
-                                   std::to_string(kernel_tensor_value_->GetDataSize()) +
-                                   "] is not equal to the data type size [" + std::to_string(sizeof(T)) + "]");
-
-      const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value_->GetDataPtr());
-      MS_EXCEPTION_IF_NULL(data_ptr);
-      return *data_ptr;
+    } else {
+      // Sync value data from device.
+      if (!SyncDataFromDevieToHost()) {
+        MS_LOG(ERROR) << "Sync data form devie to host side failed";
+        return std::nullopt;
+      }
     }
 
-    if (host_value_.empty() && device_ptr_ == nullptr) {
-      return std::nullopt;
-    }
-    return *reinterpret_cast<T *>(host_value_.data());
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+    MS_EXCEPTION_IF_CHECK_FAIL((kernel_tensor_value_->GetDataSize() == sizeof(T)),
+                               "The data size in kernel tensor value which contains a scalar [" +
+                                 std::to_string(kernel_tensor_value_->GetDataSize()) +
+                                 "] is not equal to the data type size [" + std::to_string(sizeof(T)) + "]");
+
+    const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value_->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    return *data_ptr;
   }
 
   // Get the std::vector/std::string value store in KernelTensor if exists.
@@ -334,42 +342,24 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
-      MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
-
-      const typename T::value_type *data_ptr =
-        reinterpret_cast<const typename T::value_type *>(kernel_tensor_value_->GetDataPtr());
-      MS_EXCEPTION_IF_NULL(data_ptr);
-      size_t element_num = kernel_tensor_value_->GetDataSize() / sizeof(typename T::value_type);
-
-      return T(data_ptr, data_ptr + element_num);
+    } else {
+      // Sync value data from device.
+      if (!SyncDataFromDevieToHost()) {
+        MS_LOG(ERROR) << "Sync data form devie to host side failed";
+        return std::nullopt;
+      }
     }
 
-    if (host_value_.empty() && device_ptr_ == nullptr) {
-      return std::nullopt;
-    }
-    typename T::value_type *data = reinterpret_cast<typename T::value_type *>(host_value_.data());
-    MS_EXCEPTION_IF_NULL(data);
-    size_t type_in_byte = GetTypeByte(dtype_);
-    if (type_in_byte == 0) {
-      // For kTypeNone or kTypeAny, return empty value.
-      return std::nullopt;
-    }
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+    const typename T::value_type *data_ptr =
+      reinterpret_cast<const typename T::value_type *>(kernel_tensor_value_->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    size_t element_num = kernel_tensor_value_->GetDataSize() / sizeof(typename T::value_type);
 
-    return T(data, data + size_ / type_in_byte);
+    return T(data_ptr, data_ptr + element_num);
   }
 
-  // Get the value for pointer type, such as the pointer pointing the data of a Tensor store in value.
-  // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
-  template <typename T, typename std::enable_if<std::is_pointer_v<T>>::type * = nullptr>
-  std::optional<T> GetValue() {
-    if (value_ && value_->isa<tensor::Tensor>()) {
-      return reinterpret_cast<T>(value_->cast<tensor::TensorPtr>()->data_c());
-    }
-    return std::nullopt;
-  }
-
-  // Get the value for type which is not scalar, std::vector, std::string and pointer type store in KernelTensor
-  // if exists.
+  // Get the value stored in KernelTensor for type which is not scalar, std::vector or std::string if exists.
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
@@ -433,17 +423,25 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set device target name, such "GPU","Ascend".
   void set_device_name(const std::string &device_name) { device_name_ = device_name; }
 
-  // Get deviec id.
+  // Get device id.
   uint32_t device_id() const { return device_id_; }
 
-  // Set deviec id.
+  // Set device id.
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
+
+  // Set logical stream id.
+  void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
 
   // Get user data maintained by the KernelTensor.
   const UserDataPtr &user_data() const { return user_data_; }
 
   // Set user data to the KernelTensor.
   void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
+
+  // Set device synchronizer to the KernelTensor.
+  void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
+    device_synchronizer_ = device_synchronizer;
+  }
 
   // The following member methods are required by the old KernelTensor.
   KernelTensor(const KernelTensor &copy_tensor) {
@@ -529,19 +527,27 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Note: To avoid calling the interface by mistake in KernelMod, declare the interface private in the subclass and
   // public in the parent class.
   ValuePtr GetValue() const override {
-    if (value_ == nullptr) {
-      return kValueAny;
+    // There is a origin value in KernelTensor(maybe come from a ValueNode).
+    if (value_ && !value_->isa<ValueAny>()) {
+      if (kernel_tensor_value_ == nullptr) {
+        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
+        return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
+      }
+      return kernel_tensor_value_;
     }
 
-    if (kernel_tensor_value_ == nullptr) {
-      kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
-      return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
+    // Sync value data from device.
+    if (!SyncDataFromDevieToHost()) {
+      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
     }
     return kernel_tensor_value_;
   }
 
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
+
+  // Synchronize value data from device to host side.
+  bool SyncDataFromDevieToHost() const;
 
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
   // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
@@ -570,9 +576,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The padding type corresponds to data format.
   std::string padding_type_;
 
-  // The buffer used to store the content which is copied from device side.
-  std::vector<uint8_t> host_value_;
-
   // The pointer to the device side that corresponds to KernelTensor, used in runtime.
   void *device_ptr_{nullptr};
 
@@ -585,8 +588,14 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Represents the device card id associated with the KernelTensor.
   uint32_t device_id_;
 
+  // The stream index in all stream array managed by Framework, starting form 0.
+  size_t stream_id_{SIZE_MAX};
+
   // User data is the extra data required by the kernel or framework.
   UserDataPtr user_data_{nullptr};
+
+  // For synchronizing data between device and host.
+  DeviceSynchronizerPtr device_synchronizer_{nullptr};
 
   // The following member variables are required by the old KernelTensor.
   TypeId meta_type_{kObjectTypeTensorType};
