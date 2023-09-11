@@ -34,6 +34,20 @@ def _valid_index(cell_num, index, op_name=None):
     return index % cell_num
 
 
+def _valid_index_for_inserting(cell_num, index, op_name=None):
+    """
+    Internal function, used to detect the value and type of index for inserting Cell in
+    SequentialCell or CellList.
+    """
+    msg_prefix = f"For '{op_name}', the" if op_name else "The"
+    if not isinstance(index, int):
+        raise TypeError(f"{msg_prefix} type of 'index' must be int, but got {type(index).__name__}.")
+    if not -cell_num <= index <= cell_num:
+        raise IndexError(f"{msg_prefix} value of 'index' must be a number in range [{-cell_num}, {cell_num}], "
+                         f"but got {index}.")
+    return index % cell_num if cell_num != 0 else index
+
+
 def _valid_cell(cell, op_name=None):
     """Internal function, used to check whether the input cell is a subclass of Cell."""
     if issubclass(cell.__class__, Cell):
@@ -290,7 +304,7 @@ class SequentialCell(Cell):
             cell(Cell): The Cell to be inserted.
         """
         cls_name = self.__class__.__name__
-        idx = _valid_index(len(self), index, cls_name)
+        idx = _valid_index_for_inserting(len(self), index, cls_name)
         _valid_cell(cell, cls_name)
         length = len(self)
         prefix, key_index = _get_prefix_and_index(self._cells)
@@ -413,7 +427,7 @@ class CellList(_CellListBase, Cell):
             cell(Cell): The Cell to be inserted.
         """
         cls_name = self.__class__.__name__
-        idx = _valid_index(len(self), index, cls_name)
+        idx = _valid_index_for_inserting(len(self), index, cls_name)
         _valid_cell(cell, cls_name)
         length = len(self)
         prefix, key_index = _get_prefix_and_index(self._cells)
