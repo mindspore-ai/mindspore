@@ -937,9 +937,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<DoTransPrimitiveFunctionEvaluator>(prim);
   }
   if (prim->isa<PrimitiveFunction>()) {
-    auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
-    auto op_def = mindspore::ops::GetOpDef(prim->name());
-    return std::make_shared<PrimitiveFunctionEvaluator>(prim, op_def, frontend_func_impl);
+    return std::make_shared<PrimitiveFunctionEvaluator>(prim->cast<PrimitiveFunctionPtr>());
   }
 
   auto standard_evaluator = GetStandardPrimEvaluator(prim);
