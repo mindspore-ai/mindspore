@@ -39,7 +39,7 @@ BaseShapePtr AnfNode::Shape() const {
 }
 
 std::string AnfNode::ToString() const {
-  return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());
+  return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->debug_info());
 }
 
 std::string CNode::fullname_with_scope() {

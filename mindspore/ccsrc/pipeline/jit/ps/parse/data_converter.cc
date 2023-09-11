@@ -760,7 +760,6 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
     return nullptr;
   }
 
-  data_converter::MakeProperNameToFuncGraph(func_graph, obj_id);
   data_converter::CacheObjectValue(obj_id, func_graph);
   if (!obj_key.empty() && python_mod_get_parse_method == PYTHON_MOD_GET_PARSE_METHOD) {
     MS_LOG(DEBUG) << "Add graph: " << obj_key << ", func_graph: " << func_graph->ToString();
@@ -873,27 +872,6 @@ py::object CallPythonScript(const py::object &script, const py::tuple &args_kwar
 py::set GetPythonScriptIdAttrs(const py::object &script) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   return python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_SCRIPT_ID_ATTRS, script);
-}
-
-// Generate an appropriate name and set to graph debuginfo,
-// character <> can not used in the dot file, so change to another symbol.
-void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(func_graph->debug_info());
-  // Set detail name info of function
-  std::ostringstream oss;
-  for (size_t i = 0; i < name.size(); i++) {
-    if (name[i] == '<') {
-      // ⎡: \u23A1
-      oss << "\u23A1";
-    } else if (name[i] == '>') {
-      // ⎦: \u23A6
-      oss << "\u23A6";
-    } else {
-      oss << name[i];
-    }
-  }
-  func_graph->debug_info()->set_full_name(oss.str());
 }
 
 ValuePtr PyDataToValue(const py::object &obj) {

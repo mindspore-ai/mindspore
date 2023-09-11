@@ -304,7 +304,7 @@ DebugInfoPtr NodeDebugInfo::Copy() const {
 
 std::string GraphDebugInfo::debug_name() {
   if (name_.empty()) {
-    name_ = std::to_string(get_id());
+    name_ = "_anonymous_";  // Represent <anonymous>
   }
   return name_;
 }

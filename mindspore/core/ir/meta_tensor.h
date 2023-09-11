@@ -111,7 +111,6 @@ class MS_CORE_API MetaTensor : public Value {
   TypeId data_type() const { return data_type_; }
 
   std::string ToString() const override;
-  std::string DumpText() const override;
 
   /// \brief Set the data type of a tensor in its MetaTensor.
   ///

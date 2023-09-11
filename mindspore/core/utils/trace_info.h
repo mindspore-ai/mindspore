@@ -465,6 +465,14 @@ class TraceShard : public TraceInfo {
   MS_DECLARE_TRACE_NAME_SYMBOL("shard_ops", "shard_");
   TraceInfoPtr clone() override { return std::make_shared<TraceShard>(*this); }
 };
+
+class TraceAssert : public TraceInfo {
+ public:
+  explicit TraceAssert(const DebugInfoPtr &info) : TraceInfo(info) {}
+  MS_DECLARE_TRACE_NAME_SYMBOL("Assert", "assert_");
+  ~TraceAssert() override = default;
+  TraceInfoPtr clone() override { return std::make_shared<TraceAssert>(*this); }
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_TRACE_INFO_H_
