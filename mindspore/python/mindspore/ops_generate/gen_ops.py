@@ -664,7 +664,12 @@ def generate_enum(yaml_data):
     """
     generate python and c++ enum definition
     """
-    gen_eum_py = ''
+    gen_eum_py_func = ''
+    gen_eum_py_def = f"""
+\"\"\"Operator argument enum definition.\"\"\"
+
+from enum import Enum
+"""
     gen_eum_cc = ''
     eum_cc_head = f"""
 #ifndef MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
@@ -682,54 +687,65 @@ namespace mindspore::ops {{
 
     for enum_name, enum_data in yaml_data.items():
         class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
-        enum_py_code = f"""
+        enum_py_func_code = f"""
 def {enum_name}_to_enum({enum_name}_str):
     {enum_name}_str = {enum_name}_str.upper()
+"""
+        gen_eum_py_def += f"""
+
+class {class_name}(Enum):
 """
         enum_cc_code = f"""enum class {class_name} : int64_t {{
 """
         for enum_key, enum_value in enum_data.items():
-            enum_py_code += f"""    if {enum_name}_str == "{enum_key}":
+            enum_py_func_code += f"""    if {enum_name}_str == "{enum_key}":
         return {enum_value}
+"""
+            gen_eum_py_def += f"""    {enum_key} = {enum_value}
 """
             enum_cc_code += f"""    {enum_key} = {enum_value},
 """
 
         value_error_py = f"""    raise ValueError(f"Invalid {class_name}: {{{enum_name}_str}}")
 """
-        gen_eum_py += enum_py_code + value_error_py + """
+        gen_eum_py_func += enum_py_func_code + value_error_py + """
 """
         gen_eum_cc += enum_cc_code + f"""}};
 
 """
 
     gen_eum_cc += eum_cc_end
-    return gen_eum_py, gen_eum_cc
+    return gen_eum_py_func, gen_eum_py_def, gen_eum_cc
 
 
 def generate_enum_code(work_path):
     """Generate python function and c++ definition for enum yaml."""
     enum_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
+    yaml_str = None
+    with open(enum_yaml_path, 'r') as yaml_file:
+        yaml_str = yaml.safe_load(yaml_file)
+    py_enum_func, py_enum_def, cc_enum = generate_enum(yaml_str)
+
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
     dst_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py')
     tmp_dst_arg_handler_path = os.path.join(work_path,
                                             'mindspore/python/mindspore/ops/auto_generate/tmp_gen_arg_handler.py')
-
-    yaml_str = None
-    with open(enum_yaml_path, 'r') as yaml_file:
-        yaml_str = yaml.safe_load(yaml_file)
-    py_enum, cc_enum = generate_enum(yaml_str)
-
     os.system(f'cp {src_arg_handler_path} {tmp_dst_arg_handler_path}')
     with open(tmp_dst_arg_handler_path, 'a') as py_file:
-        py_file.write(py_enum)
+        py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
 
-    enum_def_path = os.path.join(work_path, 'mindspore/core/ops/gen_enum_def.h')
-    tmp_enum_def_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_enum_def.h')
-    with open(tmp_enum_def_path, 'w') as cc_file:
+    enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py')
+    tmp_enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_enum_def.py')
+    with open(tmp_enum_def_py_path, 'w') as cc_file:
+        cc_file.write(py_licence_str + py_enum_def)
+    check_change_and_replace_file(enum_def_py_path, tmp_enum_def_py_path)
+
+    enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_enum_def.h')
+    tmp_enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_enum_def.h')
+    with open(tmp_enum_def_cc_path, 'w') as cc_file:
         cc_file.write(cc_license_str + cc_enum)
-    check_change_and_replace_file(enum_def_path, tmp_enum_def_path)
+    check_change_and_replace_file(enum_def_cc_path, tmp_enum_def_cc_path)
 
 
 def merge_files(origin_dir, dst_file, file_format):
