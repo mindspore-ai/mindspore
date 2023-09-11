@@ -95,6 +95,9 @@ def set_env(func):
                     os.environ['ASCEND_CUSTOM_OPP_PATH']
             else:
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_tbe_custom_kernel_path
+        else:
+            logging.warning(
+                "mslite tbe_and_aicpu custom kernel path not found")
         if os.path.exists(mslite_ascend_ascendc_custom_kernel_path):
             if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path + ":" + \
@@ -102,7 +105,7 @@ def set_env(func):
             else:
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path
         else:
-            logging.warning("mslite custom kernel path not found")
+            logging.warning("mslite ascendc custom kernel path not found")
         return func(*args, **kwargs)
     return warpper
 

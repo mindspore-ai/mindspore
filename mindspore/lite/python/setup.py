@@ -46,7 +46,9 @@ def _get_package_data():
     custom_ops_data = ['custom_kernels/*', 'custom_kernels/*/*', 'custom_kernels/*/*/*', 'custom_kernels/*/*/*/*',
                        'custom_kernels/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*',
                        'custom_kernels/*/*/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*/*/*',
-                       'custom_kernels/*/*/*/*/*/*/*/*/*/*']
+                       'custom_kernels/*/*/*/*/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*/*/*/*/*',
+                       'custom_kernels/*/*/*/*/*/*/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*/*/*/*/*/*/*',
+                       'custom_kernels/*/*/*/*/*/*/*/*/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*']
     pkg_data.extend(custom_ops_data)
     if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
         pkg_data.append('lite_infer.py')
