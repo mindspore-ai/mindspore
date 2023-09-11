@@ -14,9 +14,10 @@
 # ============================================================================
 import numpy as np
 import pytest
-from mindspore import Tensor
+from mindspore import Tensor, complex64
 from mindspore.ops.operations import array_ops as P
 import mindspore.common.dtype as ms
+from mindspore.common.api import _pynative_executor
 
 
 @pytest.mark.level1
@@ -95,3 +96,20 @@ def test_conjugate_transpose_int32_2x2x2():
     conjugate_transpose_ms_out = conjugate_transpose_net(input_c, perm)
 
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conjugate_transpose_zero_rank():
+    """
+    Feature:  ConjugateTranspose input with zero rank.
+    Description: Compatible with Tensorflow's ConjugateTranspose.
+    Expectation: raise error and no core dump.
+    """
+    perm = ()
+    input_c = Tensor(np.random.uniform(-10, 10, size=())).astype(complex64)
+    conjugate_transpose_net = P.ConjugateTranspose()
+    with pytest.raises(RuntimeError):
+        _ = conjugate_transpose_net(input_c, perm)
+        _pynative_executor.sync()
