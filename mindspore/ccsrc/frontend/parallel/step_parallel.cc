@@ -1804,9 +1804,63 @@ static RedistributionOpListPtr InferSensRedistribution(const AnfNodePtr &node, c
   return sens_redistribution_list;
 }
 
+// reshape1 ---> depend ---> call @sub_graph(x, y, z)
+// sub_graph(x, y, z): reshape2(y)
+// find the reshape1 through y
+static AnfNodePtr RefParameterToActualNode(const AnfNodePtr &node) {
+  if (!node->isa<Parameter>()) {
+    return nullptr;
+  }
+  auto node_param_ptr = node->cast<ParameterPtr>();
+  if (node_param_ptr->has_default()) {
+    return node;
+  }
+  auto sub_func_graph = node_param_ptr->func_graph();
+  auto call_cnodes_map = sub_func_graph->func_graph_cnodes_index();
+  auto sub_graph_parameters = sub_func_graph->parameters();
+  auto curr_param_iter = std::find(sub_graph_parameters.begin(), sub_graph_parameters.end(), node);
+  if (curr_param_iter == sub_graph_parameters.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find param " << node_param_ptr->DebugString() << " in current sub_graph";
+  }
+  size_t curr_param_index = static_cast<size_t>(curr_param_iter - sub_graph_parameters.begin());
+  for (const auto &node_pair : call_cnodes_map) {
+    if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
+      continue;
+    }
+    auto cnode = node_pair.first->first->cast<CNodePtr>();
+    auto cnode_input = cnode->input(curr_param_index + 1);
+    auto pre_cnode = GetInputNodeWithFilter(cnode_input, [&](const CNodePtr &cnode) {
+      bool filter = IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+                    IsPrimitiveCNode(cnode, prim::kPrimDepend);
+      return std::make_pair(filter, 1);
+    });
+    if (pre_cnode) {
+      return pre_cnode;
+    }
+  }
+  return nullptr;
+}
+
+static bool IsCommonOp(const AnfNodePtr &node) {
+  CNodePtr cnode = node->cast<CNodePtr>();
+  bool is_comm_op =
+    IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>() && !IsPrimitiveCNode(node, prim::kPrimReshape);
+  return is_comm_op;
+}
+
 static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (node->isa<Parameter>()) {
-    return CreateParameterLayout(node);
+    auto node_param_ptr = node->cast<ParameterPtr>();
+    if (node_param_ptr->has_default()) {
+      return CreateParameterLayout(node);
+    }
+
+    // the node is parameter of sub-graph
+    auto actual_node = RefParameterToActualNode(node);
+    if (actual_node) {
+      return FindPrevLayout(actual_node);
+    }
+    return nullptr;
   }
   if (!node->isa<CNode>()) {
     return nullptr;
@@ -1826,8 +1880,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
     return cnode->user_data<TensorLayout>();
   }
-  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>() &&
-      !IsPrimitiveCNode(node, prim::kPrimReshape)) {
+  if (IsCommonOp(node)) {
     auto layout_ptr = GetOutputLayoutFromCNode(cnode, 0);
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
