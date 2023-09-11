@@ -41,6 +41,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             ast.BoolOp: ["values"],
             ast.UnaryOp: ["operand"],
             ast.Compare: ["left", "comparators"],
+            ast.If: ["test"]
         }
         self._transform_functions = []
 
@@ -160,7 +161,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                 continue
             targets = child.targets
             for target in targets:
-                if not isinstance(target, (ast.Name, ast.Tuple)):
+                if not isinstance(target, (ast.Name, ast.Tuple, ast.List)):
                     raise RuntimeError(
                         error_str(f"currently only support ast.Name targets, but got ast type "
                                   f"'{type(target).__name__}'", child_node=target, father_node=child))
@@ -168,7 +169,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                     target_name = target.id
                     if target_name not in target_names:
                         target_names.append(target_name)
-                elif isinstance(target, ast.Tuple):
+                elif isinstance(target, (ast.Tuple, ast.List)):
                     for elt in target.elts:
                         if not isinstance(elt, ast.Name):
                             raise RuntimeError(

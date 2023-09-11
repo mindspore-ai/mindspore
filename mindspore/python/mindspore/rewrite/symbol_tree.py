@@ -20,6 +20,7 @@ import sys
 import ast
 import importlib.util
 import time
+import collections
 import astunparse
 
 from mindspore.nn import Cell
@@ -79,6 +80,7 @@ class FieldFinder(AstFinder):
     Args:
         scope (ast.AST): An instance of ast node as search scope.
     """
+
     def __init__(self, scope: ast.AST):
         super().__init__(scope)
         self._result = False
@@ -177,6 +179,8 @@ class SymbolTree(Observer, Observable, NodeManager):
         self._tmp_unmodified_strees: {type, str} = {}
         self._tmp_replacers = []
 
+        self._import_modules_dict = collections.defaultdict(list)
+
     def __del__(self):
         for tmp_file in self._tmp_files:
             tmp_file.close()
@@ -202,6 +206,72 @@ class SymbolTree(Observer, Observable, NodeManager):
                         i += 1
                     else:
                         body.names.remove(alias)
+
+    @staticmethod
+    def _remove_duplicated_import(module_ast):
+        """Remove duplicated import of 'net'."""
+        imports = set()
+        futures = set()
+        classes = set()
+
+        class TransImportNode(ast.NodeTransformer):
+            """Find all import nodes from input ast node."""
+
+            def visit_ClassDef(self, node: ast.ClassDef) -> Any:
+                class_str = astunparse.unparse(node)
+                if class_str not in classes:
+                    classes.add(node.name)
+                    return node
+                return
+
+            def visit_Try(self, node: ast.Try) -> Any:
+                if isinstance(node.body[0], (ast.Import, ast.ImportFrom)):
+                    import_str = astunparse.unparse(node)
+                    if import_str not in imports:
+                        imports.add(import_str)
+                        return node
+                return
+
+            def visit_Import(self, node: ast.Import) -> Any:
+                import_str = astunparse.unparse(node)
+                if import_str not in imports:
+                    imports.add(import_str)
+                    return node
+                return
+
+            def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
+                """
+                Once the father class 'A' is defined in the current module, all the next imported class 'A' should
+                be removed. e.g.
+                    def class A():
+                        ...
+                    from xxx import A, B
+                    =>
+                    def class A():
+                        ...
+                    from xxx import B
+                """
+                import_str = astunparse.unparse(node)
+
+                if import_str not in imports:
+                    imports.add(import_str)
+                    # remove "__future__" module
+                    if node.module == '__future__':
+                        futures.add(node.module)
+                        return
+                    # remove modules which have been defined in the code file
+                    # it occurs when class A is a father class and other sub-classes import A
+                    for alias in node.names[:]:
+                        if alias.name in classes:
+                            node.names.remove(alias)
+                    # if the alias(es) in node.names are all removed, this import statement should be removed
+                    if not node.names:
+                        return
+                    return node
+                return
+
+        get_node_handler = TransImportNode()
+        get_node_handler.generic_visit(module_ast)
 
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
@@ -327,6 +397,16 @@ class SymbolTree(Observer, Observable, NodeManager):
         """
         return self._modified
 
+    def set_modified_true(self):
+        """
+        Set self._modified true.
+
+        Self._modified is set true when 'if' exists in the original network.
+        In this situation, different original network instance tends to be different.
+        Hence, the class name should be updated.
+        """
+        self._modified = True
+
     def get_import_asts(self):
         """Get _import_asts"""
         return self._import_asts
@@ -338,6 +418,13 @@ class SymbolTree(Observer, Observable, NodeManager):
     def get_father_class_ast(self):
         """Get _father_class_ast"""
         return self._father_class_ast
+
+    def get_import_modules_dict(self):
+        """Get _import_modules"""
+        return self._import_modules_dict
+
+    def extend_import_module(self, module, module_name_list):
+        self._import_modules_dict[module].extend(module_name_list)
 
     def get_node_inputs(self, node_or_name: Union[Node, str]) -> [Node]:
         """
@@ -514,12 +601,6 @@ class SymbolTree(Observer, Observable, NodeManager):
 
         # set node's _belong_symbol_tree
         new_node.set_belong_symbol_tree(self)
-
-        # print debug log
-        logger.debug(f"[insert]stree: {self.get_opt_cls_name()}, "
-                     f"node_manager: {node_manager.get_manager_name()}, "
-                     f"code: {astunparse.unparse(new_node.get_ast()).strip()}, "
-                     f"node_name:{new_node.get_name()}")
 
         return new_node
 
@@ -1006,6 +1087,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         self.convert_stree_to_code_bodies(self, code_bodies)
         gencode_module = ast.Module(body=code_bodies)
         SymbolTree._remove_unused_import(gencode_module)
+        SymbolTree._remove_duplicated_import(gencode_module)
         ast.fix_missing_locations(self._module_ast)
         IfFixer().fix(gencode_module)
         code = astunparse.unparse(gencode_module)
@@ -1047,29 +1129,37 @@ class SymbolTree(Observer, Observable, NodeManager):
     def insert_to_ast_while_insert_node(self, new_node: Node, base_node: Node, before_node: bool,
                                         node_manager: NodeManager):
         """ insert_to_ast_while_insert_node. """
-        new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
-        ast_assign = new_node.get_ast()
-        if ast_assign is None:
-            ast_assign = new_node.update_ast_node()
-        if not isinstance(ast_assign, ast.Assign):
-            raise RuntimeError(f"Only support insert ast.Assign now, but get {type(ast_assign)}")
+        new_node_ast = new_node.get_ast()
+        if new_node_ast is None:
+            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+            new_node_ast = new_node.update_ast_node()
+        if not isinstance(new_node_ast, (ast.Assign, ast.arg)):
+            raise RuntimeError(f"Only support insert ast.Assign or Input now, but get {type(new_node_ast)}")
         # Save instance into _origin_network.
         setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
-        # Insert ast to __init__ function
-        if isinstance(new_node, TreeNode):
-            init_code = f"self.{new_node.get_name()} = "\
-                        f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
-        else:
-            init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
-        init_ast = ast.parse(init_code).body[0]
-        AstModifier.insert_assign_ast_to_function(self._init_func_ast, init_ast)
-        # Insert ast to construct_function/class_internal_function
-        ast_base_node = base_node.get_ast() if base_node else None
-        ast_functiondef = node_manager.get_ast_functiondef()
-        if not ast_functiondef:
-            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                               "when inserting the ast.")
-        AstModifier.insert_assign_ast_to_function(ast_functiondef, ast_assign, ast_base_node, before_node)
+        if isinstance(new_node_ast, ast.Assign):
+            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+            # Insert ast to __init__ function
+            if isinstance(new_node, TreeNode):
+                init_code = f"self.{new_node.get_name()} = " \
+                            f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
+            else:
+                init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
+            init_ast = ast.parse(init_code).body[0]
+            AstModifier.insert_assign_ast_to_function(self._init_func_ast, init_ast)
+            # Insert ast to construct_function/class_internal_function
+            ast_base_node = base_node.get_ast() if base_node else None
+            ast_functiondef = node_manager.get_ast_functiondef()
+            if not ast_functiondef:
+                raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
+                                   "when inserting the ast.")
+            AstModifier.insert_assign_ast_to_function(ast_functiondef, new_node_ast, ast_base_node, before_node)
+        elif isinstance(new_node_ast, ast.arg):
+            self._inputs.append(new_node)
+            ast_construct = self.get_ast_root()
+            arg: str = new_node.get_targets()[0].value
+            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
+            AstModifier.append_arg_to_function(ast_construct, ast_arg)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):
