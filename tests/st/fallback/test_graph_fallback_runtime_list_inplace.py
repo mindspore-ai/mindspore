@@ -290,6 +290,31 @@ def test_return_local_list_4():
     assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_local_list_5():
+    """
+    Feature: Enable list inplace operation
+    Description: List create inside graph should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a, b):
+        x = [1.0, 2, 3.0, a, b]
+        return (x,)
+
+    input_a = Tensor([1])
+    input_b = 2
+    ret = foo(input_a, input_b)
+    assert isinstance(ret, tuple)
+    assert len(ret) == 1
+    assert isinstance(ret[0], list)
+    assert ret[0] == [1.0, 2, 3.0, Tensor([1]), 2]
+
+
 @pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
