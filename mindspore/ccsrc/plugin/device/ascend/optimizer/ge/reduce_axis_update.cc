@@ -180,8 +180,8 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
   ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   size_t x_dim_len = x_shape.size();
   MS_LOG(INFO) << "Input x dim len: " << x_dim_len;
-  std::vector<int64_t> axis;
-  for (size_t i = 0; i < x_dim_len; ++i) {
+  std::vector<int64_t> axis = {0};
+  for (size_t i = 1; i < x_dim_len; ++i) {
     (void)axis.emplace_back(SizeToLong(i));
     MS_LOG(INFO) << "x dim: " << x_shape[i];
   }
