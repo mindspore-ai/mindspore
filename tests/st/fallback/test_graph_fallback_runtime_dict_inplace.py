@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 
-from mindspore import jit, nn
+from mindspore import jit, jit_class, nn
 from mindspore import context
 
 
@@ -226,7 +226,7 @@ def test_dict_inplace_setitem():
     assert id(x) == id(res)
 
 
-@pytest.mark.skip(reason="SetItem node loss after auto monad")
+@pytest.mark.skip(reason="Dictionary with no return will be convert to tuple")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -269,3 +269,100 @@ def test_dict_inplace_setitem_3():
     assert res == {"a": 1, "b": [1, 2, 3, 4]}
     assert id(x) == id(res)
     assert id(y) == id(res["b"])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inplace_setitem_with_attribute():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x["1"] = 10
+            self.x["3"] = 3
+            return self.x
+
+    x = {"1": 1, "2": 2}
+    net = Net(x)
+    ret = net()
+    assert ret == {"1": 10, "2": 2, "3": 3}
+    assert net.x == {"1": 10, "2": 2, "3": 3}
+    assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inplace_setitem_with_attribute_2():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    @jit_class
+    class AttrClass():
+        def __init__(self, x):
+            self.attr = x
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x.attr["1"] = 10
+            return self.x.attr
+
+    x = {"1": 1, "2": 2}
+    obj = AttrClass(x)
+    net = Net(obj)
+    ret = net()
+    assert ret == {"1": 10, "2": 2}
+    assert net.x.attr == {"1": 10, "2": 2}
+    assert id(x) == id(ret)
+
+
+@pytest.mark.skip(reason="setitem with abstract any do not convert to pyexecute yet")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inplace_setitem_with_attribute_3():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class AttrClass():
+        def __init__(self, x):
+            self.attr = x
+
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            self.x.attr["1"] = 10
+            return self.x.attr
+
+    x = {"1": 1, "2": 2}
+    obj = AttrClass(x)
+    net = Net(obj)
+    ret = net()
+    assert ret == {"1": 10, "2": 2}
+    assert net.x.attr == {"1": 10, "2": 2}
+    assert id(x) == id(ret)

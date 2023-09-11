@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import functools
 import numpy as np
 
@@ -142,8 +143,10 @@ def test_class_member_list_append():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [[1, 2], 3]
     net = Net(z)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(TypeError):
         net(x, y)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_class_member_not_defined():
@@ -162,7 +165,7 @@ def test_class_member_not_defined():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     with pytest.raises(TypeError) as ex:
         net(x, y)
-    assert "'self.x' should be initialized as a 'Parameter' in the '__init__' function" in str(ex.value)
+    assert "should be initialized in the '__init__' function before subscript." in str(ex.value)
 
 
 def test_change_list_element():
@@ -179,8 +182,10 @@ def test_change_list_element():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [[1, 2], 3]
     net = Net(z)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(TypeError):
         net(x, y)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 class ListOperate(nn.Cell):
