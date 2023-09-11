@@ -1452,7 +1452,7 @@ def set_context(**kwargs):
                 value = 0
             if value > 3:
                 raise ValueError(f"value for save_graphs should be 0-3 but got '{value}'")
-        if key == 'jit_syntax_level' and value != STRICT and value != COMPATIBLE and value != LAX:
+        if key == 'jit_syntax_level' and value not in (STRICT, COMPATIBLE, LAX):
             raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
                              f" or context.LAX, but got {value}.")
         if not _check_target_specific_cfgs(device, key):

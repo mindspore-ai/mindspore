@@ -134,7 +134,8 @@ std::vector<int64_t> GetOutShape(const string &op_name, const std::vector<int64_
     in_w = in_shape[kMaxPoolIdx2];
     channel = in_shape[kMaxPoolIdx3];
   }
-  int64_t out_h = abstract::Shape::kShapeDimAny, out_w = abstract::Shape::kShapeDimAny;
+  int64_t out_h = abstract::Shape::kShapeDimAny;
+  int64_t out_w = abstract::Shape::kShapeDimAny;
   if (pad_mode == VALID && in_h != abstract::Shape::kShapeDimAny) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
   }

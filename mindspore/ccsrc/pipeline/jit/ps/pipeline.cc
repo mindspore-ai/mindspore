@@ -1220,7 +1220,7 @@ void CheckInterpretNodeLineInfos() {
         MS_EXCEPTION_IF_NULL(script_value);
         auto script_value_str = script_value->cast<StringImmPtr>();
         MS_EXCEPTION_IF_NULL(script_value_str);
-        script_str = script->value();
+        script_str = script_value_str->value();
       }
     }
     if (!script_str.empty()) {

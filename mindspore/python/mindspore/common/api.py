@@ -867,8 +867,8 @@ def _no_recursive(callable_obj):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    isCellSubClass = inspect.isclass(callable_obj) and issubclass(callable_obj, ms.nn.Cell)
-    if not isCellSubClass and not inspect.ismethod(callable_obj) and not inspect.isfunction(callable_obj):
+    is_cell_subclass = inspect.isclass(callable_obj) and issubclass(callable_obj, ms.nn.Cell)
+    if not is_cell_subclass and not inspect.ismethod(callable_obj) and not inspect.isfunction(callable_obj):
         raise TypeError(f"Decorator no_recursive is used for callable object, but got {callable_obj}.")
     _add_flags(callable_obj, no_recursive=True)
     return callable_obj
