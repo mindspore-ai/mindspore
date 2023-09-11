@@ -70,13 +70,9 @@ nvinfer1::DataType CastPlugin::getOutputDataType(int, const nvinfer1::DataType *
   return dest_datatype_;
 }
 
-size_t CastPlugin::getSerializationSize() const noexcept {
-  // origin_datatype_ and dest_datatype_
-  return sizeof(nvinfer1::DataType) * 2;
-}
+size_t CastPlugin::getSerializationSize() const noexcept { return sizeof(nvinfer1::DataType); }
 
 void CastPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &origin_datatype_, sizeof(nvinfer1::DataType));
   SerializeValue(&buffer, &dest_datatype_, sizeof(nvinfer1::DataType));
 }
 }  // namespace mindspore::lite
