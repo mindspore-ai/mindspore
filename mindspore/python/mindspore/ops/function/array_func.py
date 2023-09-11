@@ -745,7 +745,7 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
     return _get_cache_prim(P.FillV2)()(shape, value)
 
 
-def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-name
+def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-name
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
@@ -951,7 +951,7 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
          [1. 1.]]
     """
     _dtype = mstype.float32 if dtype is None else dtype
-    ones_op = P.FillV2()
+    ones_op = _get_cache_prim(P.FillV2)()
     value = Tensor(1, _dtype)
     if isinstance(shape, int):
         shape = tuple([shape])
@@ -992,7 +992,7 @@ def ones_like(input, *, dtype=None):
         [[1 1]
          [1 1]]
     """
-    ones_like_op = P.OnesLike()
+    ones_like_op = _get_cache_prim(P.OnesLike)()
     output = ones_like_op(input)
     _dtype = input.dtype if dtype is None else dtype
     output = cast_(output, _dtype)
@@ -1027,7 +1027,7 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
         [[0. 0.]
          [0. 0.]]
     """
-    zero_op = P.FillV2()
+    zero_op = _get_cache_prim(P.FillV2)()
     _dtype = mstype.float32 if dtype is None else dtype
     value = Tensor(0, _dtype)
     if isinstance(size, int):
@@ -1073,7 +1073,7 @@ def zeros_like(input, *, dtype=None):
          [0. 0.]]
     """
     _dtype = input.dtype if dtype is None else dtype
-    zeros_like_op = P.ZerosLike()
+    zeros_like_op = _get_cache_prim(P.ZerosLike)()
     output = zeros_like_op(input)
     output = cast_(output, _dtype)
     return output
@@ -1729,7 +1729,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'flatten', argument 'input' must be Tensor.")
     if not isinstance(start_dim, int) or not isinstance(end_dim, int) or \
-        isinstance(start_dim, bool) or isinstance(end_dim, bool):
+            isinstance(start_dim, bool) or isinstance(end_dim, bool):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
@@ -4507,7 +4507,7 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
     return matrix_diag_part_v3(x, k, padding_value)
 
 
-def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=redefined-outer-name
+def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=redefined-outer-name
     r"""
     Returns a batched matrix tensor with new batched diagonal values.
     Given x and diagonal, this operation returns a tensor with the same shape and values as x, except for the specified
@@ -4719,7 +4719,7 @@ def affine_grid(theta, size, align_corners=False):
     return affine_grid_op(theta, size)
 
 
-def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
+def broadcast_to(input, shape):  # pylint: disable=redefined-outer-name
     """
     Broadcasts input tensor to a given shape. The dim of input shape must be smaller
     than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
@@ -5693,7 +5693,7 @@ def split(tensor, split_size_or_sections, axis=0):
     return tuple(res)
 
 
-def tril(input, diagonal=0): # pylint: disable=redefined-outer-name
+def tril(input, diagonal=0):  # pylint: disable=redefined-outer-name
     """
     Returns the lower triangle part of 'input' (elements that contain the diagonal and below),
     and set the other elements to zeros.
@@ -6108,7 +6108,7 @@ def dsplit(input, indices_or_sections):
     return tensor_split(input, indices_or_sections, 2)
 
 
-def _init_and_select_elem(input, initial, where, cmp_fn):    # pylint: disable=redefined-outer-name
+def _init_and_select_elem(input, initial, where, cmp_fn):  # pylint: disable=redefined-outer-name
     """Initialize the input according to Initial, and select the element according to where."""
     if initial is not None:
         initial = ops.fill(input.dtype, input.shape, initial)
@@ -6126,7 +6126,7 @@ def _init_and_select_elem(input, initial, where, cmp_fn):    # pylint: disable=r
     return input
 
 
-def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pylint: disable=redefined-outer-name
+def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylint: disable=redefined-outer-name
     """
     Calculates the maximum value along with the given axis for the input tensor. It returns the maximum values and
     indices.
@@ -6244,7 +6244,7 @@ def argmax(input, dim=None, keepdim=False):
     return out
 
 
-def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pylint: disable=redefined-outer-name
+def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylint: disable=redefined-outer-name
     """
     Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
     indices.
@@ -6485,7 +6485,6 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
         [3. 3. 4. 2. 5. 0.]
     """
     return unsorted_segment_sum_(input_x, segment_ids, num_segments)
-
 
 
 def topk(input, k, dim=None, largest=True, sorted=True):
