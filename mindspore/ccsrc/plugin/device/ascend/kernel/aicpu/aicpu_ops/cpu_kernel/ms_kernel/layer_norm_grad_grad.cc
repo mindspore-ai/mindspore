@@ -70,46 +70,10 @@ uint32_t LayerNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelContext &ctx, size_t ParallelDataNums) {
-  auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
-  auto input_dy = reinterpret_cast<T *>(ctx.Input(1)->GetData());
-  auto input_var = reinterpret_cast<T *>(ctx.Input(2)->GetData());
-  auto input_mean = reinterpret_cast<T *>(ctx.Input(3)->GetData());
-  auto input_gamma = reinterpret_cast<T *>(ctx.Input(4)->GetData());
-  auto input_d_dx = reinterpret_cast<T *>(ctx.Input(5)->GetData());
-  auto input_d_dg = reinterpret_cast<T *>(ctx.Input(6)->GetData());
-  auto input_d_db = reinterpret_cast<T *>(ctx.Input(7)->GetData());
-
-  auto output_sopd_x = reinterpret_cast<T *>(ctx.Output(0)->GetData());
-  auto output_sopd_dy = reinterpret_cast<T *>(ctx.Output(1)->GetData());
-  auto output_sopd_g = reinterpret_cast<T *>(ctx.Output(2)->GetData());
-
-  size_t num = static_cast<size_t>(ctx.Input(0)->NumElements());
-  size_t g_num = static_cast<size_t>(ctx.Input(4)->NumElements());
-  size_t mean_num = static_cast<size_t>(ctx.Input(3)->NumElements());
-
-  KERNEL_CHECK_FALSE((g_num > 0), KERNEL_STATUS_PARAM_INVALID, "gamma should not be empty");
-
-  T *inv_std = new T[mean_num];
-  for (size_t i = 0; i < mean_num; i++) {
-    if (input_var[i] <= T(0)) {
-      KERNEL_LOG_ERROR("variance must be greater than zero");
-      return KERNEL_STATUS_PARAM_INVALID;
-    }
-    inv_std[i] = T(1) / sqrt(input_var[i]);
-  }
-
-  T *x_hat = new T[num];
-  T *dy_gamma = new T[num];
-  T *sum1 = new T[mean_num];
-  std::fill_n(sum1, mean_num, T(0));
-  T *sum2 = new T[mean_num];
-  std::fill_n(sum2, mean_num, T(0));
-  T *sum3 = new T[mean_num];
-  std::fill_n(sum3, mean_num, T(0));
-  T *sum4 = new T[mean_num];
-  std::fill_n(sum4, mean_num, T(0));
-
+uint32_t SwitchParallelCompute0(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
+                                const size_t &g_num, const size_t &mean_num, T *input_x, T *input_dy, T *input_mean,
+                                T *input_gamma, T *input_d_dx, T *inv_std, T *x_hat, T *dy_gamma, T *sum1, T *sum2,
+                                T *sum3, T *sum4) {
   auto shard_inner_mean = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -129,14 +93,14 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     }
   };
   SWITCH_PARALLEL(shard_inner_mean, num, mean_num);
-  T *sum5 = new T[mean_num];
-  std::fill_n(sum5, mean_num, T(0));
-  T *sum6 = new T[mean_num];
-  std::fill_n(sum6, mean_num, T(0));
-  T *sum7 = new T[mean_num];
-  std::fill_n(sum7, mean_num, T(0));
-  T *part3 = new T[num];
+  return KERNEL_STATUS_OK;
+}
 
+template <typename T>
+uint32_t SwitchParallelCompute1(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
+                                const size_t &g_num, const size_t &mean_num, T *input_x, T *input_dy, T *input_mean,
+                                T *input_gamma, T *input_d_dx, T *input_d_dg, T *inv_std, T *x_hat, T *dy_gamma,
+                                T *sum2, T *sum3, T *sum4, T *sum5, T *sum6, T *sum7, T *part3) {
   auto shard_outer_mean = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -155,16 +119,14 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     }
   };
   SWITCH_PARALLEL(shard_outer_mean, num, mean_num);
-  if (sum3 != nullptr) {
-    delete[] sum3;
-  }
-  if (sum4 != nullptr) {
-    delete[] sum4;
-  }
-  if (dy_gamma != nullptr) {
-    delete[] dy_gamma;
-  }
+  return KERNEL_STATUS_OK;
+}
 
+template <typename T>
+uint32_t SwitchParallelCompute2(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
+                                const size_t &g_num, const size_t &mean_num, T *input_gamma, T *input_d_dx,
+                                T *input_d_dg, T *input_d_db, T *inv_std, T *output_sopd_x, T *output_sopd_dy, T *x_hat,
+                                T *sum1, T *sum2, T *sum5, T *sum6, T *sum7, T *part3) {
   auto shard_input_prop = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -180,17 +142,13 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     }
   };
   SWITCH_PARALLEL(shard_input_prop, num, mean_num);
-  if (sum5 != nullptr) {
-    delete[] sum5;
-  }
-  if (sum6 != nullptr) {
-    delete[] sum6;
-  }
-  if (sum7 != nullptr) {
-    delete[] sum7;
-  }
-  std::fill_n(output_sopd_g, g_num, T(0));
+  return KERNEL_STATUS_OK;
+}
 
+template <typename T>
+uint32_t SwitchParallelCompute3(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
+                                const size_t &g_num, const size_t &mean_num, T *input_dy, T *input_d_dx, T *inv_std,
+                                T *output_sopd_g, T *x_hat, T *sum1, T *sum2) {
   auto shard_param_prop = [&](size_t start, size_t end) {
     for (size_t g_idx = start; g_idx < end; g_idx++) {
       for (size_t sum_idx = 0; sum_idx < mean_num; sum_idx++) {
@@ -203,19 +161,116 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     }
   };
   SWITCH_PARALLEL(shard_param_prop, num, g_num);
+  return KERNEL_STATUS_OK;
+}
 
-  if (sum1 != nullptr) {
-    delete[] sum1;
+template <typename T>
+uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelContext &ctx, size_t ParallelDataNums) {
+  auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
+  auto input_dy = reinterpret_cast<T *>(ctx.Input(1)->GetData());
+  auto input_var = reinterpret_cast<T *>(ctx.Input(2)->GetData());
+  auto input_mean = reinterpret_cast<T *>(ctx.Input(3)->GetData());
+  auto input_gamma = reinterpret_cast<T *>(ctx.Input(4)->GetData());
+  auto input_d_dx = reinterpret_cast<T *>(ctx.Input(5)->GetData());
+  auto input_d_dg = reinterpret_cast<T *>(ctx.Input(6)->GetData());
+  auto input_d_db = reinterpret_cast<T *>(ctx.Input(7)->GetData());
+
+  auto output_sopd_x = reinterpret_cast<T *>(ctx.Output(0)->GetData());
+  auto output_sopd_dy = reinterpret_cast<T *>(ctx.Output(1)->GetData());
+  auto output_sopd_g = reinterpret_cast<T *>(ctx.Output(2)->GetData());
+
+  size_t num = static_cast<size_t>(ctx.Input(0)->NumElements());
+  size_t g_num = static_cast<size_t>(ctx.Input(4)->NumElements());
+  size_t mean_num = static_cast<size_t>(ctx.Input(3)->NumElements());
+
+  uint32_t res = static_cast<uint32_t>(KERNEL_STATUS_OK);
+  KERNEL_CHECK_FALSE((g_num > 0), KERNEL_STATUS_PARAM_INVALID, "gamma should not be empty");
+
+  T *inv_std = new T[mean_num];
+  for (size_t i = 0; i < mean_num; i++) {
+    if (input_var[i] <= T(0)) {
+      delete[] inv_std;
+      KERNEL_LOG_ERROR("variance must be greater than zero");
+      return KERNEL_STATUS_PARAM_INVALID;
+    }
+    inv_std[i] = T(1) / sqrt(input_var[i]);
   }
-  if (sum2 != nullptr) {
-    delete[] sum2;
+
+  T *x_hat = new T[num];
+  T *dy_gamma = new T[num];
+  T *sum1 = new T[mean_num];
+  std::fill_n(sum1, mean_num, T(0));
+  T *sum2 = new T[mean_num];
+  std::fill_n(sum2, mean_num, T(0));
+  T *sum3 = new T[mean_num];
+  std::fill_n(sum3, mean_num, T(0));
+  T *sum4 = new T[mean_num];
+  std::fill_n(sum4, mean_num, T(0));
+
+  res = SwitchParallelCompute0(ctx, ParallelDataNums, num, g_num, mean_num, input_x, input_dy, input_mean, input_gamma,
+                               input_d_dx, inv_std, x_hat, dy_gamma, sum1, sum2, sum3, sum4);
+  if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute0 failed.");
+    return res;
   }
-  if (inv_std != nullptr) {
-    delete[] inv_std;
+
+  T *sum5 = new T[mean_num];
+  std::fill_n(sum5, mean_num, T(0));
+  T *sum6 = new T[mean_num];
+  std::fill_n(sum6, mean_num, T(0));
+  T *sum7 = new T[mean_num];
+  std::fill_n(sum7, mean_num, T(0));
+  T *part3 = new T[num];
+
+  res =
+    SwitchParallelCompute1(ctx, ParallelDataNums, num, g_num, mean_num, input_x, input_dy, input_mean, input_gamma,
+                           input_d_dx, input_d_dg, inv_std, x_hat, dy_gamma, sum2, sum3, sum4, sum5, sum6, sum7, part3);
+  if (res != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute1 failed.");
+    return res;
   }
-  if (x_hat != nullptr) {
-    delete[] x_hat;
+
+  if (sum3 != nullptr) {
+    delete[] sum3;
   }
+  if (sum4 != nullptr) {
+    delete[] sum4;
+  }
+  if (dy_gamma != nullptr) {
+    delete[] dy_gamma;
+  }
+
+  res =
+    SwitchParallelCompute2(ctx, ParallelDataNums, num, g_num, mean_num, input_gamma, input_d_dx, input_d_dg, input_d_db,
+                           inv_std, output_sopd_x, output_sopd_dy, x_hat, sum1, sum2, sum5, sum6, sum7, part3);
+  if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute2 failed.");
+    return res;
+  }
+
+  if (sum5 != nullptr) {
+    delete[] sum5;
+  }
+  if (sum6 != nullptr) {
+    delete[] sum6;
+  }
+  if (sum7 != nullptr) {
+    delete[] sum7;
+  }
+  std::fill_n(output_sopd_g, g_num, T(0));
+
+  res = SwitchParallelCompute3(ctx, ParallelDataNums, num, g_num, mean_num, input_dy, input_d_dx, inv_std,
+                               output_sopd_g, x_hat, sum1, sum2);
+  if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute3 failed.");
+    return res;
+  }
+
+  delete[] sum1;
+  delete[] sum2;
+  delete[] inv_std;
+  delete[] x_hat;
+  delete[] part3;
   return KERNEL_STATUS_OK;
 }
 

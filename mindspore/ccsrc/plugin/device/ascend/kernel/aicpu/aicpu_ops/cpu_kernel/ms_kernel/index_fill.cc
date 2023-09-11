@@ -122,6 +122,29 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
 }
 
 template <typename T>
+uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx, const uint32_t &data_num,
+                                                    const int32_t *input_dim, std::map<int32_t, bool> &index_dict) {
+  uint32_t min_core_num = 1;
+  uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
+
+  if (data_num <= kParallelDataNumMid) {
+    max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
+  }
+  if (max_core_num > data_num) {
+    max_core_num = data_num;
+  }
+  if (max_core_num == 0) {
+    KERNEL_LOG_ERROR("The number of available CPU cores must be greater than 0!");
+  }
+
+  auto sharder_index_fill = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, input_dim, index_dict); };
+
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_fill),
+                      "IndexFill Compute failed.");
+  return KERNEL_STATUS_OK;
+}
+
+template <typename T>
 uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int32_t *input_1 = reinterpret_cast<int32_t *>(inputs_[1]->GetData());
   int32_t *input_2 = reinterpret_cast<int32_t *>(inputs_[2]->GetData());
@@ -166,23 +189,11 @@ uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   }
 
   if (data_num >= kParallelDataNum) {
-    uint32_t min_core_num = 1;
-    uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-
-    if (data_num <= kParallelDataNumMid) {
-      max_core_num = std::min(max_core_num, 4U);  // up to 4 cpu cores
+    uint32_t res = SpecialComputeParallel<T>(ctx, data_num, input_1, index_dict);
+    if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+      KERNEL_LOG_ERROR("IndexFill kernel SpecialComputeParallel failed.");
+      return res;
     }
-    if (max_core_num > data_num) {
-      max_core_num = data_num;
-    }
-    if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("The number of available CPU cores must be greater than 0!");
-    }
-
-    auto sharder_index_fill = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, input_1, index_dict); };
-
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_fill),
-                        "IndexFill Compute failed.");
   } else {
     SpecialCompute<T>(0, data_num, input_1, index_dict);
   }
