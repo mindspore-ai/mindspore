@@ -27,41 +27,45 @@
 
 namespace mindspore {
 namespace {
-void AscendPluginRegistration(const std::shared_ptr<AscendDeviceInfo> &ascend_device) {
+void AscendPluginRegistration(const std::shared_ptr<AscendDeviceInfo> &ascend_device, bool use_experimental_rts) {
   constexpr auto default_npu_provider = "ge";
-  constexpr auto default_ascend_native_provider = "ascend_native";
   auto provider = ascend_device->GetProvider();
   if (provider == default_npu_provider) {
     if (!lite::AscendGeExecutorPlugin::GetInstance().Register()) {
-      MS_LOG_WARNING << "Failed to register AscendGe plugin";
+      MS_LOG(WARNING) << "Failed to register AscendGe plugin";
       return;
     }
   }
-  if (provider == default_ascend_native_provider) {
-    if (!lite::AscendNativeExecutorPlugin::GetInstance().Register()) {
-      MS_LOG_WARNING << "Failed to register Ascend Native plugin";
-      return;
-    }
-  }
-  static const char *const env = std::getenv("ENABLE_MULTI_BACKEND_RUNTIME");
-  bool use_experimental_rts = env != nullptr && strcmp(env, "on") == 0;
   if (use_experimental_rts) {
-    if (!kernel::AscendKernelPlugin::Register()) {
-      MS_LOG(ERROR) << "Failed to register Ascend plugin";
-      return;
+    constexpr auto default_acl_provider = "acl";
+    constexpr auto default_ascend_native_provider = "ascend_native";
+    if (provider == default_ascend_native_provider) {
+      if (!lite::AscendNativeExecutorPlugin::GetInstance().Register()) {
+        MS_LOG(WARNING) << "Failed to register Ascend Native plugin";
+        return;
+      }
+    }
+
+    if (provider == default_acl_provider) {
+      if (!kernel::AscendKernelPlugin::Register()) {
+        MS_LOG(WARNING) << "Failed to register Ascend ACL plugin";
+        return;
+      }
     }
   }
 }
 }  // namespace
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
                                                           const ConfigInfos &config_info) {
-  HandleContext(context);
-  auto session_type = SelectSession(context);
+  static const char *const env = std::getenv("ENABLE_MULTI_BACKEND_RUNTIME");
+  bool use_experimental_rts = env != nullptr && strcmp(env, "on") == 0;
+  HandleContext(context, use_experimental_rts);
+  auto session_type = SelectSession(context, use_experimental_rts);
   MS_LOG(DEBUG) << "Session type " << static_cast<int64_t>(session_type);
   return SessionRegistry::GetInstance().GetSession(session_type, context, config_info);
 }
 
-void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
+void InferSession::HandleContext(const std::shared_ptr<Context> &context, bool use_experimental_rts) {
   if (!context) {
     return;
   }
@@ -93,7 +97,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       if (!ascend_device) {
         continue;
       }
-      AscendPluginRegistration(ascend_device);
+      AscendPluginRegistration(ascend_device, use_experimental_rts);
       continue;
     }
     if (device_info->GetDeviceType() == kCPU) {
@@ -118,10 +122,8 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
   }
 }
 
-SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context) {
+SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context, bool use_experimental_rts) {
   if (context != nullptr) {
-    static const char *const env = std::getenv("ENABLE_MULTI_BACKEND_RUNTIME");
-    bool use_experimental_rts = env != nullptr && strcmp(env, "on") == 0;
     if (MS_LIKELY((!use_experimental_rts))) {
       auto &device_contexts = context->MutableDeviceInfo();
       for (const auto &device_context : device_contexts) {
