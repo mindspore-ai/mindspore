@@ -38,9 +38,7 @@ BaseShapePtr AnfNode::Shape() const {
   return (abstract_ == nullptr) ? nullptr : abstract_->BuildShape();
 }
 
-std::string AnfNode::ToString() const {
-  return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->debug_info());
-}
+std::string AnfNode::ToString() const { return mindspore::trace::Label(const_cast<AnfNode *>(this)->debug_info()); }
 
 std::string CNode::fullname_with_scope() {
   // if full name is set, return its name immediately

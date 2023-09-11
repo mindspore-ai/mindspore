@@ -233,7 +233,7 @@ void FuncGraph::DumpCNodeList() {
 std::string FuncGraph::ToString() const {
   std::ostringstream buffer;
   auto debug_info = const_cast<FuncGraph *>(this)->debug_info();
-  buffer << mindspore::label_manage::Label(debug_info);
+  buffer << mindspore::trace::Label(debug_info);
   buffer << "_" << debug_info->get_id();
   return buffer.str();
 }

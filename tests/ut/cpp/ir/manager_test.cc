@@ -99,7 +99,7 @@ class NestingSpecs {
   ~NestingSpecs() {}
 
   std::string Name(Any node) {
-    std::string name = label_manage::Label(node.cast<AnfNodePtr>()->debug_info());
+    std::string name = trace::Label(node.cast<AnfNodePtr>()->debug_info());
     if (stage_->subs().find(name) != stage_->subs().end()) {
       return stage_->subs()[name];
     }

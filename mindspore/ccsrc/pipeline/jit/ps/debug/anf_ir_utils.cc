@@ -256,7 +256,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   }
 
   std::ostringstream oss;
-  oss << meta_func_graph->type_name() << "-" << meta_func_graph->name();
+  oss << meta_func_graph->type_name() << "_" << meta_func_graph->name();
 
   if (meta_func_graph->isa<prim::MultitypeFuncGraph>()) {
     prim::MultitypeFuncGraphPtr mt_func_graph = meta_func_graph->cast<prim::MultitypeFuncGraphPtr>();
@@ -473,7 +473,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     if (fg != nullptr) {
-      oss << "call @" << fg->ToString();
+      oss << "@" << fg->ToString();
     }
     if (!func_graph_set.contains(fg) && exported.find(fg) == exported.end() && export_used_) {
       func_graph_set.add(fg);
@@ -557,7 +557,7 @@ void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode
     (*apply_map)[cnode] = apply_idx;
     std::string func_str = GetNodeFuncStr(inputs[0]);
     oss << "  %" << apply_idx << "(" << cnode->ToString() << ")"
-        << " = " << fv_text << op_text;
+        << " = " << fv_text << (IsValueNode<FuncGraph>(inputs[0]) ? "call " : "") << op_text;
     if (!func_str.empty()) {
       oss << "[" << func_str << "]"
           << "(";
@@ -565,7 +565,7 @@ void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode
       oss << "(";
     }
   } else {
-    oss << "  " << fv_text << op_text << "(";
+    oss << "  " << (IsValueNode<FuncGraph>(inputs[0]) ? "call " : "") << fv_text << op_text << "(";
   }
 
   for (size_t i = 1; i < inputs.size(); ++i) {
@@ -609,9 +609,9 @@ void AnfExporter::OutputCNodes(std::ostringstream &oss, const std::vector<AnfNod
 
     auto cnode = node->cast<CNodePtr>();
     OutputCNode(oss, cnode, func_graph, &idx, &apply_map);
-    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+    if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
-          << label_manage::Label(cnode->debug_info()) << "\n";
+          << trace::Label(cnode->debug_info()) << "\n";
     } else {
       std::string dgi = trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
       if (dgi != "") {
@@ -652,9 +652,9 @@ void AnfExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::
       }
     }
     DumpCNode(cnode, func_graph, *para_map, gsub);
-    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+    if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       gsub->buffer << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
-                   << label_manage::Label(cnode->debug_info()) << "\n";
+                   << trace::Label(cnode->debug_info()) << "\n";
     } else {
       std::string dgi = trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
       if (dgi != "") {
@@ -708,9 +708,9 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
     oss << std::endl;
   }
   oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
-  if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+  if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
     oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
-        << label_manage::Label(func_graph->debug_info()) << "\n";
+        << trace::Label(func_graph->debug_info()) << "\n";
   } else {
     oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
   }

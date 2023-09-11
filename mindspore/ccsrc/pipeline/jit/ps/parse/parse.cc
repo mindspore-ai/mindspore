@@ -1356,7 +1356,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   if (py::isinstance<py::none>(function_ast_node)) {
     auto name = python_adapter::GetPyObjAttr(node, "id");
     auto name_id = py::cast<std::string>(name);
-    if (block->CheckhasVariable(name_id)) {
+    if (block->CheckHasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
@@ -1380,7 +1380,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     auto node_list = ParseException(block, args, name_id);
-    if (block->CheckhasVariable(name_id)) {
+    if (block->CheckHasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
