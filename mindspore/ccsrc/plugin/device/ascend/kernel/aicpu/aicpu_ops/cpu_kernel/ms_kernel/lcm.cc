@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "lcm.h"
+#include "cpu_kernel/ms_kernel/lcm.h"
 
 #include <cmath>
 #include <set>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -55,7 +56,7 @@ T elewise_lcm(T a, T b) {
   return std::abs(a / gcd_tmp * b);
 }
 
-uint32_t LcmIOTypeCheck(CpuKernelContext &ctx, int32_t &dual_types) {
+uint32_t LcmIOTypeCheck(const CpuKernelContext &ctx, int32_t *dual_types) {
   Tensor *x1 = ctx.Input(kFirstInputIndex);
   Tensor *x2 = ctx.Input(kSecondInputIndex);
   Tensor *y = ctx.Output(kFirstOutputIndex);
@@ -76,12 +77,12 @@ uint32_t LcmIOTypeCheck(CpuKernelContext &ctx, int32_t &dual_types) {
     case kInput_32_64:
       KERNEL_CHECK_FALSE(y_type == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
                          "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
-      dual_types = _dual_types;
+      *dual_types = _dual_types;
       break;
     case kInput_32_32:
       KERNEL_CHECK_FALSE(y_type == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
                          "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
-      dual_types = _dual_types;
+      *dual_types = _dual_types;
       break;
     default:
       KERNEL_LOG_ERROR("[Lcm] input data type tuple is not supported.");
@@ -91,7 +92,8 @@ uint32_t LcmIOTypeCheck(CpuKernelContext &ctx, int32_t &dual_types) {
 }
 
 template <class T1, class T2, class T3>
-uint32_t LcmElewiseCompute(CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2_ptr, T3 *y_ptr, Bcast &bcast) {
+uint32_t LcmElewiseCompute(const CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2_ptr, T3 *y_ptr,
+                           const Bcast &bcast) {
   int64_t data_num = ctx.Output(kFirstOutputIndex)->NumElements();
   auto lcm_shard = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
@@ -126,7 +128,7 @@ uint32_t LcmElewiseCompute(CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2
 }
 
 template <class T1, class T2, class T3>
-uint32_t LcmCompute(CpuKernelContext &ctx) {
+uint32_t LcmCompute(const CpuKernelContext &ctx) {
   Tensor *x1 = ctx.Input(kFirstInputIndex);
   Tensor *x2 = ctx.Input(kSecondInputIndex);
   Tensor *y = ctx.Output(kFirstOutputIndex);
@@ -148,7 +150,7 @@ uint32_t LcmCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kLcmInputNum, kLcmOutputNum), "[Lcm] check input and output number failed.");
   int32_t dual_types = static_cast<int32_t>(-1);
-  KERNEL_HANDLE_ERROR(LcmIOTypeCheck(ctx, dual_types), "[Lcm] check data type failed.");
+  KERNEL_HANDLE_ERROR(LcmIOTypeCheck(ctx, &dual_types), "[Lcm] check data type failed.");
   switch (dual_types) {
     case kInput_64_64:
       return LcmCompute<int64_t, int64_t, int64_t>(ctx);

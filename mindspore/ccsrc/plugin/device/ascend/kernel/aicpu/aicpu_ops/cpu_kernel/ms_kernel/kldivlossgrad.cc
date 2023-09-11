@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kldivlossgrad.h"
+#include "cpu_kernel/ms_kernel/kldivlossgrad.h"
 
+#include <string>
+#include <vector>
 #include <complex>
-#include "cpu_kernel_utils.h"
+#include <algorithm>
+
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const char *kKlDivLossGrad = "KlDivLossGrad";
@@ -27,39 +31,39 @@ const uint32_t kInputNum = 3;
 const uint32_t kGradIndex = 0;
 const uint32_t kInputIndex = 1;
 const uint32_t kTargetIndex = 2;
-const std::string AttrReduction = "reduction";
-const std::string AttrLog = "log_target";
+const char AttrReduction[] = "reduction";
+const char AttrLog[] = "log_target";
 const int64_t DataDefaultParallelNum = 16384;
 }  // namespace
 
 namespace aicpu {
 template <typename T>
-void KlDivLossGradOp(Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &target,
-                     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &grad,
-                     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &output, std::int64_t &len, bool &log_target,
-                     std::string &reduction) {
+void KlDivLossGradOp(const Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &target,
+                     const Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &grad,
+                     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > *output, const std::int64_t &len,
+                     const bool &log_target, const std::string &reduction) {
   T constant_zero{0};
   if (log_target) {
-    output = -Eigen::exp(target) * grad;
+    *output = -Eigen::exp(target) * grad;
     return;
   }
   if (reduction == "none") {
     for (uint32_t idx = 0; idx < len; ++idx) {
       if (target(idx) > constant_zero) {
-        output(idx) = -target(idx) * grad(idx);
+        (*output)(idx) = -target(idx) * grad(idx);
       }
     }
   } else {
     for (uint32_t idx = 0; idx < len; ++idx) {
       if (target(idx) > constant_zero) {
-        output(idx) = -target(idx) * grad(0);
+        (*output)(idx) = -target(idx) * grad(0);
       }
     }
   }
   return;
 }
 
-std::uint32_t KlDivLossGradExtraCheck(CpuKernelContext &ctx) {
+std::uint32_t KlDivLossGradExtraCheck(const CpuKernelContext &ctx) {
   Tensor *grad = ctx.Input(0);
   Tensor *input = ctx.Input(1);
   Tensor *target = ctx.Input(2);
@@ -150,17 +154,17 @@ uint32_t KlDivLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(CpuKernelContext &ctx) {
+uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ctx) {
   int64_t grad_total = ctx.Input(0)->NumElements();
   int64_t input_total = ctx.Input(1)->NumElements();
   int64_t target_total = ctx.Input(2)->NumElements();
   int64_t output_y_total = ctx.Output(0)->NumElements();
   int64_t total = input_total;
   uint32_t cores = aicpu::CpuKernelUtils::GetCPUNum(ctx);
-  T *grad = (T *)(ctx.Input(0)->GetData());
-  T *input = (T *)(ctx.Input(1)->GetData());
-  T *target = (T *)(ctx.Input(2)->GetData());
-  T *output = (T *)(ctx.Output(0)->GetData());
+  T *grad = reinterpret_cast<T *>(ctx.Input(0)->GetData());
+  T *input = reinterpret_cast<T *>(ctx.Input(1)->GetData());
+  T *target = reinterpret_cast<T *>(ctx.Input(2)->GetData());
+  T *output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   bool parallel_flag = false;
   uint64_t data_size = ctx.Input(1)->GetDataSize();
   // Determine whether to enable multi-core parallel computing
@@ -196,7 +200,7 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(CpuKernelContext &ctx) {
       Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > array_output(output + begin, length, 1);
       T constant_zero{0};
       array_output = constant_zero;
-      KlDivLossGradOp<T>(array_target, array_grad, array_output, length, log_target, reduction);
+      KlDivLossGradOp<T>(array_target, array_grad, &array_output, length, log_target, reduction);
       if (reduction == "mean") {
         array_output = array_output / T(output_y_total);
       } else if (reduction == "batchmean") {
@@ -212,7 +216,7 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(CpuKernelContext &ctx) {
     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > array_output(output, output_y_total, 1);
     T constant_zero{0};
     array_output = constant_zero;
-    KlDivLossGradOp<T>(array_target, array_grad, array_output, output_y_total, log_target, reduction);
+    KlDivLossGradOp<T>(array_target, array_grad, &array_output, output_y_total, log_target, reduction);
     if (reduction == "mean") {
       array_output = array_output / T(output_y_total);
     } else if (reduction == "batchmean") {

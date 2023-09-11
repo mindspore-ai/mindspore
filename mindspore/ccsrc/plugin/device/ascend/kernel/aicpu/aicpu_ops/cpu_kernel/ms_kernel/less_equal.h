@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LESS_EQUAL_H_
 #define AICPU_KERNELS_NORMALIZED_LESS_EQUAL_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -36,13 +36,13 @@ class LessEqualCpuKernel : public CpuKernel {
   void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, bool *output);
 
   template <typename T>
-  uint32_t NoBcastCompute(CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(CpuKernelContext &ctx, Bcast &bcast);
+  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t LessEqualCompute(CpuKernelContext &ctx);
+  uint32_t LessEqualCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

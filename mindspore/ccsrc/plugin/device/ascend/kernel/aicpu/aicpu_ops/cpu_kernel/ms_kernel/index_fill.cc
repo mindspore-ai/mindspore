@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "index_fill.h"
+#include "cpu_kernel/ms_kernel/index_fill.h"
 
 #include <securec.h>
-
 #include <map>
+#include <utility>
+#include <algorithm>
 
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -121,7 +122,7 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
 }
 
 template <typename T>
-uint32_t IndexFillCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int32_t *input_1 = reinterpret_cast<int32_t *>(inputs_[1]->GetData());
   int32_t *input_2 = reinterpret_cast<int32_t *>(inputs_[2]->GetData());
 

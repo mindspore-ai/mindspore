@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "log_matrix_determinant.h"
+#include "cpu_kernel/ms_kernel/log_matrix_determinant.h"
+
+#include <vector>
+#include <algorithm>
 
 #include "Eigen/LU"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -55,7 +58,7 @@ uint32_t LogMatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(const CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   auto output_1 = ctx.Output(1);
@@ -96,7 +99,7 @@ uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(CpuKernelConte
 }
 
 template <typename T>
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_sign = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(1)->GetData());

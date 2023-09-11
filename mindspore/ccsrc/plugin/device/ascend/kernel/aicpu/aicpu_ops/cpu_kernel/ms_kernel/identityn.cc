@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "identityn.h"
+#include "cpu_kernel/ms_kernel/identityn.h"
+#include <securec.h>
 #include <algorithm>
 #include <vector>
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+
+#include "cpu_kernel/inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "hsv_to_rgb.h"
+#include "cpu_kernel/ms_kernel/hsv_to_rgb.h"
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -142,7 +143,7 @@ uint32_t HSVToRGBCpuKernel::HSVToRGBCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(CpuKernelContext &ctx) {
+uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
   T *input_ptr = reinterpret_cast<T *>(input->GetData());
@@ -172,7 +173,7 @@ uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(CpuKernelContext &ctx) {
+uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
   Eigen::half *input_ptr = reinterpret_cast<Eigen::half *>(input->GetData());

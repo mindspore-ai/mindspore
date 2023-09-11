@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_GRAD_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include <vector>
 
 namespace aicpu {
@@ -34,7 +34,7 @@ class InstanceNormV2GradCpuKernel : public CpuKernel {
   uint32_t InstanceNormV2GradAttrCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(const CpuKernelContext &ctx);
 
   bool is_training_ = true;
   float epsilon_ = 0.00001;

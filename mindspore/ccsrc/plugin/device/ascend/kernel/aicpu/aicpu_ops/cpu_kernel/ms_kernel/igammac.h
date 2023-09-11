@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_IGAMMAC_H_
 #define AICPU_KERNELS_NORMALIZED_IGAMMAC_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -31,10 +31,10 @@ class IgammacCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t IgammacCheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo &calc_info);
+  static uint32_t IgammacCheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo *calc_info);
 
   template <typename T>
-  static uint32_t IgammacCompute(CpuKernelContext &ctx, BCalcInfo &calc_info);
+  static uint32_t IgammacCompute(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
 };
 }  // namespace aicpu
 #endif

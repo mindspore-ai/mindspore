@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "left_shift.h"
+#include "cpu_kernel/ms_kernel/left_shift.h"
 
 #include <bits/stdc++.h>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -65,7 +66,7 @@ uint32_t LeftShiftCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LeftShiftCpuKernel::LeftShiftParamCheck(CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::LeftShiftParamCheck(const CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -84,7 +85,7 @@ uint32_t LeftShiftCpuKernel::LeftShiftParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx) {
+void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx) {
   auto input1 = static_cast<T *>(ctx.Input(0)->GetData());
   auto input2 = static_cast<T *>(ctx.Input(1)->GetData());
   auto output = static_cast<T *>(ctx.Output(0)->GetData());
@@ -128,7 +129,7 @@ void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   int64_t input_0_elements_nums = ctx.Input(0)->NumElements();
   int64_t input_1_elements_nums = ctx.Input(1)->NumElements();
   int64_t data_num = ctx.Output(0)->NumElements();
@@ -147,9 +148,9 @@ uint32_t LeftShiftCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 
     auto sharder_left_shift = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, ctx); };
 
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, data_num, data_num / (max_core_num > 0) ? max_core_num : 1, sharder_left_shift),
-      "LeftShift Compute failed.");
+    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / ((max_core_num > 0) ? max_core_num : 1),
+                                                    sharder_left_shift),
+                        "LeftShift Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, ctx);
   }
@@ -157,7 +158,7 @@ uint32_t LeftShiftCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t LeftShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   auto input_0 = static_cast<T *>(ctx.Input(0)->GetData());
   auto input_1 = static_cast<T *>(ctx.Input(1)->GetData());
   auto output = static_cast<T *>(ctx.Output(0)->GetData());
@@ -181,13 +182,12 @@ uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
       }
     };
 
-    if (max_core_num <= 0) {
+    if (max_core_num == 0) {
       max_core_num = 1;
     }
 
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, data_num, data_num / (max_core_num > 0) ? max_core_num : 1, sharder_left_shift),
-      "LeftShift Compute failed.");
+    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_left_shift),
+                        "LeftShift Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       T mid = *(input_1 + bcast.GetBroadcastYIndex(i));
@@ -202,7 +202,7 @@ uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
 }
 
 template <typename T>
-uint32_t LeftShiftCpuKernel::LeftShiftCompute(CpuKernelContext &ctx) {
+uint32_t LeftShiftCpuKernel::LeftShiftCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();

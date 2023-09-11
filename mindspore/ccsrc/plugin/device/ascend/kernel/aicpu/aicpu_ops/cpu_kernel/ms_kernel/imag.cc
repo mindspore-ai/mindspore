@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "imag.h"
+#include "cpu_kernel/ms_kernel/imag.h"
+#include <algorithm>
 #include "Eigen/Eigen"
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -67,7 +68,7 @@ uint32_t ImagCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename t>
-uint32_t ImagCpuKernel::ImagCompute(CpuKernelContext &ctx) {
+uint32_t ImagCpuKernel::ImagCompute(const CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());
 

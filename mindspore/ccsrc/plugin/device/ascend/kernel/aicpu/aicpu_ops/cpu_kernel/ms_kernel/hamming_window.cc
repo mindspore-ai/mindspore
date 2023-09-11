@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#include "hamming_window.h"
+#include "cpu_kernel/ms_kernel/hamming_window.h"
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include <vector>
+#include <algorithm>
+
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
 
@@ -79,7 +82,7 @@ uint32_t HammingWindowCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t HammingWindowCpuKernel::HammingWindowCompute(CpuKernelContext &ctx) {
+uint32_t HammingWindowCpuKernel::HammingWindowCompute(const CpuKernelContext &ctx) {
   DataType input_type = ctx.Input(0)->GetDataType();
   int64_t length;
   switch (input_type) {

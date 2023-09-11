@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "hypot.h"
+#include "cpu_kernel/ms_kernel/hypot.h"
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -60,7 +61,7 @@ uint32_t HypotCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t HypotCpuKernel::HypotParamCheck(CpuKernelContext &ctx) {
+uint32_t HypotCpuKernel::HypotParamCheck(const CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -79,7 +80,7 @@ uint32_t HypotCpuKernel::HypotParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t HypotCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
+uint32_t HypotCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -161,7 +162,7 @@ uint32_t HypotCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t HypotCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
+uint32_t HypotCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
   T *in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   T *in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   T *out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -199,7 +200,7 @@ uint32_t HypotCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
 }
 
 template <typename T>
-uint32_t HypotCpuKernel::HypotCompute(CpuKernelContext &ctx) {
+uint32_t HypotCpuKernel::HypotCompute(const CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
