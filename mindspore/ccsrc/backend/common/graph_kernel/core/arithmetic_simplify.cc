@@ -578,6 +578,60 @@ class ReshapePatternTree : public PatternTree {
   }
 };
 
+// Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E), RTT is the abbreviation for Reshape + Transpose + Transpose
+class RTTPatternTree : public PatternTree {
+ public:
+  explicit RTTPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~RTTPatternTree() = default;
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    inner::GraphBuilder gb("");
+    auto out_shape = origin_root->shape;
+    auto out_shape_tensornode = gb.Tensor(out_shape);
+    (*para_to_ref)['E'] = out_shape_tensornode;
+    (void)para_to_ref->erase('B');
+    (void)para_to_ref->erase('C');
+    (void)para_to_ref->erase('D');
+    return para_to_ref;
+  }
+
+ protected:
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    auto perm2_node = origin_root->input(1);
+    MS_EXCEPTION_IF_NULL(perm2_node);
+    auto transpose1_node = origin_root->input(0);
+    MS_EXCEPTION_IF_NULL(transpose1_node);
+    auto perm1_node = transpose1_node->input(1);
+    MS_EXCEPTION_IF_NULL(perm1_node);
+    auto perm2_tensornode = perm2_node->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm2_tensornode);
+    auto perm1_tensornode = perm1_node->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm1_tensornode);
+    auto perm2 = CheckAndConvertUtils::CheckTensorIntValue(perm2_node->format, perm2_tensornode->data(), "Transpose");
+    auto perm1 = CheckAndConvertUtils::CheckTensorIntValue(perm1_node->format, perm1_tensornode->data(), "Transpose");
+    auto dim = perm1.size();
+    for (size_t i = 0; i < dim; i++) {
+      MS_EXCEPTION_IF_CHECK_FAIL(i < perm2.size(), "perm is out of bound");
+      auto index = perm2[i] < 0 ? perm2[i] + dim : perm2[i];
+      MS_EXCEPTION_IF_CHECK_FAIL(index < dim, "perm is out of bound");
+      auto axis = perm1[index] < 0 ? perm1[index] + dim : perm1[index];
+      if (static_cast<size_t>(axis) != i) {
+        return false;
+      }
+    }
+    // If the check reaches here, then it means what the two transposes do is just change the data format, this can be
+    // done in a single reshape op.
+    return true;
+  }
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
+    return attrs_map;
+  }
+};
+
 class FloatCheckPatternTree : public PatternTree {
  public:
   explicit FloatCheckPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -705,7 +759,7 @@ static std::vector<Expression> expressions = {
   {65, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(TransposePatternTree)},
   // reshape
   {66, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
-};
+  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)}};
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();
