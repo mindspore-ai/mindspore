@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
@@ -160,16 +161,39 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
     MS_LOG(EXCEPTION) << "Can't find MicroBatch information.";
   }
   auto cnode = node->cast<CNodePtr>();
+
+  int64_t micro = 0;
   auto value = GetValueNode(cnode->input(2));
-  MS_EXCEPTION_IF_NULL(value);
-  auto tuple = GetValue<std::vector<int64_t>>(value);
-  auto input_tmp = GetNodeShape(cnode->input(1));
-  auto input_shape = input_tmp.at(0);
-  auto slice_batch_size = input_shape.at(batch_axis);
-  if (slice_batch_size == 0) {
-    MS_LOG(EXCEPTION) << "slice_batch_size should be a positive integer, but got " << slice_batch_size;
+  if (value != nullptr) {
+    auto tuple = GetValue<std::vector<int64_t>>(value);  // begin
+    auto input_tmp = GetNodeShape(cnode->input(1));
+    auto input_shape = input_tmp.at(0);
+    auto slice_batch_size = input_shape.at(batch_axis);  // betch shape
+    if (slice_batch_size == 0) {
+      MS_LOG(EXCEPTION) << "slice_batch_size should be a positive integer, but got " << slice_batch_size;
+    }
+    micro = tuple.at(batch_axis) * micro_size / slice_batch_size;  // micro-index
+  } else {
+    // dynamic shape
+    // if micro is not 1: stridedslice --> maketuple --> scalarmul --> micro
+    // if micro is 1: stridedslice --> maketuple --> scalarfloordiv
+    if (!IsPrimitiveCNode(cnode->input(2), prim::kPrimMakeTuple)) {
+      MS_LOG(EXCEPTION) << "the begin of stridedslice is not constant value, and not make tuple";
+    }
+    auto make_tuple_cnode = cnode->input(2)->cast<CNodePtr>();
+
+    if (IsPrimitiveCNode(make_tuple_cnode->input(1), prim::kPrimScalarMul)) {
+      auto scalar_mul_cnode = make_tuple_cnode->input(1)->cast<CNodePtr>();
+      auto mul_value = GetValueNode(scalar_mul_cnode->input(2));
+      micro = GetValue<int64_t>(mul_value);
+    } else if (IsPrimitiveCNode(make_tuple_cnode->input(1), prim::kPrimScalarFloorDiv)) {
+      micro = 1;
+    } else {
+      MS_LOG(EXCEPTION) << "can not find the micro info, the input op of make tuple is "
+                        << GetCNodePrimitive(make_tuple_cnode->input(1))->name();
+    }
   }
-  int64_t micro = tuple.at(batch_axis) * micro_size / slice_batch_size;
+
   cnode->AddPrimalAttr(MICRO, MakeValue(micro));
   cnode->AddPrimalAttr(PIPELINE_BEGIN, MakeValue(micro));
   int64_t seg = 0;
@@ -261,11 +285,13 @@ size_t PipelineTransformer::GetBatchAxisForInput(const AnfNodeIndexSet &input_no
   for (const auto &input_node_user : input_node_users) {
     auto node = input_node_user.first;
     if (!IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
-      MS_LOG(EXCEPTION) << "Can't find MicroBatch information.";
+      return 0;  // simply return 0 when dynamic shape
     }
     auto cnode = node->cast<CNodePtr>();
     auto value = GetValueNode(cnode->input(2));
-    MS_EXCEPTION_IF_NULL(value);
+    if (value == nullptr) {
+      return 0;  // simply return 0 when dynamic shape
+    }
     auto tuple = GetValue<std::vector<int64_t>>(value);
     inputs_tuple.push_back(tuple);
   }
@@ -290,6 +316,18 @@ size_t PipelineTransformer::GetBatchAxisForInput(const AnfNodeIndexSet &input_no
   return batch_axis;
 }
 
+size_t MicroSize(const AnfNodeIndexSet &input_node_users) {
+  size_t micro_size = 0;
+  for (const auto &input_node_user : input_node_users) {
+    auto node = input_node_user.first;
+    if (IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
+      micro_size++;
+    }
+  }
+
+  return micro_size;
+}
+
 void PipelineTransformer::LabelMicroBatch() {
   if (!is_train_) {
     return;
@@ -306,11 +344,11 @@ void PipelineTransformer::LabelMicroBatch() {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager_->node_users()[node_user.first];
       auto node_first = data_users.front().first;
-      if (!IsPrimitiveCNode(node_first, prim::kPrimStridedSlice)) {
+      if (!IsPrimitiveCNode(node_first, prim::kPrimStridedSlice) && !IsPrimitiveCNode(node_first, prim::kPrimShape)) {
         data_users.clear();
         data_users = node_user_map[node_first];
       }
-      auto micro_size = int64_t(data_users.size());
+      auto micro_size = int64_t(MicroSize(data_users));
       micro_size_ = micro_size;
       auto batch_axis = GetBatchAxisForInput(data_users);
       MS_LOG(INFO) << "For the "
@@ -318,6 +356,9 @@ void PipelineTransformer::LabelMicroBatch() {
                         GetValue<int64_t>(GetValueNode(node_user.first->cast<CNodePtr>()->input(kIndex2))))
                    << "input, batch axis is " << batch_axis << ", micro size is : " << micro_size;
       for (auto &data_user : data_users) {
+        if (!IsPrimitiveCNode(data_user.first, prim::kPrimStridedSlice)) {
+          continue;
+        }
         auto micro = SetMicroBatch(data_user.first, micro_size, batch_axis);
         SetStridedSliceStrategy(data_user.first);
         auto cnode = data_user.first->cast<CNodePtr>();
