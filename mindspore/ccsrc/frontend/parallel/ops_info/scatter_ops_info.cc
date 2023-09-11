@@ -110,7 +110,8 @@ Status ScatterOpsInfo::InferTensorMap() {
     return FAILED;
   }
 
-  TensorMap input_tensor_map, updates_tensor_map;
+  TensorMap input_tensor_map;
+  TensorMap updates_tensor_map;
   TensorMap indices_tensor_map(inputs_shape_[1].size(), MAP_NONE);
 
   // cannot use dev_matrix_shape_ replace inputs_shape_[0], because it may not be fully split in all devices.

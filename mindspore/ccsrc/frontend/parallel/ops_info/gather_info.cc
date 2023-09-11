@@ -472,7 +472,9 @@ Status ManualImpl::InferTensorInfo() {
   Shape output_shape = outputs_shape_.at(0);
   int64_t rank = g_device_manager->rank_index_in_stage();
   // infer tensor layout
-  TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
+  TensorLayout input_tensor_layout;
+  TensorLayout input_index_layout;
+  TensorLayout output_tensor_layout;
 
   int64_t bias_size = 1;
   if (dev_matrix_shape_.size() > 1) {
@@ -1173,7 +1175,9 @@ Status GatherInfo::InferTensorMap() {
 }
 
 Status GatherUtil::InferTensorInfoNoSplitAxis() {
-  TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
+  TensorLayout input_tensor_layout;
+  TensorLayout input_index_layout;
+  TensorLayout output_tensor_layout;
 
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(0), inputs_shape_[0]) != SUCCESS) ||
       (input_index_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(1), inputs_shape_[1]) != SUCCESS) ||

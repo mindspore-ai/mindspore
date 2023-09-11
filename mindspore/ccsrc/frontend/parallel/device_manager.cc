@@ -80,7 +80,8 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
     return false;
   }
 
-  RankList devices, stage_map;
+  RankList devices;
+  RankList stage_map;
   for (int64_t i = 0; i < device_num; ++i) {
     devices.push_back(i);
   }
@@ -366,7 +367,7 @@ RankList DeviceManager::FindRankListByHashName(const std::string &hash_name) {
   rank_list_name = rank_list_name + "-";
   for (size_t i = 0; i < rank_list_name.size(); i++) {
     if (rank_list_name[i] == '-') {
-      int64_t rank_id = std::stoi(rank_str);
+      int64_t rank_id = std::atoi(rank_str.c_str());
       rank_list.push_back(rank_id);
       rank_str = "";
     } else if (rank_list_name[i] <= '9' && rank_list_name[i] >= '0') {

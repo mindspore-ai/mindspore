@@ -49,7 +49,10 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
 #else
   struct timeval start_time {
     0
-  }, end_time{0};
+  };
+  struct timeval end_time {
+    0
+  };
   (void)gettimeofday(&start_time, nullptr);
 #endif
   MS_LOG(INFO) << "Now entering comm ops (allreduce, allgather, reducescatter) fusion by size, and fusion before will "

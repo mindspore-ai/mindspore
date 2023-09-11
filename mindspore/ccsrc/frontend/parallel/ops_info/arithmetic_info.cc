@@ -280,7 +280,8 @@ Status LerpInfo::GetAttrs() {
 }
 
 Status LerpInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (inputs_size_ == 2) {
+  size_t input_nums = 2;
+  if (inputs_size_ == input_nums) {
     return ArithmeticBase::CheckStrategy(strategy);
   }
 
