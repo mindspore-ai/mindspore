@@ -1462,6 +1462,7 @@ void KernelRuntime::DebugStreamSync(const CNodePtr &kernel) {
 
 void KernelRuntime::GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
                                        const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr) {
+  MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->ptr_ != nullptr) {
     kernel_addr->addr = device_address->ptr_;
   } else {

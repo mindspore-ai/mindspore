@@ -165,7 +165,7 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 namespace {
 constexpr int64_t NODE_PER_SERVER = 8;
 Status IsFeasibleDeiveListOneServer(const RankList &rank_list) {
-  if (rank_list.size() == 1 || rank_list.size() == 8) {
+  if (rank_list.size() == 1 || rank_list.size() == NODE_PER_SERVER) {
     return SUCCESS;
   }
   if (rank_list.size() == 4 && (rank_list[3] - rank_list[0] == 3) && (rank_list[0] == 0 || rank_list[3] == 7)) {
