@@ -23,12 +23,14 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/diag_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr int kDiagInputsNum = 1;
 constexpr int kDiagOutputsNum = 1;
+constexpr const char *kBatchRank = "batch_rank";
 }  // namespace
 
 std::vector<std::pair<KernelAttr, DiagGpuKernelMod::DiagLaunchFunc>> DiagGpuKernelMod::diag_func_list_ = {
@@ -80,7 +82,9 @@ bool DiagGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
 
   // Get kernel launch function.
   kernel_launch_func_ = diag_func_list_[index].second;
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+  if (primitive_->HasAttr(kBatchRank)) {
+    batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(kBatchRank));
+  }
   return true;
 }
 
