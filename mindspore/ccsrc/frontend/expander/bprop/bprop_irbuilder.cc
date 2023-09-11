@@ -197,14 +197,53 @@ NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
   return ShapeCalc(g_dyn_size, {node})[0];
 }
 
-NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) {
-  if (node->abstract()->isa<abstract::AbstractTuple>()) {
+NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
+  auto abs = node->abstract();
+  if (abs->isa<abstract::AbstractSequence>()) {
     if (node->isa<ValueNode>()) {
       return Tensor(GetIntList(node), dtype);
     }
-    return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+    if (abs->isa<abstract::AbstractTuple>()) {
+      return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+    } else {
+      return Emit(kListToTensorOpName, {node, Value(dtype)});
+    }
   }
   return node;
+}
+
+NodePtr BpropIRBuilder::TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype) {
+  if (node->abstract()->isa<abstract::AbstractTensor>()) {
+    if (abs->isa<abstract::AbstractTuple>()) {
+      if (node->isa<ValueNode>()) {
+        return EmitValue(MakeValue(GetIntList(node)));
+      }
+      return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+    } else {
+      if (node->isa<ValueNode>()) {
+        auto vec = GetIntList(node);
+        std::vector<ValuePtr> value_list;
+        (void)std::transform(vec.begin(), vec.end(), std::back_inserter(value_list),
+                             [](int64_t ele) { return MakeValue(ele); });
+        return EmitValue(std::make_shared<ValueList>(value_list));
+      }
+      return Emit(kListToTensorOpName, {node, Value(dtype)});
+    }
+  }
+  return node;
+}
+
+NodePtr BpropIRBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &index, const NodePtr &value) {
+  auto abs = node->abstract();
+  if (abs->isa<abstract::AbstractTuple>()) {
+    return Emit(kTupleSetItemOpName, {node, index, value});
+  }
+  return Emit(kListSetItemOpName, {node, index, value});
+}
+
+NodePtr BpropIRBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop,
+                                      const NodePtr &step) {
+  return Emit(kSequenceSliceOpName, {node, start, stop, step});
 }
 }  // namespace bprop
 }  // namespace expander

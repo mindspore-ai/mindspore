@@ -74,7 +74,10 @@ class BpropIRBuilder : public Emitter {
     return Emit("Range", {start, limit, delta}, {{"maxlen", MakeValue(max_len)}});
   }
 
-  NodePtr TupleToTensor(const NodePtr &node, const TypePtr &dtype = kInt64);
+  NodePtr SequenceToTensor(const NodePtr &node, const TypePtr &dtype = kInt64);
+  NodePtr TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype = kInt64);
+  NodePtr SequenceSetItem(const NodePtr &node, const NodePtr &index, const NodePtr &value);
+  NodePtr SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop, const NodePtr &step);
 
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;
