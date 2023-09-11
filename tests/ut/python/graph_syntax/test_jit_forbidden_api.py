@@ -15,6 +15,7 @@
 """ test jit forbidden api in graph mode. """
 import pytest
 
+import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import context, jit, Tensor
@@ -251,3 +252,22 @@ def test_jit_forbidden_method_parameter_set_data():
         net(y)
     assert "Failed to compile in GRAPH_MODE" in str(ex.value)
     assert "the 'Parameter' object's method 'set_data' is not supported" in str(ex.value)
+
+
+def test_jit_forbidden_api_tensor_assign_value():
+    """
+    Feature: mindspore.common.tensor
+    Description: test jit forbidden api 'assign_value' in graph mode.
+    Expectation: throw RuntimeError
+    """
+    class Net(nn.Cell):
+        def construct(self, input_x, input_y):
+            return input_x.assign_value(input_y)
+
+    net = Net()
+    with pytest.raises(RuntimeError) as ex:
+        x = Tensor([1, 2, 3, 4])
+        y = Tensor(np.array([[1, 2], [3, 4]]))
+        output = net(x, y)
+        assert x == output
+    assert "Failed to compile in GRAPH_MODE because the 'Tensor' object's method 'assign_value'" in str(ex.value)
