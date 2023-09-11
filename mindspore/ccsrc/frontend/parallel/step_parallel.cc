@@ -1848,17 +1848,20 @@ static bool IsCommonOp(const AnfNodePtr &node) {
   return is_comm_op;
 }
 
-static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
+static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool *is_input_param) {
   if (node->isa<Parameter>()) {
     auto node_param_ptr = node->cast<ParameterPtr>();
     if (node_param_ptr->has_default()) {
+      // Only when the real input of Reshape is a parameter that the strategy of Reshape will be assigned to this
+      // parameter.
+      *is_input_param = true;
       return CreateParameterLayout(node);
     }
 
     // the node is parameter of sub-graph
     auto actual_node = RefParameterToActualNode(node);
     if (actual_node) {
-      return FindPrevLayout(actual_node);
+      return FindPrevLayout(actual_node, is_input_param);
     }
     return nullptr;
   }
@@ -1872,7 +1875,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
     if (!pre_node) {
       return nullptr;
     }
-    return FindPrevLayout(pre_node);
+    return FindPrevLayout(pre_node, is_input_param);
   }
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return nullptr;
@@ -1898,7 +1901,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
       if (!pre_node) {
         return nullptr;
       }
-      return FindPrevLayout(pre_node);
+      return FindPrevLayout(pre_node, is_input_param);
     }
     auto layout_ptr = FindPrevParallelCareNodeLayout(cnode->input(1), LongToSize(tuple_index));
     if (!layout_ptr) {
@@ -1912,7 +1915,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
-    auto layout_ptr = FindPrevLayout(cnode->inputs()[index]);
+    auto layout_ptr = FindPrevLayout(cnode->inputs()[index], is_input_param);
     if (!layout_ptr) {
       continue;
     }
@@ -1941,16 +1944,19 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (prim->name() != RESHAPE) {
       continue;
     }
-    auto attrs = prim->attrs();
-    if (StrategyFound(attrs)) {
-      MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
-    }
-    MS_ASSERT(cnode->inputs().size() == RESHAPE_INPUT_SIZE);
-    auto prev_layout_ptr = FindPrevLayout(cnode->input(1));
+
+    bool is_input_param = false;
+    auto prev_layout_ptr = FindPrevLayout(cnode->input(1), &is_input_param);
     if (prev_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetInputLayout(*prev_layout_ptr);
     }
+    auto attrs = prim->attrs();
+    if (StrategyFound(attrs) && !is_input_param) {
+      MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
+    }
+    MS_ASSERT(cnode->inputs().size() == RESHAPE_INPUT_SIZE);
+
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
     auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);

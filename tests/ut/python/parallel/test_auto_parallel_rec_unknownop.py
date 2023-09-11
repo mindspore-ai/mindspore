@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,9 +56,9 @@ def compile_net(net):
     context.reset_auto_parallel_context()
 
 
-def test_auto_parallel_reducemin_rec():
+def test_auto_parallel_unknownop_rec():
     """
-    Feature: test reducemin net of auto parallel
+    Feature: test unknownop net of auto parallel
     Description: using recursive algorithm
     Expectation: compile success
     """
