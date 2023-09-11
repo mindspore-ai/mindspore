@@ -47,7 +47,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
 
         参数：
-            - **function** (FunctionType) - 该节点对应的前向计算的Cell对象。
+            - **function** (FunctionType) - 被调用的函数定义。
             - **targets** (list[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
             - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `function` 没有参数输入。
             - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `function` 没有 `kwargs` 输入。
@@ -160,7 +160,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     - **Unknown**：未初始化的节点类型。
     - **CallCell**： `CallCell` 节点表示在前向计算中调用Cell对象。
     - **CallPrimitive**： `CallPrimitive` 节点代表在前向计算中调用Primitive对象。
-    - **CallFunction**： `CallFunction` 节点代表在前向计算中调用MindSpore函数。
+    - **CallFunction**： `CallFunction` 节点代表在前向计算中调用了一个函数。
     - **CallMethod**： `CallMethod` 不能对应到Cell或者Primitive的节点。
     - **Python**： `Python` 节点包含不支持的 `ast` 的节点类型或不必要的解析 `ast` 节点。
     - **Input**：输入节点代表SymbolTree的输入，对应方法的参数。
