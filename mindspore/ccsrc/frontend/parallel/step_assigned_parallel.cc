@@ -366,6 +366,67 @@ bool InsertAllReduceOpsForFFN(const std::vector<AnfNodePtr> &all_nodes, const Fu
   return true;
 }
 
+void ChangeReshape(const AnfNodePtr &node, const size_t devices) {
+  int64_t device_num = devices;
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return;
+  }
+  auto expect_reshape_cnode = node->cast<CNodePtr>();
+  if (!IsSomePrimitive(expect_reshape_cnode, prim::kPrimReshape->name())) {
+    return;
+  }
+  auto reshape_node_input = expect_reshape_cnode->input(2);
+  if (reshape_node_input == nullptr) {
+    return;
+  }
+  MS_LOG(INFO) << "find reshape ops: " << expect_reshape_cnode->DebugString();
+  if (reshape_node_input->isa<ValueNode>()) {
+    Shape origin_dst_shape = GetValue<std::vector<int64_t>>(reshape_node_input->cast<ValueNodePtr>()->value());
+    if (origin_dst_shape.size() != 4) {
+      return;
+    }
+    if (origin_dst_shape[2] % device_num != 0) {
+      return;
+    }
+    Shape new_dst_shape;
+    new_dst_shape.push_back(origin_dst_shape[0]);
+    new_dst_shape.push_back(origin_dst_shape[1]);
+    new_dst_shape.push_back(origin_dst_shape[2] / device_num);
+    new_dst_shape.push_back(origin_dst_shape[3]);
+    for (auto s : new_dst_shape) {
+      MS_LOG(INFO) << "reshape new_dst_shape: " << s;
+    }
+    expect_reshape_cnode->set_input(2, NewValueNode(MakeValue(new_dst_shape)));
+    auto reshape_node_abstract = expect_reshape_cnode->abstract()->Clone();
+    std::shared_ptr<abstract::BaseShape> output_shape = std::make_shared<abstract::Shape>(new_dst_shape);
+    reshape_node_abstract->set_shape(output_shape);
+    MS_LOG(INFO) << "new_dst_shape: " << reshape_node_abstract->ToString();
+    expect_reshape_cnode->set_abstract(reshape_node_abstract);
+
+  } else if (reshape_node_input->isa<CNode>()) {
+    auto expect_maketuple_cnode = reshape_node_input->cast<CNodePtr>();
+    MS_LOG(INFO) << "Before modify reshape maketuple: " << expect_maketuple_cnode->DebugString();
+    if (!IsSomePrimitive(expect_maketuple_cnode, prim::kPrimMakeTuple->name())) {
+      return;
+    }
+    auto maketuple_node_input = expect_maketuple_cnode->input(3);
+    if (maketuple_node_input == nullptr) {
+      return;
+    }
+    if (!maketuple_node_input->isa<ValueNode>()) {
+      return;
+    }
+    int64_t origin_value = GetValue<int64_t>(maketuple_node_input->cast<ValueNodePtr>()->value());
+    if (origin_value % device_num == 0 && !expect_maketuple_cnode->HasAttr("has_modifyed")) {
+      int64_t new_value = origin_value / device_num;
+      expect_maketuple_cnode->set_input(3, NewValueNode(MakeValue(new_value)));
+      expect_maketuple_cnode->AddAttr("has_modifyed", MakeValue(true));
+      MS_LOG(INFO) << "After modify reshape maketuple: " << expect_maketuple_cnode->DebugString();
+    }
+  }
+}
+
 bool ModifyReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, const size_t devices) {
   int64_t device_num = devices;
   MS_EXCEPTION_IF_NULL(root);
@@ -377,45 +438,56 @@ bool ModifyReshapeOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphP
     if (!IsSomePrimitive(expect_transpose, prim::kPrimTranspose->name())) {
       continue;
     }
+    auto transpose_prim = GetCNodePrimitive(expect_transpose);
+    MS_EXCEPTION_IF_NULL(transpose_prim);
+    if (!transpose_prim->HasAttr(IN_STRATEGY)) {
+      continue;
+    }
+    auto transpose_stra = transpose_prim->GetAttr(IN_STRATEGY);
+    if (transpose_stra == nullptr) {
+      continue;
+    }
+    auto transpose_var = GetValue<vector<Shape>>(transpose_stra);
+    if (transpose_var.size() > 0) {
+      Dimensions sub_strategy = transpose_var.at(0);
+      bool all_ones = std::all_of(sub_strategy.begin(), sub_strategy.end(), [](int64_t i) { return i == 1; });
+      if (all_ones) {
+        continue;
+      }
+    }
     AnfNodePtr expect_reshape = expect_transpose->input(1);
-    MS_EXCEPTION_IF_NULL(expect_reshape);
-    if (!expect_reshape->isa<CNode>()) {
-      continue;
-    }
-    auto expect_reshape_cnode = expect_reshape->cast<CNodePtr>();
-    if (!IsSomePrimitive(expect_reshape_cnode, prim::kPrimReshape->name())) {
-      continue;
-    }
-    auto reshape_node_input = expect_reshape_cnode->input(2);
-    if (reshape_node_input == nullptr) {
-      continue;
-    }
-    if (!reshape_node_input->isa<ValueNode>()) {
-      continue;
-    }
-    Shape origin_dst_shape = GetValue<std::vector<int64_t>>(reshape_node_input->cast<ValueNodePtr>()->value());
-    if (origin_dst_shape.size() != 4) {
-      continue;
-    }
-    if (origin_dst_shape[2] % device_num != 0) {
-      continue;
-    }
-    Shape new_dst_shape;
-    new_dst_shape.push_back(origin_dst_shape[0]);
-    new_dst_shape.push_back(origin_dst_shape[1]);
-    new_dst_shape.push_back(origin_dst_shape[2] / device_num);
-    new_dst_shape.push_back(origin_dst_shape[3]);
-    for (auto s : new_dst_shape) {
-      MS_LOG(INFO) << "reshape new_dst_shape: " << s;
-    }
+    ChangeReshape(expect_reshape, device_num);
+  }
+  return true;
+}
 
-    expect_reshape_cnode->set_input(2, NewValueNode(MakeValue(new_dst_shape)));
-
-    auto reshape_node_abstract = expect_reshape_cnode->abstract()->Clone();
-    std::shared_ptr<abstract::BaseShape> output_shape = std::make_shared<abstract::Shape>(new_dst_shape);
-    reshape_node_abstract->set_shape(output_shape);
-    MS_LOG(INFO) << "new_dst_shape: " << reshape_node_abstract->ToString();
-    expect_reshape_cnode->set_abstract(reshape_node_abstract);
+bool ModifyMakeTupleOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, const size_t devices) {
+  int64_t device_num = devices;
+  MS_EXCEPTION_IF_NULL(root);
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto expect_maketuple = node->cast<CNodePtr>();
+    if (!IsSomePrimitive(expect_maketuple, prim::kPrimMakeTuple->name())) {
+      continue;
+    }
+    if (expect_maketuple->inputs().size() != 4) {
+      continue;
+    }
+    if (expect_maketuple->input(1)->isa<CNode>() && expect_maketuple->input(2)->isa<CNode>() &&
+        expect_maketuple->input(3)->isa<ValueNode>()) {
+      if (IsSomePrimitive(expect_maketuple->input(1)->cast<CNodePtr>(), prim::kPrimTupleGetItem->name()) &&
+          IsSomePrimitive(expect_maketuple->input(2)->cast<CNodePtr>(), prim::kPrimTupleGetItem->name())) {
+        auto maketuple_node_input = expect_maketuple->input(3);
+        int64_t origin_value = GetValue<int64_t>(maketuple_node_input->cast<ValueNodePtr>()->value());
+        if (origin_value % device_num == 0) {
+          int64_t new_value = origin_value / device_num;
+          expect_maketuple->set_input(3, NewValueNode(MakeValue(new_value)));
+          MS_LOG(INFO) << "After modify MakeTuple, the shape is : " << expect_maketuple->DebugString();
+        }
+      }
+    }
   }
   return true;
 }
@@ -515,7 +587,8 @@ void InitRefMap(const FuncGraphPtr &root) {
     if ((prim->name() == MAKE_TUPLE) || (prim->name() == MAKE_LIST) || (prim->name() == RECEIVE)) {
       continue;
     }
-    if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+    if (IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimUpdateState) ||
+        IsPrimitiveCNode(node, prim::kPrimDepend)) {
       continue;
     }
     std::vector<AnfNodePtr> all_inputs = cnode->inputs();
@@ -917,6 +990,9 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
     MS_LOG(EXCEPTION) << "Assigned insert AllReduce ops failed.";
   }
   if (!ModifyReshapeOps(all_nodes, root, device_num)) {
+    MS_LOG(EXCEPTION) << "Modify Reshape Ops failed.";
+  }
+  if (!ModifyMakeTupleOps(all_nodes, root, device_num)) {
     MS_LOG(EXCEPTION) << "Modify Reshape Ops failed.";
   }
   if (!ModifySoftmaxReshapeOps(all_nodes, root, device_num)) {
