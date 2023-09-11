@@ -517,3 +517,35 @@ def test_custom_class_jit():
         out = out_net(x)
         print("out:", out)
     assert "Nested execution during JIT execution for 'InnerNet.construct' is not supported" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_kwargs_is_custom_class_attr():
+    """
+    Feature: Support the kwargs is any.
+    Description: Graph syntax resolve support custom class input is kwargs.
+    Expectation: No error.
+    """
+    class Config:
+        def __init__(self, **kwargs):
+            self.aaa = kwargs.pop("aaa", 2.0)
+
+    class Model(ms.nn.Cell):
+        def construct(self, input1, input2):
+            return input1 * input2
+
+    class Net(ms.nn.Cell):
+        def __init__(self, net_config):
+            super().__init__()
+            self.config = net_config
+            self.model = Model()
+
+        def construct(self, x):
+            return self.model(input1=x, input2=self.config.aaa)
+
+    config = Config()
+    net = Net(config)
+    output = net(x=ms.Tensor(3))
+    assert output == 6

@@ -21,6 +21,7 @@
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
@@ -219,8 +220,8 @@ void PresetCertainSideEffect(const FuncGraphPtr &func_graph) {
 }  // namespace
 
 const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{
-  prim::kPrimReturn,      prim::kPrimDepend, prim::kPrimSwitch,    prim::kPrimSwitchLayer,
-  prim::kPrimUpdateState, prim::kPrimLoad,   prim::kPrimIsConstant};
+  prim::kPrimReturn,      prim::kPrimDepend, prim::kPrimSwitch,     prim::kPrimSwitchLayer,
+  prim::kPrimUpdateState, prim::kPrimLoad,   prim::kPrimIsConstant, prim::kPrimMakeKeywordArg};
 
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList args_abs_list;
