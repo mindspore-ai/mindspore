@@ -538,17 +538,10 @@ class LeakyReLU(Cell):
     def __init__(self, alpha=0.2):
         """Initialize LeakyReLU."""
         super(LeakyReLU, self).__init__()
-        validator.check_value_type('alpha', alpha, [float, int], self.cls_name)
-        self.greater_equal = P.GreaterEqual()
-        self.mul = P.Mul()
         self.alpha = alpha
-        self.select_op = P.Maximum()
-        if self.alpha > 1:
-            self.select_op = P.Minimum()
 
     def construct(self, x):
-        alpha_array = P.Cast()(F.scalar_to_tensor(self.alpha), P.DType()(x))
-        out = self.select_op(alpha_array * x, x)
+        out = ops.leaky_relu(x, self.alpha)
         return out
 
 
