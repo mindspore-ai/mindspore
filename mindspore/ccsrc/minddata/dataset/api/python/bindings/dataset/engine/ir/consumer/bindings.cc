@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,30 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/api/python/pybind_conversion.h"
-
-#include "minddata/dataset/engine/python_runtime_context.h"
+#include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
+#include "minddata/dataset/engine/python_runtime_context.h"
 
 namespace mindspore {
 namespace dataset {
 PYBIND_REGISTER(TreeConsumer, 0, ([](const py::module *m) {
                   (void)py::class_<TreeConsumer, std::shared_ptr<TreeConsumer>>(*m, "TreeConsumer")
-                    .def("Reset", [](TreeConsumer &self, int64_t step, int64_t epoch) {
-                      THROW_IF_ERROR(self.Reset(step, epoch));
-                    });
+                    .def(
+                      "Reset",
+                      [](TreeConsumer &self, int64_t step, int64_t epoch) { THROW_IF_ERROR(self.Reset(step, epoch)); },
+                      py::call_guard<py::gil_scoped_release>());
                 }));
+
 PYBIND_REGISTER(PythonIteratorConsumer, 1, ([](const py::module *m) {
                   (void)py::class_<PythonIteratorConsumer, TreeConsumer, std::shared_ptr<PythonIteratorConsumer>>(
                     *m, "PythonIteratorConsumer")
                     .def(py::init<int32_t>())
-                    .def("Init", [](PythonIteratorConsumer &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def(
+                      "Init",
+                      [](PythonIteratorConsumer &self, const std::shared_ptr<DatasetNode> &root, int64_t global_step,
+                         int64_t init_epoch) { THROW_IF_ERROR(self.Init(root, global_step, init_epoch)); },
+                      py::call_guard<py::gil_scoped_release>())
                     .def("GetNextAsMap",
                          [](PythonIteratorConsumer &self) {
                            py::dict output;
@@ -54,8 +58,8 @@ PYBIND_REGISTER(
     (void)py::class_<PythonPullBasedIteratorConsumer, TreeConsumer, std::shared_ptr<PythonPullBasedIteratorConsumer>>(
       *m, "PythonPullBasedIteratorConsumer")
       .def(py::init<int32_t>())
-      .def("Init",
-           [](PythonPullBasedIteratorConsumer &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+      .def("Init", [](PythonPullBasedIteratorConsumer &self,
+                      const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
       .def("GetNextAsMap",
            [](PythonPullBasedIteratorConsumer &self) {
              py::dict output;
@@ -74,8 +78,8 @@ PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                   (void)py::class_<PythonTreeGetters, TreeConsumer, std::shared_ptr<PythonTreeGetters>>(*m,
                                                                                                         "TreeGetters")
                     .def(py::init<>())
-                    .def("Init",
-                         [](PythonTreeGetters &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("Init", [](PythonTreeGetters &self,
+                                    const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
                     .def("GetOutputShapes",
                          [](PythonTreeGetters &self, bool estimate) {
                            std::vector<TensorShape> shapes = {};
@@ -118,7 +122,7 @@ PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                            THROW_IF_ERROR(self.GetClassIndexing(&output_class_indexing));
                            return output_class_indexing;
                          })
-                    .def("__deepcopy__", [](py::object &tree_getter, py::dict memo) { return tree_getter; });
+                    .def("__deepcopy__", [](py::object &tree_getter, const py::dict &memo) { return tree_getter; });
                 }));
 
 PYBIND_REGISTER(PythonRuntimeContext, 2, ([](const py::module *m) {
@@ -129,7 +133,8 @@ PYBIND_REGISTER(PythonRuntimeContext, 2, ([](const py::module *m) {
                     .def("AssignConsumer", &PythonRuntimeContext::AssignConsumer)
                     .def("Terminate", [](PythonRuntimeContext &self) { THROW_IF_ERROR(self.Terminate()); })
                     .def("GetConsumer", &PythonRuntimeContext::GetPythonConsumer, py::return_value_policy::reference)
-                    .def("__deepcopy__", [](py::object &runtime_context, py::dict memo) { return runtime_context; });
+                    .def("__deepcopy__",
+                         [](py::object &runtime_context, const py::dict &memo) { return runtime_context; });
                 }));
 
 PYBIND_REGISTER(PythonBuildVocabConsumer, 1, ([](const py::module *m) {
@@ -137,14 +142,18 @@ PYBIND_REGISTER(PythonBuildVocabConsumer, 1, ([](const py::module *m) {
                     *m, "PythonBuildVocabConsumer")
                     .def(py::init<>())
                     .def("Init", [](PythonBuildVocabConsumer &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                                    const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
                     .def("Start", [](PythonBuildVocabConsumer &self) { THROW_IF_ERROR(self.Start()); });
                 }));
 
 PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                   (void)py::class_<ToDevice, TreeConsumer, std::shared_ptr<ToDevice>>(*m, "ToDevice")
                     .def(py::init<int32_t>())
-                    .def("Init", [](ToDevice &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def(
+                      "Init",
+                      [](ToDevice &self, const std::shared_ptr<DatasetNode> &root, int64_t global_step,
+                         int64_t init_epoch) { THROW_IF_ERROR(self.Init(root, global_step, init_epoch)); },
+                      py::call_guard<py::gil_scoped_release>())
                     .def("Send", [](ToDevice &self) { THROW_IF_ERROR(self.Send()); })
                     .def("ContinueSend", [](ToDevice &self) { THROW_IF_ERROR(self.Continue()); })
                     .def("StopSend", [](ToDevice &self) { THROW_IF_ERROR(self.Stop()); })
@@ -175,19 +184,20 @@ PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                            py::tuple py_send_info = py::cast(send_info);
                            return py_send_info;
                          })
-                    .def("__deepcopy__", [](py::object &to_device, py::dict memo) { return to_device; });
+                    .def("__deepcopy__", [](py::object &to_device, const py::dict &memo) { return to_device; });
                 }));
 
 PYBIND_REGISTER(PythonSaveToDisk, 1, ([](const py::module *m) {
                   (void)py::class_<PythonSaveToDisk, TreeConsumer, std::shared_ptr<PythonSaveToDisk>>(
                     *m, "PythonSaveToDisk")
-                    .def(py::init([](std::string &dataset_path, int32_t numFiles, std::string &datasetType) {
-                      auto save = std::make_shared<PythonSaveToDisk>(dataset_path, numFiles, datasetType);
-                      THROW_IF_ERROR(save->ValidateParams());
-                      return save;
-                    }))
-                    .def("Init",
-                         [](PythonSaveToDisk &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def(
+                      py::init([](const std::string &dataset_path, int32_t numFiles, const std::string &datasetType) {
+                        auto save = std::make_shared<PythonSaveToDisk>(dataset_path, numFiles, datasetType);
+                        THROW_IF_ERROR(save->ValidateParams());
+                        return save;
+                      }))
+                    .def("Init", [](PythonSaveToDisk &self,
+                                    const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
                     .def("Save", [](PythonSaveToDisk &self) { THROW_IF_ERROR(self.Save()); });
                 }));
 
@@ -196,7 +206,7 @@ PYBIND_REGISTER(PythonDatasetSizeGetter, 1, ([](const py::module *m) {
                     *m, "DatasetSizeGetters")
                     .def(py::init<>())
                     .def("Init", [](PythonDatasetSizeGetter &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                                    const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
                     .def("GetDatasetSize", [](PythonDatasetSizeGetter &self, bool estimate) {
                       int64_t size;
                       THROW_IF_ERROR(self.GetDatasetSize(&size, estimate));

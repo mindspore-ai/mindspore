@@ -52,7 +52,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_
     }
 
     // Handshake and init child first.
-    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op, reset_count));
+    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "[Internal ERROR] RandomAccessOp init failed, as it is nullptr.");

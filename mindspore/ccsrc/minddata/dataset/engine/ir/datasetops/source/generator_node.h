@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,8 @@ class GeneratorNode : public MappableSourceNode {
 
   /// \brief Sampler setter
   void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
+
+  bool IsMappableSource() { return source_len_ != -1; }
 
  private:
   py::function generator_function_;

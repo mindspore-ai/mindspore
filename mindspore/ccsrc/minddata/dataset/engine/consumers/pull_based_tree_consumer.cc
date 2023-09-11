@@ -19,9 +19,8 @@
 #include <algorithm>
 
 namespace mindspore::dataset {
-Status PullBasedIteratorConsumer::Init(std::shared_ptr<DatasetNode> root) {
-  RETURN_UNEXPECTED_IF_NULL(root);
-  return tree_adapter_lite_->Compile(std::move(root), num_epochs_);
+Status PullBasedIteratorConsumer::Init(const std::shared_ptr<DatasetNode> &root) {
+  return tree_adapter_lite_->Compile(root, num_epochs_);
 }
 
 std::vector<TensorRow> PullBasedIteratorConsumer::GetRows(int64_t num_rows) {
@@ -111,7 +110,6 @@ Status PullBasedIteratorConsumer::GetNextAsOrderedPair(
 
 TreeGetters::TreeGetters()
     : root_(nullptr),
-      dataset_size_(-1),
       first_row_type_({}),
       first_row_shape_({}),
       estimated_row_shape_({}),
@@ -120,9 +118,8 @@ TreeGetters::TreeGetters()
   tree_adapter_lite_ = std::make_unique<TreeAdapterLite>();
 }
 
-Status TreeGetters::Init(std::shared_ptr<DatasetNode> root) {
-  RETURN_UNEXPECTED_IF_NULL(root);
-  root_ = std::move(root);
+Status TreeGetters::Init(const std::shared_ptr<DatasetNode> &root) {
+  root_ = root;
   return Status::OK();
 }
 
@@ -244,7 +241,7 @@ Status TreeGetters::InternalInit() {
     return Status::OK();
   }
 
-  Status s = tree_adapter_lite_->Compile(std::move(root_), 1);
+  Status s = tree_adapter_lite_->Compile(root_, 1);
   if (s.IsOk()) {
     init_flag_ = true;
   }

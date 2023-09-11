@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ TreeAdapter::TreeAdapter(UsageFlag usage)
       cur_connector_size_(0),
       cur_connector_capacity_(0) {}
 
-Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
+Status TreeAdapter::PrePass(const std::shared_ptr<DatasetNode> &ir) {
   RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of actions in pre-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
@@ -82,20 +82,17 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   // Creates JSON object of offload nodes.
   offload_json_ = offload->GetOffloadJson();
 #endif
-  // Vector of flags for each action
-  std::vector<bool> modified(actions.size(), false);
   // Apply pre-pass actions
-  for (auto i = 0; i < actions.size(); i++) {
+  for (auto &action : actions) {
     auto m = false;
-    RETURN_IF_NOT_OK(actions[i]->Run(ir, &m));
-    modified[i] = m;
+    RETURN_IF_NOT_OK(action->Run(ir, &m));
   }
 
   MS_LOG(INFO) << "Pre pass offload complete.";
   return Status::OK();
 }
 
-Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
+Status TreeAdapter::Optimize(const std::shared_ptr<DatasetNode> &ir) {
   RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of optimizations
   std::vector<std::unique_ptr<IRNodePass>> optimizations;
@@ -104,15 +101,15 @@ Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
   (void)optimizations.emplace_back(std::make_unique<TensorOpFusionPass>());
 #endif
   // Apply optimization pass actions
-  for (auto i = 0; i < optimizations.size(); i++) {
+  for (auto &optimization : optimizations) {
     bool modified = false;
-    RETURN_IF_NOT_OK(optimizations[i]->Run(ir, &modified));
+    RETURN_IF_NOT_OK(optimization->Run(ir, &modified));
   }
   MS_LOG(INFO) << "Optimization pass complete.";
   return Status::OK();
 }
 
-Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
+Status TreeAdapter::PostPass(const std::shared_ptr<DatasetNode> &ir) {
   RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of actions in post-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
@@ -131,18 +128,16 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 #endif
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 
-  // Vector of flags for each action
-  std::vector<bool> modified(actions.size(), false);
-  for (auto i = 0; i < actions.size(); i++) {
+  for (auto &action : actions) {
     auto m = false;
-    RETURN_IF_NOT_OK(actions[i]->Run(ir, &m));
-    modified[i] = m;
+    RETURN_IF_NOT_OK(action->Run(ir, &m));
   }
   MS_LOG(INFO) << "Post passes complete.";
   return Status::OK();
 }
 
-Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *const op) {
+Status TreeAdapter::BuildExecutionTreeRecur(const std::shared_ptr<DatasetNode> &ir,
+                                            std::shared_ptr<DatasetOp> *const op) {
   RETURN_UNEXPECTED_IF_NULL(ir);
   RETURN_UNEXPECTED_IF_NULL(op);
   RETURN_UNEXPECTED_IF_NULL(tree_);
@@ -170,7 +165,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
   return Status::OK();
 }
 
-Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_num) {
+Status TreeAdapter::Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t init_epoch) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
   RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Build"));
   // Create ExecutionTree
@@ -182,7 +177,7 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_nu
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
   if (usage_ == kDeReset) {
-    RETURN_IF_NOT_OK(AdjustReset(epoch_num));
+    RETURN_IF_NOT_OK(AdjustReset(init_epoch));
   }
 
   // Prepare the tree
@@ -194,8 +189,8 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_nu
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t step,
-                            const int64_t epoch_num) {
+Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t global_step,
+                            int64_t init_epoch) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
   RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Compile"));
   input_ir_ = input_ir;
@@ -214,7 +209,7 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
   RETURN_IF_NOT_OK(cloning_tree.Run(input_ir, &m));
   std::shared_ptr<RootNode> root_ir = cloning_tree.Root();
   root_ir->SetNumEpochs(num_epochs);
-  root_ir->SetStep(step);
+  root_ir->SetStep(global_step);
 
   tree_state_ = kCompileStateIRTreeCloned;
   MS_LOG(INFO) << "Plan before optimization:" << '\n' << *root_ir << '\n';
@@ -235,7 +230,7 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
   // Remember the root node
   root_ir_ = root_ir;
 
-  RETURN_IF_NOT_OK(Build(root_ir_, epoch_num));
+  RETURN_IF_NOT_OK(Build(root_ir_, init_epoch));
   tree_state_ = kCompileStateReady;
   RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "Compile"));
   return Status::OK();

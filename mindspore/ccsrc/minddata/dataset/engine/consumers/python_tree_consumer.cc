@@ -82,6 +82,7 @@ Status PythonTreeGetters::GetRow(TensorRow *const r) {
   py::gil_scoped_release gil_release;
   return TreeGetters::GetRow(r);
 }
+
 Status PythonDatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) {
   RETURN_UNEXPECTED_IF_NULL(tree_adapter);
   RETURN_UNEXPECTED_IF_NULL(r);

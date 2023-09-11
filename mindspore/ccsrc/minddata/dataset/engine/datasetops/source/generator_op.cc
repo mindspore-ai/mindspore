@@ -16,6 +16,7 @@
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
 
 #include <iomanip>
+#include <utility>
 
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -27,13 +28,19 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
                          std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
                          std::shared_ptr<SamplerRT> sampler, int32_t num_parallel_workers)
     : PipelineOp(connector_size, std::move(sampler)),
-      generator_function_(generator_function),
-      column_names_(column_names),
+      generator_function_(std::move(generator_function)),
+      column_names_(std::move(column_names)),
       column_types_(std::move(column_types)),
       prefetch_size_(prefetch_size),
       generator_counter_(0),
       num_parallel_workers_(num_parallel_workers),
       num_rows_sampled_{0} {}
+
+GeneratorOp::~GeneratorOp() {
+  // we need to acquire gil before release py::object
+  py::gil_scoped_acquire gil_acquire;
+  generator_.dec_ref();
+}
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {

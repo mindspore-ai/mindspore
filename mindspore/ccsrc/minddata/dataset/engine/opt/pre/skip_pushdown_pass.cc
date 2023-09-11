@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
 #include "minddata/dataset/engine/ir/datasetops/rename_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
+#endif
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #endif
@@ -32,7 +35,7 @@ SkipPushdownPass::SkipNodes::SkipNodes() : skip_count_(0) {}
 
 // activate the optimization steps, and increase skip_count_ (if not the first skip node in the pipeline)
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<SkipNode> node, bool *const modified) {
-  if (node->OnceOnly() == false) {
+  if (!node->OnceOnly()) {
     return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
   }
   skip_count_ += node->Count();
@@ -41,7 +44,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<SkipNode> node, bool *
 }
 
 Status SkipPushdownPass::SkipNodes::VisitAfter(std::shared_ptr<SkipNode> node, bool *const modified) {
-  if (node->OnceOnly() == false) {
+  if (!node->OnceOnly()) {
     return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
   }
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ == 0, "The skip_count_ cannot be non-zero here.");
@@ -67,19 +70,11 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<BatchNode> node, bool 
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<ProjectNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) {
-    return Status::OK();
-  }  // no active skip node above. normal flow
-
   return Status::OK();
 }
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<RenameNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) {
-    return Status::OK();
-  }  // no active skip node above. normal flow
-
   return Status::OK();
 }
 
@@ -115,53 +110,40 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MapNode> node, bool *c
 }
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) {
-  CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) {
-    return Status::OK();
-  }  // no active skip node above. normal flow
+  return InsertSkipNode(node);
+}
 
-  // insert a skip node above
-  (void)insert_skip_above_.emplace_back(node, skip_count_);
-  skip_count_ = 0;
+#ifdef ENABLE_PYTHON
+Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<GeneratorNode> node, bool *const modified) {
+  if (!node->IsMappableSource()) {
+    RETURN_IF_NOT_OK(InsertSkipNode(node));
+  } else {
+    RETURN_IF_NOT_OK(Visit(std::static_pointer_cast<MappableSourceNode>(node), modified));
+  }
   return Status::OK();
 }
+#endif
 
 #ifndef ENABLE_ANDROID
 // Since MindDataset requires its own SkipFirstEpochSampler (which is not implemented) we insert the skip node above it.
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bool *const modified) {
-  CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) {
-    return Status::OK();
-  }  // no active skip node above. normal flow
-
-  // insert a skip node above
-  (void)insert_skip_above_.emplace_back(node, skip_count_);
-  skip_count_ = 0;
-  return Status::OK();
+  return InsertSkipNode(node);
 }
 #endif
 
 // This functions is used for Ops that are random, and the ones in which Visit is Not Implemented yet;
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
-  CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) {
-    return Status::OK();
-  }  // no active skip node above. normal flow
-
-  // insert a skip node above
-  (void)insert_skip_above_.emplace_back(node, skip_count_);
-  skip_count_ = 0;
-  return Status::OK();
+  return InsertSkipNode(node);
 }
 
 // constructor
-SkipPushdownPass::SkipPushdownPass() {}
+SkipPushdownPass::SkipPushdownPass() = default;
 
 // Walk the tree to push down the skip node inserted when Reset is called.
 Status SkipPushdownPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   // Since previous pass may have disabled fast_recovery (due to shuffle node in pipeline),
   // we need to double check here if it is enabled.
-  if (GlobalContext::config_manager()->fast_recovery() == false) {
+  if (!GlobalContext::config_manager()->fast_recovery()) {
     MS_LOG(INFO) << "Pre pass: ignoring skip node pushdown pass (shuffle node was detected).";
     return Status::OK();
   }
@@ -175,12 +157,12 @@ Status SkipPushdownPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *c
   }
 
   // Update modified flag if there were any nodes identified to be removed
-  if (skip_nodes->nodes_to_remove().empty() == false || skip_nodes->insert_skip_above().empty() == false) {
+  if (!skip_nodes->nodes_to_remove().empty() || !skip_nodes->insert_skip_above().empty()) {
     *modified = true;
   }
 
   // Add skip node(s) to the tree (if any)
-  for (auto iter : skip_nodes->insert_skip_above()) {
+  for (const auto &iter : skip_nodes->insert_skip_above()) {
     MS_LOG(INFO) << "Inserting a Skip(" << iter.second << ") node above this node: " << iter.first->Name();
     auto new_skip_node = std::make_shared<SkipNode>(iter.second);
     new_skip_node->SetOnceOnly(true);
@@ -188,7 +170,7 @@ Status SkipPushdownPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *c
   }
 
   // Then, execute the removal of any nodes that were set up for removal
-  for (auto node : skip_nodes->nodes_to_remove()) {
+  for (const auto &node : skip_nodes->nodes_to_remove()) {
     RETURN_IF_NOT_OK(node->Drop());
   }
 

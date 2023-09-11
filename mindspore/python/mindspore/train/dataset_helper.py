@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import math
 
 from mindspore import _checkparam as Validator
+from mindspore import log as logger
 from mindspore.common._auto_dynamic import is_auto_dynamic, convert_new_shapes
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
@@ -494,6 +495,15 @@ class _DatasetIter:
         self.sink_count = self.get_sink_count(dataset)
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(
             dataset)
+
+        if dataset.get_init_step() % sink_size != 0:
+            init_epoch = dataset.get_init_step() // sink_size
+            init_step = init_epoch * sink_size
+            logger.warning("Init global step must be the end of the epoch in sink mode, "
+                           "but got: {0}. Reset it to the end of epoch {1} at step {2}."
+                           .format(dataset.get_init_step(), init_epoch, init_step))
+            dataset.set_init_step(init_step)
+
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
