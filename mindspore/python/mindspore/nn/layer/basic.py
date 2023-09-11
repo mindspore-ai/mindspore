@@ -1077,7 +1077,8 @@ class Unfold(Cell):
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
                 raise ValueError(f"For '{prim_name}' the format of '{arg_name}s' must be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[1], int) or not isinstance(arg_val[2], int) or arg_val[1] < 1 or arg_val[2] < 1:
+            is_int = isinstance(arg_val[1], int) and isinstance(arg_val[2], int)
+            if not is_int or arg_val[1] < 1 or arg_val[2] < 1:
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[1]}, "
                                  f"{arg_name}_col is {arg_val[2]}")

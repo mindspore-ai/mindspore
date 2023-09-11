@@ -115,8 +115,8 @@ class MirrorPadInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMirrorPadInputNum, primitive->name());
     MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMirrorPadInputNum, primitive->name());
     auto prim_name = primitive->name();
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);

@@ -52,7 +52,7 @@ class PositionIterator {
       shape_ = sh;
     }
   }
-  PositionIterator operator++() {
+  const PositionIterator operator++() {
     pos_[shape_.size() - static_cast<size_t>(1)] += 1;
     for (size_t i = shape_.size() - static_cast<size_t>(1); i > static_cast<size_t>(0); i--) {
       if (pos_[i] / shape_[i] != 0) {

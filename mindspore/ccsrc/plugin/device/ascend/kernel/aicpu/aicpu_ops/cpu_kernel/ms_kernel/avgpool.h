@@ -66,7 +66,10 @@ class AvgPoolCpuKernel : public CpuKernel {
   uint32_t AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCalcArgs args);
 
   template <typename T>
-  uint32_t RealCompute(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0);
+  void RealComputeNCHW(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0);
+
+  template <typename T>
+  void RealComputeNHWC(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0);
 
   template <typename T>
   uint32_t AvgPoolCompute(const CpuKernelContext &ctx);

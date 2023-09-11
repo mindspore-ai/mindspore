@@ -56,7 +56,7 @@ int ApplyMomentumCPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(gradient);
   CHECK_NULL_RETURN(in_tensors_.at(FIFTH_INPUT)->data());
   float moment = reinterpret_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data())[0];
-  int length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
+  auto length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
 
   MS_CHECK_TRUE_RET(thread_count_ > 0, RET_ERROR);
   int stride = UP_DIV(length, thread_count_);
@@ -130,7 +130,7 @@ int ApplyMomentumCPUKernel::OptimizerStep() {
   CHECK_NULL_RETURN(in_tensors_.at(FIFTH_INPUT)->data());
   float moment = reinterpret_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data())[0];
 
-  size_t length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
+  auto length = static_cast<size_t>(in_tensors_.at(FIRST_INPUT)->ElementsNum());
 
   if (grad_sum_ != nullptr && valid_grad_sum_) {
     size_t start = 0;

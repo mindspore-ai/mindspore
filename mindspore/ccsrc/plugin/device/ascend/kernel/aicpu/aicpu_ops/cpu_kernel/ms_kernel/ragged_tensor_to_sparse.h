@@ -53,7 +53,7 @@ class RaggedTensorToSparseCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CheckAndInitParams(CpuKernelContext &ctx);
+  uint32_t CheckAndInitParams(const CpuKernelContext &ctx);
 
   template <typename T1>
   uint32_t ValidateInputs(std::vector<typename TTypes<T1>::Flat> rt_nested_splits, const Tensor *rt_dense_values_in);
@@ -64,20 +64,24 @@ class RaggedTensorToSparseCpuKernel : public CpuKernel {
   bool IsCompleted(const std::vector<int64_t> &pos, int dim,
                    const std::vector<typename TTypes<T1>::Flat> &rt_nested_splits);
 
-  void input_list(CpuKernelContext &ctx, OpInputList *list);
+  void input_list(CpuKernelContext *ctx, OpInputList *list);
 
   template <typename T1, typename T2>
-  uint32_t DoCompute(CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext *ctx);
 
   template <typename T1>
-  uint32_t Update(CpuKernelContext &ctx, std::vector<typename TTypes<T1>::Flat> rt_nested_splits);
+  uint32_t Update(const CpuKernelContext &ctx, std::vector<typename TTypes<T1>::Flat> rt_nested_splits);
 
   template <typename T2>
-  void OutPutSparseValues(CpuKernelContext &ctx);
+  void OutPutSparseValues(const CpuKernelContext &ctx);
 
   template <typename T1>
-  void OutPutSparseDenseShape(CpuKernelContext &ctx, OpInputList rt_nested_splits_in,
+  void OutPutSparseDenseShape(const CpuKernelContext &ctx, OpInputList rt_nested_splits_in,
                               std::vector<typename TTypes<T1>::Flat> rt_nested_splits);
+
+  uint32_t ComputeWithSplitTypeInt32(CpuKernelContext *ctx);
+
+  uint32_t ComputeWithSplitTypeInt64(CpuKernelContext *ctx);
 
  private:
   DataType type1;

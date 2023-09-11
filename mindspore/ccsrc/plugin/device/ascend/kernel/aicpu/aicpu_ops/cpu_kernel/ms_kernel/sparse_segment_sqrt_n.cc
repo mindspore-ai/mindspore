@@ -88,21 +88,12 @@ uint32_t SparseSegmentSqrtNCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-template <typename T1, typename T2, typename T3>
-uint32_t SparseSegmentSqrtNCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
-  size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
+namespace {
+template <typename T1, typename T2>
+uint32_t CheckParamValidation(const CpuKernelContext &ctx) {
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
-  size_t k = ctx.Output(0)->GetTensorShape()->NumElements();
-  auto x_addr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
-  auto indices_addr = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
-  auto segment_ids_addr = reinterpret_cast<T3 *>(ctx.Input(2)->GetData());
-  auto y_addr = reinterpret_cast<T1 *>(ctx.Output(0)->GetData());
-  std::vector<int64_t> x_shape_list = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  x_shape_list[0] = segment_ids_addr[m - 1] + 1;
-  ctx.Output(0)->GetTensorShape()->SetDimSizes(x_shape_list);
-  for (size_t i = 0; i < k; i++) {
-    y_addr[i] = (T1)0;
-  }
+  auto indices_addr = reinterpret_cast<T1 *>(ctx.Input(1)->GetData());
+  auto segment_ids_addr = reinterpret_cast<T2 *>(ctx.Input(2)->GetData());
   if (segment_ids_addr[0] != 0) {
     KERNEL_LOG_ERROR("segment_ids can't miss ids.");
     return KERNEL_STATUS_PARAM_INVALID;
@@ -122,6 +113,29 @@ uint32_t SparseSegmentSqrtNCpuKernel::ComputeKernel(const CpuKernelContext &ctx)
       KERNEL_LOG_ERROR("indices out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
+  }
+  return KERNEL_STATUS_OK;
+}
+}  // namespace
+
+template <typename T1, typename T2, typename T3>
+uint32_t SparseSegmentSqrtNCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+  size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
+  size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
+  size_t k = ctx.Output(0)->GetTensorShape()->NumElements();
+  auto x_addr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
+  auto indices_addr = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
+  auto segment_ids_addr = reinterpret_cast<T3 *>(ctx.Input(2)->GetData());
+  auto y_addr = reinterpret_cast<T1 *>(ctx.Output(0)->GetData());
+  std::vector<int64_t> x_shape_list = ctx.Input(0)->GetTensorShape()->GetDimSizes();
+  x_shape_list[0] = segment_ids_addr[m - 1] + 1;
+  ctx.Output(0)->GetTensorShape()->SetDimSizes(x_shape_list);
+  for (size_t i = 0; i < k; i++) {
+    y_addr[i] = (T1)0;
+  }
+  auto ret = CheckParamValidation<T2, T3>(ctx);
+  if (ret != KERNEL_STATUS_OK) {
+    return KERNEL_STATUS_PARAM_INVALID;
   }
   int oldindex = -1;
   int countnum = 0;

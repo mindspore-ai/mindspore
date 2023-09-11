@@ -105,7 +105,7 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   if (!(input_shape0[kHeight] > 0 && input_shape0[kWidth] > 0)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the height and width of grads must be greater than 0. But got height: "
-                             << input_shape1[kHeight] << ", width: " << input_shape1[kWidth] << ".";
+                             << input_shape0[kHeight] << ", width: " << input_shape0[kWidth] << ".";
   }
   if (!(input_shape0[0] == input_shape3[0] && input_shape2[0] == input_shape0[0])) {
     MS_EXCEPTION(ValueError)

@@ -49,7 +49,7 @@ int NormalizeCPUKernel::Prepare() {
 
 int NormalizeCPUKernel::ReSize() { return RET_OK; }
 
-std::string NormalizeCPUKernel::Trim(const std::string &str, const std::string &pattern /* = " \t\n\v\f\r" */) {
+std::string NormalizeCPUKernel::Trim(const std::string &str, const std::string &pattern /* = " \t\n\v\f\r" */) const {
   auto begin = str.find_first_not_of(pattern);
   if (begin == std::string::npos) {
     MS_LOG(WARNING) << "Meaningless input string!";

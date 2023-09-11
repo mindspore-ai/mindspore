@@ -161,6 +161,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
   T *res = loss_val;
   if (data_num == 0) {
     *(res) = T(0);
+    return KERNEL_STATUS_OK;
   }
   *(res) = *(res) / data_num;
 

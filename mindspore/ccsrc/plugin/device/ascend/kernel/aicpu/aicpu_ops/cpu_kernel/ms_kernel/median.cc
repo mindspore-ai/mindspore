@@ -148,7 +148,6 @@ uint32_t MedianCpuKernel::MedianCompute(CpuKernelContext &ctx) {
   if (input_shape_dims == 0) {
     *output_y0 = *input_x0;
     *output_y1 = 0;
-
     return KERNEL_STATUS_OK;
   }
 
@@ -190,9 +189,9 @@ uint32_t MedianCpuKernel::MedianCompute(CpuKernelContext &ctx) {
       }
       std::nth_element(temp_median_index_vec, temp_median_index_vec + median_pos, temp_median_index_vec + dim_data_num,
                        [&temp_median_vec, dim_data_num](int64_t pos1, int64_t pos2) {
-                         return (*(temp_median_vec + pos1) < *(temp_median_vec + pos2)) ||
-                                (pos1 >= 0 && pos1 < dim_data_num &&
-                                 *(temp_median_vec + pos1) == *(temp_median_vec + pos2) && pos1 < pos2);
+                         return (pos1 >= 0 && pos1 < dim_data_num && pos1 < pos2) &&
+                                (*(temp_median_vec + pos1) < *(temp_median_vec + pos2) ||
+                                 *(temp_median_vec + pos1) == *(temp_median_vec + pos2));
                        });
       std::nth_element(temp_median_vec, temp_median_vec + median_pos, temp_median_vec + dim_data_num);
       *(output_y0 + i * jump + j) = *(temp_median_vec + median_pos);

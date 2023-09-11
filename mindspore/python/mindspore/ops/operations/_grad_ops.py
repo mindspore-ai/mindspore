@@ -2869,7 +2869,9 @@ class Dilation2DBackpropFilter(Primitive):
         self.pad_mode = validator.check_string(self.pad_mode, ["SAME", "VALID", 'same', "valid"], "pad_mode", self.name)
         self.add_prim_attr("pad_mode", self.pad_mode.upper())
         self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
-        if self.stride[2] < 1 or self.stride[2] > 255 or self.stride[3] < 1 or self.stride[3] > 255:
+        def is_in_range(x):
+            return 1 <= x <= 255
+        if not is_in_range(self.stride[2]) or not is_in_range(self.stride[3]):
             raise ValueError(f"For '{self.name}', size of stride is not supported, "
                              f'stride should be in the range of [1, 255], '
                              f'but got stride_h: `{self.stride[2]}`, stride_w: `{self.stride[3]}`.')
