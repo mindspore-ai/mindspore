@@ -218,7 +218,8 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   if (adjoint_bv) {
     std::swap(x2_row, x2_col);
   }
-  int64_t y_row = x1_row, y_col = x2_col;
+  int64_t y_row = x1_row;
+  int64_t y_col = x2_col;
   std::vector<int64_t> y_shape{y_row, y_col};
   return std::make_shared<abstract::Shape>(y_shape);
 }

@@ -217,7 +217,8 @@ bool SparseMatrixTransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPt
                                                       sizeof(S) * (num_batches + 1),
                                                       reinterpret_cast<cudaStream_t>(stream_ptr));
   // copy shape to y
-  int kOne = 1, kTwo = 2;
+  int kOne = 1;
+  int kTwo = 2;
   std::swap(host_shape_pointers[rank_ - kOne], host_shape_pointers[rank_ - kTwo]);
   device::gpu::CudaDriver::CopyHostMemToDeviceAsync(csc_dense_shape_addr, host_shape_pointers.data(), sizeof(S) * rank_,
                                                     reinterpret_cast<cudaStream_t>(stream_ptr));

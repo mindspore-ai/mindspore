@@ -15,8 +15,8 @@
  */
 
 #include "cpu_kernel/ms_kernel/sparse_softmax.h"
-#include <vector>
 #include <securec.h>
+#include <vector>
 #include <iostream>
 #include <stack>
 #include <memory>
@@ -69,7 +69,8 @@ inline void CopyIndicesAndValue(int64_t *dst_indices_addr, T *dst_values_addr, c
 template <typename T>
 inline int64_t Partition(int64_t *__restrict indices_addr, T *__restrict values_addr, int64_t *__restrict tmp_indices,
                          const size_t &indices_len, const int64_t &left, const int64_t &right) {
-  int64_t i = left, j = right;
+  int64_t i = left;
+  int64_t j = right;
   T tmp_values = 0;
   const size_t indices_size = indices_len * sizeof(int64_t);
 #define INDICES_OFFSET_ADDR(addr, index, len) (addr) + (index) * (len)

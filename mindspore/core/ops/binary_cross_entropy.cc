@@ -101,7 +101,8 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     const int64_t input_num = SizeToLong(input_args.size());
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-    std::map<std::string, TypePtr> types1, types2;
+    std::map<std::string, TypePtr> types1;
+    std::map<std::string, TypePtr> types2;
     (void)types1.emplace("logits", input_args[kInputIndex0]->BuildType());
     (void)types1.emplace("labels", input_args[kInputIndex1]->BuildType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types1, valid_types, prim_name);
