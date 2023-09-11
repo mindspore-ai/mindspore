@@ -167,7 +167,7 @@
 
         .. note::
             - 如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的上限是256M。
-            - 如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。
+            - 如果 `dataset_sink_mode` 配置为True，在PyNative模式，每个step结束时调用Callback实例的 `step_end` 方法。在Graph模式，每个epoch结束时调用Callback实例的 `step_end` 方法。
             - 如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用。
             - 如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。
             - 每次epoch将从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。

@@ -1037,7 +1037,7 @@ def set_context(**kwargs):
     |                         +------------------------------+----------------------------+
     |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
-    |                         |  pynative_synchronize        |  GPU/Ascend                |
+    |                         |  pynative_synchronize        |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
     | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
