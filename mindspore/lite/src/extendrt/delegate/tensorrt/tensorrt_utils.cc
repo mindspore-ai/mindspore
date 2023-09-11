@@ -515,7 +515,7 @@ nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *trt_te
 #if TRT_VERSION_GE(7, 2)
   data_type = data_type == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : data_type;
   if (data_type == nvinfer1::DataType::kINT32 && trt_tensor->getType() == nvinfer1::DataType::kFLOAT) {
-    auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);
+    auto plugin = std::make_shared<CastPlugin>(name, data_type);
     nvinfer1::ITensor *inputTensors[] = {trt_tensor};
     nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     cast_layer->setName(name.c_str());
@@ -525,7 +525,7 @@ nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *trt_te
   }
   auto cast_layer = ctx->network()->addIdentity(*trt_tensor);
 #else
-  auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);
+  auto plugin = std::make_shared<CastPlugin>(name, data_type);
   nvinfer1::ITensor *inputTensors[] = {trt_tensor};
   nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
 #endif

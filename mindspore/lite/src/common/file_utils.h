@@ -77,21 +77,6 @@ void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
   out_file.close();
 }
 
-inline int WriteToBin(const std::string &file_path, void *data, const size_t size) {
-  if (data == nullptr) {
-    MS_LOG(ERROR) << "data is nullptr.";
-    return RET_ERROR;
-  }
-  std::ofstream out_file;
-  out_file.open(file_path.c_str(), std::ios::binary);
-  if (!out_file.good() || !out_file.is_open()) {
-    return RET_ERROR;
-  }
-  out_file.write(reinterpret_cast<char *>(data), size);
-  out_file.close();
-  return RET_OK;
-}
-
 inline std::string WriteStrToFile(const std::string &file_path, const std::string &file_name,
                                   const std::string &content) {
   std::fstream fs;
@@ -120,6 +105,23 @@ static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
     MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
   }
 }
+
+inline int WriteToBin(const std::string &file_path, const void *data, const size_t size, mode_t mode = S_IRUSR) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr.";
+    return RET_ERROR;
+  }
+  std::ofstream out_file;
+  out_file.open(file_path.c_str(), std::ios::binary);
+  if (!out_file.good() || !out_file.is_open()) {
+    return RET_ERROR;
+  }
+  out_file.write(reinterpret_cast<const char *>(data), size);
+  out_file.close();
+  ChangeFileMode(file_path, mode);
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore
 

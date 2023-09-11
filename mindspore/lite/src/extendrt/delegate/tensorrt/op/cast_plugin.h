@@ -23,22 +23,17 @@ namespace mindspore::lite {
 constexpr auto CAST_PLUGIN_NAME{"CastPluginCreater"};
 class CastPlugin : public TensorRTPlugin {
  public:
-  CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype,
-             uint32_t device_id = 0)
-      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME), device_id),
-        origin_datatype_(origin_datatype),
-        dest_datatype_(dest_datatype) {}
+  CastPlugin(const std::string &name, nvinfer1::DataType dest_datatype, uint32_t device_id = 0)
+      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME), device_id), dest_datatype_(dest_datatype) {}
 
   CastPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
-    origin_datatype_ = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
-    dest_datatype_ = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
+    dest_datatype_ = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
   }
 
   CastPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &origin_datatype_, sizeof(nvinfer1::DataType));
     DeserializeValue(&serialData, &serialLength, &dest_datatype_, sizeof(nvinfer1::DataType));
   }
 
@@ -55,7 +50,6 @@ class CastPlugin : public TensorRTPlugin {
   void serialize(void *buffer) const noexcept override;
 
  private:
-  nvinfer1::DataType origin_datatype_;
   nvinfer1::DataType dest_datatype_;
 };
 class CastPluginCreater : public TensorRTPluginCreater<CastPlugin> {

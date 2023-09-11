@@ -37,7 +37,6 @@ class ResizeFusion1 : public ResizeFusion {
   explicit ResizeFusion1(bool multigraph = true) : ResizeFusion(multigraph) {}
   ~ResizeFusion1() override = default;
 
- private:
   const BaseRef DefinePattern() const override;
 
  private:
@@ -50,7 +49,6 @@ class ResizeFusion2 : public ResizeFusion {
   explicit ResizeFusion2(bool multigraph = true) : ResizeFusion(multigraph) {}
   ~ResizeFusion2() override = default;
 
- private:
   const BaseRef DefinePattern() const override;
 
  private:
