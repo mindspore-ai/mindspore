@@ -93,19 +93,18 @@ class Operation : public std::enable_shared_from_this<Operation> {
   virtual SymbolPtr Eval() = 0;
   virtual void EvalOnRun() { output_->Update(Eval()); }
   bool is_building() const { return is_building_; }
-  void SetNoEval() {
+  void DoNotEvalOnRun() {
     if (is_building_) {
       need_eval_ = false;
     }
   }
 
   void SetEmitter(const Emitter *e) { emitter_ = e; }
-  SymbolPtr Emit(const OpPtr &op) {
-    if (emitter_ == nullptr) {
-      Emitter().Emit(op);
-    }
-    return emitter_->Emit(op);
+  const Emitter &emitter() const {
+    static Emitter e(nullptr);
+    return emitter_ != nullptr ? *emitter_ : e;
   }
+  SymbolPtr Emit(const OpPtr &op) const { return emitter().Emit(op); }
 
   SymbolPtr GenInt(int64_t v) { return IntSymbol::Make(v, shared_from_this()); }
   SymbolPtr GenVInt() { return IntSymbol::Make(shared_from_this()); }

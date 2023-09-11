@@ -41,16 +41,22 @@ SymbolPtr BinElemwise::Eval() {
     return GenVList();
   }
   // the following ScalarMax is added to global ops list.
-  SetNoEval();
-  SymbolPtrList result(std::max(lhs->size(), rhs->size()));
+  DoNotEvalOnRun();
+  return GenList(BinElemwise::Process(lhs->symbols(), rhs->symbols(), emitter()));
+}
+
+SymbolPtrList BinElemwise::Process(const SymbolPtrList &lhs, const SymbolPtrList &rhs, const Emitter &e, size_t shift) {
+  MS_EXCEPTION_IF_CHECK_FAIL(shift <= std::min(lhs.size(), rhs.size()),
+                             "shift should not greater than the minimum size of lhs and rhs");
+  SymbolPtrList result(std::max(lhs.size(), rhs.size()) - shift);
   int i = static_cast<int>(result.size()) - 1;
-  auto a = lhs->symbols().rbegin();
-  auto b = rhs->symbols().rbegin();
+  auto a = lhs.rbegin() + shift;
+  auto b = rhs.rbegin() + shift;
   for (; i >= 0; i--) {
-    if (b == rhs->symbols().rend()) {
+    if (b == rhs.rend()) {
       result[i] = *a;
       ++a;
-    } else if (a == lhs->symbols().rend()) {
+    } else if (a == lhs.rend()) {
       result[i] = *b;
       ++b;
     } else {
@@ -59,7 +65,7 @@ SymbolPtr BinElemwise::Eval() {
       // rule 2: s1 & 1  -> s1
       // rule 3: s1 & n  -> n  (n != 1)
       if (!(*a)->HasData() && !(*b)->HasData()) {
-        result[i] = Emit(std::make_shared<ScalarMax>(*a, *b));
+        result[i] = e.Emit(std::make_shared<ScalarMax>(*a, *b));
       } else if ((*a)->HasData() && AsInt(*a) == 1) {
         result[i] = *b;
       } else if ((*b)->HasData() && AsInt(*b) != 1) {
@@ -71,7 +77,7 @@ SymbolPtr BinElemwise::Eval() {
       ++b;
     }
   }
-  return GenList(std::move(result));
+  return result;
 }
 
 bool Reduce::GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, HashSet<int64_t> *axis_set) const {
@@ -106,7 +112,7 @@ SymbolPtr Reduce::Eval() {
     auto axis_list = axis->as<ListSymbol>();
     if (axis_list != nullptr && axis_list->HasData() && axis_list->size() == 0) {
       if (skip_mode) {
-        SetNoEval();
+        DoNotEvalOnRun();
         return input(kIndex0);
       }
       // if not keepdims, and the axis is a reduce-all case, then output shape is empty.
@@ -116,7 +122,7 @@ SymbolPtr Reduce::Eval() {
     }
     return GenVList();
   }
-  SetNoEval();
+  DoNotEvalOnRun();
   HashSet<int64_t> axis_set;
   auto &inp = data->symbols();
   auto rank = SizeToLong(inp.size());
@@ -158,7 +164,7 @@ SymbolPtr Reshape::Eval() {
   if (shape->AllHaveData()) {
     if (ProductShape(shape)) {
       // no -1 in "shape", the output is static shape.
-      SetNoEval();
+      DoNotEvalOnRun();
       return input(1);
     }
   } else {
@@ -232,6 +238,67 @@ void Reshape::EvalOnRun() {
     result[unknown_dim_idx_] = size_of_unknown_dim;
     output_as<IListSymbol>()->UpdateList(std::move(result));
   }
+}
+
+SymbolPtr Transpose::Eval() {
+  auto inp = input_as<ListSymbol>(0);
+  auto perm = input_as<IListSymbol>(1);
+  if (inp->HasData() && perm->AllHaveData()) {
+    DoNotEvalOnRun();
+    return GenList(GenResult(inp, perm));
+  }
+  // dynamic rank
+  if (!inp->HasData() && !perm->AllHaveData()) {
+    return GenVList();
+  }
+  size_t rank = inp->HasData() ? inp->size() : perm->size();
+  return GenVIntList(rank);
+}
+
+void Transpose::EvalOnRun() {
+  auto inp = input_as<ListSymbol>(0);
+  auto perm = input_as<IListSymbol>(1);
+  output_as<ListSymbol>()->UpdateList(GenResult(inp, perm));
+}
+
+SymbolPtr MatMul::Eval() {
+  auto a = input_as<IListSymbol>(kIndex0);
+  auto b = input_as<IListSymbol>(kIndex1);
+  auto trans_a = input_as<BoolSymbol>(kIndex2)->value();
+  auto trans_b = input_as<BoolSymbol>(kIndex3)->value();
+  constexpr const size_t kMatMulRank = 2;
+  // dynamic rank on building
+  if (!a->HasData() || !b->HasData()) {
+    if (has_batch_) {
+      return GenVList();
+    }
+    if (a->HasData()) {
+      auto m = trans_a ? a->symbols()[1] : a->symbols()[0];
+      return GenList(SymbolPtrList{m, GenVInt()});
+    }
+    if (b->HasData()) {
+      auto n = trans_b ? b->symbols()[0] : b->symbols()[1];
+      return GenList(SymbolPtrList{GenVInt(), n});
+    }
+    return GenVIntList(kMatMulRank);
+  }
+  DoNotEvalOnRun();
+  SymbolPtrList result;
+  result.reserve(std::max(a->size(), b->size()) + kMatMulRank);
+  if (has_batch_) {
+    result = BinElemwise::Process(a->symbols(), b->symbols(), emitter(), kMatMulRank);
+  }
+  // shape of `a` is k*m(transposed) or m*k(not transposed)
+  auto m = trans_a ? a->symbols().back() : *(++a->symbols().rbegin());
+  // shape of `b` is n*k(transposed) or k*n(not transposed)
+  auto n = trans_b ? *(++b->symbols().rbegin()) : b->symbols().back();
+  (void)result.emplace_back(std::move(m));
+  (void)result.emplace_back(std::move(n));
+  if (is_building()) {
+    return GenList(std::move(result));
+  }
+  output_as<ListSymbol>()->UpdateList(std::move(result));
+  return nullptr;
 }
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

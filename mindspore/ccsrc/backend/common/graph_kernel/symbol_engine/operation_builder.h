@@ -109,6 +109,9 @@ using OperationBuilderPtr = std::unique_ptr<OperationBuilder>;
 
 class OperationBuilderRegistry {
  public:
+  inline static bool HasBuilder(const std::string &name) {
+    return OperationBuilderRegistry::Instance().builders_.count(name) > 0;
+  }
   inline static OperationBuilderPtr GetBuilder(const std::string &name, OperationEmitter *e, SymbolCache *cache) {
     const auto &builders = OperationBuilderRegistry::Instance().builders_;
     auto iter = builders.find(name);

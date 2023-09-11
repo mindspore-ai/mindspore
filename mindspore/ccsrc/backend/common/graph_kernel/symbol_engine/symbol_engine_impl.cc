@@ -196,15 +196,26 @@ void SymbolEngineImpl::Dump() {
     MS_LOG(INFO) << op->output()->ToString() << " = " << op->ToString();
   }
   MS_LOG(INFO) << "======= Dump Shapes ========================";
+  auto dump_symbol = [this](const AnfNodePtr &node) -> std::string {
+    auto output = cache_.GetShape(node);
+    if (output == nullptr) {
+      auto value = cache_.GetValue(node);
+      if (value == nullptr) {
+        return "none";
+      }
+      return value->ToString();
+    }
+    return output->ToString();
+  };
   for (auto &node : cnodes_) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     MS_LOG(INFO) << "Node " << cnode->fullname_with_scope();
     MS_LOG(INFO) << "  inputs shape:";
     for (size_t i = 1; i < cnode->size(); i++) {
-      MS_LOG(INFO) << "    " << i << ": " << QueryShape(cnode->input(i));
+      MS_LOG(INFO) << "    " << i << ": " << QueryShape(cnode->input(i)) << ". symbol:" << dump_symbol(cnode->input(i));
     }
-    MS_LOG(INFO) << "  output shape: " << QueryShape(cnode);
+    MS_LOG(INFO) << "  output shape: " << QueryShape(cnode) << ". symbol:" << dump_symbol(cnode);
   }
   MS_LOG(INFO) << "============================================";
 }

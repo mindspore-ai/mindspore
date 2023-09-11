@@ -32,11 +32,11 @@ SymbolPtr ScalarAdd::Eval() {
     return GenInt(lhs->value() + rhs->value());
   }
   if (lhs->HasData() && lhs->value() == 0) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(1);
   }
   if (rhs->HasData() && rhs->value() == 0) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -50,11 +50,11 @@ SymbolPtr ScalarSub::Eval() {
     return GenInt(lhs->value() - rhs->value());
   }
   if (lhs->HasData() && lhs->value() == 0) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(1);
   }
   if (rhs->HasData() && rhs->value() == 0) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -71,11 +71,11 @@ SymbolPtr ScalarMul::Eval() {
     return GenInt(0);
   }
   if (lhs->HasData() && lhs->value() == 1) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(1);
   }
   if (rhs->HasData() && rhs->value() == 1) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -92,7 +92,7 @@ SymbolPtr ScalarDiv::Eval() {
     return GenInt(0);
   }
   if (rhs->HasData() && rhs->value() == 1) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -106,7 +106,7 @@ SymbolPtr ScalarMax::Eval() {
     return GenInt(std::max(lhs->value(), rhs->value()));
   }
   if (*lhs == *rhs) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -120,7 +120,7 @@ SymbolPtr ScalarMin::Eval() {
     return GenInt(std::min(lhs->value(), rhs->value()));
   }
   if (*lhs == *rhs) {
-    SetNoEval();
+    DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
@@ -160,7 +160,7 @@ SymbolPtr SetValue::Eval() {
     return GenVIntList(inp->size());
   }
   // on Building, if 'input' is static rank and 'index' is const value, unnecessary to evaluate on Run.
-  SetNoEval();
+  DoNotEvalOnRun();
   auto list = inp->symbols();
   auto idx = index->value();
   if (LongToSize(idx) >= list.size()) {
@@ -182,7 +182,7 @@ SymbolPtr ListAppend::Eval() {
   if (!a->HasData() || (b_list != nullptr && !b_list->HasData())) {
     return GenVList();
   }
-  SetNoEval();
+  DoNotEvalOnRun();
   SymbolPtrList result;
   result.reserve(a->size() + (b_list != nullptr ? b_list->size() : 1));
   (void)result.insert(result.end(), a->symbols().begin(), a->symbols().end());
