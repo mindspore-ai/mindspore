@@ -373,7 +373,7 @@ class AssignParser(Parser):
                 ast_root: ast.Module = ast.parse(source_code)
                 stree.get_external_ast().append(ast_root.body[0])
                 return func, ast_root.body[0]
-        logger.warning(f"Cannot get ast of function {func_name} from {file_path}.")
+        logger.info(f"Cannot get ast of function {func_name} from {file_path}.")
         return None, None
 
     def _process_internal_function(self, stree: SymbolTree, func_name):
@@ -601,8 +601,8 @@ class AssignParser(Parser):
                                                     args, {}, "tuple")
                     stree.append_origin_field(node_, node_manager)
                 else:
-                    logger.warning(f"some elements in Tuple of assign({astunparse.unparse(node)}) are not supported "
-                                   "in rewrite, fallback to python")
+                    logger.info(f"some elements in Tuple of assign({astunparse.unparse(node)}) are not supported "
+                                "in rewrite, fallback to python")
                     stree.try_append_python_node(node, node, node_manager)
             elif isinstance(value, (ast.List, ast.Dict)):
                 # add these as callmethod node if necessary

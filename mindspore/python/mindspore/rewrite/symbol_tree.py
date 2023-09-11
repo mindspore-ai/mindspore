@@ -1203,7 +1203,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         file_path = os.getcwd()
         file_path = os.path.join(file_path, "rewritten_network")
         if not os.path.exists(file_path):
-            os.mkdir(file_path)
+            try:
+                os.mkdir(file_path)
+            except FileExistsError:
+                pass
         file_name = f"{self._opt_cls_name}_{id(self)}.py"
         network_file = os.path.join(file_path, file_name)
         with os.fdopen(os.open(network_file, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:

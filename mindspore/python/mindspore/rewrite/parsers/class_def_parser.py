@@ -120,7 +120,7 @@ class ClassDefParser(Parser):
     # a dict of which key is father class, value is the number of args of father class init
     dict_init_args = collections.defaultdict(int)
     # a denied_function_decorator_list which is registered by user
-    denied_funciton_decorator_list = []
+    denied_function_decorator_list = []
 
     @staticmethod
     def _process_init_func_ast(init_ast: ast.FunctionDef, father_classes: list, class_name: str):
@@ -365,7 +365,7 @@ class ClassDefParser(Parser):
                     decorator_name = func.id
             elif isinstance(decorator, ast.Name):
                 decorator_name = decorator.id
-            if decorator_name in ClassDefParser.denied_funciton_decorator_list:
+            if decorator_name in ClassDefParser.denied_function_decorator_list:
                 node.decorator_list.remove(decorator)
 
     def target(self):
