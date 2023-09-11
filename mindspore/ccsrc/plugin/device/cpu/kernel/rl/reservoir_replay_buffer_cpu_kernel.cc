@@ -70,6 +70,7 @@ bool ReservoirReplayBufferCreateCpuKernel::Init(const BaseOperatorPtr &base_oper
 bool ReservoirReplayBufferCreateCpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                                   const std::vector<AddressPtr> &outputs) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(handle);
   *handle = handle_;
   return true;
 }
@@ -105,6 +106,7 @@ bool ReservoirReplayBufferPushCpuKernel::Launch(const std::vector<AddressPtr> &i
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(handle);
   *handle = handle_;
   return true;
 }
@@ -159,6 +161,7 @@ bool ReservoirReplayBufferDestroyCpuKernel::Launch(const std::vector<AddressPtr>
   factory.Delete(handle_);
 
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(handle);
   *handle = handle_;
   return true;
 }
