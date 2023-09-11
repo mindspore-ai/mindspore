@@ -22,24 +22,21 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kAllGatherInputsNum = 1;
-constexpr size_t kAllGatherOutputsNum = 1;
 constexpr auto kRanksGroup = "group";
 }  // namespace
 
-void AllGatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kAllGatherInputsNum, kernel_name_);
-  ranks_group_ = common::AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
+int AllGatherCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  ranks_group_ = GetValue<std::vector<int>>(primitive_->GetAttr(kRanksGroup));
+  return KRET_OK;
 }
 
 bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAllGatherInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAllGatherOutputsNum, kernel_name_);
   auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
   auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
   auto input_data_num = inputs[0]->size() / sizeof(float);

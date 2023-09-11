@@ -155,21 +155,20 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
   CPUKernelUtils::ParallelFor(task, lens, kBatchSize);
 }
 
-void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVarIndex);
-  if (AnfAlgo::IsShapesDynamic({var_shape})) {
-    return;
+int FusedCastAdamWeightDecayCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  var_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kVarIndex);
-  gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kGradIndex);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  const auto &var_shape = inputs[kVarIndex]->GetShapeVector();
+  var_dtype_ = inputs[kVarIndex]->dtype_id();
+  gradient_dtype_ = inputs[kGradIndex]->dtype_id();
+  size_t input_num = inputs.size();
   if (input_num != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = outputs.size();
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;
@@ -190,6 +189,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be float16 or float32, but got "
                       << TypeIdToType(var_dtype_)->ToString();
   }
+  return KRET_OK;
 }
 
 void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::KernelTensor *> &inputs,

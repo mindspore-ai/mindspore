@@ -23,12 +23,12 @@
 
 namespace mindspore {
 namespace kernel {
-class AllGatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AllGatherCpuKernelMod : public NativeCpuKernelMod {
  public:
   AllGatherCpuKernelMod() = default;
   ~AllGatherCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;

@@ -23,11 +23,12 @@
 
 namespace mindspore {
 namespace kernel {
-class FusedCastAdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class FusedCastAdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
  public:
   FusedCastAdamWeightDecayCpuKernelMod() = default;
   ~FusedCastAdamWeightDecayCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs) override;
 
