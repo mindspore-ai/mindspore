@@ -34,6 +34,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr uint32_t kInputNum = 2;
+constexpr uint32_t kWorkspaceNum = 1;
+constexpr uint32_t kOutputNum = 1;
+
 // clang-format off
 #define ADD_KERNEL(prob_dtype, prob_type)                                                                              \
   {KernelAttr().AddInputAttr(kNumberType##prob_dtype).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),  \
@@ -96,9 +100,9 @@ template <typename T_in, typename T_out>
 bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &workspace,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 2, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), 1, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kWorkspaceNum, kernel_name_);
 
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);

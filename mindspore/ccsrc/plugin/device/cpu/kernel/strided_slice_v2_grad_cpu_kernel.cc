@@ -580,6 +580,7 @@ bool StridedSliceV2GradCpuKernelMod::CalStridedSliceV2Grad(T *input, T *output) 
     if (zerocpret != EOK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', memcpy_s error ";
     }
+    free(res_arr);
     return true;
   }
 

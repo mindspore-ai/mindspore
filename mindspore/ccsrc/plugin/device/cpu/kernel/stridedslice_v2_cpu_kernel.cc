@@ -97,7 +97,14 @@ int DoStridedSliceV2Com(const void *in_data, void *out_data, StridedSliceParamet
   dim_offset[1] = in_shape[kIndex2] * dim_offset[kIndex2];
   dim_offset[0] = in_shape[1] * dim_offset[1];
   size_t out_offset = 0;
-  int32_t dim0, dim1, dim2, dim3, dim4, dim5, dim6, dim7;
+  int32_t dim0;
+  int32_t dim1;
+  int32_t dim2;
+  int32_t dim3;
+  int32_t dim4;
+  int32_t dim5;
+  int32_t dim6;
+  int32_t dim7;
   for (dim0 = begins[0]; LoopContinue(strides[0], dim0, ends[0]); dim0 += strides[0]) {
     for (dim1 = begins[1]; LoopContinue(strides[1], dim1, ends[1]); dim1 += strides[1]) {
       for (dim2 = begins[kIndex2]; LoopContinue(strides[kIndex2], dim2, ends[kIndex2]); dim2 += strides[kIndex2]) {

@@ -68,7 +68,8 @@ bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   }
   auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t i = 0;
-  int64_t r = std::max<int64_t>(0, -offset_), c = 0;
+  int64_t r = std::max<int64_t>(0, -offset_);
+  int64_t c = 0;
   while (i < SizeToLong(tril_size)) {
     output_addr[i] = r;
     output_addr[tril_size + i++] = c;

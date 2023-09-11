@@ -37,7 +37,7 @@ bool NextAfterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 template <typename T>
 bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 2 || outputs.size() != 1) {
+  if (inputs.size() != kNextAfterInputsNum || outputs.size() != kNextAfterOutputsNum) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
