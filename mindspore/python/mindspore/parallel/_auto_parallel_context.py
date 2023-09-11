@@ -810,7 +810,9 @@ class _AutoParallelContext:
                                                  shape[n] \* size(dtype). Non-negative. Unit: KB. Default: 64.
             - optimizer_weight_shard_size(int): Set the optimizer weight shard group size if you want to specific the
                                                 maximum group size across devices when the parallel optimizer is
-                                                enabled. The numerical range can be (0, device_num]. Default -1.
+                                                enabled. The numerical range can be (0, device_num]. Default value
+                                                is -1, which means the optimizer weight shard group size will
+                                                the data parallel group of each parameter. Default -1.
 
         """
         self.check_context_handle()
