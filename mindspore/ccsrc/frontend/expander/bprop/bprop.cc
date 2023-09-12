@@ -302,7 +302,7 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  static const bool cache_env = (common::GetEnv("MS_DEV_BPROP_EXPANDER_CACHE") == "on");
+  static const bool cache_env = (common::GetEnv("MS_DEV_DISABLE_BPROP_CACHE") != "on");
   if (cache_env) {
     output_nodes_ = ir_builder.BuildWithCache(input_nodes_, attrs, *handle, prim->instance_name(), prim);
   } else {
