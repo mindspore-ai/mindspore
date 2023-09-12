@@ -626,7 +626,7 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
   static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (!is_enable_ge || !is_cell_reuse) {
     return;
   }
