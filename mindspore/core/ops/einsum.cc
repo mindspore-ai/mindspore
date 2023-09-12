@@ -263,6 +263,7 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+    MS_EXCEPTION_IF_CHECK_FAIL(!elements.empty(), "Einsum's input tuple must be not empty!");
   }
   std::vector<std::vector<int64_t>> input_shapes;
   for (size_t idx = 0; idx < elements.size(); ++idx) {

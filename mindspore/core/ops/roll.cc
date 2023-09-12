@@ -44,6 +44,7 @@ namespace {
 inline std::vector<int64_t> GetRollAttr(const PrimitivePtr &primitive, const std::string &attr_name) {
   auto prim_name = primitive->name();
   auto value = primitive->GetAttr(attr_name);
+  MS_EXCEPTION_IF_NULL(value);
   std::vector<int64_t> values{};
   if (value->isa<ValueSequence>()) {
     values = GetValue<std::vector<int64_t>>(value);
