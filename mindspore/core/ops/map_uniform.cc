@@ -43,8 +43,8 @@ abstract::ShapePtr MapUniformInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr MapUniformInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
   auto input_type = input_args[kInputIndex0]->BuildType();
   auto per_group_size_type = input_args[kInputIndex1]->BuildType();
   auto group_num_type = input_args[kInputIndex2]->BuildType();
