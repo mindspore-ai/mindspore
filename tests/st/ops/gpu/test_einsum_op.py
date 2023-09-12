@@ -148,3 +148,20 @@ def test_einsum_graph_float64_dynamic():
     Expectation: the diff between the result and the operator of np.einsum is within the loss range
     """
     einsum_test_cases_dynamic(np.float64, 1e-5)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_einsum_exception():
+    """
+    Feature: test einsum exception case
+    Description: test einsum exception case when input is an empty tuple
+    Expectation: no segmentation fault
+    """
+    equation = "j,i->ji"
+    x = ()
+    try:
+        op_net = Einsum(equation)
+        _ = op_net(x)
+    except ValueError:
+        assert True
