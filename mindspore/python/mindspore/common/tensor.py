@@ -275,7 +275,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             if np.array(input_data).dtype == np.float64:
                 return mstype.float32
         if isinstance(input_data, (int, list, tuple)):
-            if np.array(input_data).dtype == np.int32 or np.array(input_data).dtype == np.int64:
+            if np.array(input_data).dtype in (np.int32, np.int64):
                 return mstype.int64
         return dtype
 
