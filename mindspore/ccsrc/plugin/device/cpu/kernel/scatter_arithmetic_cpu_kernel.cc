@@ -50,11 +50,25 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetShapeVector();
-  auto indices_shape = inputs[1]->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto indices_shape = inputs[kIndex1]->GetShapeVector();
+  auto updates_shape = inputs[kIndex2]->GetShapeVector();
+  auto input_shape_null = CheckNullInput(input_shape);
+  auto indices_shape_null = CheckNullInput(indices_shape);
+  auto updates_shape_null = CheckNullInput(updates_shape);
+  has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
+  if (has_null_input_) {
+    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
+    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
+    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
+    output_size_list_.clear();
+    output_size_list_.push_back(input_size_list_[kIndex0]);
+    return KRET_OK;
+  }
 
   first_dim_size_ = 1;
   if (!input_shape.empty()) {
@@ -78,6 +92,9 @@ template <typename T, typename S>
 bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
+  if (has_null_input_) {
+    return true;
+  }
   static const mindspore::HashMap<std::string, std::function<void(T * a, const T *b)>> scatter_arithmetic_func_map{
     {prim::kPrimScatterMul->name(), [](T *a, const T *b) { *a *= *b; }},
     {prim::kPrimScatterDiv->name(), [](T *a, const T *b) { *a /= *b; }},
