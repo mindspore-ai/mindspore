@@ -72,7 +72,7 @@ uint32_t EnvironSetKernel::ParseKernelParam() {
 
   // Get value size.
   aicpuops::Tensor value_tensor = node_def_.inputs(aicpu::kIndex2);
-  value_size_ = value_tensor.data_size();
+  value_size_ = GetTensorMemSizeByShape(value_tensor);
   return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu

@@ -190,6 +190,10 @@ cust_op_lists = [
     "norepeatngram",
     "randint",
     "reversesequence",
+    "environcreate",
+    "environdestroyall",
+    "environget",
+    "environset"
 ]
 
 
