@@ -30,15 +30,12 @@ namespace mindspore {
 namespace transform {
 namespace {
 bool IsTrain() {
-  auto ms_context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context_ptr);
-  bool enable_ge = ms_context_ptr->backend_policy() == "ge";
   const std::string &phase = PhaseManager::GetInstance().phase();
   bool enable_training = false;
   if (!phase.empty()) {
     enable_training = pipeline::GetPhasePrefix(phase) == "train";
   }
-  return enable_ge && enable_training;
+  return enable_training;
 }
 }  // namespace
 
