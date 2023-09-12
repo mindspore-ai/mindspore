@@ -245,7 +245,6 @@ KernelGraphPtr AscendCommOpReuse::CreateCommSubGraph(const CNodePtr &comm_op) {
   // create sub graph
   auto graph = std::make_shared<session::KernelGraph>();
   graph->set_graph_id(comm_subgraph_sum_++);
-  MS_EXCEPTION_IF_NULL(graph);
   auto sub_graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(sub_graph_inputs);
   // create inputs param for sub graph

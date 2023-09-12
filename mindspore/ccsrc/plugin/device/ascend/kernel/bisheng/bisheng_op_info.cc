@@ -68,12 +68,12 @@ void BishengOpInfoRegisterHelper::Output(size_t index, const std::string &name, 
 }
 
 KernelAttr BishengOpInfoRegisterHelper::DataTypeFormat(const std::vector<std::pair<std::string, std::string>> &args) {
+  MS_EXCEPTION_IF_NULL(op_info_);
   if (args.size() != inputs_.size() + outputs_.size()) {
     MS_LOG(EXCEPTION) << "Invalid dtype&format args size " << args.size() << " with inputs size " << inputs_.size()
                       << " and outputs size " << outputs_.size()
                       << (op_info_->op_name().empty() ? "." : " in op " + op_info_->op_name() + ".");
   }
-  MS_EXCEPTION_IF_NULL(op_info_);
   auto kernel_attr = KernelAttr();
   for (size_t i = 0; i < args.size(); ++i) {
     const auto &arg = args[i];
