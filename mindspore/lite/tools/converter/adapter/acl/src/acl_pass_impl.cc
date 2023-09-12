@@ -84,7 +84,8 @@ constexpr auto kConstFoldPass = "ConstFoldPass";
 constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
-constexpr auto kCustomOpFusionForFlashAttention = "FlashAttentionFusion";
+constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionForCustom";
+constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kMakeListPass = "MakeListPass";
 constexpr auto kFuncType = "func_type";
@@ -249,8 +250,8 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Remove single input concat node failed.";
     return lite::RET_ERROR;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kMakeListPass, kScalarOpPass, kRemoveRedundantOpPass,
-                                           kRemoveUnusedAddNodePass, kCustomOpFusionForFlashAttention})) {
+  if (!lite::RunOptimizerPass(func_graph,
+                              {kMakeListPass, kScalarOpPass, kRemoveRedundantOpPass, kRemoveUnusedAddNodePass})) {
     MS_LOG(ERROR) << "Run optimizer pass failed.";
     return lite::RET_ERROR;
   }
@@ -576,6 +577,30 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     }
   } else {
     MS_LOG(WARNING) << "Not support fmk type " << fmk_type_;
+  }
+  // flash attention fusion after infer shape
+  if (param_->provider != "ge") {
+    // if provider is ge, it will fusion in anf_transform_for_ge.cc
+    auto plugin_custom_ops = user_options_cfg_.plugin_custom_ops;
+    if (plugin_custom_ops != "All") {
+      MS_LOG(INFO) << plugin_custom_ops << " is not All";
+      return RET_OK;
+    }
+    auto soc_version = AclModelOptions::GetSocName();
+    MS_LOG(INFO) << "soc_version: " << soc_version;
+    MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
+    if (soc_version == "Ascend910B1" || soc_version == "Ascend910B2") {
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
+        MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
+        return lite::RET_ERROR;
+      }
+    } else {
+      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
+        MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
+        return lite::RET_ERROR;
+      }
+    }
   }
   MS_LOG(DEBUG) << "Pre proc graph success.";
   return lite::RET_OK;

@@ -136,8 +136,9 @@
 #include "tools/optimizer/graph/miniaturization_pass.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/fusion/tile_matmul_fusion.h"
-#include "tools/optimizer/fusion/flash_attention_fusion.h"
+#include "tools/optimizer/fusion/flash_attention_fusion_for_custom.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/fusion/flash_attention_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -804,12 +805,13 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
     {"RemoveUnusedAddNodePass", std::make_shared<opt::RemoveUnusedAddNodePass>(), false},
     {"ScalarOpPass", std::make_shared<opt::ScalarOpPass>(), true},
-    {"FlashAttentionFusion",
-     std::make_shared<opt::FlashAttentionFusion>(param->aclModelOptionCfgParam.plugin_custom_ops,
-                                                 param->aclModelOptionCfgParam.enable_custom_fusion_pattern,
-                                                 param->aclModelOptionCfgParam.disable_custom_fusion_pattern),
+    {"FlashAttentionFusionForCustom",
+     std::make_shared<opt::FlashAttentionFusionForCustom>(param->aclModelOptionCfgParam.plugin_custom_ops,
+                                                          param->aclModelOptionCfgParam.enable_custom_fusion_pattern,
+                                                          param->aclModelOptionCfgParam.disable_custom_fusion_pattern),
      false},
-    {"MakeListPass", std::make_shared<opt::MakeListPass>(), true}};
+    {"MakeListPass", std::make_shared<opt::MakeListPass>(), true},
+    {"FlashAttentionFusion", std::make_shared<opt::FlashAttentionFusion>(), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));

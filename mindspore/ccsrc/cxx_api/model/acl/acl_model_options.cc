@@ -69,6 +69,15 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   soc_version_ = soc_name;
 }
 
+std::string AclModelOptions::GetSocName() {
+  const char *soc_name = aclrtGetSocName();
+  if (soc_name == nullptr) {
+    MS_LOG(WARNING) << "Get soc version failed.";
+    return "";
+  }
+  return soc_name;
+}
+
 void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {
   if (input_names.size() != input_shape_map_.size()) {
     MS_LOG(INFO) << "Inputs count not match";
