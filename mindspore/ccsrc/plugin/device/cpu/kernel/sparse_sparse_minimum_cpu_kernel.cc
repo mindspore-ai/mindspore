@@ -115,7 +115,8 @@ void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   std::vector<std::pair<bool, int64_t>> entries_to_copy;
   (void)entries_to_copy.reserve(static_cast<size_t>(x1_nnz_ + x2_nnz_));
   std::vector<T> out_values;
-  size_t i = 0, j = 0;
+  size_t i = 0;
+  size_t j = 0;
   T s;
   while (i < static_cast<size_t>(x1_nnz_) && j < static_cast<size_t>(x2_nnz_)) {
     int64_t index_cmp = 0;

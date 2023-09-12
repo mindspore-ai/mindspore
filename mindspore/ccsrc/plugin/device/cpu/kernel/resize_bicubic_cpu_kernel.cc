@@ -25,6 +25,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
 constexpr size_t kResizeBicubicInputsNum = 2;
 constexpr size_t kResizeBicubicOutputsNum = 1;
 constexpr int64_t cached_values_hand_max = 4;
@@ -67,6 +71,17 @@ struct ResizerState {
   int64_t bchw_size;
 };
 ResizerState sta;
+
+struct HalfPixelScaler {
+  HalfPixelScaler() {}
+  inline float operator()(const int64_t x, const float scale) const {
+    return (static_cast<float>(x) + 0.5f) * scale - 0.5f;
+  }
+};
+struct LegacyScaler {
+  LegacyScaler() {}
+  inline float operator()(const int64_t x, const float scale) const { return static_cast<float>(x) * scale; }
+};
 }  // namespace
 
 struct WeightsAndIndices {
@@ -79,17 +94,6 @@ struct WeightsAndIndices {
   int64_t index_2;
   int64_t index_3;
   size_t advance;  // advance value.
-};
-
-struct HalfPixelScaler {
-  HalfPixelScaler() {}
-  inline float operator()(const int64_t x, const float scale) const {
-    return (static_cast<float>(x) + 0.5f) * scale - 0.5f;
-  }
-};
-struct LegacyScaler {
-  LegacyScaler() {}
-  inline float operator()(const int64_t x, const float scale) const { return static_cast<float>(x) * scale; }
 };
 
 class CachedInterpolationCalculator {
@@ -233,7 +237,8 @@ static float ComputeYInterpolation(int which, const WeightsAndIndices &y_wai, co
 }
 
 static float Compute_1D(const float *values_, const float xw_0, const float xw_1, const float xw_2, const float xw_3) {
-  return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[0], values_[1], values_[2], values_[3]);
+  return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[kIndex0], values_[kIndex1], values_[kIndex2],
+                              values_[kIndex3]);
 }
 
 template <typename T1>

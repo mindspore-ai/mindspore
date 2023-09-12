@@ -93,7 +93,9 @@ void MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxSingleCompute(
   DATA_T *input, DATA_T *output_y, INDICES_T *output_argmax, int64_t iD, int64_t iH, int64_t iW, int64_t oD, int64_t oH,
   int64_t oW, int64_t kD, int64_t kH, int64_t kW, int64_t sD, int64_t sH, int64_t sW, int64_t pD, int64_t pH,
   int64_t pW, int64_t dD, int64_t dH, int64_t dW) const {
-  int64_t i, j, ti;
+  int64_t i;
+  int64_t j;
+  int64_t ti;
   DATA_T *ip = input;
   for (ti = 0; ti < oD; ti++) {
     for (i = 0; i < oH; i++) {

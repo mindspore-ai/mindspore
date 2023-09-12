@@ -89,7 +89,9 @@ void MaxPool3DGradWithArgmaxCpuKernelMod::MaxPool3DGradWithArgmaxSingleCompute(
   INDICES_T *argmax = input_argmax;
 
   /* calculate max points */
-  size_t ti, i, j;
+  size_t ti;
+  size_t i;
+  size_t j;
   for (ti = 0; ti < oD; ti++) {
     for (i = 0; i < oH; i++) {
       for (j = 0; j < oW; j++) {

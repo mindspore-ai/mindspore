@@ -70,7 +70,8 @@ bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto triu_size = row_ * col_ - tril_size;
   auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t i = 0;
-  int64_t c = std::max<int64_t>(0, offset_), r = 0;
+  int64_t c = std::max<int64_t>(0, offset_);
+  int64_t r = 0;
   while (i < SizeToLong(triu_size)) {
     output_addr[i] = r;
     output_addr[triu_size + i++] = c;

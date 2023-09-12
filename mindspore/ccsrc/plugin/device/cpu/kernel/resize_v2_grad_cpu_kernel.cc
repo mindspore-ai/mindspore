@@ -263,8 +263,10 @@ bool ResizeV2GradCpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::Ad
   }
 
   auto task = [input_addr, output_addr, this](size_t start, size_t end) {
-    size_t iw0, iw1;
-    float w0lambda, w1lambda;
+    size_t iw0;
+    size_t iw1;
+    float w0lambda;
+    float w1lambda;
     size_t in_index[2];
     float lambda_data[2];
     for (size_t c = start; c < end; c++) {
@@ -361,6 +363,7 @@ bool ResizeV2GradCpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::Add
   for (size_t i = 0; i < channels_ * out_hw_size_; ++i) {
     output_addr[i] = static_cast<T>(out_temp[i]);
   }
+  delete[] out_temp;
   return true;
 }
 

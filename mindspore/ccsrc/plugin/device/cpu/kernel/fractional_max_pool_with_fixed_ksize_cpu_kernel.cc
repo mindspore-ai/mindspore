@@ -240,7 +240,8 @@ void FractionalMaxPoolWithFixedKsizeCPUKernelMod::FractionalMaxPoolWithFixedKsiz
     scalar_t *outputPlane = outputForPlane + plane * output_h_ * output_w_;
     int64_t *argmaxPlane = argmaxForPlane + plane * output_h_ * output_w_;
 
-    int h, w;
+    int h;
+    int w;
     for (h = 0; h < output_h_; h++) {
       int inputHStart = sequenceH[h];
       for (w = 0; w < output_w_; w++) {

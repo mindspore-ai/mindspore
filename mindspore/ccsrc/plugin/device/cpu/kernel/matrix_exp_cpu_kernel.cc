@@ -78,7 +78,9 @@ void MatrixExpCpuKernelMod::MTaylorApproximantLow(const Eigen::MatrixBase<Derive
     constexpr int A2_divisor = 2;
     *matrix_y = I + A + A2 / A2_divisor;
   } else if (order == exp_order_4) {
-    constexpr int I_divisor = 2, A_divisor = 6, A2_divisor = 24;
+    constexpr int I_divisor = 2;
+    constexpr int A_divisor = 6;
+    constexpr int A2_divisor = 24;
     *matrix_y = I + A + A2 * (I / I_divisor + A / A_divisor + A2 / A2_divisor);
   } else {
     auto A4 = A2 * (x1 * A + x2 * A2);
