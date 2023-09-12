@@ -791,9 +791,12 @@ def set_auto_parallel_context(**kwargs):
                           across the devices. Parameter size = shape[0] \* ... \* shape[n] \* size(dtype). Non-negative.
                           Unit: KB. Default: ``64`` .
 
-                        - optimizer_weight_shard_size(int): Set the optimizer weight shard group size. When the
-                          parallel optimizer is enabled, if you want to specific the maximum group size across devices.
-                          The numerical range can be (0, device_num]. Default: ``-1`` .
+                        - optimizer_weight_shard_size(int): Set the optimizer weight shard group size, if you want to
+                          specific the maximum group size across devices when the parallel optimizer is enabled.
+                          The numerical range can be (0, device_num]. If the size of data parallel communication domain
+                          of the parameter cannot be divided by `optimizer_weight_shard_size`, then the specified
+                          communication group size will not take effect. Default value is ``-1`` , which means the
+                          optimizer weight shard group size will be the size of data parallel group of each parameter.
 
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
