@@ -1138,7 +1138,7 @@ class Node:
             raise RuntimeError("self._targets should have the same length as targets_ast's elts")
         if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
             raise RuntimeError("self._targets should have targets_ast same length")
-        for i in range(0, len(self._targets)):
+        for i, _ in enumerate(self._targets):
             target = self._targets[i]
             target_ast = targets_ast[0]
             if isinstance(target_ast, ast.Name):

@@ -403,7 +403,7 @@ class AstModifier(ast.NodeTransformer):
                     results.append(ast.Attribute(ast.Name(arg.scope, ast.Load()), arg.value, ast.Store()))
                 else:
                     results.append(ast.Name(arg.value, ast.Store()))
-            elif arg.type == ValueType.ListValue or arg.type == ValueType.TupleValue:
+            elif arg.type in (ValueType.ListValue, ValueType.TupleValue):
                 results.append(AstModifier._create_list_or_tuple(arg))
             else:
                 raise RuntimeError("Please handle custom-object first")

@@ -13126,7 +13126,7 @@ def vecdot(x, y, *, axis=-1):
     ndim = x.ndim if x.ndim > y.ndim else y.ndim
     if (axis < -ndim) or (axis >= ndim):
         raise ValueError(f"For vecdot, the dim is out of range.")
-    if (x.dtype == mstype.complex64) or (x.dtype == mstype.complex128):
+    if x.dtype in mstype.complex_type:
         x = x.conj()
     result = x * y
     result = result.sum(axis=axis)
