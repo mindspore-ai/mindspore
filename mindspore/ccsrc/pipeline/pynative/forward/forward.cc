@@ -772,7 +772,8 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   if (op_run_info->requires_grad) {
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
   } else {
-    op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
+    op_run_info->base_op_run_info.use_dynamic_shape_process =
+      grad()->forward_use_dynamic_shape_process() || grad()->use_dynamic_shape_process();
   }
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   OpRunInfoUsePrimC(op_run_info);

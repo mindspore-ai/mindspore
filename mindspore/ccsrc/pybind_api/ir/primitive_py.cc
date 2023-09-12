@@ -116,7 +116,6 @@ py::tuple ConstructCellHookFnArgs(const std::string &cell_id, const py::object &
   }
   return hook_fn_args;
 }
-
 struct RunPrimitivePyHookFunctionRegister {
   RunPrimitivePyHookFunctionRegister() {
     python_adapter::PyAdapterCallback::SetRunPrimitivePyHookFunctionHandler(
@@ -127,8 +126,14 @@ struct RunPrimitivePyHookFunctionRegister {
       });
   }
 } callback_register;
+struct ProcessUnPairedCellHookRegister {
+  ProcessUnPairedCellHookRegister() {
+    python_adapter::PyAdapterCallback::SetProcessUnPairedCellHookHandler(
+      [](bool execute_hook_fn) -> void { PrimitivePy::ProcessUnPairedCellHook(execute_hook_fn); });
+  }
+} cell_hook_callback_register;
 }  // namespace
-std::map<std::string, py::object> PrimitivePy::hook_grad_;
+std::map<std::string, std::pair<std::map<int, py::function>, py::object>> PrimitivePy::hook_grad_;
 
 PrimitivePy::PrimitivePy(const std::string &name) : Primitive(name, false), python_obj_(py::none()) {}
 
@@ -418,7 +423,8 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
         MS_LOG(EXCEPTION) << "Decorating hook function " << py::str(name_obj) << " with '@jit' is not supported.";
       }
       SyncData(grad_output);
-      py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, iter->second, grad_output);
+      const py::object grad_input = iter->second.second;
+      py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, grad_input, grad_output);
       py::object ret = elem.second(*hook_fn_args);
       if (!py::isinstance<py::none>(ret)) {
         grad_output = UnpackRetValueOfCellHook(ret);
@@ -429,7 +435,7 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
   } else {
     // The first bprop_cut used to hook input gradient of cell.
     SyncData(grad_output);
-    hook_grad_[cell_id] = grad_output;
+    hook_grad_[cell_id] = {backward_hook_fn_, grad_output};
   }
   if (!py::isinstance<py::tuple>(grad_output)) {
     grad_output = py::make_tuple(grad_output);
@@ -582,6 +588,22 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
   }
   auto infer_value = python_obj_.attr(PY_PRIM_METHOD_INFER_VALUE);
   return infer_value(*args);
+}
+
+void PrimitivePy::ProcessUnPairedCellHook(bool execute_hook_fn) {
+  if (execute_hook_fn) {
+    for (const auto &[cell_id, pair] : hook_grad_) {
+      const auto &hook_fn = pair.first;
+      const auto &grad_input = pair.second;
+      for (const auto &elem : hook_fn) {
+        SyncData(grad_input);
+        py::object grad_output = py::none();
+        py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, grad_input, grad_output);
+        (void)elem.second(*hook_fn_args);
+      }
+    }
+  }
+  hook_grad_.clear();
 }
 
 void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }

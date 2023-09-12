@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
@@ -74,6 +75,7 @@ class PrimitivePy : public Primitive {
   PrimitivePtr Clone() override;
   PrimitivePyAdapterPtr adapter() const { return adapter_; }
   void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
+  static void ProcessUnPairedCellHook(bool execute_hook_fn);
   static void ClearHookRes();
 
  private:
@@ -87,7 +89,7 @@ class PrimitivePy : public Primitive {
   std::vector<Signature> signatures_;
   std::vector<PrimitivePyWeakPtr> bprop_cut_prims_;
   std::map<int, py::function> backward_hook_fn_;
-  static std::map<std::string, py::object> hook_grad_;
+  static std::map<std::string, std::pair<std::map<int, py::function>, py::object>> hook_grad_;
 };
 
 class PrimitivePyAdapter {
