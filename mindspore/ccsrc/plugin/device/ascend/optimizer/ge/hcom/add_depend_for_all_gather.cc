@@ -153,7 +153,7 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (cell_reuse) {
     return false;
   }
