@@ -316,7 +316,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     validator.check_positive_int(decay_epoch, 'decay_epoch')
     if min_lr >= max_lr:
         raise ValueError(f"For 'cosine_decay_lr', the 'max_lr' must be greater than the 'min_lr', "
-                         f"but got 'max_lr' value: {max_lr}, 'min_lr' value: {mind_lr}.")
+                         f"but got 'max_lr' value: {max_lr}, 'min_lr' value: {min_lr}.")
     delta = 0.5 * (max_lr - min_lr)
     lr = []
     for i in range(total_step):
