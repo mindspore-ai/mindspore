@@ -132,7 +132,8 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_ZERO("stride_w", stride_w);
 
   int64_t out_h{0}, out_w{0}, total_block{0}, kernel_product{0};
-  int64_t pad_h{0}, pad_w{0};
+  int64_t pad_h{0};
+  int64_t pad_w{0};
 
   (void)CheckAndConvertUtils::CheckPositiveVector(kPads, pads, op_name);
   if (!pads.empty() && (pads.size() <= size_2 || pads.size() == size_4)) {
