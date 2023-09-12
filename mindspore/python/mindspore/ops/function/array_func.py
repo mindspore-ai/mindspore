@@ -910,12 +910,12 @@ def fills(x, value):
         value_ = float(value)
     elif isinstance(value, Tensor):
         if value.ndim != 0:
-            raise ValueError("For 'ops.fills', if the argument 'value' is a tensor, the number of its dimension"
-                             " should be 0, but got {}".format(value.ndim))
+            raise ValueError(f"For 'ops.fills', if the argument 'value' is a tensor, the number of its dimension"
+                             f" should be 0, but got {value.ndim}")
         value_ = value.astype(mstype.float32)
     else:
-        raise TypeError("For 'ops.fills', the type of argument 'value' should be int, float or Tensor,"
-                        " but got {}".format(type(value)))
+        raise TypeError(f"For 'ops.fills', the type of argument 'value' should be int, float or Tensor,"
+                        f" but got {type(value)}")
     return fills_(x, value_)
 
 

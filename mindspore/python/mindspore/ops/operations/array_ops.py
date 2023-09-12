@@ -2946,7 +2946,7 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     out_n = len(x_shape)
     for i in range(1, out_n):
         if x_type[i] != x_type[i-1]:
-            raise TypeError("For \'{}\', all types should be same, but got {}".format(prim_name, x_type))
+            raise TypeError(f"For {prim_name}, all types should be same, but got {x_type}")
 
     new_x_shape = []
     for i, shp in enumerate(x_shape):
@@ -2968,8 +2968,8 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
         for j in range(0, rank_base):
             if new_x_shape[i]["shape"][j] != new_x_shape[0]["shape"][j] and \
                     new_x_shape[i]["shape"][j] != -1 and new_x_shape[0]["shape"][j] != -1:
-                raise ValueError("For \'{}\' element {} shape in input can not pack with first element".format(
-                    prim_name, new_x_shape[i]['id']))
+                raise ValueError(f"For {prim_name} element {new_x_shape[i]['id']} shape"
+                                 f"in input can not pack with first element")
 
     validator.check_int_range(axis, -rank_base - 1, rank_base, validator.INC_BOTH, 'axis', prim_name)
     if axis < 0:

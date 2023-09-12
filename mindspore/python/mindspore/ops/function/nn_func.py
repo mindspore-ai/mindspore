@@ -301,7 +301,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         raise TypeError("For avg_pool1d, the input input_x must be tensor")
 
     if len(input_x.shape) != 3:
-        raise ValueError("For avg_pool1d, input must have 3 dim, but got {}.".format(len(input_x.shape)))
+        raise ValueError(f"For avg_pool1d, input must have 3 dim, but got {len(input_x.shape)}.")
 
     _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad)
     if isinstance(padding, int):
@@ -457,7 +457,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         raise TypeError("For avg_pool2d, the input input_x must be tensor")
 
     if len(input_x.shape) != 4:
-        raise ValueError("For avg_pool2d, input must have 4 dim, but got {}.".format(len(input_x.shape)))
+        raise ValueError(f"For avg_pool2d, input must have 4 dim, but got {len(input_x.shape)}.")
 
     kernel_size = _check_avgpool_2d_kernel_size(kernel_size)
     stride = _check_avgpool_2d_stride(stride)
@@ -561,7 +561,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         raise TypeError("For avg_pool3d, the input input_x must be tensor")
 
     if len(input_x.shape) != 5:
-        raise ValueError("For avg_pool3d, input must have 5 dim, but got {}.".format(len(input_x.shape)))
+        raise ValueError(f"For avg_pool3d, input must have 5 dim, but got {len(input_x.shape)}.")
 
     _check_avg_pool3d_padding(padding)
 
@@ -638,21 +638,21 @@ def adaptive_max_pool1d(input, output_size):
     x_dtype = _get_cache_prim(P.DType)()(input)
 
     if len(x_in_shape) != 3:
-        raise ValueError("For adaptive_max_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
+        raise ValueError(f"For adaptive_max_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
     if x_in_shape[2] < output_size:
-        raise ValueError("For adaptive_max_pool1d input's last dimension must be greater or equal to "
-                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+        raise ValueError(f"For adaptive_max_pool1d input's last dimension must be greater or equal to "
+                         f"output size {output_size}, but got {x_in_shape[2]}.")
     if x_in_shape[2] % output_size != 0:
-        raise ValueError("For adaptive_max_pool1d input's last dimension must be divisible by "
-                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+        raise ValueError(f"For adaptive_max_pool1d input's last dimension must be divisible by "
+                         f"output size {output_size}, but got {x_in_shape[2]}.")
     if is_ascend_backend():
         if x_dtype not in [mstype.float16]:
-            raise TypeError("For adaptive_max_pool1d in Ascend platform, the input dtype must be float16, "
-                            "but got {}.".format(x_dtype))
+            raise TypeError(f"For adaptive_max_pool1d in Ascend platform, the input dtype must be float16, "
+                            f"but got {x_dtype}.")
     else:
         if x_dtype not in [mstype.float16, mstype.float32]:
-            raise TypeError("For adaptive_max_pool1d, the input dtype must be float16 or float32, "
-                            "but got {}.".format(x_dtype))
+            raise TypeError(f"For adaptive_max_pool1d, the input dtype must be float16 or float32, "
+                            f"but got {x_dtype}.")
 
     expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
@@ -6573,8 +6573,8 @@ def gelu(input_x, approximate='none'):
 
     x_dtype = _get_cache_prim(P.DType)()(input_x)
     if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
-        raise TypeError("For gelu, the input dtype must be float16, float32 or float64, "
-                        "but got {}.".format(x_dtype))
+        raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
+                        f"but got {x_dtype}.")
     if approximate == 'tanh':
         output = _get_cache_prim(P.GeLU)()(input_x)
     else:
