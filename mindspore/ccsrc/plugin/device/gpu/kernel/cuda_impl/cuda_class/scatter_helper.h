@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,19 @@ class ScatterHelperGpuKernel : public GpuKernelHelperBase {
     }
     input_shape_ = input_shapes[0];
     indices_shape_ = input_shapes[1];
-    first_dim_size_ = input_shape_[0];
+    first_dim_size_ = 1;
+    if (!input_shape_.empty()) {
+      if (input_shape_[0] < 0) {
+        return -1;
+      }
+      first_dim_size_ = static_cast<size_t>(input_shape_[0]);
+    }
     input_size_ = 1;
     inner_size_ = 1;
     for (int64_t i = 1; i < static_cast<int64_t>(input_shape_.size()); i++) {
       inner_size_ *= input_shape_[i];
     }
-    input_size_ = input_shape_[0] * inner_size_;
+    input_size_ = first_dim_size_ * inner_size_;
     indices_size_ = 1;
     for (int64_t i = 0; i < static_cast<int64_t>(indices_shape_.size()); i++) {
       indices_size_ *= indices_shape_[i];
