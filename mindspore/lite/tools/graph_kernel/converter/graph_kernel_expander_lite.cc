@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
@@ -233,6 +234,9 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
 
 bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {
   if (!GraphKernelExpander::CanExpand(node)) {
+    return false;
+  }
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return false;
   }
   // check if the node has dynamic shape

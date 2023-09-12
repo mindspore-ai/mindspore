@@ -23,10 +23,13 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "include/common/utils/anfalgo.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
@@ -64,7 +67,21 @@ std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
 }
 
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
-  if (!GraphKernelCluster::IsClusterableOp(node)) {
+  if (AnfUtils::IsGraphKernel(node)) {
+    return true;
+  }
+  if (GkUtils::IsKeepBasicNode(node)) {
+    return false;
+  }
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    return false;
+  }
+  bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
+                                    [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+  if (!node_in_oplist) {
+    return false;
+  }
+  if (!ConvertOpUtils::CanConvertInputToAttr(node)) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();

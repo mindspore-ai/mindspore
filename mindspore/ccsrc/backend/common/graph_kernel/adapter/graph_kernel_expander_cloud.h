@@ -34,12 +34,7 @@ class GraphKernelExpanderCloud : public GraphKernelExpander {
  protected:
   std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr InitExpander(const AnfNodePtr &node) override;
-  bool CanExpand(const CNodePtr &node) const override {
-    if (IsComplexOp(node)) {
-      return true;
-    }
-    return GraphKernelExpander::CanExpand(node);
-  }
+  bool CanExpand(const CNodePtr &node) const override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_EXPANDER_WITH_PY_H_
