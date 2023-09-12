@@ -55,8 +55,8 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
  public:
   EltWiseGradCpuTypeFunc() = default;
   ~EltWiseGradCpuTypeFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
+  void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
 
@@ -461,9 +461,9 @@ void EltWiseGradCpuTypeFunc<T>::SoftplusGrad(const T *input1, const T *input2, T
 }
 
 template <typename T>
-void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                         const std::vector<KernelTensorPtr> &) {
-  kernel_name_ = base_operator->name();
+void EltWiseGradCpuTypeFunc<T>::InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &) {
+  kernel_name_ = kernel_name;
   if constexpr (std::is_same_v<T, double>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
@@ -824,9 +824,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<complex128>}}}};
 }  // namespace
 
-bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool EltWiseGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_list_map.find(kernel_name_);
   if (iter == kernel_attr_list_map.end()) {
     MS_LOG(ERROR) << "For 'EltWiseGrad', the kernel name must be in "
@@ -843,14 +842,13 @@ bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   func_obj_ = kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(kernel_name_, inputs, outputs);
   return true;
 }
 
-int EltWiseGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EltWiseGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
