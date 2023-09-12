@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "resize_bicubic.h"
+#include "ms_kernel/resize_bicubic.h"
 
 #include <securec.h>
-
+#include <algorithm>
 #include <vector>
+#include <limits>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 
@@ -171,14 +172,14 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 }
 
 struct HalfPixelScaler {
-  HalfPixelScaler(){};
+  HalfPixelScaler() {}
   inline float operator()(const int64_t x, const float scale) const {
     return (static_cast<float>(x) + 0.5f) * scale - 0.5f;
   }
 };
 
 struct LegacyScaler {
-  LegacyScaler(){};
+  LegacyScaler() {}
   inline float operator()(const int64_t x, const float scale) const { return static_cast<float>(x) * scale; }
 };
 
@@ -472,7 +473,7 @@ inline void interpolate_with_caching(const T1 *input_data, const ResizerState &r
 }
 
 template <typename T1, typename T2>
-uint32_t DoCompute(CpuKernelContext &ctx) {
+uint32_t DoCompute(const CpuKernelContext &ctx) {
   auto input_addr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto output_addr = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   ResizerState sta;

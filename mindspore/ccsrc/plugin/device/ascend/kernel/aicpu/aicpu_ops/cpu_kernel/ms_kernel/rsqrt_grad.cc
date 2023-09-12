@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "rsqrt_grad.h"
+#include "ms_kernel/rsqrt_grad.h"
 
 #include <algorithm>
 #include <complex>
@@ -64,7 +64,7 @@ uint32_t RsqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(const CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
@@ -94,7 +94,7 @@ uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(const CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
@@ -127,7 +127,7 @@ uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradComputeComplex(CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradComputeComplex(const CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);

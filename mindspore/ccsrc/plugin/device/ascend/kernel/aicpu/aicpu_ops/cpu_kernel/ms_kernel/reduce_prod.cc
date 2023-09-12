@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#include "reduce_prod.h"
+#include "ms_kernel/reduce_prod.h"
 
-#include "cpu_kernel_utils.h"
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "algorithm"
-#include "iostream"
 
 namespace {
 const char *kReduceProd = "ReduceProd";
@@ -130,7 +132,7 @@ prod consists of one same base address and different offset addresses
 input_data_address = base_address + offset_address
 */
 template <typename T1, typename T2>
-uint32_t ReduceProdCpuKernel::ReduceProdCompute(CpuKernelContext &ctx) {
+uint32_t ReduceProdCpuKernel::ReduceProdCompute(const CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
@@ -309,7 +311,7 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(CpuKernelContext &ctx) {
+uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(const CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();

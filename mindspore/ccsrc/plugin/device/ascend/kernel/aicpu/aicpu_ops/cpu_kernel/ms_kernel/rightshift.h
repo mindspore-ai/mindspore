@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RIGHTSHIFT_H
 #define AICPU_KERNELS_NORMALIZED_RIGHTSHIFT_H
 
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

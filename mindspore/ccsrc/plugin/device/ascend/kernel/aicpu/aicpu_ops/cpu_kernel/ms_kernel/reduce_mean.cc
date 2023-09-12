@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "reduce_mean.h"
-
-#include "cpu_kernel_utils.h"
+#include "ms_kernel/reduce_mean.h"
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "algorithm"
-#include "iostream"
 
 namespace {
 const char *kReduceMean = "ReduceMean";
+constexpr uint32_t kIndex0 = 0;
 
 #define REDUCEMEAN_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
   case (DTYPE): {                                            \
@@ -126,7 +127,7 @@ mean consists of one same base address and different offset addresses
 input_data_address = base_address + offset_address
 */
 template <typename T1, typename T2>
-uint32_t ReduceMeanCpuKernel::ReduceMeanCompute(CpuKernelContext &ctx) {
+uint32_t ReduceMeanCpuKernel::ReduceMeanCompute(const CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
@@ -305,7 +306,7 @@ uint32_t ReduceMeanCpuKernel::ReduceMeanCompute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t ReduceMeanCpuKernel::ReduceMeanCompute_Complex(CpuKernelContext &ctx) {
+uint32_t ReduceMeanCpuKernel::ReduceMeanCompute_Complex(const CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
@@ -366,7 +367,7 @@ uint32_t ReduceMeanCpuKernel::ReduceMeanCompute_Complex(CpuKernelContext &ctx) {
     for (int64_t i = 0; i < input_data_num; i++) {
       data_sum += input_data_addr[i];
     }
-    output_data_addr[0] = ComplexDiv<T1>(data_sum, input_data_num);
+    output_data_addr[kIndex0] = ComplexDiv<T1>(data_sum, input_data_num);
   } else {
     std::vector<int64_t> dims_new(input_data_shape->GetDimSizes());
     if (keep_dims) {

@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include "resize_nearest_neighbor_v2_grad.h"
+#include "ms_kernel/resize_nearest_neighbor_v2_grad.h"
 
+#include <securec.h>
 #include <stdint.h>
+#include <vector>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -59,9 +61,8 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradParamC
   Tensor *grads_ptr = ctx.Input(0);
   Tensor *size_ptr = ctx.Input(1);
 
-  auto grads_shape = grads_ptr->GetTensorShape()->GetDimSizes();
+  grads_shape = grads_ptr->GetTensorShape()->GetDimSizes();
   auto grads_dims = grads_ptr->GetTensorShape()->GetDims();
-  auto size_shape = size_ptr->GetTensorShape()->GetDimSizes();
   auto size_dims = size_ptr->GetTensorShape()->GetDims();
   auto size_data = static_cast<int32_t *>(size_ptr->GetData());
 
@@ -115,7 +116,7 @@ uint32_t ResizeNearestNeighborV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx) {
+uint32_t ResizeNearestNeighborV2GradCpuKernel::ResizeNearestNeighborV2GradCompute(const CpuKernelContext &ctx) {
   Tensor *input_grads = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   grads_shape = input_grads->GetTensorShape()->GetDimSizes();

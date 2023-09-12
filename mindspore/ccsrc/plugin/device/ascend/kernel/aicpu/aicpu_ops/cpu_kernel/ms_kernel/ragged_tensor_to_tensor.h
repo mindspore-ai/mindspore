@@ -15,21 +15,21 @@
  */
 #ifndef AICPU_KERNELS_NORMALIZED_RAGGEDTENSORTOTENSOR_H_
 #define AICPU_KERNELS_NORMALIZED_RAGGEDTENSORTOTENSOR_H_
+#include <securec.h>
 #include <memory>
 #include <vector>
 #include <iostream>
 #include <string>
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include <unordered_map>
+#include "inc/cpu_ops_kernel.h"
+#include "common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include <unordered_map>
 using std::string;
 using std::vector;
 
@@ -56,12 +56,12 @@ const graphStatus GRAPH_SUCCESS = 0;
 
 class RaggedTensorToTensorCpuKernel : public CpuKernel {
  public:
-  graphStatus GetRowPartitionTypes(CpuKernelContext &ctx);
+  graphStatus GetRowPartitionTypes(const CpuKernelContext &ctx);
   int32_t GetRaggedRank(const std::vector<RowPartitionType> &partition_types);
   RowPartitionType GetRowPartitionTypeByDimension(int dimension);
 
   template <typename INDEX_TYPE>
-  typename TTypes<INDEX_TYPE>::Flat GetRowPartitionTensor(CpuKernelContext &c, int64_t dimension);
+  typename TTypes<INDEX_TYPE>::Flat GetRowPartitionTensor(const CpuKernelContext &c, int64_t dimension);
 
   string RowPartitionTypeToString(RowPartitionType row_partition_type);
 
@@ -71,11 +71,11 @@ class RaggedTensorToTensorCpuKernel : public CpuKernel {
   graphStatus AsProto(Tensor *tshape, TensorShapeProto *proto, std::string name) const;
 
   graphStatus CombineRaggedTensorToTensorShapes(int32_t ragged_rank, const TensorShapeProto &shape,
-                                                const TensorShapeProto &value_shape, TensorShapeProto &output_shape,
+                                                const TensorShapeProto &value_shape, TensorShapeProto *output_shape,
                                                 const char *op_name);
 
   template <typename INDEX_TYPE>
-  uint32_t CalculateOutputSize(INDEX_TYPE first_dim, CpuKernelContext &c, vector<INDEX_TYPE> *result);
+  uint32_t CalculateOutputSize(INDEX_TYPE first_dim, const CpuKernelContext &c, vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
   vector<INDEX_TYPE> CalculateFirstParentOutputIndex(INDEX_TYPE first_dimension, INDEX_TYPE output_index_multiplier,
@@ -94,18 +94,18 @@ class RaggedTensorToTensorCpuKernel : public CpuKernel {
                                           vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
-  uint32_t CalculateOutputIndex(CpuKernelContext &context, int64_t dimension,
+  uint32_t CalculateOutputIndex(const CpuKernelContext &context, int64_t dimension,
                                 const vector<INDEX_TYPE> &parent_output_index, INDEX_TYPE output_index_multiplier,
                                 INDEX_TYPE output_size, vector<INDEX_TYPE> *result);
 
   template <typename INDEX_TYPE>
-  uint32_t GetFirstDimensionSize(CpuKernelContext &context, INDEX_TYPE *result);
+  uint32_t GetFirstDimensionSize(const CpuKernelContext &context, INDEX_TYPE *result);
 
   template <typename INDEX_TYPE, typename VALUE_TYPE>
-  uint32_t DoCompute(CpuKernelContext &context);
+  uint32_t DoCompute(const CpuKernelContext &context);
 
   template <typename INDEX_TYPE, typename VALUE_TYPE>
-  uint32_t SetOutput(CpuKernelContext &context, const vector<INDEX_TYPE> &output_index, Tensor *output_tensor);
+  uint32_t SetOutput(const CpuKernelContext &context, const vector<INDEX_TYPE> &output_index, Tensor *output_tensor);
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;

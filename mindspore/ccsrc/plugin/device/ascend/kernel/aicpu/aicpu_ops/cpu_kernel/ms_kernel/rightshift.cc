@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "rightshift.h"
-
-#include "cpu_kernel_utils.h"
+#include "ms_kernel/rightshift.h"
+#include <algorithm>
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

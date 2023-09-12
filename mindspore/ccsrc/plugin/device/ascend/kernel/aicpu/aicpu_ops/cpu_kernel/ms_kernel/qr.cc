@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "qr.h"
-
+#include "ms_kernel/qr.h"
+#include <algorithm>
+#include <vector>
+#include <utility>
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -57,7 +59,7 @@ uint32_t QrCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t QrCpuKernel::QrCheck(CpuKernelContext &ctx) {
+uint32_t QrCpuKernel::QrCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
   KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
   KERNEL_CHECK_NULLPTR(ctx.Output(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed")
@@ -76,7 +78,7 @@ uint32_t QrCpuKernel::QrCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t QrCpuKernel::QrCompute(CpuKernelContext &ctx) {
+uint32_t QrCpuKernel::QrCompute(const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_q = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_r = reinterpret_cast<T *>(ctx.Output(1)->GetData());

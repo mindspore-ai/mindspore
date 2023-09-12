@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "quantile.h"
+#include "ms_kernel/quantile.h"
 
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <utility>
 
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -34,7 +35,7 @@ const char *kQuantile = "Quantile";
 
 namespace aicpu {
 template <typename T>
-uint32_t QuantileCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
+uint32_t QuantileCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
   input_ = ctx.Input(0);
   DataType input_type = input_->GetDataType();
   int64_t input_dim = input_->GetTensorShape()->GetDims();
@@ -93,11 +94,10 @@ uint32_t QuantileCpuKernel::MaybeWrapDim(int64_t dim, int64_t dim_post_expr) {
 }
 
 template <typename T>
-std::vector<T> transpose(std::vector<T> &f, std::vector<int64_t> &shape, int index) {
+std::vector<T> transpose(const std::vector<T> &f, const std::vector<int64_t> &shape, int index) {
   int element_count = f.size();
   int m = shape.size();
-  int i;
-  int *indexA = (int *)malloc(sizeof(int) * m);
+  int *indexA = reinterpret_cast<int *>(malloc(sizeof(int) * m));
   if (indexA == nullptr) {
     return {};
   }
@@ -108,7 +108,7 @@ std::vector<T> transpose(std::vector<T> &f, std::vector<int64_t> &shape, int ind
     std::swap(pos[m - 1], pos[((index + m) % m)]);
   }
 
-  int *indexB = (int *)malloc(sizeof(int) * m);
+  int *indexB = reinterpret_cast<int *>(malloc(sizeof(int) * m));
   if (indexB == nullptr) {
     free(indexA);
     return {};
@@ -122,18 +122,18 @@ std::vector<T> transpose(std::vector<T> &f, std::vector<int64_t> &shape, int ind
 
   for (int src = 0; src < element_count; src++) {
     int temp = src;
-    for (i = m - 1; i >= 0; i--) {
+    for (int i = m - 1; i >= 0; i--) {
       indexA[i] = temp % shape[i];
       temp = temp / shape[i];
     }
 
-    for (i = 0; i < m; i++) {
+    for (int i = 0; i < m; i++) {
       indexB[i] = indexA[pos[i]];
     }
 
     int dst = 0;
     temp = 1;
-    for (i = m - 1; i >= 0; i--) {
+    for (int i = m - 1; i >= 0; i--) {
       dst = dst + indexB[i] * temp;
       temp = temp * shapeb[i];
     }
@@ -147,18 +147,18 @@ std::vector<T> transpose(std::vector<T> &f, std::vector<int64_t> &shape, int ind
 
 template <typename T>
 void QuantileCpuKernel::QuantileComputeParallelFunc(size_t start, size_t end, int64_t last_shape_size,
-                                                    std::vector<T> &sorted) {
+                                                    std::vector<T> *sorted) {
   uint64_t q_size = q_->GetTensorShape()->NumElements();
   T *output_addr = reinterpret_cast<T *>(output_->GetData());
   T *q_addrs = reinterpret_cast<T *>(q_->GetData());
   for (u_int64_t i = start; i < end; i++) {
     std::vector<T> tmp;
-    std::sort(sorted.begin() + i * last_shape_size, sorted.begin() + (i + 1) * last_shape_size);
+    std::sort(sorted->begin() + i * last_shape_size, sorted->begin() + (i + 1) * last_shape_size);
     bool has_nan = false;
     bool all_nan = true;
 
     for (u_int64_t j = i * last_shape_size; j < (i + 1) * last_shape_size; j++) {
-      if (std::isnan(sorted[j])) {
+      if (std::isnan((*sorted)[j])) {
         has_nan = true;
       } else {
         all_nan = false;
@@ -172,7 +172,7 @@ void QuantileCpuKernel::QuantileComputeParallelFunc(size_t start, size_t end, in
       continue;
     }
     for (auto k = i * last_shape_size; k < (i + 1) * last_shape_size; k++) {
-      auto x = sorted[k];
+      auto x = (*sorted)[k];
       if (!isnan(x)) {
         tmp.push_back(x);
       }
@@ -191,19 +191,19 @@ void QuantileCpuKernel::QuantileComputeParallelFunc(size_t start, size_t end, in
 }
 
 template <typename T>
-void QuantileCpuKernel::QuantileComputeSerialFunc(int64_t last_shape_size, std::vector<T> &sorted) {
+void QuantileCpuKernel::QuantileComputeSerialFunc(int64_t last_shape_size, std::vector<T> *sorted) {
   uint64_t n = input_->GetTensorShape()->NumElements();
   uint64_t q_size = q_->GetTensorShape()->NumElements();
   T *output_addr = reinterpret_cast<T *>(output_->GetData());
   T *q_addrs = reinterpret_cast<T *>(q_->GetData());
   for (u_int64_t i = 0; i < n; i += last_shape_size) {
     std::vector<T> tmp;
-    sort(sorted.begin() + i, sorted.begin() + i + last_shape_size);
+    sort(sorted->begin() + i, sorted->begin() + i + last_shape_size);
     bool has_nan = false;
     bool all_nan = true;
     for (auto j = i; j < i + last_shape_size; j++) {
-      if (!isnan(sorted[j])) {
-        tmp.push_back(sorted[j]);
+      if (!isnan((*sorted)[j])) {
+        tmp.push_back((*sorted)[j]);
         all_nan = false;
       } else {
         has_nan = true;
@@ -227,14 +227,14 @@ void QuantileCpuKernel::QuantileComputeSerialFunc(int64_t last_shape_size, std::
   }
 }
 template <typename T>
-void QuantileCpuKernel::QuantileComputeDefaultFunc(std::vector<T> &sorted) {
+void QuantileCpuKernel::QuantileComputeDefaultFunc(std::vector<T> *sorted) {
   uint64_t q_size = q_->GetTensorShape()->NumElements();
   T *output_addr = reinterpret_cast<T *>(output_->GetData());
   T *q_addrs = reinterpret_cast<T *>(q_->GetData());
-  std::sort(sorted.begin(), sorted.end());
+  std::sort(sorted->begin(), sorted->end());
   bool all_nan = true;
   std::vector<T> tmp;
-  for (auto &x : sorted) {
+  for (auto &x : *sorted) {
     if (!isnan(x)) {
       tmp.push_back(x);
       all_nan = false;
@@ -279,7 +279,7 @@ std::vector<int64_t> QuantileCpuKernel::SetQuantileOutputShape() {
 }
 
 template <typename T>
-uint32_t QuantileCpuKernel::QuantileCompute(CpuKernelContext &ctx) {
+uint32_t QuantileCpuKernel::QuantileCompute(const CpuKernelContext &ctx) {
   T *input_addrs = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   size_t data_size = input_->GetTensorShape()->NumElements() * sizeof(T);
 
@@ -297,9 +297,9 @@ uint32_t QuantileCpuKernel::QuantileCompute(CpuKernelContext &ctx) {
 
   if (data_size <= paralled_data_size) {
     if (dim_ == kQuantileAttrDefaultDim) {
-      QuantileComputeDefaultFunc<T>(sorted);
+      QuantileComputeDefaultFunc<T>(&sorted);
     } else if (dim_ == input_shape_size - 1) {
-      QuantileComputeSerialFunc<T>(input_dims[input_dims.size() - 1], sorted);
+      QuantileComputeSerialFunc<T>(input_dims[input_dims.size() - 1], &sorted);
     } else {
       input_dims.push_back(1);
       sorted = transpose<T>(sorted, input_dims, dim_);
@@ -307,26 +307,26 @@ uint32_t QuantileCpuKernel::QuantileCompute(CpuKernelContext &ctx) {
       if (m != 0) {
         std::swap(input_dims[m - 1], input_dims[((dim_ + m) % m)]);
       }
-      QuantileComputeSerialFunc<T>(input_dims[input_dims.size() - 1], sorted);
+      QuantileComputeSerialFunc<T>(input_dims[input_dims.size() - 1], &sorted);
     }
   } else {
     DoParallelQuantile(ctx, sorted, input_dims);
   }
-  SetOutput<T>(out_shape);
+  SetOutput<T>(&out_shape);
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t QuantileCpuKernel::DoParallelQuantile(CpuKernelContext &ctx, std::vector<T> sorted,
+uint32_t QuantileCpuKernel::DoParallelQuantile(const CpuKernelContext &ctx, std::vector<T> sorted,
                                                std::vector<int64_t> input_dims) {
   int64_t input_shape_size = input_->GetTensorShape()->GetDims();
   std::vector<int64_t> input_shape_dims = input_->GetTensorShape()->GetDimSizes();
   int64_t n = input_->GetTensorShape()->NumElements();
   if (dim_ == kQuantileAttrDefaultDim) {
-    QuantileComputeDefaultFunc<T>(sorted);
+    QuantileComputeDefaultFunc<T>(&sorted);
   } else if (dim_ == input_shape_size - 1) {
     int64_t last_shape_size = input_dims[input_dims.size() - 1];
     auto shard_quantile = [&](size_t start, size_t end) {
-      QuantileComputeParallelFunc<T>(start, end, last_shape_size, sorted);
+      QuantileComputeParallelFunc<T>(start, end, last_shape_size, &sorted);
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
                         "Quantile Compute failed.");
@@ -339,7 +339,7 @@ uint32_t QuantileCpuKernel::DoParallelQuantile(CpuKernelContext &ctx, std::vecto
     }
     int64_t last_shape_size = input_shape_dims[input_shape_dims.size() - 1];
     auto shard_quantile = [&](size_t start, size_t end) {
-      QuantileComputeParallelFunc<T>(start, end, last_shape_size, sorted);
+      QuantileComputeParallelFunc<T>(start, end, last_shape_size, &sorted);
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n / last_shape_size, last_shape_size, shard_quantile),
                         "Quantile Compute failed.");
@@ -347,24 +347,24 @@ uint32_t QuantileCpuKernel::DoParallelQuantile(CpuKernelContext &ctx, std::vecto
   return 0;
 }
 template <typename T>
-void QuantileCpuKernel::SetOutput(std::vector<int64_t> &out_shape) {
+void QuantileCpuKernel::SetOutput(std::vector<int64_t> *out_shape) {
   auto output_addr = reinterpret_cast<T *>(output_->GetData());
 
   int64_t l = output_->GetTensorShape()->NumElements();
   std::vector<T> out;
   int64_t q_dim = q_->GetTensorShape()->GetDims();
-  std::vector<int64_t> tmp(out_shape);
+  std::vector<int64_t> tmp(*out_shape);
   if (q_dim > 0) {
     for (int i = 0; i < l; i++) {
       out.push_back(*(output_addr + i));
     }
 
-    int64_t out_end_shape = out_shape[out_shape.size() - 1];
-    out_shape.push_back(out_end_shape);
-    std::swap(out_shape[0], out_shape[out_shape.size() - 1]);
-    out_shape.erase(out_shape.begin());
-    out_shape.insert(out_shape.begin(), 1);
-    out = transpose<T>(out, out_shape, 0);
+    int64_t out_end_shape = (*out_shape)[out_shape->size() - 1];
+    out_shape->push_back(out_end_shape);
+    std::swap((*out_shape)[0], (*out_shape)[out_shape->size() - 1]);
+    out_shape->erase(out_shape->begin());
+    out_shape->insert(out_shape->begin(), 1);
+    out = transpose<T>(out, *out_shape, 0);
     for (int i = 0; i < l; i++) {
       output_addr[i] = out[i];
     }

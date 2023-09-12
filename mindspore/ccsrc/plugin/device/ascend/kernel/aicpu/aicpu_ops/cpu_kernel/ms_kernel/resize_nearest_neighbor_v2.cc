@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include "resize_nearest_neighbor_v2.h"
+#include "ms_kernel/resize_nearest_neighbor_v2.h"
 
+#include <securec.h>
 #include <stdint.h>
+#include <vector>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -74,11 +76,10 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
   }
   auto x_shape = x_ptr->GetTensorShape()->GetDimSizes();
   auto x_dims = x_ptr->GetTensorShape()->GetDims();
-  auto size_shape = size_ptr->GetTensorShape()->GetDimSizes();
   auto size_dims = size_ptr->GetTensorShape()->GetDims();
   auto size_data = static_cast<int32_t *>(size_ptr->GetData());
 
-  KERNEL_CHECK_FALSE((!half_pixel_centers || (half_pixel_centers && !align_corners)), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE(!(half_pixel_centers && align_corners), KERNEL_STATUS_PARAM_INVALID,
                      "If half_pixel_centers is True, "
                      "align_corners must be False, but got half_pixel_centers %s, "
                      "align_corners %s.",
@@ -109,9 +110,9 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
 
   auto height_scale = CalculateResizeScale(in_height, out_height, align_corners);
   auto width_scale = CalculateResizeScale(in_width, out_width, align_corners);
-  KERNEL_CHECK_FALSE(ceilf((out_height - 1) * height_scale) <= float(INT64_MAX), KERNEL_STATUS_PARAM_INVALID,
-                     "input image height scale would cause an overflow.");
-  KERNEL_CHECK_FALSE(ceilf((out_width - 1) * width_scale) <= float(INT64_MAX), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE(ceilf((out_height - 1) * height_scale) <= static_cast<float>(INT64_MAX),
+                     KERNEL_STATUS_PARAM_INVALID, "input image height scale would cause an overflow.");
+  KERNEL_CHECK_FALSE(ceilf((out_width - 1) * width_scale) <= static_cast<float>(INT64_MAX), KERNEL_STATUS_PARAM_INVALID,
                      "input image width scale would cause an overflow.");
   KERNEL_CHECK_FALSE(in_height < (1 << kMaxValue) && in_width < (1 << kMaxValue), KERNEL_STATUS_PARAM_INVALID,
                      "nearest neighbor requires max height "
@@ -172,7 +173,7 @@ void ResizeNearestNeighborV2CpuKernel::InnerCompute(
 }
 
 template <typename T>
-uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(CpuKernelContext &ctx) {
+uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(const CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   std::vector<int64_t> x_shape = input_x->GetTensorShape()->GetDimSizes();

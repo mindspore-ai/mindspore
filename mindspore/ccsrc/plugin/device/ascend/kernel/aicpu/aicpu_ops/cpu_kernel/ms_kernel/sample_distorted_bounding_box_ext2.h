@@ -16,7 +16,9 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SAMPLE_DISTORTED_BOUNDING_BOX_EXT2_H_
 #define AICPU_KERNELS_NORMALIZED_SAMPLE_DISTORTED_BOUNDING_BOX_EXT2_H_
 
-#include "cpu_ops_kernel.h"
+#include <algorithm>
+#include <vector>
+#include "inc/cpu_ops_kernel.h"
 #include "utils/philox_random.h"
 
 class Rectangle {
@@ -92,7 +94,7 @@ class SDBBExt2CpuKernel : public CpuKernel {
   bool GenerateRandomCrop(int original_width, int original_height, float min_relative_crop_area,
                           float max_relative_crop_area, float aspect_ratio, Rectangle *crop_rect);
 
-  uint32_t SDBBExt2Check(CpuKernelContext &ctx);
+  uint32_t SDBBExt2Check(const CpuKernelContext &ctx);
 
   template <typename T>
   uint32_t SDBBExt2Compute(CpuKernelContext &ctx);

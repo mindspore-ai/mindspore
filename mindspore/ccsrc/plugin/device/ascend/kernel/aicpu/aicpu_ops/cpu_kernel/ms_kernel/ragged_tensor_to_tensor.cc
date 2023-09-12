@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ragged_tensor_to_tensor.h"
-#include "securec.h"
+#include <securec.h>
+#include "ms_kernel/ragged_tensor_to_tensor.h"
+#include <algorithm>
 
 namespace {
 constexpr uint32_t kInputNum = 4;
@@ -55,7 +56,7 @@ uint32_t RaggedTensorToTensorCpuKernel::Compute(CpuKernelContext &ctx) {
           KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
         }
-      };
+      }
       break;
     case DT_INT64:
       switch (type1) {
@@ -83,7 +84,7 @@ uint32_t RaggedTensorToTensorCpuKernel::Compute(CpuKernelContext &ctx) {
           KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
         }
-      };
+      }
       break;
     default: {
       KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(SplitType).c_str());
@@ -92,7 +93,7 @@ uint32_t RaggedTensorToTensorCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-graphStatus RaggedTensorToTensorCpuKernel::GetRowPartitionTypes(CpuKernelContext &ctx) {
+graphStatus RaggedTensorToTensorCpuKernel::GetRowPartitionTypes(const CpuKernelContext &ctx) {
   std::vector<std::string> partition_types;
   AttrValue *row_part = ctx.GetAttr("row_partition_types");
   int64_t N = ctx.Input(0)->GetTensorShape()->GetDims();
@@ -144,7 +145,7 @@ RowPartitionType RaggedTensorToTensorCpuKernel::GetRowPartitionTypeByDimension(i
 
 // Returns the relationship between dimension and dimension + 1.
 template <typename INDEX_TYPE>
-typename TTypes<INDEX_TYPE>::Flat RaggedTensorToTensorCpuKernel::GetRowPartitionTensor(CpuKernelContext &c,
+typename TTypes<INDEX_TYPE>::Flat RaggedTensorToTensorCpuKernel::GetRowPartitionTensor(const CpuKernelContext &c,
                                                                                        int64_t dimension) {
   if (row_partition_types_[0] == RowPartitionType::FIRST_DIM_SIZE) {
     Tensor *row_partition = c.Input(dimension + 1 + kFirstPartitionInputIndex);
@@ -250,26 +251,26 @@ graphStatus RaggedTensorToTensorCpuKernel::AsProto(Tensor *tshape, TensorShapePr
 graphStatus RaggedTensorToTensorCpuKernel::CombineRaggedTensorToTensorShapes(int32_t ragged_rank,
                                                                              const TensorShapeProto &shape,
                                                                              const TensorShapeProto &value_shape,
-                                                                             TensorShapeProto &output_shape,
+                                                                             TensorShapeProto *output_shape,
                                                                              const char *op_name) {
   if (value_shape.unknown_rank && shape.unknown_rank) {
-    output_shape.dims.clear();
-    output_shape.unknown_rank = true;
+    output_shape->dims.clear();
+    output_shape->unknown_rank = true;
     return GRAPH_SUCCESS;
   }
   if (shape.unknown_rank) {
-    while (output_shape.dims.size() < ragged_rank + value_shape.dims.size()) {
+    while (output_shape->dims.size() < ragged_rank + value_shape.dims.size()) {
       Dim temp_dim;
       temp_dim.size = -1;
-      output_shape.dims.emplace_back(temp_dim);
+      output_shape->dims.emplace_back(temp_dim);
     }
   } else {
-    output_shape = shape;
+    *output_shape = shape;
   }
   if (value_shape.unknown_rank) {
     return GRAPH_SUCCESS;
   }
-  if (ragged_rank + value_shape.dims.size() != output_shape.dims.size()) {
+  if (ragged_rank + value_shape.dims.size() != output_shape->dims.size()) {
     KERNEL_LOG_ERROR(
       "error:ragged_rank plus value_shape dims should be equal to output dim "
       "sizes.");
@@ -278,7 +279,7 @@ graphStatus RaggedTensorToTensorCpuKernel::CombineRaggedTensorToTensorShapes(int
 
   for (size_t i = 1; i < value_shape.dims.size(); ++i) {
     const Dim value_dim = value_shape.dims[i];
-    Dim output_shape_dim = output_shape.dims.at(output_shape.dims.size() - value_shape.dims.size() + i);
+    Dim output_shape_dim = output_shape->dims.at(output_shape->dims.size() - value_shape.dims.size() + i);
     if (value_dim.size >= 0) {
       if (output_shape_dim.size >= 0 && output_shape_dim.size != value_dim.size) {
         KERNEL_LOG_ERROR("Value and shape dimension are inconsistent.");
@@ -293,7 +294,7 @@ graphStatus RaggedTensorToTensorCpuKernel::CombineRaggedTensorToTensorShapes(int
 }
 
 template <typename INDEX_TYPE>
-uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputSize(INDEX_TYPE first_dim, CpuKernelContext &c,
+uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputSize(INDEX_TYPE first_dim, const CpuKernelContext &c,
                                                             vector<INDEX_TYPE> *result) {
   TensorShapeProto value_shape_proto;
   Tensor *value_ptr = c.Input(kValueInputIndex);
@@ -313,7 +314,7 @@ uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputSize(INDEX_TYPE first_dim
     AsProto(shape_ptr, &shape_proto, "shape");
   }
   KERNEL_CHECK_FALSE((CombineRaggedTensorToTensorShapes(ragged_rank_, shape_proto, value_shape_proto,
-                                                        output_shape_proto, "RaggedTensorToTensor") != GRAPH_FAILED),
+                                                        &output_shape_proto, "RaggedTensorToTensor") != GRAPH_FAILED),
                      KERNEL_STATUS_PARAM_INVALID, "CombineRaggedTensorToTensorShapes error.");
   result->reserve(output_shape_proto.dims.size());
   for (unsigned int dim = 0; dim < output_shape_proto.dims.size(); dim++) {
@@ -453,7 +454,7 @@ uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputIndexValueRowID(
 }
 
 template <typename INDEX_TYPE>
-uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputIndex(CpuKernelContext &ctx, int64_t dimension,
+uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputIndex(const CpuKernelContext &ctx, int64_t dimension,
                                                              const vector<INDEX_TYPE> &parent_output_index,
                                                              INDEX_TYPE output_index_multiplier, INDEX_TYPE output_size,
                                                              vector<INDEX_TYPE> *result) {
@@ -473,7 +474,7 @@ uint32_t RaggedTensorToTensorCpuKernel::CalculateOutputIndex(CpuKernelContext &c
 }
 
 template <typename INDEX_TYPE>
-uint32_t RaggedTensorToTensorCpuKernel::GetFirstDimensionSize(CpuKernelContext &ctx, INDEX_TYPE *result) {
+uint32_t RaggedTensorToTensorCpuKernel::GetFirstDimensionSize(const CpuKernelContext &ctx, INDEX_TYPE *result) {
   const Tensor *first_partition_tensor = ctx.Input(kFirstPartitionInputIndex);
   const RowPartitionType first_partition_type = row_partition_types_[0];
 
@@ -494,7 +495,7 @@ uint32_t RaggedTensorToTensorCpuKernel::GetFirstDimensionSize(CpuKernelContext &
 }
 
 template <typename INDEX_TYPE, typename VALUE_TYPE>
-uint32_t RaggedTensorToTensorCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t RaggedTensorToTensorCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((GetRowPartitionTypes(ctx) != GRAPH_FAILED), KERNEL_STATUS_PARAM_INVALID,
                      "GetRowPartitionTypes error");
   ragged_rank_ = GetRaggedRank(row_partition_types_);
@@ -536,7 +537,7 @@ uint32_t RaggedTensorToTensorCpuKernel::DoCompute(CpuKernelContext &ctx) {
 }
 
 template <typename INDEX_TYPE, typename VALUE_TYPE>
-uint32_t RaggedTensorToTensorCpuKernel::SetOutput(CpuKernelContext &ctx, const vector<INDEX_TYPE> &output_index,
+uint32_t RaggedTensorToTensorCpuKernel::SetOutput(const CpuKernelContext &ctx, const vector<INDEX_TYPE> &output_index,
                                                   Tensor *output_tensor) {
   EigenTensor outputET(output_tensor, reinterpret_cast<INDEX_TYPE *>(output_tensor->GetData()));
   typename aicpu::TTypes<VALUE_TYPE>::Flat output_flat = outputET.flat<VALUE_TYPE>();

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "reduce_sum.h"
-
-#include "cpu_kernel_utils.h"
+#include "ms_kernel/reduce_sum.h"
+#include <vector>
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -241,7 +241,7 @@ uint32_t ReduceSumCpuKernel::ReduceSumOneAxes2(const T *input_data, int64_t inpu
 }
 
 template <typename T1>
-uint32_t ReduceSumCpuKernel::ReduceSumDedupAxes(CpuKernelContext &ctx) {
+uint32_t ReduceSumCpuKernel::ReduceSumDedupAxes(const CpuKernelContext &ctx) {
   int32_t rank = ctx.Input(0)->GetTensorShape()->GetDims();
   auto axes_data = reinterpret_cast<T1 *>(ctx.Input(1)->GetData());
   int64_t axes_num = ctx.Input(1)->NumElements();

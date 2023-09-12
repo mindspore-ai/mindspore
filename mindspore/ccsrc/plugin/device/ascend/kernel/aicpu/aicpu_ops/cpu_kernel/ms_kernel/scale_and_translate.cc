@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-#include "scale_and_translate.h"
+#include "ms_kernel/scale_and_translate.h"
 
 #include <iostream>
 #include <type_traits>
+#include <limits>
+#include <vector>
+#include <string>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "../utils/sampling_kernels.h"
@@ -72,7 +76,7 @@ inline const T &Clamp(const T &low, const T &high, const T &value) {
 }
 
 template <typename Kernel>
-uint32_t ComputeSpansCore(CpuKernelContext &context, const Kernel &kernel, const int64_t output_size,
+uint32_t ComputeSpansCore(const CpuKernelContext &context, const Kernel &kernel, const int64_t output_size,
                           const int64_t input_size, const float scale, const float translate, const bool antialias,
                           Spans *spans) {
   const float inv_scale = 1.0 / scale;
@@ -133,7 +137,7 @@ uint32_t ComputeSpansCore(CpuKernelContext &context, const Kernel &kernel, const
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeGradSpansCore(CpuKernelContext &context, const Spans *spans, const int64_t forward_output_size,
+uint32_t ComputeGradSpansCore(const CpuKernelContext &context, const Spans *spans, const int64_t forward_output_size,
                               const int64_t forward_input_size, Spans *grad_spans) {
   struct GradComponent {
     int index;
@@ -189,9 +193,9 @@ uint32_t ComputeGradSpansCore(CpuKernelContext &context, const Spans *spans, con
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeSpans(CpuKernelContext &context, const aicpu::SamplingKernelType kernel_type, const int64_t output_size,
-                      const int64_t input_size, const float scale, const float translate, const bool antialias,
-                      Spans *spans) {
+uint32_t ComputeSpans(const CpuKernelContext &context, const aicpu::SamplingKernelType kernel_type,
+                      const int64_t output_size, const int64_t input_size, const float scale, const float translate,
+                      const bool antialias, Spans *spans) {
   switch (kernel_type) {
     case Lanczos1Kernel: {
       return ComputeSpansCore(context, CreateLanczos1Kernel(), output_size, input_size, scale, translate, antialias,
@@ -231,7 +235,7 @@ uint32_t ComputeSpans(CpuKernelContext &context, const aicpu::SamplingKernelType
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ComputeGradSpans(CpuKernelContext &context, const SamplingKernelType kernel_type,
+uint32_t ComputeGradSpans(const CpuKernelContext &context, const SamplingKernelType kernel_type,
                           const int64_t forward_output_size, const int64_t forward_input_size, const float scale,
                           const float translate, const bool antialias, Spans *grad_spans) {
   Spans spans;
@@ -283,11 +287,9 @@ uint32_t ScaleAndTranslateGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(const CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(0)->GetTensorShape();
   auto input1_shape = ctx.Input(1)->GetTensorShape();
-  auto input2_shape = ctx.Input(2)->GetTensorShape();
-  auto input3_shape = ctx.Input(3)->GetTensorShape();
   // dims check
   KERNEL_CHECK_FALSE((input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
                      "The input0's dims=[%d] must be 4-dimensional", input0_shape->GetDims())
@@ -316,11 +318,9 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCheck(CpuKernelContext &ct
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCheck(CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCheck(const CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(0)->GetTensorShape();  // batch_size
   auto input1_shape = ctx.Input(1)->GetTensorShape();  // forward_input_height
-  auto input2_shape = ctx.Input(2)->GetTensorShape();  // channels
-  auto input3_shape = ctx.Input(3)->GetTensorShape();  // forward_input_width
   // dims check
   KERNEL_CHECK_FALSE((input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
                      "The input_grad dims=[%d] must be 4-dimensional", input0_shape->GetDims())
@@ -349,7 +349,7 @@ uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCheck(CpuKernelCon
 }
 
 template <typename T>
-uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(const CpuKernelContext &ctx) {
   auto input_size = reinterpret_cast<int32_t *>(ctx.Input(1)->GetData());
   auto input_scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());
   auto input_translation = reinterpret_cast<float *>(ctx.Input(3)->GetData());
@@ -362,7 +362,6 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext &
   Tensor *output = ctx.Output(0);
 
   auto input0_shape = ctx.Input(0)->GetTensorShape();
-  auto input1_shape = ctx.Input(1)->GetTensorShape();
 
   const int64_t output_height = input_size[0];
   const int64_t output_width = input_size[1];
@@ -423,7 +422,7 @@ uint32_t ScaleAndTranslateCpuKernel::ScaleAndTranslateCompute(CpuKernelContext &
 }
 
 template <typename T>
-uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(CpuKernelContext &ctx) {
+uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(const CpuKernelContext &ctx) {
   auto input_scale = reinterpret_cast<float *>(ctx.Input(2)->GetData());
   auto input_translation = reinterpret_cast<float *>(ctx.Input(3)->GetData());
   std::string kernel_type_str = ctx.GetAttr("kernel_type")->GetString();
@@ -492,7 +491,7 @@ uint32_t ScaleAndTranslateGradCpuKernel::ScaleAndTranslateGradCompute(CpuKernelC
 }
 
 template <typename T>
-uint32_t GatherColumns(CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
+uint32_t GatherColumns(const CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
                        const T *image, const int64_t input_height, const int64_t input_width,
                        const int64_t output_height, const int64_t output_width, const int channels, float *output) {
   const int64_t in_row_size = input_width * channels;
@@ -532,7 +531,7 @@ inline void AddScaledVector(const T *in_vec, int vec_len, float weight, float *o
 }
 
 template <typename T>
-uint32_t GatherRows(CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
+uint32_t GatherRows(const CpuKernelContext &context, int span_size, const int32_t *starts, const float *weights,
                     const T *image, const int64_t input_height, const int64_t input_width, const int64_t output_height,
                     const int64_t output_width, const int channels, float *output) {
   const int64_t in_row_size = input_width * channels;
@@ -558,7 +557,7 @@ uint32_t GatherRows(CpuKernelContext &context, int span_size, const int32_t *sta
 }
 
 template <typename T>
-uint32_t GatherSpans<T>::operator()(aicpu::CpuKernelContext &context, int row_span_size,
+uint32_t GatherSpans<T>::operator()(const aicpu::CpuKernelContext &context, int row_span_size,
                                     Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> row_starts,
                                     Eigen::TensorMap<Eigen::Tensor<float, 1>> row_weights, int col_span_size,
                                     Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> col_starts,

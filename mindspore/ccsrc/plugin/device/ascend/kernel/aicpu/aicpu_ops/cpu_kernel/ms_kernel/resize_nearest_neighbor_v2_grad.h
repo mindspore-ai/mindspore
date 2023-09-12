@@ -18,8 +18,9 @@
 #define AICPU_KERNELS_NORMALIZED_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H
 
 #include <unordered_map>
+#include <vector>
 
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {
@@ -34,7 +35,7 @@ class ResizeNearestNeighborV2GradCpuKernel : public CpuKernel {
   uint32_t ResizeNearestNeighborV2GradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx);
+  uint32_t ResizeNearestNeighborV2GradCompute(const CpuKernelContext &ctx);
 
   template <typename T, typename S>
   void RealCompute(T *const grads_4d, S *const y_4d);

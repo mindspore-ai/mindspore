@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "rgb_to_hsv.h"
+#include "ms_kernel/rgb_to_hsv.h"
 
 #include <iostream>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -42,12 +43,9 @@ const std::vector<std::string> RGBToHSVCpuKernel::kernels_name_ = {"(DT_FLOAT16,
                                                                    "(DT_DOUBLE,DT_DOUBLE)"};
 
 template <typename T1, typename T2>
-uint32_t RGBToHSVCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
-  Tensor *output_tensor = ctx.Output(0);
-  auto input_shape = input_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input_tensor->NumElements();
-  auto output_shape = output_tensor->GetTensorShape()->GetDimSizes();
   auto input_data = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto out = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
 
@@ -73,7 +71,7 @@ uint32_t RGBToHSVCpuKernel::DoCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckParam(CpuKernelContext &ctx, const std::string &in_or_out, uint32_t index,
+uint32_t RGBToHSVCpuKernel::CheckParam(const CpuKernelContext &ctx, const std::string &in_or_out, uint32_t index,
                                        size_t rank) {
   Tensor *param = nullptr;
   if (in_or_out == kInputStr) {
@@ -102,7 +100,7 @@ uint32_t RGBToHSVCpuKernel::CheckParam(CpuKernelContext &ctx, const std::string 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckShapes(CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::CheckShapes(const CpuKernelContext &ctx) {
   auto input0_shape = ctx.Input(kFirstInputIndex)->GetTensorShape()->GetDimSizes();
   if (input0_shape.back() != kImageChannels) {
     KERNEL_LOG_ERROR(
@@ -114,7 +112,7 @@ uint32_t RGBToHSVCpuKernel::CheckShapes(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t RGBToHSVCpuKernel::CheckParams(CpuKernelContext &ctx) {
+uint32_t RGBToHSVCpuKernel::CheckParams(const CpuKernelContext &ctx) {
   auto ret = CheckParam(ctx, kInputStr, kFirstInputIndex, kInputShapeRank);
   if (ret != KERNEL_STATUS_OK) {
     return ret;

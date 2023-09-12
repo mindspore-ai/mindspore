@@ -19,7 +19,7 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class ResizeBicubicGradCpuKernel : public CpuKernel {

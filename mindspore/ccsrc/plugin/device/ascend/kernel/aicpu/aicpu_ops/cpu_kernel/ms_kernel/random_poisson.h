@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_H_
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "random/utils.h"
@@ -37,13 +37,12 @@ class RandomPoissonCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t Generate(CpuKernelContext &ctx, Tensor *output);
+  uint32_t Generate(const CpuKernelContext &ctx, Tensor *output);
   uint64_t seed_ = 0;
   uint64_t seed2_ = 0;
   std::mt19937 rng_;
 };
 
-namespace {
 EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
   timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
@@ -58,7 +57,6 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t 
   }
   return seed * 6364136223846793005ULL + 0xda3e39cb94b95bdbULL;
 }
-}  // namespace
 
 template <typename T>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(std::mt19937 &rng, double rate) {
@@ -132,7 +130,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(std::mt19937 &rng, d
 template <typename T>
 class PoissonRandomGenerator {
  public:
-  PoissonRandomGenerator(double rate) : m_rate(rate) {}
+  explicit PoissonRandomGenerator(double rate) : m_rate(rate) {}
   void setRate(double rate) { m_rate = rate; }
   T gen(std::mt19937 &rng) const {
     T result = RandomToTypePoisson<T>(rng, m_rate);

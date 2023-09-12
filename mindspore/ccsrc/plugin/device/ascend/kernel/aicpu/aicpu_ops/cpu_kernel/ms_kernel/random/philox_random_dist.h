@@ -18,9 +18,9 @@
 #define AI_CPU_PHILOX_RANDOM_DIS_H
 
 #include <algorithm>
-#include "utils.h"
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
+#include "ms_kernel/random/utils.h"
+#include "inc/cpu_ops_kernel.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/philox_random.h"
 namespace aicpu {

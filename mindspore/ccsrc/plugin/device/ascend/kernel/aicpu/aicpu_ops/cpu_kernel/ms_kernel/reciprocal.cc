@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "reciprocal.h"
+#include "ms_kernel/reciprocal.h"
 
 #include <float.h>
 #include <complex>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -80,7 +81,7 @@ uint32_t ReciprocalCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx) {
+uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(x->GetData());
   auto output_y = reinterpret_cast<T *>(y->GetData());
   if (data_num <= kParallelDataNums) {
@@ -123,7 +124,8 @@ uint32_t ReciprocalCpuKernel::ReciprocalCompute(Tensor *x, Tensor *y, uint64_t d
 }
 
 template <typename T>
-uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx) {
+uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num,
+                                                       const CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(x->GetData());
   auto output_y = reinterpret_cast<T *>(y->GetData());
   if (data_num <= kParallelDataNums) {

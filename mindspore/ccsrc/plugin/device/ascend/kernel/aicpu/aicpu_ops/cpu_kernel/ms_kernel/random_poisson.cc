@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "random_poisson.h"
+#include "ms_kernel/random_poisson.h"
 #include "random/utils.h"
 
 namespace {
@@ -61,7 +61,7 @@ uint32_t RandomPoissonCpuKernel::Compute(CpuKernelContext &ctx) {
     RANDOM_POISSON_GENERATE_CASE(DT_FLOAT, float)
     RANDOM_POISSON_GENERATE_CASE(DT_DOUBLE, double)
     RANDOM_POISSON_GENERATE_CASE(DT_INT32, int)
-    RANDOM_POISSON_GENERATE_CASE(DT_INT64, long)
+    RANDOM_POISSON_GENERATE_CASE(DT_INT64, int64_t)
     default:
       KERNEL_LOG_ERROR("RandomPoisson kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -70,7 +70,7 @@ uint32_t RandomPoissonCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RandomPoissonCpuKernel::Generate(CpuKernelContext &ctx, Tensor *output) {
+uint32_t RandomPoissonCpuKernel::Generate(const CpuKernelContext &ctx, Tensor *output) {
   // reset the state of ops
   uint32_t kernel_ret = 0;
   uint64_t rng_seed =

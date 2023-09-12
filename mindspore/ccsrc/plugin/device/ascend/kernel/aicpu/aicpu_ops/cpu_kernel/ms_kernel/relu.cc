@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "relu.h"
-
-#include "cpu_kernel_utils.h"
+#include "ms_kernel/relu.h"
+#include <algorithm>
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -74,7 +74,7 @@ void ReluCpuKernel::DoCompute(int64_t start, int64_t end, const T *input1, T *ou
 }
 
 template <typename T>
-uint32_t ReluCpuKernel::ReluCompute(CpuKernelContext &ctx) {
+uint32_t ReluCpuKernel::ReluCompute(const CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Output(0)->NumElements();
