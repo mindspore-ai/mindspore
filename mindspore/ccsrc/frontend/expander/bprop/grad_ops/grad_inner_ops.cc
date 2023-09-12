@@ -21,6 +21,29 @@
 #include "ops/array_op_name.h"
 
 namespace mindspore::expander::bprop {
+
+NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+  auto base_eye = ib->Emit(
+    "Eye", {ib->Value(x_shape[x_shape.size() - 2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
+  base_eye = ib->Reshape(base_eye, {-1});
+  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - 2);
+  auto tile = ib->Tile(base_eye, tile_shape);
+  auto assist = ib->Reshape(tile, x_shape);
+  return assist;
+}
+
+NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+  auto base_eye = ib->Emit(
+    "Eye", {ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
+  base_eye = ib->Reshape(base_eye, {-1});
+  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - 1);
+  auto tile = ib->Tile(base_eye, tile_shape);
+  auto assist_shape(x_shape);
+  assist_shape.push_back(x_shape.back());
+  auto assist = ib->Reshape(tile, assist_shape);
+  return assist;
+}
+
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
 REG_BPROP_BUILDER("DSDMatmul.NotReady").SetBody(BODYFUNC(ib) {
   auto w1_gm = ib->GetInput(kIndex0);
@@ -243,6 +266,64 @@ REG_BPROP_BUILDER("ConvertToAdapterTensor").SetUnusedInputs({i0, i1}).SetBody(BO
 REG_BPROP_BUILDER("ConvertToMsTensor").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {dout};
+});
+
+REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto shape = ib->GetShape(dout);
+  if (IsDynamicRank(shape) || IsDynamicShape(shape)) {
+    MS_LOG(EXCEPTION) << "MatrxiDiag bprop don't support dynamic rank or dynamic shape, because operation Eye need "
+                         "constant values in shape";
+  }
+  auto dtype = ib->GetDtype(dout);
+  auto assist = GetMatrixDiagPartAssit(ib, shape, dtype);
+  auto dx = ib->Emit("MatrixDiagPart", {dout, assist});
+  return {dx, ib->OutZeros(y)};
+});
+
+REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto z = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto input_shape = ib->GetShape(x);
+  auto grad_shape = GetValue<ShapeVector>(ib->Shape(dout)->BuildValue());
+  if (IsDynamicRank(input_shape) || IsDynamicShape(input_shape) || IsDynamicRank(grad_shape) ||
+      IsDynamicShape(grad_shape)) {
+    MS_LOG(EXCEPTION) << "MatrxiSetDiag bprop don't support dynamic rank or dynamic shape, because operation Eye need "
+                         "constant values in shape";
+  }
+  ShapeVector diag_shape(input_shape.begin(), input_shape.end() - 2);
+  ShapeVector matrix_shape(input_shape.end() - 2, input_shape.end());
+  diag_shape.push_back(std::min(matrix_shape[0], matrix_shape[1]));
+  auto grad_dtype = ib->GetDtype(dout);
+  auto assist = GetMatrixDiagPartAssit(ib, grad_shape, grad_dtype);
+  auto dx =
+    ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {ib->Value(diag_shape), ib->EmitValue(grad_dtype)}), assist});
+  auto dy = ib->Emit("MatrixDiagPart", {dout, assist});
+  auto dz = ib->OutZeros(z);
+  return {dx, dy, dz};
+});
+
+REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto shape = ib->GetShape(x);
+  if (IsDynamicRank(shape) || IsDynamicShape(shape)) {
+    MS_LOG(EXCEPTION) << "MatrxiDiagPart bprop don't support dynamic rank or dynamic shape, because operation Eye need "
+                         "constant values in shape";
+  }
+  ShapeVector x_shape(shape.end() - 2, shape.end());
+  if (x_shape[0] == x_shape[1]) {
+    shape = ib->GetShape(dout);
+    auto dtype = ib->GetDtype(dout);
+    auto assist = GetMatrixDiagAssit(ib, shape, dtype);
+    return {ib->Emit("MatrixDiag", {dout, assist}), ib->OutZeros(y)};
+  }
+  auto dtype = ib->GetDtype(x);
+  auto assist = GetMatrixDiagPartAssit(ib, shape, dtype);
+  return {ib->Emit("MatrixSetDiag", {ib->OutZeros(x), dout, assist}), ib->OutZeros(y)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
