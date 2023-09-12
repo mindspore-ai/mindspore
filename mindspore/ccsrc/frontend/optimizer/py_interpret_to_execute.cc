@@ -209,7 +209,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(manager);
   auto transact = manager->Transact();
   const auto all_nodes = manager->all_nodes();
-  for (const auto node : all_nodes) {
+  for (const auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
       auto trans_node = Transform(node->cast<CNodePtr>(), manager);
       (void)transact.Replace(node, trans_node);
