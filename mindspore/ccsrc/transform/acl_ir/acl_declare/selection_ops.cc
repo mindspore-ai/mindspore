@@ -19,5 +19,7 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(Select).set_run_mode(false);
+REGISTER_ACL_OP(UnsortedSegmentMax).set_run_mode(false);
+REGISTER_ACL_OP(UnsortedSegmentMin).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore
