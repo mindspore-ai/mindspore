@@ -27,6 +27,7 @@ def load_mindir(file_name):
 
     Args:
         file_name (str): File name.
+
     Returns:
         Object, proto object.
 

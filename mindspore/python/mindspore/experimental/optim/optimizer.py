@@ -54,7 +54,7 @@ class Optimizer(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import nn, Tensor, Parameter
