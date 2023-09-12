@@ -758,7 +758,7 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
 void ArithmeticSelfCpuKernelFunc::InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &) {
   kernel_name_ = kernel_name;
-  dtype_ = inputs.at(kIndex0)->dtype_id();
+  dtype_ = inputs[kIndex0]->dtype_id();
   if (inputs.size() > 1) {
     attr_inputs = std::vector<KernelTensor *>(inputs.begin() + 1, inputs.end());
   }
@@ -1186,7 +1186,7 @@ int ArithmeticSelfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (int ret = func_obj_->Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -1229,7 +1229,7 @@ int IdentityCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);

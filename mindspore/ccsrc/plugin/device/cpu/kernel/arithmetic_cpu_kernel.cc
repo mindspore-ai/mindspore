@@ -106,9 +106,9 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   ArithmeticCpuTypeFunc() = default;
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
-    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
-    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+    input_shape1_ = inputs[kIndex0]->GetShapeVector();
+    input_shape2_ = inputs[kIndex1]->GetShapeVector();
+    output_shape_ = outputs[kIndex0]->GetShapeVector();
     if (output_shape_.empty()) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
     }

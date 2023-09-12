@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,19 +52,18 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
-    auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-    axis_ = kernel_ptr->get_axis();
-    if (axis_ < 0) {
-      auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-      axis_ += (SizeToInt(input_shape.size()) + 1);
-    }
+    // Todo:
+    // auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
+    // axis_ = kernel_ptr->get_axis();
+    // if (axis_ < 0) {
+    //   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+    //   axis_ += (SizeToInt(input_shape.size()) + 1);
+    // }
     auto origin_data_format = kOpFormat_DEFAULT;
     auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
@@ -91,9 +90,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     }
     return KRET_OK;
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto output_num = outputs.size();
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;

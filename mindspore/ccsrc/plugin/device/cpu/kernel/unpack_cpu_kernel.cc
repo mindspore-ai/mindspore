@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,20 @@ constexpr size_t kUnpackWorkspaceMinNum = 1;
 constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
-bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast unstack ops failed!";
-    return false;
-  }
-  unstack_param_.axis_ = kernel_ptr->get_axis();
-  origin_axis_ = unstack_param_.axis_;
-  unstack_param_.pre_dims_ = 1;
-  unstack_param_.axis_dim_ = 1;
-  unstack_param_.after_dims_ = 1;
-  input_size_ = 1;
+bool UnpackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  // Todo:
+  // kernel_name_ = base_operator->name();
+  // auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
+  // if (kernel_ptr == nullptr) {
+  //   MS_LOG(ERROR) << "cast unstack ops failed!";
+  //   return false;
+  // }
+  // unstack_param_.axis_ = kernel_ptr->get_axis();
+  // origin_axis_ = unstack_param_.axis_;
+  // unstack_param_.pre_dims_ = 1;
+  // unstack_param_.axis_dim_ = 1;
+  // unstack_param_.after_dims_ = 1;
+  // input_size_ = 1;
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -60,11 +60,8 @@ bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int UnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UnpackCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

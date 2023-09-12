@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ namespace {
 constexpr size_t kPackOutputsNum = 1;
 }  // namespace
 
-bool PackFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool PackFwdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input_num_ = inputs.size();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -41,19 +39,18 @@ bool PackFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int PackFwdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-  axis_ = kernel_ptr->get_axis();
-  if (axis_ < 0) {
-    auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-    axis_ += (SizeToInt(input_shape.size()) + 1);
-  }
+  // Todo:
+  // auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
+  // axis_ = kernel_ptr->get_axis();
+  // if (axis_ < 0) {
+  //   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  //   axis_ += (SizeToInt(input_shape.size()) + 1);
+  // }
 
   dims_behind_axis_ = 1;
   // calculate elements while dim >= axis
