@@ -57,6 +57,8 @@ mindspore
     mindspore.set_algo_parameters
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
+    mindspore.set_offload_context
+    mindspore.get_offload_context
 
 随机种子
 ---------
