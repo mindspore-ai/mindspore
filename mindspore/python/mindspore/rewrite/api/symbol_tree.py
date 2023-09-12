@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Rewrite module api: SymbolTree."""
-from typing import Optional, Union
+from typing import Optional, Union, List
 import mindspore as ms
 
 from mindspore.nn import Cell
@@ -148,7 +148,7 @@ class SymbolTree:
             return None
         return Node(node_impl)
 
-    def get_inputs(self) -> [Node]:
+    def get_inputs(self) -> List[Node]:
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
     def before(self, node: Union[Node, str]):
@@ -271,7 +271,7 @@ class SymbolTree:
             node = node.get_handler()
         return Node(self._symbol_tree.erase_node(node))
 
-    def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
+    def replace(self, old_node: Node, new_nodes: List[Node]) -> Node:
         """
         Replace the `old_node` with nodes in the `new_nodes` list.
 
@@ -285,7 +285,7 @@ class SymbolTree:
 
         Args:
             old_node (Node): Node to be replaced.
-            new_nodes (list[Node]): Nodes of the node_tree to replace in.
+            new_nodes (List[Node]): Nodes of the node_tree to replace in.
 
         Returns:
             An instance of Node represents root of node_tree been replaced in.

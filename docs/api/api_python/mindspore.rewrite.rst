@@ -16,7 +16,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         - **node** (NodeImpl) - `Node` 的内部实现实例。建议调用Node下的指定方法来创建Node，例如 `create_call_cell` ，而不直接
           调用Node的构造函数。不需关心NodeImpl是什么，只需作为句柄看待。
 
-    .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False)
+    .. py:method:: mindspore.rewrite.Node.create_call_cell(cell: Cell, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None, name: str = "", is_sub_net: bool = False)
         :staticmethod:
 
         通过该接口可以根据 `cell` 对象创建一个Node实例。节点对应的源代码格式：
@@ -25,9 +25,9 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **cell** (Cell) - 该节点对应的前向计算的Cell对象。
-            - **targets** (list[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
-            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `cell` 没有参数输入。
-            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `cell` 没有 `kwargs` 输入。
+            - **targets** (List[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
+            - **args** (List[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `cell` 没有参数输入。
+            - **kwargs** (Dict[str, ScopedValue]) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `cell` 没有 `kwargs` 输入。
             - **name** (str) - 表示节点的名称。用作源代码中的字段名称。当未提供名称时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。默认值： ``""`` 。
             - **is_sub_net** (bool) - 表示 `cell` 是否是一个网络。如果 `is_sub_net` 为 ``True`` ，Rewrite将尝试将 `cell` 解析为TreeNode，否则为CallCell节点。默认值： ``False`` 。
 
@@ -41,16 +41,16 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
             - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ScopedValue类型。
 
-    .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None)
+    .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None)
         :staticmethod:
 
         通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
 
         参数：
             - **function** (FunctionType) - 被调用的函数定义。
-            - **targets** (list[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
-            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `function` 没有参数输入。
-            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `function` 没有 `kwargs` 输入。
+            - **targets** (List[Union[ScopedValue, str]]) - 表示输出名称。在源代码中作为节点的输出变量名。
+            - **args** (List[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。默认值： ``None`` ，表示 `function` 没有参数输入。
+            - **kwargs** (Dict[str, ScopedValue]) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认值： ``None`` ，表示 `function` 没有 `kwargs` 输入。
 
         返回：
             Node实例。
@@ -180,14 +180,14 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
         - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值： ``None`` 。
 
-    .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None)
+    .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None)
         :staticmethod:
 
         创建ScopedValue的列表。
 
         参数：
-            - **names** (list[str] or tuple[str]) - 引用变量的名称，类型为str的列表或元组。
-            - **scopes** (list[str] or tuple[str]) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
+            - **names** (List[str] or Tuple[str]) - 引用变量的名称，类型为str的列表或元组。
+            - **scopes** (List[str] or Tuple[str]) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例列表。
@@ -353,7 +353,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         异常：
             - **TypeError** - 如果参数 `all_nodes` 不是bool类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
+    .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: List[Node])
 
         使用 `new_nodes` 列表里的节点来替代旧节点 `old_node` 。
 
@@ -365,7 +365,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **old_node** (Node) - 被替换节点。
-            - **new_nodes** (list[Node]) - 要替换进SymbolTree的节点列表。
+            - **new_nodes** (List[Node]) - 要替换进SymbolTree的节点列表。
 
         返回：
             替换到SymbolTree的节点列表的根节点。
