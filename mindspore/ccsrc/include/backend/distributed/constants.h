@@ -122,6 +122,9 @@ constexpr uint32_t kMaxRetryPortNum = 10;
 // The remote function id which will be increased progressively.
 inline uint32_t kRemoteFuncId = 0;
 
+// Rank list vector, could be [m, n] or [m, m+1, ..., m+n].
+using RankList = std::vector<uint32_t>;
+
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))
