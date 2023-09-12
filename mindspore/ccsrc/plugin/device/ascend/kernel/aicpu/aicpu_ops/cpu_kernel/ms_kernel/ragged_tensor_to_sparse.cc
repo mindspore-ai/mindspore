@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ragged_tensor_to_sparse.h"
+#include "ms_kernel/ragged_tensor_to_sparse.h"
+#include <algorithm>
 
 namespace {
 const std::uint32_t kInputNum{aicpu::kDynamicInput};
@@ -115,10 +116,10 @@ bool RaggedTensorToSparseCpuKernel::IsCompleted(const std::vector<int64_t> &pos,
 }
 
 void RaggedTensorToSparseCpuKernel::input_list(CpuKernelContext *ctx, OpInputList *list) {
-  static uint32_t start = 0, stop;
   if (ctx->Input(0)->NumElements() > 0) {
-    stop = start + static_cast<uint32_t>(ctx->Input(0)->NumElements());
-    *list = OpInputList(ctx, start, stop);
+    static uint32_t stop;
+    stop = static_cast<uint32_t>(ctx->Input(0)->NumElements());
+    *list = OpInputList(ctx, 0, stop);
   }
 }
 

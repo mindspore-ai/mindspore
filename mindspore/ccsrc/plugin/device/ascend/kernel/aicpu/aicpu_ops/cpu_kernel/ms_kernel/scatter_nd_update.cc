@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "scatter_nd_update.h"
+#include "ms_kernel/scatter_nd_update.h"
 
 #include <string.h>
 
@@ -22,8 +22,9 @@
 #include <complex>
 #include <iostream>
 #include <map>
+#include <vector>
 
-#include "eigen_tensor.h"
+#include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -132,7 +133,7 @@ uint32_t ScatterNdUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename var_type>
-uint32_t ScatterNdUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
+uint32_t ScatterNdUpdateCpuKernel::DTYPE_CHOOSE(const CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(1)->GetDataType());
   switch (indices_type) {
     case DT_INT32:
@@ -147,7 +148,7 @@ uint32_t ScatterNdUpdateCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
 }
 
 template <typename var_type, typename indices_type>
-uint32_t ScatterNdUpdateCpuKernel::ScatterNdUpdateComputeRealKernel(CpuKernelContext &ctx) {
+uint32_t ScatterNdUpdateCpuKernel::ScatterNdUpdateComputeRealKernel(const CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 

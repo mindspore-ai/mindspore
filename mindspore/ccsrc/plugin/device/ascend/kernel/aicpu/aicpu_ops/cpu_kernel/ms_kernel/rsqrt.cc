@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "rsqrt.h"
+#include "ms_kernel/rsqrt.h"
 
 #include <cfloat>
 #include <complex>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

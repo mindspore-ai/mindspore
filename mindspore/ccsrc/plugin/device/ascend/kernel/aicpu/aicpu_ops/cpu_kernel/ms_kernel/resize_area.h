@@ -17,8 +17,9 @@
 #define AICPU_KERNELS_NORMALIZED_RESIZE_AREA_H_
 
 #include <string>
+#include <vector>
 #include "Eigen/Core"
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 // weight data of every pixel
@@ -31,7 +32,7 @@ struct ResizeAreaCachedInterpolation {
 };
 
 struct ResizeAreaSt {
-  void CalSt(CpuKernelContext &ctx, std::vector<int64_t> &in_shape1, bool align_corners);
+  void CalSt(const CpuKernelContext &ctx, const std::vector<int64_t> &in_shape1, bool align_corners);
   size_t batch_size;
   size_t channels;
   size_t in_height;
@@ -49,8 +50,8 @@ class ResizeAreaCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(const ResizeAreaSt &st, std::vector<ResizeAreaCachedInterpolation> &x_interps,
-                     int64_t kKnownNumChannels, CpuKernelContext &ctx);
+  uint32_t DoCompute(const ResizeAreaSt &st, const std::vector<ResizeAreaCachedInterpolation> &x_interps,
+                     int64_t kKnownNumChannels, const CpuKernelContext &ctx);
   template <bool NeedsXBounding, typename T>
   void ComputePatchSumOf3Channels(float scale, const ResizeAreaSt &st, const std::vector<const T *> &y_ptrs,
                                   const std::vector<float> &y_scales, const ResizeAreaCachedInterpolation &x_interp,

@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sample_distorted_bounding_box_ext2.h"
+#include "ms_kernel/sample_distorted_bounding_box_ext2.h"
 
 #include <random>
-#include "cpu_kernel_utils.h"
-#include "securec.h"
+#include <vector>
+#include <securec.h>
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kOutputNum = 3;
 const uint32_t kInputNum = 3;
+const uint32_t IMAGE_SIZE_NUM = 3;
+const uint32_t SHAPE_BOUNDING_BOXES_SIZE = 3;
+const uint32_t BOUNDING_BOXES_SIZE = 4;
+
 const char *kSDBBExt2 = "SampleDistortedBoundingBoxExt2";
 
 #define SDBBExt2CpuKernel_COMPUTE_CASE(DTYPE, TYPE, CTX)                         \
@@ -126,20 +131,13 @@ bool SDBBExt2CpuKernel::GenerateRandomCrop(int original_width, int original_heig
   const float min_area = min_relative_crop_area * original_width * original_height;
   const float max_area = max_relative_crop_area * original_width * original_height;
 
-  if (aspect_ratio == 0) {
-    return false;
-  }
   int height = static_cast<int>(lrintf(std::sqrt(min_area / aspect_ratio)));
-  if (aspect_ratio == 0) {
-    return false;
-  }
+
   int max_height = static_cast<int>(lrintf(std::sqrt(max_area / aspect_ratio)));
   if (lrintf(max_height * aspect_ratio) > original_width) {
     const float kEps = 0.0000001;
     const float kBias = 0.5;
-    if (aspect_ratio == 0) {
-      return false;
-    }
+
     max_height = static_cast<int>((original_width + kBias - kEps) / aspect_ratio);
     if (lrintf(max_height * aspect_ratio) > original_width) {
       max_height -= 1;
@@ -209,7 +207,7 @@ uint32_t SDBBExt2CpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SDBBExt2CpuKernel::SDBBExt2Check(CpuKernelContext &ctx) {
+uint32_t SDBBExt2CpuKernel::SDBBExt2Check(const CpuKernelContext &ctx) {
   auto image_size = ctx.Input(0);
   auto bounding_boxes = ctx.Input(1);
   auto min_object_covered = ctx.Input(2);
@@ -259,17 +257,15 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Check(CpuKernelContext &ctx) {
 
   KERNEL_CHECK_FALSE((shape_image_size.size() == 1), KERNEL_STATUS_PARAM_INVALID,
                      "image_size must be 1-dimensional, got: [%d].", shape_image_size.size())
-  const int image_size_num = 3;
-  KERNEL_CHECK_FALSE((shape_image_size.at(0) == image_size_num), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_image_size.at(0) == IMAGE_SIZE_NUM), KERNEL_STATUS_PARAM_INVALID,
                      "image_size must contain 3 elements, got: [%d].", shape_image_size.size())
 
-  const int shape_bounding_boxes_size = 3;
-  KERNEL_CHECK_FALSE((shape_bounding_boxes.size() == shape_bounding_boxes_size), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_bounding_boxes.size() == SHAPE_BOUNDING_BOXES_SIZE), KERNEL_STATUS_PARAM_INVALID,
                      "input boxes must be 3-dimensional [batch, num_boxes, "
                      "coords], got: [%d].",
                      shape_bounding_boxes.size())
-  const int bounding_boxes_size = 4;
-  KERNEL_CHECK_FALSE((shape_bounding_boxes.at(shape_bounding_boxes.size() - 1) == bounding_boxes_size),
+
+  KERNEL_CHECK_FALSE((shape_bounding_boxes.at(shape_bounding_boxes.size() - 1) == BOUNDING_BOXES_SIZE),
                      KERNEL_STATUS_PARAM_INVALID, "bounding boxes must have shape [4], got: [%d].",
                      shape_bounding_boxes.at(shape_bounding_boxes.size() - 1))
 

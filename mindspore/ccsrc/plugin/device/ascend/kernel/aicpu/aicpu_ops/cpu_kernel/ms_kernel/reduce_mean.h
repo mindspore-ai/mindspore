@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REDUCEMEAN_H_
 #define AICPU_KERNELS_NORMALIZED_REDUCEMEAN_H_
 
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class ReduceMeanCpuKernel : public CpuKernel {
@@ -29,10 +29,10 @@ class ReduceMeanCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t ReduceMeanCompute(CpuKernelContext &ctx);
+  static uint32_t ReduceMeanCompute(const CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceMeanCompute_Complex(CpuKernelContext &ctx);
+  static uint32_t ReduceMeanCompute_Complex(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

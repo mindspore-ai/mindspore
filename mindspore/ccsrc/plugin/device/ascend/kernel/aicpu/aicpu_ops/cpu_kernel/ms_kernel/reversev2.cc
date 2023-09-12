@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-#include "reversev2.h"
+#include "ms_kernel/reversev2.h"
 #include <securec.h>
 #include <unordered_set>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 #include "Eigen/Core"
 
-#include "cpu_kernel_utils.h"
-#include "iostream"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/tensor_iterator.h"
 #include "utils/kernel_util.h"
-using namespace std;
+
 namespace {
 const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
 const char *kReverseV2 = "ReverseV2";
 
-vector<int64_t> idx2coord(int idx, const vector<int64_t> &accum_dim) {
-  vector<int64_t> coord(accum_dim.size());
+std::vector<int64_t> idx2coord(int idx, const std::vector<int64_t> &accum_dim) {
+  std::vector<int64_t> coord(accum_dim.size());
   for (size_t i = 0; i < coord.size(); ++i) {
     coord[i] = idx / accum_dim[i];
     idx -= coord[i] * accum_dim[i];
@@ -39,8 +42,8 @@ vector<int64_t> idx2coord(int idx, const vector<int64_t> &accum_dim) {
   return coord;
 }
 
-inline int64_t calc_target_idx(const vector<int64_t> &coord, const unordered_set<int64_t> &dims,
-                               const vector<int64_t> &shape, const vector<int64_t> &accum_dim) {
+inline int64_t calc_target_idx(const std::vector<int64_t> &coord, const std::unordered_set<int64_t> &dims,
+                               const std::vector<int64_t> &shape, const std::vector<int64_t> &accum_dim) {
   int64_t idx = 0;
   for (size_t i = 0; i < coord.size(); ++i) {
     if (dims.count(i) != 0) {
@@ -91,7 +94,7 @@ uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, CpuKernelContext &ctx) {
+uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, const CpuKernelContext &ctx) {
   switch (data_type) {
     case DT_FLOAT16:
       return ComputeReverseV2<Eigen::half>(ctx);
@@ -118,7 +121,7 @@ uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, CpuKernelContex
     case DT_COMPLEX128:
       return ComputeReverseV2<std::complex<double>>(ctx);
     case DT_STRING:
-      return ComputeReverseV2<string>(ctx);
+      return ComputeReverseV2<std::string>(ctx);
     default:
       KERNEL_LOG_ERROR("ReverseV2 invalid input type[%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -127,7 +130,7 @@ uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, CpuKernelContex
 }
 
 template <typename T>
-uint32_t ReverseV2CpuKernel::ComputeReverseV2(CpuKernelContext &ctx) {
+uint32_t ReverseV2CpuKernel::ComputeReverseV2(const CpuKernelContext &ctx) {
   auto input = ctx.Input(0);
   auto input_shape = input->GetTensorShape()->GetDimSizes();
   auto input_data = reinterpret_cast<T *>(input->GetData());

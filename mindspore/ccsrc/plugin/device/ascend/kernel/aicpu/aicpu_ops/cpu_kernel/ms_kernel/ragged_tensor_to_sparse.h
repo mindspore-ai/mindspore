@@ -16,14 +16,14 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RAGGED_TENSOR_TO_SPARSE_H_
 #define AICPU_KERNELS_NORMALIZED_RAGGED_TENSOR_TO_SPARSE_H_
 
+#include <securec.h>
 #include <memory>
 #include <vector>
 
-#include "cpu_ops_kernel.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "inc/cpu_ops_kernel.h"
+#include "common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"

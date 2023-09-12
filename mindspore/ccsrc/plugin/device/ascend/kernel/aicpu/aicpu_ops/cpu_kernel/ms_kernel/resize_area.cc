@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "resize_area.h"
+#include "ms_kernel/resize_area.h"
 #include <securec.h>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 
@@ -50,7 +50,7 @@ float Scaling_(size_t in_size, size_t out_size, bool align_corners) {
 }  // namespace
 
 namespace aicpu {
-void ResizeAreaSt::CalSt(CpuKernelContext &ctx, std::vector<int64_t> &in_shape1, bool align_corners) {
+void ResizeAreaSt::CalSt(const CpuKernelContext &ctx, const std::vector<int64_t> &in_shape1, bool align_corners) {
   Tensor *input_tensor2 = ctx.Input(1);
   auto outsize = reinterpret_cast<int32_t *>(input_tensor2->GetData());
   batch_size = in_shape1[0];
@@ -106,8 +106,9 @@ uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<ResizeAreaCachedInterpolation> &x_interps,
-                                        int64_t kKnownNumChannels, CpuKernelContext &ctx) {
+uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st,
+                                        const std::vector<ResizeAreaCachedInterpolation> &x_interps,
+                                        int64_t kKnownNumChannels, const CpuKernelContext &ctx) {
   auto input_ptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_ptr = reinterpret_cast<float *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
@@ -244,10 +245,10 @@ void ResizeAreaCpuKernel::ComputePatchSumOf3Channels(float scale, const ResizeAr
 
     if (x_interp.start + 1 != x_interp.end) {
       for (size_t x = x_interp.start + 1; x < x_interp.end - 1; ++x) {
-        int64_t offset = 3 * BOUND_IF_NEEDED(x, st.in_width);
-        sum_y_0 += static_cast<float>(ptr[offset + 0]);
-        sum_y_1 += static_cast<float>(ptr[offset + 1]);
-        sum_y_2 += static_cast<float>(ptr[offset + kIndex2]);
+        int64_t ofs = 3 * BOUND_IF_NEEDED(x, st.in_width);
+        sum_y_0 += static_cast<float>(ptr[ofs + 0]);
+        sum_y_1 += static_cast<float>(ptr[ofs + 1]);
+        sum_y_2 += static_cast<float>(ptr[ofs + kIndex2]);
       }
       scale_x = x_interp.end_minus_one_scale;
       offset = 3 * BOUND_IF_NEEDED(x_interp.end - 1, st.in_width);

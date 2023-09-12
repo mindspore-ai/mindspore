@@ -17,7 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REDUCE_SUM_H
 #define AICPU_KERNELS_NORMALIZED_REDUCE_SUM_H
 
-#include "cpu_ops_kernel.h"
+#include <vector>
+#include "inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class ReduceSumCpuKernel : public CpuKernel {
@@ -45,7 +46,7 @@ class ReduceSumCpuKernel : public CpuKernel {
                              int64_t output_num, std::vector<int64_t> &axes, uint32_t &axes_idx);
 
   template <typename T1>
-  uint32_t ReduceSumDedupAxes(CpuKernelContext &ctx);
+  uint32_t ReduceSumDedupAxes(const CpuKernelContext &ctx);
 
   uint32_t ReduceSumParseAxes(std::vector<int64_t> &input_shape, std::vector<int64_t> &axes, uint32_t &axes_idx,
                               int64_t &inner, int64_t &outer, int64_t &depth) const;

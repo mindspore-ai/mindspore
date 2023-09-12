@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "utils.h"
+#include "ms_kernel/random/utils.h"
+#include <securec.h>
 #include <random>
 #include <securec.h>
 #include "utils/philox_random.h"

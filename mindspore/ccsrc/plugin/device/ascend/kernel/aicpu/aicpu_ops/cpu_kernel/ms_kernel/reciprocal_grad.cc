@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "reciprocal_grad.h"
+#include "ms_kernel/reciprocal_grad.h"
 
 #include <float.h>
 #include <complex>
 #include <math.h>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include "common/cpu_kernel_utils.h"
+#include "inc/cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -83,7 +84,7 @@ uint32_t ReciprocalGradCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t ReciprocalGradCpuKernel::ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                                        CpuKernelContext &ctx) {
+                                                        const CpuKernelContext &ctx) {
   auto input_y = reinterpret_cast<T *>(y->GetData());
   auto input_dy = reinterpret_cast<T *>(dy->GetData());
   auto output_z = reinterpret_cast<T *>(z->GetData());
@@ -118,7 +119,7 @@ uint32_t ReciprocalGradCpuKernel::ReciprocalGradCompute(Tensor *y, Tensor *dy, T
 
 template <typename T>
 uint32_t ReciprocalGradCpuKernel::ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                                               CpuKernelContext &ctx) {
+                                                               const CpuKernelContext &ctx) {
   auto input_y = reinterpret_cast<T *>(y->GetData());
   auto input_dy = reinterpret_cast<T *>(dy->GetData());
   auto output_z = reinterpret_cast<T *>(z->GetData());

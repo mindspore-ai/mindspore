@@ -14,18 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ragged_range.h"
+#include "ms_kernel/ragged_range.h"
 
 #include <vector>
 #include <cmath>
 #include <type_traits>
+#include <algorithm>
 
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
+#include "common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "common/status.h"
 #include "utils/eigen_tensor.h"
-#include "kernel_log.h"
-#include "status.h"
-using namespace std;
+#include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kOutputNum = 2;
@@ -71,7 +71,7 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
   bool broadcast_limits = limits_dim == 0;
   bool broadcast_deltas = deltas_dim == 0;
 
-  vector<int> in_sizes;
+  std::vector<int> in_sizes;
   if (!broadcast_starts) in_sizes.push_back(starts_shape->GetDimSize(0));
   if (!broadcast_limits) in_sizes.push_back(limits_shape->GetDimSize(0));
   if (!broadcast_deltas) in_sizes.push_back(deltas_shape->GetDimSize(0));
@@ -135,7 +135,8 @@ uint32_t RaggedRange::Compute(CpuKernelContext &ctx) {
 template <typename T, typename TSPLITS>
 uint32_t RaggedRange::RaggedRangeCompute(const uint32_t nrows, Tensor *starts, Tensor *limits, Tensor *deltas,
                                          bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                                         Tensor *rt_nested_splits, Tensor *rt_dense_values, CpuKernelContext &ctx) {
+                                         Tensor *rt_nested_splits, Tensor *rt_dense_values,
+                                         const CpuKernelContext &ctx) {
   T *starts_addr = reinterpret_cast<T *>(starts->GetData());
   T *limits_addr = reinterpret_cast<T *>(limits->GetData());
   T *deltas_addr = reinterpret_cast<T *>(deltas->GetData());

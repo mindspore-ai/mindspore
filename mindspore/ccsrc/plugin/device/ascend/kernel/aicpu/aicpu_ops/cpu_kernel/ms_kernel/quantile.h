@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "cpu_ops_kernel.h"
+#include "inc/cpu_ops_kernel.h"
 namespace aicpu {
 class QuantileCpuKernel : public CpuKernel {
  public:
@@ -31,22 +31,22 @@ class QuantileCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t GetInputAndCheck(CpuKernelContext &ctx);
+  uint32_t GetInputAndCheck(const CpuKernelContext &ctx);
   template <typename T>
-  uint32_t QuantileCompute(CpuKernelContext &ctx);
+  uint32_t QuantileCompute(const CpuKernelContext &ctx);
   uint32_t MaybeWrapDim(int64_t dim, int64_t dim_post_expr);
   template <typename T>
-  void QuantileComputeSerialFunc(int64_t last_shape_size, std::vector<T> &sorted);
+  void QuantileComputeSerialFunc(int64_t last_shape_size, std::vector<T> *sorted);
   template <typename T>
-  void QuantileComputeParallelFunc(size_t start, size_t end, int64_t last_shape_size, std::vector<T> &sorted);
+  void QuantileComputeParallelFunc(size_t start, size_t end, int64_t last_shape_size, std::vector<T> *sorted);
 
   template <typename T>
-  void QuantileComputeDefaultFunc(std::vector<T> &sorted);
+  void QuantileComputeDefaultFunc(std::vector<T> *sorted);
   std::vector<int64_t> SetQuantileOutputShape();
   template <typename T>
-  void SetOutput(std::vector<int64_t> &out_shape);
+  void SetOutput(std::vector<int64_t> *out_shape);
   template <typename T>
-  uint32_t DoParallelQuantile(CpuKernelContext &ctx, std::vector<T> sorted, std::vector<int64_t> input_dims);
+  uint32_t DoParallelQuantile(const CpuKernelContext &ctx, std::vector<T> sorted, std::vector<int64_t> input_dims);
   int64_t last_shape_size_ = 0;
   bool ignore_nan_ = false;
   bool keep_dims_ = false;

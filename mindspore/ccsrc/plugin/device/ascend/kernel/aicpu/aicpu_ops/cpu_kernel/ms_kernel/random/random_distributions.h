@@ -20,7 +20,7 @@
 #include <securec.h>
 #include <string.h>
 #include <cmath>
-#include "utils.h"
+#include "ms_kernel/random/utils.h"
 #include "utils/philox_random.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 

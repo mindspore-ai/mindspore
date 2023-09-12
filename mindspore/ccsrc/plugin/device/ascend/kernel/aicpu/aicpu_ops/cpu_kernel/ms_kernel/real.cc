@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "real.h"
+#include "ms_kernel/real.h"
+#include <algorithm>
 #include "Eigen/Eigen"
-#include "cpu_kernel_utils.h"
+#include "common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -68,7 +69,7 @@ uint32_t RealCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename t>
-uint32_t RealCpuKernel::RealCompute(CpuKernelContext &ctx) {
+uint32_t RealCpuKernel::RealCompute(const CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());
 

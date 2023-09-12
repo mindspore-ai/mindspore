@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#include "scatter_nd.h"
+#include "ms_kernel/scatter_nd.h"
 
 #include <complex>
 #include <cstdint>
 #include <cmath>
-#include "eigen_tensor.h"
-#include "securec.h"
+#include <vector>
+#include <algorithm>
+#include <securec.h>
+#include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
@@ -121,7 +123,7 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename data_type_x>
-uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
+uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(const CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(0)->GetDataType());
   switch (indices_type) {
     case DT_INT32:
@@ -137,7 +139,7 @@ uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(CpuKernelContext &ctx) {
 }
 
 template <typename indices_type, typename data_type_x>
-uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
+uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 
