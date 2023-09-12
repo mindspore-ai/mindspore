@@ -594,8 +594,9 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   static const bool enable_ge = context->backend_policy() == "ge";
+  context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
-    auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;

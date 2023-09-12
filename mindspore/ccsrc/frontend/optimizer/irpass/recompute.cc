@@ -24,7 +24,7 @@ namespace irpass {
 bool EnableGraphReuse() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   return cell_reuse;
 }
 

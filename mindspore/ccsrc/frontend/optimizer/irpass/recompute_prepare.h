@@ -34,7 +34,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
+    const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
     if (!IsValueNode<FuncGraph>(node)) {
       return nullptr;
     }
