@@ -189,6 +189,7 @@ class OperatorInfo {
     cnodes_.push_back(cnode);
   }
   std::vector<CNodePtr> cnodes();
+  CNodePtr cnode() const { return cnode_; }
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
   StrategyPtr strategy() const { return strategy_; }

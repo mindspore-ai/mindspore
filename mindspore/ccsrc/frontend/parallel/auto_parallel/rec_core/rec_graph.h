@@ -57,7 +57,11 @@ enum OperatorType {
   kRecStridedSlice,
   kRecArgWithValue,
   kRecUnsortedSegmentOp,
-  kRecBatchMatMul
+  kRecBatchMatMul,
+  kRecFlatten,
+  kRecCum,
+  kRecStandAlone,
+  kRecBatchParallel
 };
 
 enum InfoType { kApplication, kConstant };
@@ -78,7 +82,7 @@ class Graph {
     std::vector<size_t> node_in;
     // Nodes that point from this node
     std::vector<size_t> node_out;
-    // Nodes that point to this node via auxliary edges
+    // Nodes that point to this node via auxiliary edges
     std::vector<size_t> node_in_aux;
     // Input indices of the nodes that point to this node via auxliary edges
     std::vector<size_t> node_in_aux_idx;

@@ -29,14 +29,15 @@
 
 namespace mindspore {
 namespace parallel {
-static const std::set<OperatorType> ElementWiseOpType = {
-  OperatorType::kRecReLU,         OperatorType::kRecLog,         OperatorType::kRecExp,
-  OperatorType::kRecAdd,          OperatorType::kRecElmWiseOp,   OperatorType::kRecBiasAdd,
-  OperatorType::kRecSub,          OperatorType::kRecMul,         OperatorType::kRecDiv,
-  OperatorType::kRecSqueeze,      OperatorType::kRecReduce,      OperatorType::kRecCast,
-  OperatorType::kRecReshape,      OperatorType::kRecGatherV2,    OperatorType::kRecArgWithValue,
-  OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,      OperatorType::kRecExpandDims,
-  OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul, OperatorType::kRecLayerNorm};
+static const std::set<OperatorType> EliminateOpType = {
+  OperatorType::kRecReLU,         OperatorType::kRecLog,           OperatorType::kRecExp,
+  OperatorType::kRecAdd,          OperatorType::kRecElmWiseOp,     OperatorType::kRecBiasAdd,
+  OperatorType::kRecSub,          OperatorType::kRecMul,           OperatorType::kRecDiv,
+  OperatorType::kRecSqueeze,      OperatorType::kRecReduce,        OperatorType::kRecCast,
+  OperatorType::kRecReshape,      OperatorType::kRecGatherV2,      OperatorType::kRecArgWithValue,
+  OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
+  OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
+  OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -49,7 +50,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {MAX_POOL_WITH_ARGMAX, OperatorType::kRecPooling},
   {SIMPLE_MEAN, OperatorType::kRecPooling},
   {RESHAPE, OperatorType::kRecReshape},
-  {FLATTEN, OperatorType::kRecReshape},
+  {FLATTEN, OperatorType::kRecFlatten},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {LAYER_NORM, OperatorType::kRecLayerNorm},
@@ -61,6 +62,10 @@ const std::map<std::string, OperatorType> DictOpType{
   {REDUCE_MAX, OperatorType::kRecReduce},
   {REDUCE_MIN, OperatorType::kRecReduce},
   {REDUCE_MEAN, OperatorType::kRecReduce},
+  {STAND_ALONE, OperatorType::kRecStandAlone},
+  {GET_NEXT, OperatorType::kRecUnknownType},
+  {VIRTUAL_DATA_SET, OperatorType::kRecUnknownType},
+  {BATCH_PARALLEL, OperatorType::kRecBatchParallel},
   {GATHERV2, OperatorType::kRecGatherV2},
   {EXPAND_DIMS, OperatorType::kRecExpandDims},
   {STRIDEDSLICE, OperatorType::kRecStridedSlice},
@@ -105,6 +110,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
   {CHOLESKY, OperatorType::kRecSoftmax},
   {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
+  {FLATTEN, OperatorType::kRecFlatten},
+  {CUM_SUM, OperatorType::kRecCum},
   {SQRT, OperatorType::kRecElmWiseOp},
   {NEG, OperatorType::kRecElmWiseOp},
   {POW, OperatorType::kRecElmWiseOp},
@@ -173,7 +180,9 @@ const std::map<std::string, OperatorType> DictOpType{
   {STACK, OperatorType::kRecElmWiseOp},
   {"Select", OperatorType::kRecElmWiseOp},
   {"Concat", OperatorType::kRecElmWiseOp},
-  {"Tile", OperatorType::kRecElmWiseOp}};
+  {"Tile", OperatorType::kRecElmWiseOp},
+  {MASKED_FILL, OperatorType::kRecElmWiseOp},
+  {GATHERD, OperatorType::kRecBatchParallel}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
@@ -183,6 +192,9 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
                                    Graph::NodeType NewTensor);
 
 TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+
+TensorParam Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                              const size_t iter_input_tensors, Graph::NodeType NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,

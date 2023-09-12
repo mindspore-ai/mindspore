@@ -953,13 +953,13 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   if (prim == nullptr) {
     return false;
   }
-  if (prim->name() == SEND || prim->name() == RECEIVE) {
+  if (IsSomePrimitiveList(cnode, {SEND, RECEIVE, MAKE_TUPLE, MAKE_LIST})) {
     return false;
   }
   bool bool_result = IsParallelCareNode(cnode) && !IsSplittableOperator(prim->name());
-  if (bool_result && (prim->name() != MAKE_TUPLE) && (prim->name() != MAKE_LIST)) {
-    MS_LOG(EXCEPTION) << "For 'auto_parallel', missing the implementation of OperatorInfo for: " << prim->name()
-                      << ", please use 'semi_auto_parallel' mode.";
+  if (bool_result) {
+    MS_LOG(INFO) << "For 'auto_parallel', missing the splitable implementation of OperatorInfo for: " << prim->name()
+                 << ", default strategy will be assigned. Network training may deteriorate or malfunction";
   } else if (prim->name() == CAST) {
     if (cnode->fullname_with_scope().find(OPTIMIZER_SUB_STRING) != std::string::npos) {
       // Do not care CASTs from optimizer
@@ -967,7 +967,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
     }
     return cnode->in_forward_flag();
   }
-  return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
+  return IsParallelCareNode(cnode);
 }
 
 std::string GetDisOpName(const std::string &prim_name) {
@@ -1479,6 +1479,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
     auto prev_cnode = prev_node->cast<CNodePtr>();
     PrimitivePtr prev_prim;
     ValueNodePtr prev_prim_anf_node;
+
     bool is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
     if (is_cross) {
       name_inputs.push_back(input->UniqueId());
@@ -1502,6 +1503,11 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(INDEX_TWO))));
         prev_node = prev_cnode->input(1);
         prev_cnode = prev_node->cast<CNodePtr>();
+
+        if (common::AnfAlgo::GetCNodeName(prev_cnode) == kTupleGetItemOpName) {
+          break;
+        }
+
         is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
         if (is_cross) {
           name_inputs.push_back(prev_node->UniqueId());
