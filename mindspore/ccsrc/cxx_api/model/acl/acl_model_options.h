@@ -57,6 +57,8 @@ class MS_API AclModelOptions {
   }
   std::map<std::string, std::string> GetAoeGlobalOptionsMap() const { return aoe_global_options_map_; }
 
+  static std::string GetSocName();
+
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
   // build options

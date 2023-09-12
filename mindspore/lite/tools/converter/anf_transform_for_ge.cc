@@ -41,6 +41,7 @@
 #include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
+#include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 
@@ -57,6 +58,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
 
   std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>()};
   if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
+    fusions.push_back(std::make_shared<opt::FlashAttentionFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());
