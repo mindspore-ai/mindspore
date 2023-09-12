@@ -1073,9 +1073,10 @@ def zeros_like(input, *, dtype=None):
          [0. 0.]]
     """
     _dtype = input.dtype if dtype is None else dtype
-    zeros_like_op = _get_cache_prim(P.ZerosLike)()
-    output = zeros_like_op(input)
-    output = cast_(output, _dtype)
+    _zeros_like = _get_cache_prim(P.ZerosLike)()
+    _cast = _get_cache_prim(P.Cast)()
+    output = _zeros_like(input)
+    output = _cast(output, _dtype)
     return output
 
 

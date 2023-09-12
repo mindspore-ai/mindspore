@@ -2924,7 +2924,7 @@ def sigmoid(input):
         >>> print(output)
         [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
     """
-    return sigmoid_(input)
+    return _get_cache_prim(NN_OPS.Sigmoid)()(input)
 
 
 def logsigmoid(x):
