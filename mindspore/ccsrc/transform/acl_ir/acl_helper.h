@@ -58,6 +58,9 @@ class AclHelper {
 
   // Get kernel's precision mode is FORCE_FP32.
   static bool GetMoreDataTypeSupported(TypeId data_type, const std::string &op_type);
+
+  // Check whether is nop op.
+  static bool IsNopNode(const CNodePtr &node);
 };
 }  // namespace transform
 }  // namespace mindspore

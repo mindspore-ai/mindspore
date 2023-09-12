@@ -34,27 +34,18 @@ bool SpecialOut(const BaseRef &n) {
       MS_EXCEPTION_IF_NULL(value);
       auto prim_py = value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(prim_py);
-      return prim_py->HasAttr(kAttrAclSpecialFormat);
+      return prim_py->HasAttr(kAttrAclSpecialFormat) || prim_py->HasAttr(kAttrAclSpecialInputFormat);
     }
     return false;
   }
   return false;
 }
 
-AnfNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+void SetBuildInfo(const AnfNodePtr &cnode, const CNodePtr &new_node, const size_t index) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetOutputTensorNum(cnode) != 1) {
-    return cnode;
-  }
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
-  MS_EXCEPTION_IF_NULL(new_node);
-
-  const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);
-  const auto origin_shape = AnfAlgo::GetOutputDetailShape(cnode, 0);
-  const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, 0);
+  const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, index);
+  const auto origin_shape = AnfAlgo::GetOutputDetailShape(cnode, index);
+  const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, index);
   // set abstract
   abstract::AbstractTensorPtr abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(device_type), origin_shape);
   new_node->set_abstract(abs);
@@ -70,7 +61,35 @@ AnfNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePt
   builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), new_node.get());
+}
 
+CNodePtr InsertIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                const std::vector<size_t> &input_index) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  for (auto index : input_index) {
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
+    auto identity_node =
+      kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), kernel_with_index.first});
+    SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second);
+    common::AnfAlgo::SetNodeInput(cnode, identity_node, index);
+  }
+  return cnode;
+}
+
+CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+    return cnode;
+  }
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
+  MS_EXCEPTION_IF_NULL(new_node);
+  SetBuildInfo(cnode, new_node, 0);
   return new_node;
 }
 }  // namespace
@@ -87,11 +106,18 @@ const AnfNodePtr InsertIdentity::Process(const FuncGraphPtr &func_graph, const A
   if (!AnfUtils::IsRealCNodeKernel(node) || func_graph == nullptr) {
     return nullptr;
   }
-  common::AnfAlgo::EraseNodeAttr(kAttrAclSpecialFormat, node);
   CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  // process output
-  return InsertIdentityForOutput(func_graph, cnode);
+  CNodePtr new_cnode = cnode;
+  if (common::AnfAlgo::HasNodeAttr(kAttrAclSpecialInputFormat, cnode)) {
+    const auto &trans_inputs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAclSpecialInputFormat);
+    new_cnode = InsertIdentityForInput(func_graph, cnode, trans_inputs);
+  }
+  common::AnfAlgo::EraseNodeAttr(kAttrAclSpecialInputFormat, node);
+  if (common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, cnode)) {
+    new_cnode = InsertIdentityForOutput(func_graph, new_cnode);
+  }
+  common::AnfAlgo::EraseNodeAttr(kAttrAclSpecialFormat, node);
+  return new_cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

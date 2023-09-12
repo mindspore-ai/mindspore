@@ -23,6 +23,7 @@
 #include "include/common/utils/utils.h"
 #include "include/transform/graph_ir/types.h"
 #include "ops/nn_ops.h"
+#include "ops/array_ops.h"
 #include "ops/structure_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/image_op_name.h"
@@ -74,6 +75,110 @@ TypeId ConvertGeType(GeDataType type) {
 bool GLogIsDebug() {
   const std::string &glog = common::GetEnv("GLOG_v");
   return !glog.empty() && glog[0] == '0';
+}
+
+bool NeedNDInput(const CNodePtr &cnode, const CNodePtr &input_cnode, const std::string &format,
+                 bool *input_special_flag) {
+  if (AclHelper::IsNopNode(cnode) && !AclHelper::CheckDefaultSupportFormat(format)) {
+    *input_special_flag = true;
+    return true;
+  }
+
+  if (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode)) {
+    return true;
+  }
+  return false;
+}
+
+bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num) {
+  auto name = GetCNodeFuncName(cnode);
+  if (kDefaultOutputNode.count(name) != 0) {
+    return true;
+  }
+
+  if (input_num != output_num) {
+    return true;
+  }
+
+  for (size_t i = 0; i < output_num; ++i) {
+    const auto &shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
+    if (shape.size() <= 1) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const AclAdapterInfo &acl_info,
+                       const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
+                       std::vector<std::string> *input_reshape_types) {
+  auto input_info = acl_info.inputs();
+  std::vector<size_t> special_inputs;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
+    auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
+    bool input_special_flag = false;
+    auto cnode = node->cast<CNodePtr>();
+    auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    input_format =
+      NeedNDInput(cnode, input_cnode, input_format, &input_special_flag) ? kOpFormat_DEFAULT : input_format;
+    (void)input_formats->emplace_back(input_format);
+    if (input_special_flag) {
+      (void)special_inputs.emplace_back(i);
+    }
+
+    // Get reshape type.
+    auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
+    if (ge_idx >= input_info.size()) {
+      continue;
+    }
+    auto special_info = input_info.at(ge_idx);
+    if (!special_info.reshape_type.empty()) {
+      input_reshape_types->at(i) = special_info.reshape_type;
+    }
+  }
+  if (!special_inputs.empty()) {
+    common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
+  }
+}
+
+void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const AclAdapterInfo &acl_info,
+                        const std::vector<std::string> &input_formats, std::vector<std::string> *output_formats) {
+  // First use output func.
+  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+  if (acl_info.output_selector() != nullptr) {
+    auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
+    std::vector<ShapeVector> input_shapes;
+    for (size_t i = 0; i < input_num; ++i) {
+      (void)input_shapes.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(node, i));
+    }
+    auto func = acl_info.output_selector();
+    for (size_t i = 0; i < output_num; ++i) {
+      const auto &format = func(data_type, input_shapes);
+      (void)output_formats->emplace_back(format);
+    }
+    return;
+  }
+
+  // Second use output format.
+  if (!acl_info.no_special_outputs()) {
+    for (size_t i = 0; i < output_num; ++i) {
+      (void)output_formats->emplace_back(acl_info.output_format(i, input_formats));
+    }
+    return;
+  }
+
+  output_formats->assign(output_num, kOpFormat_DEFAULT);
+}
+
+void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
+  if (common::GetEnv("MS_DEV_FORCE_ACL") == "1") {
+    if (std::any_of(output_formats.begin(), output_formats.end(),
+                    [](const auto &format) { return format != kOpFormat_DEFAULT; })) {
+      common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
+    }
+  }
 }
 }  // namespace
 
@@ -234,90 +339,6 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   return ACL_KERNEL;
 }
 
-namespace {
-void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const AclAdapterInfo &acl_info,
-                       const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
-                       std::vector<std::string> *input_reshape_types) {
-  auto input_info = acl_info.inputs();
-  for (size_t i = 0; i < input_num; ++i) {
-    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
-    auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
-    auto input_format = (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode))
-                          ? kOpFormat_DEFAULT
-                          : AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    (void)input_formats->emplace_back(input_format);
-
-    // Get reshape type.
-    auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
-    if (ge_idx >= input_info.size()) {
-      continue;
-    }
-    auto special_info = input_info.at(ge_idx);
-    if (!special_info.reshape_type.empty()) {
-      input_reshape_types->at(i) = special_info.reshape_type;
-    }
-  }
-}
-
-void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const AclAdapterInfo &acl_info,
-                        const std::vector<std::string> &input_formats, std::vector<std::string> *output_formats) {
-  // First use output func.
-  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  if (acl_info.output_selector() != nullptr) {
-    auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-    std::vector<ShapeVector> input_shapes;
-    for (size_t i = 0; i < input_num; ++i) {
-      (void)input_shapes.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(node, i));
-    }
-    auto func = acl_info.output_selector();
-    for (size_t i = 0; i < output_num; ++i) {
-      const auto &format = func(data_type, input_shapes);
-      (void)output_formats->emplace_back(format);
-    }
-    return;
-  }
-
-  // Second use output format.
-  if (!acl_info.no_special_outputs()) {
-    for (size_t i = 0; i < output_num; ++i) {
-      (void)output_formats->emplace_back(acl_info.output_format(i, input_formats));
-    }
-    return;
-  }
-
-  output_formats->assign(output_num, kOpFormat_DEFAULT);
-}
-
-bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num) {
-  auto name = GetCNodeFuncName(cnode);
-  if (kDefaultOutputNode.count(name) != 0) {
-    return true;
-  }
-
-  if (input_num != output_num) {
-    return true;
-  }
-
-  for (size_t i = 0; i < output_num; ++i) {
-    const auto &shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
-    if (shape.size() <= 1) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-void SetIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (common::GetEnv("MS_DEV_FORCE_ACL") == "2") {
-    if (std::any_of(output_formats.begin(), output_formats.end(),
-                    [](const auto &format) { return format != kOpFormat_DEFAULT; })) {
-      common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
-    }
-  }
-}
-}  // namespace
-
 void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
                                         std::vector<std::string> *output_formats,
                                         std::vector<std::string> *input_reshape_types,
@@ -343,29 +364,37 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   output_reshape_types->assign(output_num, "");
 
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    std::vector<size_t> special_inputs;
     for (size_t i = 0; i < input_num; ++i) {
       auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
       auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
-      auto input_format = (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode))
-                            ? kOpFormat_DEFAULT
-                            : AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      bool input_special_flag = false;
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      input_format =
+        NeedNDInput(cnode, input_cnode, input_format, &input_special_flag) ? kOpFormat_DEFAULT : input_format;
       (void)input_formats->emplace_back(input_format);
+      if (input_special_flag) {
+        (void)special_inputs.emplace_back(i);
+      }
     }
     // Input and output number same's op forward.
     if (NeedNDOutput(cnode, input_num, output_num)) {
       output_formats->assign(output_num, kOpFormat_DEFAULT);
-      return;
+    } else {
+      output_formats->assign(input_formats->begin(), input_formats->end());
+      SetOutputIdentityFlag(node, *output_formats);
     }
 
-    output_formats->assign(input_formats->begin(), input_formats->end());
-    SetIdentityFlag(node, *output_formats);
+    if (!special_inputs.empty()) {
+      common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
+    }
     return;
   }
 
   auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
   GetOutputBuildInfo(node, output_num, acl_info, *input_formats, output_formats);
-  SetIdentityFlag(node, *output_formats);
+  SetOutputIdentityFlag(node, *output_formats);
 }
 
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
@@ -449,6 +478,15 @@ int64_t AclHelper::GetFracZGroupFromAttr(const PrimitivePtr &primitive) {
     }
   }
   return fracz_group;
+}
+
+bool AclHelper::IsNopNode(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), prim::kPrimExpandDims->name(),
+                                                      prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
+                                                      prim::kPrimFlattenGrad->name()};
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
+  return (nop_nodes.find(op_name) != nop_nodes.end());
 }
 }  // namespace transform
 }  // namespace mindspore
