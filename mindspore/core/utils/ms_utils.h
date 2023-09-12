@@ -125,8 +125,9 @@ static inline bool UseMPI() {
 }
 
 static inline bool UseDynamicCluster() {
-  // If environment variable 'MS_ROLE' is set, we consider this process is participating in cluster building.
-  return !common::GetEnv("MS_ROLE").empty();
+  // If environment variable 'MS_ROLE' or 'MS_SCHED_HOST' is set, we consider this process is participating in cluster
+  // building.
+  return !common::GetEnv("MS_ROLE").empty() || !common::GetEnv("MS_SCHED_HOST").empty();
 }
 
 // UseDynamicCluster or UseMPI. If false, means use rank table file.

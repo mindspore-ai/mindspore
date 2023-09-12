@@ -83,17 +83,21 @@ void SSLWrapper::InitSSL() {
   STACK_OF(X509) *ca_stack = nullptr;
   BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
   if (bio == nullptr) {
+    PSContext::instance()->ClearServerPassword();
     MS_LOG(EXCEPTION) << "Read server cert file failed.";
   }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
   BIO_free_all(bio);
   if (p12 == nullptr) {
+    PSContext::instance()->ClearServerPassword();
     MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
   }
   if (PKCS12_parse(p12, server_password, &pkey, &cert, &ca_stack) == 0) {
     if (ERR_GET_REASON(ERR_peek_last_error()) == PKCS12_R_MAC_VERIFY_FAILURE) {
+      PSContext::instance()->ClearServerPassword();
       MS_LOG(EXCEPTION) << "The server password is invalid!";
     }
+    PSContext::instance()->ClearServerPassword();
     MS_LOG(EXCEPTION) << "PKCS12_parse failed, the reason is " << ERR_reason_error_string(ERR_peek_last_error());
   }
   PSContext::instance()->ClearServerPassword();

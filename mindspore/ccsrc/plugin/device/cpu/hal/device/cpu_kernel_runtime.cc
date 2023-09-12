@@ -113,8 +113,8 @@ void CPUKernelRuntime::AssignValueNodeAddress(const session::KernelGraph *kernel
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       DeviceAddressPtr address = nullptr;
       address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id);
-      address->set_from_persistent_mem(tensor->is_parameter());
       MS_EXCEPTION_IF_NULL(address);
+      address->set_from_persistent_mem(tensor->is_parameter());
       if (tensor->data_type() == output_type_id) {
         address->ptr_ = tensor->data_c();
       } else {
