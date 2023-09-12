@@ -39,7 +39,7 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
 GeneratorOp::~GeneratorOp() {
   // we need to acquire gil before release py::object
   py::gil_scoped_acquire gil_acquire;
-  generator_.dec_ref();
+  (void)generator_.release();
 }
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
