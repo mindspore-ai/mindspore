@@ -182,8 +182,8 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 }
 
 void PyNativeExecutor::ClearRes() const {
-  forward_executor()->ClearForwardTask();
-  runtime::OpExecutor::GetInstance().Reset();
+  forward_executor()->WaitForwardTask();
+  runtime::OpExecutor::GetInstance().Wait();
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
   pynative::autograd::ClearPyNativeAutoGradStaticRes();
