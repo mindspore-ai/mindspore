@@ -27,7 +27,7 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 static constexpr size_t INPUT_NUM = 2;
 static constexpr size_t OUTPUT_NUM = 1;
-static constexpr int MAX_DIMS = 7;
+static constexpr int MAX_DIMS = 8;
 static constexpr size_t PARALLEL_THRESHOLD = 4096;
 template <typename T>
 T GetDivZeroVal(const T &v) {
