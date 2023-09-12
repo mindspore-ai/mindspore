@@ -249,7 +249,13 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
 
   if (buf.format.back() == 'w') {
     auto max_length = buf.format.substr(0, buf.format.length() - 1);
-    auto string_max_length = LongToSize(std::stol(max_length));
+    int64_t max_length_long = 0;
+    try {
+      max_length_long = std::stol(max_length);
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid argument:" << e.what() << " when parse " << max_length;
+    }
+    auto string_max_length = LongToSize(max_length_long);
     if (string_max_length == 0) {
       MS_LOG(ERROR) << "Failed to get Tensor Desc. Please check string length";
       return nullptr;
@@ -277,7 +283,14 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     tensor_ptr = make_shared<GeTensor>(*desc);
     (void)tensor_ptr->SetData(string_vector);
   } else {
-    auto string_length = LongToSize(std::stol(buf.format.substr(0, buf.format.length() - 1)));
+    int64_t length_long = 0;
+    try {
+      length_long = std::stol(buf.format.substr(0, buf.format.length() - 1));
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Invalid argument:" << e.what() << " when parse "
+                        << buf.format.substr(0, buf.format.length() - 1);
+    }
+    auto string_length = LongToSize(length_long);
     if (string_length == 0) {
       MS_LOG(ERROR) << "Failed to get Tensor Desc. Please check string length";
       return nullptr;
