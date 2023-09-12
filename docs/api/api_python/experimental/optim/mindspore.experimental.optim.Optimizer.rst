@@ -19,10 +19,9 @@ mindspore.experimental.optim.Optimizer
         - **ValueError** - `weight_decay` 小于0。
         - **ValueError** - `learning_rate` 是一个Tensor，但是其shape大于1。
 
-    .. py:method:: add_param_group(group_id, param_group)
+    .. py:method:: add_param_group(param_group)
 
         为 `Optimizer.param_groups` 属性添加一个参数组。
 
         参数：
-            - **group_id** (int) - group的id。
             - **param_group** (dict) - 指定了当前网络参数组的特定的优化器配置。

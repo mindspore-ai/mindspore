@@ -46,6 +46,36 @@ class LRScheduler:
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import nn
+        >>> from mindspore.experimental import optim
+        >>>
+        >>> class ConstantLR(optim.lr_scheduler.LRScheduler):
+        ...     def __init__(self, optimizer, factor=0.5, total_iters=3, last_epoch=-1):
+        ...         self.factor = factor
+        ...         self.total_iters = total_iters
+        ...         super(ConstantLR, self).__init__(optimizer, last_epoch)
+        ...
+        ...     def _get_lr(self):
+        ...         lrs = [lr.value() for lr in self.last_lrs]
+        ...         if self.last_epoch == 0:
+        ...             return [lr * self.factor for lr in lrs]
+        ...         if self.last_epoch != self.total_iters:
+        ...             return lrs
+        ...         return sreturn [lr / self.factor for lr in lrs]
+        >>>
+        >>> net = nn.Dense(8, 2)
+        >>> optimizer = optim.SGD(net.trainable_params(), 0.01)
+        >>> scheduler = ConstantLR(optimizer)
+        >>> for i in range(4):
+        ...     scheduler.step()
+        ...     current_lr = scheduler.get_last_lr()
+        ...     print(current_lr)
+        [Tensor(shape=[], dtype=Float32, value= 0.005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.005)]
+        [Tensor(shape=[], dtype=Float32, value= 0.01)]
+        [Tensor(shape=[], dtype=Float32, value= 0.01)]
     """
 
     def __init__(self, optimizer, last_epoch=-1, verbose=False):
@@ -407,7 +437,7 @@ class ChainedScheduler:
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
 
     Args:
-        schedulers (list[:class:`mindspore.experimental.optim.Optimizer`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.experimental.optim.LRScheduler`]): List of learning rate schedulers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -133,7 +133,6 @@ class Optimizer(Cell):
         Add a param group to the `Optimizer.param_groups`.
 
         Args:
-            group_id(int): Specifies the group index.
             param_group (dict): Specifies what Parameters should be optimized along with group
                 specific optimization options.
         """
