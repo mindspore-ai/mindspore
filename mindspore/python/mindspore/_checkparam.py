@@ -802,6 +802,8 @@ def check_transpose_axis(axes, ndim):
         # if only one argument provided, it must be tuple or list
         if isinstance(perm, list):
             perm = tuple(perm)
+        elif isinstance(perm, int):
+            perm = (perm,)
         else:
             if not isinstance(perm, tuple):
                 raise TypeError(f"For Tensor.transpose, the parameter 'axes' must be a tuple/list, " \

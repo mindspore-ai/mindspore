@@ -12032,12 +12032,11 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
          [54.]]]
     """
     if not isinstance(input, Tensor):
-        raise TypeError("For 'sum', 'input' must be Tensor.")
-    if dim is not None:
-        if not isinstance(dim, (int, tuple, list)):
-            raise TypeError("For 'sum', 'dim' must be int, tuple(int), list(int) or None.")
+        raise TypeError(f"For 'sum', 'input' must be Tensor, but got{type(input)}")
+    if dim is not None and not isinstance(dim, (int, tuple, list)):
+        raise TypeError(f"For 'sum', 'dim' must be int, tuple(int), list(int) or None, but got {type(dim)}")
     if not isinstance(keepdim, bool):
-        raise TypeError("For 'sum', 'keepdim' must be bool.")
+        raise TypeError(f"For 'sum', 'keepdim' must be bool, but got {type(keepdim)}")
 
     if input.dtype == mstype.bool_:
         input = input.astype(mstype.int64)

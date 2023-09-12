@@ -2371,8 +2371,8 @@ def squeeze(input, axis=None):
 
     Args:
         input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
-            all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
+        axis (Union[int, tuple(int), list(int)]): Specifies the dimension indexes of shape to be removed, which will
+            remove all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
             Default: ``None`` , an empty tuple will be used.
 
     Returns:
@@ -2380,8 +2380,8 @@ def squeeze(input, axis=None):
 
     Raises:
         TypeError: If `input` is not a tensor.
-        TypeError: If `axis` is neither an int nor tuple.
-        TypeError: If `axis` is a tuple whose elements are not all int.
+        TypeError: If `axis` is not an int, tuple or list.
+        TypeError: If `axis` is a tuple or list whose elements are not all int.
         ValueError: If the corresponding dimension of the specified axis isn't equal to 1.
 
     Supported Platforms:
@@ -2400,6 +2400,8 @@ def squeeze(input, axis=None):
     """
     if axis is None:
         axis = ()
+    if isinstance(axis, list):
+        axis = tuple(axis)
     squeeze_ = _get_cache_prim(P.Squeeze)(axis)
     return squeeze_(input)
 
