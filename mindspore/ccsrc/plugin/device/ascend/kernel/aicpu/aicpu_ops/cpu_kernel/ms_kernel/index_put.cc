@@ -110,23 +110,18 @@ uint32_t IndexPutCpuKernel::IndexPutParmCheck(const CpuKernelContext &ctx) {
     KERNEL_CHECK_FALSE((accumulate_data == 0 || accumulate_data == 1), KERNEL_STATUS_PARAM_INVALID,
                        "accumulate must be 1 or 0.");
   }
-  if (indices_data) {
-    KERNEL_CHECK_FALSE(((ctx.GetInputsSize() - INPUT_NUM) < tensorshapes.size() ||
-                        (ctx.GetInputsSize() - INPUT_NUM) == tensorshapes.size()),
-                       KERNEL_STATUS_PARAM_INVALID, "too many indices for tensor of dimension [%d] (got [%d])",
-                       tensorshapes.size(), ctx.GetInputsSize() - INPUT_NUM);
-  }
-  if (input_1 && (ctx.GetInputsSize() - INPUT_NUM) > 0) {
-    int64_t maxnum = indices_data->NumElements();
-    for (size_t i = 2; i < ctx.GetInputsSize(); ++i) {
-      if (ctx.Input(i)->NumElements() > maxnum) {
-        maxnum = ctx.Input(i)->NumElements();
-      }
+  KERNEL_CHECK_FALSE(ctx.GetInputsSize() - INPUT_NUM <= tensorshapes.size(), KERNEL_STATUS_PARAM_INVALID,
+                     "too many indices for tensor of dimension [%d] (got [%d])", tensorshapes.size(),
+                     ctx.GetInputsSize() - INPUT_NUM);
+  int64_t maxnum = indices_data->NumElements();
+  for (size_t i = 2; i < ctx.GetInputsSize(); ++i) {
+    if (ctx.Input(i)->NumElements() > maxnum) {
+      maxnum = ctx.Input(i)->NumElements();
     }
-    KERNEL_CHECK_FALSE((input_1->NumElements() == 1 || input_1->NumElements() == maxnum ||
-                        input_1->NumElements() == tensorshapes[tensorshapes.size() - 1]),
-                       KERNEL_STATUS_PARAM_INVALID, "shape mismatch");
   }
+  KERNEL_CHECK_FALSE((input_1->NumElements() == 1 || input_1->NumElements() == maxnum ||
+                      input_1->NumElements() == tensorshapes[tensorshapes.size() - 1]),
+                     KERNEL_STATUS_PARAM_INVALID, "shape mismatch");
 
   KERNEL_LOG_DEBUG(
     "indexputcpukernel[%s],input0:size[%llu],"

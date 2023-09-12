@@ -29,14 +29,12 @@ namespace mindspore {
 namespace kernel {
 bool SincGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Sinc>(base_operator);
+  MS_ERROR_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
-    return false;
-  }
-  if (!kernel_ptr_) {
-    MS_LOG(ERROR) << "cast Sinc ops failed!";
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

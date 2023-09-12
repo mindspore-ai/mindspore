@@ -130,7 +130,7 @@ template <typename T>
 void PoolingCpuKernelMod::EliminateInvalidPadding(T *dst) {
   if (dst_shape_.size() < SHAPE_5D || kernel_.size() + NC_LEN < SHAPE_5D ||
       padding_invalid_.size() + NC_LEN < SHAPE_5D) {
-    MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
+    MS_LOG(EXCEPTION) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
   }
   const auto d_max = LongToSize(dst_shape_[D_INDEX] - 1);
   const auto h_max = LongToSize(dst_shape_[H_INDEX] - 1);
@@ -160,7 +160,14 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(T *dst) {
             const char h_bound = h == h_max ? '1' : '0';
             const char w_bound = w == w_max ? '1' : '0';
             const std::string bin{d_bound, h_bound, w_bound};
-            const int kernel_index = std::stoi(bin, nullptr, base);
+            int kernel_index = 0;
+            try {
+              kernel_index = std::stoi(bin, nullptr, base);
+            } catch (const std::invalid_argument &e) {
+              MS_LOG(EXCEPTION) << "invalid string to be cast to int!";
+            } catch (const std::out_of_range &e) {
+              MS_LOG(EXCEPTION) << "value is out of the range of int!";
+            }
             const int64_t valid_kernel_size = valid_kernel_array[kernel_index];
             if (valid_kernel_size != kernel_size) {
               const size_t index =

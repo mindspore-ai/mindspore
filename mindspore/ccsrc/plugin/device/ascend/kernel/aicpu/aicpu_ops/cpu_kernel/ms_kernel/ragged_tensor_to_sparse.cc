@@ -22,7 +22,7 @@ const char *kRaggedTensorToSparse = "RaggedTensorToSparse";
 }  // namespace
 
 namespace aicpu {
-uint32_t RaggedTensorToSparseCpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
+uint32_t RaggedTensorToSparseCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
   n_ = ctx.GetInputsSize() - 1;
   KERNEL_CHECK_FALSE((n_ >= 1), KERNEL_STATUS_PARAM_INVALID,
                      "Input num must great equal 1,"
@@ -114,16 +114,16 @@ bool RaggedTensorToSparseCpuKernel::IsCompleted(const std::vector<int64_t> &pos,
   return current_child >= limit_child;
 }
 
-void RaggedTensorToSparseCpuKernel::input_list(CpuKernelContext &ctx, OpInputList *list) {
+void RaggedTensorToSparseCpuKernel::input_list(CpuKernelContext *ctx, OpInputList *list) {
   static uint32_t start = 0, stop;
-  if (ctx.Input(0)->NumElements() > 0) {
-    stop = start + static_cast<uint32_t>(ctx.Input(0)->NumElements());
-    *list = OpInputList(&ctx, start, stop);
+  if (ctx->Input(0)->NumElements() > 0) {
+    stop = start + static_cast<uint32_t>(ctx->Input(0)->NumElements());
+    *list = OpInputList(ctx, start, stop);
   }
 }
 
 template <typename T1, typename T2>
-uint32_t RaggedTensorToSparseCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t RaggedTensorToSparseCpuKernel::DoCompute(CpuKernelContext *ctx) {
   // Assemble each value in `sparse_indices` using three parts:
   // - `index_prefix` is the index in dimensions up through the last ragged
   //   dimension.
@@ -142,18 +142,18 @@ uint32_t RaggedTensorToSparseCpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
   }
 
-  const Tensor *rt_dense_values_in = ctx.Input(n_);
+  const Tensor *rt_dense_values_in = ctx->Input(n_);
   KERNEL_CHECK_FALSE((ValidateInputs<T1>(rt_nested_splits, rt_dense_values_in) == KERNEL_STATUS_OK),
                      KERNEL_STATUS_PARAM_INVALID, "ValidateInputs failed.");
-  KERNEL_CHECK_FALSE((Update<T1>(ctx, rt_nested_splits) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((Update<T1>(*ctx, rt_nested_splits) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                      "Update failed.");
-  OutPutSparseValues<T2>(ctx);
-  OutPutSparseDenseShape<T1>(ctx, rt_nested_splits_in, rt_nested_splits);
+  OutPutSparseValues<T2>(*ctx);
+  OutPutSparseDenseShape<T1>(*ctx, rt_nested_splits_in, rt_nested_splits);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1>
-uint32_t RaggedTensorToSparseCpuKernel::Update(CpuKernelContext &ctx,
+uint32_t RaggedTensorToSparseCpuKernel::Update(const CpuKernelContext &ctx,
                                                std::vector<typename TTypes<T1>::Flat> rt_nested_splits) {
   const Tensor *rt_dense_values_in = ctx.Input(n_);
   const int64_t rt_nested_splits_len = n_;
@@ -223,31 +223,20 @@ uint32_t RaggedTensorToSparseCpuKernel::Update(CpuKernelContext &ctx,
 }
 
 template <typename T2>
-void RaggedTensorToSparseCpuKernel::OutPutSparseValues(CpuKernelContext &ctx) {
+void RaggedTensorToSparseCpuKernel::OutPutSparseValues(const CpuKernelContext &ctx) {
   // Output the `sparse_values` Tensor.
   const Tensor *rt_dense_values_in = ctx.Input(n_);
   Tensor *spares_values_out = ctx.Output(1);
-  if (rt_dense_values_in->GetTensorShape()->GetDims() == 1) {
-    spares_values_out->SetDataType(rt_dense_values_in->GetDataType());
-    auto rt_dense_shape = rt_dense_values_in->GetTensorShape();
-    auto spares_values_out_ptr = reinterpret_cast<T2 *>(spares_values_out->GetData());
-    auto rt_dense_values_in_ptr = reinterpret_cast<T2 *>(rt_dense_values_in->GetData());
-    for (int64_t i = 0; i < rt_dense_values_in->NumElements(); i++) {
-      spares_values_out_ptr[i] = rt_dense_values_in_ptr[i];
-    }
-  } else {
-    spares_values_out->SetDataType(rt_dense_values_in->GetDataType());
-    auto rt_dense_shape = rt_dense_values_in->GetTensorShape();
-    auto spares_values_out_ptr = reinterpret_cast<T2 *>(spares_values_out->GetData());
-    auto rt_dense_values_in_ptr = reinterpret_cast<T2 *>(rt_dense_values_in->GetData());
-    for (int64_t i = 0; i < rt_dense_values_in->NumElements(); i++) {
-      spares_values_out_ptr[i] = rt_dense_values_in_ptr[i];
-    }
+  spares_values_out->SetDataType(rt_dense_values_in->GetDataType());
+  auto spares_values_out_ptr = reinterpret_cast<T2 *>(spares_values_out->GetData());
+  auto rt_dense_values_in_ptr = reinterpret_cast<T2 *>(rt_dense_values_in->GetData());
+  for (int64_t i = 0; i < rt_dense_values_in->NumElements(); i++) {
+    spares_values_out_ptr[i] = rt_dense_values_in_ptr[i];
   }
 }
 
 template <typename T1>
-void RaggedTensorToSparseCpuKernel::OutPutSparseDenseShape(CpuKernelContext &ctx, OpInputList rt_nested_splits_in,
+void RaggedTensorToSparseCpuKernel::OutPutSparseDenseShape(const CpuKernelContext &ctx, OpInputList rt_nested_splits_in,
                                                            std::vector<typename TTypes<T1>::Flat> rt_nested_splits) {
   // Output the `sparse_dense_shape` Tensor.
   const Tensor *rt_dense_values_in = ctx.Input(n_);
@@ -267,66 +256,73 @@ void RaggedTensorToSparseCpuKernel::OutPutSparseDenseShape(CpuKernelContext &ctx
   }
 }
 
+uint32_t RaggedTensorToSparseCpuKernel::ComputeWithSplitTypeInt32(CpuKernelContext *ctx) {
+  type1 = ctx->Input(n_)->GetDataType();
+  switch (type1) {
+    case DT_DOUBLE:
+      return DoCompute<int32_t, double>(ctx);
+    case DT_FLOAT16:
+      return DoCompute<int32_t, Eigen::half>(ctx);
+    case DT_FLOAT:
+      return DoCompute<int32_t, float>(ctx);
+    case DT_INT8:
+      return DoCompute<int32_t, int8_t>(ctx);
+    case DT_INT16:
+      return DoCompute<int32_t, int16_t>(ctx);
+    case DT_INT32:
+      return DoCompute<int32_t, int32_t>(ctx);
+    case DT_INT64:
+      return DoCompute<int32_t, int64_t>(ctx);
+    case DT_UINT8:
+      return DoCompute<int32_t, uint8_t>(ctx);
+    case DT_UINT16:
+      return DoCompute<int32_t, uint16_t>(ctx);
+    case DT_BOOL:
+      return DoCompute<int32_t, bool>(ctx);
+    default:
+      KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+  }
+}
+
+uint32_t RaggedTensorToSparseCpuKernel::ComputeWithSplitTypeInt64(CpuKernelContext *ctx) {
+  type1 = ctx->Input(n_)->GetDataType();
+  switch (type1) {
+    case DT_DOUBLE:
+      return DoCompute<int64_t, double>(ctx);
+    case DT_FLOAT16:
+      return DoCompute<int64_t, Eigen::half>(ctx);
+    case DT_FLOAT:
+      return DoCompute<int64_t, float>(ctx);
+    case DT_INT8:
+      return DoCompute<int64_t, int8_t>(ctx);
+    case DT_INT16:
+      return DoCompute<int64_t, int16_t>(ctx);
+    case DT_INT32:
+      return DoCompute<int64_t, int32_t>(ctx);
+    case DT_INT64:
+      return DoCompute<int64_t, int64_t>(ctx);
+    case DT_UINT8:
+      return DoCompute<int64_t, uint8_t>(ctx);
+    case DT_UINT16:
+      return DoCompute<int64_t, uint16_t>(ctx);
+    case DT_BOOL:
+      return DoCompute<int64_t, bool>(ctx);
+    default:
+      KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+  }
+}
+
 uint32_t RaggedTensorToSparseCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((CheckAndInitParams(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                      "CheckAndInitParams failed.");
-  DataType type1 = ctx.Input(n_)->GetDataType();
   DataType SplitType = ctx.Input(0)->GetDataType();
   switch (SplitType) {
     case DT_INT32:
-      switch (type1) {
-        case DT_DOUBLE:
-          return DoCompute<int32_t, double>(ctx);
-        case DT_FLOAT16:
-          return DoCompute<int32_t, Eigen::half>(ctx);
-        case DT_FLOAT:
-          return DoCompute<int32_t, float>(ctx);
-        case DT_INT8:
-          return DoCompute<int32_t, int8_t>(ctx);
-        case DT_INT16:
-          return DoCompute<int32_t, int16_t>(ctx);
-        case DT_INT32:
-          return DoCompute<int32_t, int32_t>(ctx);
-        case DT_INT64:
-          return DoCompute<int32_t, int64_t>(ctx);
-        case DT_UINT8:
-          return DoCompute<int32_t, uint8_t>(ctx);
-        case DT_UINT16:
-          return DoCompute<int32_t, uint16_t>(ctx);
-        case DT_BOOL:
-          return DoCompute<int32_t, bool>(ctx);
-        default:
-          KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
-          return KERNEL_STATUS_PARAM_INVALID;
-      };
-      break;
+      return ComputeWithSplitTypeInt32(&ctx);
     case DT_INT64:
-      switch (type1) {
-        case DT_DOUBLE:
-          return DoCompute<int64_t, double>(ctx);
-        case DT_FLOAT16:
-          return DoCompute<int64_t, Eigen::half>(ctx);
-        case DT_FLOAT:
-          return DoCompute<int64_t, float>(ctx);
-        case DT_INT8:
-          return DoCompute<int64_t, int8_t>(ctx);
-        case DT_INT16:
-          return DoCompute<int64_t, int16_t>(ctx);
-        case DT_INT32:
-          return DoCompute<int64_t, int32_t>(ctx);
-        case DT_INT64:
-          return DoCompute<int64_t, int64_t>(ctx);
-        case DT_UINT8:
-          return DoCompute<int64_t, uint8_t>(ctx);
-        case DT_UINT16:
-          return DoCompute<int64_t, uint16_t>(ctx);
-        case DT_BOOL:
-          return DoCompute<int64_t, bool>(ctx);
-        default:
-          KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(type1).c_str());
-          return KERNEL_STATUS_PARAM_INVALID;
-      };
-      break;
+      return ComputeWithSplitTypeInt64(&ctx);
     default:
       KERNEL_LOG_ERROR("Unsupported datatype [%s]", DTypeStr(SplitType).c_str());
       return KERNEL_STATUS_PARAM_INVALID;

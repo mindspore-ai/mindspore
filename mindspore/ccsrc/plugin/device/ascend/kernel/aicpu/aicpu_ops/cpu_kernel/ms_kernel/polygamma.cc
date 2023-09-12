@@ -102,9 +102,7 @@ static inline scalar_t zeta(scalar_t x, scalar_t q) {
     b /= w;
     t = a * b / A[i];
     s = s + t;
-    if (s == 0) {
-      s = 0;
-    }
+    // div by zero is allow
     t = ::fabs(t / s);
     if (t < MACHEP) {
       return static_cast<scalar_t>(s);

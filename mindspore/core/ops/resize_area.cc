@@ -42,8 +42,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kDimension4 = 4;
+
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  std::vector<int64_t> output_shape(4, -1);
+  std::vector<int64_t> output_shape(kDimension4, -1);
   auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (!IsDynamicRank(images_shape)) {
     constexpr int64_t image_shape_size = 4;

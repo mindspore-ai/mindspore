@@ -42,8 +42,8 @@ const uint32_t knum = 2;
 namespace aicpu {
 uint32_t CauchyCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output_tensor = ctx.Output(0);
-  auto output_dtype = output_tensor->GetDataType();
   KERNEL_CHECK_NULLPTR(output_tensor, KERNEL_STATUS_INNER_ERROR, "CauchyCompute check output_tensor is nullptr.");
+  auto output_dtype = output_tensor->GetDataType();
 
   switch (output_dtype) {
     CAUCHY_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)

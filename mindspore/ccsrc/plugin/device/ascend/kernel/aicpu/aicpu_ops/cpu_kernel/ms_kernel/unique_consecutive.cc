@@ -441,18 +441,18 @@ uint32_t UniqueConsecutiveCpuKernel::ExtraParamCheck(CpuKernelContext &ctx) {
   return_idx_ = (return_idx == nullptr) ? false : (return_idx->GetBool());
   if (return_idx_) {
     Tensor *output_1 = ctx.Output(1);
-    idx_dtype_ = output_1->GetDataType();
     KERNEL_CHECK_NULLPTR(output_1, KERNEL_STATUS_PARAM_INVALID, "Get [indices] tensor failed.");
     KERNEL_CHECK_NULLPTR(output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [indices] data failed.");
+    idx_dtype_ = output_1->GetDataType();
   }
   // Check output counts
   AttrValue *return_counts = ctx.GetAttr("return_counts");
   return_counts_ = (return_counts == nullptr) ? false : (return_counts->GetBool());
   if (return_counts_) {
     Tensor *output_2 = ctx.Output(2);
-    count_dtype_ = output_2->GetDataType();
     KERNEL_CHECK_NULLPTR(output_2, KERNEL_STATUS_PARAM_INVALID, "Get [counts] tensor failed.");
     KERNEL_CHECK_NULLPTR(output_2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get [counts] data failed.");
+    count_dtype_ = output_2->GetDataType();
   }
   // Check idx and counts datatype
   if (return_counts_ && return_idx_) {

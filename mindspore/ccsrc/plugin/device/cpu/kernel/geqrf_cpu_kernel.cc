@@ -118,9 +118,6 @@ std::unique_ptr<T[]> GeqrfCpuKernelMod::Larf(size_t m, size_t n, T *x, T *tau, s
 
 template <typename T>
 void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
-  if (num_m_ < 0 || num_n_ < 0) {
-    return;
-  }
   size_t k = std::min(num_m_, num_n_);
   T one = static_cast<T>(1);
   auto x_origin = x;

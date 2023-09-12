@@ -111,7 +111,7 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
       sampled_expected_count_shape[0] != static_cast<int64_t>(num_sampled_)) {
     MS_LOG(ERROR)
       << "output sampled_expected_count shape shape should equal to (num_sampled, ), sampled_expected_count shape = "
-      << VectorToString(sampled_candidates_shape) << ", num_sampled_ = " << num_sampled_;
+      << VectorToString(sampled_expected_count_shape) << ", num_sampled_ = " << num_sampled_;
     return KRET_RESIZE_FAILED;
   }
   return ret;

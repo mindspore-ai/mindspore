@@ -186,7 +186,14 @@ void PoolingGradCpuKernelMod::EliminateInvalidPadding(T *dst) {
             const char h_bound = h == h_max ? '1' : '0';
             const char w_bound = w == w_max ? '1' : '0';
             const std::string bin{d_bound, h_bound, w_bound};
-            const int kernel_index = std::stoi(bin, nullptr, base);
+            int kernel_index = 0;
+            try {
+              kernel_index = std::stoi(bin, nullptr, base);
+            } catch (const std::invalid_argument &e) {
+              MS_LOG(EXCEPTION) << "invalid string to be cast to int!";
+            } catch (const std::out_of_range &e) {
+              MS_LOG(EXCEPTION) << "value is out of the range of int!";
+            }
             const int64_t valid_kernel_size = valid_kernel_array[kernel_index];
             if (valid_kernel_size != kernel_size) {
               const size_t index =

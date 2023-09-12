@@ -142,8 +142,8 @@ std::vector<std::vector<int64_t>> AttrValueImpl::GetListListInt() const {
  */
 void AttrValueImpl::SetListListInt(const std::vector<std::vector<int64_t>> &list) {
   auto array = attr_value_->mutable_list_list_int();
-  array->clear_list_list_i();
   KERNEL_CHECK_NULLPTR_VOID(array, "Protobuf mutable array is nullptr")
+  array->clear_list_list_i();
   for (const std::vector<int64_t> &i : list) {
     const auto list_i = array->add_list_list_i();
     for (const int64_t val : i) {

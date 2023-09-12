@@ -68,7 +68,9 @@ template <typename Derived>
 void MatrixExpCpuKernelMod::MTaylorApproximantLow(const Eigen::MatrixBase<Derived> &A,
                                                   const Eigen::MatrixBase<Derived> &I, int order,
                                                   Eigen::MatrixBase<Derived> *matrix_y) const {
-  constexpr int exp_order_1 = 1, exp_order_2 = 2, exp_order_4 = 4;
+  constexpr int exp_order_1 = 1;
+  constexpr int exp_order_2 = 2;
+  constexpr int exp_order_4 = 4;
   auto A2 = A * A;
   if (order == exp_order_1) {
     *matrix_y = I + A;

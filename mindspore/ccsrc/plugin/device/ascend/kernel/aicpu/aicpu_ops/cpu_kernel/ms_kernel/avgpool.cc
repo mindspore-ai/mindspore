@@ -96,62 +96,31 @@ uint32_t AvgPoolCpuKernel::AvgPoolProcess(const CpuKernelContext &ctx, AvgPoolCa
       max_core_num = static_cast<uint32_t>(args.batch_size);
     }
 
-    auto sharder_avgpool = [&](int64_t start, int64_t end) { RealCompute<T>(start, end, args, input0, output0); };
-
+    auto sharder_avgpool = [&](int64_t start, int64_t end) {
+      if (args.data_format == "NCHW") {
+        RealComputeNCHW<T>(start, end, args, input0, output0);
+      } else {
+        RealComputeNHWC<T>(start, end, args, input0, output0);
+      }
+    };
     KERNEL_HANDLE_ERROR(
       CpuKernelUtils::ParallelFor(ctx, args.batch_size, args.batch_size / max_core_num, sharder_avgpool),
       "AvgPool Compute failed.");
   } else {
-    RealCompute<T>(0, args.batch_size, args, input0, output0);
+    if (args.data_format == "NCHW") {
+      RealComputeNCHW<T>(0, args.batch_size, args, input0, output0);
+    } else {
+      RealComputeNHWC<T>(0, args.batch_size, args, input0, output0);
+    }
   }
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t AvgPoolCpuKernel::RealCompute(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0) {
-  // NCHW
-  if (args.data_format == "NCHW") {
-    for (int64_t n = start; n < end; n++) {
-      for (int64_t c = 0; c < args.out_size_c; c++) {
-        for (int64_t offset_h = 0; offset_h < args.out_size_h; offset_h++) {
-          int64_t in_start_h = offset_h * args.stride_h;
-          int64_t in_end_h = offset_h * args.stride_h + args.window_h;
-
-          for (int64_t offset_w = 0; offset_w < args.out_size_w; offset_w++) {
-            int64_t in_start_w = offset_w * args.stride_w;
-            int64_t in_end_w = offset_w * args.stride_w + args.window_w;
-            // local pointers
-            T *in_point = input0 + n * args.image_size + c * args.in_size_h * args.in_size_w;
-            T *out_point = output0 + n * args.out_size_h * args.out_size_w * args.out_size_c +
-                           c * args.out_size_h * args.out_size_w + offset_h * args.out_size_w + offset_w;
-
-            // compute local avg:
-            int64_t ih = 0;
-            int64_t iw = 0;
-            T avg_val = static_cast<T>(0);
-            T window_element_num = static_cast<T>(
-              (std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
-              (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
-            for (ih = in_start_h; ih < in_end_h; ih++) {
-              for (iw = in_start_w; iw < in_end_w; iw++) {
-                if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
-                    iw >= args.pad_left + args.in_size_w) {
-                  continue;
-                }
-                avg_val +=
-                  *(in_point + (ih - args.pad_top) * args.in_size_w + (iw - args.pad_left)) / window_element_num;
-              }
-            }
-            // set output to local avg
-            *out_point = avg_val;
-          }
-        }
-      }
-    }
-  } else {
-    // NHWC
-    for (int64_t n = start; n < end; n++) {
+void AvgPoolCpuKernel::RealComputeNCHW(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0) {
+  for (int64_t n = start; n < end; n++) {
+    for (int64_t c = 0; c < args.out_size_c; c++) {
       for (int64_t offset_h = 0; offset_h < args.out_size_h; offset_h++) {
         int64_t in_start_h = offset_h * args.stride_h;
         int64_t in_end_h = offset_h * args.stride_h + args.window_h;
@@ -159,38 +128,75 @@ uint32_t AvgPoolCpuKernel::RealCompute(int64_t start, int64_t end, AvgPoolCalcAr
         for (int64_t offset_w = 0; offset_w < args.out_size_w; offset_w++) {
           int64_t in_start_w = offset_w * args.stride_w;
           int64_t in_end_w = offset_w * args.stride_w + args.window_w;
+          // local pointers
+          T *in_point = input0 + n * args.image_size + c * args.in_size_h * args.in_size_w;
+          T *out_point = output0 + n * args.out_size_h * args.out_size_w * args.out_size_c +
+                         c * args.out_size_h * args.out_size_w + offset_h * args.out_size_w + offset_w;
 
-          T *in_point = input0 + n * args.image_size;
-          for (int64_t c = 0; c < args.out_size_c; c++) {
-            // local pointers
-            T *out_point = output0 + n * args.out_size_h * args.out_size_w * args.out_size_c +
-                           offset_h * args.out_size_w * args.out_size_c + offset_w * args.out_size_c + c;
-            // compute local avg:
-            int64_t ih = 0;
-            int64_t iw = 0;
-            T avg_val = static_cast<T>(0);
-            T window_element_num = static_cast<T>(
-              (std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
-              (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
-            for (ih = in_start_h; ih < in_end_h; ih++) {
-              for (iw = in_start_w; iw < in_end_w; iw++) {
-                if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
-                    iw >= args.pad_left + args.in_size_w) {
-                  continue;
-                }
-                avg_val += *(in_point + (ih - args.pad_top) * args.in_size_w * args.in_size_c +
-                             (iw - args.pad_left) * args.in_size_c + c) /
-                           window_element_num;
+          // compute local avg:
+          int64_t ih = 0;
+          int64_t iw = 0;
+          T avg_val = static_cast<T>(0);
+          T window_element_num =
+            static_cast<T>((std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
+                           (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
+          for (ih = in_start_h; ih < in_end_h; ih++) {
+            for (iw = in_start_w; iw < in_end_w; iw++) {
+              if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
+                  iw >= args.pad_left + args.in_size_w) {
+                continue;
               }
+              avg_val += *(in_point + (ih - args.pad_top) * args.in_size_w + (iw - args.pad_left)) / window_element_num;
             }
-            // set output to local avg
-            *out_point = avg_val;
           }
+          // set output to local avg
+          *out_point = avg_val;
         }
       }
     }
   }
-  return KERNEL_STATUS_OK;
+}
+
+template <typename T>
+void AvgPoolCpuKernel::RealComputeNHWC(int64_t start, int64_t end, AvgPoolCalcArgs args, T *input0, T *output0) {
+  for (int64_t n = start; n < end; n++) {
+    for (int64_t offset_h = 0; offset_h < args.out_size_h; offset_h++) {
+      int64_t in_start_h = offset_h * args.stride_h;
+      int64_t in_end_h = offset_h * args.stride_h + args.window_h;
+
+      for (int64_t offset_w = 0; offset_w < args.out_size_w; offset_w++) {
+        int64_t in_start_w = offset_w * args.stride_w;
+        int64_t in_end_w = offset_w * args.stride_w + args.window_w;
+
+        T *in_point = input0 + n * args.image_size;
+        for (int64_t c = 0; c < args.out_size_c; c++) {
+          // local pointers
+          T *out_point = output0 + n * args.out_size_h * args.out_size_w * args.out_size_c +
+                         offset_h * args.out_size_w * args.out_size_c + offset_w * args.out_size_c + c;
+          // compute local avg:
+          int64_t ih = 0;
+          int64_t iw = 0;
+          T avg_val = static_cast<T>(0);
+          T window_element_num =
+            static_cast<T>((std::min(in_end_h, args.in_size_h + args.pad_top) - std::max(in_start_h, args.pad_top)) *
+                           (std::min(in_end_w, args.in_size_w + args.pad_left) - std::max(in_start_w, args.pad_left)));
+          for (ih = in_start_h; ih < in_end_h; ih++) {
+            for (iw = in_start_w; iw < in_end_w; iw++) {
+              if (ih < args.pad_top || ih >= args.pad_top + args.in_size_h || iw < args.pad_left ||
+                  iw >= args.pad_left + args.in_size_w) {
+                continue;
+              }
+              avg_val += *(in_point + (ih - args.pad_top) * args.in_size_w * args.in_size_c +
+                           (iw - args.pad_left) * args.in_size_c + c) /
+                         window_element_num;
+            }
+          }
+          // set output to local avg
+          *out_point = avg_val;
+        }
+      }
+    }
+  }
 }
 
 template <typename T>
@@ -207,10 +213,10 @@ uint32_t AvgPoolCpuKernel::AvgPoolCompute(const CpuKernelContext &ctx) {
   std::string data_format =
     ctx.GetAttr("data_format") == nullptr ? defaultDataFormat : ctx.GetAttr("data_format")->GetString();
 
-  int32_t n_position = data_format.find("N");
-  int32_t c_position = data_format.find("C");
-  int32_t h_position = data_format.find("H");
-  int32_t w_position = data_format.find("W");
+  auto n_position = data_format.find("N");
+  auto c_position = data_format.find("C");
+  auto h_position = data_format.find("H");
+  auto w_position = data_format.find("W");
   AvgPoolCalcArgs args;
   args.batch_size = input0_shape[n_position];
 

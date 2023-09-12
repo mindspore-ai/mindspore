@@ -79,7 +79,7 @@ bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTe
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the shape of 'grad' must be the same as the shape of 'var', "
                                 "but got the shape of 'grad': "
-                             << mom_shape << " and the shape of 'var': " << var_shape_;
+                             << grad_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
   auto indices_shape = inputs.at(kIndex5)->GetShapeVector();

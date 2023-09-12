@@ -35,11 +35,8 @@ bool ExtractVolumePatchesGpuKernelMod::Init(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractVolumePatches>(base_operator);
+  MS_ERROR_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-    return false;
-  }
   kernel_size_ = kernel_ptr->get_kernel_size();
   strides_ = kernel_ptr->get_strides();
   padding_ = kernel_ptr->get_padding();

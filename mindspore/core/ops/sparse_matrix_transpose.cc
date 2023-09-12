@@ -87,7 +87,7 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   }
   if (values_shape.size() != 1) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the shape of input col indices must be 1-D, but got "
-                             << col_indices_shape.size() << "-D.";
+                             << values_shape.size() << "-D.";
   }
   ShapeVector transpose_row_pointers_shape{abstract::Shape::kShapeDimAny};
   auto dense_shape = input_args[kInputIndex0];

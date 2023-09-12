@@ -115,6 +115,7 @@ bool NodeDefImpl::AddAttrs(const std::string &name, const AttrValue *attr) {
   auto attrs = nodedef_->mutable_attrs();
   KERNEL_CHECK_NULLPTR(attrs, false, "Protobuf mutable attrs is null")
   auto impl = CpuKernelUtils::GetImpl(attr);
+  KERNEL_CHECK_NULLPTR(impl, false, "Protobuf attrs impl is null")
   auto pair =
     attrs->insert(google::protobuf::Map<std::string, aicpuops::AttrValue>::value_type(name, *(impl->GetProto())));
   if (!pair.second) {

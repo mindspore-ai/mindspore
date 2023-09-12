@@ -73,14 +73,13 @@ uint32_t ConcatCpuKernel::CheckAndInitParams(const CpuKernelContext &ctx) {
   auto input0_type_ptr = input0_ptr->GetDataType();
   for (int64_t i = 1; i < n_; i++) {
     Tensor *inputi_ptr = ctx.Input(i);
+    KERNEL_CHECK_NULLPTR(inputi_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input xi failed.");
     auto inputi_shape_ptr = inputi_ptr->GetTensorShape();
     auto inputi_type_ptr = inputi_ptr->GetDataType();
-    KERNEL_CHECK_NULLPTR(inputi_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input xi failed.");
     KERNEL_CHECK_NULLPTR(inputi_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input xi shape failed.");
     KERNEL_CHECK_FALSE((input0_type_ptr == inputi_type_ptr), KERNEL_STATUS_PARAM_INVALID,
-                       "Input tensor should have same type"
-                       "but got %d and %d.",
-                       DTypeStr(input0_type_ptr).c_str(), DTypeStr(inputi_type_ptr).c_str());
+                       "Input tensor should have same type, but got %d and %d.", DTypeStr(input0_type_ptr).c_str(),
+                       DTypeStr(inputi_type_ptr).c_str());
   }
   auto input0_shape_ptr = input0_ptr->GetTensorShape();
   input_dims_ = input0_shape_ptr->GetDims();
