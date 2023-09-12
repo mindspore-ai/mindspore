@@ -34,11 +34,6 @@ class IdentityIsNot(nn.Cell):
         return in_v
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_int_is_not_int():
     """
     Feature: simple expression
@@ -52,11 +47,6 @@ def test_ms_syntax_operator_int_is_not_int():
     assert "For syntax like 'a is not b', b supports True, False, None and Type" in str(err)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_int_is_not_none():
     """
     Feature: simple expression
@@ -68,11 +58,6 @@ def test_ms_syntax_operator_int_is_not_none():
     assert ret
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_int_is_not_true():
     """
     Feature: simple expression
@@ -84,11 +69,6 @@ def test_ms_syntax_operator_int_is_not_true():
     assert ret
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_bool_is_not_none():
     """
     Feature: simple expression
@@ -100,11 +80,6 @@ def test_ms_syntax_operator_bool_is_not_none():
     assert ret
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_bool_is_not_false():
     """
     Feature: simple expression
@@ -116,11 +91,6 @@ def test_ms_syntax_operator_bool_is_not_false():
     assert ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ms_syntax_operator_type_is_not_type():
     """
     Feature: simple expression
@@ -131,3 +101,36 @@ def test_ms_syntax_operator_type_is_not_type():
     net = IdentityIsNot(x.dtype, mstype.bool_)
     ret = net()
     assert ret
+
+
+def test_ms_syntax_operator_is_not_int():
+    """
+    Feature: simple expression
+    Description: test is operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot(int, int)
+    ret = net()
+    assert not ret
+
+
+def test_ms_syntax_operator_is_not_float():
+    """
+    Feature: simple expression
+    Description: test is operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot(int, float)
+    ret = net()
+    assert ret
+
+
+def test_ms_syntax_operator_is_not_tensor():
+    """
+    Feature: simple expression
+    Description: test is operator.
+    Expectation: No exception
+    """
+    net = IdentityIsNot(ms.Tensor, ms.Tensor)
+    ret = net()
+    assert not ret
