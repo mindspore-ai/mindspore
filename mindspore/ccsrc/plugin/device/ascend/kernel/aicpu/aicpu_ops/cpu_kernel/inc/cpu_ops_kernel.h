@@ -31,12 +31,23 @@ static inline std::shared_ptr<T> MakeShared(Args &&... args) {
   return ret;
 }
 
-#define REGISTER_CPU_KERNEL(type, clazz)                 \
+#define REGISTER_KERNEL(type, clazz)                     \
   std::shared_ptr<CpuKernel> Creator_##type##_Kernel() { \
     std::shared_ptr<clazz> ptr = nullptr;                \
     ptr = MakeShared<clazz>();                           \
     return ptr;                                          \
   }                                                      \
   bool g_##type##_Kernel_Creator __attribute__((unused)) = RegistCpuKernel(type, Creator_##type##_Kernel)
+#define REGISTER_CUST_KERNEL(type, clazz)                      \
+  std::shared_ptr<CpuKernel> Creator_Cust##type##_Kernel() {   \
+    std::shared_ptr<clazz> ptr = nullptr;                      \
+    ptr = MakeShared<clazz>();                                 \
+    return ptr;                                                \
+  }                                                            \
+  bool g_Cust##type##_Kernel_Creator __attribute__((unused)) = \
+    RegistCpuKernel("Cust" + static_cast<std::string>(type), Creator_Cust##type##_Kernel)
+#define REGISTER_CPU_KERNEL(type, clazz) \
+  REGISTER_KERNEL(type, clazz);          \
+  REGISTER_CUST_KERNEL(type, clazz);
 }  // namespace aicpu
 #endif  // CPU_KERNEL_H

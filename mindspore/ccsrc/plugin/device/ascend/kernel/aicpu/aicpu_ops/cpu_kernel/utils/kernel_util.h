@@ -299,5 +299,36 @@ uint32_t CheckTensorTypeSame(const std::map<std::string, DataType> &types, const
 uint32_t CheckTensorShapeSame(const std::map<std::string, TensorShapePtr> &shapes,
                               const std::vector<int64_t> &check_shape, const std::string &prim_name);
 
+inline size_t IntToSize(int u) {
+  if (u < 0) {
+    AICPU_LOGE("The int value [%d] is less than 0.", u);
+    return SIZE_MAX;
+  }
+  return static_cast<size_t>(u);
+}
+
+inline int SizeToInt(size_t u) {
+  if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+    AICPU_LOGE("The size_t value [%lu] exceeds the maximum value of int.", u);
+    return INT_MAX;
+  }
+  return static_cast<int>(u);
+}
+
+inline size_t LongToSize(int64_t u) {
+  if (u < 0) {
+    AICPU_LOGE("The int64_t value [%ld] is less than 0.", u);
+    return SIZE_MAX;
+  }
+  return static_cast<size_t>(u);
+}
+
+inline int32_t LongToInt(int64_t u) {
+  if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
+    AICPU_LOGE("The size_t value [%ld] exceeds the maximum value of int.", u);
+    return INT_MAX;
+  }
+  return static_cast<int32_t>(u);
+}
 }  // namespace aicpu
 #endif
