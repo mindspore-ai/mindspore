@@ -133,7 +133,7 @@ class SpecializeOnGraphArguments : public AnfVisitor {
   static bool IsSetRecomputed(const FuncGraphPtr &fg) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+    const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
     return fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
            (cell_reuse &&
             (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)));
