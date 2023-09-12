@@ -56,7 +56,7 @@ std::shared_ptr<ops::BaseOperator> CommonConverterCreators(const std::shared_ptr
 }
 
 std::shared_ptr<ops::BaseOperator> ArgMinConverterCreators(const std::shared_ptr<ops::BaseOperator> &op) {
-  auto op_converter = CommonConverterCreators<ops::ArgMin, ops::ArgMinFusion>(op);
+  auto op_converter = CommonConverterCreators<ops::Argmin, ops::ArgMinFusion>(op);
   auto op_arg = std::dynamic_pointer_cast<ops::ArgMinFusion>(op_converter);
   op_arg->set_top_k(1);
   op_arg->set_keep_dims(true);

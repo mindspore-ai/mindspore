@@ -112,8 +112,8 @@ int ArgmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   if (CHECK_SHAPE_NULL(shape_, kernel_name_, "input")) {
     return KRET_RESIZE_FAILED;
   }
-  static const auto size_index_ = ops::GetInputIndexByName(kernel_name_, "axis");
-  axis_ = inputs[size_index_]->GetValueWithCheck<int64_t>();
+  constexpr auto kSizeIndex = 1;
+  axis_ = inputs[kSizeIndex]->GetValueWithCheck<int64_t>();
   if (axis_ < 0) {
     axis_ += SizeToLong(shape_len);
   }

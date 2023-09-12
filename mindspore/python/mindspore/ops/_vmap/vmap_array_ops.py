@@ -83,24 +83,21 @@ def get_cast_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Argmax)
 @vmap_rules_getters.register(P.Argmin)
 def get_argmin_vmap_rule(prim, axis_size):
     """VmapRule for `Argmin` operations."""
-    if isinstance(prim, str):
-        axis = -1
-        output_type = mindspore.int32
-    else:
-        axis = prim.axis
-        output_type = prim.output_type
 
-    def vmap_rule(x_bdim):
+    def vmap_rule(x_bdim, axis_bdim, type_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
         if is_all_none:
             return result
         var, x_dim = x_bdim
+        axis_data, _ = axis_bdim
+        type_data, _ = type_bdim
         x_ndim = ops.rank(var)
-        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        out = P.Argmin(batch_axis, output_type)(var)
+        batch_axis = _get_reduce_batch_axis(axis_data, x_dim, x_ndim)
+        out = prim(var, batch_axis, type_data)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis)
         return out, out_dim
 

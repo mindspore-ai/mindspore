@@ -26,7 +26,6 @@
 #include "ops/addn.h"
 #include "ops/all.h"
 #include "ops/apply_momentum.h"
-#include "ops/arg_min.h"
 #include "ops/assert.h"
 #include "ops/assign_add.h"
 #include "ops/attention.h"
@@ -225,7 +224,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(All)
 FUNC_MSOP2SCHEMAOP_DECLARE(ApplyMomentum)
 FUNC_MSOP2SCHEMAOP_DECLARE(Argmax)
 FUNC_MSOP2SCHEMAOP_DECLARE(ArgMaxFusion)
-FUNC_MSOP2SCHEMAOP_DECLARE(ArgMin)
+FUNC_MSOP2SCHEMAOP_DECLARE(Argmin)
 FUNC_MSOP2SCHEMAOP_DECLARE(ArgMinFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Asin)
 FUNC_MSOP2SCHEMAOP_DECLARE(Assert)

@@ -150,6 +150,13 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>) {
   } else if (value->isa<UInt64Imm>()) {
     // type id
     me_type = static_cast<TypeId>(GetValue<uint64_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    // type id
+    me_type = static_cast<TypeId>(GetValue<int64_t>(value));
+  } else if (value->isa<KernelTensorValue>()) {
+    // type id
+    auto value_opt = ops::GetScalarValue<int64_t>(value);
+    me_type = static_cast<TypeId>(value_opt.value());
   } else {
     MS_LOG(EXCEPTION) << "error convert Value to TypePtr for value: " << value->ToString()
                       << ", type: " << value->type_name() << ", value should be a Typeptr or TypeId";

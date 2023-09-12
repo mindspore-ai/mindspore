@@ -28,14 +28,41 @@ using ArgMinPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, ArgMinPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32), CreateArgMinKernelPtr<double, int>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32), CreateArgMinKernelPtr<float, int>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32), CreateArgMinKernelPtr<half, int>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateArgMinKernelPtr<double, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateArgMinKernelPtr<float, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateArgMinKernelPtr<half, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    CreateArgMinKernelPtr<double, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    CreateArgMinKernelPtr<float, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    CreateArgMinKernelPtr<half, int64_t>}};
 }  // namespace
 
@@ -56,10 +83,7 @@ bool ArgminGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
   if (!is_match) {
     return false;
   }
-  attr_ptr_->axis = GetValue<int64_t>(primitive_->GetAttr("axis"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  helper_ptr_->SetKernelParam(attr_ptr_);
-
   return true;
 }
 
@@ -70,6 +94,9 @@ int ArgminGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
   input_shapes.emplace_back(inp_shape);
   output_shapes.emplace_back(out_shape);
+  constexpr auto kSizeIndex = 1;
+  attr_ptr_->axis = inputs[kSizeIndex]->GetValueWithCheck<int64_t>();
+  helper_ptr_->SetKernelParam(attr_ptr_);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }

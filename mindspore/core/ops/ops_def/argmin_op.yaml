@@ -1,5 +1,5 @@
-#operator argmax
-argmax:
+#operator argmin
+argmin:
   args:
     x:
       dtype: tensor
@@ -14,4 +14,4 @@ argmax:
     output:
       dtype: tensor
   function:
-    name: argmax_
+    name: argmin_

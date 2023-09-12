@@ -291,8 +291,8 @@ REG_ADPT_DESC(OnesLike, kNameOnesLike, ADPT_DESC(OnesLike))
 
 // ArgMax
 CUST_INPUT_MAP(ArgMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
-CUST_ATTR_INPUT_MAP(ArgMax) = {{"axis", "dimension"}};
-CUST_ATTR_MAP(ArgMax) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_ATTR_MAP(ArgMax) = {};
+CUST_INPUT_ATTR_MAP(ArgMax) = {{3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(ArgMax) = {{0, OUTPUT_DESC(y)}};
 
 // ArgMaxD
@@ -683,8 +683,8 @@ REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
 
 // ArgMin
 INPUT_MAP(ArgMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
-ATTR_INPUT_MAP(ArgMin) = {{"axis", "dimension"}};
-ATTR_MAP(ArgMin) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+ATTR_MAP(ArgMin) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(ArgMin) = {{3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))

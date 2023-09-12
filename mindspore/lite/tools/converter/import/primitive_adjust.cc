@@ -89,7 +89,7 @@
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
 using mindspore::ops::kNameArgmax;
-using mindspore::ops::kNameArgMin;
+using mindspore::ops::kNameArgmin;
 using mindspore::ops::kNameAvgPool;
 using mindspore::ops::kNameAvgPoolGrad;
 // using mindspore::ops::kNameBatchNorm;
@@ -710,7 +710,7 @@ REGIST_PRIMITIVE_ADJUST(kNameAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAdder, MoveAttrMapAdder)
 REGIST_PRIMITIVE_ADJUST(kNameArgmax, MoveAttrMapCommon<ops::ArgMaxFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMaxWithValue, MoveAttrMapArgMaxWithValue)
-REGIST_PRIMITIVE_ADJUST(kNameArgMin, MoveAttrMapCommon<ops::ArgMinFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameArgmin, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMinWithValue, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGrad, MoveAttrPoolGrad)

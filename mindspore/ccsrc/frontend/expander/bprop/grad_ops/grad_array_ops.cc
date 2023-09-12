@@ -979,7 +979,7 @@ REG_BPROP_BUILDER("NonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Argmax").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("Argmin").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("Argmin").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Diag").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);

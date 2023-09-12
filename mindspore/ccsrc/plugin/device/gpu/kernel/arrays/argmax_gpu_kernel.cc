@@ -185,8 +185,8 @@ int ArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   if (ret != KRET_OK) {
     return ret;
   }
-  static const auto size_index_ = ops::GetInputIndexByName(kernel_name_, "axis");
-  axis_ = inputs[size_index_]->GetValueWithCheck<int64_t>();
+  constexpr auto kSizeIndex = 1;
+  axis_ = inputs[kSizeIndex]->GetValueWithCheck<int64_t>();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   is_null_input_ =

@@ -72,7 +72,6 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicShape, std::make_shared<Primitive>(kDynamicSh
 GVAR_DEF(PrimitivePtr, kPrimCheckNumerics, std::make_shared<Primitive>(kCheckNumericsOpName));
 GVAR_DEF(PrimitivePtr, kPrimSize, std::make_shared<Primitive>("Size"));
 GVAR_DEF(PrimitivePtr, kPrimArgMax, std::make_shared<Primitive>("Argmax"));
-GVAR_DEF(PrimitivePtr, kPrimArgmin, std::make_shared<Primitive>("Argmin"));
 GVAR_DEF(PrimitivePtr, kPrimArgMin, std::make_shared<Primitive>("ArgMin"));
 GVAR_DEF(PrimitivePtr, kPrimArgminV2, std::make_shared<Primitive>("ArgminV2"));
 GVAR_DEF(PrimitivePtr, kPrimPack, std::make_shared<Primitive>("Pack"));

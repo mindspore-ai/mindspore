@@ -38,7 +38,6 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
-#include "ops/arg_min.h"
 #include "ops/ops_func_impl/greater_equal.h"
 #include "ops/ops_func_impl/greater.h"
 #include "ops/mod.h"

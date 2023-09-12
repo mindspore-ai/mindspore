@@ -16,13 +16,12 @@
 #include "plugin/device/cpu/kernel/argmin_cpu_kernel.h"
 #include <string>
 #include <algorithm>
-#include "mindspore/core/ops/arg_min.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kArgMinInputsNum = 1;
+constexpr size_t kArgMinInputsNum = 3;
 constexpr size_t kArgMinOutputsNum = 1;
 constexpr char kKernelName[] = "Argmin";
 
@@ -90,11 +89,6 @@ bool ArgminCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
   return true;
 }
 bool ArgminCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() < 1) {
-    MS_LOG(ERROR) << "Argmin input size can not less than 1!";
-    return false;
-  }
-  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -119,18 +113,11 @@ int ArgminCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   if (CHECK_SHAPE_NULL(shape_, kernel_name_, "input")) {
     return KRET_RESIZE_FAILED;
   }
-  int64_t dim = static_cast<int64_t>(shape_len);
-  if (axis_ >= dim || axis_ < -dim) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of 'axis' must be in the range of [" << -dim
-                             << "," << dim << "), but got 'axis': " << axis_ << ".";
-  }
-  axis_ += SizeToLong(shape_len);
+  constexpr auto kSizeIndex = 1;
+  axis_ = inputs[kSizeIndex]->GetValueWithCheck<int64_t>();
   if (axis_ < 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'axis' must be in range [0, " << (shape_len - 1)
-                    << "], but got " << axis_;
-    return KRET_RESIZE_FAILED;
+    axis_ += SizeToLong(shape_len);
   }
-  axis_ = axis_ % SizeToLong(shape_len);
   num_before_axis_ = 1;
   num_after_axis_ = 1;
   for (size_t index = 0; index < shape_len; index++) {
@@ -145,49 +132,137 @@ int ArgminCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
 }
 
 std::vector<std::pair<KernelAttr, ArgminCpuKernelMod::ArgminFunc>> ArgminCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<int8_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<int16_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<uint32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<uint64_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<float16, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<float, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &ArgminCpuKernelMod::LaunchKernel<double, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<int8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<int16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<uint32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<uint64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<float16, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<float, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &ArgminCpuKernelMod::LaunchKernel<double, int64_t>}};
 
 std::vector<KernelAttr> ArgminCpuKernelMod::GetOpSupport() {

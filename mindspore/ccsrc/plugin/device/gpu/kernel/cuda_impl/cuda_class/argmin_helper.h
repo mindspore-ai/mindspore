@@ -98,11 +98,6 @@ class ArgMinHelperGpuKernel : public GpuKernelHelperBase {
   int CheckKernelParam() override {
     axis_ = attr_ptr_->axis;
     int64_t dims = static_cast<int64_t>(input_shape_.size());
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
-                    << "), but got " << axis_;
-      return -1;
-    }
     if (axis_ < 0) {
       axis_ += dims;
     }

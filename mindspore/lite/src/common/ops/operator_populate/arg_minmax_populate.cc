@@ -19,13 +19,12 @@
 #include "nnacl/arg_min_max_parameter.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/arg_max_fusion.h"
-#include "ops/arg_min.h"
 #include "ops/fusion/arg_min_fusion.h"
 using mindspore::ops::kAxis;
 using mindspore::ops::kKeepDims;
 using mindspore::ops::kNameArgmax;
 using mindspore::ops::kNameArgMaxFusion;
-using mindspore::ops::kNameArgMin;
+using mindspore::ops::kNameArgmin;
 using mindspore::ops::kNameArgMinFusion;
 using mindspore::ops::kOutMaxValue;
 using mindspore::ops::kTopK;
@@ -54,7 +53,7 @@ OpParameter *PopulateArgMinMaxOpParameter(const BaseOperatorPtr &base_operator) 
 
 REG_OPERATOR_POPULATE(kNameArgmax, PrimitiveType_ArgMaxFusion, PopulateArgMinMaxOpParameter)
 REG_OPERATOR_POPULATE(kNameArgMaxFusion, PrimitiveType_ArgMaxFusion, PopulateArgMinMaxOpParameter)
-REG_OPERATOR_POPULATE(kNameArgMin, PrimitiveType_ArgMinFusion, PopulateArgMinMaxOpParameter)
+REG_OPERATOR_POPULATE(kNameArgmin, PrimitiveType_ArgMinFusion, PopulateArgMinMaxOpParameter)
 REG_OPERATOR_POPULATE(kNameArgMinFusion, PrimitiveType_ArgMinFusion, PopulateArgMinMaxOpParameter)
 }  // namespace lite
 }  // namespace mindspore

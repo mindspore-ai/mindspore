@@ -1127,8 +1127,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/custom.h
         #     ${TOP_DIR}/mindspore/core/ops/add.h
-        #     ${TOP_DIR}/mindspore/core/ops/arg_max.h
-            ${TOP_DIR}/mindspore/core/ops/arg_min.h
         #     ${TOP_DIR}/mindspore/core/ops/avg_pool.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h

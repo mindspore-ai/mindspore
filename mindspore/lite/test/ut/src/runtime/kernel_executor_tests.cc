@@ -27,7 +27,6 @@
 #include "ops/conv2d.h"
 #include "ops/mat_mul.h"
 #include "ops/topk.h"
-#include "ops/arg_min.h"
 // #include "ops/avg_pool.h"
 // #include "ops/ceil.h"
 #include "ops/concat.h"
@@ -289,7 +288,7 @@ TEST_F(KernelExecutorTest, TestArgMax) {
 }
 
 TEST_F(KernelExecutorTest, TestArgMin) {
-  auto op = std::make_shared<ops::ArgMin>();
+  auto op = std::make_shared<ops::Argmin>();
   op->Init();
   std::vector<float> input_data{2.0, 3.1, 1.2};
   std::vector<mindspore::MSTensor> inputs;
