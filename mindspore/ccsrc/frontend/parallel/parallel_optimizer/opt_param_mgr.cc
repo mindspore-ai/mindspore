@@ -55,7 +55,7 @@ class OptParamMgrImpl : public OptParamMgr {
       opt_shard_group = dev_group[0].name();
       MS_LOG(INFO) << "create group success.";
     } else {
-      MS_LOG(ERROR) << "create group failed.";
+      MS_LOG(WARNING) << "create opt shard group for the parameter " << parameter->ToString() << " failed.";
     }
     return opt_shard_group;
   }

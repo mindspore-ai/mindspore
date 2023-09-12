@@ -1760,6 +1760,14 @@ Status ParallelInit(size_t rank_id, const size_t devices) {
     return FAILED;
   }
 
+  int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
+  if (ParallelContext::GetInstance()->enable_parallel_optimizer() && optimizer_weight_shard_size > 0 &&
+      device_num < optimizer_weight_shard_size) {
+    MS_LOG(ERROR) << "When parallel_optimizer is enabled, the optimizer_weight_shard_size "
+                  << optimizer_weight_shard_size << " should not exceed the device num " << device_num << ".";
+    return FAILED;
+  }
+
   if ((global_rank < 0) || (global_rank >= device_num)) {
     MS_LOG(ERROR) << "The parameter 'global_rank' must be  greater than 0 and less equal 'device num', "
                      "but got the global_rank : "
