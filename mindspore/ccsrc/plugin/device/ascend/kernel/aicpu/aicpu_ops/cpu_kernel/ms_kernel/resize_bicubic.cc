@@ -346,7 +346,12 @@ static float ComputeYInterpolation(int which, const int64_t &channel_num, const 
 }
 
 static float ComputeOneD(float values_[4], const float xw_0, const float xw_1, const float xw_2, const float xw_3) {
-  return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[0], values_[1], values_[2], values_[3]);
+  int kIndex0 = 0;
+  int kIndex1 = 1;
+  int kIndex2 = 2;
+  int kIndex3 = 3;
+  return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[kIndex0], values_[kIndex1], values_[kIndex2],
+                              values_[kIndex3]);
 }
 
 template <typename T1, typename T2>

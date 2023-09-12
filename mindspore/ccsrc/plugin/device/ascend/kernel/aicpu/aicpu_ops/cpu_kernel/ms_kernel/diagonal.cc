@@ -122,7 +122,8 @@ uint32_t DiagonalCpuKernel::DoComputeType(CpuKernelContext &ctx) {
   if (x_dim != N2 && x_NumE > 0) {
     // set the vx_shape and vx_stride, which is x_shape_ and x_stride of
     // position dim1_ and dim2_ removed.
-    std::vector<int64_t> vx_shape, vx_stride;
+    std::vector<int64_t> vx_shape;
+    std::vector<int64_t> vx_stride;
     for (unsigned int tmp_dim = 0; tmp_dim < x_shape_.size(); tmp_dim++) {
       if (tmp_dim != dim1_ && tmp_dim != dim2_) {
         vx_shape.push_back(x_shape_[tmp_dim]);

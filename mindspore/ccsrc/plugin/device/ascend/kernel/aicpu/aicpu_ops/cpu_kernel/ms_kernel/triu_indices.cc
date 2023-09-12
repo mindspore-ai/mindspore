@@ -80,7 +80,8 @@ uint32_t TriuIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
 
   int64_t i = 0;
-  int64_t c = std::max<int64_t>(0, offset), r = 0;
+  int64_t c = std::max<int64_t>(0, offset);
+  int64_t r = 0;
   while (i < triu_size) {
     output[i] = r;
     output[triu_size + i++] = c;

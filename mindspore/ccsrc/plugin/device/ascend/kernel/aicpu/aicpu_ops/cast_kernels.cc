@@ -37,9 +37,11 @@ uint32_t CastTask(const std::vector<uintptr_t> &ioAddrs, const size_t &input_siz
     }
     return kAicpuKernelStateSucess;
   } else {
-    Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> input_map(reinterpret_cast<T *>(ioAddrs[0]), 1, input_size);
-    const auto &input = Eigen::Tensor<T, 2, Eigen::RowMajor>(input_map);
-    Eigen::TensorMap<Eigen::Tensor<S, 2, Eigen::RowMajor>>(reinterpret_cast<S *>(ioAddrs[1]), 1, input_size) =
+    constexpr int kRank = 2;
+    Eigen::TensorMap<Eigen::Tensor<T, kRank, Eigen::RowMajor>> input_map(reinterpret_cast<T *>(ioAddrs[0]), 1,
+                                                                         input_size);
+    const auto &input = Eigen::Tensor<T, kRank, Eigen::RowMajor>(input_map);
+    Eigen::TensorMap<Eigen::Tensor<S, kRank, Eigen::RowMajor>>(reinterpret_cast<S *>(ioAddrs[1]), 1, input_size) =
       input.template cast<S>();
     return kAicpuKernelStateSucess;
   }

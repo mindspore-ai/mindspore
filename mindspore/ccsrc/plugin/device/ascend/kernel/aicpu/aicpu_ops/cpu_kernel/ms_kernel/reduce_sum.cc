@@ -134,7 +134,9 @@ uint32_t ReduceSumCpuKernel::ReduceSumOneAxes(const T *input_data, std::vector<i
     }
     return KERNEL_STATUS_OK;
   }
-  int64_t inner = 1, outer = 1, depth = 1;
+  int64_t inner = 1;
+  int64_t outer = 1;
+  int64_t depth = 1;
   KERNEL_HANDLE_ERROR(ReduceSumParseAxes(input_shape, axes, axes_idx, inner, outer, depth), "parse axes failed.");
   auto output_data_temp = new (std::nothrow) T[inner * outer];
   KERNEL_CHECK_NULLPTR(output_data_temp, KERNEL_STATUS_INNER_ERROR, "apply memory failed.");
@@ -201,7 +203,9 @@ uint32_t ReduceSumCpuKernel::ReduceSumOneAxes2(const T *input_data, int64_t inpu
     }
     return KERNEL_STATUS_OK;
   }
-  int64_t inner = 1, outer = 1, depth = 1;
+  int64_t inner = 1;
+  int64_t outer = 1;
+  int64_t depth = 1;
   KERNEL_HANDLE_ERROR(ReduceSumParseAxes(input_shape, axes, axes_idx, inner, outer, depth), "parse axes failed.");
   std::vector<T2> input_data_real(input_num);
   std::vector<T2> input_data_imag(input_num);

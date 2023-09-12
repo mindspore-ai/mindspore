@@ -38,6 +38,7 @@ constexpr int64_t kIndex1 = 1;
 constexpr int64_t kIndex2 = 2;
 constexpr int64_t kIndex3 = 3;
 const int64_t kParallelNum{64};
+const size_t kMinDimSize = 2;
 }  // namespace
 // 定义命名空间aicpu
 namespace aicpu {
@@ -52,7 +53,7 @@ const std::vector<int64_t> Strides(const std::vector<int64_t> &shape) {
 }
 
 uint32_t GroupsShape(const std::vector<int64_t> input_shape, std::vector<int64_t> &grouped_shape) {
-  if (input_shape.size() < 2) {
+  if (input_shape.size() < kMinDimSize) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // grouped_shape is input_shape[:-1]
@@ -178,10 +179,9 @@ template <typename T>
 uint32_t DenseToSparseSetOperationCpuKernel::OutputSparseTensor(
   DataBank &databank, const std::vector<int64_t> &output_shape, const int64_t num_values,
   const std::map<std::vector<int64_t>, std::set<T>> &sets) {
-  Tensor *out_indices, *out_values, *out_shape;
-  out_indices = databank.result_indices;
-  out_values = databank.result_values;
-  out_shape = databank.result_shape;
+  auto out_indices = databank.result_indices;
+  auto out_values = databank.result_values;
+  auto out_shape = databank.result_shape;
 
   EigenTensor out_indices_t(out_indices, out_indices->GetData());
   auto out_indices_mat = out_indices_t.matrix<int64_t>();

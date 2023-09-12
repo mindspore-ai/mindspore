@@ -212,10 +212,9 @@ uint32_t FractionalMaxPoolWithFixedKsize::ComputeSingleBatch(T *x_addr, SType *r
     T *x_plane_addr = x_addr + plane * input_h * input_w;
     T *y_plane_addr = y_addr + plane * output_h * output_w;
     int64_t *argmax_plane_addr = argmax_addr + plane * output_h * output_w;
-    int h, w;
-    for (h = 0; h < output_h; h++) {
+    for (int h = 0; h < output_h; h++) {
       int pool_h_start = sequence_h[h];
-      for (w = 0; w < output_w; w++) {
+      for (int w = 0; w < output_w; w++) {
         int pool_w_start = sequence_w[w];
         int h2 = pool_h_start;
         int w2 = pool_w_start;

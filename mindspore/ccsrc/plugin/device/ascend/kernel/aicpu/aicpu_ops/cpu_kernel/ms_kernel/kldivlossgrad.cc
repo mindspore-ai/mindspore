@@ -189,7 +189,8 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ct
     std::int64_t per_unit_size{total / std::min(std::max(1L, cores - 2L), total)};
     auto shard_kldivlossgrad = [&](std::int64_t begin, std::int64_t end) {
       std::int64_t length = end - begin;
-      std::int64_t grad_begin{0}, grad_length{grad_total};
+      std::int64_t grad_begin{0};
+      std::int64_t grad_length{grad_total};
       if (reduction == "none") {
         grad_begin = begin;
         grad_length = length;

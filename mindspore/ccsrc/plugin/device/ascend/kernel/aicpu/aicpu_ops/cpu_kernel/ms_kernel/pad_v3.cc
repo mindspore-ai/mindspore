@@ -140,11 +140,10 @@ uint32_t PadV3CpuKernel::EdgeCompute2D(T *input, T *output, int64_t p) {
   int64_t i_start_y = std::max(int64_t(0), -pad_t);
   int64_t o_start_x = std::max(int64_t(0), pad_l);
   int64_t o_start_y = std::max(int64_t(0), pad_t);
-  int64_t ip_x, ip_y;
   for (int64_t i = 0; i < output_h; ++i) {
     for (int64_t j = 0; j < output_w; ++j) {
-      ip_x = EdgeIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
-      ip_y = EdgeIndexCaculate(pad_t, i, input_h, o_start_y, i_start_y);
+      int64_t ip_x = EdgeIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
+      int64_t ip_y = EdgeIndexCaculate(pad_t, i, input_h, o_start_y, i_start_y);
       T *dest_p = output + p * output_w * output_h * (nplane + 1) + i * output_w + j;
       T *src_p = input + p * input_w * input_h * (nplane + 1) + ip_y * input_w + ip_x;
       *dest_p = *src_p;
@@ -171,13 +170,12 @@ uint32_t PadV3CpuKernel::EdgeCompute3D(T *input, T *output, int64_t p) {
   int64_t o_start_x = std::max(int64_t(0), pad_l);
   int64_t o_start_y = std::max(int64_t(0), pad_t);
   int64_t o_start_z = std::max(int64_t(0), pad_f);
-  int64_t ip_x, ip_y, ip_z;
   for (int64_t k = 0; k < output_d; ++k) {
     for (int64_t j = 0; j < output_h; ++j) {
       for (int64_t i = 0; i < output_w; ++i) {
-        ip_x = EdgeIndexCaculate(pad_l, i, input_w, o_start_x, i_start_x);
-        ip_y = EdgeIndexCaculate(pad_t, j, input_h, o_start_y, i_start_y);
-        ip_z = EdgeIndexCaculate(pad_f, k, input_d, o_start_z, i_start_z);
+        int64_t ip_x = EdgeIndexCaculate(pad_l, i, input_w, o_start_x, i_start_x);
+        int64_t ip_y = EdgeIndexCaculate(pad_t, j, input_h, o_start_y, i_start_y);
+        int64_t ip_z = EdgeIndexCaculate(pad_f, k, input_d, o_start_z, i_start_z);
         T *dest_p =
           output + p * output_w * output_h * output_d * (nplane + 1) + k * output_w * output_h + j * output_w + i;
         T *src_p =
@@ -225,11 +223,10 @@ uint32_t PadV3CpuKernel::ReflectCompute1D(T *input, T *output, int64_t p) {
   int64_t pad_l = paddings[0];
   int64_t i_start_x = std::max(int64_t(0), -pad_l);
   int64_t o_start_x = std::max(int64_t(0), pad_l);
-  int64_t ip_x;
   for (int64_t j = 0; j < output_w; ++j) {
-    ip_x = ReflectIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
+    int64_t ip_x = ReflectIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
     T *dest_p = output + p * output_w * (nplane + 1) + j;
-    T *src_p = input + +p * input_w * (nplane + 1) + ip_x;
+    T *src_p = input + p * input_w * (nplane + 1) + ip_x;
     *dest_p = *src_p;
   }
   return KERNEL_STATUS_OK;
@@ -248,11 +245,10 @@ uint32_t PadV3CpuKernel::ReflectCompute2D(T *input, T *output, int64_t p) {
   int64_t i_start_y = std::max(int64_t(0), -pad_t);
   int64_t o_start_x = std::max(int64_t(0), pad_l);
   int64_t o_start_y = std::max(int64_t(0), pad_t);
-  int64_t ip_x, ip_y;
   for (int64_t i = 0; i < output_h; ++i) {
     for (int64_t j = 0; j < output_w; ++j) {
-      ip_x = ReflectIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
-      ip_y = ReflectIndexCaculate(pad_t, i, input_h, o_start_y, i_start_y);
+      int64_t ip_x = ReflectIndexCaculate(pad_l, j, input_w, o_start_x, i_start_x);
+      int64_t ip_y = ReflectIndexCaculate(pad_t, i, input_h, o_start_y, i_start_y);
       T *dest_p = output + p * output_w * output_h * (nplane + 1) + i * output_w + j;
       T *src_p = input + p * input_w * input_h * (nplane + 1) + ip_y * input_w + ip_x;
       *dest_p = *src_p;
@@ -279,13 +275,12 @@ uint32_t PadV3CpuKernel::ReflectCompute3D(T *input, T *output, int64_t p) {
   int64_t o_start_x = std::max(int64_t(0), pad_l);
   int64_t o_start_y = std::max(int64_t(0), pad_t);
   int64_t o_start_z = std::max(int64_t(0), pad_f);
-  int64_t ip_x, ip_y, ip_z;
   for (int64_t k = 0; k < output_d; ++k) {
     for (int64_t j = 0; j < output_h; ++j) {
       for (int64_t i = 0; i < output_w; ++i) {
-        ip_x = ReflectIndexCaculate(pad_l, i, input_w, o_start_x, i_start_x);
-        ip_y = ReflectIndexCaculate(pad_t, j, input_h, o_start_y, i_start_y);
-        ip_z = ReflectIndexCaculate(pad_f, k, input_d, o_start_z, i_start_z);
+        int64_t ip_x = ReflectIndexCaculate(pad_l, i, input_w, o_start_x, i_start_x);
+        int64_t ip_y = ReflectIndexCaculate(pad_t, j, input_h, o_start_y, i_start_y);
+        int64_t ip_z = ReflectIndexCaculate(pad_f, k, input_d, o_start_z, i_start_z);
         T *dest_p =
           output + p * output_w * output_h * output_d * (nplane + 1) + k * output_w * output_h + j * output_w + i;
         T *src_p =

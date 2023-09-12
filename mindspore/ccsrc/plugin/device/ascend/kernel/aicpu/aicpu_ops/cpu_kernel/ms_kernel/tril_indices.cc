@@ -78,7 +78,8 @@ uint32_t TrilIndicesCpuKernel::DoCompute(CpuKernelContext &ctx) {
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
 
   int64_t i = 0;
-  int64_t r = std::max<int64_t>(0, -offset), c = 0;
+  int64_t r = std::max<int64_t>(0, -offset);
+  int64_t c = 0;
   while (i < tril_size) {
     output[i] = r;
     output[tril_size + i++] = c;

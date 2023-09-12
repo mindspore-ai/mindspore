@@ -124,11 +124,13 @@ std::pair<int64_t, int64_t> TileCpuKernel::TileOneDimension(const std::vector<in
     CopyMultipleTimes(in_data, dimension_size, multipliers[dimension], out_data);
     return std::make_pair(dimension_size, dimension_size * static_cast<int64_t>(multipliers[dimension]));
   }
-  int64_t total_stride_size = 0, total_tiled_stride_size = 0;
+  int64_t total_stride_size = 0;
+  int64_t total_tiled_stride_size = 0;
   const T *copy_from_data = in_data;
   T *copy_to_data = out_data;
   for (int64_t i = 0; i < dimension_size; ++i) {
-    int64_t stride_size = 0, tiled_stride_size = 0;
+    int64_t stride_size = 0;
+    int64_t tiled_stride_size = 0;
     std::tie(stride_size, tiled_stride_size) =
       TileOneDimension(in_dimensions, copy_from_data, multipliers, copy_to_data, dimension + 1);
     copy_from_data += stride_size;

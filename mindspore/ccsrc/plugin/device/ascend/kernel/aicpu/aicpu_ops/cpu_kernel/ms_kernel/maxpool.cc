@@ -58,7 +58,8 @@ namespace aicpu {
 uint32_t GetOutputSize(int input_size, int kernel_size, int stride, const std::string &padding, int64_t *output_size,
                        int64_t *padding_before, int64_t *padding_after) {
   KERNEL_CHECK_FALSE(stride > 0, KERNEL_STATUS_PARAM_INVALID, "[MaxPool] Stride must be positive.");
-  std::string same("SAME"), valid("VALID");
+  std::string same("SAME");
+  std::string valid("VALID");
   if (valid == padding) {
     *output_size = (input_size - kernel_size + stride) / stride;
     *padding_before = 0;
@@ -88,7 +89,8 @@ uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorSh
     KERNEL_LOG_ERROR("[MaxPool] Input tensor must have 2 spacial dimensions.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt(), strides = ctx.GetAttr("strides")->GetListInt();
+  std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt();
+  std::vector<int64_t> strides = ctx.GetAttr("strides")->GetListInt();
   std::string padding = ctx.GetAttr("padding")->GetString();
   std::string data_format_str = "";
   if (ctx.GetAttr("data_format") == nullptr) {
@@ -132,8 +134,8 @@ uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorSh
       return KERNEL_STATUS_PARAM_INVALID;
   }
   auto ret1 = GetOutputSize(params.tensor_rows, params.ksize_rows, params.strides_rows, padding, &params.out_height,
-                            &params.pad_top, &params.pad_bottom),
-       ret2 = GetOutputSize(params.tensor_cols, params.ksize_cols, params.strides_cols, padding, &params.out_width,
+                            &params.pad_top, &params.pad_bottom);
+  auto ret2 = GetOutputSize(params.tensor_cols, params.ksize_cols, params.strides_cols, padding, &params.out_width,
                             &params.pad_left, &params.pad_right);
   KERNEL_CHECK_FALSE(ret1 == KERNEL_STATUS_OK && ret2 == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
                      "[MaxPool] An error occurred while calculating output size.");
@@ -151,15 +153,20 @@ uint32_t SpacialMaxPool(CpuKernelContext &ctx, const PoolParams &params) {
     typedef Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenArrayMap;
     typedef Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> EigenArrayMap;
     const int64_t batch_size = limit;
-    const int64_t X_W = static_cast<int64_t>(params.tensor_cols), X_H = static_cast<int64_t>(params.tensor_rows);
-    const int64_t Y_W = params.out_width, Y_H = params.out_height;
-    const int64_t X_HxW = X_H * X_W, Y_HxW = Y_H * Y_W;
-    const int64_t X_stride = X_HxW, Y_stride = Y_HxW;
-    const int64_t stride_h = static_cast<int64_t>(params.strides_rows),
-                  stride_w = static_cast<int64_t>(params.strides_cols);
-    const int64_t pad_t = params.pad_top, pad_l = params.pad_left;
-    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows),
-                  kernel_w = static_cast<int64_t>(params.ksize_cols);
+    const int64_t X_W = static_cast<int64_t>(params.tensor_cols);
+    const int64_t X_H = static_cast<int64_t>(params.tensor_rows);
+    const int64_t Y_W = params.out_width;
+    const int64_t Y_H = params.out_height;
+    const int64_t X_HxW = X_H * X_W;
+    const int64_t Y_HxW = Y_H * Y_W;
+    const int64_t X_stride = X_HxW;
+    const int64_t Y_stride = Y_HxW;
+    const int64_t stride_h = static_cast<int64_t>(params.strides_rows);
+    const int64_t stride_w = static_cast<int64_t>(params.strides_cols);
+    const int64_t pad_t = params.pad_top;
+    const int64_t pad_l = params.pad_left;
+    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows);
+    const int64_t kernel_w = static_cast<int64_t>(params.ksize_cols);
     const T *x_ptr = raw_input_data + start * X_stride;
     T *y_ptr = raw_output_data + start * Y_stride;
     for (int64_t i = start; i < batch_size; ++i) {
@@ -183,16 +190,21 @@ uint32_t SpacialMaxPool(CpuKernelContext &ctx, const PoolParams &params) {
     typedef Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenArrayMap;
     typedef Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> EigenArrayMap;
     const int64_t batch_size = limit;
-    const int64_t X_W = static_cast<int64_t>(params.tensor_cols), X_H = static_cast<int64_t>(params.tensor_rows);
-    const int64_t Y_W = params.out_width, Y_H = params.out_height;
-    const int64_t X_HxW = X_H * X_W, Y_HxW = Y_H * Y_W;
+    const int64_t X_W = static_cast<int64_t>(params.tensor_cols);
+    const int64_t X_H = static_cast<int64_t>(params.tensor_rows);
+    const int64_t Y_W = params.out_width;
+    const int64_t Y_H = params.out_height;
+    const int64_t X_HxW = X_H * X_W;
+    const int64_t Y_HxW = Y_H * Y_W;
     const int64_t C = static_cast<int64_t>(params.depth);
-    const int64_t X_stride = X_HxW * C, Y_stride = Y_HxW * C;
-    const int64_t stride_h = static_cast<int64_t>(params.strides_rows),
-                  stride_w = static_cast<int64_t>(params.strides_cols);
-    const int64_t pad_t = params.pad_top, pad_l = params.pad_left;
-    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows),
-                  kernel_w = static_cast<int64_t>(params.ksize_cols);
+    const int64_t X_stride = X_HxW * C;
+    const int64_t Y_stride = Y_HxW * C;
+    const int64_t stride_h = static_cast<int64_t>(params.strides_rows);
+    const int64_t stride_w = static_cast<int64_t>(params.strides_cols);
+    const int64_t pad_t = params.pad_top;
+    const int64_t pad_l = params.pad_left;
+    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows);
+    const int64_t kernel_w = static_cast<int64_t>(params.ksize_cols);
     const T *x_ptr = raw_input_data + start * X_stride;
     T *y_ptr = raw_output_data + start * Y_stride;
     for (int64_t i = start; i < batch_size; ++i) {

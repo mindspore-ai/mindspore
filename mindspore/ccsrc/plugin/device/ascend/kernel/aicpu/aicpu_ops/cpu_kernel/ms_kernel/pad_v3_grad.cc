@@ -231,10 +231,9 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute1D(T *input, T *output, int64_t p) 
 
 template <typename T>
 uint32_t PadV3GradCpuKernel::PadV3GradCompute2D(T *input, T *output, int64_t p, int64_t i) {
-  int ip_x, ip_y;
   for (int j = 0; j < input_w; j++) {
-    ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
-    ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
+    int ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
+    int ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
     T *src_p = input + p * input_w * input_h + i * input_w + j;
     T *dest_p = output + p * output_w * output_h + ip_y * output_w + ip_x;
     *dest_p += *src_p;
@@ -244,12 +243,11 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute2D(T *input, T *output, int64_t p, 
 
 template <typename T>
 uint32_t PadV3GradCpuKernel::PadV3GradCompute3D(T *input, T *output, int64_t p, int64_t z) {
-  int ip_x, ip_y, ip_z;
   for (int i = 0; i < input_h; i++) {
     for (int j = 0; j < input_w; j++) {
-      ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
-      ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
-      ip_z = IndexCaculate(pad_f, pad_b, z, output_c, o_start_z, i_start_z);
+      int ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
+      int ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
+      int ip_z = IndexCaculate(pad_f, pad_b, z, output_c, o_start_z, i_start_z);
       T *src_p = input + p * input_w * input_h * input_c + z * input_w * input_h + i * input_w + j;
       T *dest_p = output + p * output_w * output_h * output_c + ip_z * output_w * output_h + ip_y * output_w + ip_x;
       *dest_p += *src_p;
