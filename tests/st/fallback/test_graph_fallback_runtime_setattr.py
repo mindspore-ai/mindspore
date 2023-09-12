@@ -50,7 +50,7 @@ def test_setattr_self_non_param():
     assert test_net.data == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -76,7 +76,7 @@ def test_setattr_self_non_param_2():
     assert test_net.data == [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -183,7 +183,7 @@ def test_setattr_self_non_param_used_in_operator():
     assert np.all(test_net.data.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -242,7 +242,7 @@ data_obj2 = AssignTarget()
 data_obj2.x = 100
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -266,7 +266,7 @@ def test_setattr_global_obj_attr2():
 data_obj3 = np.array([1, 2, 3, 4])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -326,7 +326,7 @@ nested_data_obj2 = OuterAssignTarget()
 nested_data_obj2.a.b.x = 100
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -400,7 +400,7 @@ def test_setattr_run_multiple_times():
     assert ret3 == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -429,7 +429,7 @@ def test_setattr_run_multiple_times_2():
     assert np.all(ret3.asnumpy() == np.array([4, 5, 6]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -518,7 +518,7 @@ def test_setattr_in_control_flow():
     assert ret == -2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

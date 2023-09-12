@@ -126,7 +126,7 @@ def test_single_if_no_else_type():
     assert str(res) == "[<class 'numpy.ndarray'>, <class 'object'>]"
 
 
-@case_register.level0
+@case_register.level1
 @case_register.target_gpu
 @case_register.target_ascend
 def test_single_if_no_else_type_2():

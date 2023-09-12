@@ -49,7 +49,7 @@ def test_fallback_list_with_input_constant_tensor():
     assert out[3].asnumpy() == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -123,7 +123,7 @@ def test_fallback_tuple_with_input_constant_tensor():
     assert out[2].asnumpy() == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

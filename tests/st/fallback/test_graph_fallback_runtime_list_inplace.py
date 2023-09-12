@@ -49,7 +49,7 @@ def test_global_list_used_in_graph():
 global_float_list_1 = [1.0, 2.0, 3.0, 4.0]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +131,7 @@ def test_global_nested_list_return_in_graph():
     assert id(res) == id(global_list_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -155,7 +155,7 @@ def test_global_nested_list_return_in_graph_2():
 global_list_3 = [1, 2, 3, (4, [3, 4])]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -174,7 +174,7 @@ def test_global_nested_list_getitem_in_graph_2():
     assert id(res) == id(global_list_3[3][1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +218,7 @@ def test_return_local_list():
     assert ret == [1, 2, 3, Tensor([1]), 2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,7 +244,7 @@ def test_return_local_list_2():
 global_list_4 = [1, 2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -267,7 +267,7 @@ def test_return_local_list_3():
     assert id(ret[4]) == id(global_list_4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -365,7 +365,7 @@ def test_list_inplace_reverse():
 global_list_for_reverse_2 = [Tensor([1, 2, 3]), Tensor([1, 2])]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -391,7 +391,7 @@ def test_list_inplace_reverse_2():
 global_list_for_reverse_3 = ["1", np.array([1, 2, 3]), [1, 2], Tensor([1, 2, 3])]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -465,7 +465,7 @@ def test_list_inplace_reverse_local_list():
     assert out[1] == [3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -515,7 +515,7 @@ def test_list_inplace_pop():
 global_list_for_pop_2 = [1, [2, 3], "4"]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -563,7 +563,7 @@ def test_list_inplace_pop_local():
     assert out[2] == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -588,7 +588,7 @@ def test_list_inplace_pop_local_2():
     assert out[2] == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -774,7 +774,7 @@ def test_list_inplace_reverse_with_variable():
     assert np.all(out[1].asnumpy() == np.array([1, 2, 3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -794,7 +794,7 @@ def test_list_inplace_reverse_with_variable_2():
     assert out == [3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -836,7 +836,7 @@ def test_dynamic_len_list_inplace_op():
     assert out == [2, 5, 1, 7]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -883,7 +883,7 @@ def test_list_inplace_with_all_str():
 global_tuple_with_list_all_str = (['a', 'b', 'c'], 1, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -928,7 +928,7 @@ def test_list_in_joined_str():
     assert "The input is [1, 2, 3]" in str(raise_info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -949,7 +949,7 @@ def test_list_in_joined_str_2():
            in str(raise_info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -970,7 +970,7 @@ def test_list_in_joined_str_3():
            " Tensor(shape=[1], dtype=Int64, value= [2])])" in str(raise_info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1032,7 +1032,7 @@ def test_list_inplace_with_graph_input():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1051,7 +1051,7 @@ def test_list_inplace_with_graph_input_2():
     assert id(x[0]) == id(ret[0])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1071,7 +1071,7 @@ def test_list_inplace_with_graph_input_3():
     assert id(x) != id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1092,7 +1092,7 @@ def test_list_inplace_with_graph_input_4():
     assert x == [4, 3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1111,7 +1111,7 @@ def test_list_inplace_with_graph_input_5():
     assert x == [4, 3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1158,7 +1158,7 @@ def test_list_inplace_with_attribute():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1185,7 +1185,7 @@ def test_list_inplace_with_attribute_2():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1267,7 +1267,7 @@ def test_list_inplace_with_attribute_of_jit_class():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1297,7 +1297,7 @@ def test_list_inplace_with_attribute_of_jit_class_2():
     assert x == [4, 3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

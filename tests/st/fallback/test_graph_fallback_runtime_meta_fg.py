@@ -50,7 +50,7 @@ def test_fallback_add_meta():
     assert ret == (1, 2, 3, 4, 5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -108,7 +108,7 @@ def test_fallback_aug_assign_meta():
     assert ret == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -135,7 +135,7 @@ def test_fallback_add_meta_3():
     assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -163,7 +163,7 @@ def test_fallback_add_meta_4():
     assert np.allclose(ret.asnumpy(), Tensor([-3, -2, -1]).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,7 +244,7 @@ def test_fallback_negative_meta():
     assert ret == -100
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -299,6 +299,7 @@ def test_fallback_compare_meta():
     assert not ret
 
 
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -360,7 +361,7 @@ def test_fallback_getitem_meta():
     assert ret == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -388,6 +389,7 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -437,7 +439,7 @@ def test_fallback_meta_fg_not_support_type_in_1():
     assert net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -456,7 +458,7 @@ def test_fallback_meta_fg_not_support_type_in_2():
     assert not net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -658,7 +660,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     assert "'>=' not supported between instances of 'list' and 'tuple'." in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -681,7 +683,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_2():
     assert "'>=' not supported between" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -40,7 +40,7 @@ def test_list_extend_tensor():
     assert np.all(out[1].asnumpy() == ms.Tensor([3, 4]).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_list_extend_tensor_2():

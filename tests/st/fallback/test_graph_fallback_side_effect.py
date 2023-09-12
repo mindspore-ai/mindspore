@@ -101,7 +101,7 @@ def test_fallback_side_effect_dict():
     assert out[1] == 44
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_dict_2():
@@ -285,7 +285,7 @@ def test_fallback_side_effect_assign_2():
     assert out == 20
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_dict_3():

@@ -57,7 +57,7 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():
                "Multiply values for specific argument: x" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
@@ -93,7 +93,7 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
                "Multiply values for specific argument: z" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_z():

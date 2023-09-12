@@ -138,6 +138,11 @@ def test_get_attr_form_param():
     assert "Failed to compile in GRAPH_MODE" in str(ex.value)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_get_attr_form_param_2():
     """
     Feature: Graph mode do not support getattr on Parameter.

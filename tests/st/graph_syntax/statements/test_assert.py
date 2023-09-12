@@ -40,7 +40,7 @@ def test_assert1():
         net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert2():
@@ -61,7 +61,7 @@ def test_assert2():
     assert out == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert3():
@@ -82,7 +82,7 @@ def test_assert3():
         net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert4():
@@ -104,7 +104,7 @@ def test_assert4():
     assert "x not in [2, 3, 4]" in str(excinfo.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert5():
@@ -126,7 +126,7 @@ def test_assert5():
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert6():
@@ -148,7 +148,7 @@ def test_assert6():
     assert "1 not in [2, 3, 4]" in str(excinfo.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_assert7():
