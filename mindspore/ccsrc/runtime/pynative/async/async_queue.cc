@@ -91,6 +91,8 @@ void AsyncQueue::WorkerLoop() {
     MS_LOG(DEBUG) << "Get task";
     MS_EXCEPTION_IF_NULL(task);
     if (task->task_type() == kExitTask) {
+      std::unique_lock<std::mutex> lock(task_mutex_);
+      tasks_queque_.pop();
       MS_LOG(DEBUG) << "Thread exit";
       return;
     }
