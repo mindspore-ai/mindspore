@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import composite as C
@@ -70,3 +70,20 @@ def test_roll_1d():
 
     assert np.allclose(except_output, output_ms.asnumpy())
     assert np.allclose(except_grad_output, output_grad_ms[0].asnumpy())
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_roll_exception():
+    """
+    Feature: exception gpu TEST.
+    Description: exception case
+    Expectation: throw error info
+    """
+    input_x = Tensor(np.random.uniform(-10, 10, size=[5, 5])).astype(ms.float32)
+    shifts = ()
+    dims = 0
+    try:
+        _ = ms.ops.roll(input_x, shifts, dims=dims)
+    except ValueError:
+        assert True

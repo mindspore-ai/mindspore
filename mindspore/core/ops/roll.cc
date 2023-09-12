@@ -41,9 +41,29 @@
 namespace mindspore {
 namespace ops {
 namespace {
+inline std::vector<int64_t> GetRollAttr(const PrimitivePtr &primitive, const std::string &attr_name) {
+  auto prim_name = primitive->name();
+  auto value = primitive->GetAttr(attr_name);
+  std::vector<int64_t> values{};
+  if (value->isa<ValueSequence>()) {
+    values = GetValue<std::vector<int64_t>>(value);
+  } else if (value->isa<Int64Imm>()) {
+    values.emplace_back(GetValue<int64_t>(value));
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', '" << attr_name
+                             << "'should be an int64 number or an array of int64 numbers.";
+  }
+  return values;
+}
+
 abstract::ShapePtr RollInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  auto axis = GetRollAttr(primitive, kAxis);
+  auto shift = GetRollAttr(primitive, kShift);
+  if (axis.size() != shift.size() || shift.empty()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'axis' and 'shift' must be not empty and have same size.";
+  }
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                            prim_name);
