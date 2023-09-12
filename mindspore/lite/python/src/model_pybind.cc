@@ -175,6 +175,7 @@ void ModelPyBind(const py::module &m) {
 #ifdef PARALLEL_INFERENCE
 std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *runner,
                                                       const std::vector<MSTensorPtr> &inputs_ptr,
+                                                      const std::vector<MSTensorPtr> &outputs_ptr,
                                                       const MSKernelCallBack &before = nullptr,
                                                       const MSKernelCallBack &after = nullptr) {
   if (runner == nullptr) {
@@ -183,6 +184,9 @@ std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *runne
   }
   std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
   std::vector<MSTensor> outputs;
+  if (!outputs_ptr.empty()) {
+    outputs = MSTensorPtrToMSTensor(outputs_ptr);
+  }
   if (!runner->Predict(inputs, &outputs, before, after).IsOk()) {
     return {};
   }

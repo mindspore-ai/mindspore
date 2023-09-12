@@ -510,7 +510,7 @@ class ModelParallelRunner:
             inputs.append(Tensor(_tensor))
         return inputs
 
-    def predict(self, inputs):
+    def predict(self, inputs, outputs=None):
         """
         Inference ModelParallelRunner.
 
@@ -615,7 +615,17 @@ class ModelParallelRunner:
                 raise TypeError(f"inputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
             _inputs.append(element._tensor)
-        _outputs = self._model.predict(_inputs, None, None)
+        _outputs = []
+        if outputs is not None:
+            if not isinstance(outputs, list):
+                raise TypeError("outputs must be list, bug got {}.".format(type(inputs)))
+            for i, element in enumerate(outputs):
+                if not isinstance(element, Tensor):
+                    raise TypeError(f"outputs element must be Tensor, bug got {type(element)} at index {i}.")
+                # pylint: disable=protected-access
+                _outputs.append(element._tensor)
+
+        _outputs = self._model.predict(_inputs, _outputs, None, None)
         if not isinstance(_outputs, list) or len(_outputs) == 0:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []

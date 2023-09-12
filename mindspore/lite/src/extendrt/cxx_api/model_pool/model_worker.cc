@@ -240,36 +240,9 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       return kLiteError;
     }
   }
-  bool need_copy_output = true;
-  auto model_output = model_->GetOutputs();
-  for (size_t i = 0; i < outputs->size(); i++) {
-    auto &output = outputs->at(i);
-    if (output.Data() != nullptr || output.GetDeviceData() != nullptr) {
-      /* user set graph-output-tensor from outside */
-      model_output[i].SetShape(output.Shape());
-      model_output[i].SetData(output.MutableData(), false);
-      if (output.GetDeviceData() != nullptr) {
-        model_output[i].SetDeviceData(output.GetDeviceData());
-      }
-      model_output[i].SetAllocator(nullptr);
-      need_copy_output = false;
-    }
-  }
-  for (size_t i = 0; i < inputs.size(); i++) {
-    auto &input = inputs[i];
-    model_input[i].SetShape(input.Shape());
-    auto host_data = const_cast<MSTensor &>(input).Data();
-    auto device_data = const_cast<MSTensor &>(input).GetDeviceData();
-    if (host_data != nullptr) {
-      model_input[i].SetData(const_cast<MSTensor &>(input).MutableData(), false);
-    } else if (device_data != nullptr) {
-      model_input[i].SetDeviceData(const_cast<MSTensor &>(input).GetDeviceData());
-    } else {
-      MS_LOG(ERROR) << "Input Data is nullptr";
-      return kLiteError;
-    }
-  }
-  auto status = model_->Predict(model_input, &model_output, before, after);
+  auto model_outputs = model_->GetOutputs();
+  auto outputs_ptr = outputs->empty() ? &model_outputs : outputs;
+  auto status = model_->Predict(inputs, outputs_ptr, before, after);
   for (size_t i = 0; i < model_input.size(); i++) {
     model_input[i].SetData(nullptr);
   }
@@ -279,19 +252,20 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     available_ = true;
     return status;
   }
-  if (need_copy_output) {
-    status = CopyOutputTensor(model_output, outputs);
+  if (outputs->empty()) {
+    status = CopyOutputTensor(model_outputs, outputs);
     if (status != kSuccess) {
       available_ = true;
       return kLiteError;
     }
   } else {
-    model_output = model_->GetOutputs();
+    model_outputs = model_->GetOutputs();
     for (size_t i = 0; i < outputs->size(); i++) {
-      outputs->at(i).SetShape(model_output[i].Shape());
-      model_output[i].SetData(nullptr);
-      model_output[i].SetDeviceData(nullptr);
-      model_output[i].SetAllocator(nullptr);
+      outputs->at(i).SetShape(model_outputs[i].Shape());
+      // user's data, not belong to model.
+      model_outputs[i].SetData(nullptr, false);
+      model_outputs[i].SetDeviceData(nullptr);
+      model_outputs[i].SetAllocator(nullptr);
     }
   }
   available_ = true;
