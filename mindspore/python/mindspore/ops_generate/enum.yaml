@@ -1,101 +1,13 @@
 # enum Format
 format:
-    DEFAULT_FORMAT: -1
     NCHW: 0
     NHWC: 1
-    NHWC4: 2
-    HWKC: 3
-    HWCK: 4
-    KCHW: 5
-    CKHW: 6
-    KHWC: 7
-    CHWK: 8
-    HW: 9
-    HW4: 10
-    NC: 11
-    NC4: 12
-    NC4HW4: 13
-    NUM_OF_FORMAT: 14
-    NCDHW: 15
-    NWC: 16
-    NCW: 17
-    NDHWC: 18
-    NC8HW8: 19
 
-# enum CoordinateTransformMode
-coordinate_transform_mode:
-  ASYMMETRIC: 0
-  ALIGN_CORNERS: 1
-  HALF_PIXEL: 2
-  CROP_AND_RESIZE: 3
-
-# enum ResizeMethod
-resize_method:
-  UNKNOWN: -1
-  LINEAR: 0
-  NEAREST: 1
-  CUBIC: 2
-  AREA: 3
-
-# enum NearestMode
-nearest_mode:
-  NORMAL: 0
-  ROUND_HALF_DOWN: 1
-  ROUND_HALF_UP: 2
-  FLOOR: 3
-  CEIL: 4
-
-# enum RoundMode
-round_mode:
-  FLOOR: 0
-  CEIL: 1
-
-# enum ActivationType
-activation_type:
-  NO_ACTIVATION: 0
-  RELU: 1
-  SIGMOID: 2
-  RELU6: 3
-  ELU: 4
-  LEAKY_RELU: 5
-  ABS: 6
-  RELU1: 7
-  SOFTSIGN: 8
-  SOFTPLUS: 9
-  TANH: 10
-  SELU: 11
-  HSWISH: 12
-  HSIGMOID: 13
-  THRESHOLDRELU: 14
-  LINEAR: 15
-  HARD_TANH: 16
-  SIGN: 17
-  SWISH: 18
-  GELU: 19
-  GLU: 20
-  UNKNOWN: 21
-
-# enum ReduceMode
-reduce_mode:
-  REDUCE_MEAN: 0
-  REDUCE_MAX: 1
-  REDUCE_MIN: 2
-  REDUCE_PROD: 3
-  REDUCE_SUM: 4
-  REDUCE_SUM_SQUARE: 5
-  REDUCE_ASUM: 6
-  REDUCE_ALL: 7
-  REDUCE_L2: 8
-  REDUCE_L1: 9
-  REDUCE_LOG_SUM: 10
-  REDUCE_LOG_SUM_EXP: 11
-
-# enum EltwiseMode
-eltwise_mode:
-  PROD: 0
-  SUM: 1
-  MAXIMUM: 2
-  ELTWISEMODE_UNKNOW: 3
+# enum PadMode
+pad_mode:
+  PAD: 0
+  SAME: 1
+  VALID: 2
 
 # enum Reduction
 reduction:
@@ -104,32 +16,34 @@ reduction:
   SUM: 2
   ADD: 3
 
-# enum PadMode
-pad_mode:
-  PAD: 0
-  SAME: 1
-  VALID: 2
+# enum Direction
+direction:
+  UNIDIRECTIONAL: 0
 
-# enum LshProjectionType
-lsh_projection_type:
-  UNKNOWN: 0
-  SPARSE: 1
-  DENSE: 2
+# enum Activation
+activation:
+  TANH: 0
+
+# enum GateOrder
+gate_order:
+  RZH: 0
+  ZRH: 1
+
+# enum CellType
+cell_type:
+  LSTM: 0
+
+# enum Group
+group:
+  SYNC_BN_GROUP0: 0
+
+# enum InterpolationMode
+interpolation_mode:
+  BILINEAR: 0
+  NEAREST: 1
 
 # enum PaddingMode
 padding_mode:
-  CONSTANT: 0
-  REFLECT: 1
-  SYMMETRIC: 2
-  MODE_RESERVED: 3
-
-# enum PoolMode
-pool_mode:
-  MAX_POOLING: 0
-  MEAN_POOLING: 1
-
-# enum NormMode
-norm_mode:
-  BACKWARD: 0
-  FORWARD: 1
-  ORTHO: 2
+  ZEROS: 0
+  BORDER: 1
+  REFLECTION: 2

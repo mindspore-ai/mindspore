@@ -278,12 +278,12 @@ def process_args(args):
 
         assign_str = ""
         type_cast = arg_info.get('type_cast')
-        type_cast_set = None
+        type_cast_tuple = None
         if type_cast:
-            type_cast_set = {ct.strip() for ct in type_cast.split(",")}
-        if type_cast_set:
-            assign_str += f'type_it({arg_name}, ' + '[' + ', '.join(get_type_str(ct) for ct in type_cast_set) + '], ' \
-                          + get_type_str(dtype) + ')'
+            type_cast_tuple = (ct.strip() for ct in type_cast.split(","))
+        if type_cast_tuple:
+            assign_str += f'type_it({arg_name}, ' + '[' + ', '.join(get_type_str(ct) for ct in type_cast_tuple) + \
+                          '], ' + get_type_str(dtype) + ')'
         else:
             assign_str += arg_name
 
@@ -515,11 +515,11 @@ OpDef g{class_name} = {{
                 replace('list', 'array').upper()
 
             type_cast = arg_info.get('type_cast')
-            type_cast_set = None
+            type_cast_tuple = None
             if type_cast:
-                type_cast_set = {ct.strip() for ct in type_cast.split(",")}
-            if type_cast_set:
-                src_type_str = "\"" + '", "'.join(get_type_str(ct) for ct in type_cast_set) + "\""
+                type_cast_tuple = (ct.strip() for ct in type_cast.split(","))
+            if type_cast_tuple:
+                src_type_str = "\"" + '", "'.join(get_type_str(ct) for ct in type_cast_tuple) + "\""
                 dst_type_str = get_type_str(dtype)
             else:
                 src_type_str = ""
@@ -781,15 +781,13 @@ def main():
     merge_files(inner_yaml_dir_path, inner_ops_yaml_path, '*op.yaml')
     merge_files(inner_yaml_dir_path, inner_doc_yaml_path, '*doc.yaml')
 
-
     # gen python ops files
-    all_doc_str = safe_load_yaml_str({doc_yaml_path, inner_doc_yaml_path})
+    all_doc_str = safe_load_yaml_str((doc_yaml_path, inner_doc_yaml_path))
     generate_py_code(work_path, safe_load_yaml_str({ops_yaml_path}), all_doc_str, "gen")
     generate_py_code(work_path, safe_load_yaml_str({inner_ops_yaml_path}), all_doc_str, "gen_inner")
 
-
     # all ops gen files
-    all_ops_str = safe_load_yaml_str({ops_yaml_path, inner_ops_yaml_path})
+    all_ops_str = safe_load_yaml_str((ops_yaml_path, inner_ops_yaml_path))
     generate_labels_file(work_path, all_ops_str)
     generate_cc_code(work_path, all_ops_str)
     generate_enum_code(work_path)
