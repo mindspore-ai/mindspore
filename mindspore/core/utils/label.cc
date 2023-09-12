@@ -16,25 +16,54 @@
 
 #include "utils/label.h"
 
+#include <vector>
 #include "utils/info.h"
 
-namespace mindspore {
-namespace label_manage {
-static const TraceLabelType global_trace_type = (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
+namespace {
+using mindspore::DebugInfoPtr;
+using mindspore::TraceInfoPtr;
+using mindspore::trace::TraceLabelType;
+
+static const TraceLabelType global_trace_type = (mindspore::common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
                                                   ? TraceLabelType::kWithUniqueId
                                                   : TraceLabelType::kShortSymbol;
-TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
+
 TraceLabelType GetCurrentTraceLabelType() {
-  if (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
+  if (mindspore::common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
     return TraceLabelType::kWithUniqueId;
   }
   return TraceLabelType::kShortSymbol;
 }
 
+std::string CombineUniqueID(const DebugInfoPtr &debug_info) {
+  auto root_info = debug_info;
+  std::string label = "";
+  while (root_info != nullptr) {
+    if (!root_info->name().empty()) {
+      label = label + root_info->name();
+    } else {
+      // The symbol 'U' is for identification of number
+      label = label + "U" + std::to_string(root_info->unique_id());
+    }
+
+    if (root_info->trace_info() != nullptr) {
+      label = label + "_" + root_info->trace_info()->full_name() + "_";
+      root_info = root_info->trace_info()->debug_info();
+    } else {
+      root_info = nullptr;
+    }
+  }
+  return label;
+}
+
+// Get trace with unique id chain
+std::string LabelStringUnique(const DebugInfoPtr &debug_info) { return CombineUniqueID(debug_info); }
+
 struct NameWithTrace {
-  std::string name;
+  std::string root_name;
   std::vector<std::string> trace_labels;
 };
+
 static std::string GetTraceName(const TraceInfoPtr &trace_info, TraceLabelType trace_label) {
   switch (trace_label) {
     case TraceLabelType::kShortSymbol:
@@ -46,70 +75,66 @@ static std::string GetTraceName(const TraceInfoPtr &trace_info, TraceLabelType t
   }
 }
 
-NameWithTrace RootName(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
-  NameWithTrace trace_name;
-  // find debug info after Resolve/ExpandJ/GenMetaFuncGraph, it is a new node
+NameWithTrace CollectTraceInfos(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
+  NameWithTrace name_and_traces;
+  // Find debug info after Resolve/ExpandJ/GenMetaFuncGraph/GenerateVarArg/GenerateKwArg, it is a new node.
   MS_EXCEPTION_IF_NULL(debug_info);
-  auto temp_info = debug_info;
-  while (temp_info != nullptr) {
-    if (temp_info->trace_info() != nullptr) {
-      if (temp_info->trace_info()->isa<TraceResolve>() || temp_info->trace_info()->isa<TraceExpandJ>() ||
-          temp_info->trace_info()->isa<TraceGenMetaFuncGraph>() ||
-          temp_info->trace_info()->isa<TraceGenerateVarArg>() || temp_info->trace_info()->isa<TraceGenerateKwArg>()) {
-        break;
-      }
-      trace_name.trace_labels.push_back(GetTraceName(temp_info->trace_info(), trace_label));
-      temp_info = temp_info->trace_info()->debug_info();
-    } else {
+  auto root_info = debug_info;
+  while (root_info != nullptr) {
+    if (root_info->trace_info() == nullptr) {
       break;
     }
+    if (root_info->trace_info()->isa<mindspore::TraceResolve>() ||
+        root_info->trace_info()->isa<mindspore::TraceExpandJ>() ||
+        root_info->trace_info()->isa<mindspore::TraceGenMetaFuncGraph>() ||
+        root_info->trace_info()->isa<mindspore::TraceGenerateVarArg>() ||
+        root_info->trace_info()->isa<mindspore::TraceGenerateKwArg>()) {
+      break;
+    }
+    name_and_traces.trace_labels.push_back(GetTraceName(root_info->trace_info(), trace_label));
+    root_info = root_info->trace_info()->debug_info();
   }
-  if (!temp_info->name().empty()) {
-    trace_name.name = temp_info->name();
+
+  if (!root_info->name().empty()) {
+    name_and_traces.root_name = root_info->name();
   } else {
-    trace_name.name = temp_info->debug_name();
+    name_and_traces.root_name = root_info->debug_name();
   }
-  return trace_name;
+  return name_and_traces;
 }
 
-std::string CombineTraceTypes(const std::string &root_name, const std::vector<std::string> &trace_labels) {
-  std::string tags = "";
-  for (auto &itr : trace_labels) {
-    std::string symbol = itr;
-    tags = tags + symbol;
+std::string CombineTraceInfos(const std::string &root_name, const std::vector<std::string> &trace_labels) {
+  std::stringstream ss_labels;
+  for (size_t i = 0; i < trace_labels.size(); ++i) {
+    size_t start = i;
+    auto &start_label = trace_labels[start];
+    if (start_label.empty()) {
+      continue;
+    }
+    // Combine the same continuous symbols. For example, AAA --> 3A
+    while (i + 1 < trace_labels.size() && trace_labels[i + 1] == start_label) {
+      ++i;
+    }
+    if (start == i) {
+      ss_labels << start_label;
+    } else {
+      ss_labels << std::to_string(i - start + 1) << start_label;
+    }
   }
-  return tags + root_name;
+  ss_labels << root_name;
+  return ss_labels.str();
 }
 
-// get the label name of the node debug info
+// Get the label name of the node debug info
 std::string LabelString(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
-  NameWithTrace trace_name = RootName(debug_info, trace_label);
-  return CombineTraceTypes(trace_name.name, trace_name.trace_labels);
+  NameWithTrace name_and_traces = CollectTraceInfos(debug_info, trace_label);
+  return CombineTraceInfos(name_and_traces.root_name, name_and_traces.trace_labels);
 }
+}  // namespace
 
-std::string CombineUniqueID(const DebugInfoPtr &debug_info) {
-  auto temp_info = debug_info;
-  std::string label = "";
-  while (temp_info != nullptr) {
-    if (!temp_info->name().empty()) {
-      label = label + temp_info->name();
-    } else {
-      // the symbol 'U' is for identification of number
-      label = label + "U" + std::to_string(temp_info->unique_id());
-    }
-
-    if (temp_info->trace_info() != nullptr) {
-      label = label + "_" + temp_info->trace_info()->full_name() + "_";
-      temp_info = temp_info->trace_info()->debug_info();
-    } else {
-      temp_info = nullptr;
-    }
-  }
-  return label;
-}
-
-// get trace with unique id chain
-std::string LabelStringUnique(const DebugInfoPtr &debug_info) { return CombineUniqueID(debug_info); }
+namespace mindspore {
+namespace trace {
+TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
 
 std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   if ((GetGlobalTraceLabelType() == TraceLabelType::kWithUniqueId) ||
@@ -118,5 +143,5 @@ std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   }
   return LabelString(debug_info, trace_label);
 }
-}  // namespace label_manage
+}  // namespace trace
 }  // namespace mindspore

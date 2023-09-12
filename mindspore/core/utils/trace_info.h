@@ -209,7 +209,7 @@ class TraceEquiv : public TraceInfo {
  public:
   explicit TraceEquiv(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceEquiv() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("equiv", "equiv");
+  MS_DECLARE_TRACE_NAME_SYMBOL("equiv", "equiv_");
   TraceInfoPtr clone() override { return std::make_shared<TraceEquiv>(*this); }
 };
 
@@ -396,7 +396,7 @@ class TraceDoSignature : public TraceInfo {
  public:
   explicit TraceDoSignature(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceDoSignature() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("DoSignature", "do_sig_");
+  MS_DECLARE_TRACE_NAME_SYMBOL("DoSignature", "");
   TraceInfoPtr clone() override { return std::make_shared<TraceDoSignature>(*this); }
 };
 

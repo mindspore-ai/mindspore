@@ -23,12 +23,12 @@
 #include "ir/anf.h"
 
 namespace mindspore {
-namespace label_manage {
+namespace trace {
 enum class TraceLabelType { kShortSymbol, kFullName, kWithUniqueId };
 MS_CORE_API TraceLabelType GetGlobalTraceLabelType();
 MS_CORE_API std::string Label(const DebugInfoPtr &debug_info,
                               TraceLabelType trace_label = TraceLabelType::kShortSymbol);
-}  // namespace label_manage
+}  // namespace trace
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_LABEL_H_

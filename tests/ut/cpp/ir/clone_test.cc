@@ -94,14 +94,14 @@ AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string &key) {
 }
 
 void FuncGraphIndex::Acquire(const FuncGraphPtr &key) {
-  std::string name = label_manage::Label(key->debug_info());
+  std::string name = trace::Label(key->debug_info());
   if (!name.empty()) {
     (void)index_func_graph_[name].insert(key);
   }
 }
 
 void FuncGraphIndex::Acquire(const AnfNodePtr &key) {
-  std::string name = label_manage::Label(key->debug_info());
+  std::string name = trace::Label(key->debug_info());
   if (!name.empty()) {
     (void)index_node_[name].insert(key);
   }

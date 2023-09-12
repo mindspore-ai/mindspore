@@ -56,7 +56,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void WriteVariable(const std::string &var_name, const AnfNodePtr &node);
   AnfNodePtr ReadVariable(const std::string &var_name);
   AnfNodePtr ReadLocalVariable(const std::string &var_name);
-  bool CheckhasVariable(const std::string &var_name);
+  bool CheckHasVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
   void SetPhiArgument(const ParameterPtr &phi);
   void CollectRemovablePhi(const ParameterPtr &phi);

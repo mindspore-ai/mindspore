@@ -128,7 +128,7 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
   return nullptr;
 }
 
-bool FunctionBlock::CheckhasVariable(const std::string &var_name) {
+bool FunctionBlock::CheckHasVariable(const std::string &var_name) {
   auto node = ReadLocalVariable(var_name);
   if (node != nullptr) {
     return true;
@@ -136,7 +136,7 @@ bool FunctionBlock::CheckhasVariable(const std::string &var_name) {
   if (!prev_blocks_.empty()) {
     auto block = prev_blocks_[0];
     MS_EXCEPTION_IF_NULL(block);
-    return block->CheckhasVariable(var_name);
+    return block->CheckHasVariable(var_name);
   }
   return false;
 }

@@ -905,9 +905,9 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
       oss << std::endl;
     }
     oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
-    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+    if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
-          << label_manage::Label(sg.first->debug_info()) << "\n";
+          << trace::Label(sg.first->debug_info()) << "\n";
     } else {
       oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
     }
