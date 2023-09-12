@@ -184,7 +184,7 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>)
   } else if (value->isa<UInt64Imm>()) {
     format_id = static_cast<int64_t>(GetValue<uint64_t>(value));
   }
-  return CheckAndConvertUtils::GetFormatStringVal(format_id);
+  return GEDataFormat::ConvertEnumToString(format_id);
 }
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>) {
@@ -201,7 +201,46 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>) {
   } else if (value->isa<UInt64Imm>()) {
     pad_id = static_cast<int64_t>(GetValue<uint64_t>(value));
   }
-  return CheckAndConvertUtils::GetPadModStringVal(pad_id, true);
+  return GEPadMod::ConvertEnumToString(pad_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>) {
+  MS_EXCEPTION_IF_NULL(value);
+  int64_t reduction_id = -1;
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  } else if (value->isa<Int32Imm>()) {
+    reduction_id = static_cast<int64_t>(GetValue<int32_t>(value));
+  } else if (value->isa<UInt32Imm>()) {
+    reduction_id = static_cast<int64_t>(GetValue<uint32_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    reduction_id = static_cast<int64_t>(GetValue<int64_t>(value));
+  } else if (value->isa<UInt64Imm>()) {
+    reduction_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  }
+  return GEReduction::ConvertEnumToString(reduction_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>,
+                           const std::vector<std::string> &enum_string) {
+  MS_EXCEPTION_IF_NULL(value);
+  int64_t id = -1;
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  } else if (value->isa<Int32Imm>()) {
+    id = static_cast<int64_t>(GetValue<int32_t>(value));
+  } else if (value->isa<UInt32Imm>()) {
+    id = static_cast<int64_t>(GetValue<uint32_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    id = static_cast<int64_t>(GetValue<int64_t>(value));
+  } else if (value->isa<UInt64Imm>()) {
+    id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  }
+  if (id < 0 || id >= static_cast<int64_t>(enum_string.size())) {
+    MS_LOG(EXCEPTION) << "Invalid enum id " << id;
+    return "";
+  }
+  return enum_string[id];
 }
 
 template <typename T1, typename T2>

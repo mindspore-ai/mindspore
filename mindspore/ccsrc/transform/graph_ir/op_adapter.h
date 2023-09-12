@@ -451,6 +451,14 @@ class OpAdapter : public BaseOpAdapter {
     return static_cast<int64_t>(GetValue<int64_t>(value));
   }
 
+  // specialization for float
+  static float ConvertAny(const ValuePtr &value, const AnyTraits<float>) {
+    if (value->isa<FP64Imm>()) {
+      return static_cast<float>(GetValue<double>(value));
+    }
+    return GetValue<float>(value);
+  }
+
   // specialization for int or tuple broadcast to Vector
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &name,
                                          const AnyTraits<std::vector<int64_t>> anyTraitsInt) {
@@ -617,6 +625,15 @@ class OpAdapter : public BaseOpAdapter {
 
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEPadMod> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEReduction> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
+                                const std::vector<std::string> &enum_string) {
+    return ConvertAnyUtil(value, enum_str, enum_string);
   }
 
   // convert any value to tensor

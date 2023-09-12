@@ -202,21 +202,6 @@ void CheckAndConvertUtils::GetPadModEnumValue(const ValuePtr &value, int64_t *en
   *enum_value = iter->second;
 }
 
-std::string CheckAndConvertUtils::GetPadModStringVal(const int64_t pad_id, bool is_upper) {
-  if (is_upper) {
-    auto iter = PadModToStrUpperMap.find(pad_id);
-    if (iter == PadModToStrUpperMap.end()) {
-      MS_LOG(EXCEPTION) << "Invalid pad enum " << pad_id << " use 0, 1 or 2";
-    }
-    return iter->second;
-  }
-  auto iter = PadModToStrMap.find(pad_id);
-  if (iter == PadModToStrMap.end()) {
-    MS_LOG(EXCEPTION) << "Invalid pad enum " << pad_id << " use 0, 1 or 2";
-  }
-  return iter->second;
-}
-
 void CheckAndConvertUtils::GetReductionEnumValue(const ValuePtr &value, int64_t *enum_value) {
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<StringImm>()) {
@@ -326,14 +311,6 @@ void CheckAndConvertUtils::GetFormatStringVal(const PrimitivePtr &prim, std::str
       *format = DataFormatToStrMap.at(data_format);
     }
   }
-}
-
-std::string CheckAndConvertUtils::GetFormatStringVal(const int64_t format_id) {
-  auto iter = DataFormatToStrMap.find(format_id);
-  if (iter == DataFormatToStrMap.end()) {
-    MS_LOG(EXCEPTION) << "The data format enum " << format_id << " not be converted to string.";
-  }
-  return iter->second;
 }
 
 size_t CheckAndConvertUtils::CheckAbstractShapeSame(const std::vector<AbstractBasePtr> &abs_list) {

@@ -87,6 +87,10 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>)
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>);
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>);
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>, const std::vector<std::string> &);
+
 template <typename P, typename Q>
 std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTraits<std::vector<Q>>) {
   MS_EXCEPTION_IF_NULL(value);

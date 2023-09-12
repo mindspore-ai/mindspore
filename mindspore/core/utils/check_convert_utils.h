@@ -379,7 +379,6 @@ class MS_CORE_API CheckAndConvertUtils {
   static AttrConverterPair GetAttrConvertPair(const std::string &op_type, const std::string &attr_name);
   static bool GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value);
   static void GetPadModEnumValue(const ValuePtr &value, int64_t *enum_value, bool is_upper = false);
-  static std::string GetPadModStringVal(const int64_t pad_id, bool is_upper = false);
   static void GetReductionEnumValue(const ValuePtr &value, int64_t *enum_value);
   static bool CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static void CheckSummaryParam(const AbstractBasePtr &name, const AbstractBasePtr &value,
@@ -401,7 +400,6 @@ class MS_CORE_API CheckAndConvertUtils {
                              const int64_t match_value, const std::string &prim_name);
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
   static void GetFormatStringVal(const PrimitivePtr &prim, std::string *format);
-  static std::string GetFormatStringVal(const int64_t format_id);
   static size_t CheckAbstractShapeSame(const std::vector<AbstractBasePtr> &abs_list);
   static size_t CheckAbstractTypeSame(const std::vector<AbstractBasePtr> &abs_list);
   static void CheckAbstractTypeAndShapeSame(const std::vector<AbstractBasePtr> &abs_list,
