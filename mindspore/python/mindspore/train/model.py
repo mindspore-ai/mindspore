@@ -1265,6 +1265,9 @@ class Model:
             >>> model.train(2, dataset)
         """
         epoch = Validator.check_positive_int(epoch)
+        if hasattr(self._train_network, '_is_check_and_refresh') and not self._train_network._is_check_and_refresh:
+            self._train_network.check_names_and_refresh_name()
+            self._train_network._is_check_and_refresh = True
         self._init(train_dataset, valid_dataset, sink_size, epoch)
 
     def _eval_in_fit(self, valid_dataset, callbacks=None, dataset_sink_mode=True, cb_params=None):

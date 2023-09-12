@@ -25,7 +25,6 @@ from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as Validator
-from mindspore.ops._primitive_cache import _get_cache_prim
 
 __all__ = [
     'clip_by_value',
@@ -36,11 +35,11 @@ __all__ = [
 ]
 
 hyper_map = C.HyperMap()
-max_op = _get_cache_prim(P.Maximum)()
-min_op = _get_cache_prim(P.Minimum)()
-cast_op = _get_cache_prim(P.Cast)()
-scalar2tensor_op = _get_cache_prim(P.ScalarToTensor)()
-partial_op = _get_cache_prim(P.Partial)()
+max_op = P.Maximum()
+min_op = P.Minimum()
+cast_op = P.Cast()
+scalar2tensor_op = P.ScalarToTensor()
+partial_op = P.Partial()
 expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
