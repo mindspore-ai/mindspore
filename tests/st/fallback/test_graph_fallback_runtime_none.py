@@ -432,7 +432,7 @@ def test_none_is_output_of_function_with_side_effect_is():
     assert res == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
