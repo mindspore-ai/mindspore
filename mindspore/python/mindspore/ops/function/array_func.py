@@ -7378,7 +7378,7 @@ def _check_is_int(arg_value, arg_name, op_name):
 
 @_primexpr
 def _check_positive_int(arg_value, arg_name, op_name):
-    arg_value = validator.check_positive_int(arg_value, arg_name, op_name)
+    arg_value = validator.check_int_range(arg_value, 0, 2147483647, validator.INC_RIGHT, arg_name, op_name)
     return arg_value
 
 
