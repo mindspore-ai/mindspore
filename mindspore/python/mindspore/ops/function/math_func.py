@@ -190,6 +190,7 @@ reshape_ = P.Reshape()
 dtype_ = P.DType()
 eps_ = P.Eps()
 
+
 #####################################
 # Element-wise Operation Functions.
 #####################################
@@ -556,7 +557,7 @@ def bucketize(input, boundaries, *, right=False):
 
     bucketize_op = _get_cache_prim(P.Bucketize)
     epsilon_ = 0. if right else 1.e-6
-    boundaries = [boundary+epsilon_ for boundary in boundaries]
+    boundaries = [boundary + epsilon_ for boundary in boundaries]
     return bucketize_op(boundaries)(input)
 
 
@@ -630,12 +631,12 @@ def argmin(input, axis=None, keepdims=False):
         return Tensor(0)
     is_axis_none = False
     if axis is None:
-        input = P.Reshape()(input, (-1,))
+        input = _get_cache_prim(P.Reshape)()(input, (-1,))
         axis = 0
         is_axis_none = True
     out = _get_cache_prim(P.Argmin)(axis)(input)
     if keepdims and not is_axis_none:
-        out = P.ExpandDims()(out, axis)
+        out = _get_cache_prim(P.ExpandDims)()(out, axis)
     return out
 
 
@@ -3331,7 +3332,6 @@ def erfc(input):
     return erfc_(input)
 
 
-
 def bessel_j0(x):
     r"""
     Computes Bessel function of the first kind, order 0 element-wise.
@@ -5678,7 +5678,7 @@ def vander(x, N=None):
     if N <= 0:
         raise ValueError(
             f"For vander, N must be greater than 0, but got {N}.")
-    exponent = ops.range(Tensor(N-1), Tensor(-1), Tensor(-1))
+    exponent = ops.range(Tensor(N - 1), Tensor(-1), Tensor(-1))
     x = F.expand_dims(x, 1)
     exponent = F.expand_dims(exponent, 0)
     return F.tensor_pow(x, exponent)
@@ -12295,7 +12295,7 @@ def _permute_input(input, input_dim, ret_dim):
     for value in ret_dim:
         is_transformed_dim[value] = True
 
-   # partition dim_permute
+    # partition dim_permute
     dim_permute_a, dim_permute_b = [], []
     for i in range(len(dim_permute)):
         value = dim_permute[i]
@@ -12417,7 +12417,7 @@ def _handle_fftwithsize_output(out, input_dim, batch_dims, dim_permute, out_size
 
     type_size = np.dtype(mstype.dtype_to_nptype(out.dtype)).itemsize
     if out.shape != out_sizes or out.strides != out_strides:
-        out = as_strided(out, out_sizes, [int(i/type_size) for i in out_strides])
+        out = as_strided(out, out_sizes, [int(i / type_size) for i in out_strides])
     return out
 
 
@@ -12770,6 +12770,7 @@ def _check_validate_axis(axis, name):
         if isinstance(axis, (tuple, list)):
             for idx, item in enumerate(axis):
                 validator.check_value_type("axis[%d]" % idx, item, [int], name)
+
     _check(axis)
     axis = validator.check_value_type('axis', axis, [int, tuple, list], name)
     return axis
@@ -12912,7 +12913,6 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
         if axes > len(x1_shape) or axes > len(x2_shape):
             raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
                              f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
-
 
     if isinstance(axes, int):
         _check_lt_zero(axes)
@@ -13255,11 +13255,13 @@ def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
     """
+
     def _check():
         msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
         if len(x1_shape) < 2 or len(x2_shape) < 2:
             raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2', "
                              f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
+
     _check()
     return x1_shape[0], x2_shape[0]
 
