@@ -78,16 +78,16 @@ class Iterator:
         self._runtime_context.Init()
         if dataset.get_init_step() == 0:
             init_step = 0
-            init_epoch = 0
+            dataset_size = -1
         else:
             init_step = dataset.get_init_step()
-            init_epoch = init_step // dataset.get_dataset_size()
+            dataset_size = dataset.get_dataset_size()
         if get_debug_mode():
             consumer = cde.PythonPullBasedIteratorConsumer(num_epochs)
             consumer.Init(self.ir_tree)
         else:
             consumer = cde.PythonIteratorConsumer(num_epochs)
-            consumer.Init(self.ir_tree, init_step, init_epoch)
+            consumer.Init(self.ir_tree, init_step, dataset_size)
         self._runtime_context.AssignConsumer(consumer)
         self._iterator = self._runtime_context.GetConsumer()
         self._output_numpy = output_numpy
@@ -180,15 +180,15 @@ class Iterator:
             self._col_names = self.__ori_dataset.get_col_names()
         return self._col_names
 
-    def _reset(self, step, epoch):
+    def _reset(self, step, dataset_size):
         """
         Reset the iterator to the given step number and epoch number.
 
         Args:
             step (int): Global step number
-            epoch (int): Global epoch number
+            dataset_size (int): The number of steps that one epoch has.
         """
-        self._iterator.Reset(step, epoch)
+        self._iterator.Reset(step, dataset_size)
 
     def __convert_python(self, obj, to_numpy):
         """

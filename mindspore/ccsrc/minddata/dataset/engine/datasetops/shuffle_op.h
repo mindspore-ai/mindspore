@@ -92,6 +92,11 @@ class ShuffleOp : public PipelineOp {
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+  /// \brief Skip this op by a specified number of steps to restore the internal status.
+  /// \param[in] skip_steps The number of steps to skip.
+  /// \return Status The status code.
+  void Skip(int64_t skip_steps);
+
  protected:
   /// \brief Gets the implementation status for operator in pull mode
   /// \return implementation status

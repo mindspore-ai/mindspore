@@ -79,12 +79,15 @@ class AddSkipPass : public IRTreePass {
 
     int32_t GetNumEpochs() const { return num_epochs_; }
 
+    int32_t GetDatasetSize() const { return dataset_size_; }
+
     bool HasShuffleNode() const { return has_shuffle_node_; }
 
    private:
     std::shared_ptr<DatasetNode> injection_point_;
-    int64_t step_{};
-    int32_t num_epochs_{};
+    int64_t step_ = 0;
+    int32_t num_epochs_ = 0;
+    int64_t dataset_size_ = -1;
     bool has_shuffle_node_;
   };
 

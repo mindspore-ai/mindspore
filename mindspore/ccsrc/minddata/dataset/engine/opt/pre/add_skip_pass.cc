@@ -38,8 +38,9 @@ Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool 
                                "Invalid data, the number of children should be greater than zero.");
   // The injection is at the child of the root node
   injection_point_ = node->Children()[0];
-  num_epochs_ = node->num_epochs();
-  step_ = node->step();
+  num_epochs_ = node->NumEpochs();
+  step_ = node->Step();
+  dataset_size_ = node->DatasetSize();
   return Status::OK();
 }
 
@@ -99,12 +100,10 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   std::shared_ptr<DatasetNode> node = finder.injection_point();
   CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Failed to inject SkipOp.");
 
-  int64_t dataset_size = -1;
-  std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
-  RETURN_IF_NOT_OK(root_ir->GetDatasetSize(size_getter, false, &dataset_size));
-  CHECK_FAIL_RETURN_UNEXPECTED(dataset_size > 0, "Cannot reset the pipeline, dataset size is undefined");
   int32_t num_epochs = finder.GetNumEpochs();
   int64_t step = finder.GetStep();
+  int64_t dataset_size = finder.GetDatasetSize();
+  CHECK_FAIL_RETURN_UNEXPECTED(dataset_size > 0, "Cannot reset the pipeline, dataset size is undefined");
   CHECK_FAIL_RETURN_UNEXPECTED(step >= 0,
                                "Cannot reset the pipeline, reset step must be >= 0. step: " + std::to_string(step));
   if (step >= dataset_size * num_epochs) {

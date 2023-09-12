@@ -190,7 +190,7 @@ Status TreeAdapter::Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t i
 }
 
 Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t global_step,
-                            int64_t init_epoch) {
+                            int64_t dataset_size) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
   RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Compile"));
   input_ir_ = input_ir;
@@ -210,6 +210,7 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
   std::shared_ptr<RootNode> root_ir = cloning_tree.Root();
   root_ir->SetNumEpochs(num_epochs);
   root_ir->SetStep(global_step);
+  root_ir->SetDatasetSize(dataset_size);
 
   tree_state_ = kCompileStateIRTreeCloned;
   MS_LOG(INFO) << "Plan before optimization:" << '\n' << *root_ir << '\n';
@@ -230,6 +231,7 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
   // Remember the root node
   root_ir_ = root_ir;
 
+  int64_t init_epoch = dataset_size != -1 ? global_step / dataset_size : 0;
   RETURN_IF_NOT_OK(Build(root_ir_, init_epoch));
   tree_state_ = kCompileStateReady;
   RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "Compile"));

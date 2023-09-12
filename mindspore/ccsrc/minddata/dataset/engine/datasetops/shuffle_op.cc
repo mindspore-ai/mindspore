@@ -295,5 +295,7 @@ Status ShuffleOp::GetNextRowPullMode(TensorRow *const row) {
   }
   return Status::OK();
 }
+
+void ShuffleOp::Skip(int64_t skip_steps) { rng_.discard(skip_steps); }
 }  // namespace dataset
 }  // namespace mindspore

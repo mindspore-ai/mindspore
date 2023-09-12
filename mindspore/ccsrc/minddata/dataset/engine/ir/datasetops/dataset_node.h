@@ -140,7 +140,7 @@ constexpr char kYelpReviewNode[] = "YelpReviewDataset";
 constexpr char kYesNoNode[] = "YesNoDataset";
 
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
-                    int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op);
+                    int32_t connector_que_size, std::shared_ptr<ShuffleOp> *shuffle_op);
 
 // Helper function to validate dataset files parameter
 Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files,
@@ -462,6 +462,11 @@ class NonMappableSourceNode : public DatasetNode {
   ///     defaults so that this source node will produce the full set of data into the cache.
   /// \return Status of the function
   virtual Status MakeSimpleProducer() = 0;
+
+  void SetSkipSteps(int64_t skip_steps) { skip_steps_ = skip_steps; }
+
+ protected:
+  int64_t skip_steps_ = 0;
 };
 }  // namespace dataset
 }  // namespace mindspore

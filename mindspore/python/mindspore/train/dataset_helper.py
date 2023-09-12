@@ -433,9 +433,9 @@ class DatasetHelper:
         """
         self.iter.continue_send()
 
-    def _reset(self, step, epoch):
+    def _reset(self, step, dataset_size):
         """Reset the dataset to the provided step and epoch."""
-        self.iter._reset(step, epoch)  # pylint: disable=protected-access
+        self.iter._reset(step, dataset_size)  # pylint: disable=protected-access
 
     # pylint: disable=missing-docstring
     def get_data_info(self):

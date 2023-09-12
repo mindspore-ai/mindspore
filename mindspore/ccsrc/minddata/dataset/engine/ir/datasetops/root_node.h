@@ -29,7 +29,7 @@ namespace dataset {
 class RootNode : public DatasetNode {
  public:
   /// \brief Constructor
-  RootNode() : DatasetNode(), num_epochs_(0) {}
+  RootNode() : DatasetNode(), num_epochs_(0), step_(0), dataset_size_(-1) {}
 
   /// \brief Constructor
   explicit RootNode(std::shared_ptr<DatasetNode> child);
@@ -52,19 +52,25 @@ class RootNode : public DatasetNode {
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
   /// \return Status Status::OK() if build successfully
-  Status Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) override;
+  Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) override;
 
   /// \brief Getter of number of epochs
-  int32_t num_epochs() const { return num_epochs_; }
+  int32_t NumEpochs() const { return num_epochs_; }
 
   /// \brief Getter of number of epochs
-  int64_t step() const { return step_; }
+  int64_t Step() const { return step_; }
+
+  /// \brief Getter of number of steps in one epoch
+  int64_t DatasetSize() const { return dataset_size_; }
 
   /// \brief Setter of number of epochs
   void SetStep(int64_t step) { step_ = step; }
 
   /// \brief Setter of number of epochs
   void SetNumEpochs(int32_t num_epochs) override { num_epochs_ = num_epochs; }
+
+  /// \brief Setter of number of steps in one epoch
+  void SetDatasetSize(int64_t dataset_size) { dataset_size_ = dataset_size; }
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
@@ -85,6 +91,7 @@ class RootNode : public DatasetNode {
  private:
   int32_t num_epochs_;
   int64_t step_;  // to support reset
+  int64_t dataset_size_;
 };
 }  // namespace dataset
 }  // namespace mindspore

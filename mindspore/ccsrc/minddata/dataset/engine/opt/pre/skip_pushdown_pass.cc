@@ -20,6 +20,7 @@
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
 #include "minddata/dataset/engine/ir/datasetops/rename_node.h"
+#include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
@@ -110,6 +111,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MapNode> node, bool *c
 }
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) {
+  node->SetSkipSteps(skip_steps_);
   return InsertSkipNode(node);
 }
 
@@ -134,6 +136,15 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bo
 // This functions is used for Ops that are random, and the ones in which Visit is Not Implemented yet;
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   return InsertSkipNode(node);
+}
+
+Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
+  int64_t dataset_size = node->DatasetSize();
+  int64_t step = node->Step();
+  // in fast recover mode, we need to know how many steps are actually skipped
+  // when we skip `step / dataset_size` epochs
+  skip_steps_ = step / dataset_size * dataset_size;
+  return Status::OK();
 }
 
 // constructor
