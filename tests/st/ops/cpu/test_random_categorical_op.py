@@ -277,6 +277,54 @@ def test_rc_pynative_fp16_int32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_rc_pynative_fp16_int32_result_random():
+    """
+    Feature: RandomCategorical cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target=TARGET)
+
+    x = Tensor(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]), ms.float16)
+    num_sample = 2
+    seed = 0
+    dtype = ms.int32
+    diff = 0
+    random_cateogoric = RCnet(dtype)
+    expect = random_cateogoric(x, num_sample, seed)
+    for _ in range(10):
+        output = random_cateogoric(x, num_sample, seed)
+        diff += abs(output.asnumpy() - expect)
+    assert np.any(diff != 0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_rc_graph_fp16_int32_result_random():
+    """
+    Feature: RandomCategorical cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target=TARGET)
+
+    x = Tensor(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]), ms.float16)
+    num_sample = 2
+    seed = 0
+    dtype = ms.int32
+    diff = 0
+    random_cateogoric = RCnet(dtype)
+    expect = random_cateogoric(x, num_sample, seed)
+    for _ in range(10):
+        output = random_cateogoric(x, num_sample, seed)
+        diff += abs(output.asnumpy() - expect)
+    assert np.any(diff != 0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_rc_pynative_fp16_int32_dynamic_shape():
     """
     Feature: random_cateogoric operation dynamic shape test
