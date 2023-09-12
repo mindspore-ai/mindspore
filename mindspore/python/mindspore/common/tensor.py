@@ -2068,19 +2068,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.argmax`.
         """
-        if self.shape == ():
-            return Tensor(0)
-        a = self
-        if self.dtype == mstype.bool_:
-            a = self.astype(mstype.int32)
-        is_axis_none = False
-        if axis is None:
-            a = a.ravel()
-            axis = 0
-            is_axis_none = True
-        out = tensor_operator_registry.get('argmax')(axis, mstype.int64)(a)
-        if keepdims and not is_axis_none:
-            out = out.expand_dims(axis)
+        self._init_check()
+        out = tensor_operator_registry.get('argmax')(self, axis, keepdims)
         return out
 
     def argmin(self, axis=None, keepdims=False):
