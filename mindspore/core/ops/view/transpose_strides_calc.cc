@@ -17,6 +17,7 @@
 #include "ops/view/transpose_strides_calc.h"
 #include <vector>
 #include <memory>
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
@@ -44,7 +45,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
 
-  auto dims = GetValue<std::vector<int64_t>>(inputs[1]);
+  auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
   const auto ndim = old_shape.size();
 
   ShapeVector new_shape(ndim);
@@ -54,7 +55,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   for (size_t i = 0; i < ndim; i++) {
     const auto wrap_dim = DynamicDimWrap(dims[i], ndim);
     if (seen_dims[wrap_dim]) {
-      MS_LOG(EXCEPTION) << "duplicate dims";
+      MS_EXCEPTION(ValueError) << "duplicate dims, dim:" << wrap_dim;
     }
     seen_dims[wrap_dim] = true;
     new_shape[i] = old_shape[wrap_dim];

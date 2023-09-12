@@ -540,7 +540,7 @@ void GradExecutor::NewGraphInner(const py::object &obj, const py::args &args) {
 
 InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py::args &args) {
   const auto &input_args_info = std::make_shared<InputArgsInfo>(
-    input_args_info_stack_.empty(), is_high_order_top_cell(), grad_is_running_, obj_order_++);
+    input_args_info_stack_.empty(), GetIsHighOrderTopCellFlag(), grad_is_running_, obj_order_++);
   ParsePyArgsToInputArgsInfo(input_args_info, obj, args);
 
   if (input_args_info->has_custom_bprop) {

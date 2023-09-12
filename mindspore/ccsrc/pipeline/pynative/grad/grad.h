@@ -145,6 +145,8 @@ class GradExecutor {
   }
   std::string GetAlreadyRunCellId(const std::string &obj_id) const;
 
+  inline bool is_high_order_top_cell() const { return top_cell_ != nullptr && top_cell_->is_high_order_top_cell(); }
+
  private:
   ForwardExecutorPtr forward() const;
   inline FuncGraphPtr curr_g() const { return top_cell()->fg(); }
@@ -167,7 +169,7 @@ class GradExecutor {
       --grad_order_;
     }
   }
-  inline bool is_high_order_top_cell() const {
+  inline bool GetIsHighOrderTopCellFlag() const {
     return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
   uint32_t kernel_graph_id_for_control_flow() { return --kernel_graph_id_for_control_flow_; }

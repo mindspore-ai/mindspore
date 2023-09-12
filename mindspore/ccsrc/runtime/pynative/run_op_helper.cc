@@ -1103,7 +1103,7 @@ void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *
   MS_LOG(DEBUG) << "Start, task_type:" << task_type;
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(task_type, input_addr_list, input_storage_list,
                                                                    output_addr_list)) {
-    MS_LOG(EXCEPTION) << "InputContiguous failed";
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "End";
 }
