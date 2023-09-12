@@ -164,5 +164,18 @@ REG_BPROP_BUILDER("RGBToHSV").SetBody(BODYFUNC(ib) {
   auto doutient_input = dv_drgb + ds_drgb + dh_drgb;
   return {doutient_input};
 });
+
+REG_BPROP_BUILDER("ResizeV2").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto roi = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto sizes = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto input_size = ib->Shape(x, true);
+  auto dx = ib->Emit(
+    "ResizeV2Grad", {dout, roi, scales, input_size},
+    {{"coordinate_transformation_mode", ib->GetAttr("coordinate_transformation_mode")}, {"mode", ib->GetAttr("mode")}});
+  return {dx, ib->OutZeros(roi), ib->OutZeros(scales), ib->OutZeros(sizes)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
