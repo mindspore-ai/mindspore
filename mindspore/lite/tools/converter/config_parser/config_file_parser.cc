@@ -284,16 +284,19 @@ STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::Con
     if (status == "enable") {
       if (param->aclModelOptionCfgParam.enable_custom_fusion_pattern.find(op_type) !=
           param->aclModelOptionCfgParam.enable_custom_fusion_pattern.end()) {
+        MS_LOG(ERROR) << op_type << " has define, can not defined repeat.";
         return RET_ERROR;
       }
       param->aclModelOptionCfgParam.enable_custom_fusion_pattern[op_type] = names_list;
     } else if (status == "disable") {
       if (param->aclModelOptionCfgParam.disable_custom_fusion_pattern.find(op_type) !=
           param->aclModelOptionCfgParam.disable_custom_fusion_pattern.end()) {
+        MS_LOG(ERROR) << op_type << " has define, can not defined repeat.";
         return RET_ERROR;
       }
       param->aclModelOptionCfgParam.disable_custom_fusion_pattern[op_type] = names_list;
     } else {
+      MS_LOG(ERROR) << "status only support enable or disable";
       return RET_ERROR;
     }
   }
@@ -321,6 +324,10 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   set_option("provider", &param->provider);
 
   if (!(ascend_string = FindInAscendMap(kPluginCustomOps, ascend_map)).empty()) {
+    if (ascend_string != "All" && ascend_string != "None") {
+      MS_LOG(ERROR) << kPluginCustomOps << " must be All or None.";
+      return false;
+    }
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
   } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
@@ -328,6 +335,10 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   // parse for ascend custom fusion op
   auto acl_plugin_custom_ops_string = FindInAscendMap(kPluginCustomOps, ascend_map);
   if (!acl_plugin_custom_ops_string.empty()) {
+    if (ascend_string != "All" && ascend_string != "None") {
+      MS_LOG(ERROR) << kPluginCustomOps << " must be All or None.";
+      return false;
+    }
     param->aclModelOptionCfgParam.plugin_custom_ops = acl_plugin_custom_ops_string;
   }
   auto custom_fusion_pattern_str = FindInAscendMap("custom_fusion_pattern", ascend_map);
