@@ -25,17 +25,15 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferAppendKernelMod : public DeprecatedNativeGpuKernelMod {
+class BufferAppendKernelMod : public NativeGpuKernelMod {
  public:
   BufferAppendKernelMod();
   ~BufferAppendKernelMod();
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-
- protected:
-  void InitSizeLists() override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t element_nums_;
@@ -43,8 +41,6 @@ class BufferAppendKernelMod : public DeprecatedNativeGpuKernelMod {
   int64_t capacity_;
   std::vector<size_t> exp_element_list;
 };
-
-MS_REG_GPU_KERNEL(BufferAppend, BufferAppendKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 
