@@ -19,7 +19,7 @@ import os
 import mindspore.context as context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
-from mindspore import nn, ops
+from mindspore import nn
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.nn.cell import Cell
 from mindspore.common import Tensor
@@ -48,18 +48,18 @@ def tensor_grad_scale_row_tensor(scale, grad):
                           grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
                           grad.dense_shape)
 
-_gpu_grad_overflow = C.MultitypeFuncGraph("_gpu_grad_overflow")
-gpu_grad_overflow = P.FloatStatus()
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
 
 
-@_gpu_grad_overflow.register("Tensor")
-def _tensor_gpu_grad_overflow(grad):
-    return gpu_grad_overflow(grad)
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
 
 
-@_gpu_grad_overflow.register("RowTensor")
-def _tensor_gpu_grad_overflow_row_tensor(grad):
-    return gpu_grad_overflow(grad.values)
+@_grad_overflow.register("RowTensor")
+def _tensor_grad_overflow_row_tensor(grad):
+    return grad_overflow(grad.values)
 
 
 _ascend_grad_overflow = C.MultitypeFuncGraph("_ascend_grad_overflow")
@@ -70,14 +70,16 @@ ascend_grad_overflow = P.IsFinite()
 def _tensor_ascend_grad_overflow(grad):
     status = ascend_grad_overflow(grad)
     base = Tensor(1.0, dtype=mstype.float32)
-    return ops.sub(base, Tensor(status.all(keep_dims=True), dtype=mstype.float32))
+    output = base - status.all()
+    return output
 
 
 @_ascend_grad_overflow.register("RowTensor")
 def _tensor_ascend_grad_overflow_row_tensor(grad):
     status = ascend_grad_overflow(grad.values)
     base = Tensor(1.0, dtype=mstype.float32)
-    return ops.sub(base, Tensor(status.all(keep_dims=True), dtype=mstype.float32))
+    output = base - status.all()
+    return output
 
 
 class DynamicLossScaleUpdateCell(Cell):
@@ -475,7 +477,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     def _get_gpu_overflow_status(self, compute_output):
         """get overflow status of gpu."""
-        overflow = self._get_distributed_overflow_status_on_infnan_mode(_gpu_grad_overflow, compute_output)
+        overflow = self._get_distributed_overflow_status_on_infnan_mode(_grad_overflow, compute_output)
         return overflow
 
     def _get_ascend_overflow_status_on_infnan_mode(self, compute_output):
