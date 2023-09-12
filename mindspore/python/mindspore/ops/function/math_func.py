@@ -639,9 +639,6 @@ def argmin(input, axis=None, keepdims=False):
     return out
 
 
-neg_tensor = P.Neg()
-
-
 def neg(input):
     """
     Returns a tensor with negative values of the input tensor element-wise.
@@ -671,7 +668,7 @@ def neg(input):
         >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
     """
-    return neg_tensor(input)
+    return _get_cache_prim(P.Neg)()(input)
 
 
 def negative(input):
@@ -681,7 +678,7 @@ def negative(input):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return neg_tensor(input)
+    return _get_cache_prim(P.Neg)()(input)
 
 
 def positive(input):
@@ -1277,7 +1274,7 @@ def pow(input, exponent):
         >>> print(output)
         [ 1. 16. 64.]
     """
-    return tensor_pow(input, exponent)
+    return _get_cache_prim(P.Pow)()(input, exponent)
 
 
 def floor_mod(x, y):
@@ -1853,7 +1850,7 @@ def logical_and(input, other):
         input = input.astype(mstype.bool_)
     if isinstance(other, Tensor) and other.dtype != mstype.bool_:
         other = other.astype(mstype.bool_)
-    return logical_and_(input, other)
+    return _get_cache_prim(P.LogicalAnd)()(input, other)
 
 
 def sign(input):
