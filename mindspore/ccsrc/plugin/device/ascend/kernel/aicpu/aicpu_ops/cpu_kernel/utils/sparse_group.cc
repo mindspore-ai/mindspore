@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "sparse_group.h"
+#include "cpu_kernel/utils/sparse_group.h"
+#include <algorithm>
 
 namespace aicpu {
 void GroupIterable::IteratorStep::UpdateEndOfGroup() {
@@ -36,8 +37,7 @@ GroupIterable::IteratorStep &GroupIterable::IteratorStep::operator++() {  // pre
   return *this;
 }
 
-const GroupIterable::IteratorStep GroupIterable::IteratorStep::operator++(int)  // postfix ++
-{
+const GroupIterable::IteratorStep GroupIterable::IteratorStep::operator++(int) {  // postfix ++
   IteratorStep lhs(*this);
   ++(*this);
   return lhs;
@@ -48,9 +48,8 @@ Group GroupIterable::IteratorStep::operator*() const { return Group(iter_, loc_,
 std::vector<int64_t> Group::group() const {
   std::vector<int64_t> g;
   const auto &ix_t = iter_->ix_matrix_;
-  for (const int64_t d : iter_->group_dims_) {
-    g.push_back(ix_t(loc_, d));
-  }
+  std::transform(iter_->group_dims_.begin(), iter_->group_dims_.end(), std::back_inserter(g),
+                 [&ix_t, this](const auto &d) { return ix_t(loc_, d); });
   return g;
 }
 

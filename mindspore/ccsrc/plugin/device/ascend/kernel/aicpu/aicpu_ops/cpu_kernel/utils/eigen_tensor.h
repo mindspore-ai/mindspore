@@ -17,8 +17,10 @@
 #ifndef AICPU_EIGENTENSOR_H
 #define AICPU_EIGENTENSOR_H
 
-#include "cpu_tensor.h"
-#include "kernel_log.h"
+#include <functional>
+#include <vector>
+#include "cpu_kernel/inc/cpu_tensor.h"
+#include "common/kernel_log.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {
@@ -70,17 +72,14 @@ struct TTypes {
 
 namespace aicpu {
 
-namespace {
 using ShapeVector = std::vector<int64_t>;
-}
 
 class EigenTensor {
  public:
   EigenTensor() = delete;
-  EigenTensor(Tensor *tensor, void *data) : tensor_(tensor), tensor_data_(data) {
-    tensor_shape_ = tensor->GetTensorShape()->GetDimSizes();
-  }
-  EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_shape_(shape), tensor_data_(data_ptr) {}
+  EigenTensor(Tensor *tensor, void *data)
+      : tensor_(tensor), tensor_shape_(tensor->GetTensorShape()->GetDimSizes()), tensor_data_(data) {}
+  EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_(nullptr), tensor_shape_(shape), tensor_data_(data_ptr) {}
   ~EigenTensor() = default;
 
   /*
@@ -171,7 +170,7 @@ class EigenTensor {
   }
 
  private:
-  Tensor *tensor_;
+  Tensor *tensor_{nullptr};
   ShapeVector tensor_shape_;
   void *tensor_data_;
 };

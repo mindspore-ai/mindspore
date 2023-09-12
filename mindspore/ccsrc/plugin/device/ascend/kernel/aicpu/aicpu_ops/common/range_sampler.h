@@ -20,7 +20,7 @@
 #include <vector>
 #include <cstdint>
 #include <random>
-#include "kernel_log.h"
+#include "common/kernel_log.h"
 
 namespace aicpu {
 class RangeSampler {
@@ -32,15 +32,15 @@ class RangeSampler {
 
   virtual float Probability(int64_t value) const = 0;
 
-  void SampleBatch(bool unique, std::vector<int64_t> &batch) const;
+  void SampleBatch(bool unique, const std::vector<int64_t> &batch) const;
 
-  void SampleBatchGetExpectedCount(bool unique, uint64_t seed, std::vector<int64_t> &batch,
-                                   std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
-                                   std::vector<float> &extras_expected_count) const;
+  void SampleBatchGetExpectedCount(bool unique, int64_t seed, std::vector<int64_t> *batch,
+                                   std::vector<float> *batch_expected_count, std::vector<int64_t> extras,
+                                   std::vector<float> *extras_expected_count) const;
 
-  virtual void SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, std::vector<int64_t> &batch,
-                                                std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
-                                                std::vector<float> &extras_expected_count,
+  virtual void SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, std::vector<int64_t> *batch,
+                                                std::vector<float> *batch_expected_count, std::vector<int64_t> extras,
+                                                std::vector<float> *extras_expected_count,
                                                 std::vector<int64_t> avoided_values) const;
 
   int64_t range() { return range_; }

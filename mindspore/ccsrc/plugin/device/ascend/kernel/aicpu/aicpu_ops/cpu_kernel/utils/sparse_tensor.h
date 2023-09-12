@@ -19,14 +19,16 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
+#include <vector>
 
-#include "cpu_tensor.h"
-#include "eigen_tensor.h"
+#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_kernel/utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "sparse_group.h"
-#include "status.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/utils/sparse_group.h"
+#include "common/status.h"
 
 namespace aicpu {
 template <typename T>
@@ -40,7 +42,7 @@ namespace aicpu {
 class DimComparator {
  public:
   DimComparator(const TTypes<int64_t>::Matrix &ix, const std::vector<int64_t> &order, const std::vector<int64_t> &shape)
-      : ix_(ix), order_(order), dims_(shape.size()) {}
+      : ix_(ix), order_(order), dims_(shape.size()), ix_order_(nullptr) {}
 
   inline bool operator()(const int64_t i, const int64_t j) const {
     for (int di = 0; di < dims_; ++di) {

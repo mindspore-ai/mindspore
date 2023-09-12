@@ -18,7 +18,7 @@
 #define CPU_KERNEL_UTIL_SPARSE_GROUP_ITERATOR_H_
 
 #include <vector>
-#include "eigen_tensor.h"
+#include "cpu_kernel/utils/eigen_tensor.h"
 
 namespace aicpu {
 class Group;  // Predeclare Group for GroupIterable.

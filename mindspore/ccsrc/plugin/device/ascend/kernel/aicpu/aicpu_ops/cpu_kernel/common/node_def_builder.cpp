@@ -188,4 +188,4 @@ NodeDefBuilder& NodeDefBuilder::Attr(std::string name, std::vector<aicpu::Tensor
     nodeDef_->AddAttrs(name, attr.get());
     return *this;
 }
-}
+}  // namespace aicpu

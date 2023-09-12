@@ -25,11 +25,11 @@ namespace aicpu {
 
 RangeSampler::~RangeSampler() {}
 
-void RangeSampler::SampleBatch(bool unique, std::vector<int64_t> &batch) const {}
+void RangeSampler::SampleBatch(bool unique, const std::vector<int64_t> &batch) const {}
 
-void RangeSampler::SampleBatchGetExpectedCount(bool unique, uint64_t seed, std::vector<int64_t> &batch,
-                                               std::vector<float> &batch_expected_count, std::vector<int64_t> extras,
-                                               std::vector<float> &extras_expected_count) const {
+void RangeSampler::SampleBatchGetExpectedCount(bool unique, int64_t seed, std::vector<int64_t> *batch,
+                                               std::vector<float> *batch_expected_count, std::vector<int64_t> extras,
+                                               std::vector<float> *extras_expected_count) const {
   SampleBatchGetExpectedCountAvoid(unique, seed, batch, batch_expected_count, extras, extras_expected_count,
                                    std::vector<int64_t>());
 }
@@ -51,12 +51,12 @@ static const int32_t kint32max = static_cast<int32_t>(0x7FFFFFFF);
 
 }  // namespace
 
-void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, std::vector<int64_t> &batch,
-                                                    std::vector<float> &batch_expected_count,
+void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, std::vector<int64_t> *batch,
+                                                    std::vector<float> *batch_expected_count,
                                                     std::vector<int64_t> extras,
-                                                    std::vector<float> &extras_expected_count,
+                                                    std::vector<float> *extras_expected_count,
                                                     std::vector<int64_t> avoided_values) const {
-  const int batch_size = batch.size();
+  const int batch_size = batch->size();
   int num_tries;
   if (range_ <= 0) {
     AICPU_LOGE("range_ must be greater than 0!");
@@ -81,7 +81,7 @@ void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, 
       }
       int64_t value = Sample();
       if (InsertIfNotPresent(&used, value)) {
-        batch[num_picked++] = value;
+        (*batch)[num_picked++] = value;
       }
     }
   } else {
@@ -90,27 +90,27 @@ void RangeSampler::SampleBatchGetExpectedCountAvoid(bool unique, uint64_t seed, 
       return;
     }
     for (int i = 0; i < batch_size; i++) {
-      batch[i] = Sample();
+      (*batch)[i] = Sample();
     }
     num_tries = batch_size;
   }
 
-  if (!batch_expected_count.empty()) {
-    if (batch_size != static_cast<int>(batch_expected_count.size())) {
+  if (!batch_expected_count->empty()) {
+    if (batch_size != static_cast<int>(batch_expected_count->size())) {
       AICPU_LOGE("the size of extras_expected_count: %zu should be equal to batch_size: %d!",
-                 batch_expected_count.size(), batch_size);
+                 batch_expected_count->size(), batch_size);
       return;
     }
     for (int i = 0; i < batch_size; i++) {
-      batch_expected_count[i] = ExpectedCountHelper(Probability(batch[i]), batch_size, num_tries);
+      (*batch_expected_count)[i] = ExpectedCountHelper(Probability((*batch)[i]), batch_size, num_tries);
     }
   }
-  if (extras.size() != extras_expected_count.size()) {
+  if (extras.size() != extras_expected_count->size()) {
     AICPU_LOGE("the size of extras and extras_expected_count should be equal!");
     return;
   }
   for (size_t i = 0; i < extras.size(); i++) {
-    extras_expected_count[i] = ExpectedCountHelper(Probability(extras[i]), batch_size, num_tries);
+    (*extras_expected_count)[i] = ExpectedCountHelper(Probability(extras[i]), batch_size, num_tries);
   }
 }
 

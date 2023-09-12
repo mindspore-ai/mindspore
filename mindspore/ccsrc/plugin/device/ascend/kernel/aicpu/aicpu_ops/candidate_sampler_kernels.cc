@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/kernel/aicpu/aicpu_ops/candidate_sampler_kernels.h"
 #include <algorithm>
-#include "range_sampler.h"
+#include "common/range_sampler.h"
 #include "common/random_utils.h"
 
 namespace aicpu {
@@ -98,8 +98,8 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
     return kAicpuKernelStateFailed;
   }
 
-  sampler_->SampleBatchGetExpectedCount(unique_, rng_seed, sampled_candidate, sampled_expected_count, true_candidate,
-                                        true_expected_count);
+  sampler_->SampleBatchGetExpectedCount(unique_, rng_seed, &sampled_candidate, &sampled_expected_count, true_candidate,
+                                        &true_expected_count);
 
   std::transform(sampled_candidate.begin(), sampled_candidate.end(), sampled_candidate_raw.begin(),
                  [&](int64_t x) { return static_cast<T>(x); });
