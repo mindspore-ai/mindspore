@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 
+from mindspore import ops
 from mindspore import Tensor, jit, context
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
@@ -274,6 +275,58 @@ def test_sequence_mul_used_in_operator():
 
     ret = foo(Tensor([1]), Tensor([2]))
     assert ret == Tensor([5])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ops_with_sequence_of_any_input():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    class Container():
+        def __init__(self):
+            self.x = Tensor([1])
+
+    obj = Container()
+
+    @jit
+    def foo(x):
+        m = [x, obj.x]
+        return ops.addn(m)
+
+    ret = foo(Tensor([0]))
+    assert ret == Tensor([1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ops_with_sequence_of_any_input_2():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    class Container():
+        def __init__(self):
+            self.x = Tensor([1])
+
+    obj = Container()
+
+    @jit
+    def foo(x):
+        m = (x, obj.x)
+        return ops.addn(m)
+
+    ret = foo(Tensor([0]))
+    assert ret == Tensor([1])
 
 
 @pytest.mark.level0
