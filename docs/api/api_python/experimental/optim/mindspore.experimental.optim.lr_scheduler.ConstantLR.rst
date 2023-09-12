@@ -10,7 +10,7 @@ mindspore.experimental.optim.lr_scheduler.ConstantLR
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
-        - **factor** (float) - 学习率的衰减因子。 默认值：``1.0 / 3``。
-        - **total_iters** (int) - 学习率进行衰减的epoch/step数，当epoch/step数达到 `total_iters`，恢复学习率。默认值：``5``.
+        - **factor** (float，可选) - 学习率的衰减因子。 默认值：``1.0 / 3``。
+        - **total_iters** (int，可选) - 学习率进行衰减的epoch/step数，当epoch/step数达到 `total_iters`，恢复学习率。默认值：``5``.
         - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。
         - **verbose** (bool，可选) - 是否打印学习率。默认值：``False``。

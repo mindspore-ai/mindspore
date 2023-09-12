@@ -629,7 +629,7 @@ def get_black_list():
     Returns:
         list, A copy of internal black list.
 
-    Example:
+    Examples:
         >>> from mindspore import amp
         >>> black_list = amp.get_black_list()
         >>> print(black_list)

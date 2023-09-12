@@ -388,7 +388,7 @@ class ModelCheckpoint(Callback):
         ValueError: If `directory` is not str.
         TypeError: If the config is not CheckpointConfig type.
 
-    Example:
+    Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> from mindspore import nn
