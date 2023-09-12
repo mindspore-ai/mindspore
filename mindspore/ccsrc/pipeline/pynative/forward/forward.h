@@ -103,6 +103,7 @@ class ForwardExecutor {
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
+  void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor);
 
  private:
   GradExecutorPtr grad() const;
