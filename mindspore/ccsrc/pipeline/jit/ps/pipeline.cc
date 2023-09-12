@@ -393,9 +393,15 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
 }
 
 py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  const auto &[py_res, use_as_total] = GetTotalVectorRefPyData(value_list);
-  if (use_as_total) {
-    return py_res;
+  static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
+  if (!allow_runtime_compile) {
+    // If Runtime compile is supported, all the PyExecute will be AbstractAny in frontend (no AbstractSequence).
+    // There will not exist the scene when multiple elements with the same user data should return as
+    // a whole python object. GetTotalVectorRefPyData will be deleted when MS_RUNTIME_COMPILE is deleted.
+    const auto &[py_res, use_as_total] = GetTotalVectorRefPyData(value_list);
+    if (use_as_total) {
+      return py_res;
+    }
   }
   if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
     return BaseRefToPyData(value_list, abs);
