@@ -86,3 +86,14 @@ def test_convert_resize_nearest_neighbor_x_dtype():
     Expectation: success
     """
     utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_adaptive_max_pool2d_x_dtype():
+    """
+    Description: test AdaptiveMaxPool2DGeFusion dytpe
+    Expectation: success
+    """
+    utils.run_testcase('pass_adaptive_max_pool2d')
