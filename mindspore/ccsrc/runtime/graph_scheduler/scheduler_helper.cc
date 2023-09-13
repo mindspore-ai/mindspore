@@ -363,7 +363,7 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
   (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), control_arrow.get()));
-
+  MS_LOG(DEBUG) << "Add control arrow from actor:" << from_actor->GetAID() << " to actor:" << to_actor->GetAID();
   AddMemorySign(from_actor, to_actor);
 }
 

@@ -715,7 +715,7 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       return GetShape(b_shp);
     } else if (b_shp->isa<abstract::NoShape>()) {
       return ShapeVector();
-    } else if (b_shp->isa<abstract::TupleShape>()) {
+    } else if (b_shp->isa<abstract::SequenceShape>()) {
       // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
       // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
       // normally.

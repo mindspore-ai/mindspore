@@ -745,6 +745,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   const auto &node = node_with_index.first->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
   size_t index = node_with_index.second;
+  MS_LOG(DEBUG) << "Prepare data for control value node:" << node->DebugString() << " index:" << index;
   auto node_value = node->value();
   if (common::AnfAlgo::IsDynamicSequence(node)) {
     auto tensor = AnfAlgo::SequenceToTensor(node_value);

@@ -1655,7 +1655,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     if ((common::GetEnv("MS_RUNTIME_COMPILE") == "1" ||
          (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
           (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()))) &&
-        repeat_it == internal_parameters.end()) {
+        repeat_it == internal_parameters.end() && to_actor->type() != KernelTransformType::kAnyTypeKernelActor) {
       MS_LOG(DEBUG) << "Add internal parameter:" << internal_parameter->DebugString()
                     << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
                     << " actor:" << dynamic_shape_actor->GetAID();
@@ -2191,6 +2191,73 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
         MS_EXCEPTION_IF_NULL(from_actor);
       }
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
+    }
+  }
+  LinkControlArrowForCustomActorByAutoMonad(actor_set, graph_compiler_info);
+}
+
+void GraphScheduler::LinkControlArrowForCustomActorByAutoMonad(const ActorSet *actor_set,
+                                                               const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+  mindspore::HashMap<KernelGraphPtr, mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>>> graph_to_monad_inputs;
+
+  // Link control arrow for the value depend of monad.
+  for (const auto &to_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(to_actor);
+    auto kernel = to_actor->kernel().lock();
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfUtils::GetCustomActorType(kernel) != kInfer) {
+      continue;
+    }
+
+    const auto &base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+    MS_EXCEPTION_IF_NULL(base_node);
+    const auto &graph = AnfAlgo::FetchKernelGraph(base_node.get());
+    auto dynamic_shape_depends = abstract::GetValueDependArgIndices(base_node);
+    for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
+      const auto &input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
+      MS_EXCEPTION_IF_NULL(input_node);
+      if (graph == nullptr || (!IsInternalParameter(input_node, graph)) ||
+          parser->IsControlFlowDataArrow(graph, input_node)) {
+        MS_LOG(DEBUG) << "Skip link control arrow for custom actor:" << to_actor->GetAID().Name()
+                      << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
+                      << " index:" << *iter;
+        continue;
+      }
+      MS_LOG(INFO) << "Link control arrow by value depend custom actor:" << to_actor->GetAID().Name()
+                   << ", kernel:" << base_node->fullname_with_scope()
+                   << ", input node:" << input_node->fullname_with_scope() << ", value depend input index:" << *iter;
+      auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(input_node);
+      auto front_output_node = front_output_with_index.first;
+      if (front_output_node == nullptr || graph_output_to_actor_.count(front_output_with_index) == 0) {
+        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:" << front_output_node->DebugString();
+        continue;
+      }
+      const auto &graph_output_pair = graph_output_to_actor_.at(front_output_with_index);
+      MS_LOG(DEBUG) << "to actor:" << to_actor->GetAID() << " check front node:" << front_output_node->DebugString()
+                    << " backend node:"
+                    << (graph_output_pair.second.first == nullptr ? "nullptr"
+                                                                  : graph_output_pair.second.first->DebugString());
+      if (graph_output_pair.second.first == nullptr ||
+          (!common::AnfAlgo::CheckPrimitiveType(graph_output_pair.second.first, prim::kPrimLoad))) {
+        continue;
+      }
+      const auto &pre_graph = AnfAlgo::FetchKernelGraph(graph_output_pair.second.first.get());
+      if (pre_graph == nullptr) {
+        continue;
+      }
+      if (graph_to_monad_inputs.find(pre_graph) == graph_to_monad_inputs.end()) {
+        mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_monad_inputs;
+        MS_LOG(INFO) << "Get all u input of cnode in graph:" << pre_graph->ToString() << " start.";
+        GetAllCNodeUInputByGraph(pre_graph, &cnode_to_monad_inputs);
+        MS_LOG(INFO) << "Get all u input of cnode in graph:" << pre_graph->ToString() << " end.";
+        graph_to_monad_inputs[pre_graph] = cnode_to_monad_inputs;
+      }
+      std::set<AnfNodePtr> checked_nodes;
+      LinkControlArrowByAutoMonad(to_actor.get(), graph_output_pair.second.first, pre_graph, parser,
+                                  graph_to_monad_inputs[pre_graph], &checked_nodes);
     }
   }
 }
