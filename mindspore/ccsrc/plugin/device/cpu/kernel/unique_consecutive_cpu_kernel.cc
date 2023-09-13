@@ -187,6 +187,9 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<Addr
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
   T2 *output_idx = GetDeviceAddress<T2>(outputs, kIndex1);
   T2 *output_count = GetDeviceAddress<T2>(outputs, kIndex2);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(output_y);
+  MS_EXCEPTION_IF_NULL(output_count);
   int64_t input_total = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int64_t>());
   if (input_total > 0) {
     *output_y = *input_x;
@@ -247,6 +250,7 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<Addre
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
   T2 *output_idx = GetDeviceAddress<T2>(outputs, kIndex1);
   T2 *output_count = GetDeviceAddress<T2>(outputs, kIndex2);
+  MS_EXCEPTION_IF_NULL(output_count);
   auto num_zero_dims = std::count(input_shape_.begin(), input_shape_.end(), 0);
   int64_t dim0 = input_shape_[static_cast<size_t>(axis_)];
   // Set the idx shape
