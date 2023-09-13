@@ -21,6 +21,8 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::session {
+const size_t kDefaultContainerSize = 5000;
+
 namespace {
 std::string GetNodeGroup(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -48,21 +50,34 @@ bool NeedOptimize(const AnfNodePtr &node, const std::string &optimized_comm_grou
 
 ExecOrderBuilder::~ExecOrderBuilder() {}
 
-std::vector<CNodePtr> ExecOrderBuilder::Build(FuncGraph *graph) {
+void ExecOrderBuilder::Build(FuncGraph *graph, std::vector<CNodePtr> *execution_order, NodeUser *node_user) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(execution_order);
+  MS_EXCEPTION_IF_NULL(node_user);
   graph_ = graph;
+  is_pynative_kernel_graph_ = graph_->has_flag(kFlagIsPyNativeBpropKernelGraph);
+  execution_order_ = execution_order;
+  node_output_edges_ = node_user;
+  node_output_edges_->clear();
   ClearLinkInfo();
   BuildLinkInfo();
   FindIndependentNodes();
-  return Build();
+  Build();
 }
 
 void ExecOrderBuilder::ClearLinkInfo() {
-  node_input_num_.clear();
-  node_output_num_.clear();
-  node_input_edges_.clear();
-  node_output_edges_.clear();
-  trivial_nodes_.clear();
+  if (node_input_num_.empty()) {
+    node_input_num_.reserve(kDefaultContainerSize);
+    node_output_num_.reserve(kDefaultContainerSize);
+    node_input_edges_.reserve(kDefaultContainerSize);
+    trivial_nodes_.reserve(kDefaultContainerSize);
+  } else {
+    node_input_num_.clear();
+    node_output_num_.clear();
+    node_input_edges_.clear();
+    trivial_nodes_.clear();
+    node_output_edges_->clear();
+  }
 }
 
 bool ExecOrderBuilder::IsTrivialNode(const AnfNodePtr &node) {
@@ -71,62 +86,64 @@ bool ExecOrderBuilder::IsTrivialNode(const AnfNodePtr &node) {
     return true;
   }
 
-  if (AnfUtils::IsRealKernel(node)) {
-    return false;
+  const auto iter = trivial_nodes_.find(node);
+  if (iter != trivial_nodes_.end()) {
+    return iter->second;
   }
 
-  auto iter = trivial_nodes_.find(node);
-  if (iter != trivial_nodes_.end()) {
-    return true;
+  if (AnfUtils::IsRealKernel(node)) {
+    (void)trivial_nodes_.emplace(node, false);
+    return false;
   }
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  for (auto &input : cnode->inputs()) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (!IsTrivialNode(input)) {
-      return false;
-    }
+  if (std::all_of(cnode->inputs().begin(), cnode->inputs().end(),
+                  [this](const auto &input) { return IsTrivialNode(input); })) {
+    (void)trivial_nodes_.emplace(node, true);
+    return true;
+  } else {
+    (void)trivial_nodes_.emplace(node, false);
+    return false;
   }
-  (void)trivial_nodes_.insert(node);
-  return true;
 }
 
 void ExecOrderBuilder::BuildLinkInfo() {
   std::queue<AnfNodePtr> to_visit;
-  to_visit.push(graph_->get_return());
-  std::set<AnfNodePtr> visited;
+  auto output = graph_->get_return();
+  if (!output->isa<CNode>()) {
+    return;
+  }
+  to_visit.emplace(output);
+  auto seen = NewSeenGeneration();
   while (!to_visit.empty()) {
     auto node = to_visit.front();
     to_visit.pop();
     MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>() || AnfUtils::IsCustomActorNode(node)) {
-      continue;
-    }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (auto &input : cnode->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
+      (void)(*node_output_edges_)[input].emplace_back(node);
       if (IsTrivialNode(input)) {
         continue;
       }
-      (void)node_output_edges_[input].emplace_back(node);
-      (void)node_input_edges_[node].emplace_back(input);
+      if (!is_pynative_kernel_graph_) {
+        (void)node_input_edges_[node].emplace_back(input);
+      }
       node_input_num_[node] += 1;
       node_output_num_[input] += 1;
-      if (visited.find(input) != visited.end()) {
+      if (input->seen_ == seen || !input->isa<CNode>() || AnfUtils::IsCustomActorNode(input)) {
         continue;
       }
-      to_visit.push(input);
-      (void)visited.insert(input);
+      to_visit.emplace(input);
+      input->seen_ = seen;
     }
   }
 }
 
-bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input,
-                                     mindspore::HashSet<AnfNodePtr> *visited) {
+bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input, SeenNum seen) {
   MS_EXCEPTION_IF_NULL(input);
-  MS_EXCEPTION_IF_NULL(visited);
   if (visit_with_refcount) {
     auto output_iter = node_output_num_.find(input);
     if (output_iter != node_output_num_.end()) {
@@ -136,10 +153,10 @@ bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr 
       }
     }
   } else {
-    if (visited->find(input) != visited->end()) {
+    if (input->seen_ == seen) {
       return false;
     }
-    (void)visited->insert(input);
+    input->seen_ = seen;
   }
   return true;
 }
@@ -147,14 +164,14 @@ bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr 
 void ExecOrderBuilder::FindIndependentNodes() {
   std::queue<AnfNodePtr> to_visit;
   std::queue<AnfNodePtr> vnode_to_visit;
-  mindspore::HashSet<AnfNodePtr> visited;
-  vnode_to_visit.push(graph_->get_return());
+  vnode_to_visit.emplace(graph_->get_return());
   bool visit_with_refcount = true;
   auto ms_context = MsContext::GetInstance();
   auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (target == kGPUDevice) {
     visit_with_refcount = false;
   }
+  auto seen = NewSeenGeneration();
   while (!to_visit.empty() || !vnode_to_visit.empty()) {
     AnfNodePtr node;
     if (vnode_to_visit.empty()) {
@@ -186,21 +203,23 @@ void ExecOrderBuilder::FindIndependentNodes() {
       }
       independent = false;
 
-      if (!CanVisitInput(visit_with_refcount, input, &visited)) {
+      if (!CanVisitInput(visit_with_refcount, input, seen)) {
         continue;
       }
 
       if (AnfUtils::IsRealKernel(node)) {
-        to_visit.push(input);
+        to_visit.emplace(input);
         if (!independent_nodes_.empty() && visit_with_refcount) {
           auto inode = independent_nodes_.top();
-          (void)node_output_edges_[input].emplace_back(inode);
-          (void)node_input_edges_[inode].emplace_back(input);
+          (void)(*node_output_edges_)[input].emplace_back(inode);
+          if (!is_pynative_kernel_graph_) {
+            (void)node_input_edges_[inode].emplace_back(input);
+          }
           node_input_num_[inode] += 1;
           independent_nodes_.pop();
         }
       } else {
-        vnode_to_visit.push(input);
+        vnode_to_visit.emplace(input);
       }
     }
 
@@ -212,8 +231,10 @@ void ExecOrderBuilder::FindIndependentNodes() {
 
 void ExecOrderBuilder::EnqueueReadyNodes(const AnfNodePtr &node, std::deque<AnfNodePtr> *visit_queue, bool comm_first) {
   MS_EXCEPTION_IF_NULL(visit_queue);
-  auto it = node_output_edges_.find(node);
-  if (it == node_output_edges_.end()) {
+  MS_EXCEPTION_IF_NULL(visit_queue);
+  MS_EXCEPTION_IF_NULL(node_output_edges_);
+  auto it = node_output_edges_->find(node);
+  if (it == node_output_edges_->end()) {
     return;
   }
 
@@ -242,8 +263,10 @@ void ExecOrderBuilder::EnqueueReadyNodes(const AnfNodePtr &node, std::deque<AnfN
   (void)std::copy(active_nodes.begin(), active_nodes.end(), std::back_inserter(*visit_queue));
 }
 
-std::vector<CNodePtr> ExecOrderBuilder::Build() {
-  std::vector<CNodePtr> execution_order;
+void ExecOrderBuilder::Build() {
+  MS_EXCEPTION_IF_NULL(execution_order_);
+  execution_order_->clear();
+  execution_order_->reserve(kDefaultContainerSize);
   std::deque<AnfNodePtr> to_visit;
   std::deque<AnfNodePtr> delay_visit;
   std::deque<AnfNodePtr> high_priority_to_visit;
@@ -276,7 +299,7 @@ std::vector<CNodePtr> ExecOrderBuilder::Build() {
       // add execute node
       MS_EXCEPTION_IF_NULL(node);
       if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-        (void)execution_order.emplace_back(node->cast<CNodePtr>());
+        (void)execution_order_->emplace_back(node->cast<CNodePtr>());
       }
       // delay execute comm ops that need optimize
       bool is_comm = common::AnfAlgo::IsCommunicationOp(node);
@@ -294,8 +317,9 @@ std::vector<CNodePtr> ExecOrderBuilder::Build() {
       }
     }
   }
-  CheckLoop();
-  return execution_order;
+  if (!is_pynative_kernel_graph_) {
+    CheckLoop();
+  }
 }
 
 bool ExecOrderBuilder::PrintLoopNodesIfExist(const AnfNodePtr &node, std::set<AnfNodePtr> *visited_nodes,

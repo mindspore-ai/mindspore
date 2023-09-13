@@ -67,7 +67,7 @@ class Jit {
                          const FuncGraphPtr &jit_forward_graph, const FuncGraphPtr &jit_grad_graph,
                          bool has_added_v) const;
   void KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                          const autograd::GradParamPtr &grad_param) const;
+                          const GradParamPtr &grad_param) const;
   void RecordForwardGraphForJit(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                 const FuncGraphPtr &ms_func_graph) const;
   void UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v);

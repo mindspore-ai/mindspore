@@ -168,8 +168,8 @@ std::vector<AnfNodePtr> KernelGraph::outputs() const {
 void KernelGraph::SetNodeOutputEdges() {
   node_output_edges_.clear();
   std::queue<AnfNodePtr> to_visit;
-  to_visit.push(get_return());
-  std::set<AnfNodePtr> visited;
+  to_visit.emplace(get_return());
+  auto seen = NewSeenGeneration();
   while (!to_visit.empty()) {
     auto node = to_visit.front();
     to_visit.pop();
@@ -181,26 +181,25 @@ void KernelGraph::SetNodeOutputEdges() {
     MS_EXCEPTION_IF_NULL(cnode);
     for (auto &input : cnode->inputs()) {
       (void)node_output_edges_[input].emplace_back(node);
-      if (visited.find(input) != visited.end()) {
+      if (input->seen_ == seen) {
         continue;
       }
-      to_visit.push(input);
-      (void)visited.insert(input);
+      to_visit.emplace(input);
+      input->seen_ = seen;
     }
   }
 }
 
 void KernelGraph::SetExecOrderByDefault() {
   ExecOrderBuilder builder;
-  execution_order_ = builder.Build(this);
+  builder.Build(this, &execution_order_, &node_output_edges_);
   execution_order_ = SortStartLabelAndEndGoto();
-  SetNodeOutputEdges();
 }
 
 std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
   std::vector<CNodePtr> re_order;
   if (start_label_ != nullptr) {
-    re_order.push_back(start_label_);
+    re_order.emplace_back(start_label_);
   }
   for (auto &node : execution_order_) {
     if (node == start_label_ || node == end_goto_) {
@@ -238,10 +237,10 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
       }
     }
 
-    re_order.push_back(node);
+    re_order.emplace_back(node);
   }
   if (end_goto_ != nullptr) {
-    re_order.push_back(end_goto_);
+    re_order.emplace_back(end_goto_);
   }
   return re_order;
 }

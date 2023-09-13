@@ -1340,7 +1340,7 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   SetRunMode(resource);
   auto bc_ptr = resource->GetBackend();
   MS_EXCEPTION_IF_NULL(bc_ptr);
-  std::string backend = context_ptr->backend_policy();
+  const auto &backend = context_ptr->backend_policy();
   // The graph compiling of mindRT.
   if ((backend == kMsConvert || backend == kGeVm) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(resource);

@@ -26,13 +26,15 @@
 #include "utils/hash_map.h"
 
 namespace mindspore::session {
+
+using NodeUser = mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>>;
 class ExecOrderBuilder {
  public:
   ExecOrderBuilder() = default;
 
   ~ExecOrderBuilder();
 
-  std::vector<CNodePtr> Build(FuncGraph *graph);
+  void Build(FuncGraph *graph, std::vector<CNodePtr> *execution_order, NodeUser *node_user);
 
  private:
   void ClearLinkInfo();
@@ -41,9 +43,9 @@ class ExecOrderBuilder {
 
   void FindIndependentNodes();
 
-  bool CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input, mindspore::HashSet<AnfNodePtr> *visited);
+  bool CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input, SeenNum seen);
 
-  std::vector<CNodePtr> Build();
+  void Build();
 
   void EnqueueReadyNodes(const AnfNodePtr &node, std::deque<AnfNodePtr> *visit_queue, bool comm_first = true);
 
@@ -54,13 +56,16 @@ class ExecOrderBuilder {
 
   bool IsTrivialNode(const AnfNodePtr &node);
 
+  // If PyNative graph has is_pynative_kernel_graph_ true, means no control flow and no loop need to be checked
+  bool is_pynative_kernel_graph_{false};
+  std::vector<CNodePtr> *execution_order_{nullptr};
   FuncGraph *graph_{nullptr};
   std::stack<AnfNodePtr> independent_nodes_;
   mindspore::HashMap<AnfNodePtr, size_t> node_input_num_;
   mindspore::HashMap<AnfNodePtr, size_t> node_output_num_;
-  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_input_edges_;
-  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;
-  std::set<AnfNodePtr> trivial_nodes_;
+  NodeUser node_input_edges_;
+  NodeUser *node_output_edges_{nullptr};
+  mindspore::HashMap<AnfNodePtr, bool> trivial_nodes_;
 };
 }  // namespace mindspore::session
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SESSION_EXEC_ORDER_BUILDER_H
