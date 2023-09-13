@@ -25,12 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
-class InstanceNormV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class InstanceNormV2GradCpuKernelMod : public NativeCpuKernelMod {
  public:
   InstanceNormV2GradCpuKernelMod() = default;
   ~InstanceNormV2GradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
