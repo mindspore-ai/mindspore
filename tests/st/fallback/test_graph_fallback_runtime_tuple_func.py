@@ -932,3 +932,26 @@ def test_sequence_ops_with_grad_4():
     context.set_context(mode=context.GRAPH_MODE)
     grad2 = GradOperation()(foo)(x)
     assert grad1 == grad2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sequence_getitem_with_abstract_any_input():
+    """
+    Feature: Enable sequence operations with nested or irregular inputs.
+    Description: Sequence operations with nested or irregular inputs should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = ([2, 1], [5, 6], [3, 4])
+        x = mutable(x, True)
+        y = mutable(2)
+        z = mutable(0)
+        return x[y][z]
+
+    ret = foo()
+    assert ret == 3
