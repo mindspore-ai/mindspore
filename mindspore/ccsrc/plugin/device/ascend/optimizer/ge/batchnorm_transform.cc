@@ -40,6 +40,7 @@ constexpr size_t kBNOutputNum = 3;
 constexpr size_t kTupleSize = 2;
 constexpr size_t kSubInputNum = 2;
 constexpr size_t kMulInputNum = 2;
+constexpr size_t kAssignSubInputNum = 3;
 constexpr char kMomentum[] = "momentum";
 
 void CreateMultiOutputOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
@@ -104,7 +105,7 @@ AnfNodePtr CreateDataNode(const CNodePtr &node) {
 }
 
 AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputNum, "Check Sub input size fail!");
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputNum, "Check Mul input size fail!");
   const auto &data_node = inputs[0];
   const auto &sub_node = inputs[1];
   MS_EXCEPTION_IF_NULL(data_node);
@@ -116,6 +117,7 @@ AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &input
 }
 
 AnfNodePtr CreateAssignSubNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &inputs) {
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kAssignSubInputNum, "Check AssignSub input size fail!");
   auto ref_var = inputs[0];
   auto mul_node = inputs[1];
   auto update_state_node = inputs[2];
@@ -244,6 +246,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   return anf_node;
 }
 }  // namespace
+
 bool BatchNormTransform::NeedBNTransform(const BaseRef &ref) {
   if (utils::isa<AnfNodePtr>(ref)) {
     AnfNodePtr node = utils::cast<AnfNodePtr>(ref);
@@ -267,7 +270,6 @@ bool BatchNormTransform::NeedBNTransform(const BaseRef &ref) {
 }
 
 const BaseRef BatchNormTransform::DefinePattern() const {
-  MS_LOG(INFO) << "BatchNormTransform::DefinePattern";
   VarPtr x = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimBatchNorm, x});
 }

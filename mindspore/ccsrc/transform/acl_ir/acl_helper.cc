@@ -109,6 +109,8 @@ bool AclHelper::GetMoreDataTypeSupported(TypeId data_type, const std::string &op
 }
 
 KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::shared_ptr<GeAdapterInfo> &info) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(info);
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
   size_t ms_real_idx = 0;  // index of actual input argument
@@ -168,6 +170,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
 }
 
 KernelType AclHelper::GetKernelInfoByOutputs(const AnfNodePtr &node, const std::shared_ptr<GeAdapterInfo> &info) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(info);
   auto output_supported_dtypes = info->output_supported_dtypes();
   auto output_flags = info->GetOutputMappingFlags();
   size_t output_num = ((output_flags & GeTensorInfo::kDynamicParam) == 0) ? info->GetNumOutputsOfMsOpProto()

@@ -105,7 +105,7 @@ bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vect
         continue;
       }
       if (!IsPrimitiveCNode(allgather_first_succ, prim::kPrimLoad)) {
-        MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: " << node->fullname_with_scope()
+        MS_LOG(DEBUG) << "AllGather successor node is not Load, but is: " << node->fullname_with_scope()
                       << ", AllGather node:" << node->fullname_with_scope();
         continue;
       }
