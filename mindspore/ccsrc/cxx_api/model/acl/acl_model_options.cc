@@ -145,6 +145,15 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
   // init by config file param
   for (auto item : init_options_map_) {
     MS_LOG(INFO) << "Option " << item.first << " : " << item.second;
+    if (item.first == ge::ir_option::SOC_VERSION) {
+      auto soc_version = item.second;
+      if (soc_version != soc_version_) {
+        MS_LOG(WARNING) << "ge.socVersion: " << soc_version
+                        << " is different with this machine core type: " << soc_version_;
+      }
+      init_options[item.first] = item.second;
+      continue;
+    }
     if (init_options.find(item.first) != init_options.end()) {
       MS_LOG(WARNING) << "the parameters[" << item.first
                       << "] have been set through the API and do not need to be repeated.";
