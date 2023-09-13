@@ -26,7 +26,8 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr auto kNameFlashAttentionPatternForSD = "FlashAttentionPatternForSD";
+constexpr auto kNameFlashAttentionPatternForSDBSH = "FlashAttentionPatternForSDBSH";
+constexpr auto kNameFlashAttentionPatternForSDBNSD = "FlashAttentionPatternForSDBNSD";
 constexpr auto kNameFlashAttentionPatternForPg = "FlashAttentionPatternForPg";
 constexpr auto kNameFlashAttentionPatternForLLAMAPatternV1 = "FlashAttentionPatternForLLAMAPatternV1";
 constexpr auto kNameFlashAttentionPatternForLLAMAPatternV2 = "FlashAttentionPatternForLLAMAPatternV2";
@@ -35,6 +36,7 @@ constexpr size_t kNumIndex1 = 1;
 constexpr size_t kNumIndex2 = 2;
 constexpr size_t kNumIndex3 = 3;
 constexpr size_t kNumDimSize4 = 4;
+constexpr int64_t kNumMinSeqLenSize = 1024;
 
 std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
   auto abstract = GetCNodeInputAbstract(cnode, input_index);
@@ -53,14 +55,15 @@ std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
 
 std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns() const {
   std::unordered_map<std::string, VectorRef> patterns;
-  patterns[kNameFlashAttentionPatternForSD] = DefineFlashAttentionPatternForSD();
+  patterns[kNameFlashAttentionPatternForSDBSH] = DefineFlashAttentionPatternForSDBSH();
+  patterns[kNameFlashAttentionPatternForSDBNSD] = DefineFlashAttentionPatternForSDBNSD();
   patterns[kNameFlashAttentionPatternForPg] = DefineFlashAttentionPatternForPg();
   patterns[kNameFlashAttentionPatternForLLAMAPatternV1] = DefineFlashAttentionPatternForLLAMAPatternV1();
   patterns[kNameFlashAttentionPatternForLLAMAPatternV2] = DefineFlashAttentionPatternForLLAMAPatternV2();
   return patterns;
 }
 
-const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSD() const {
+const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSDBNSD() const {
   // Q reshape
   auto reshape_q_input_1 = std::make_shared<Var>();  // input Q
   MS_CHECK_TRUE_RET(reshape_q_input_1 != nullptr, {});
@@ -116,6 +119,118 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSD() const {
   MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
   auto matmul_2 = VectorRef({is_matmul_2, cast, reshape_v});
   return matmul_2;
+}
+
+const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSDBSH() const {
+  // Q: three dim input reshape to four dims
+  auto input_q_reshape_param_1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_q_reshape_param_1 != nullptr, {});
+  auto input_q_reshape_param_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_q_reshape_param_2 != nullptr, {});
+  auto is_input_q_reshape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_input_q_reshape != nullptr, {});
+  auto input_q_reshape = VectorRef({is_input_q_reshape, input_q_reshape_param_1, input_q_reshape_param_2});
+  //  transpose
+  auto is_input_q_transpose_param = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_input_q_transpose_param != nullptr, {});
+  auto is_input_q_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_input_q_transpose != nullptr, {});
+  auto input_q_transpose = VectorRef({is_input_q_transpose, input_q_reshape, is_input_q_transpose_param});
+  // Q reshape
+  auto reshape_q_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_q_input_2 != nullptr, {});
+  auto is_reshape_q = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_q != nullptr, {});
+  auto reshape_q = VectorRef({is_reshape_q, input_q_transpose, reshape_q_input_2});
+
+  // K: three dim input reshape to four dims
+  auto input_k_reshape_param_1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_k_reshape_param_1 != nullptr, {});
+  auto input_k_reshape_param_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_k_reshape_param_2 != nullptr, {});
+  auto is_input_k_reshape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_input_k_reshape != nullptr, {});
+  auto input_k_reshape = VectorRef({is_input_k_reshape, input_k_reshape_param_1, input_k_reshape_param_2});
+  //  transpose
+  auto is_input_k_transpose_param = std::make_shared<Var>();
+  auto is_input_k_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  auto input_k_transpose = VectorRef({is_input_k_transpose, input_k_reshape, is_input_k_transpose_param});
+  // K reshape
+  auto reshape_k_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_k_input_2 != nullptr, {});
+  auto is_reshape_k = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_k != nullptr, {});
+  auto reshape_k = VectorRef({is_reshape_k, input_k_transpose, reshape_k_input_2});
+  // transpose
+  auto is_transpose_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_transpose_param != nullptr, {});
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  auto transpose = VectorRef({is_transpose, reshape_k, is_transpose_param});
+  // matmul 1
+  auto is_matmul_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
+  MS_CHECK_TRUE_RET(is_matmul_1 != nullptr, {});
+  auto matmul_1 = VectorRef({is_matmul_1, reshape_q, transpose});
+  // mul
+  auto is_mul_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_mul_param != nullptr, {});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto mul = VectorRef({is_mul, matmul_1, is_mul_param});
+  // softmax
+  auto is_softmax = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSoftmax>);
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  auto softmax = VectorRef({is_softmax, mul});
+  // cast
+  auto is_cast_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_cast_param != nullptr, {});
+  auto is_cast = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimCast>);
+  MS_CHECK_TRUE_RET(is_cast != nullptr, {});
+  auto cast = VectorRef({is_cast, softmax, is_cast_param});
+
+  // V: three dim input reshape to four dims
+  auto input_v_reshape_param_1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_v_reshape_param_1 != nullptr, {});
+  auto input_v_reshape_param_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_v_reshape_param_2 != nullptr, {});
+  auto is_input_v_reshape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_input_v_reshape != nullptr, {});
+  auto input_v_reshape = VectorRef({is_input_v_reshape, input_v_reshape_param_1, input_v_reshape_param_2});
+  //  transpose
+  auto is_input_v_transpose_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_input_v_transpose_param != nullptr, {});
+  auto is_input_v_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_input_v_transpose != nullptr, {});
+  auto input_v_transpose = VectorRef({is_input_v_transpose, input_v_reshape, is_input_v_transpose_param});
+  // V reshape
+  auto reshape_v_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_v_input_2 != nullptr, {});
+  auto is_reshape_v = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_v != nullptr, {});
+  auto reshape_v = VectorRef({is_reshape_v, input_v_transpose, reshape_v_input_2});
+  // matmul
+  auto is_matmul_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
+  MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
+  auto matmul_2 = VectorRef({is_matmul_2, cast, reshape_v});
+  // output reshape to four dims
+  auto reshape_o_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_o_2 != nullptr, {});
+  auto is_reshape_o = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_o != nullptr, {});
+  auto reshape_o = VectorRef({is_reshape_o, matmul_2, reshape_o_2});
+  // output transpose
+  auto is_transpose_o_param = std::make_shared<CondVar>(IsParamNode);
+  MS_CHECK_TRUE_RET(is_transpose_o_param != nullptr, {});
+  auto is_transpose_o = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose_o != nullptr, {});
+  auto transpose_o = VectorRef({is_transpose_o, reshape_o, is_transpose_o_param});
+  // output reshape to three dims
+  auto reshape_o2_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(reshape_o2_2 != nullptr, {});
+  auto is_reshape_o2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_o2 != nullptr, {});
+  auto reshape_o2 = VectorRef({is_reshape_o2, transpose_o, reshape_o2_2});
+  return reshape_o2;
 }
 
 const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForPg() const {
@@ -357,7 +472,7 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBNSD(const Func
     MS_LOG(ERROR) << "new cnode failed.";
     return nullptr;
   }
-  prompt_flash_attention_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_prompt_flash_attention");
+  prompt_flash_attention_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_prompt_flash_attention_bnsd");
   if (node->abstract() != nullptr) {
     prompt_flash_attention_cnode->set_abstract(node->abstract()->Clone());
   }
@@ -396,7 +511,7 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBSH(const FuncG
     MS_LOG(ERROR) << "new cnode failed.";
     return nullptr;
   }
-  incre_flash_attention_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_prompt_flash_attention");
+  incre_flash_attention_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_prompt_flash_attention_bsh");
   if (node->abstract() != nullptr) {
     incre_flash_attention_cnode->set_abstract(node->abstract()->Clone());
   }
@@ -446,7 +561,16 @@ CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(const FuncG
 CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &pattern_name,
                                                              const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                              const EquivPtr &equiv) const {
-  auto matmul_2 = node->cast<CNodePtr>();
+  auto reshape_o1 = node->cast<CNodePtr>();
+  if (pattern_name == kNameFlashAttentionPatternForSDBSH) {
+    auto reshape_o2 = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(reshape_o2 != nullptr, nullptr);
+    auto transpose_o = reshape_o2->input(kNumIndex1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(transpose_o != nullptr, nullptr);
+    reshape_o1 = transpose_o->input(kNumIndex1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(reshape_o1 != nullptr, nullptr);
+  }
+  auto matmul_2 = reshape_o1->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_2 != nullptr, nullptr);
   auto cast_2 = matmul_2->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(cast_2 != nullptr, nullptr);
@@ -493,6 +617,11 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
   MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
                << ", v shape: " << input_tensor_v_shape;
 
+  if (input_tensor_q_shape[kNumIndex2] < kNumMinSeqLenSize || input_tensor_k_shape[kNumIndex2] < kNumMinSeqLenSize) {
+    MS_LOG(INFO) << "input tensor seq len is less 1024, not need fusion.";
+    return nullptr;
+  }
+
   // check input shape
   if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
     MS_LOG(ERROR) << "D is -1";
@@ -500,9 +629,26 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
   }
   float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));  // can not use auto, must use float
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
-  if (seq_len != 1) {
+  if (seq_len != 1 && pattern_name == kNameFlashAttentionPatternForSDBNSD) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, nullptr, input_tensor_q_shape[kNumIndex1],
                                                   input_tensor_q_shape[kNumIndex2], scale_value);
+  }
+  if (seq_len != 1 && pattern_name == kNameFlashAttentionPatternForSDBSH) {
+    auto q_tran = q->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(q_tran != nullptr, nullptr);
+    auto q_tran_reshape = q_tran->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(q_tran_reshape != nullptr, nullptr);
+    auto k_tran = k->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(k_tran != nullptr, nullptr);
+    auto k_tran_reshape = k_tran->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(k_tran_reshape != nullptr, nullptr);
+    auto v_tran = v->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(v_tran != nullptr, nullptr);
+    auto v_tran_reshape = v_tran->cast<CNodePtr>()->input(kNumIndex1);
+    MS_CHECK_TRUE_RET(v_tran_reshape != nullptr, nullptr);
+    return CreatePromptFlashAttentionCnodeForBSH(func_graph, node, q_tran_reshape, k_tran_reshape, v_tran_reshape,
+                                                 nullptr, input_tensor_q_shape[kNumIndex1],
+                                                 input_tensor_q_shape[kNumIndex2], scale_value);
   }
   return nullptr;
 }
@@ -566,8 +712,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForPg(const std::string &
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
   if (seq_len != 1) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], input_tensor_q_shape[kNumIndex2],
-                                                  scale_value);
+                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
   }
   return nullptr;
 }
@@ -632,8 +777,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV1(const s
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
   if (seq_len != 1) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], input_tensor_q_shape[kNumIndex2],
-                                                  scale_value);
+                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
   }
   return nullptr;
 }
@@ -694,8 +838,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV2(const s
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
   if (seq_len != 1) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], input_tensor_q_shape[kNumIndex2],
-                                                  scale_value);
+                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
   }
   return nullptr;
 }
@@ -721,7 +864,7 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
     return nullptr;
   }
   CNodePtr flash_attention_node = nullptr;
-  if (patten_name == kNameFlashAttentionPatternForSD) {
+  if (patten_name == kNameFlashAttentionPatternForSDBNSD || patten_name == kNameFlashAttentionPatternForSDBSH) {
     flash_attention_node = CreateFlashAttentionNodeForSD(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameFlashAttentionPatternForPg) {
     flash_attention_node = CreateFlashAttentionNodeForPg(patten_name, func_graph, node, equiv);

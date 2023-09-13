@@ -74,7 +74,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV2(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                      const AnfNodePtr &node, const EquivPtr &equiv) const;
 
-  const VectorRef DefineFlashAttentionPatternForSD() const;
+  const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
+  const VectorRef DefineFlashAttentionPatternForSDBSH() const;
   const VectorRef DefineFlashAttentionPatternForPg() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV1() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV2() const;

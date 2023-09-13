@@ -38,7 +38,55 @@ class MIND_API PromptFlashAttention : public BaseOperator {
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.PromptFlashAttention for the inputs.
   void Init(const int64_t num_heads, const int64_t pre_tokens, const int64_t next_tokens,
-            const std::string input_layout, const int64_t num_key_value_heads, const float scale_value) const;
+            const std::string input_layout, const int64_t num_key_value_heads, const float scale_value);
+
+  /// \brief Set num_heads.
+  void set_num_heads(const int64_t num_heads);
+
+  /// \brief Get num_heads.
+  ///
+  /// \return num_heads.
+  int64_t get_num_heads() const;
+
+  /// \brief Set pre_tokens.
+  void set_pre_tokens(const int64_t pre_tokens);
+
+  /// \brief Get pre_tokens.
+  ///
+  /// \return pre_tokens.
+  int64_t get_pre_tokens() const;
+
+  /// \brief Set next_tokens.
+  void set_next_tokens(const int64_t next_tokens);
+
+  /// \brief Get next_tokens.
+  ///
+  /// \return next_tokens.
+  int64_t get_next_tokens() const;
+
+  /// \brief Set input_layout.
+  void set_input_layout(const std::string input_layout);
+
+  /// \brief Get input_layout.
+  ///
+  /// \return input_layout.
+  std::string get_input_layout() const;
+
+  /// \brief Set num_key_value_heads.
+  void set_num_key_value_heads(const int64_t num_key_value_heads);
+
+  /// \brief Get num_key_value_heads.
+  ///
+  /// \return num_key_value_heads.
+  int64_t get_num_key_value_heads() const;
+
+  /// \brief Set scale_value.
+  void set_scale_value(const float scale_value);
+
+  /// \brief Get scale_value.
+  ///
+  /// \return scale_value.
+  float get_scale_value() const;
 };
 MIND_API abstract::AbstractBasePtr PromptFlashAttentionInfer(const abstract::AnalysisEnginePtr &,
                                                              const PrimitivePtr &primitive,
