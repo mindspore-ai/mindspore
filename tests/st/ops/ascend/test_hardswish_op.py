@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import pytest
 
@@ -116,7 +115,6 @@ def test_hardswish_forward_and_backward():
     Expectation: success
     """
     modes = (context.GRAPH_MODE, context.PYNATIVE_MODE)
-    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     dtypes = (np.float32, np.float16)
     for mode in modes:
         for dtype in dtypes:

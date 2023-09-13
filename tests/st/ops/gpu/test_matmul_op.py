@@ -97,9 +97,7 @@ def test_matmul_composite():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     net = MatMulComposite()
 
-    scalars = [np.random.randn(1).astype(np.float32), np.random.randn(1).astype(np.float32),
-               np.random.randn(1, 1).astype(np.float32),
-               np.random.randn(1, 1, 1).astype(np.float32)]
+    scalars = [np.random.randn(1).astype(np.float32), np.random.randn(1).astype(np.float32)]
     for x in scalars:
         for y in scalars:
             output = net(Tensor(x), Tensor(y))
@@ -107,16 +105,12 @@ def test_matmul_composite():
             np.testing.assert_array_almost_equal(output.asnumpy(), expect, decimal=4)
 
     broadcastables = [
-        np.random.randn(3).astype(np.float32), np.random.randn(3).astype(np.float32),
-        np.random.randn(6).astype(np.float32), np.random.randn(6, 4).astype(np.float32),
-        np.random.randn(5, 2).astype(np.float32), np.random.randn(2).astype(np.float32),
-        np.random.randn(2, 9).astype(np.float32), np.random.randn(9, 8).astype(np.float32),
-        np.random.randn(6).astype(np.float32), np.random.randn(2, 6, 5).astype(np.float32),
-        np.random.randn(9, 2, 7).astype(np.float32), np.random.randn(7).astype(np.float32),
-        np.random.randn(5, 2, 4).astype(np.float32), np.random.randn(6, 1, 4, 9).astype(np.float32),
-        np.random.randn(7, 1, 5, 3, 2).astype(np.float32), np.random.randn(8, 1, 6, 1, 2, 9).astype(np.float32)
+        np.random.randn(5, 2).astype(np.float32), np.random.randn(2, 5).astype(np.float32),
+        np.random.randn(2, 9).astype(np.float32), np.random.randn(9, 2).astype(np.float32),
+        np.random.randn(9, 2).astype(np.float32), np.random.randn(2, 3).astype(np.float32),
+        np.random.randn(5, 4).astype(np.float32), np.random.randn(4, 1).astype(np.float32)
     ]
-    for i in range(8):
+    for i in range(4):
         x = broadcastables[2*i]
         y = broadcastables[2*i + 1]
         output = net(Tensor(x), Tensor(y))

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import pytest
 
@@ -398,7 +397,6 @@ def test_index_add_vmap_cpu():
     Expectation: the result match with expect
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     vmap_case()
 
 
