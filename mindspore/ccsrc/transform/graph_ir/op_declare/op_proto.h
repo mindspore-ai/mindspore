@@ -32,6 +32,8 @@ class OpProto {
   OpProto &SetOutput(const std::string &name, const std::string &tensor_type);
   OpProto &SetAttr(const std::string &name, bool is_optional);
   OpProto &DoNothing();
+  OpProto &DefineDataType(const std::string &name, const std::string &tensor_type);
+  OpProto &FinishRegOperator();
 
   size_t GetInputIndexByName(const std::string &name) const;
   size_t GetOutputIndexByName(const std::string &name) const;
@@ -49,6 +51,11 @@ class OpProto {
   std::vector<std::string> output_names_;
   HashMap<std::string, std::vector<enum ge::DataType>> output_types_;
   HashMap<std::string, bool> attr_optional_flags_;
+
+  // temporary fields used for building operator info
+  HashMap<std::string, std::string> input_types_org_;
+  HashMap<std::string, std::string> output_types_org_;
+  HashMap<std::string, std::vector<enum ge::DataType>> alias_types_;
 };
 
 class OpProtoStorage {
