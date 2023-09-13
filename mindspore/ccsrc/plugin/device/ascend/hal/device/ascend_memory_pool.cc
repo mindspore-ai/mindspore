@@ -100,6 +100,12 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   }
 
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (is_cell_reuse) {
+    alloc_mem_size = std::min(alloc_mem_size, size);
+  }
   return alloc_mem_size;
 }
 
