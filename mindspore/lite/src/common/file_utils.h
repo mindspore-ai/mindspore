@@ -106,7 +106,13 @@ static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   }
 }
 
-inline int WriteToBin(const std::string &file_path, const void *data, const size_t size, mode_t mode = S_IRUSR) {
+inline int WriteToBin(const std::string &file_path, const void *data, const size_t size,
+#ifdef _MSC_VER
+                      int mode = _S_IREAD
+#else
+                      mode_t mode = S_IRUSR
+#endif
+) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "data is nullptr.";
     return RET_ERROR;
