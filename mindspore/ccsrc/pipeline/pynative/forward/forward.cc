@@ -475,13 +475,7 @@ void ForwardExecutor::RunContiguousTask(const tensor::TensorPtr &tensor, bool en
     return;
   }
 
-  const auto &storage_info = tensor->storage_info();
-  if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
-    MS_LOG(DEBUG) << "Tensor is already contiguous.";
-    return;
-  }
   MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << tensor->id();
-
   MS_EXCEPTION_IF_NULL(tensor->device_address());
   auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
@@ -1131,20 +1125,25 @@ void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
   }
 }
 
+void ForwardExecutor::RunContiguousTaskForTensor(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return;
+  }
+
+  GilReleaseWithCheck release_gil;
+  RunContiguousTask(tensor, !ScopedFallbackRunning::on() && enable_async());
+}
+
 device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                                    const TensorStorageInfoPtr &storage_info) {
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
-
   auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device_address);
   if (storage_info == nullptr) {
     return device_addr;
   }
 
-  if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
-    MS_LOG(DEBUG) << "Tensor is already contiguous.";
-    return device_addr;
-  }
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   // as_numpy sync promise contiguous run_sync

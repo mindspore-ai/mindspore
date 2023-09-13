@@ -580,16 +580,11 @@ bool AscendContiguousKernelTask::RunWithRet() {
     return ret;
   }
 
-  if (input_addr_info->storage_offset() > 0) {
-    auto ret =
-      LaunchAsyncCopy(input_addr_info, output_addr_info, input_addr_info->GetSize(), device_context, stream_ptr);
-    if (!ret) {
-      MS_LOG(ERROR) << "LaunchAsyncCopy failed.";
-      return ret;
-    }
+  auto ret = LaunchAsyncCopy(input_addr_info, output_addr_info, input_addr_info->GetSize(), device_context, stream_ptr);
+  if (!ret) {
+    MS_LOG(ERROR) << "LaunchAsyncCopy failed.";
   }
-
-  return true;
+  return ret;
 }
 
 bool AscendCopyWithSliceKernelTask::RunWithRet() {
