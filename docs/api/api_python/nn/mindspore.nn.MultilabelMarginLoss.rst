@@ -22,14 +22,14 @@ mindspore.nn.MultilabelMarginLoss
         该算子仅考虑从前方开始的连续非负目标块。这允许不同的样本具有不同数量的目标类别。
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
 
           - ``"none"``：不应用规约方法。
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **x** (Tensor) - 预测值。hape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
+        - **x** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
           为批量大小，:math:`C` 为类别数。数据类型必须为：float16或float32。
         - **target** (Tensor) - 目标值，shape与 `inputs` 相同，数据类型必须为int32，标签目标值由-1填充。
 
@@ -43,4 +43,4 @@ mindspore.nn.MultilabelMarginLoss
         - **TypeError** - 当 `target` 数据类型不是int32时。
         - **ValueError** - 当 `inputs` 的数据维度不是以下其中之一时：1、2。
         - **ValueError** - 当 `inputs` 和 `target` 的shape不相同时。
-        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。
+        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``"none"`` 、 ``"mean"`` 、 ``"sum"`` 。

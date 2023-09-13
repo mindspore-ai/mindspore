@@ -96,7 +96,7 @@ class LPPool1d(Cell):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0.
+        norm_type (Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
 
             - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
               pooling).
@@ -168,7 +168,7 @@ class LPPool2d(Cell):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        norm_type(Union[int, float]) - Type of normalization, represents p in the formula, can not be 0.
+        norm_type(Union[int, float]) - Type of normalization, represents :math:`p` in the formula, can not be 0.
 
             - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
               pooling).
@@ -342,7 +342,7 @@ class MaxPool3d(_PoolNd):
           :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
-        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+        If `pad_mode` is in ``"pad"`` mode, the output shape calculation formula is as follows:
 
         .. math::
             D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] - \text{dilation}[0] \times
@@ -361,9 +361,9 @@ class MaxPool3d(_PoolNd):
         TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If the `padding` parameter is neither an integer nor a tuple of length 3.
-        ValueError: If `pad_mode` is not set to 'pad', setting return_indices to True or dilation to a value
+        ValueError: If `pad_mode` is not set to ``"pad"``, setting return_indices to True or dilation to a value
             other than 1.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -374,13 +374,13 @@ class MaxPool3d(_PoolNd):
         >>> import numpy as np
         >>> np_x = np.random.randint(0, 10, [5, 3, 4, 6, 7])
         >>> x = Tensor(np_x, ms.float32)
-        >>> pool1 = nn.MaxPool3d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=3, return_indices=True)
+        >>> pool1 = nn.MaxPool3d(kernel_size=2, stride=1, pad_mode="pad", padding=1, dilation=3, return_indices=True)
         >>> output = pool1(x)
         >>> print(output[0].shape)
         (5, 3, 3, 5, 6)
         >>> print(output[1].shape)
         (5, 3, 3, 5, 6)
-        >>> pool2 = nn.MaxPool3d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=3, return_indices=False)
+        >>> pool2 = nn.MaxPool3d(kernel_size=2, stride=1, pad_mode="pad", padding=1, dilation=3, return_indices=False)
         >>> output2 = pool2(x)
         >>> print(output2.shape)
         (5, 3, 3, 5, 6)
@@ -498,17 +498,17 @@ class MaxPool2d(_PoolNd):
 
     Raises:
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
-        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `pad_mode` is neither ``"valid"`` nor ``"same"`` with not case sensitive.
+        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'`` .
         ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
-        ValueError: If `pad_mode` is not 'pad', `padding`, `dilation`, `return_indices`, `ceil_mode` parameters are not
-            set to their default values.
+        ValueError: If `pad_mode` is not ``"pad"``, `padding`, `dilation`, `return_indices`, `ceil_mode` parameters
+            are not set to their default values.
         ValueError: If the length of the tuple/list `padding` parameter is not 2.
         ValueError: If The length of the tuple dilation parameter is not 2.
         ValueError: If dilation parameter is neither an integer nor a tuple.
-        ValueError: If `pad_mode` is 'pad' and `data_format` is 'NHWC'.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `pad_mode` is ``"pad"`` and `data_format` is ``'NHWC'``.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -523,7 +523,7 @@ class MaxPool2d(_PoolNd):
         (1, 2, 2, 2)
         >>> np_x = np.random.randint(0, 10, [5, 3, 4, 5])
         >>> x = ms.Tensor(np_x, ms.float32)
-        >>> pool2 = ms.nn.MaxPool2d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=1, return_indices=True)
+        >>> pool2 = ms.nn.MaxPool2d(kernel_size=2, stride=1, pad_mode="pad", padding=1, dilation=1, return_indices=True)
         >>> output = pool2(x)
         >>> print(output[0].shape)
         (5, 3, 5, 6)
@@ -652,16 +652,16 @@ class MaxPool1d(_PoolNd):
 
     Raises:
         TypeError: If `kernel_size` or `strides` is not an int.
-        ValueError: If `pad_mode` is not 'valid', 'same' or 'pad', case-insensitive.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `pad_mode` is not ``"valid"``, ``"same"`` or ``"pad"``, case-insensitive.
+        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
-        ValueError: If `pad_mode` is not 'pad', `padding`, `dilation`, `return_indices`, `ceil_mode` parameters are not
-            set to their default values.
+        ValueError: If `pad_mode` is not ``"pad"``, `padding`, `dilation`, `return_indices`, `ceil_mode` parameters
+            are not set to their default values.
         ValueError: If the length of the tuple/list `padding` parameter is not 1.
         ValueError: If The length of the tuple dilation parameter is not 1.
         ValueError: If dilation parameter is neither an integer nor a tuple.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -678,7 +678,7 @@ class MaxPool1d(_PoolNd):
         (1, 2, 2)
         >>> np_x = np.random.randint(0, 10, [5, 3, 4])
         >>> x = ms.Tensor(np_x, ms.float32)
-        >>> mpool2 = nn.MaxPool1d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=1, return_indices=True)
+        >>> mpool2 = nn.MaxPool1d(kernel_size=2, stride=1, pad_mode="pad", padding=1, dilation=1, return_indices=True)
         >>> output = mpool2(x)
         >>> print(output[0].shape)
         (5, 3, 5)
@@ -814,7 +814,7 @@ class AvgPool3d(_PoolNd):
               in the depth, height and width dimension is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int]), optional): Pooling padding value, only 'pad' mode can be set to
+        padding (Union(int, tuple[int], list[int]), optional): Pooling padding value, only ``"pad"`` mode can be set to
             non-zero. Default: ``0`` . Only the following paddings are supported:
 
             - `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
@@ -866,7 +866,7 @@ class AvgPool3d(_PoolNd):
         ValueError: If element of `padding` is less than 0.
         ValueError: If length of shape of `x` is neither 4 nor 5.
         ValueError: If `divisor_override` is less than or equal to 0.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -879,7 +879,7 @@ class AvgPool3d(_PoolNd):
         >>> print(output.shape)
         (1, 2, 2, 2, 3)
         >>> x1 = ms.ops.randn(6, 5, 7, 7, 5).astype(ms.float32)
-        >>> pool2 = ms.nn.AvgPool3d(4, stride=2, pad_mode='pad', padding=(2, 2, 1), divisor_override=10)
+        >>> pool2 = ms.nn.AvgPool3d(4, stride=2, pad_mode="pad", padding=(2, 2, 1), divisor_override=10)
         >>> output2 = pool2(x1)
         >>> print(output2.shape)
         (6, 5, 4, 4, 2)
@@ -942,7 +942,7 @@ class AvgPool2d(_PoolNd):
               in the height and width directions is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value, only ``"pad"`` mode can be set to non-zero.
             Default: ``0`` . `padding` can only be an integer or a tuple/list containing one or two integers.
             If `padding` is an integer or a tuple/list containing one integer, it will be padded `padding` times in the
             four directions of the input. If `padding` is a tuple/list containing two integers, it will be padded
@@ -973,15 +973,15 @@ class AvgPool2d(_PoolNd):
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
-        ValueError: If `pad_mode` is not 'valid' ,'same' or 'pad' with not case sensitive.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `pad_mode` is not ``"valid"`` ,``"same"`` or ``"pad"`` with not case sensitive.
+        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
         ValueError: If `padding`, `ceil_mode`, `count_include_pad`, or `divisor_override` is used
-            or `pad_mode` is `pad` when `data_format` is 'NHWC'.
+            or `pad_mode` is ``"pad"`` when `data_format` is 'NHWC'.
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1 or 2.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
         ValueError: If `divisor_override` is less than or equal to 0.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -995,7 +995,7 @@ class AvgPool2d(_PoolNd):
         >>> print(output.shape)
         (1, 2, 2, 2)
         >>> x = ms.ops.randn(6, 6, 8, 8)
-        >>> pool2 = ms.nn.AvgPool2d(4, stride=1, pad_mode='pad', padding=2, divisor_override=5)
+        >>> pool2 = ms.nn.AvgPool2d(4, stride=1, pad_mode="pad", padding=2, divisor_override=5)
         >>> output2 = pool2(x)
         >>> print(output2.shape)
         (6, 6, 9, 9)
@@ -1095,7 +1095,7 @@ class AvgPool1d(_PoolNd):
               at the begin and end is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value, only ``"pad"`` mode can be set to non-zero.
             Default: ``0`` . padding can only be an integer or a tuple/list containing a single integer, in which case
             padding times or padding[0] times are padded on both sides of the input.
         ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
@@ -1115,11 +1115,11 @@ class AvgPool1d(_PoolNd):
 
     Raises:
         TypeError: If `kernel_size` or `stride` is not an int.
-        ValueError: If `pad_mode` is not 'valid' ,'same' or 'pad' with not case sensitive.
+        ValueError: If `pad_mode` is not ``"valid"`` ,``"same"`` or ``"pad"`` with not case sensitive.
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
-        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1133,7 +1133,7 @@ class AvgPool1d(_PoolNd):
         >>> result = output.shape
         >>> print(result)
         (1, 3, 1)
-        >>> pool2 = ms.nn.AvgPool1d(4, stride=1, ceil_mode=True, pad_mode='pad', padding=2)
+        >>> pool2 = ms.nn.AvgPool1d(4, stride=1, ceil_mode=True, pad_mode="pad", padding=2)
         >>> x1 = ms.ops.randn(6, 6, 8)
         >>> output = pool2(x1)
         >>> print(output.shape)
@@ -1882,7 +1882,7 @@ class MaxUnpool1d(Cell):
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
 
     Args:
@@ -1899,8 +1899,8 @@ class MaxUnpool1d(Cell):
           Values of indices must belong to :math:`[0, H_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
-          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
-          If output_size is not None, then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
+          If output_size is ``None``, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not ``None``, then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
           :math:`(H)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
@@ -1964,8 +1964,8 @@ class MaxUnpool2d(Cell):
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
-        W_{out} = (W{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        W_{out} = (W_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
         \end{array}
 
     Args:
@@ -1988,8 +1988,8 @@ class MaxUnpool2d(Cell):
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
-          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
-          If output_size is not None, then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
+          If output_size is ``None``, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not ``None``, then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
           :math:`(H, W)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
@@ -2056,9 +2056,9 @@ class MaxUnpool3d(Cell):
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
-        H_{out} = (H{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
-        W_{out} = (W{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
+        D_{out} = (D_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        W_{out} = (W_{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
 
     Args:
@@ -2082,8 +2082,8 @@ class MaxUnpool3d(Cell):
           Values of indices must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
-          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
-          If output_size is not None, then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
+          If output_size is ``None``, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not ``None``, then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
           :math:`(D, H, W)` and output_size must belong to
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
           (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.

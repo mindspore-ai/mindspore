@@ -64,8 +64,9 @@ class Embedding(Cell):
         embedding_size (int): The size of each embedding vector.
         use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: ``False`` .
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
-            Refer to class `initializer` for the values of string when a string
-            is specified. Default: ``'normal'`` .
+            Refer to class `mindspore.common.initializer
+            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            for the values of string when a string is specified. Default: ``'normal'`` .
         dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mstype.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: ``None`` . The feature is inactivated.
@@ -504,8 +505,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             :class:`mindspore.nn.EmbeddingLookup`. Default: ``'batch_slice'``.
         feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
             Default:  ``None`` .
-        max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
-                                       or None. Default: ``None`` .
+        max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32.
+            Default: ``None`` .
         sparse (bool): Using sparse mode. When 'target' is set to ``'CPU'`` , 'sparse' has to be true.
             Default: ``True`` .
         operator (str): The pooling method for the features in one field. Support ``'SUM'`` , ``'MEAN'`` and
@@ -528,12 +529,12 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         TypeError: If `vocab_size` or `embedding_size` or `field_size` is not an int.
         TypeError: If `sparse` is not a bool or `feature_num_list` is not a tuple.
         ValueError: If `vocab_size` or `embedding_size` or `field_size` is less than 1.
-        ValueError: If `target` is neither 'CPU' nor 'DEVICE'.
-        ValueError: If `slice_mode` is not one of 'batch_slice', 'field_slice', 'table_row_slice',
-                    'table_column_slice'.
-        ValueError: If `sparse` is False and `target` is 'CPU'.
-        ValueError: If `slice_mode` is 'field_slice' and `feature_num_list` is None.
-        ValueError: If `operator` is not one of 'SUM', 'MAX', 'MEAN'.
+        ValueError: If `target` is neither ``'CPU'`` nor ``'DEVICE'``.
+        ValueError: If `slice_mode` is not one of ``'batch_slice'``, ``'field_slice'``, ``'table_row_slice'``,
+                    ``'table_column_slice'`` .
+        ValueError: If `sparse` is False and `target` is ``'CPU'`` .
+        ValueError: If `slice_mode` is ``'field_slice'`` and `feature_num_list` is None.
+        ValueError: If `operator` is not one of ``'SUM'``, ``'MAX'``, ``'MEAN'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU``

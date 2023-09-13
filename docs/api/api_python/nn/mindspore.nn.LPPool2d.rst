@@ -11,7 +11,7 @@ mindspore.nn.LPPool2d
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     参数：
-        - **norm_type** (Union[int, float]) - 标准化类型，代表公式里的p，不能为0，
+        - **norm_type** (Union[int, float]) - 标准化类型，代表公式里的 :math:`p`，不能为0，
 
           - 如果 p = 1，得到的结果为池化核内元素之和（与平均池化成比例）；
           - 如果 p = :math:`\infty`，得到的结果为最大池化的结果。

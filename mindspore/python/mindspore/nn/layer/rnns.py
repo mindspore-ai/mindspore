@@ -595,7 +595,7 @@ class RNN(_RNNBase):
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked RNN. Default: ``1`` .
         nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
             RNN layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
@@ -797,7 +797,7 @@ class LSTM(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked LSTM . Default: ``1`` .
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default ``0`` . The range of dropout is [0.0, 1.0).

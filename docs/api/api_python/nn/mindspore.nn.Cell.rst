@@ -188,7 +188,7 @@
         获取Cell的参数。如果 `expand` 为 ``true`` ，获取此cell和所有subcells的参数。关于subcell，请看下面的示例。
 
         参数：
-            - **expand** (bool) - 如果为 ``True`` ，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值： ``True`` 。
+            - **expand** (bool) - 如果为 ``True`` ，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的subcell的parameter。默认值： ``True`` 。
 
         返回：
             Iteration类型，Cell的parameter。
@@ -350,7 +350,7 @@
             - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_backward_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         参数：
-            - **hook_fn** (function) - 捕获Cell对象信息和反向输入，输出梯度的hook_fn函数。
+            - **hook_fn** (function) - 捕获Cell对象信息和反向输入，输出梯度的 `hook_fn` 函数。
 
         返回：
             `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
@@ -370,7 +370,7 @@
             - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         参数：
-            - **hook_fn** (function) - 捕获Cell对象信息和正向输入，输出数据的hook_fn函数。
+            - **hook_fn** (function) - 捕获Cell对象信息和正向输入，输出数据的 `hook_fn` 函数。
 
         返回：
             `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。

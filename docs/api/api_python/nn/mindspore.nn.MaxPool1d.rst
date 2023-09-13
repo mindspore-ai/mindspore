@@ -44,12 +44,12 @@ mindspore.nn.MaxPool1d
 
     异常：
         - **TypeError** - `kernel_size` 或 `strides` 不是整数。
-        - **ValueError** - `pad_mode` 既不是'valid'，也不是'same' 或者 'pad'，不区分大小写。
-        - **ValueError** - `data_format` 既不是'NCHW'也不是'NHWC'。
+        - **ValueError** - `pad_mode` 既不是 ``"valid"`` ，也不是 ``"same"`` 或者 ``"pad"``，不区分大小写。
+        - **ValueError** - `data_format` 既不是 ``'NCHW'`` 也不是 ``'NHWC'``。
         - **ValueError** - `kernel_size` 或 `strides` 小于1。
         - **ValueError** - `x` 的shape长度不等于2或3。
-        - **ValueError** - 当 `pad_mode` 不为 'pad' 时，`padding`、 `dilation`、 `return_indices`、 `ceil_mode` 参数不为默认值。
+        - **ValueError** - 当 `pad_mode` 不为 ``"pad"`` 时，`padding`、 `dilation`、 `return_indices`、 `ceil_mode` 参数不为默认值。
         - **ValueError** - `padding` 参数为tuple/list时长度不为1。
         - **ValueError** - `dilation` 参数为tuple时长度不为1。
         - **ValueError** - `dilation` 参数不为int也不为tuple。
-        - **ValueError** - `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
+        - **ValueError** - `pad_mode` 不为 ``"pad"`` 的时候 `padding` 为非0。

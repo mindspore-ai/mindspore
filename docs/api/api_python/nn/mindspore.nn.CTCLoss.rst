@@ -9,7 +9,7 @@ mindspore.nn.CTCLoss
 
     参数：
         - **blank** (int，可选) - 空白标签。默认值：``0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
 
           - ``"none"``：不应用规约方法。
           - ``"mean"``：计算输出元素的平均值。
@@ -31,7 +31,7 @@ mindspore.nn.CTCLoss
         - **TypeError** - `zero_infinity` 不是布尔值， `reduction` 不是字符串。
         - **TypeError** - `log_probs` 的数据类型不是float或double。
         - **TypeError** - `targets` ， `input_lengths` 或 `target_lengths` 数据类型不是int32或int64。
-        - **ValueError** - `reduction` 不为"none"，"mean"或"sum"。
+        - **ValueError** - `reduction` 不为 ``"none"`` ， ``"mean"`` 或 ``"sum"`` 。
         - **ValueError** - `blank` 值不介于0到C之间。C是 `log_probs` 的分类数。
         - **ValueError** - 当 `log_prob` 的shape是 :math:`(T, C)` 时， `target` 的维度不是1或2。
         - **ValueError** - 当 `log_prob` 的shape是 :math:`(T, C)` 时， `target` 的首个维度的长度不是1。

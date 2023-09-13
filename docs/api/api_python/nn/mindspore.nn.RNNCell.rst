@@ -13,7 +13,7 @@ mindspore.nn.RNNCell
     参数：
         - **input_size** (int) - 输入层输入的特征向量维度。
         - **hidden_size** (int) - 隐藏层输出的特征向量维度。
-        - **has_bias** (bool) - Cell是否有偏置项 :math:`b_ih` 和 :math:`b_hh` 。默认值： ``True`` 。
+        - **has_bias** (bool) - Cell是否有偏置项 :math:`b_{ih}` 和 :math:`b_{hh}` 。默认值： ``True`` 。
         - **nonlinearity** (str) - 用于选择非线性激活函数。取值可以是'tanh'或'relu'。默认值： ``'tanh'`` 。
 
     输入：

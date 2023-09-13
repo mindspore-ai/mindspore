@@ -37,7 +37,7 @@ mindspore.nn.MultiMarginLoss
         - **TypeError** - `x` 数据类型不是以下之一：float16、float、float64。
         - **TypeError** - `weight` 和 `x` 的数据类型不相同。
         - **ValueError** - `p` 的值不是以下之一：1、2。
-        - **ValueError** - `reduction` 的值不是以下之一：{'none','sum','mean'}。
+        - **ValueError** - `reduction` 的值不是以下之一：{ ``'none'`` , ``'sum'`` , ``'mean'`` }。
         - **ValueError** - `x` 的shape[0]和 `target` 的shape[0]不相等。
         - **ValueError** - `x` 的shape[1]和 `weight` 的shape[0]不相等。
         - **ValueError** - 如果 `weight` 的维度不是1。

@@ -17,7 +17,7 @@ mindspore.nn.PolynomialDecayLR
     .. math::
         tmp\_step= \min(current\_step, decay\_steps)
 
-    如果 `update_decay_steps` 为 ``true`` ，则每 `decay_steps` 更新 :math:`tmp_decay_steps` 的值。公式为：
+    如果 `update_decay_steps` 为 ``true`` ，则每 `decay_steps` 更新 :math:`tmp\_decay\_steps` 的值。公式为：
 
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
