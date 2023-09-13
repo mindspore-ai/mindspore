@@ -36,7 +36,7 @@ mindspore.nn.MaxPool3d
         - **output** (Tensor) - 最大池化结果，shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{out}, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
         - **argmax** (Tensor) - 最大值对应的索引。数据类型为int64。
 
-        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+        其中，如果 `pad_mode` 为 ``"pad"`` 模式时，输出的shape计算公式如下：
 
         .. math::
             D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] - \text{dilation}[0] \times
@@ -55,5 +55,5 @@ mindspore.nn.MaxPool3d
         - **TypeError** - `kernel_size` 、 `stride` 、 `padding` 、 `dilation` 既不是整数也不是元组。
         - **ValueError** - `kernel_size` 或者 `stride` 小于1。
         - **ValueError** - `padding` 不为int也不为长度为3的tuple。
-        - **ValueError** - `pad_mode` 不为 'pad' 模式时，`return_indices` 设为了True或者 `dilation` 不为1。
-        - **ValueError** - `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
+        - **ValueError** - `pad_mode` 不为 ``"pad"`` 模式时，`return_indices` 设为了True或者 `dilation` 不为1。
+        - **ValueError** - `pad_mode` 不为 ``"pad"`` 的时候 `padding` 为非0。

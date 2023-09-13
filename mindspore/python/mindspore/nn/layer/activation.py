@@ -288,7 +288,7 @@ class LogSoftmax(Cell):
 
     .. math::
 
-        \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right),
+        \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right)
 
     Args:
         axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: ``-1`` .

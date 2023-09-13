@@ -15,7 +15,7 @@ mindspore.nn.CosineEmbeddingLoss
 
     参数：
         - **margin** (float) - 指定运算的调节因子，取值范围[-1.0, 1.0]。默认值： ``0.0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
 
           - ``"none"``：不应用规约方法。
           - ``"mean"``：计算输出元素的平均值。
@@ -31,7 +31,7 @@ mindspore.nn.CosineEmbeddingLoss
 
     异常：
         - **TypeError** - `margin` 不是float。
-        - **ValueError** - `reduction` 不为"none"、"mean"或"sum"。
+        - **ValueError** - `reduction` 不为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` 。
         - **ValueError** - `margin` 的值不在范围[-1.0, 1.0]内。
 
 

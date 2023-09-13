@@ -348,7 +348,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     .. math::
         tmp\_decay\_epoch = decay\_epoch
 
-    If `update_decay_epoch` is true, update the value of :math:`tmp_decay_epoch` every epoch. The formula is:
+    If `update_decay_epoch` is true, update the value of :math:`tmp\_decay\_epoch` every epoch. The formula is:
 
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)

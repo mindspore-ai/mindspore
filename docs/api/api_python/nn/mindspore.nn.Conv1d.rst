@@ -80,4 +80,4 @@ mindspore.nn.Conv1d
         - **TypeError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 、 `padding` 或 `dilation` 不是int。
         - **ValueError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 或 `dilation` 小于1。
         - **ValueError** - `padding` 小于0。
-        - **ValueError** - `pad_mode` 不是"same"，"valid"或"pad"。
+        - **ValueError** - `pad_mode` 不是 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。

@@ -14,7 +14,7 @@ mindspore.nn.NLLLoss
 
     其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重， :math:`N` 表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]`，表示类索引，其中 :math:`C` 表示类的数量。
 
-    若 `reduction` 不为'none'（默认为'mean'），则
+    若 :math:`reduction \neq none` 时（默认为'mean'），则
 
     .. math::
         \ell(x, t)=\left\{\begin{array}{ll}
@@ -43,6 +43,6 @@ mindspore.nn.NLLLoss
         - **TypeError** - `weight` 不是Tensor。
         - **TypeError** - `weight` 的dtype既不是float16，也不是float32。
         - **TypeError** - `ignore_index` 不是int。
-        - **ValueError** - `reduction` 不为"mean"、"sum"，或"none"。
+        - **ValueError** - `reduction` 不为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。
         - **TypeError** - `logits` 不是Tensor。
         - **TypeError** - `labels` 不是Tensor。

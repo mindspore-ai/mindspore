@@ -10,9 +10,9 @@ mindspore.nn.MaxUnpool3d
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
-        H_{out} = (H{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
-        W_{out} = (W{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
+        D_{out} = (D_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        W_{out} = (W_{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
 
     参数：
@@ -30,8 +30,8 @@ mindspore.nn.MaxUnpool3d
         - **indices** (Tensor) - 最大值的索引。shape必须与输入 `x` 相同。取值范围需满足
           :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` 。数据类型必须是int32或int64。
         - **output_size** (tuple[int], 可选) - 输出shape。默认值： ``None`` 。
-          如果output_size为None，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
-          如果output_size不为None，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` ， :math:`(C, D, H, W)` 或 :math:`(D, H, W)` ，
+          如果output_size为 ``None`` ，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
+          如果output_size不为 ``None`` ，那么 `output_size` 必须满足格式 :math:`(N, C, D, H, W)` ， :math:`(C, D, H, W)` 或 :math:`(D, H, W)` ，
           取值范围需满足：
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
           (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。

@@ -2827,7 +2827,7 @@ class NLLLoss(Primitive):
     r"""
     Gets the negative log likelihood loss between logits and labels.
 
-    The nll loss with reduction=none can be described as:
+    The nll loss with :math:`reduction = none` can be described as:
 
     .. math::
 
@@ -2838,7 +2838,7 @@ class NLLLoss(Primitive):
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
     N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
-    If reduction is not ``'none'`` (default ``'mean'`` ), then
+    If :math:`reduction \neq none` (default ``'mean'`` ), then
 
     .. math::
 
@@ -7147,8 +7147,8 @@ class Dropout(PrimitiveWithCheck):
 
           - On GPU and CPU, `mask` has the same shape and data type as `x`.
           - On Ascend, to achieve a better performance, it is denoted as a 1-D Tensor
-            with Uint8 data type. It has shape :math:`(byte_counts, )` where :math:`byte_counts` is the
-            number of bytes needed to mask the input `x`, :math:`byte_counts` is calculated using the
+            with Uint8 data type. It has shape :math:`(byte\_counts, )` where :math:`byte\_counts` is the
+            number of bytes needed to mask the input `x`, :math:`byte\_counts` is calculated using the
             following formula:
 
             .. math::

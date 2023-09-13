@@ -20,10 +20,10 @@ mindspore.nn.BatchNorm3d
         - **eps** (float) - 加在分母上的值，以确保数值稳定。默认值： ``1e-5`` 。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值： ``0.9`` 。
         - **affine** (bool) - bool类型。设置为 ``True`` 时，可以学习gama和beta。默认值： ``True`` 。
-        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
-        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'zeros'`` 。
-        - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值：``'zeros'`` 。
-        - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。方差的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
+        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
+        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'zeros'`` 。
+        - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值：``'zeros'`` 。
+        - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。方差的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
         - **use_batch_statistics** (bool) - 如果为 ``True`` ，则使用当前批次数据的平均值和方差值。如果为 ``False`` ，则使用指定的平均值和方差值。如果为 ``None`` ，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值： ``None`` 。
 
     输入：

@@ -1431,9 +1431,9 @@ class MultiLabelSoftMarginLoss(LossBase):
         \sum_{j = 1}^{C}\left(y_{ij}\log\frac{1}{1 + e^{- x_{ij}}} + \left( 1 - y_{ij}
         \right)\log\frac{e^{-x_{ij}}}{1 + e^{-x_{ij}}} \right)
 
-    where :math:`x{ij}` represents the predicted score of sample :math:`i` for class :math:`j`. :math:`y{ij}`
+    where :math:`x_{ij}` represents the predicted score of sample :math:`i` for class :math:`j`. :math:`y_{ij}`
     represents the binary label of sample :math:`i` for class :math:`j`, where sample :math:`i` belongs to
-    class :math:`j` if :math:`y{ij}=1` , and sample :math:`i` does not belong to class :math:`j` if :math:`y{ij}=0`.
+    class :math:`j` if :math:`y_{ij}=1` , and sample :math:`i` does not belong to class :math:`j` if :math:`y_{ij}=0`.
     For a multi-label classification task, each sample may have multiple labels with a value of 1 in the binary
     label :math:`y`. `weight` will multiply to the loss of each class if given.
 
@@ -1447,7 +1447,7 @@ class MultiLabelSoftMarginLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **x** (Tensor) - A tensor of shape (N, C), where N is batch size and C is number
+        - **x** (Tensor) - A tensor of shape :math:`(N, C)`, where N is batch size and C is number
           of classes.
         - **target** (Tensor) - The label target Tensor which has the same shape as `x`.
 
@@ -1527,7 +1527,7 @@ class MultiMarginLoss(LossBase):
         TypeError: If dtype of `x` is not float16, float or float64.
         TypeError: If dtype of `weight` and `x` is not the same.
         ValueError: If 'p' is not 1 or 2.
-        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
+        ValueError: If 'reduction' is not one of { ``'none'`` , ``'sum'`` , ``'mean'`` }.
         ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
         ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
         ValueError: IF rank of `weight` is not 1.

@@ -74,7 +74,7 @@ mindspore.nn.Conv3dTranspose
         - **TypeError** - 输入数据类型不是float16或float32。
         - **ValueError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 或 `dilation` 小于1。
         - **ValueError** - `padding` 小于0。
-        - **ValueError** - `pad_mode` 不是"same"，"valid"或"pad"。
+        - **ValueError** - `pad_mode` 不是 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。
         - **ValueError** - `padding` 是长度不等于6的tuple。
         - **ValueError** - `pad_mode` 不等于"pad"且 `padding` 不等于(0, 0, 0, 0, 0, 0)。
         - **ValueError** - `data_format` 不是"NCDHW"。

@@ -321,7 +321,7 @@ class LazyAdam(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: ``1e-3`` .
+        learning_rate (Union[float, int, Tensor, Iterable, :class:`~.train.LearningRateSchedule`]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -370,7 +370,7 @@ class LazyAdam(Optimizer):
         Tensor[bool], the value is ``True`` .
 
     Raises:
-        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, :class:`~.train.LearningRateSchedule`.
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
