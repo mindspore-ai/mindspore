@@ -188,7 +188,8 @@ HsvTuple rgb2hsv(const float r, const float g, const float b) {
   const float M = fmaxf(r, fmaxf(g, b));
   const float m = fminf(r, fminf(g, b));
   const float chroma = M - m;
-  float h = 0.0f, s = 0.0f;
+  float h = 0.0f;
+  float s = 0.0f;
   // hue
   if (chroma > 0.0f) {
     if (M == r) {
@@ -246,7 +247,9 @@ uint32_t AdjustHueCpuKernel::DoCompute(const CpuKernelContext &ctx, const Comput
   auto sharder_adjusthue = [&](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
       // CPU compute
-      float h, v_min, v_max;
+      float h;
+      float v_min;
+      float v_max;
       rgb_to_hv_range(static_cast<float>(*(input_data + i)), static_cast<float>(*(input_data + i + 1)),
                       static_cast<float>(*(input_data + i + 2)), &h, &v_min, &v_max);
 

@@ -38,6 +38,7 @@ const uint32_t kInputNum = 2;
 const uint32_t kOutputIndex0 = 0;
 const uint32_t kOutputIndex1 = 1;
 const uint32_t kOutputIndex2 = 2;
+const int kDim2 = 2;
 const char *kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 const int64_t kParallelNum{512};
 
@@ -63,22 +64,22 @@ const std::vector<int64_t> Strides(const std::vector<int64_t> &shape) {
 }  // namespace
 
 namespace aicpu {
-uint32_t GetNumElements(const std::vector<int64_t> &input_shape, int64_t &res) {
+uint32_t GetNumElements(const std::vector<int64_t> &input_shape, int64_t *res) {
   int64_t result = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     KERNEL_CHECK_FALSE(MulWithoutOverflow(input_shape[i], result, result), KERNEL_STATUS_PARAM_INVALID,
                        "Overflow when calculate shape size");
   }
-  res = result;
+  *res = result;
   return KERNEL_STATUS_OK;
 }
 
-uint32_t GroupShape(const std::vector<int64_t> &input_shape, std::vector<int64_t> &grouped_shape) {
-  if (input_shape.size() < 2) {
+uint32_t GroupShape(const std::vector<int64_t> &input_shape, std::vector<int64_t> *grouped_shape) {
+  if (input_shape.size() < kDim2) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // grouped_shape is input_shape[:-1]
-  grouped_shape.assign(input_shape.begin(), input_shape.end() - 1);
+  grouped_shape->assign(input_shape.begin(), input_shape.end() - 1);
   return KERNEL_STATUS_OK;
 }
 
@@ -93,42 +94,42 @@ uint32_t ChecksShapesMatch(const std::vector<int64_t> &shape1, const std::vector
 }
 
 uint32_t GroupShapeFromDenseInputs(const std::vector<int64_t> &shape1, const std::vector<int64_t> &shape2,
-                                   std::vector<int64_t> &group_shape) {
+                                   std::vector<int64_t> *group_shape) {
   std::vector<int64_t> group_shape_1;
-  KERNEL_HANDLE_ERROR(GroupShape(shape1, group_shape_1), "Shape rank is less than 2");
+  KERNEL_HANDLE_ERROR(GroupShape(shape1, &group_shape_1), "Shape rank is less than 2");
   std::vector<int64_t> group_shape_2;
-  KERNEL_HANDLE_ERROR(GroupShape(shape2, group_shape_2), "Shape rank is less than 2");
+  KERNEL_HANDLE_ERROR(GroupShape(shape2, &group_shape_2), "Shape rank is less than 2");
   KERNEL_HANDLE_ERROR(ChecksShapesMatch(group_shape_1, group_shape_2), "Two shapes mismatch with each other.");
-  group_shape.assign(group_shape_1.begin(), group_shape_1.end());
+  group_shape->assign(group_shape_1.begin(), group_shape_1.end());
   return KERNEL_STATUS_OK;
 }
 
 // Split `flat_group_index` into separate dimensions based on `group_shape`.
 void PopulatesGroupIndices(const int64_t flat_group_index, const std::vector<int64_t> &group_shape,
-                           std::vector<int64_t> &group_indices) {
-  group_indices.clear();
+                           std::vector<int64_t> *group_indices) {
+  group_indices->clear();
   int64_t running_flat_group_index = flat_group_index;
   for (int64_t group_dim_index = static_cast<int64_t>(group_shape.size()) - 1; group_dim_index >= 0;
        --group_dim_index) {
     const auto group_dim = group_shape[group_dim_index];
-    group_indices.insert(group_indices.begin(), running_flat_group_index % group_dim);
+    group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
     running_flat_group_index /= group_dim;
   }
 }
 
 template <typename T>
 uint32_t PopulateFromDenseGroup(Tensor *input_tensor, const std::vector<int64_t> &input_strides,
-                                const std::vector<int64_t> &group_indices, std::set<T> &result) {
+                                const std::vector<int64_t> &group_indices, std::set<T> *result) {
   KERNEL_CHECK_FALSE(group_indices.size() == input_strides.size() - 1, KERNEL_STATUS_PARAM_INVALID,
                      "group_indices size is not equal to  input_strides.size-1 ")
-  result.clear();
+  result->clear();
   EigenTensor input_tensor_eigen(input_tensor, input_tensor->GetData());
   auto input_flat = input_tensor_eigen.flat<T>();
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0LL);
   auto input_shape = input_tensor->GetTensorShape();
   const auto end = start + input_shape->GetDimSize(input_shape->GetDims() - 1);
   for (int64_t i = start; i < end; ++i) {
-    result.insert(input_flat(i));
+    result->insert(input_flat(i));
   }
   return KERNEL_STATUS_OK;
 }
@@ -204,7 +205,9 @@ template <typename T>
 uint32_t DenseToDenseSetOperationCpuKernel::OutputSparseTensor(
   const CpuKernelContext &ctx, const std::vector<int64_t> &output_shape, const int64_t num_values,
   const std::map<std::vector<int64_t>, std::set<T>> &sets) {
-  Tensor *out_indices_t, *out_values_t, *out_shape_t;
+  Tensor *out_indices_t;
+  Tensor *out_values_t;
+  Tensor *out_shape_t;
 
   out_indices_t = ctx.Output(kOutputIndex0);
   out_values_t = ctx.Output(kOutputIndex1);
@@ -263,7 +266,7 @@ uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ct
   std::vector<int64_t> group_shape;
   const auto shape1 = set1_t->GetTensorShape()->GetDimSizes();
   const auto shape2 = set2_t->GetTensorShape()->GetDimSizes();
-  KERNEL_HANDLE_ERROR(GroupShapeFromDenseInputs(shape1, shape2, group_shape), "Create group shape error.");
+  KERNEL_HANDLE_ERROR(GroupShapeFromDenseInputs(shape1, shape2, &group_shape), "Create group shape error.");
 
   const auto set1_strides = Strides(shape1);
   const auto set2_strides = Strides(shape2);
@@ -273,17 +276,17 @@ uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ct
   std::atomic<int64_t> max_set_size(0);
 
   int64_t num_elements;
-  KERNEL_HANDLE_ERROR(GetNumElements(group_shape, num_elements), "Get numelements failed.");
+  KERNEL_HANDLE_ERROR(GetNumElements(group_shape, &num_elements), "Get numelements failed.");
 
   if (num_elements <= kParallelNum) {
     std::set<T> set1_group_set;
     std::set<T> set2_group_set;
     std::vector<int64_t> group_indices;
     for (int64_t flat_group_index = 0; flat_group_index < num_elements; ++flat_group_index) {
-      PopulatesGroupIndices(flat_group_index, group_shape, group_indices);
-      KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set1_t, set1_strides, group_indices, set1_group_set),
+      PopulatesGroupIndices(flat_group_index, group_shape, &group_indices);
+      KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set1_t, set1_strides, group_indices, &set1_group_set),
                           "PopulateFromDenseGroup set1 compute failed");
-      KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set2_t, set2_strides, group_indices, set2_group_set),
+      KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set2_t, set2_strides, group_indices, &set2_group_set),
                           "PopulateFromDenseGroup set2 compute failed");
 
       std::set<T> group_set;
@@ -307,10 +310,10 @@ uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ct
       std::set<T> set2_group_set;
       std::vector<int64_t> group_indices;
       for (int64_t flat_group_index = begin; flat_group_index < end; ++flat_group_index) {
-        PopulatesGroupIndices(flat_group_index, group_shape, group_indices);
-        KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set1_t, set1_strides, group_indices, set1_group_set),
+        PopulatesGroupIndices(flat_group_index, group_shape, &group_indices);
+        KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set1_t, set1_strides, group_indices, &set1_group_set),
                             "PopulateFromDenseGroup set1 compute failed");
-        KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set2_t, set2_strides, group_indices, set2_group_set),
+        KERNEL_HANDLE_ERROR(PopulateFromDenseGroup<T>(set2_t, set2_strides, group_indices, &set2_group_set),
                             "PopulateFromDenseGroup set2 compute failed");
         std::set<T> group_set;
         ApplySetOperation(set1_group_set, set2_group_set, group_set);

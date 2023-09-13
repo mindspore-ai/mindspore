@@ -182,7 +182,8 @@ uint32_t SspaddmmCpuKernel::BoundaryCheck(Tensor *tensor, Tensor *shape_tensor, 
     KERNEL_LOG_ERROR("For sspaddmm, sparse tensor shape should be positive num but get [%d, %d]", row, col);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  int64_t row_tmp, col_tmp;
+  int64_t row_tmp;
+  int64_t col_tmp;
   T1 *addr = reinterpret_cast<T1 *>(tensor->GetData());
   uint32_t data_num = static_cast<uint32_t>(nums);
   if (data_num >= kParallelDataNumSameShape_) {

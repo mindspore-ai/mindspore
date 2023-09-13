@@ -110,15 +110,19 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
     typedef Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenArrayMap;
     typedef Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> EigenArrayMap;
     const int64_t X_W = static_cast<int64_t>(params.tensor_cols), X_H = static_cast<int64_t>(params.tensor_rows);
-    const int64_t Y_W = params.out_width, Y_H = params.out_height;
+    const int64_t Y_W = params.out_width;
+    const int64_t Y_H = params.out_height;
     const int64_t batch_size = limit;
-    const int64_t X_HxW = X_H * X_W, Y_HxW = Y_H * Y_W;
-    const int64_t X_stride = X_HxW, Y_stride = Y_HxW;
-    const int64_t stride_h = static_cast<int64_t>(params.strides_rows),
-                  stride_w = static_cast<int64_t>(params.strides_cols);
-    const int64_t pad_t = params.pad_top, pad_l = params.pad_left;
-    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows),
-                  kernel_w = static_cast<int64_t>(params.ksize_cols);
+    const int64_t X_HxW = X_H * X_W;
+    const int64_t Y_HxW = Y_H * Y_W;
+    const int64_t X_stride = X_HxW;
+    const int64_t Y_stride = Y_HxW;
+    const int64_t stride_h = static_cast<int64_t>(params.strides_rows);
+    const int64_t stride_w = static_cast<int64_t>(params.strides_cols);
+    const int64_t pad_t = params.pad_top;
+    const int64_t pad_l = params.pad_left;
+    const int64_t kernel_h = static_cast<int64_t>(params.ksize_rows);
+    const int64_t kernel_w = static_cast<int64_t>(params.ksize_cols);
     const T *dy_ptr = grad_ptr + start * Y_stride;
     const T *x_ptr = orig_input_ptr + start * X_stride;
     const T *y_ptr = orig_output_ptr + start * Y_stride;
@@ -136,7 +140,8 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
           const int64_t r = std::min(w * stride_w - pad_l + kernel_w, X_W);
           const int64_t y = h * Y_W + w;
           auto some_max_block = (x_arr.block(l, t, r - l, b - t) == y_arr(y)).template cast<T>();
-          int64_t first_max_x_rel = 0, first_max_y_rel = 0;
+          int64_t first_max_x_rel = 0;
+          int64_t first_max_y_rel = 0;
           bool max_found = false;
           for (int64_t by = 0; by < b - t; ++by) {
             for (int64_t bx = 0; bx < r - l; ++bx) {
@@ -149,7 +154,8 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
               break;
             }
           }
-          const int64_t fact_index_h = t + first_max_y_rel, fact_index_w = l + first_max_x_rel;
+          const int64_t fact_index_h = t + first_max_y_rel;
+          const int64_t fact_index_w = l + first_max_x_rel;
           *(dx_ptr + fact_index_h * X_W + fact_index_w) += static_cast<T>(1) * dy_arr(y);
         }
       }
@@ -269,7 +275,7 @@ uint32_t SpatialMaxPoolWithArgMaxHelper(CpuKernelContext &ctx, const PoolParams 
     return CpuKernelUtils::ParallelFor(ctx, params.tensor_batch, params.tensor_batch / max_core_num, shard);
   }
 }
-uint32_t CheckMaxPoolGrad(CpuKernelContext &ctx) {
+uint32_t CheckMaxPoolGrad(const CpuKernelContext &ctx) {
   Tensor *tensor_in = ctx.Input(kFirstInputIndex);
   Tensor *tensor_out = ctx.Input(kSecondInputIndex);
   Tensor *out_backprop = ctx.Input(kThirdInputIndex);
@@ -299,7 +305,8 @@ uint32_t CheckMaxPoolGrad(CpuKernelContext &ctx) {
 uint32_t GetOutputSizeGrad(int input_size, int kernel_size, int stride, const std::string &padding,
                            int64_t *output_size, int64_t *padding_before, int64_t *padding_after) {
   KERNEL_CHECK_FALSE(stride > 0, KERNEL_STATUS_PARAM_INVALID, "[MaxPoolGrad] Stride must be positive.");
-  std::string same("SAME"), valid("VALID");
+  std::string same("SAME");
+  std::string valid("VALID");
   if (valid == padding) {
     *output_size = (input_size - kernel_size + stride) / stride;
     *padding_before = 0;
@@ -320,12 +327,13 @@ uint32_t GetOutputSizeGrad(int input_size, int kernel_size, int stride, const st
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorShape &data_format, PoolParams &params) {
+uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorShape &data_format, PoolParams *params) {
   Format format = data_format.GetFormat();
   KERNEL_CHECK_FALSE((format == FORMAT_NHWC || format == FORMAT_NCHW), KERNEL_STATUS_PARAM_INVALID,
                      "[MaxPoolGrad] Format is not NHWC or NCHW.");
   std::vector<int64_t> tensor_in_shapes = data_format.GetDimSizes();
-  std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt(), strides = ctx.GetAttr("strides")->GetListInt();
+  std::vector<int64_t> ksize = ctx.GetAttr("ksize")->GetListInt();
+  std::vector<int64_t> strides = ctx.GetAttr("strides")->GetListInt();
   std::string padding = ctx.GetAttr("padding")->GetString();
   std::string data_format_str = "";
   if (ctx.GetAttr("data_format") == nullptr) {
@@ -341,28 +349,28 @@ uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorSh
   }
   switch (format) {
     case FORMAT_NHWC:
-      params.depth = tensor_in_shapes[kFormatNHWCIndexC];
-      params.tensor_rows = tensor_in_shapes[kFormatNHWCIndexH];
-      params.tensor_cols = tensor_in_shapes[kFormatNHWCIndexW];
-      params.tensor_batch = tensor_in_shapes[kFormatNHWCIndexN];
-      params.ksize_rows = ksize[kFormatNHWCIndexH];
-      params.ksize_cols = ksize[kFormatNHWCIndexW];
-      params.ksize_depth = ksize[kFormatNHWCIndexC];
-      params.strides_rows = strides[kFormatNHWCIndexH];
-      params.strides_cols = strides[kFormatNHWCIndexW];
-      params.strides_depth = strides[kFormatNHWCIndexC];
+      (*params).depth = tensor_in_shapes[kFormatNHWCIndexC];
+      (*params).tensor_rows = tensor_in_shapes[kFormatNHWCIndexH];
+      (*params).tensor_cols = tensor_in_shapes[kFormatNHWCIndexW];
+      (*params).tensor_batch = tensor_in_shapes[kFormatNHWCIndexN];
+      (*params).ksize_rows = ksize[kFormatNHWCIndexH];
+      (*params).ksize_cols = ksize[kFormatNHWCIndexW];
+      (*params).ksize_depth = ksize[kFormatNHWCIndexC];
+      (*params).strides_rows = strides[kFormatNHWCIndexH];
+      (*params).strides_cols = strides[kFormatNHWCIndexW];
+      (*params).strides_depth = strides[kFormatNHWCIndexC];
       break;
     case FORMAT_NCHW:
-      params.depth = tensor_in_shapes[kFormatNCHWIndexC];
-      params.tensor_rows = tensor_in_shapes[kFormatNCHWIndexH];
-      params.tensor_cols = tensor_in_shapes[kFormatNCHWIndexW];
-      params.tensor_batch = tensor_in_shapes[kFormatNCHWIndexN];
-      params.ksize_rows = ksize[kFormatNCHWIndexH];
-      params.ksize_cols = ksize[kFormatNCHWIndexW];
-      params.ksize_depth = ksize[kFormatNCHWIndexC];
-      params.strides_rows = strides[kFormatNCHWIndexH];
-      params.strides_cols = strides[kFormatNCHWIndexW];
-      params.strides_depth = strides[kFormatNCHWIndexC];
+      (*params).depth = tensor_in_shapes[kFormatNCHWIndexC];
+      (*params).tensor_rows = tensor_in_shapes[kFormatNCHWIndexH];
+      (*params).tensor_cols = tensor_in_shapes[kFormatNCHWIndexW];
+      (*params).tensor_batch = tensor_in_shapes[kFormatNCHWIndexN];
+      (*params).ksize_rows = ksize[kFormatNCHWIndexH];
+      (*params).ksize_cols = ksize[kFormatNCHWIndexW];
+      (*params).ksize_depth = ksize[kFormatNCHWIndexC];
+      (*params).strides_rows = strides[kFormatNCHWIndexH];
+      (*params).strides_cols = strides[kFormatNCHWIndexW];
+      (*params).strides_depth = strides[kFormatNCHWIndexC];
       break;
     default:
       KERNEL_LOG_ERROR("[MaxPoolGrad] Format is not NHWC or NCHW, current is [%d].", format);
@@ -370,17 +378,17 @@ uint32_t ConstructPoolParams(aicpu::CpuKernelContext &ctx, const aicpu::TensorSh
   }
   // 1 types of pooling is supported: 2d pooling on w/h
   // depth pooling on channel is not supported
-  KERNEL_CHECK_FALSE(params.ksize_depth == 1, KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((*params).ksize_depth == 1, KERNEL_STATUS_PARAM_INVALID,
                      "[MaxPoolGrad] Only pooling on width/height is supported.");
   // Padding calc
-  if (params.ksize_depth == 1) {
-    uint32_t ret1 = GetOutputSizeGrad(params.tensor_rows, params.ksize_rows, params.strides_rows, padding,
-                                      &params.out_height, &params.pad_top, &params.pad_bottom);
-    uint32_t ret2 = GetOutputSizeGrad(params.tensor_cols, params.ksize_cols, params.strides_cols, padding,
-                                      &params.out_width, &params.pad_left, &params.pad_right);
+  if ((*params).ksize_depth == 1) {
+    uint32_t ret1 = GetOutputSizeGrad((*params).tensor_rows, (*params).ksize_rows, (*params).strides_rows, padding,
+                                      &(*params).out_height, &(*params).pad_top, &(*params).pad_bottom);
+    uint32_t ret2 = GetOutputSizeGrad((*params).tensor_cols, (*params).ksize_cols, (*params).strides_cols, padding,
+                                      &(*params).out_width, &(*params).pad_left, &(*params).pad_right);
     KERNEL_CHECK_FALSE(ret1 == KERNEL_STATUS_OK && ret2 == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
                        "[MaxPoolGrad] An error occurred while calculating output size.");
-    params.out_depth = params.depth;
+    (*params).out_depth = (*params).depth;
   }
   return KERNEL_STATUS_OK;
 }
@@ -388,7 +396,7 @@ template <class T>
 uint32_t ComputeMaxPoolGradImpl(CpuKernelContext &ctx) {
   TensorShape ts = *(ctx.Input(kFirstInputIndex)->GetTensorShape());
   PoolParams params;
-  KERNEL_CHECK_FALSE(ConstructPoolParams(ctx, ts, params) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE(ConstructPoolParams(ctx, ts, &params) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
                      "[MaxPoolGrad] Parameters construct failed.")
   return SpatialMaxPoolWithArgMaxHelper<T, int64_t>(ctx, params);
 }

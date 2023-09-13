@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "upsample_trilinear3d.h"
+#include "cpu_kernel/ms_kernel/upsample_trilinear3d.h"
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "securec.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "securec/include/securec.h"
+#include "cpu_kernel/common/status.h"
 #include "utils/eigen_tensor.h"
 
 namespace {
@@ -78,23 +78,23 @@ static inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool ali
 }
 
 template <typename T>
-static inline void ComputeSourceIndexAndLambda(int64_t &input_index0, int64_t &input_index1, T &lambda0, T &lambda1,
+static inline void ComputeSourceIndexAndLambda(int64_t *input_index0, int64_t *input_index1, T *lambda0, T *lambda1,
                                                T ratio, int64_t output_index, int64_t input_size, int64_t output_size,
                                                bool align_corners) {
   if (output_size == input_size) {
     // scale_factor = 1
-    input_index0 = output_index;
-    input_index1 = output_index;
-    lambda0 = static_cast<T>(1);
-    lambda1 = static_cast<T>(0);
+    *input_index0 = output_index;
+    *input_index1 = output_index;
+    *lambda0 = static_cast<T>(1);
+    *lambda1 = static_cast<T>(0);
   } else {
     const T real_input_index = AreaPixelComputeSourceIndex<T>(ratio, output_index, align_corners);
-    input_index0 = static_cast<int64_t>(real_input_index);
-    int64_t offset = (input_index0 < input_size - 1) ? 1 : 0;
-    input_index1 = input_index0 + offset;
-    lambda1 = real_input_index - input_index0;
+    *input_index0 = static_cast<int64_t>(real_input_index);
+    int64_t offset = (*input_index0 < input_size - 1) ? 1 : 0;
+    *input_index1 = *input_index0 + offset;
+    *lambda1 = real_input_index - *input_index0;
     constexpr T one = 1.0;
-    lambda0 = one - lambda1;
+    *lambda0 = one - *lambda1;
   }
 }
 
@@ -157,18 +157,28 @@ void UpsampleTrilinear3dCpuKernel::InnerCompute(int64_t n, const T *x_ptr, T *y_
   auto input_indexr_value = [=](int64_t n, int64_t d, int64_t h, int64_t w) {
     return x_ptr[n * input_slice_size + d * input_height * input_width + h * input_width + w];
   };
-  int64_t id0, id1, ih0, ih1, iw0, iw1;
-  S d0lambda, d1lambda, h0lambda, h1lambda, w0lambda, w1lambda;
+  int64_t id0;
+  int64_t id1;
+  int64_t ih0;
+  int64_t ih1;
+  int64_t iw0;
+  int64_t iw1;
+  S d0lambda;
+  S d1lambda;
+  S h0lambda;
+  S h1lambda;
+  S w0lambda;
+  S w1lambda;
 
   for (int64_t od = 0; od < output_depth; ++od) {
-    ComputeSourceIndexAndLambda(id0, id1, d0lambda, d1lambda, depth_scale, od, input_depth, output_depth,
+    ComputeSourceIndexAndLambda(&id0, &id1, &d0lambda, &d1lambda, depth_scale, od, input_depth, output_depth,
                                 align_corners);
 
     for (int64_t oh = 0; oh < output_height; ++oh) {
-      ComputeSourceIndexAndLambda(ih0, ih1, h0lambda, h1lambda, height_scale, oh, input_height, output_height,
+      ComputeSourceIndexAndLambda(&ih0, &ih1, &h0lambda, &h1lambda, height_scale, oh, input_height, output_height,
                                   align_corners);
       for (int64_t ow = 0; ow < output_width; ++ow) {
-        ComputeSourceIndexAndLambda(iw0, iw1, w0lambda, w1lambda, width_scale, ow, input_width, output_width,
+        ComputeSourceIndexAndLambda(&iw0, &iw1, &w0lambda, &w1lambda, width_scale, ow, input_width, output_width,
                                     align_corners);
         auto i000 = static_cast<S>(input_indexr_value(n, id0, ih0, iw0));
         auto i001 = static_cast<S>(input_indexr_value(n, id0, ih0, iw1));

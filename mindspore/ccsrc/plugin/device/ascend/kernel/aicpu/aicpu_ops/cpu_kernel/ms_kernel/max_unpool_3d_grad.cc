@@ -24,8 +24,8 @@
 #include "utils/kernel_util.h"
 
 namespace {
-const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
+const uint32_t kOutputNum = 1;
 constexpr int64_t kParallelDataNums = 1024;
 const char *kMaxUnpool3DGrad = "MaxUnpool3DGrad";
 
@@ -132,7 +132,11 @@ uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCompute(const CpuKernelContext
   if (ctx.GetAttr("data_format") != nullptr) {
     dataFormat = ctx.GetAttr("data_format")->GetString();
   }
-  int32_t NIndex, CIndex, DIndex, HIndex, WIndex;
+  int32_t NIndex;
+  int32_t CIndex;
+  int32_t DIndex;
+  int32_t HIndex;
+  int32_t WIndex;
   bool error = false;
   if (dataFormat == "NDHWC") {
     NIndex = 0;

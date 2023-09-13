@@ -54,7 +54,8 @@ template <>
 inline std::uint32_t ParallelForAddV2<std::int64_t>(const CpuKernelContext &ctx, std::int64_t total,
                                                     std::int64_t per_unit_size,
                                                     const std::function<void(std::int64_t, std::int64_t)> &work) {
-  if (total > 32 * 1024)
+  const std::int64_t kNumber1 = 32;
+  if (total > kNumber1 * 1024)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
   else
     work(0, total);
@@ -65,7 +66,8 @@ template <>
 inline std::uint32_t ParallelForAddV2<std::double_t>(const CpuKernelContext &ctx, std::int64_t total,
                                                      std::int64_t per_unit_size,
                                                      const std::function<void(std::int64_t, std::int64_t)> &work) {
-  if (total > 16 * 1024)
+  const std::int64_t kNumber2 = 16;
+  if (total > kNumber2 * 1024)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
   else
     work(0, total);

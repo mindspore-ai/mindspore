@@ -281,7 +281,8 @@ uint32_t InstanceNormV2CpuKernel::CollectLinearAndConstant(
   float *_beta_) {
   auto loop_instance = [&](int64_t begin, int64_t end) {
     for (int64_t idx = begin; idx < end; ++idx) {
-      float mean = float_init_zero, invstd = float_init_zero;
+      float mean = float_init_zero;
+      float invstd = float_init_zero;
       if (is_training_) {
         mean = save_mean(idx);
         invstd = save_invstd(idx);

@@ -247,8 +247,8 @@ uint32_t SetSizeCpuKernel::SetSizeCompute_string(CpuKernelContext &ctx, SparseTe
   std::vector<int64_t> group_ix(dims_ - 1);
   std::iota(group_ix.begin(), group_ix.end(), 0);
   std::vector<int64_t> strides(dims_);
-  auto shape_t = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
   int64_t num2 = 2;
+  auto shape_t = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
   if (dims_ > 1) {
     strides[dims_ - num2] = 1;
   }

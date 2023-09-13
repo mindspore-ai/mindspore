@@ -85,7 +85,8 @@ uint32_t DepthToSpaceCpuKernel::DoCompute(CpuKernelContext &ctx) {
       if (j % output_dims[h_nhwc] == 0) {
         ++x;
       }
-      size_t number = 0, output_pos = 0;
+      size_t number = 0;
+      size_t output_pos = 0;
       size_t loc = j / output_dims[h_nhwc];
       number += (loc / (output_dims[w_nhwc] * output_dims[c_nhwc])) * output_dims[w_nhwc] * output_dims[c_nhwc];
       // Mark the position of this segment of the vector in the entire segment.

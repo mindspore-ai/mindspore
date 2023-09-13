@@ -60,7 +60,12 @@ static inline scalar_t zeta(scalar_t x, scalar_t q) {
                                -7.1661652561756670113e18};
 
   int i = 0;
-  scalar_t a, b, k, s, t, w;
+  scalar_t a;
+  scalar_t b;
+  scalar_t k;
+  scalar_t s;
+  scalar_t t;
+  scalar_t w;
   if (x == one) {
     return std::numeric_limits<scalar_t>::infinity();
   }
