@@ -192,11 +192,13 @@ class TripletMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     input_shapes.insert(input_shapes.end(), positive_shape_.begin(), positive_shape_.end());
     input_shapes.insert(input_shapes.end(), negative_shape_.begin(), negative_shape_.end());
     input_shapes.insert(input_shapes.end(), dst_shape_.begin(), dst_shape_.end());
-    int64_t *anchor_shape_ptr = nullptr, *dst_shape_ptr = nullptr;
+    int64_t *anchor_shape_ptr = nullptr;
+    int64_t *dst_shape_ptr = nullptr;
     float *tem_output_ptr = nullptr;
     size_t *bound_list_ptr = nullptr;
-    T *anchor_broadcast_ptr = anchor_ptr, *positive_broadcast_ptr = positive_ptr,
-      *negative_broadcast_ptr = positive_ptr;
+    T *anchor_broadcast_ptr = anchor_ptr;
+    T *positive_broadcast_ptr = positive_ptr;
+    T *negative_broadcast_ptr = positive_ptr;
     flag = GetDeviceAddress<int64_t>(work_ptrs, kzero, kernel_name_, &anchor_shape_ptr);
     if (flag != 0) {
       return flag;
