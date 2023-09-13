@@ -1462,6 +1462,36 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
   }
 }
 
+static std::shared_ptr<TensorLayout> GenerateTensorLayoutForParamReshapeWithStra(const AnfNodePtr &node,
+                                                                                 const Dimensions input_stra) {
+  CheckGlobalDeviceManager();
+  int64_t dev_num = g_device_manager->stage_device_num();
+  MS_EXCEPTION_IF_ZERO("dev_num", dev_num);
+
+  Shapes inputs_shape = GetNodeShape(node);
+  Shape param_shape = inputs_shape[0];
+
+  Shape param_dev_matrix_shape(input_stra.size() + 1, 0);
+  for (size_t i = param_dev_matrix_shape.size() - 1; i > 0; i--) {
+    param_dev_matrix_shape[i] = input_stra[i - 1];
+  }
+  param_dev_matrix_shape[0] =
+    dev_num / std::accumulate(input_stra.begin(), input_stra.end(), 1, std::multiplies<int64_t>());
+
+  TensorMap param_tensor_map;
+  for (size_t i = 0; i < param_shape.size(); ++i) {
+    param_tensor_map.push_back(static_cast<int64_t>(param_shape.size() - i - 1));
+  }
+
+  TensorLayout param_layout;
+
+  if (param_layout.InitFromVector(param_dev_matrix_shape, param_tensor_map, param_shape) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Infer param-Reshape with strategy tensor layout failed.";
+  }
+
+  return std::make_shared<TensorLayout>(param_layout);
+}
+
 static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding the next tensor layout for the parameter, exceeded the maximum recursion depth: "
@@ -1487,8 +1517,21 @@ static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &n
     MS_EXCEPTION_IF_NULL(prim_anf_node);
     PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(node_prim);
-    if ((node_prim->name() == DEPEND && node_pair.second != 1) || node_prim->name() == RESHAPE) {
+    if (node_prim->name() == DEPEND && node_pair.second != 1) {
       continue;
+    }
+    if (node_prim->name() == RESHAPE) {
+      auto attrs_temp = node_prim->attrs();
+      if (!StrategyFound(attrs_temp)) {
+        continue;
+      }
+      StrategyPtr strategy = ExtractStrategy(attrs_temp[IN_STRATEGY]);
+      Strategies stra = strategy->GetInputDim();
+      Dimensions input_strategy = stra.at(0);
+
+      auto param_layout = GenerateTensorLayoutForParamReshapeWithStra(node, input_strategy);
+
+      return param_layout;
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       auto layout = GetInputLayoutFromCNode(node_pair);
