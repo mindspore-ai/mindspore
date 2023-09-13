@@ -345,6 +345,7 @@ class DfGraphConvertor {
   bool is_kernel_graph_ = false;
 
   std::string phase_prefix_;
+  void AddInputInDataSink(vector<Operator> *inputs);
 };
 }  // namespace transform
 }  // namespace mindspore

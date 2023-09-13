@@ -162,17 +162,18 @@ GeFormat TransformUtil::ConvertFormat(const string &format, const size_t shape_s
   return iter->second;
 }
 
-std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &me_shape, const MeDataType &me_type,
-                                                             const std::string &format, const ShapeVector &ori_shape,
-                                                             const std::string &ori_format) {
+std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &ori_shape, const MeDataType &me_type,
+                                                             const std::string &ori_format,
+                                                             const ShapeVector &dev_shape,
+                                                             const std::string &dev_format) {
   // convert me shape to ge shape
-  GeShape shape(me_shape);
-  if (shape.GetDimNum() == 0) {
+  GeShape ori_ge_shape(ori_shape);
+  if (ori_ge_shape.GetDimNum() == 0) {
     MS_LOG(DEBUG) << "The dims size of Ge tensor is zero";
   }
   // convert me format to ge format
-  GeFormat ge_format = ConvertFormat(format, me_shape.size());
-  if (ge_format == GeFormat::FORMAT_ND) {
+  GeFormat ori_ge_format = ConvertFormat(ori_format, ori_shape.size());
+  if (ori_ge_format == GeFormat::FORMAT_ND) {
     MS_LOG(DEBUG) << "Set ND data format";
   }
   // convert me datatype to ge datatype
@@ -181,25 +182,24 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
     MS_LOG(ERROR) << "undefined data type :" << me_type;
     return nullptr;
   }
-
-  auto desc = std::make_shared<GeTensorDesc>(shape, ge_format, data_type);
+  auto desc = std::make_shared<GeTensorDesc>();
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Create GeTensorDesc failed!";
     return nullptr;
   }
+  // set ori shape and format.
+  desc->SetOriginShape(ori_ge_shape);
+  desc->SetOriginFormat(ori_ge_format);
+  desc->SetDataType(data_type);
 
-  if (!ori_shape.empty()) {
-    GeShape ge_ori_shape(ori_shape);
-    desc->SetOriginShape(ge_ori_shape);
-  }
+  // set device shape and format, if value is empty, use ori shape and format replace.
+  auto dev_ge_shape = dev_shape.empty() ? ori_ge_shape : GeShape(dev_shape);
+  GeFormat dev_ge_format = dev_format.empty() ? ori_ge_format : ConvertFormat(dev_format, dev_ge_shape.GetDimNum());
+  desc->SetShape(dev_ge_shape);
+  desc->SetFormat(dev_ge_format);
 
-  if (!ori_format.empty()) {
-    GeFormat ge_ori_format = ConvertFormat(ori_format, ori_shape.size());
-    desc->SetOriginFormat(ge_ori_format);
-  }
-
-  MS_LOG(DEBUG) << "SetRealDimCnt is :" << me_shape.size();
-  desc->SetRealDimCnt(SizeToInt(me_shape.size()));
+  MS_LOG(DEBUG) << "SetRealDimCnt is :" << ori_shape.size();
+  desc->SetRealDimCnt(SizeToInt(ori_shape.size()));
   return desc;
 }
 

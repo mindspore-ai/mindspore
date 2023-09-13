@@ -97,6 +97,7 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
   MS_EXCEPTION_IF_NULL(option);
   auto enable_io_reuse = common::GetEnv("MS_ENABLE_IO_REUSE");
   auto enable_fea_refreshable = common::GetEnv("MS_FEA_REFRESHABLE");
+  MS_LOG(INFO) << "Enable io reuse: " << enable_io_reuse << ", refreshable: " << enable_fea_refreshable;
   if (enable_io_reuse != "1" || enable_fea_refreshable != "1" || !common::IsEnableRefMode()) {
     return;
   }
