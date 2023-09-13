@@ -73,6 +73,7 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &outputs) {
   const auto data_addr = GetDeviceAddress<T>(inputs, kDataIndex);
   const auto idx_addr = GetDeviceAddress<int64_t>(inputs, kIdxIndex);
+  MS_EXCEPTION_IF_NULL(idx_addr);
   const auto value_addr = GetDeviceAddress<T>(inputs, kValueIndex);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   int64_t idx = idx_addr[0];
@@ -85,6 +86,8 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                       << "} is not equal to the size of output: {" << output_size << "}";
   }
   if (input_size != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
+    MS_EXCEPTION_IF_NULL(data_addr);
     auto cp_ret = memcpy_s(output_addr, output_size, data_addr, input_size);
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
@@ -101,6 +104,8 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
   size_t out_offset = static_cast<size_t>(idx) * element_size;
   if (element_size != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
+    MS_EXCEPTION_IF_NULL(value_addr);
     auto cp_ret = memcpy_s(output_addr + out_offset, element_size * sizeof(T), value_addr, element_size * sizeof(T));
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;

@@ -54,6 +54,7 @@ bool ShapeMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
                                         const std::vector<AddressPtr> &outputs) {
   int64_t *input_addr = GetDeviceAddress<int64_t>(inputs, 0);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   *output_addr = 1;
   for (int64_t i = 0; i < input_shape_[0]; i++) {
     *output_addr *= input_addr[i];

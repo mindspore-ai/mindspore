@@ -54,7 +54,9 @@ template <typename T, typename S>
 bool ScalarCastCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto ele_addr = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(ele_addr);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   *output_addr = static_cast<S>(ele_addr[0]);
   return true;
 }

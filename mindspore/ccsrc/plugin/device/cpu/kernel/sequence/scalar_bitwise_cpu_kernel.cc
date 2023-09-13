@@ -84,8 +84,11 @@ bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
   T *input_x = GetDeviceAddress<T>(inputs, kInputx);
+  MS_EXCEPTION_IF_NULL(input_x);
   S *input_y = GetDeviceAddress<S>(inputs, kInputy);
+  MS_EXCEPTION_IF_NULL(input_y);
   N *output = GetDeviceAddress<N>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output);
   auto x = static_cast<N>(*input_x);
   auto y = static_cast<N>(*input_y);
   if (kernel_type_ == kScalarBitwiseAnd) {

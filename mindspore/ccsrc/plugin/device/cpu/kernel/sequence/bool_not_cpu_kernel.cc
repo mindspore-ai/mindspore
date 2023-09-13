@@ -62,7 +62,9 @@ bool BoolNotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input_x);
   bool *output = GetDeviceAddress<bool>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output);
   *output = !static_cast<bool>(*input_x);
   return true;
 }
