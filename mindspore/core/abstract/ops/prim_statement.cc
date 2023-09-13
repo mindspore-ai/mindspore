@@ -139,15 +139,28 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   return b;
 }
 
-std::vector<ValuePtr> GetSupportedTargetValue() {
+bool SupportedIsTargetValue(const ValuePtr t) {
   std::vector<ValuePtr> list = {kNone, MakeValue(false), MakeValue(true)};
-  return list;
+  return std::any_of(list.begin(), list.end(), [&t](const ValuePtr &v) { return *v == *t; });
 }
 
-bool SupportedIsTargetValue(const ValuePtr t) {
-  auto list = GetSupportedTargetValue();
-  auto match = std::any_of(list.begin(), list.end(), [&t](const ValuePtr &v) { return *v == *t; });
-  return match;
+bool CheckIfDataIsTarget(const std::string &op_name, const AbstractBasePtr &data_abs,
+                         const AbstractBasePtr &target_abs) {
+  // Check if data and target are both None.
+  if (data_abs->isa<AbstractNone>() || target_abs->isa<AbstractNone>()) {
+    return data_abs->isa<AbstractNone>() && target_abs->isa<AbstractNone>();
+  }
+  const auto &target_value = target_abs->BuildValue();
+  const auto &target_type = target_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(target_value);
+  MS_EXCEPTION_IF_NULL(target_type);
+  if (!SupportedIsTargetValue(target_value) && !target_type->isa<TypeType>()) {
+    MS_LOG(EXCEPTION) << "For syntax like 'a " << op_name << " b', b supports True, False, None and Type, but got "
+                      << target_value->ToString();
+  }
+  const auto &data_value = data_abs->BuildValue();
+  MS_EXCEPTION_IF_NULL(data_value);
+  return *data_value == *target_value;
 }
 
 AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -157,18 +170,10 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
   constexpr size_t kInputsNum = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_abs_list, kInputsNum);
-  ValuePtr x = args_abs_list[0]->BuildValue();
-  ValuePtr t = args_abs_list[1]->BuildValue();
-
-  if (args_abs_list[0]->isa<abstract::AbstractType>() && args_abs_list[1]->isa<abstract::AbstractType>()) {
-    return std::make_shared<AbstractScalar>(*t == *x);
-  } else if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
-    return std::make_shared<AbstractScalar>(true);
-  } else if (!SupportedIsTargetValue(t) && !args_abs_list[1]->isa<abstract::AbstractType>()) {
-    MS_LOG(EXCEPTION) << "For syntax like 'a is b', b supports True, False, None and Type, but got " << t->ToString();
-  }
-
-  return std::make_shared<AbstractScalar>(*t == *x);
+  constexpr size_t data_index = 0;
+  constexpr size_t target_index = 1;
+  bool res = CheckIfDataIsTarget("is", args_abs_list[data_index], args_abs_list[target_index]);
+  return std::make_shared<AbstractScalar>(res);
 }
 
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -178,19 +183,10 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
   constexpr size_t kInputsNum = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_abs_list, kInputsNum);
-  ValuePtr x = args_abs_list[0]->BuildValue();
-  ValuePtr t = args_abs_list[1]->BuildValue();
-
-  if (args_abs_list[0]->isa<abstract::AbstractType>() && args_abs_list[1]->isa<abstract::AbstractType>()) {
-    return std::make_shared<AbstractScalar>(!(*t == *x));
-  } else if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
-    return std::make_shared<AbstractScalar>(false);
-  } else if (!SupportedIsTargetValue(t) && !args_abs_list[1]->isa<abstract::AbstractType>()) {
-    MS_LOG(EXCEPTION) << "For syntax like 'a is not b', b supports True, False, None and Type, but got "
-                      << t->ToString();
-  }
-
-  return std::make_shared<AbstractScalar>(!(*t == *x));
+  constexpr size_t data_index = 0;
+  constexpr size_t target_index = 1;
+  bool res = CheckIfDataIsTarget("is not", args_abs_list[data_index], args_abs_list[target_index]);
+  return std::make_shared<AbstractScalar>(!res);
 }
 
 bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list) {
