@@ -23,13 +23,19 @@ from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 
 def load_mindir(file_name):
     """
-    Read protobuf file.
+    load protobuf file.
 
     Args:
         file_name (str): File name.
 
     Returns:
-        Object, proto object.
+        ModelProto, mindir proto object.
+
+    Raises:
+        ValueError: The file does not exist or the file name format is incorrect.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -59,11 +65,15 @@ def save_mindir(model, file_name):
     save protobuf file.
 
     Args:
-        model (python object): mindir model
+        model (ModelProto): mindir model
         file_name (str): File name.
 
-    Returns:
-        None.
+    Raises:
+        TypeError: The argument `model` is not a ModelProto object.
+        ValueError: The file path does not exist or the `file_name` format is incorrect.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -72,14 +82,13 @@ def save_mindir(model, file_name):
         >>> ms.save_mindir(md,"test_new.mindir")
         >>> md_new = ms.load_mindir("test_new.mindir")
         >>> md_new.user_info
-            {'version': 'pangu v100'}
     """
 
     Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
 
     if not isinstance(model, mindir_model):
-        raise TypeError("For 'save_mindir', the argument 'model' must be mindir model, "
+        raise TypeError("For 'save_mindir', the argument 'model' must be ModelProto, "
                         "but got {}.".format(type(model)))
     try:
         with open(file_name, "wb") as f:
