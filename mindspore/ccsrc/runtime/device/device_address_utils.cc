@@ -209,8 +209,12 @@ std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateDeviceAddressFor
 
 mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const KernelGraphPtr &graph) {
   mindspore::HashSet<mindspore::AnfNodePtr> nodes;
-  const auto &execution_order = graph->execution_order();
-  for (auto const &node : execution_order) {
+  auto topo_nodes = TopoSort(graph->get_return());
+  for (auto const &n : topo_nodes) {
+    if (!n->isa<CNode>()) {
+      continue;
+    }
+    auto node = n->cast<CNodePtr>();
     auto op_name = common::AnfAlgo::GetCNodeName(node);
     auto input_num = common::AnfAlgo::GetInputNum(node);
     mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
@@ -289,8 +293,8 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, GetTypeByte(TypeIdToType(type_id)),
                                                                          kOpFormat_DEFAULT, type_id, ShapeVector());
     }
-    // Deal with string and scalar
-    if (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end()) {
+    // Deal with string and scalar; Address will be nullptr if the input is a type.
+    if (address && (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end())) {
       address->UpdateFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
       MS_LOG(DEBUG) << "Find node " << value_node->DebugString() << " has init args";
     }
