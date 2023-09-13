@@ -100,7 +100,7 @@ void MatmulDoubleCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
   if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatMul ops failed!";
+    MS_LOG(EXCEPTION) << "cast MatMul ops failed!";
   }
 
   trans_a_ = kernel_ptr->get_transpose_a();
