@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -57,6 +58,15 @@ class RCWM_1D(nn.Cell):
 
     def construct(self, x):
         return self.RCWM_1D(x)
+
+
+class RCWM_max_count(nn.Cell):
+    def __init__(self):
+        super(RCWM_max_count, self).__init__()
+        self.rcwm_max_count = P.RandomChoiceWithMask(count=2051328285, seed=0, seed2=-1024)
+
+    def construct(self, x):
+        return self.rcwm_max_count(x)
 
 
 @pytest.mark.level0
@@ -116,6 +126,38 @@ def test_RCWM_count_in():
     output1, output2 = rcwm(input_tensor)
     assert output1.shape == expect1
     assert output2.shape == expect2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_RCWM_max_count_graph():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: RuntimeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_tensor = Tensor(np.random.uniform(-10, 10, size=[240000, 4, 4])).astype(mstype.bool_)
+    with pytest.raises(RuntimeError):
+        rcwm = RCWM_max_count()
+        rcwm(input_tensor)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_RCWM_max_count_pynative():
+    """
+    Feature: RandomChoiceWithMask cpu kernel
+    Description: test the correctness of shape and result
+    Expectation: RuntimeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    input_tensor = Tensor(np.random.uniform(-10, 10, size=[240000, 4, 4])).astype(mstype.bool_)
+    with pytest.raises(RuntimeError):
+        rcwm = RCWM_max_count()
+        rcwm(input_tensor)
 
 
 @pytest.mark.level0

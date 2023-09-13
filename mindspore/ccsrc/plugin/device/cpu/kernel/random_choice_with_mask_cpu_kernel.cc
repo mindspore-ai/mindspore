@@ -185,7 +185,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
       }
     }
 
-    if (output_length * input_dim_size_ >= INT_MAX || output_length * input_dim_size_ < 0) {
+    if (output_length >= INT_MAX / input_dim_size_ || output_length * input_dim_size_ < 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
     }
 
