@@ -251,6 +251,32 @@ def test_lamb_split_fusion():
     context.reset_auto_parallel_context()
 
 
+def test_auto_parallel_device_num():
+    """
+    Feature: semi-parallel-optimizer with not fully shard
+    Description: If the optimizer_weight_shard_size exceeds the device num, there should be error.
+    Expectation: The optimizer_weight_shard_size exceeds the device num.
+    """
+    dp = 4
+    context.set_auto_parallel_context(parallel_optimizer_config={"optimizer_weight_shard_size": 128})
+    with pytest.raises(RuntimeError):
+        auto_parallel_compile_net("semi_auto_parallel", 32, Net2, ((dp, 8), (8, 1)), ((dp, 4), (4, 2)))
+
+
+def test_auto_parallel_device_num_not_divided_by_weight_shard_size():
+    """
+    Feature: semi-parallel-optimizer not divided by weight shard size
+    Description: If the optimizer_weight_shard_size cannot be divided by the device num, there should be no errors.
+    Expectation: No exception.
+    """
+    dp = 4
+    context.set_auto_parallel_context(parallel_optimizer_config={"parallel_optimizer_threshold": 0,
+                                                                 "optimizer_weight_shard_size": 3})
+    auto_parallel_compile_net("semi_auto_parallel", 32, Net2, ((dp, 8), (8, 1)), ((dp, 4), (4, 2)))
+
+
+
+
 def test_edge_case():
     """ test_edge_case """
     context.set_auto_parallel_context(enable_parallel_optimizer=True)

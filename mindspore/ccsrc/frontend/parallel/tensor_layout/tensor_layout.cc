@@ -451,7 +451,7 @@ Status TensorLayout::GenerateOptShardSliceShape() {
     std::accumulate(repeated_dev.begin(), repeated_dev.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t split_num;
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
-  if (optimizer_weight_shard_size != -1) {
+  if (optimizer_weight_shard_size != -1 && repeated_num >= optimizer_weight_shard_size) {
     repeated_num = optimizer_weight_shard_size;
   }
   if (tensor_map[0] == MAP_NONE) {

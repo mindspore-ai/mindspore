@@ -790,9 +790,11 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     // not fully use opt shard
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
     int64_t repeated_size = SizeToLong(group_devices.size());
-    if (repeated_size % optimizer_weight_shard_size != 0) {
-      MS_LOG(WARNING) << name_ << ": Parallel optimizer: optimizer_weight_shard_size " << optimizer_weight_shard_size
-                      << " can not be applied. The repeated size is " << repeated_size;
+    if (repeated_size % optimizer_weight_shard_size != 0 || repeated_size < optimizer_weight_shard_size) {
+      MS_LOG(WARNING) << "Parallel optimizer:"
+                      << " optimizer_weight_shard_size " << optimizer_weight_shard_size
+                      << " can not be applied for the parameter used by" << cnode_->fullname_with_scope()
+                      << " The data parallel group size is " << repeated_size;
       return FAILED;
     }
     repeated_size = repeated_size / optimizer_weight_shard_size;
