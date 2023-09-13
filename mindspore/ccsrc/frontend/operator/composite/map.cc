@@ -100,13 +100,13 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   for (auto &item : arg_pairs) {
     num++;
     auto lhs = std::dynamic_pointer_cast<List>(item.second);
-    if (lhs->dynamic_len()) {
-      MS_LOG(EXCEPTION) << "For 'map', the dynamic length input is unsupported in graph mode";
-    }
     auto [error_index, next_index] = GetMapInputIndex(num);
     if (lhs == nullptr) {
       MS_LOG(EXCEPTION) << "The " << error_index << " element in Map has wrong type, expected a List, but got "
                         << item.second->ToString() << ".";
+    }
+    if (lhs->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "For 'map', the dynamic length input is unsupported in graph mode";
     }
     if (lhs->elements().size() != size) {
       oss << "\nThe length of the " << error_index << " element in Map is " << size << ", but the length of the "
