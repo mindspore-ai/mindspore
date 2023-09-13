@@ -30,7 +30,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
@@ -98,7 +98,7 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (!node_in_oplist) {
     return false;
   }
-  if (!ConvertOpUtils::CanConvertInputToAttr(node)) {
+  if (!ValueDependOpUtils::IsConstInput(node)) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();

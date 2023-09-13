@@ -23,7 +23,6 @@
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const std::string &name) const {
@@ -31,7 +30,7 @@ AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const s
   new_fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(name));
   auto main_graph = node->func_graph();
   std::vector<AnfNodePtr> inputs(node->inputs().begin() + 1, node->inputs().end());
-  (void)ConvertNonscalarTensorToParameter(new_fg, &inputs);
+  (void)ConvertTensorToParameter(new_fg, &inputs);
   auto graph_kernel_node = CreateNewFuseCNode(main_graph, new_fg, inputs);
   MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();

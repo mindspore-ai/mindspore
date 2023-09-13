@@ -21,7 +21,7 @@
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
 #include "backend/common/graph_kernel/expander/base/ir_builder.h"
 #include "backend/common/graph_kernel/expander/mindir_adapter/mindir_emitter.h"
@@ -54,7 +54,7 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node, bool clone_p
 AnfNodePtr DependValueDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   MS_EXCEPTION_IF_NULL(cnode);
-  (void)ConvertOpUtils::AddConstInputToAttr(cnode, input_idx_);
+  (void)ValueDependOpUtils::AddConstInputToAttr(cnode, input_idx_);
   return decorated_->Run(cnode);
 }
 

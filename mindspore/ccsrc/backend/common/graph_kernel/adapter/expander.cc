@@ -40,7 +40,6 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/adapter/callback_impl.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"

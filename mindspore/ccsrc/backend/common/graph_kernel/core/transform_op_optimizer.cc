@@ -778,7 +778,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
         new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, node_name);
         auto cnode = node->cast<CNodePtr>();
         AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-        (void)ConvertNonscalarTensorToParameter(new_funcgraph, &inputs);
+        (void)ConvertTensorToParameter(new_funcgraph, &inputs);
         auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
         (void)mng->Replace(node, new_node);
         mng->AddFuncGraph(new_funcgraph);

@@ -36,7 +36,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
@@ -161,7 +161,7 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
       return false;
     }
   }
-  if (!ConvertOpUtils::CanConvertInputToAttr(node)) {
+  if (!ValueDependOpUtils::IsConstInput(node)) {
     return false;
   }
   return true;
@@ -186,7 +186,7 @@ bool DynamicShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
-  if (!ConvertOpUtils::CanConvertInputToAttr(node)) {
+  if (!ValueDependOpUtils::IsConstInput(node)) {
     return false;
   }
   return true;

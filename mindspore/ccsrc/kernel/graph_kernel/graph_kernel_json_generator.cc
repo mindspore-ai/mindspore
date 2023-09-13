@@ -43,7 +43,7 @@ using kernel::OpImplyType;
 using kernel::OpInfo;
 using kernel::OpIOInfo;
 namespace {
-constexpr int kCurrentInfoVersion = 1;
+constexpr int kCurrentInfoVersion = 2;
 constexpr auto kAttrParallelDimInfoSize = 2;
 constexpr auto kDebugStrDepth = 2;
 

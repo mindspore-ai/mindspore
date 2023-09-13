@@ -164,7 +164,7 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     return nullptr;
   } else {
     auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
-    (void)ConvertNonscalarTensorToParameter(new_fg, &inputs);
+    (void)ConvertTensorToParameter(new_fg, &inputs);
     AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
     (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
     return node->func_graph()->NewCNode(new_inputs);

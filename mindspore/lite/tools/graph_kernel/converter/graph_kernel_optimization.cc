@@ -24,7 +24,6 @@
 #include "mindspore/core/ops/array_ops.h"
 
 #include "backend/common/graph_kernel/core/arithmetic_simplify.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/core/shape_ops_splitter.h"
@@ -127,8 +126,6 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
 
 GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageBuildKernel, "buildkernel");
-  // add const inputs to attribute then eliminate those inputs for static kernels.
-  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // build akg and replace graph kernel nodes
   pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
