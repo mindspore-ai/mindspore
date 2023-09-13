@@ -1133,3 +1133,38 @@ def test_get_grad_outer_list_weight():
     expect_value1 = Tensor([1, 2], mstype.int64)
     assert np.allclose(out[0].asnumpy(), expect_value0.asnumpy())
     assert np.allclose(out[1].asnumpy(), expect_value1.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_of_pyexecute_with_more_than_three_inputs():
+    """
+    Features: Function grad.
+    Description: Test F.grad of_pyexecute_with_more_than_three_inputs in graph mode.
+    Expectation: No exception.
+    """
+    class GradNet3(nn.Cell):
+        def __init__(self, net, grad_position=0):
+            super().__init__()
+            self.net = net
+            self.grad_position = grad_position
+            self.grad = grad
+
+        def construct(self, *inputs):
+            return self.grad(self.net, self.grad_position)(*inputs)
+
+    class ModifyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.p = 4
+
+        def construct(self, x):
+            self.p = self.p + x
+            return self.p
+
+    out = ModifyNet()(Tensor([2]))
+    assert out == Tensor([6])
+
+    ms_grad = GradNet3(ModifyNet())(Tensor([2]))
+    assert ms_grad == 0

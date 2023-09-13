@@ -574,9 +574,8 @@ FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   int64_t args_size = SizeToLong(args_abs_list.size());
   constexpr auto py_execute_grad_input_count = 3;
-  constexpr auto op_name = "PyExecuteGradient";
   if (args_size < py_execute_grad_input_count) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The inputs size of " << op_name << " should not less than "
+    MS_LOG(INTERNAL_EXCEPTION) << "The inputs size of PyExecuteGradient should not less than "
                                << py_execute_grad_input_count;
   }
 
@@ -655,8 +654,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     } else if (args_abs_list[i]->isa<abstract::AbstractIOMonad>()) {
       (void)grads.emplace_back(NewValueNode(kIOMonad));
     } else {
-      MS_LOG(INTERNAL_EXCEPTION) << "The extra input of " << op_name << " should be UMonad or IOMonad, but got "
-                                 << args_abs_list[i]->ToString();
+      (void)grads.emplace_back(NewValueNode(kValueAny));
     }
   }
 
