@@ -1030,6 +1030,8 @@ class Parser:
             if value == item:
                 logger.debug(f"Found unsupported internal type: '{value}'.")
                 return True
+        if ms_adapter_registry.is_registered and value == ms_adapter_registry.tensor:
+            return True
         return False
 
     @staticmethod

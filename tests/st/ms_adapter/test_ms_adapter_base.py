@@ -161,3 +161,20 @@ def test_parameter_isinstance():
     y = Parameter(Tensor([2]), name="val")
     out = func(x, y)
     assert not out[0] and out[1] and out[2]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_create_instance():
+    """
+    Feature: MSAdapter
+    Description: Test isinstance syntax
+    Expectation: No exception
+    """
+    @ms.jit
+    def func():
+        return Tensor([1])
+
+    out = func()
+    assert out == 1
