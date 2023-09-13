@@ -32,8 +32,6 @@
 
 namespace mindspore {
 namespace lite {
-using STATUS = int;
-
 std::vector<CNodePtr> GetInputCNode(const CNodePtr &cnode);
 
 template <typename T>

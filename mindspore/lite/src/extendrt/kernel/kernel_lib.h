@@ -147,7 +147,7 @@ class KernelLibRegistry {
       MS_LOG(WARNING) << "KernelLib " << provider << " is nullptr, ignored.";
       return;
     }
-    KernelLibRegister::Instance().RegKernelLib(provider, lib);
+    (void)KernelLibRegister::Instance().RegKernelLib(provider, lib);
   }
 };
 

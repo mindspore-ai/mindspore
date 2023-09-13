@@ -228,9 +228,9 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPattern(bool mask) const {
   if (mask) {
     auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is_add");
     MS_CHECK_TRUE_RET(is_add != nullptr, {});
-    auto mask = DefineMask(mask_);
-    MS_CHECK_TRUE_RET(!mask.empty(), {});
-    auto add = VectorRef({is_add, mask, matmul1});
+    auto mask_in = DefineMask(mask_);
+    MS_CHECK_TRUE_RET(!mask_in.empty(), {});
+    auto add = VectorRef({is_add, mask_in, matmul1});
     reshape1 = VectorRef({is_reshape1, add, var1});
   } else {
     reshape1 = VectorRef({is_reshape1, matmul1, var1});

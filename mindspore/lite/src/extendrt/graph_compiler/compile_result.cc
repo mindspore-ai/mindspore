@@ -66,10 +66,10 @@ inline std::string DumpTensor(const InferTensor *tensor, int indent = 0) {
 kernel::KernelAttr CompileNode::GetKernelAttr() const {
   kernel::KernelAttr attr;
   for (auto &input : inputs_) {
-    attr.AddInputAttr(input->data_type(), FormatEnumToString(input->format()));
+    (void)attr.AddInputAttr(input->data_type(), FormatEnumToString(input->format()));
   }
   for (auto &output : outputs_) {
-    attr.AddOutputAttr(output->data_type(), FormatEnumToString(output->format()));
+    (void)attr.AddOutputAttr(output->data_type(), FormatEnumToString(output->format()));
   }
   return attr;
 }
@@ -100,7 +100,7 @@ CompileNodePtr CompileNode::Create(CNodePtr cnode) {
       MS_LOG(ERROR) << "Create primitive_c failed, type: " << node->type_;
       return nullptr;
     }
-    primc->SetAttrs(primitive->attrs());
+    (void)primc->SetAttrs(primitive->attrs());
   }
   static auto baseops_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
   auto baseops_creator_iter = baseops_fns.find(node->type_.TypeName());

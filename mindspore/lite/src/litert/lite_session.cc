@@ -234,6 +234,10 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
     dst_tensor = new (std::nothrow)
       Tensor(TypeId(data_type), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
   }
+  if (dst_tensor == nullptr) {
+    MS_LOG(ERROR) << "create dst_tensor is nullptr.";
+    return nullptr;
+  }
   if (src_tensor.name() != nullptr) {
     dst_tensor->set_tensor_name(src_tensor.name()->str());
   }
