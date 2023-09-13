@@ -589,8 +589,8 @@ def test_map_multiprocessing_with_in_out_rowsize():
 def test_map_and_generatordataset_with_multiprocessing():
     """
     Feature: Map op
-    Description: When map or GeneratorDataset with multiprocessing or num_parallel_workers > 1, methods of output_types
-    and output_shapes will not start multiple processes and threads
+    Description: The output_types and output_shapes methods do not start multiprocessing and multithreading When map or
+    GeneratorDataset's parameter multiprocessing is True or num_parallel_workers > 1
     Expectation: The returned result is as expected
     """
 

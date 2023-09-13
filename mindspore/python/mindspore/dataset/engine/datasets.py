@@ -389,9 +389,12 @@ class Dataset:
             _OP_PROCESS.update(generator_process)
         return op_name
 
-    def create_ir_tree(self, no_python_multiprocessing=False):
+    def create_ir_tree(self, getter_mode=False):
         """
         Internal method to build an IR tree.
+
+        Args:
+            getter_mode (bool, optional): Whether to build IR tree in pull mode. Default: ``False``.
 
         Returns:
             DatasetNode, the root node of the IR tree.
@@ -402,25 +405,28 @@ class Dataset:
         dataset = copy.deepcopy(self)
         global _OP_NAME
         _OP_NAME = Dataset._get_operator_id(dataset)
-        ir_tree = dataset.parse_tree(no_python_multiprocessing)
+        ir_tree = dataset.parse_tree(getter_mode)
         self.parent = parent
         _init_device_info()
         return ir_tree, dataset
 
-    def parse_tree(self, no_python_multiprocessing=False):
+    def parse_tree(self, getter_mode=False):
         """
         Internal method to parse the API tree into an IR tree.
+
+        Args:
+            getter_mode (bool, optional): Whether to build IR tree in pull mode. Default: ``False``.
 
         Returns:
             DatasetNode, the root node of the IR tree.
         """
         if len(self.parent) > 1:
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
-        ir_children = [d.parse_tree(no_python_multiprocessing) for d in self.children]
+        ir_children = [d.parse_tree(getter_mode) for d in self.children]
         # Bootstrap can only be performed on a copy of the original dataset node.
         # Bootstrap on original dataset node will make all iterators share the same process pool
         self.iterator_bootstrap()
-        self.pre_parse(no_python_multiprocessing)
+        self.pre_parse(getter_mode)
         ir_node = self.parse(ir_children)
         ir_node = self.post_parse(ir_node)
         return ir_node
@@ -1647,11 +1653,14 @@ class Dataset:
     def copy_batch_size(self, value):
         self._batch_size = value
 
-    def _init_tree_getters(self, no_python_multiprocessing=True):
+    def _init_tree_getters(self, getter_mode=True):
         """
         Get pipeline information.
+
+        Args:
+            getter_mode (bool, optional): Whether to build IR tree in pull mode. Default: ``True``.
         """
-        ir_tree, api_tree = self.create_ir_tree(no_python_multiprocessing)
+        ir_tree, api_tree = self.create_ir_tree(getter_mode)
 
         runtime_context = cde.PythonRuntimeContext()
         runtime_context.Init()
@@ -2029,8 +2038,8 @@ class Dataset:
             shard_id = 0
         return num_shards, shard_id
 
-    def pre_parse(self, no_python_multiprocessing):
-        if no_python_multiprocessing:
+    def pre_parse(self, getter_mode):
+        if getter_mode:
             if hasattr(self, "python_multiprocessing"):
                 self.python_multiprocessing = False
             if hasattr(self, "num_parallel_workers"):

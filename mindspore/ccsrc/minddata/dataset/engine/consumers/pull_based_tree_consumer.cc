@@ -125,9 +125,7 @@ Status TreeGetters::Init(const std::shared_ptr<DatasetNode> &root) {
 
 Status TreeGetters::GetRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
-  RETURN_IF_NOT_OK(CollectPipelineInfoStart("TreeGetters", "GetRow"));
   Status get_next_status = tree_adapter_lite_->GetNextRow(row);
-  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("TreeGetters", "GetRow"));
   return get_next_status;
 }
 
