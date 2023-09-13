@@ -205,7 +205,7 @@ def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
                 slice_index += (s,)
             new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
             new_tensor_numpy[slice_index] = data.asnumpy()
-        new_tensor = Tensor(new_tensor_numpy)
+        new_tensor = Tensor(new_tensor_numpy, dtype=type_)
         lst.append(new_tensor)
     if scaling_sens:
         lst.append(Tensor(scaling_sens, mstype.float32))

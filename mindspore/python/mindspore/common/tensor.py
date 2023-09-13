@@ -2731,7 +2731,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         if slice_num_of_persistent_data > 1:
             self.assign_value(Tensor_.persistent_data_from_numpy(data, slice_num_of_persistent_data))
         else:
-            self.assign_value(Tensor_.from_numpy(data))
+            if self.dtype == mstype.bfloat16:
+                # The dtype of data is np.float32 when mstype is bfloat16,
+                # so we create tensor_ by init func instead of asnumpy
+                self.assign_value(Tensor_(data, self.dtype))
+            else:
+                self.assign_value(Tensor_.from_numpy(data))
         return self
 
     def resize(self, *new_shape):

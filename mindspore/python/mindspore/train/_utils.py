@@ -107,7 +107,7 @@ def _construct_tensor_list(types, shapes, batch_expand_num=1):
                 new_shape += (item * batch_expand_num,)
             else:
                 new_shape += (item,)
-        tensor = Tensor(np.zeros(new_shape, dtype_to_nptype(type_)))
+        tensor = Tensor(np.zeros(new_shape, dtype_to_nptype(type_)), dtype=type_)
         tensor.virtual_flag = True
         tensor_list.append(tensor)
     return tensor_list
