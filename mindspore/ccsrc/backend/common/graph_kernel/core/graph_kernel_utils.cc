@@ -341,14 +341,6 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       const auto iter = node_map.find(input_i);
       if (iter != node_map.end()) {
         // input is parameter or cnode
-        if (input_i->isa<Parameter>()) {
-          auto tensor = input_i->abstract()->BuildValue()->cast<tensor::TensorPtr>();
-          if (tensor != nullptr && tensor->data().const_data() != nullptr &&
-              ConvertOpUtils::NeedConvert(AnfUtils::GetCNodeName(cnode), i - 1)) {
-            inputs.push_back(gb.Value(tensor));
-            continue;
-          }
-        }
         inputs.push_back(iter->second);
         continue;
       }

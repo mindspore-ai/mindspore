@@ -154,6 +154,15 @@ class CompositeGraph:
             for op in desc['op_desc']:
                 inputs = [self.tensors.get(d['tensor_name'], None) for x in op['input_desc']
                           for d in x if 'value' not in d]
+                if op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin'):
+                    axis = op['input_desc'][1][0]['value']
+                    if isinstance(axis, int):
+                        axis = [axis]
+                    if not op['attr']:
+                        attr = [{'name': 'axis', 'dtype': 'listInt', 'value': axis}]
+                        op['attr'] = attr
+                    else:
+                        op['attr'].append({'name': 'axis', 'dtype': 'listInt', 'value': axis})
                 out_desc = op['output_desc']
                 name, shape, dtype, data_format = out_desc[0]['tensor_name'], out_desc[
                     0]['shape'], out_desc[0]['data_type'], out_desc[0]['format']

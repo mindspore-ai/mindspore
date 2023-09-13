@@ -26,8 +26,10 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "base/base.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/python_adapter.h"
+#include "ir/tensor.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "kernel/framework_utils.h"
@@ -37,6 +39,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "pipeline/jit/ps/action.h"
 #include "utils/hash_set.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -301,17 +304,13 @@ ShapeVector GetDeviceShape(const AnfNodePtr &node) {
 }
 
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
-  auto prim = GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(prim);
-  const auto &attrs = prim->attrs();
-  auto iter = attrs.find(kAttrAxis);
-  if (iter == attrs.end()) {
-    MS_LOG(EXCEPTION) << "Can not find attribute '" << kAttrAxis << "' in node " << node->fullname_with_scope();
-  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto axis_node = cnode->input(kIndex2)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(axis_node);
 
   std::vector<int64_t> axis;
-
-  auto &v = iter->second;
+  auto &v = axis_node->value();
   if (v->isa<ValueList>() || v->isa<ValueTuple>()) {
     auto vec = v->isa<ValueList>() ? v->cast<ValueListPtr>()->value() : v->cast<ValueTuplePtr>()->value();
     for (auto value : vec) {
@@ -324,6 +323,8 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
     }
   } else if (v->isa<Int64Imm>()) {
     axis.push_back(GetValue<int64_t>(v));
+  } else if (v->isa<tensor::Tensor>()) {
+    axis = CheckAndConvertUtils::CheckTensorIntValue("axis", v, "ReduceSum");
   } else {
     MS_LOG(EXCEPTION) << "Attribute 'axis' should be a list or tuple in node " << node->fullname_with_scope();
   }
