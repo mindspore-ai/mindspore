@@ -296,6 +296,9 @@ void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
 
 char *PSContext::client_password() { return client_password_; }
 void PSContext::set_client_password(const char *password) {
+  if (password == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't set None or nullptr for client password.";
+  }
   if (strlen(password) >= kMaxPasswordLen) {
     MS_LOG(EXCEPTION) << "Client password is longer than max password length " << kMaxPasswordLen;
   }
@@ -314,6 +317,9 @@ void PSContext::ClearClientPassword() {
 
 char *PSContext::server_password() { return server_password_; }
 void PSContext::set_server_password(const char *password) {
+  if (password == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't set None or nullptr for server password.";
+  }
   if (strlen(password) >= kMaxPasswordLen) {
     MS_LOG(EXCEPTION) << "Client password is longer than max password length " << kMaxPasswordLen;
   }
