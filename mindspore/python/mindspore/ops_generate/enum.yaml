@@ -42,8 +42,22 @@ interpolation_mode:
   BILINEAR: 0
   NEAREST: 1
 
-# enum PaddingMode
-padding_mode:
+# enum NormMode
+norm_mode:
+  BCAKWARD: 0
+  FORWARD: 1
+  ORTHO: 2
+
+# enum GradSamplerPaddingMode
+grad_sampler_padding_mode:
   ZEROS: 0
   BORDER: 1
   REFLECTION: 2
+
+# enum PadFillingMode
+pad_filling_mode:
+  CONSTANT: 0
+  REFLECT: 1
+  EDGE: 2
+  CIRCULAR: 3
+  SYMMETRIC: 4
