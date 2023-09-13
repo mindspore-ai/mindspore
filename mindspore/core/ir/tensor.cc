@@ -166,10 +166,12 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       auto buf = static_cast<double *>(data);
       return NewData<T>(buf, size);
     }
+#ifndef KERNEL_EXECUTOR_ANDROID
     case kNumberTypeBFloat16: {
       auto buf = static_cast<bfloat16 *>(data);
       return NewData<T>(buf, size);
     }
+#endif
     case kNumberTypeComplex64: {
       auto buf = static_cast<ComplexStorage<float> *>(data);
       return NewData<T>(buf, size);
@@ -635,8 +637,10 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
       return std::make_shared<ImplClass<float>>(std::forward<Args>(args)...);
     case kNumberTypeFloat64:
       return std::make_shared<ImplClass<double>>(std::forward<Args>(args)...);
+#ifndef KERNEL_EXECUTOR_ANDROID
     case kNumberTypeBFloat16:
       return std::make_shared<ImplClass<bfloat16>>(std::forward<Args>(args)...);
+#endif
     case kNumberTypeComplex64:
       return std::make_shared<ImplClass<ComplexStorage<float>>>(std::forward<Args>(args)...);
     case kNumberTypeComplex128:
@@ -820,12 +824,12 @@ Tensor::Tensor(float16 input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat16), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
-
+#ifndef KERNEL_EXECUTOR_ANDROID
 Tensor::Tensor(bfloat16 input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeBFloat16), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
-
+#endif
 Tensor::Tensor(uint64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt64), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),

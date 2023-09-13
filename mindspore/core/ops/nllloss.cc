@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ class NLLLossInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::set valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     const int64_t input_num = 3;

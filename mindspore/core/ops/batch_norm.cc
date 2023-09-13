@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ class BatchNormInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const auto prim_name = prim->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
-    const std::set valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     auto x_type = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
 

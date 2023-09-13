@@ -46,7 +46,7 @@ thread_local enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 static std::string GetProcName() {
 #if defined(__APPLE__) || defined(__FreeBSD__)
   const std::string appname = getprogname();
-#elif defined(_GNU_SOURCE)
+#elif defined(_GNU_SOURCE) && !defined(ANDROID)
   const std::string appname = program_invocation_name;
 #else
   const std::string appname = "?";

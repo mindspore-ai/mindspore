@@ -351,12 +351,12 @@ set(TRAIN_SRC
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/subgraph_node_pass.cc
         )
 
-if(COMPILE_KERNEL_EXECUTOR STREQUAL "Linux" AND NOT MSLITE_ENABLE_CONVERTER)
+if(MSLITE_ENABLE_KERNEL_EXECUTOR AND NOT MSLITE_ENABLE_CONVERTER)
     add_subdirectory(${CORE_DIR} mindspore_core)
 endif()
 
 if(MSLITE_ENABLE_MINDRT)
-    if((NOT MSLITE_ENABLE_CONVERTER) AND (NOT (COMPILE_KERNEL_EXECUTOR STREQUAL "Linux")))
+    if((NOT MSLITE_ENABLE_CONVERTER) AND (NOT MSLITE_ENABLE_KERNEL_EXECUTOR))
         add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     endif()
     set(LITE_SRC ${LITE_SRC}
@@ -662,7 +662,7 @@ if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
 
-if(COMPILE_KERNEL_EXECUTOR STREQUAL "Linux")
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     target_link_libraries(mindspore-lite mindspore_core)
     target_link_libraries(mindspore-lite_static mindspore_core)
 endif()
