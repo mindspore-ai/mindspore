@@ -19,6 +19,7 @@
 from mindspore import log as logger
 from mindspore._c_expression import GraphExecutor_, Tensor
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
+from mindspore.common.parameter import Parameter
 
 SHAPE_DIM_ANY = -1
 SHAPE_RANK_ANY = -2
@@ -389,6 +390,14 @@ class _AutoIdentifyDynamicShape:
         """do generalize shape one input by cache"""
         generalize_one_shape = []
         for i, (input, cache) in enumerate(zip(input_args, cache_args)):
+            if isinstance(input, Parameter) and isinstance(cache, Parameter):
+                if self.auto_dynamic_shape_manager.is_tensor_equal(input, cache):
+                    generalize_one_shape.append(input)
+                    continue
+                else:
+                    logger.info("In auto dynamic shape mode, parameter must be equal, it can not be generalize.")
+                    return input_args, False
+
             if isinstance(input, Tensor) and isinstance(cache, Tensor):
                 if self.auto_dynamic_shape_manager.is_tensor_equal(input, cache):
                     generalize_one_shape.append(input)
