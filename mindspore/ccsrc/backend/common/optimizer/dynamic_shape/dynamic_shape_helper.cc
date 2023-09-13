@@ -331,6 +331,10 @@ abstract::AbstractBasePtr MakeNewAbstractBySequence(const tensor::TensorPtr &dep
       elems = MakeElemsByTensorValue<double>(depended_value->data_c(), depended_value->DataSize());
       break;
     }
+    case kNumberTypeBool: {
+      elems = MakeElemsByTensorValue<bool>(depended_value->data_c(), depended_value->DataSize());
+      break;
+    }
     default: {
       MS_LOG(EXCEPTION) << "Unsupported type: " << type;
     }

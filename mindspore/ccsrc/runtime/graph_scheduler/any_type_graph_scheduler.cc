@@ -117,7 +117,10 @@ void AnyTypeGraphScheduler::TransArrowInDataSourceActorToAnyTypeKernelActor(
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "output data node:" << node->DebugString();
     const auto &front_node = real_graph->GetFrontAnfByBackendAnf(node);
-    MS_EXCEPTION_IF_NULL(front_node);
+    if (front_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get front node by data node:" << node->DebugString()
+                        << " in real graph:" << real_graph->ToString();
+    }
     MS_LOG(DEBUG) << "output data front node:" << front_node->DebugString();
     const auto &front_parameters = model_graph->input_nodes();
     const auto &iter = find(front_parameters.begin(), front_parameters.end(), front_node);
@@ -334,10 +337,16 @@ void PrepareDataForValueNode(const AnfNodePtr &node, DeviceContext *const device
     return;
   }
   MS_LOG(DEBUG) << "Prepare data for value node:" << node->DebugString() << " node addr:" << node;
-  auto device_tensor = DeviceTensorStore::GetInstance().Fetch(node.get(), device_context->GetDeviceType());
-  if (device_tensor != nullptr) {
+  auto device_tensors = DeviceTensorStore::GetInstance().Fetch(node.get());
+  for (const auto &device_tensor : device_tensors) {
+    if (device_tensor == nullptr) {
+      continue;
+    }
+    const auto &real_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_tensor->device_name(), device_tensor->device_id()});
+    MS_EXCEPTION_IF_NULL(real_device_context);
     if (device_tensor->GetPtr() == nullptr) {
-      if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+      if (!real_device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
         MS_LOG(EXCEPTION) << "Failed to allocate memory for device tensor store:" << device_tensor;
       }
       MS_LOG(DEBUG) << "Device address:" << device_tensor << " allocate ptr:" << device_tensor->GetPtr()
@@ -374,8 +383,6 @@ void PrepareDataForValueNode(const AnfNodePtr &node, DeviceContext *const device
     }
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                   << " for value node:" << node->DebugString();
-  } else {
-    MS_LOG(EXCEPTION) << "Failed to get device address by node:" << node->DebugString();
   }
 }
 
@@ -404,10 +411,7 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
         MS_LOG(DEBUG) << "Failed to fetch front node for device tensor store key node:" << pair.second->DebugString()
                       << " node addr:" << pair.second << " index:" << pair.first << " for actor:" << actor->GetAID();
         device_tensor_store_keys.emplace_back(pair);
-        if (pair.second->isa<ValueNode>() && real_graph->graph_value_nodes().find(pair.second->cast<ValueNodePtr>()) !=
-                                               real_graph->graph_value_nodes().end()) {
-          PrepareDataForValueNode(pair.second, device_context);
-        }
+        PrepareDataForValueNode(pair.second, device_context);
         continue;
       }
       MS_LOG(DEBUG) << "Fix device tensor store key node from:" << pair.second->DebugString()
