@@ -19,7 +19,6 @@ import os
 import inspect
 from typing import Union
 import ast
-import astunparse
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore._extends.parse.namespace import CellNamespace
@@ -31,6 +30,10 @@ from ..common import error_str
 from ..parsers.module_parser import ModuleParser
 from ..node.node_manager import NodeManager
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class AstScopeChecker:
     """

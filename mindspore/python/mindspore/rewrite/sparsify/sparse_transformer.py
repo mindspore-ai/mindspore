@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Sparsify transformer"""
+import sys
 import ast
 import inspect
 import textwrap
 from collections import deque
-import astunparse
 
 from mindspore import ops, nn
 from mindspore import log as logger
@@ -25,6 +25,10 @@ from mindspore.rewrite.parsers.assign_parser import AssignParser
 from mindspore.rewrite.sparsify.utils import ArgType, SparseFunc, sparse_rules, get_sparse_func, builtin_ops, \
     get_binop_name, get_sparse_method_outputs, arg_type_to_prefix_map, get_inputs_outputs
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 OPS_MODULE = "mindspore.ops."
 MAX_RECURSION_DEPTH = 10
@@ -61,8 +65,13 @@ def sparsify_helper(f, arg_types, user_defined_rules=None, sparse_name="", full_
 
     if changed:
         sparse_tree = list(x[0] for x in sparse_transformer.sparse_functiondef.values()) + sparse_tree
-        ast_module = ast.Module([ast.FunctionDef(
-            sparse_name, functiondef.args, sparse_tree, functiondef.decorator_list, functiondef.returns)])
+        if sys.version_info >= (3, 9):
+            ast_module = ast.Module([ast.FunctionDef(
+                sparse_name, functiondef.args, sparse_tree, functiondef.decorator_list, functiondef.returns)],
+                                    type_ignores=[])
+        else:
+            ast_module = ast.Module([ast.FunctionDef(
+                sparse_name, functiondef.args, sparse_tree, functiondef.decorator_list, functiondef.returns)])
         return ast_module, True, return_types
     return tree, False, return_types
 

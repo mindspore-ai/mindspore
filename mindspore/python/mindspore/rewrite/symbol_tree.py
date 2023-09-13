@@ -21,7 +21,6 @@ import ast
 import importlib.util
 import time
 import collections
-import astunparse
 
 from mindspore.nn import Cell
 from mindspore import log as logger
@@ -37,6 +36,10 @@ from .common.observable import Observable
 from .common.event import Event
 from .node.node_manager import NodeManager
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class Position:
     """
@@ -985,13 +988,19 @@ class SymbolTree(Observer, Observable, NodeManager):
 
         # Check ClassDef ast node exist by using AstClassFinder
         if isinstance(body, ast.ClassDef):
-            class_finder = AstClassFinder(ast.Module(body=code_bodies))
+            if sys.version_info >= (3, 9):
+                class_finder = AstClassFinder(ast.Module(body=code_bodies, type_ignores=[]))
+            else:
+                class_finder = AstClassFinder(ast.Module(body=code_bodies))
             results = class_finder.find_all(body.name)
             return bool(results)
 
         # Check FunctionDef ast node exist by using AstFunctionFinder
         if isinstance(body, ast.FunctionDef):
-            function_finder = AstFunctionFinder(ast.Module(body=code_bodies))
+            if sys.version_info >= (3, 9):
+                function_finder = AstFunctionFinder(ast.Module(body=code_bodies, type_ignores=[]))
+            else:
+                function_finder = AstFunctionFinder(ast.Module(body=code_bodies))
             results = function_finder.find_all(body.name)
             return bool(results)
 
@@ -1014,7 +1023,10 @@ class SymbolTree(Observer, Observable, NodeManager):
             return False
         # Un-modified ast.ClassDef already exist in code_bodies,
         # replace class name to class name of first un-modified ast.ClassDef.
-        replacer = AstReplacer(ast.Module(body=code_bodies))
+        if sys.version_info >= (3, 9):
+            replacer = AstReplacer(ast.Module(body=code_bodies, type_ignores=[]))
+        else:
+            replacer = AstReplacer(ast.Module(body=code_bodies))
         replacer.replace_all(stree.get_class_ast().name, first_cls_name)
         self._tmp_replacers.append(replacer)
         return True
@@ -1052,7 +1064,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         for body in reversed(stree.get_father_class_ast()):
             if self.check_body_exist(body, code_bodies):
                 # remove exist ast in old position, then insert ast to upper position
-                exist_ast = AstClassFinder(ast.Module(body=code_bodies)).find_all(body.name)[0]
+                if sys.version_info >= (3, 9):
+                    exist_ast = AstClassFinder(ast.Module(body=code_bodies, type_ignores=[])).find_all(body.name)[0]
+                else:
+                    exist_ast = AstClassFinder(ast.Module(body=code_bodies)).find_all(body.name)[0]
                 code_bodies.remove(exist_ast)
             code_bodies.insert(insert_pos, body)
 
@@ -1085,7 +1100,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         self._tmp_replacers.clear()
         code_bodies = []
         self.convert_stree_to_code_bodies(self, code_bodies)
-        gencode_module = ast.Module(body=code_bodies)
+        if sys.version_info >= (3, 9):
+            gencode_module = ast.Module(body=code_bodies, type_ignores=[])
+        else:
+            gencode_module = ast.Module(body=code_bodies)
         SymbolTree._remove_unused_import(gencode_module)
         SymbolTree._remove_duplicated_import(gencode_module)
         ast.fix_missing_locations(self._module_ast)

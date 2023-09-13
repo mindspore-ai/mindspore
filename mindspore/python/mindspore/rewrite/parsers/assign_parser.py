@@ -18,7 +18,6 @@ import os
 import ast
 import sys
 import inspect
-import astunparse
 
 from mindspore import log as logger
 from mindspore.nn import Cell, SequentialCell
@@ -37,6 +36,10 @@ from mindspore.rewrite.ast_transformers.flatten_recursive_stmt import FlattenRec
 from mindspore.rewrite.ast_helpers import AstReplacer
 from ..common import error_str
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class AssignParser(Parser):
     """Parse ast.Assign in construct function to node of SymbolTree."""

@@ -13,13 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree nodes manager."""
+import sys
 from typing import Optional
 import ast
-import astunparse
 from .node import Node
 from .node_topological_manager import TopoManager
 from ..api.node_type import NodeType
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class NodeManager:
     """
