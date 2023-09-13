@@ -65,6 +65,15 @@ class OpNet(nn.Cell):
         return self.op(*args)
 
 
+class OpFunctionNet(nn.Cell):
+    def __init__(self, prim_func):
+        super().__init__()
+        self.prim_func = prim_func
+
+    def construct(self, *args):
+        return self.prim_func(*args)
+
+
 class GradNet(nn.Cell):
     def __init__(self, net):
         super().__init__()
@@ -356,10 +365,15 @@ def get_name_by_prim(prim):
 
 
 def create_net(prim, grad):
-    if grad:
-        return GradNet(OpNet(prim))
+    if isinstance(prim, ops.Primitive):
+        net_class = OpNet
+    else:
+        net_class = OpFunctionNet
 
-    return OpNet(prim)
+    if grad:
+        return GradNet(net_class(prim))
+
+    return net_class(prim)
 
 
 def TEST_OP(prim, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='BOTH',

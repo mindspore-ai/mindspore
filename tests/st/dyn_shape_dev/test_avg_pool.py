@@ -19,7 +19,7 @@ import test_utils
 
 from mindspore import ops
 import mindspore as ms
-
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 @test_utils.run_with_cell
 def avg_pool_forward_func(x):
@@ -88,3 +88,19 @@ def test_avg_pool_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(avg_pool_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)
     print("out:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+def test_avg_pool_dynamic():
+    """
+    Feature: test dynamic tensor and dynamic scalar of avg pool.
+    Description: test dynamic tensor and dynamic scalar of avg pool.
+    Expectation: expect correct result.
+    """
+    in1 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
+    in2 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
+    TEST_OP(ops.auto_generate.avg_pool, [in1, in2], dump_ir=True, grad=False)
