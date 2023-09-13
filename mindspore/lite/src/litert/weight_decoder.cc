@@ -122,9 +122,6 @@ int WeightDecoder::DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite
     return RET_NO_CHANGE;
   }
   auto data = reinterpret_cast<const char *>(src_tensor.data());
-  if (data == nullptr) {
-    return RET_NO_CHANGE;
-  }
   std::string encode_str(data, src_tensor.length());
   dst_tensor->FreeData();
   dst_tensor->set_data(nullptr);
