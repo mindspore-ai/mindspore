@@ -15,13 +15,13 @@
  */
 
 #include "transform/graph_ir/op_declare/logging_ops_declare.h"
+#include <string>
 
 namespace mindspore::transform {
-// Print
-INPUT_MAP(Print) = EMPTY_INPUT_MAP;
-DYN_INPUT_MAP(Print) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(Print) = EMPTY_ATTR_MAP;
-REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(Print))
+// PrintV2
+INPUT_MAP(PrintV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(PrintV2) = {{"output_stream", ATTR_DESC(output_stream, AnyTraits<std::string>())}};
+REG_ADPT_DESC(PrintV2, kNamePrint, ADPT_DESC(PrintV2))
 
 INPUT_MAP(Assert) = {{1, INPUT_DESC(input_condition)}};
 DYN_INPUT_MAP(Assert) = {{2, DYN_INPUT_DESC(input_data)}};

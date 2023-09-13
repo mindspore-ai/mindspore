@@ -3174,6 +3174,18 @@ void DfGraphConvertor::ConvertParallelGroupToHcom(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertPrint(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  (void)op->SetAttr("_kernel", "extend");
+  op_cache_[node.get()] = op;
+}
+
 void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   MS_LOG(INFO) << "Add Hcom fusion_id";
   OpAdapterPtr adpt = FindAdapter(node, training_);
@@ -3388,6 +3400,8 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {kNameConv2DBackpropInputV2, &DfGraphConvertor::ConvertConv2D},
       {prim::kPrimConv2DBackpropInput->name(), &DfGraphConvertor::ConvertConv2D},
       {prim::kPrimConv2DBackpropFilter->name(), &DfGraphConvertor::ConvertConv2D},
+      // Add attr '_kernel' to select AICPU Print ops.
+      {prim::kPrimPrint->name(), &DfGraphConvertor::ConvertPrint},
       // Add attr 'N' to DynamicStitch
       {prim::kPrimDynamicStitch->name(), &DfGraphConvertor::ConvertDynamicStitch},
       // Convert hccl op for comm handle
