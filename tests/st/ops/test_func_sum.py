@@ -76,3 +76,34 @@ def test_sum_keepdim(mode):
                            [[24], [30], [36]],
                            [[42], [48], [54]]], dtype=np.float32)
     assert np.allclose(out.asnumpy(), expect_out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_sum_error(mode):
+    """
+    Feature: sum
+    Description: Verify the result of sum error
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+
+    x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+                         [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+                         [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), ms.float32)
+
+    with pytest.raises(TypeError):
+        net(1, dim=2, keepdim=True)
+
+    with pytest.raises(TypeError):
+        net(x, dim="error", keepdim=True)
+
+    with pytest.raises(TypeError):
+        net(x, dim=2, keepdim=12)
