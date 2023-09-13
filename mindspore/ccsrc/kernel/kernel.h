@@ -384,7 +384,14 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   T GetValueWithCheck() {
     auto value_opt = GetValue<T>();
     if (!value_opt.has_value()) {
-      MS_LOG(EXCEPTION) << "Get value failed, there is no any value in KernelTensor.";
+      MS_LOG(EXCEPTION)
+        << "Get value failed, there is no any value in KernelTensor."
+           "Here are the possible reasons:"
+           "1. When the operator KernelMod is registered, the data type is not correct, such as Scalar or Tuple, but "
+           "is registered as Tensor."
+           "2. If the KernelMod is registered correctly, it may be an attempt to GetValue the output of the "
+           "previous operator. During compilation, the output of the operator has no value. You can check the ir file "
+           "to see if the input for the current operator value is from an operator.";
     }
     return value_opt.value();
   }
