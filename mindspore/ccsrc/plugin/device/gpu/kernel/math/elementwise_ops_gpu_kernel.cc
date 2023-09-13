@@ -177,14 +177,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"SiLUGrad",
      {REGISTER_BINARY_FLOAT_TYPE(ElwiseOpType::kSiLUGrad), REGISTER_BINARY_COMPLEX_TYPE(ElwiseOpType::kSiLUGrad)}},
 };
-bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool ElementwiseOpsGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'elementwise op', the kernel name must be in "
@@ -203,10 +201,9 @@ bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int ElementwiseOpsGpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ElementwiseOpsGpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ele_num_ = SizeOf(inputs.at(kIndex0)->GetShapeVector());
