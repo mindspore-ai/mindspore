@@ -121,9 +121,9 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(const CpuKe
                      "The data type of output argmax:[%s] should be a int32 or int64. ",
                      DTypeStr(output_argmax_type).c_str())
 
-  std::vector<int64_t> dim_vec = input_info->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE(dim_vec.size() == 5, KERNEL_STATUS_PARAM_INVALID, "The dim of input:[%d] should be 5.",
-                     dim_vec.size())
+  constexpr size_t kSize = 5;
+  KERNEL_CHECK_FALSE(input_info->GetTensorShape()->GetDimSizes().size() == kSize, KERNEL_STATUS_PARAM_INVALID,
+                     "The dim of input:[%d] should be 5.", input_info->GetTensorShape()->GetDimSizes().size())
 
   const size_t DIM_SIZE1 = 1;
   const size_t DIM_SIZE3 = 3;
@@ -214,6 +214,27 @@ void MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxSingleCompute(T *input, T 
   }
 }
 
+void MaxPool3DWithArgmaxCpuKernel::FillListWithDimSize(const std::vector<int64_t> src_list,
+                                                       std::vector<int64_t> *dst_list, bool is_dilation) {
+  constexpr size_t kDimSize1 = 1;
+  constexpr size_t kDimSize5 = 5;
+  constexpr size_t kSize = 3;
+  (*dst_list).reserve(kSize);
+  if (src_list.size() == kDimSize1) {
+    (*dst_list).push_back(src_list[0]);
+    (*dst_list).push_back(src_list[0]);
+    (*dst_list).push_back(src_list[0]);
+  } else if (is_dilation && src_list.size() == kDimSize5) {
+    (*dst_list).push_back(src_list[2]);
+    (*dst_list).push_back(src_list[3]);
+    (*dst_list).push_back(src_list[4]);
+  } else {
+    (*dst_list).push_back(src_list[0]);
+    (*dst_list).push_back(src_list[1]);
+    (*dst_list).push_back(src_list[2]);
+  }
+}
+
 template <typename T, typename S>
 uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
@@ -242,52 +263,14 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKerne
   const int64_t out_width = output_shape_vec[4];
   const int64_t out_height = output_shape_vec[3];
   const int64_t out_depth = output_shape_vec[2];
-  const size_t DIM_SIZE1 = 1;
-  const size_t DIM_SIZE5 = 5;
   std::vector<int64_t> ksizeTempList;
-  if (ksizeList.size() == DIM_SIZE1) {
-    ksizeTempList.push_back(ksizeList[0]);
-    ksizeTempList.push_back(ksizeList[0]);
-    ksizeTempList.push_back(ksizeList[0]);
-  } else {
-    ksizeTempList.push_back(ksizeList[0]);
-    ksizeTempList.push_back(ksizeList[1]);
-    ksizeTempList.push_back(ksizeList[2]);
-  }
   std::vector<int64_t> stridesTempList;
-  if (stridesList.size() == DIM_SIZE1) {
-    stridesTempList.push_back(stridesList[0]);
-    stridesTempList.push_back(stridesList[0]);
-    stridesTempList.push_back(stridesList[0]);
-  } else {
-    stridesTempList.push_back(stridesList[0]);
-    stridesTempList.push_back(stridesList[1]);
-    stridesTempList.push_back(stridesList[2]);
-  }
   std::vector<int64_t> padsTempList;
-  if (padsList.size() == DIM_SIZE1) {
-    padsTempList.push_back(padsList[0]);
-    padsTempList.push_back(padsList[0]);
-    padsTempList.push_back(padsList[0]);
-  } else {
-    padsTempList.push_back(padsList[0]);
-    padsTempList.push_back(padsList[1]);
-    padsTempList.push_back(padsList[2]);
-  }
   std::vector<int64_t> dilationTempList;
-  if (dilationList.size() == DIM_SIZE1) {
-    dilationTempList.push_back(dilationList[0]);
-    dilationTempList.push_back(dilationList[0]);
-    dilationTempList.push_back(dilationList[0]);
-  } else if (dilationList.size() == DIM_SIZE5) {
-    dilationTempList.push_back(dilationList[2]);
-    dilationTempList.push_back(dilationList[3]);
-    dilationTempList.push_back(dilationList[4]);
-  } else {
-    dilationTempList.push_back(dilationList[0]);
-    dilationTempList.push_back(dilationList[1]);
-    dilationTempList.push_back(dilationList[2]);
-  }
+  FillListWithDimSize(ksizeList, &ksizeTempList, false);
+  FillListWithDimSize(stridesList, &stridesTempList, false);
+  FillListWithDimSize(padsList, &padsTempList, false);
+  FillListWithDimSize(dilationList, &dilationTempList, true);
   const int64_t k_width = ksizeTempList[2];
   const int64_t k_height = ksizeTempList[1];
   const int64_t k_depth = ksizeTempList[0];

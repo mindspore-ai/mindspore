@@ -594,8 +594,9 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   static const bool enable_ge = context->backend_policy() == "ge";
+  context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
-    auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;
@@ -1339,7 +1340,7 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   SetRunMode(resource);
   auto bc_ptr = resource->GetBackend();
   MS_EXCEPTION_IF_NULL(bc_ptr);
-  std::string backend = context_ptr->backend_policy();
+  const auto &backend = context_ptr->backend_policy();
   // The graph compiling of mindRT.
   if ((backend == kMsConvert || backend == kGeVm) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(resource);

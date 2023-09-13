@@ -312,7 +312,7 @@ py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) con
 void PyNativeExecutor::WaitBeforeFork() {
   MS_LOG(INFO) << "fork event detected in main process, PyNativeExecutor will wait for async task finish.";
   runtime::OpExecutor::GetInstance().WaitAll();
-  grad_executor_->async_executor()->Wait();
+  grad_executor_->bprop_queue()->Wait();
   MS_LOG(INFO) << "PyNativeExecutor waits for async task finish done.";
 }
 

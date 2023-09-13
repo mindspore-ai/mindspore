@@ -17,12 +17,21 @@
 #define AICPU_OPS_DROP_GEN_MASK_KERNELS_H_
 
 #include <random>
+
 #include "common/kernel_base.h"
 
 namespace aicpu {
 class DropOutGenMaskKernel : public KernelBase {
  public:
-  DropOutGenMaskKernel() : KernelBase("DropOutGenMask"), seed_(0), seed2_(0), keep_prob_(0), count_(0), out_(nullptr) {}
+  DropOutGenMaskKernel()
+      : KernelBase("DropOutGenMask"),
+        seed_(0),
+        seed2_(0),
+        keep_prob_(0),
+        count_(0),
+        g_key{0, 0},
+        g_offset{0, 0},
+        out_(nullptr) {}
 
   ~DropOutGenMaskKernel() = default;
 

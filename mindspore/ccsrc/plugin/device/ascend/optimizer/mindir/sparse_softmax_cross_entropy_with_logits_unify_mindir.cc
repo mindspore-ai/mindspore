@@ -512,8 +512,7 @@ CNodePtr CreateMulInput(const FuncGraphPtr &graph, const CNodePtr &mul_node, con
 }  // namespace
 
 std::vector<std::string> SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::MustExistPrimitiveName() const {
-  std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
+  static std::vector<std::string> ret{prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name()};
   return ret;
 }
 
@@ -693,9 +692,7 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
 }
 
 std::vector<std::string> PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::MustExistPrimitiveName() const {
-  std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
-  ret.emplace_back(prim::kPrimMul->name());
+  static std::vector<std::string> ret{prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(), prim::kPrimMul->name()};
   return ret;
 }
 
@@ -746,10 +743,8 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
 }
 
 std::vector<std::string> PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::MustExistPrimitiveName() const {
-  std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name());
-  ret.emplace_back(prim::kPrimCast->name());
-  ret.emplace_back(prim::kPrimMul->name());
+  static std::vector<std::string> ret{prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(), prim::kPrimCast->name(),
+                                      prim::kPrimMul->name()};
   return ret;
 }
 

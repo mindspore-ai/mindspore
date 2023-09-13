@@ -25,13 +25,13 @@
 #include "cpu_kernel/common/session_cache.h"
 #include "cpu_kernel/common/status.h"
 
-using namespace aicpu;
+namespace aicpu {
 namespace {
 // max param len limit 10k.
 constexpr uint32_t kMaxParamLen = 10240;
 // max extend info len limit 20k.
 constexpr uint32_t kMaxExtendLen = 20480;
-const std::string kContextKeyStreamId = "streamId";
+const char kContextKeyStreamId[] = "streamId";
 
 uint32_t ParseExtSessionInfo(AicpuParamHead *param_head, SessionInfo *&session) {
   KERNEL_LOG_INFO("Parse extend session info begin.");
@@ -106,7 +106,7 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernel(void *param) {
   }
 
   std::string stream_id_value = "0";
-  auto status = GetThreadLocalCtx(kContextKeyStreamId, &stream_id_value);
+  auto status = GetThreadLocalCtx(std::string(kContextKeyStreamId), &stream_id_value);
   if (status != AICPU_ERROR_NONE) {
     KERNEL_LOG_ERROR("GetThreadLocalCtx failed, ret[%d].", status);
     return KERNEL_STATUS_INNER_ERROR;
@@ -121,12 +121,12 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernel(void *param) {
 }
 
 __attribute__((visibility("default"))) uint32_t RunCpuKernelWithBlock(void *param, struct BlkDimInfo *blkdim_info) {
-  KERNEL_LOG_INFO("RunCpuKernelWithBlock C begin. blockid[%u], blockdim[%u].", blkdim_info->blockId,
-                  blkdim_info->blockNum);
   if (param == nullptr || blkdim_info == nullptr) {
     KERNEL_LOG_ERROR("Param is null.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
+  KERNEL_LOG_INFO("RunCpuKernelWithBlock C begin. blockid[%u], blockdim[%u].", blkdim_info->blockId,
+                  blkdim_info->blockNum);
 
   // parse param_len
   AicpuParamHead *param_head = static_cast<AicpuParamHead *>(param);
@@ -154,7 +154,7 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernelWithBlock(void *para
   }
 
   std::string stream_id_value = "0";
-  auto status = GetThreadLocalCtx(kContextKeyStreamId, &stream_id_value);
+  auto status = GetThreadLocalCtx(std::string(kContextKeyStreamId), &stream_id_value);
   if (status != AICPU_ERROR_NONE) {
     KERNEL_LOG_ERROR("GetThreadLocalCtx failed, ret[%d].", status);
     return KERNEL_STATUS_INNER_ERROR;
@@ -168,3 +168,4 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernelWithBlock(void *para
     param, session->sessionId, stream_id, session->sessFlag, blkdim_info);
 }
 }
+}  // namespace aicpu

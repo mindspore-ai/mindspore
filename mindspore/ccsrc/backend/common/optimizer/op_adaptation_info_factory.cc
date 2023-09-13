@@ -71,6 +71,11 @@ std::string OpAdaptationInfoRegister::GenerateKey(const std::string &me_op_name,
   return std::string(me_op_name + device_name + flag_str);
 }
 
+std::set<std::string> &OpAdaptationInfoRegister::GetOpName() {
+  static std::set<std::string> op_names;
+  return op_names;
+}
+
 std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMap() {
   static std::map<std::string, OpAdaptationInfo *> op_info_map;
   return op_info_map;
@@ -78,6 +83,7 @@ std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMa
 
 void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
   MS_EXCEPTION_IF_NULL(reg_info);
+  (void)GetOpName().insert(reg_info->me_op_name());
   auto key = GenerateKey(reg_info->me_op_name(), reg_info->device_name(), reg_info->flag());
   auto find = GetOpInfoMap().find(key);
   if (find != GetOpInfoMap().end()) {
@@ -91,6 +97,10 @@ void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
 
 OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &me_op_name,
                                                                 const std::string &device_name, bool flag) {
+  auto name_iter = GetOpName().find(me_op_name);
+  if (name_iter == GetOpName().end()) {
+    return nullptr;
+  }
   auto key = GenerateKey(me_op_name, device_name, flag);
   auto iter = GetOpInfoMap().find(key);
   if (iter == GetOpInfoMap().end()) {

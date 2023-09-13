@@ -80,6 +80,41 @@ struct OpGradInfo {
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 
+struct GradParam {
+  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
+      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
+    input_size = op_grad_info->input_value.size();
+  }
+
+  OpGradInfoPtr op_grad_info;
+
+  // High order used this
+  bool grad_by_value{true};
+  // Dynamic shape or dynamic structure
+  bool use_dynamic_shape_process{false};
+
+  // For other used
+  bool out_used_in_bporp_graph{false};
+  bool is_control_flow{false};
+  size_t input_size{0};
+
+  // For jit domain
+  bool has_added_v{false};
+  bool is_jit_graph{false};
+  bool is_jit_self_dynamic_shape{false};
+
+  // For KPynativeWithFProp used
+  FuncGraphPtr fg{nullptr};
+  // grad func graph for jit or fg
+  FuncGraphPtr source_fg{nullptr};
+  // Op forward output used in bprop graph
+  std::string graph_cache_key;
+  // Used for pyexecute
+  CNodePtr cnode;
+};
+
+using GradParamPtr = std::shared_ptr<GradParam>;
+
 struct FrontendOpRunInfo {
   FrontendOpRunInfo() { op_grad_info = std::make_shared<OpGradInfo>(); }
   OpGradInfoPtr op_grad_info;

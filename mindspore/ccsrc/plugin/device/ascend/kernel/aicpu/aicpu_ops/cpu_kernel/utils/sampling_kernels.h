@@ -17,9 +17,10 @@
 #ifndef AICPU_UTILS_SAMPLING_KERNELS_H_
 #define AICPU_UTILS_SAMPLING_KERNELS_H_
 
-#include <cmath>
 #include <stdio.h>
-#include "cpu_context.h"
+#include <cmath>
+#include <string>
+#include "cpu_kernel/inc/cpu_context.h"
 
 namespace aicpu {
 // Defines functions for different types of sampling kernels.
@@ -76,7 +77,7 @@ enum SamplingKernelType {
  * // Converts a string into the corresponding kernel type.
  * Returns SamplingKernelTypeEnd if the string couldn't be converted.
  */
-SamplingKernelType SamplingKernelTypeFromString(std::string str);
+SamplingKernelType SamplingKernelTypeFromString(const std::string &str);
 
 // A function object for a Lanczos kernel.
 struct LanczosKernelFunc {

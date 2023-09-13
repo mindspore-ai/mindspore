@@ -966,11 +966,11 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
     DeleteDynamicLen(node);
   }
   auto node_ptr = node->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(node_ptr);
   std::string node_name = "";
   if (node_ptr->isa<CNode>()) {
     node_name = GetCNodeName(node_ptr);
   }
-  MS_EXCEPTION_IF_NULL(node_ptr);
   if (types.size() != shapes.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                                << "." << trace::DumpSourceLines(node);

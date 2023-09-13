@@ -55,9 +55,9 @@ void TransSrcDataToDstData(const TransArgs &args, const std::vector<int64_t> &sh
   const int64_t c1hwc0 = c1 * hwc0;
   const int64_t dc1hwc0 = d * c1hwc0;
   const int64_t ndhwc = n * dhwc;
-  int64_t src_index = 0;
 
   for (int64_t ndhwc_idx = 0; ndhwc_idx < ndhwc; ++ndhwc_idx) {
+    int64_t src_index = 0;
     const int64_t n_idx = ndhwc_idx / dhwc;
     const int64_t dhw_idx = ndhwc_idx % dhwc / c;
     const int64_t c_idx = ndhwc_idx % c;

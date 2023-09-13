@@ -16,13 +16,13 @@ mindspore.ops.squeeze
 
     参数：
         - **input** (Tensor) - 用于计算Squeeze的输入Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **axis** (Union[int, tuple(int)]) - 指定待删除shape的维度索引，它会删除给定axis参数中所有大小为1的维度。如果指定了维度索引，其数据类型必须为int32或int64。默认值： ``None`` ，将使用空tuple。
+        - **axis** (Union[int, tuple(int), list(int)]) - 指定待删除shape的维度索引，它会删除给定axis参数中所有大小为1的维度。如果指定了维度索引，其数据类型必须为int32或int64。默认值： ``None`` ，将使用空tuple。
 
     返回：
         Tensor，shape为 :math:`(x_1, x_2, ..., x_S)` 。
 
     异常：
         - **TypeError** - `input` 不是tensor。
-        - **TypeError** - `axis` 既不是int也不是tuple。
-        - **TypeError** - `axis` 是tuple，其元素并非全部是int。
+        - **TypeError** - `axis` 不是int、tuple或list。
+        - **TypeError** - `axis` 是tuple或list，但其元素不全是int。
         - **ValueError** - 指定 `axis` 的对应维度不等于1。

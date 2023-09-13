@@ -78,6 +78,7 @@ typedef struct MatmulStruct {
 
   bool a_const_;
   bool b_const_;
+  bool bias_need_repack_;
   bool infer_shape_;
   bool pack_opt_;
   bool is_sharing_pack_;

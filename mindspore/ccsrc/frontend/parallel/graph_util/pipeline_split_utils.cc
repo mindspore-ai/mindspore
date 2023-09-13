@@ -122,7 +122,7 @@ static ValuePtr GetReceiveSegment(const CNodePtr &cnode) {
 static bool EnableShareCell() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   const auto &comm_reuse_env = common::GetEnv("MS_COMM_COMPILER_OPT");
   if (!comm_reuse_env.empty() && cell_reuse) {
     MS_LOG(EXCEPTION) << "The cell reuse cannot be used with communication reuse,"

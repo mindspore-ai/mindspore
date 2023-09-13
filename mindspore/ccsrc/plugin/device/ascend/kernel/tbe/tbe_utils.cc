@@ -264,6 +264,10 @@ void TbeUtils::LoadCache() {
   static bool has_load = false;
   if (!has_load) {
     auto bin_map = KernelMeta::GetInstance();
+    if (bin_map == nullptr) {
+      MS_LOG(INFO) << "Kernel cache is invalid.";
+      return;
+    }
     auto config_path = TbeUtils::GetOpDebugPath();
     auto path = config_path + kCceKernelMeta;
     if (!bin_map->ReadIndex(path)) {
@@ -281,7 +285,7 @@ void TbeUtils::LoadCache() {
 void TbeUtils::UpdateCache(const std::string &kernel_name) {
   KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
-    MS_LOG(INFO) << "kernel cache is invalid.";
+    MS_LOG(INFO) << "Kernel cache is invalid.";
     return;
   }
   return bin_map->UpdateCache(kernel_name);
@@ -290,7 +294,10 @@ void TbeUtils::UpdateCache(const std::string &kernel_name) {
 KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg) {
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
-  MS_EXCEPTION_IF_NULL(bin_map);
+  if (bin_map == nullptr) {
+    MS_LOG(DEBUG) << "Kernel cache is invalid.";
+    return nullptr;
+  }
   return bin_map->GetKernelPack(kernel_name, is_akg);
 }
 

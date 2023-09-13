@@ -61,7 +61,8 @@ abstract::TupleShapePtr SparseSoftmaxCrossEntropyWithLogitsV2InferShape(
 
   auto loss_shape = labels_shape;
   auto backprop_shape = features_shape;
-  abstract::ShapePtr loss_shape_ptr, backprop_shape_ptr;
+  abstract::ShapePtr loss_shape_ptr;
+  abstract::ShapePtr backprop_shape_ptr;
   loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
   backprop_shape_ptr = std::make_shared<abstract::Shape>(backprop_shape);
   return std::make_shared<abstract::TupleShape>(
@@ -75,7 +76,8 @@ TuplePtr SparseSoftmaxCrossEntropyWithLogitsV2InferType(const PrimitivePtr &prim
   auto labels_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_features_types = {kFloat16, kFloat32};
   const std::set<TypePtr> valid_labels_types = {kInt32, kInt64};
-  std::map<std::string, TypePtr> features_args, labels_args;
+  std::map<std::string, TypePtr> features_args;
+  std::map<std::string, TypePtr> labels_args;
   (void)features_args.emplace("logits_type(features_type)", features_type);
   (void)labels_args.emplace("labels_type", labels_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(features_args, valid_features_types, primitive->name());

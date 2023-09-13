@@ -45,7 +45,9 @@ class RaggedRangeHelperGpuKernel : public GpuKernelHelperBase {
     const std::vector<std::vector<int64_t>> nested_splits_shapes{output_shapes[0]};
     const std::vector<std::vector<int64_t>> dense_values_shapes{output_shapes[1]};
     const std::vector<std::vector<int64_t>> range_sizes_shapes{std::vector<int64_t>{output_shapes[0][0] - 1}};
-    int in_flag, nested_splits_out_flag, dense_values_out_flag;
+    int in_flag;
+    int nested_splits_out_flag;
+    int dense_values_out_flag;
     int workspace_flag;
     ResetResource();
 

@@ -573,7 +573,7 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (cell_reuse) {
     after_inline_pm->AddPass(std::make_shared<EliminateMaketupleGetitem>());
     after_inline_pm->AddPass(std::make_shared<AllReduceFusion>());
@@ -734,7 +734,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<RecvFusion>());
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
+  const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
   if (no_cell_reuse) {
     other_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
     other_pm->AddPass(std::make_shared<AllReduceFusion>());

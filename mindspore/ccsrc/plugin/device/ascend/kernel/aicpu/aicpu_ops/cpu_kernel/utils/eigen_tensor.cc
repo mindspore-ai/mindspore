@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "eigen_tensor.h"
+#include "cpu_kernel/utils/eigen_tensor.h"
 
 namespace aicpu {
 const Tensor *EigenTensor::GetTensor() const { return tensor_; }

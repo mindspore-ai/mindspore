@@ -311,7 +311,7 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
   }
 }
 
-autograd::GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
+GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   bool out_used_in_bporp_graph = true;
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
@@ -327,15 +327,14 @@ autograd::GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info
   }
 
   op_run_info->op_grad_info->out_abs = op_run_info->base_op_run_info.abstract;
-  auto grad_param = std::make_shared<autograd::GradParam>(
-    op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(), top_cell->use_dynamic_shape_process());
+  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(),
+                                                top_cell->use_dynamic_shape_process());
   grad_param->out_used_in_bporp_graph = out_used_in_bporp_graph;
   return grad_param;
 }
 
-autograd::GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell,
-                                       const expander::GraphGradInfoPtr &graph_grad_info,
-                                       ValuePtrList *forward_vnodes_values) {
+GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell,
+                             const expander::GraphGradInfoPtr &graph_grad_info, ValuePtrList *forward_vnodes_values) {
   MS_LOG_DEBUG << "start CreateGradParam";
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
@@ -345,8 +344,8 @@ autograd::GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, 
     PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
   // original output abs
   op_run_info->op_grad_info->out_abs = graph_grad_info->ori_output_abs;
-  auto grad_param = std::make_shared<autograd::GradParam>(
-    op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(), top_cell->use_dynamic_shape_process());
+  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(),
+                                                top_cell->use_dynamic_shape_process());
   MS_LOG_DEBUG << "end CreateGradParam";
   return grad_param;
 }
@@ -375,7 +374,7 @@ void RunReplace(const expander::GraphGradInfoPtr &graph_grad_info, const ValuePt
   MS_LOG_DEBUG << "end RunReplace";
 }
 
-void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, const autograd::GradParamPtr &grad_param,
+void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
                     const expander::GraphGradInfoPtr &graph_grad_info, const ValuePtrList &forward_vnodes_values) {
   // Replace vnode in ad_graph by current output value
   RunReplace(graph_grad_info, forward_vnodes_values);
@@ -489,12 +488,9 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
   MS_EXCEPTION_IF_NULL(input_args_info);
   forward()->WaitForwardTask();
   // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
-  // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
+  // and clear bprop_queue queue, bprop task of outer top cell may not finish, it will cause not found cnode
   // error.
-  {
-    GilReleaseWithCheck gil_release;
-    async_executor_->Wait();
-  }
+  WaitBpropTask();
   if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
     MS_LOG(DEBUG) << "Make new topest graph";
     MakeNewTopGraph(input_args_info);
@@ -630,7 +626,7 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
     auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
     auto task = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
-    DispatchGradQueueTask(task);
+    DispatchGradQueueTask(std::move(task));
   } else {
     top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(
       PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value));
@@ -890,11 +886,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     MS_LOG(DEBUG) << "No need compile graph";
     // If no need compile, we can clear construct bprop queue.
     (void)need_gc_top_cell_list_.emplace_back(top_cell());
-    {
-      GilReleaseWithCheck release_gil;
-      async_executor_->Clear();
-    }
-    async_executor_->CheckException();
+    ClearBpropTask();
     top_cell()->ClearParamGradInfo();
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
@@ -902,11 +894,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     return;
   }
   MS_LOG(DEBUG) << "Need compile graph";
-  {
-    GilReleaseWithCheck release_gil;
-    async_executor_->Wait();
-  }
-  async_executor_->CheckException();
+  WaitBpropTask();
   set_top_cell(already_run_top_cell);
   AsyncClearTopCell();
   op_num_in_bprop_graph_ = top_cell()->op_index();
@@ -1310,8 +1298,8 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   op_grad_info->out_value = out_value;
   op_grad_info->out_abs = first_grad_fg->output()->abstract();
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
-  auto grad_param = std::make_shared<autograd::GradParam>(op_grad_info, !top_cell()->is_high_order_top_cell(),
-                                                          use_dynamic_shape_process);
+  auto grad_param =
+    std::make_shared<GradParam>(op_grad_info, !top_cell()->is_high_order_top_cell(), use_dynamic_shape_process);
   grad_param->fg = grad_fg;
   grad_param->source_fg = first_grad_fg;
   grad_param->is_control_flow = has_call_graph;
@@ -1435,7 +1423,7 @@ void GradExecutor::AsyncClearTopCell() {
   for (const auto &need_gc_top_cell : need_gc_top_cell_list_) {
     if (forward()->enable_async()) {
       auto task = [need_gc_top_cell]() { need_gc_top_cell->Clear(); };
-      DispatchGradQueueTask(task);
+      DispatchGradQueueTask(std::move(task));
     } else {
       need_gc_top_cell->Clear();
     }
@@ -1446,7 +1434,7 @@ void GradExecutor::AsyncClearTopCell() {
 void GradExecutor::AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell) {
   if (forward()->enable_async()) {
     auto task = [top_cell] { top_cell->set_auto_grad_cell_ptr(nullptr); };
-    DispatchGradQueueTask(task);
+    DispatchGradQueueTask(std::move(task));
   } else {
     top_cell->set_auto_grad_cell_ptr(nullptr);
   }
@@ -1691,7 +1679,7 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
     auto task = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
-    DispatchGradQueueTask(task);
+    DispatchGradQueueTask(std::move(task));
   } else {
     top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }
@@ -1707,7 +1695,7 @@ void GradExecutor::DoGraphGrad(const FrontendOpRunInfoPtr &op_run_info) const {
     auto fn = [auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values]() {
       KPynativeGraph(auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values);
     };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(fn)));
   } else {
     KPynativeGraph(top_cell()->auto_grad_cell_ptr(), grad_param, graph_grad_info, forward_vnodes_values);
   }
@@ -1926,10 +1914,25 @@ void GradExecutor::SetTopCellDynamicAttr(const py::object &cell) {
   top_cell()->set_use_dynamic_shape_process(dynamic_inputs_cells_.count(PyNativeAlgo::PyParser::GetIdByPyObj(cell)));
 }
 
-void GradExecutor::DispatchGradQueueTask(std::function<void(void)> task) const {
-  bool success = async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
-  if (!success) {
-    async_executor_->CheckException();
+void GradExecutor::DispatchGradQueueTask(std::function<void(void)> &&task) const {
+  if (!bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(task)))) {
+    bprop_queue_->CheckException();
+  }
+}
+
+void GradExecutor::ClearBpropTask() const {
+  if (bprop_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
+    bprop_queue_->Clear();
+    bprop_queue_->CheckException();
+  }
+}
+
+void GradExecutor::WaitBpropTask() const {
+  if (bprop_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
+    bprop_queue_->Wait();
+    bprop_queue_->CheckException();
   }
 }
 }  // namespace pynative

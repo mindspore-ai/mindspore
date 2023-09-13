@@ -48,6 +48,9 @@ namespace ops {
 namespace {
 int64_t CheckAttrInt64Positive(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
   MS_EXCEPTION_IF_NULL(attr);
+  if (!attr->isa<Int64Imm>()) {
+    MS_EXCEPTION(TypeError) << "For '" << op << "', the attr '" << attr_name << "' should be an int.";
+  }
   int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
   if (attr_val <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << op << "', the '" << attr_name

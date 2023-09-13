@@ -118,3 +118,40 @@ def test_scatter_update_output():
     updates = Tensor(np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]]), mindspore.int64)
     output = P.ScatterUpdate()(input_x, indices, updates)
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_update_empty_input():
+    """
+    Feature: test ScatterUpdate empty input.
+    Description: input shape has 0.
+    Expectation: no error.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = Parameter(Tensor([], mindspore.float32), name="input_x")
+    indices = Tensor(np.arange(0, 20, 1).reshape((2, 1, 2, 5)), mindspore.int64)
+    updates = Tensor(np.random.randint(-32768, 32767, (2, 1, 2, 5)), mindspore.float32)
+    _ = P.ScatterUpdate()(input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_div_0d():
+    """
+    Feature: test ScatterDiv 0d input.
+    Description: 0d input.
+    Expectation: the output match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x_np = np.random.randn()
+    indices_np = np.random.randint(0, 1)
+    updates_np = np.random.randn()
+    input_x = Parameter(Tensor(input_x_np, mindspore.float32), name="x")
+    indices = Tensor(indices_np, mindspore.int32)
+    updates = Tensor(updates_np, mindspore.float32)
+    output = P.ScatterDiv()(input_x, indices, updates)
+    expect = input_x_np / updates_np
+    assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)

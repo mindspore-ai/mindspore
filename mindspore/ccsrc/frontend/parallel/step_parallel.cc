@@ -2647,7 +2647,7 @@ static void ReorderForGradAccumulation(const FuncGraphPtr &root, const FuncGraph
     root->set_flag(BACKWARD, true);
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    static const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+    const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
     DumpGraph(root, "before_reorder");
     if (IsTraining(manager)) {
       if (cell_reuse) {
@@ -2696,7 +2696,7 @@ static void MicroBatchPreProcess(const FuncGraphPtr &root, const FuncGraphManage
   TagMicroBatchEnd(manager, all_nodes);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
+  const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
   bool enable_grad_accu = ParallelContext::GetInstance()->grad_accumulation_step() > 1;
   if (no_cell_reuse && enable_grad_accu) {
     TagMicroBatchBpEndPrim(root);

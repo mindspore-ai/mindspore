@@ -60,12 +60,8 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   }
   auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto logits_shape = logits_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("logits_shape", SizeToLong(logits_shape.size()), kGreaterEqual, kSize1,
-                                           op_name);
   auto label_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto label_shape = label_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("label_shape", SizeToLong(label_shape.size()), kGreaterEqual, kSize1,
-                                           op_name);
   if (IsDynamicRank(logits_shape) || IsDynamicRank(label_shape)) {
     auto ds_shape = std::vector<int64_t>{abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(ds_shape);
@@ -89,6 +85,10 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
       << "For '" << op_name
       << "', the two input 'weight' and 'pos_weight' shape can not broadcast to logits and label.";
   }
+  if (!IsDynamic(logits_shape) && !IsDynamic(broadcast_weight_shape)) {
+    (void)CheckAndConvertUtils::Check("label_shape", logits_shape, kEqual, broadcast_weight_shape, op_name);
+  }
+
   // For BCEWithLogitsLoss, if reduction in ('mean', 'sum'), output will be a scalar.
   if (reduction_value != "none") {
     std::vector<int64_t> broadcast_shape;

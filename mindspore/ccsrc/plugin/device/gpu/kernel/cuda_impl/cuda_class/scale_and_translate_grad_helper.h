@@ -83,8 +83,14 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
     size_t size_size = (kIndex2) * sizeof(int32_t);
     work_size_list_.emplace_back(size_size);
     // starts, span_size_, weight_size
-    std::vector<std::vector<int64_t>> int32_shapes, weights_shapes, buffers_shapes;
-    std::vector<int64_t> start_shape, weight_shape, spans_size_shape, buffer_shape, weight_size_shape;
+    std::vector<std::vector<int64_t>> int32_shapes;
+    std::vector<std::vector<int64_t>> weights_shapes;
+    std::vector<std::vector<int64_t>> buffers_shapes;
+    std::vector<int64_t> start_shape;
+    std::vector<int64_t> weight_shape;
+    std::vector<int64_t> spans_size_shape;
+    std::vector<int64_t> buffer_shape;
+    std::vector<int64_t> weight_size_shape;
     start_shape.push_back(input_grad_height_ + input_grad_width_ + origin_height_ + origin_width_);
     spans_size_shape.push_back(kIndex2);
     weight_size_shape.push_back(origin_height_ + origin_width_);
@@ -118,8 +124,11 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
     if (is_null_input_) {
       return 0;
     }
-    T *input_grad_ptr = nullptr, *input_origin_image_ptr = nullptr;
-    float *input_scale_ptr = nullptr, *input_translate_ptr = nullptr, *output_ptr = nullptr;
+    T *input_grad_ptr = nullptr;
+    T *input_origin_image_ptr = nullptr;
+    float *input_scale_ptr = nullptr;
+    float *input_translate_ptr = nullptr;
+    float *output_ptr = nullptr;
     int flag = GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &input_grad_ptr);
     if (flag != 0) {
       return flag;
@@ -141,9 +150,14 @@ class ScaleAndTranslateGradHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     int64_t *input_shape_ptr = nullptr;
-    int32_t *forward_starts_ptr = nullptr, *grad_starts_ptr = nullptr, *spans_size_ptr = nullptr,
-            *weight_size_ptr = nullptr, *size_ptr = nullptr;
-    float *forward_weights_ptr = nullptr, *grad_weights_ptr = nullptr, *intermediate_ptr = nullptr;
+    int32_t *forward_starts_ptr = nullptr;
+    int32_t *grad_starts_ptr = nullptr;
+    int32_t *spans_size_ptr = nullptr;
+    int32_t *weight_size_ptr = nullptr;
+    int32_t *size_ptr = nullptr;
+    float *forward_weights_ptr = nullptr;
+    float *grad_weights_ptr = nullptr;
+    float *intermediate_ptr = nullptr;
     flag = GetDeviceAddress<int64_t>(work_ptrs, 0, kernel_name_, &input_shape_ptr);
     if (flag != 0) {
       return flag;

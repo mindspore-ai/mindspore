@@ -17,12 +17,12 @@
 
 #include <memory>
 
+#include "cpu_kernel/common/status.h"
 #include "cpu_kernel/format_transfer/format_transfer_utils.h"
 #include "cpu_kernel/format_transfer/formats_definitions.h"
-#include "utils/kernel_util.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "securec/include/securec.h"
-#include "cpu_kernel/common/status.h"
+#include "utils/kernel_util.h"
 
 namespace aicpu {
 namespace formats {
@@ -51,12 +51,11 @@ bool ShapeArgValid(const std::vector<int64_t> &src_shape, const std::vector<int6
     KERNEL_LOG_ERROR("Failed to transpose, src shape is empty");
     return false;
   }
-  for (auto dim : src_shape) {
-    if (dim < 0) {
-      KERNEL_LOG_ERROR("Failed to transpose, negative dim [%d] in src shape [%s]", dim,
-                       FmtToStr(VectorToString(src_shape)).c_str());
-      return false;
-    }
+  auto iter = std::find_if(src_shape.begin(), src_shape.end(), [](auto dim) { return dim < 0; });
+  if (iter != src_shape.end()) {
+    KERNEL_LOG_ERROR("Failed to transpose, negative dim [%d] in src shape [%s]", *iter,
+                     FmtToStr(VectorToString(src_shape)).c_str());
+    return false;
   }
   if (perm_arg.size() != src_shape.size()) {
     KERNEL_LOG_ERROR(

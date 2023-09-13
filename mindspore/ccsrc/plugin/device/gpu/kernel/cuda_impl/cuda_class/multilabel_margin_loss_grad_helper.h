@@ -135,7 +135,8 @@ class MultilabelMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
   int CheckKernelParam() override {
     reduction_ = attr_ptr_->reduction;
     int64_t dims = static_cast<int64_t>(x_shape_.size());
-    int64_t min_dim = 1, max_dim = 2;
+    int64_t min_dim = 1;
+    int64_t max_dim = 2;
     if (dims < min_dim || dims > max_dim) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dim of input should be 0 or 1 or 2 but got " << dims;
       return -1;

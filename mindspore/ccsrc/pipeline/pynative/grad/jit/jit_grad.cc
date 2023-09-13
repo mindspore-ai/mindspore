@@ -315,8 +315,8 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   op_grad_info->out_value = op_run_info->real_out;
   op_grad_info->out_abs = jit_forward_graph->output()->abstract();
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
-  auto grad_param = std::make_shared<autograd::GradParam>(op_grad_info, !top_cell->is_high_order_top_cell(),
-                                                          grad_executor->use_dynamic_shape_process());
+  auto grad_param = std::make_shared<GradParam>(op_grad_info, !top_cell->is_high_order_top_cell(),
+                                                grad_executor->use_dynamic_shape_process());
   grad_param->is_control_flow = compile_info_.is_control_flow_;
 
   grad_param->has_added_v = has_added_v;
@@ -336,10 +336,10 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
 }
 
 void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                             const autograd::GradParamPtr &grad_param) const {
+                             const GradParamPtr &grad_param) const {
   {
     py::gil_scoped_release gil_release;
-    grad_executor->async_executor()->Wait();
+    grad_executor->bprop_queue()->Wait();
   }
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {

@@ -1289,8 +1289,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
                                  cnode);
   }
   // set execution order
-  std::vector<CNodePtr> exe_order = {cnode};
-  graph->set_execution_order(exe_order);
+  graph->set_execution_order({cnode});
   if (is_ascend && !is_mutable) {
     graph->set_output(cnode);
   } else {

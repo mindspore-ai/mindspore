@@ -26,7 +26,6 @@
 #include <tuple>
 #include <vector>
 
-namespace {
 /**
  * Coefficients for the Lanczos approximation of the gamma function. The
  * coefficients are uniquely determined by the choice of g and n (kLanczosGamma
@@ -43,11 +42,10 @@ static constexpr std::array<double, 8> kLanczosCoefficients = {
   771.3234287776530788486528258894,   -176.61502916214059906584551354,
   12.507343278686904814458936853,     -0.13857109526572011689554707,
   9.984369578019570859563e-6,         1.50563273514931155834e-7};
-double log_lanczos_gamma_plus_one_half = std::log(kLanczosGamma + 0.5);
+static const double log_lanczos_gamma_plus_one_half = std::log(kLanczosGamma + 0.5);
 static constexpr int VALUE = 1;
 static constexpr int DERIVATIVE = 2;
 static constexpr int SAMPLE_DERIVATIVE = 3;
-}  // namespace
 
 /** Compute the Lgamma function using Lanczos' approximation from "A Precision
  * Approximation of the Gamma Function". SIAM Journal on Numerical Analysis
@@ -135,7 +133,7 @@ T Lgamma(const T &input) {
   T result = need_to_reflect ? reflection : log_y;
 
   return std::isinf(input) ? std::numeric_limits<T>::infinity() : result;
-};
+}
 
 /* Compute the Digamma function using Lanczos' approximation from "A Precision
  * Approximation of the Gamma Function". SIAM Journal on Numerical Analysis
@@ -188,7 +186,7 @@ T Digamma(const T &input) {
 
   // Digamma has poles at negative integers and zero; return nan for those.
   return (input < 0 && input == std::floor(input)) ? std::numeric_limits<T>::quiet_NaN() : real_result;
-};
+}
 
 template <typename T>
 void IgammaSeriesLoop(std::vector<T> &vals, const int &mode) {
