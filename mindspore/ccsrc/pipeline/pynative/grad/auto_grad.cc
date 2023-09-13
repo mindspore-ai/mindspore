@@ -1205,8 +1205,7 @@ FuncGraphPtr AutoGradCellImpl::Finish(const tensor::TensorPtrList &weights, cons
   }
   SetOutput(weights, grad_position, grad_attr);
   // Replace Parameter of primal func graph with parameter of ad_param()->tape_;
-  AnfNodePtrList params = ExtractParamters(weights);
-  ReplacePrimalParameter(params, grad_attr.has_sens);
+  ReplacePrimalParameter(grad_attr.has_sens);
   PyNativeAlgo::Common::DumpGraphIR("before_final_opt.ir", ad_param()->tape_);
   // Clear weights grad info
   for (const auto &weight : weights) {
@@ -2000,21 +1999,14 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
   need_grad_weights_.reserve(weights.size());
   for (const auto &weight_tensor : weights) {
     (void)need_grad_weights_.emplace(weight_tensor->id());
-    auto p = ad_param()->tape_->add_parameter();
-    auto param = ExtractParameter(weight_tensor);
-    if (param == nullptr) {
-      param = CreateTapeParameter(weight_tensor,
-                                  PyNativeAlgo::Common::SetAbstractValueToAnyValue(weight_tensor->ToAbstract()));
+    UpdateTapeParameter(weight_tensor);
+  }
+  for (auto &weight : weights_used_in_graph_) {
+    auto tensor = PyNativeAlgo::Common::GetTensorFromParam(weight);
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (need_grad_weights_.find(tensor->id()) == need_grad_weights_.end()) {
+      UpdateTapeParameter(tensor);
     }
-    MS_EXCEPTION_IF_NULL(param);
-    const auto &param_info = weight_tensor->param_info();
-    MS_EXCEPTION_IF_NULL(param_info);
-    const auto &param_name = param_info->name();
-    p->set_name(param_name);
-    p->debug_info()->set_name(param_name);
-    TraceGuard trace_guard(std::make_shared<TraceCopy>(p->debug_info()));
-    p->set_default_param(weight_tensor);
-    p->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(weight_tensor->ToAbstract()));
   }
 }
 
@@ -2254,7 +2246,7 @@ void AutoGradCellImpl::ElimateTupleGetItem() {
   }
 }
 
-void AutoGradCellImpl::DoParameterReplaceByManager(const AnfNodePtrList &weights, bool has_sens_arg) {
+void AutoGradCellImpl::DoParameterReplaceByManager(bool has_sens_arg) {
   const auto &parameters = ad_param()->tape_->parameters();
   auto cell_inputs_size = cell_inputs_.size();
   auto mng = MakeManager({ad_param()->tape_}, false);
@@ -2267,20 +2259,17 @@ void AutoGradCellImpl::DoParameterReplaceByManager(const AnfNodePtrList &weights
   if (has_sens_arg) {
     weight_offset = weight_offset + 1;
   }
-  for (size_t i = 0; i < weights.size(); ++i) {
-    (void)tr.Replace(weights[i], parameters[weight_offset + i]);
-  }
-  for (auto &weight : weights_used_in_graph_) {
-    auto t = PyNativeAlgo::Common::GetTensorFromParam(weight);
-    if (need_grad_weights_.find(t->id()) == need_grad_weights_.end()) {
-      MS_LOG(DEBUG) << "Convert " << weight->DebugString() << " to value node by manager.";
-      (void)tr.Replace(weight, PyNativeAlgo::Common::CreateValueNodeByValue(t, weight->abstract()));
-    }
+  for (size_t i = weight_offset; i < parameters.size(); ++i) {
+    auto tensor = PyNativeAlgo::Common::GetTensorFromParam(parameters[i]);
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto parameter = ExtractParameter(tensor);
+    MS_EXCEPTION_IF_NULL(parameter);
+    (void)tr.Replace(parameter, parameters[i]);
   }
   tr.Commit();
 }
 
-void AutoGradCellImpl::DoParameterReplaceByUser(const AnfNodePtrList &weights, bool has_sens_arg) {
+void AutoGradCellImpl::DoParameterReplaceByUser(bool has_sens_arg) {
   const auto &parameters = ad_param()->tape_->parameters();
   auto cell_inputs_size = cell_inputs_.size();
   for (size_t i = 0; i < cell_inputs_size; ++i) {
@@ -2290,31 +2279,44 @@ void AutoGradCellImpl::DoParameterReplaceByUser(const AnfNodePtrList &weights, b
   if (has_sens_arg) {
     weight_offset = weight_offset + 1;
   }
-  for (size_t i = 0; i < weights.size(); ++i) {
-    Replace(weights[i], parameters[weight_offset + i], &ad_param()->users_.dout_user_);
-  }
-  for (auto &weight : weights_used_in_graph_) {
-    auto t = PyNativeAlgo::Common::GetTensorFromParam(weight);
-    MS_EXCEPTION_IF_NULL(t);
-    if (need_grad_weights_.find(t->id()) == need_grad_weights_.end()) {
-      MS_LOG(DEBUG) << "Convert " << weight->DebugString() << " to value node by user.";
-      Replace(weight, PyNativeAlgo::Common::CreateValueNodeByValue(t, weight->abstract()),
-              &ad_param()->users_.dout_user_);
-    }
+  for (size_t i = weight_offset; i < parameters.size(); ++i) {
+    auto tensor = PyNativeAlgo::Common::GetTensorFromParam(parameters[i]);
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto parameter = ExtractParameter(tensor);
+    MS_EXCEPTION_IF_NULL(parameter);
+    Replace(parameter, parameters[i], &ad_param()->users_.dout_user_);
   }
 }
 
-void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg) {
+void AutoGradCellImpl::ReplacePrimalParameter(bool has_sens_arg) {
   PyNativeAlgo::Common::DumpGraphIR("replace_param.ir", ad_param()->tape_);
   if (need_do_manager_replace_) {
     MS_LOG(DEBUG) << "Do parameter replace by manager.";
-    DoParameterReplaceByManager(weights, has_sens_arg);
+    DoParameterReplaceByManager(has_sens_arg);
     need_do_manager_replace_ = false;
   } else {
     MS_LOG(DEBUG) << "Do parameter replace by user.";
-    DoParameterReplaceByUser(weights, has_sens_arg);
+    DoParameterReplaceByUser(has_sens_arg);
   }
   ElimateTupleGetItem();
+}
+
+void AutoGradCellImpl::UpdateTapeParameter(const tensor::TensorPtr &tensor) {
+  auto p = ad_param()->tape_->add_parameter();
+  auto param = ExtractParameter(tensor);
+  if (param == nullptr) {
+    param = CreateTapeParameter(tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor->ToAbstract()));
+  }
+  MS_EXCEPTION_IF_NULL(param);
+  const auto &param_info = tensor->param_info();
+  if (param_info != nullptr) {
+    const auto &param_name = param_info->name();
+    p->set_name(param_name);
+    p->debug_info()->set_name(param_name);
+  }
+  TraceGuard trace_guard(std::make_shared<TraceCopy>(p->debug_info()));
+  p->set_default_param(tensor);
+  p->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor->ToAbstract()));
 }
 
 void ClearPyNativeAutoGradStaticRes() {

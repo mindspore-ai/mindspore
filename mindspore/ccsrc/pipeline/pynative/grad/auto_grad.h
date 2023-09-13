@@ -228,9 +228,10 @@ class AutoGradCellImpl {
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const;
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
-  void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
-  void DoParameterReplaceByManager(const AnfNodePtrList &weights, bool has_sens_arg);
-  void DoParameterReplaceByUser(const AnfNodePtrList &weights, bool has_sens_arg);
+  void ReplacePrimalParameter(bool has_sens_arg);
+  void UpdateTapeParameter(const tensor::TensorPtr &tensor);
+  void DoParameterReplaceByManager(bool has_sens_arg);
+  void DoParameterReplaceByUser(bool has_sens_arg);
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_sens_arg);
   // get last reverse iterator
