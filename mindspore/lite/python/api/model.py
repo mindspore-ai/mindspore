@@ -79,6 +79,7 @@ model_type_cxx_py_map = {
 
 def set_env(func):
     """set env for Ascend custom opp"""
+
     def warpper(*args, **kwargs):
         current_path = os.path.dirname(os.path.abspath(__file__))
         mslite_ascend_ascendc_custom_kernel_path = os.path.join(current_path,
@@ -92,7 +93,7 @@ def set_env(func):
         if os.path.exists(mslite_ascend_tbe_custom_kernel_path):
             if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_tbe_custom_kernel_path + ":" + \
-                    os.environ['ASCEND_CUSTOM_OPP_PATH']
+                                                       os.environ['ASCEND_CUSTOM_OPP_PATH']
             else:
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_tbe_custom_kernel_path
         else:
@@ -101,12 +102,13 @@ def set_env(func):
         if os.path.exists(mslite_ascend_ascendc_custom_kernel_path):
             if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path + ":" + \
-                    os.environ['ASCEND_CUSTOM_OPP_PATH']
+                                                       os.environ['ASCEND_CUSTOM_OPP_PATH']
             else:
                 os.environ['ASCEND_CUSTOM_OPP_PATH'] = mslite_ascend_ascendc_custom_kernel_path
         else:
             logging.warning("mslite ascendc custom kernel path not found")
         return func(*args, **kwargs)
+
     return warpper
 
 
@@ -285,7 +287,7 @@ class Model(BaseModel):
 
         Args:
             inputs (list[Tensor]): A list that includes all input Tensors in order.
-            inputs (list[Tensor], optional): A list that includes all output Tensors in order,
+            outputs (list[Tensor], optional): A list that includes all output Tensors in order,
                 this tensor include output data buffer.
 
         Returns:
@@ -293,7 +295,9 @@ class Model(BaseModel):
 
         Raises:
             TypeError: `inputs` is not a list.
+            TypeError: `outputs` is not a list.
             TypeError: `inputs` is a list, but the elements are not Tensor.
+            TypeError: `outputs` is a list, but the elements are not Tensor.
             RuntimeError: predict model failed.
 
         Examples:

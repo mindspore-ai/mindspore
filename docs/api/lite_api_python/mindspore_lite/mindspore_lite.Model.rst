@@ -68,19 +68,29 @@ mindspore_lite.Model
         返回：
             list[Tensor]，模型的输入Tensor列表。
 
-    .. py:method:: predict(inputs)
+    .. py:method:: get_outputs()
+
+        获取模型的所有输出Tensor信息。
+
+        返回：
+            list[TensorMeta]，模型的输出TensorMeta列表。
+
+    .. py:method:: predict(inputs, outputs=None)
 
         推理模型。
 
         参数：
             - **inputs** (list[Tensor]) - 包含所有输入Tensor的顺序列表。
+            - **outputs** (list[Tensor]) - 包含所有输出Tensor的顺序列表。
 
         返回：
             list[Tensor]，模型的输出Tensor列表。
 
         异常：
             - **TypeError** - `inputs` 不是list类型。
+            - **TypeError** - `outputs` 不是list类型。
             - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
+            - **TypeError** - `outputs` 是list类型，但元素不是Tensor类型。
             - **RuntimeError** - 预测推理模型失败。
 
     .. py:method:: resize(inputs, dims)
