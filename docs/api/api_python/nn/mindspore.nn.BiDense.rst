@@ -1,7 +1,7 @@
 mindspore.nn.BiDense
 ====================
 
-.. py:class:: mindspore.nn.BiDense(in1_channels, in2_channels, out_channels, weight_init=None, bias_init=None, has_bias=True)
+.. py:class:: mindspore.nn.BiDense(in1_channels, in2_channels, out_channels, weight_init=None, bias_init=None, has_bias=True, dtype=mstype.float32)
 
     双线性全连接层。
 
@@ -19,6 +19,7 @@ mindspore.nn.BiDense
         - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。str的值引用自函数 `initializer`。默认值： ``None`` 。
         - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。str的值引用自函数 `initializer`。默认值： ``None`` 。
         - **has_bias** (bool) - 是否使用偏置向量 :math:`\text{bias}` 。默认值： ``True`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     形状：
         - **input1** - :math:`(*, H_{in1})`，其中 :math:`H_{in1}=\text{in1_channels}`，

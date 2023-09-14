@@ -1,7 +1,7 @@
 mindspore.nn.BatchNorm2d
 =========================
 
-.. py:class:: mindspore.nn.BatchNorm2d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW')
+.. py:class:: mindspore.nn.BatchNorm2d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW', dtype=mstype.float32)
 
     在四维输入（具有额外通道维度的小批量二维输入）上应用批归一化处理（Batch Normalization Layer），以避免内部协变量偏移。批归一化广泛应用于卷积网络中。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据和学习参数进行训练，这些参数见以下公式：
 
@@ -34,6 +34,7 @@ mindspore.nn.BatchNorm2d
           - 如果为 ``False`` ，则使用指定值的平均值和方差值，不跟踪统计值。
           - 如果为 ``None`` ，则根据训练和验证模式自动设置 `use_batch_statistics` 为 ``True`` 或 ``False`` 。在训练时， `use_batch_statistics会` 设置为 ``True`` 。在验证时， `use_batch_statistics` 会自动设置为 ``False`` 。
         - **data_format** (str) - 数据格式可为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值：``'NCHW'`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - 输入shape为 :math:`(N, C, H, W)` 的Tensor。支持数据类型：float16、float32。

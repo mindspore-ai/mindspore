@@ -246,7 +246,7 @@ class Conv2d(_Conv):
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
@@ -462,10 +462,10 @@ class Conv1d(_Conv):
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` .
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
@@ -704,7 +704,7 @@ class Conv3d(_Conv):
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
 
     Inputs:
@@ -924,11 +924,11 @@ class Conv3dTranspose(_Conv):
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
             Default: ``'NCDHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
-          Currently input data type only support float16 and float32.
+          Currently input data dtype only support float16 and float32.
 
     Outputs:
         Tensor, the shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -1147,7 +1147,7 @@ class Conv2dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1363,7 +1363,7 @@ class Conv1dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.

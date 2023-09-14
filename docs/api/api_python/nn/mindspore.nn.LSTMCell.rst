@@ -28,11 +28,11 @@ mindspore.nn.LSTMCell
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
         - **has_bias** (bool) - cell是否有偏置 `b_ih` 和 `b_hh` 。默认值： ``True`` 。
-        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。
-        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为 :math:`(batch\_size, hidden\_size)`。 `hx` 的数据类型必须与 `x` 相同。
+        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为 :math:`(batch\_size, hidden\_size)`。
 
     输出：
         - **hx'** (Tensor) - 两个Tensor(h', c')的元组，其shape为 :math:`(batch\_size, hidden\_size)` 。

@@ -1,7 +1,7 @@
 mindspore.nn.BatchNorm3d
 =========================
 
-.. py:class:: mindspore.nn.BatchNorm3d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None)
+.. py:class:: mindspore.nn.BatchNorm3d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, dtype=mstype.float32)
 
     对输入的五维数据进行批归一化(Batch Normalization Layer)。
 
@@ -25,6 +25,7 @@ mindspore.nn.BatchNorm3d
         - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值：``'zeros'`` 。
         - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。方差的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
         - **use_batch_statistics** (bool) - 如果为 ``True`` ，则使用当前批次数据的平均值和方差值。如果为 ``False`` ，则使用指定的平均值和方差值。如果为 ``None`` ，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值： ``None`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。支持数据类型：float16、float32。

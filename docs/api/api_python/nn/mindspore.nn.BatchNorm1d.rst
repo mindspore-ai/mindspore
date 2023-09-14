@@ -1,7 +1,7 @@
 mindspore.nn.BatchNorm1d
 =========================
 
-.. py:class:: mindspore.nn.BatchNorm1d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW')
+.. py:class:: mindspore.nn.BatchNorm1d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW', dtype=mstype.float32)
 
     在二维或三维输入（mini-batch 一维输入或二维输入）上应用批归一化（Batch Normalization Layer），避免内部协变量偏移。归一化在卷积网络中被广泛的应用。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。
 
@@ -24,6 +24,7 @@ mindspore.nn.BatchNorm1d
         - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
         - **use_batch_statistics** (bool) - 如果为 ``True`` ，则使用当前批次数据的平均值和方差值。如果为 ``False`` ，则使用指定的平均值和方差值。如果为 ``None`` ，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值： ``None`` 。
         - **data_format** (str) - 数据格式可为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - 输入shape为 :math:`(N, C)` 或 :math:`(N, C, L)` 的Tensor，其中 `N` 为batch， `C` 为特征数量或通道数量， `L` 为序列长度。支持数据类型：float16、float32。

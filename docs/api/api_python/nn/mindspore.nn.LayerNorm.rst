@@ -1,7 +1,7 @@
 mindspore.nn.LayerNorm
 =======================
 
-.. py:class:: mindspore.nn.LayerNorm(normalized_shape, begin_norm_axis=-1, begin_params_axis=-1, gamma_init='ones', beta_init='zeros', epsilon=1e-7)
+.. py:class:: mindspore.nn.LayerNorm(normalized_shape, begin_norm_axis=-1, begin_params_axis=-1, gamma_init='ones', beta_init='zeros', epsilon=1e-7, dtype=mstype.float32)
 
     在mini-batch输入上应用层归一化（Layer Normalization）。
 
@@ -20,6 +20,7 @@ mindspore.nn.LayerNorm
         - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'ones'`` 。
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'zeros'`` 。
         - **epsilon** (float) - :math:`\epsilon` 添加到分母中的值，以确保数值稳定。默认值： ``1e-7`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - `x` 的shape为 :math:`(x_1, x_2, ..., x_R)` ， `input_shape[begin_norm_axis:]` 等于 `normalized_shape` 。
