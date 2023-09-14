@@ -49,8 +49,8 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &primitive,
                                                             const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   auto x1_shape_ptr = input_args[0]->BuildShape();
   auto x2_indices_shape_ptr = input_args[1]->BuildShape();
   auto x2_values_shape_ptr = input_args[2]->BuildShape();

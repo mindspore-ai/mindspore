@@ -1304,7 +1304,7 @@ def triu(m, k=0):
     if rank < 1:
         _raise_value_error("input m's rank should be larger than 0")
     elif rank == 1:
-        mask = tri(m.shape[0], k=k-1, dtype=mstype.bool_)
+        mask = tri(m.shape[0], k=k - 1, dtype=mstype.bool_)
         return where(mask, zeros(1, m.dtype), m)
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
