@@ -205,6 +205,8 @@ void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
                                                   "Invalid device context for super kernel actor:" + GetAID().Name());
   }
+  sort(memory_alloc_list_.begin(), memory_alloc_list_.end(),
+       [](const DeviceTensor *a, const DeviceTensor *b) { return a->GetSize() > b->GetSize(); });
   if (ActorDispatcher::is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                               device_contexts_[0], context, GetAID());
