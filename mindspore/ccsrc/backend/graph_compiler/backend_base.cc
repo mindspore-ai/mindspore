@@ -480,9 +480,15 @@ bool AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session
     return false;
   }
   // Update parameters info
+  const auto &manager = kernel_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &users = manager->node_users();
   for (const auto &p : parameters) {
-    (void)session_ptr->CreateNewParameterFromParameter(p, kernel_graph.get());
-    kernel_graph->SetKernelInfoForNode(p);
+    // Exclude parameter not used in graph, such as constant input
+    if (users.find(p) != users.end()) {
+      (void)session_ptr->CreateNewParameterFromParameter(p, kernel_graph.get());
+      kernel_graph->SetKernelInfoForNode(p);
+    }
   }
   // Run by single op will create kernel info in single op graph, so no need do this here;
   // But, run by Actor need kernel info, so do this here

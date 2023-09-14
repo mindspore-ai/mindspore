@@ -16,6 +16,7 @@
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
+import numpy as np
 
 
 class _Grad(Cell):
@@ -106,3 +107,23 @@ class HighGrad(Cell):
 
     def construct(self, *inputs):
         return self.final_grad(*inputs)
+
+
+def _count_unequal_element(data_expected, data_me, rtol, atol):
+    assert data_expected.shape == data_me.shape
+    total_count = len(data_expected.flatten())
+    error = np.abs(data_expected - data_me)
+    greater = np.greater(error, atol + np.abs(data_me) * rtol)
+    loss_count = np.count_nonzero(greater)
+    assert (loss_count / total_count) < rtol, \
+        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
+            format(data_expected[greater], data_me[greater], error[greater])
+
+
+def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
+    if np.any(np.isnan(data_expected)) or np.any(np.isnan(data_me)):
+        assert np.allclose(data_expected, data_me, rtol, atol, equal_nan=equal_nan)
+    elif not np.allclose(data_expected, data_me, rtol, atol, equal_nan=equal_nan):
+        _count_unequal_element(data_expected, data_me, rtol, atol)
+    else:
+        assert np.array(data_expected).shape == np.array(data_me).shape

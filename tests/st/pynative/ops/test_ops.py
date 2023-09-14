@@ -19,7 +19,7 @@ import mindspore.nn as nn
 import mindspore as ms
 from mindspore import context
 from mindspore import ops, Tensor, dtype, jit
-from tests.st.pynative.utils import GradOfFirstInput
+from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, allclose_nparray
 
 
 def test_cast():
@@ -116,8 +116,7 @@ class Abs(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_primitive_abs():
     """
@@ -130,3 +129,67 @@ def test_primitive_abs():
     net = Abs()
     grad_net = GradOfFirstInput(net, sens_param=False)
     grad_net(inputs)
+
+
+class Net1(nn.Cell):
+    def __init__(self, ksize=2, strides=1, pad_mode="same", data_format='NCHW', int_type=2, bool_type=True,
+                 none_type=None):
+        super(Net1, self).__init__()
+        self.avgpool = ops.AvgPool(kernel_size=ksize, strides=strides, pad_mode=pad_mode, data_format=data_format)
+        self.int_type = int_type
+        self.bool_type = bool_type
+        self.none_type = none_type
+
+    def construct(self, input_x):
+        if self.bool_type:
+            return self.avgpool(input_x)
+        return self.int_type, self.none_type
+
+
+class Net2(nn.Cell):
+    def __init__(self):
+        super(Net2, self).__init__()
+        self.abs = ops.Abs()
+
+    def construct(self, input_x, kernel_size, strides, int_type, bool_type, none_type):
+        ops_avg = ops.AvgPool(kernel_size=kernel_size, strides=strides, pad_mode="same", data_format='NCHW')
+        out = ops_avg(input_x)
+        if bool_type:
+            return out
+        return int_type, none_type
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_primitive_avgpool():
+    """
+    Feature: Primitive avgpool
+    Description: Test ops avgpool grad.
+    Expectation: No exception.
+    """
+    def test_inner(net_ms1, net_ms2, *inputs):
+        net_ms1.set_grad()
+        net_ms2.set_grad()
+        input_list = inputs
+
+        grad_net1 = GradOfAllInputs(net_ms1)
+        grad_net1.set_train()
+        grad_ms1 = grad_net1(input_list[0], input_list[-1])
+
+        grad_net2 = GradOfAllInputs(net_ms2)
+        grad_net2.set_train()
+        grad_ms2 = grad_net2(*input_list)
+        allclose_nparray(grad_ms1[0].asnumpy(), grad_ms2[0].asnumpy(), 0.001, 0.001)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_1 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    output_grad = Tensor(np.ones((2, 3, 4, 5)).astype(np.float32))
+    kernel_size = 2
+    strides = 1
+    int_type = 3
+    bool_type = True
+    none_type = None
+    net1 = Net1()
+    net2 = Net2()
+    test_inner(net1, net2, input_1, kernel_size, strides, int_type, bool_type, none_type, output_grad)
