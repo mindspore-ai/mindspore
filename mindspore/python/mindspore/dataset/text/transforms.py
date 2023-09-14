@@ -876,19 +876,22 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>>
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
         >>> vocab = text.Vocab.from_list(vocab_list)
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         ...                                        max_bytes_per_token=100, with_offsets=False)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+        >>>
         >>> # If with_offsets=True, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         ...                                       max_bytes_per_token=100, with_offsets=True)
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
 

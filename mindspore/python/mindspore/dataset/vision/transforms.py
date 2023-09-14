@@ -34,6 +34,8 @@ Examples:
     >>> import mindspore.dataset as ds
     >>> import mindspore.dataset.vision as vision
     >>> from mindspore.dataset.vision import Border, Inter
+    >>> import mindspore.dataset.transforms as transforms
+    >>>
     >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
     >>> # create a dataset that reads all files in dataset_dir with 8 threads
     >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
@@ -1607,7 +1609,7 @@ class MixUp(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.batch(batch_size=batch_size)
         >>> # finally mix up the images and labels
         >>> image_folder_dataset = image_folder_dataset.map(
-        ...     operations=py_vision.MixUp(batch_size=batch_size, alpha=0.2),
+        ...     operations=vision.MixUp(batch_size=batch_size, alpha=0.2),
         ...     input_columns=["image", "label"])
 
     Tutorial Examples:

@@ -2742,10 +2742,10 @@ class BatchInfo(cde.CBatchInfo):
             >>> iterator = dataset.create_tuple_iterator(num_epochs=epoch)
             >>> for i in range(epoch):
             ...    result.extend(list(iterator))
-            >>> print(result)
-            [[Tensor(shape=[1], dtype=Int64, value= [0])], [Tensor(shape=[1], dtype=Int64, value= [1])],
-             [Tensor(shape=[1], dtype=Int64, value= [2])], [Tensor(shape=[1], dtype=Int64, value= [3])],
-             [Tensor(shape=[2], dtype=Int64, value= [0, 1])], [Tensor(shape=[2], dtype=Int64, value= [2, 3])]]
+            >>> # result:
+            >>> # [[Tensor(shape=[1], dtype=Int64, value= [0])], [Tensor(shape=[1], dtype=Int64, value= [1])],
+            >>> #  [Tensor(shape=[1], dtype=Int64, value= [2])], [Tensor(shape=[1], dtype=Int64, value= [3])],
+            >>> #  [Tensor(shape=[2], dtype=Int64, value= [0, 1])], [Tensor(shape=[2], dtype=Int64, value= [2, 3])]]
         """
         return
 

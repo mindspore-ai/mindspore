@@ -36,6 +36,7 @@ class TimeMonitor(Callback):
 
     Raises:
         ValueError: If data_size is not positive int.
+        TypeError: If data_time is not bool.
 
     Examples:
         >>> from mindspore import nn
@@ -62,7 +63,7 @@ class TimeMonitor(Callback):
         self.data_time_sum = 0.0
         self.data_time_start = 0.0
         self.data_sink = lambda c: c.original_args()["dataset_sink_mode"]
-        Validator.check_bool(data_time)
+        Validator.check_bool(data_time, "data_time")
 
     def on_train_step_begin(self, run_context):
         """
