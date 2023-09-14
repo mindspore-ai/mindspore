@@ -372,9 +372,9 @@ class Cast(PrimitiveWithCheck):
         value = None
         np_dst_type = mstype.dtype_to_nptype(dst_type)
         if isinstance(x, (int, float)):
-            value = Tensor(np.array(x).astype(np_dst_type))
+            value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
         else:
-            value = Tensor(x.asnumpy().astype(np_dst_type))
+            value = Tensor(x.asnumpy().astype(np_dst_type), dtype=dst_type)
         return value
 
 
@@ -1682,7 +1682,7 @@ class Fill(PrimitiveWithCheck):
         if isinstance(x, Tensor):
             x = x.asnumpy()
         ret = np.full(dims, x, x_nptype)
-        return Tensor(ret)
+        return Tensor(ret, dtype=dtype)
 
     def infer_value(self, dtype, dims, x):
         x_nptype = mstype.dtype_to_nptype(dtype)
@@ -1692,7 +1692,7 @@ class Fill(PrimitiveWithCheck):
             if isinstance(x, Tensor):
                 x = x.asnumpy()
             ret = np.full(dims, x, x_nptype)
-            return Tensor(ret)
+            return Tensor(ret, dtype=dtype)
         return None
 
 
@@ -2006,7 +2006,7 @@ class ScalarToTensor(PrimitiveWithInfer):
         validator.check_value_type("x", x, [bool, int, float], self.name)
         validator.check_subclass("dtype", dtype, mstype.number, self.name)
         data_type = mstype.dtype_to_nptype(dtype)
-        return Tensor(np.array(x, data_type))
+        return Tensor(np.array(x, data_type), dtype=dtype)
 
 
 class InvertPermutation(PrimitiveWithInfer):
