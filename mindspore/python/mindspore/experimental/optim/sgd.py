@@ -20,6 +20,7 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore.experimental.optim.optimizer import Optimizer
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
@@ -133,7 +134,7 @@ class SGD(Optimizer):
 
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
-            opt = P.SGD(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
+            opt = _get_cache_prim(P.SGD)(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
             lr = group.get("lr")
             if isinstance(lr, float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
