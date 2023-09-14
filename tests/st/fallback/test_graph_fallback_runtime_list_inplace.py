@@ -1355,3 +1355,49 @@ def test_list_inplace_with_stub_tensor():
     ret = net(index)
     assert ret == Tensor(2)
     context.set_context(mode=context.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_any_input():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(m):
+        x = [[2], [3], [4], [5]]
+        x.pop()
+        x.extend(m[Tensor([1])])
+        return x
+
+    ret = foo([[1], [2], [3], [4]])
+    assert ret == [[2], [3], [4], 2]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_any_input_2():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(m):
+        x = [[2], [3], [4], [5]]
+        while x[1] < [4]:
+            x.extend([[2]])
+            x.insert(2, [6])
+            x.reverse()
+            x.pop()
+            x.extend(m[Tensor(1)])
+        return x
+
+    ret = foo([[1], [2], [3], [4]])
+    assert ret == [[2], [5], [4], [6], [3], 2]

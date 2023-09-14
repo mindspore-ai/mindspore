@@ -1077,10 +1077,6 @@ class AfterOptARewriter : public BaseRewriter {
     if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
 
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1130,6 +1126,10 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto list_abs = abs->cast<abstract::AbstractListPtr>();
+      MS_EXCEPTION_IF_NULL(list_abs);
       fallback::SetRealType(res, list_abs->BuildType());
       fallback::SetRealShape(res, list_abs->BuildShape());
     }
@@ -1143,10 +1143,6 @@ class AfterOptARewriter : public BaseRewriter {
     if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto dict_abs = abs->cast<abstract::AbstractDictionaryPtr>();
-    MS_EXCEPTION_IF_NULL(dict_abs);
 
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1199,11 +1195,6 @@ class AfterOptARewriter : public BaseRewriter {
       return nullptr;
     }
 
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
-
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     constexpr auto internal_list_input = "__internal_list_input__";
@@ -1252,6 +1243,10 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto list_abs = abs->cast<abstract::AbstractListPtr>();
+      MS_EXCEPTION_IF_NULL(list_abs);
       fallback::SetRealType(res, list_abs->BuildType());
       fallback::SetRealShape(res, list_abs->BuildShape());
     }
@@ -1265,10 +1260,6 @@ class AfterOptARewriter : public BaseRewriter {
     if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
 
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1313,6 +1304,10 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto list_abs = abs->cast<abstract::AbstractListPtr>();
+      MS_EXCEPTION_IF_NULL(list_abs);
       fallback::SetRealType(res, list_abs->BuildType());
       fallback::SetRealShape(res, list_abs->BuildShape());
     }
@@ -1358,15 +1353,15 @@ class AfterOptARewriter : public BaseRewriter {
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
 
     res->set_debug_info(node->debug_info());
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
 
     static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto list_abs = abs->cast<abstract::AbstractListPtr>();
+      MS_EXCEPTION_IF_NULL(list_abs);
       fallback::SetRealType(res, list_abs->BuildType());
       fallback::SetRealShape(res, list_abs->BuildShape());
     }
@@ -1380,10 +1375,6 @@ class AfterOptARewriter : public BaseRewriter {
     if (!fallback::EnableFallbackListDictInplace()) {
       return nullptr;
     }
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto list_abs = abs->cast<abstract::AbstractListPtr>();
-    MS_EXCEPTION_IF_NULL(list_abs);
 
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1437,6 +1428,10 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_runtime_compile) {
       // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
       // be inferred as AbstractAny.
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto list_abs = abs->cast<abstract::AbstractListPtr>();
+      MS_EXCEPTION_IF_NULL(list_abs);
       fallback::SetRealType(res, list_abs->BuildType());
       fallback::SetRealShape(res, list_abs->BuildShape());
     }
