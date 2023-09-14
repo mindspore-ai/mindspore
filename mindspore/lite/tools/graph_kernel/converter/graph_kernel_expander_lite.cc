@@ -29,7 +29,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
@@ -41,28 +41,56 @@
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
 #include "utils/check_convert_utils.h"
+#include "mindspore/ccsrc/kernel/kernel_build_info.h"
+#include "include/backend/kernel_info.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   std::vector<std::string> format = GetFixedFormat(node);
-  auto ori_format = node->cast<CNodePtr>()->GetAttr(kOutputsFormat);
-  cnode->AddAttr(kOutputsFormat, MakeValue(format));
+  auto current_kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+  if (current_kernel_info == nullptr) {
+    MS_LOG(ERROR) << "Kernel info from " << cnode->fullname_with_scope() << "is nullptr";
+    return nullptr;
+  }
+  auto current_kernel_build_info = current_kernel_info->GetMutableSelectKernelBuildInfo();
+  auto ori_format = current_kernel_build_info->GetAllOutputFormats();
+  current_kernel_build_info->SetOutputsFormat(format);
   auto ret = decorated_->Run(cnode);
   if (ret == nullptr) {
     return nullptr;
   }
   auto fg = GetCNodeFuncGraph(ret);
   for (auto sub_cnode : fg->GetOrderedCnodes()) {
-    sub_cnode->AddAttr(kOutputsFormat, ori_format);
+    std::shared_ptr<device::KernelInfo> kernel_info = nullptr;
+    auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+    kernel_info_builder.SetOutputsFormat(ori_format);
+    if (!node->kernel_info_ptr()) {
+      kernel_info = std::make_shared<device::KernelInfo>();
+    } else {
+      kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+    }
+    kernel_info->set_select_kernel_build_info(kernel_info_builder.Build());
+    sub_cnode->set_kernel_info(kernel_info);
   }
   auto ret_cnode = ret->cast<CNodePtr>();
-  ret_cnode->AddAttr(kOutputsFormat, ori_format);
+  std::shared_ptr<device::KernelInfo> kernel_info_ret_cnode = nullptr;
+  auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+  kernel_info_builder.SetOutputsFormat(ori_format);
+  if (!node->kernel_info_ptr()) {
+    kernel_info_ret_cnode = std::make_shared<device::KernelInfo>();
+  } else {
+    kernel_info_ret_cnode = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+  }
+  kernel_info_ret_cnode->set_select_kernel_build_info(kernel_info_builder.Build());
+  ret_cnode->set_kernel_info(current_kernel_info);
   return ret_cnode;
 }
 
-std::vector<std::string> FixFormatDeco::GetFixedFormat(const AnfNodePtr &) const {
-  std::vector<std::string> format = {kOpFormat_DEFAULT};
+std::vector<std::string> FixFormatDeco::GetFixedFormat(const AnfNodePtr &node) const {
+  auto cnode = node->cast<CNodePtr>();
+  auto out_num = AnfUtils::GetOutputTensorNum(cnode);
+  std::vector<std::string> format(out_num, kOpFormat_DEFAULT);
   return format;
 }
 
@@ -75,9 +103,10 @@ std::vector<std::string> UseInputFormatDeco::GetFixedFormat(const AnfNodePtr &no
     if (cnode->input(i)->isa<CNode>()) {
       auto kernel_with_index = AnfUtils::VisitKernel(cnode->input(i), 0);
       auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
-      if (input_cnode != nullptr && input_cnode->HasAttr(kOutputsFormat)) {
+      if (input_cnode != nullptr && input_cnode->kernel_info_ptr() != nullptr) {
+        auto kernel_info_ret_cnode = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
         auto input_format =
-          GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsFormat))[kernel_with_index.second];
+          kernel_info_ret_cnode->select_kernel_build_info()->GetOutputFormat(kernel_with_index.second);
         format.push_back(input_format);
         break;
       }
@@ -90,6 +119,7 @@ std::vector<std::string> UseInputFormatDeco::GetFixedFormat(const AnfNodePtr &no
 }
 
 AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
+  // operators must infer value
   std::unordered_set<std::string> akg_exclude_nodes = {prim::kPrimGather->name(), prim::kPrimShape->name(),
                                                        prim::kPrimConcat->name(), prim::kPrimConstantOfShape->name(),
                                                        "StridedSliceOnnx"};
@@ -115,30 +145,29 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     }
   }
   auto &outputs = litegraph->GetOutputs();
-
-  if (outputs.size() != 1) {
-    return nullptr;
-  }
-
-  if (outputs[0]->NodeType() == inner::NType::Tensor) {
-    auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
-    auto valuenode = NewValueNode(value);
-    valuenode->set_abstract(value->ToAbstract());
-    return valuenode;
-  } else {
-    bool cannot_expand =
-      std::any_of(ops_list.begin(), ops_list.end(), [&akg_exclude_nodes](const inner::NodePtr &node) {
-        return akg_exclude_nodes.count(std::static_pointer_cast<inner::PrimOp>(node)->op()) > 0;
-      });
-    if (cannot_expand) {
-      return nullptr;
-    } else {
-      auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
-      (void)ConvertNonscalarTensorToParameter(new_fg, &inputs);
-      AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
-      (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
-      return node->func_graph()->NewCNode(new_inputs);
+  std::vector<AnfNodePtr> output_const;
+  for (auto &output : outputs) {
+    if (output->NodeType() == inner::NType::Tensor) {
+      auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
+      auto valuenode = NewValueNode(value);
+      valuenode->set_abstract(value->ToAbstract());
+      output_const.emplace_back(valuenode);
     }
+  }
+  if (outputs.size() == output_const.size()) {
+    return node->func_graph()->NewCNode(output_const);
+  }
+  bool cannot_expand = std::any_of(ops_list.begin(), ops_list.end(), [&akg_exclude_nodes](const inner::NodePtr &node) {
+    return akg_exclude_nodes.count(std::static_pointer_cast<inner::PrimOp>(node)->op()) > 0;
+  });
+  if (cannot_expand) {
+    return nullptr;
+  } else {
+    auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
+    (void)ConvertNonscalarTensorToParameter(new_fg, &inputs);
+    AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
+    (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
+    return node->func_graph()->NewCNode(new_inputs);
   }
 }
 
@@ -179,33 +208,46 @@ bool GraphKernelExpanderLite::DisableConvTuning() {
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
-  std::vector<OpWithLevel> expand_ops_with_level = {{kAllTarget, OpLevel_0, prim::kPrimSquare},
-                                                    // ascend device
-                                                    {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
-                                                    {kAscendDevice, OpLevel_0, prim::kPrimTile},
-                                                    // cpu device
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimReshape},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimGather},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimShape},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimConcat},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimSoftmax},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimActivation},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},
-                                                    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimInstanceNorm},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimScaleFusion}};
+  std::vector<OpWithLevel> expand_ops_with_level = {
+    {kAllTarget, OpLevel_0, prim::kPrimAddN},
+    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimGeLU},
+    {kAllTarget, OpLevel_0, prim::kPrimSquare},
+    {kAllTarget, OpLevel_0, prim::kPrimSquaredDifference},
+    {kAllTarget, OpLevel_0, prim::kPrimTile},
+    // ascend device
+    {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
+    {kAscendDevice, OpLevel_0, prim::kPrimTile},
+    {kAscendDevice, OpLevel_1, prim::kPrimBatchMatMul},
+    {kAscendDevice, OpLevel_1, prim::kPrimLayerNorm},
+    {kAscendDevice, OpLevel_1, prim::kPrimMatMul},
+    {kAscendDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogits},
+    {kAscendDevice, OpLevel_0, prim::kPrimSquaredDifference},
+    {kAscendDevice, OpLevel_0, prim::kPrimSquareSumAll},
+    {kAscendDevice, OpLevel_1, prim::kPrimSoftsign},
+    // cpu device
+    {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
+    {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
+    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},
+    {kCPUDevice, OpLevel_1, prim::kPrimReshape},
+    {kCPUDevice, OpLevel_1, prim::kPrimGather},
+    {kCPUDevice, OpLevel_1, prim::kPrimShape},
+    {kCPUDevice, OpLevel_1, prim::kPrimConcat},
+    {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftmax},
+    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},
+    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimActivation},
+    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},
+    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},
+    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape},
+    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion},
+    {kCPUDevice, OpLevel_1, prim::kPrimInstanceNorm},
+    {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
+    {kCPUDevice, OpLevel_1, prim::kPrimScaleFusion}};
   const auto &flags = GraphKernelFlags::GetInstance();
   auto conv_tuning_op_list = ConvTuningExpanderOps();
   if (DisableConvTuning()) {
@@ -236,10 +278,6 @@ bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {
   if (!GraphKernelExpander::CanExpand(node)) {
     return false;
   }
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    return false;
-  }
-  // check if the node has dynamic shape
   auto cb = Callback::Instance();
   for (size_t i = 0; i < node->size() - 1; i++) {
     if (!node->input(i + 1)->isa<Parameter>() && !node->input(i + 1)->isa<ValueNode>() &&

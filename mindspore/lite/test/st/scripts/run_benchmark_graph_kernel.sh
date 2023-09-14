@@ -376,9 +376,6 @@ run_benchmark_result_file=${benchmark_test_path}/run_graph_kernel_result_files.t
 echo "Running in ${benchmark_device} on device ${device_id} ..."
 Run_Benchmark
 Run_benchmark_status=$?
-echo "benchmark log begin--------------------"
-cat ${run_benchmark_log_file}
-echo "benchmark log end--------------------"
 if [[ ${Run_benchmark_status} != 0 ]]; then
     echo "Run_Benchmark failed"
     cat ${run_benchmark_log_file}
