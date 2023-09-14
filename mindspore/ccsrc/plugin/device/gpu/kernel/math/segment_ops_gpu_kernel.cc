@@ -371,13 +371,14 @@ int SegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 
 std::vector<KernelAttr> SegmentOpsGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map.find(kernel_type_);
+  std::vector<KernelAttr> support_list;
   if (iter == kernel_attr_map.end()) {
     MS_LOG(ERROR) << "For 'SegmentOpsOp', only support these types: "
                   << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, SegmentOpsPtrCreatorFunc>>>(
                        kernel_attr_map)
                   << " currently, but got " << kernel_name_;
+    return support_list;
   }
-  std::vector<KernelAttr> support_list;
   (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, SegmentOpsPtrCreatorFunc> &item) { return item.first; });
   return support_list;

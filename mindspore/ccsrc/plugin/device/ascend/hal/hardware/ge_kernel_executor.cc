@@ -260,6 +260,7 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
@@ -406,6 +407,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 bool GeKernelExecutor::PySyncRuning() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(res_manager_);
   if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
       ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) &&
       !res_manager_->SyncStream(kDefaultStreamIndex)) {
