@@ -24,6 +24,7 @@
 using ge::DT_BF16;
 using ge::DT_BOOL;
 using ge::DT_COMPLEX128;
+using ge::DT_COMPLEX32;
 using ge::DT_COMPLEX64;
 using ge::DT_DOUBLE;
 using ge::DT_DUAL;
@@ -80,6 +81,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
     {"DT_BOOL", {DT_BOOL}},
     {"DT_COMPLEX128", {DT_COMPLEX128}},
     {"DT_COMPLEX64", {DT_COMPLEX64}},
+    {"DT_COMPLEX32", {DT_COMPLEX32}},
     {"DT_DOUBLE", {DT_DOUBLE}},
     {"DT_DUAL", {DT_DUAL}},
     {"DT_DUAL_SUB_INT8", {DT_DUAL_SUB_INT8}},
@@ -158,13 +160,13 @@ OpProto::OpProto(const std::string &name) : name_(name) {}
 OpProto &OpProto::SetInput(const std::string &name, const std::string &tensor_type, bool is_optional) {
   (void)input_names_.emplace_back(name);
   input_optional_flags_.push_back(is_optional);
-  (void)input_types_.emplace(name, ParseGeTypes(tensor_type));
+  (void)input_types_org_.emplace(name, tensor_type);
   return *this;
 }
 
 OpProto &OpProto::SetOutput(const std::string &name, const std::string &tensor_type) {
   (void)output_names_.emplace_back(name);
-  (void)output_types_.emplace(name, ParseGeTypes(tensor_type));
+  (void)output_types_org_.emplace(name, tensor_type);
   return *this;
 }
 
@@ -174,6 +176,40 @@ OpProto &OpProto::SetAttr(const std::string &name, bool is_optional) {
 }
 
 OpProto &OpProto::DoNothing() { return *this; }
+
+OpProto &OpProto::DefineDataType(const std::string &name, const std::string &tensor_type) {
+  (void)alias_types_.emplace("\"" + name + "\"", ParseGeTypes(tensor_type));
+  return *this;
+}
+
+OpProto &OpProto::FinishRegOperator() {
+  // process types of input parameters
+  for (const auto &[name, type_str] : input_types_org_) {
+    auto alias_iter = alias_types_.find(name);
+    if (alias_iter != alias_types_.end()) {
+      (void)input_types_.emplace(name, alias_iter->second);
+      continue;
+    }
+    (void)input_types_.emplace(name, ParseGeTypes(type_str));
+  }
+
+  // process types of output parameters
+  for (const auto &[name, type_str] : output_types_org_) {
+    auto alias_iter = alias_types_.find(name);
+    if (alias_iter != alias_types_.end()) {
+      (void)output_types_.emplace(name, alias_iter->second);
+      continue;
+    }
+    (void)output_types_.emplace(name, ParseGeTypes(type_str));
+  }
+
+  // clear temporary fields
+  input_types_org_.clear();
+  output_types_org_.clear();
+  alias_types_.clear();
+
+  return *this;
+}
 
 size_t OpProto::GetInputIndexByName(const std::string &name) const {
   auto iter = std::find(input_names_.begin(), input_names_.end(), name);
