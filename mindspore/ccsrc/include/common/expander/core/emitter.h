@@ -31,6 +31,7 @@
 #include "ops/array_op_name.h"
 #include "ops/comparison_op_name.h"
 #include "ops/framework_op_name.h"
+#include "ops/arithmetic_op_name.h"
 #include "ops/math_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/shape_calc.h"
@@ -59,6 +60,10 @@ class COMMON_EXPORT Emitter {
   NodePtr TupleGetItem(const NodePtr &input, size_t i) {
     return Emit(mindspore::kTupleGetItemOpName, {input, Value(static_cast<int64_t>(i))});
   }
+  NodePtr TupleGetItem(const NodePtr &input, const NodePtr &i) { return Emit(kTupleGetItemOpName, {input, i}); }
+  NodePtr Len(const NodePtr &input) { return Emit(kSequenceLenOpName, {input}); }
+  NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarAddOpName, {lhs, rhs}); }
+  NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarSubOpName, {lhs, rhs}); }
 
   NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
