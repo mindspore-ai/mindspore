@@ -210,7 +210,7 @@ def zip(datasets):
             The number of datasets must be more than 1.
 
     Returns:
-        Dataset, dataset zipped.
+        Dataset, a new dataset with the above operation applied.
 
     Raises:
         ValueError: If the number of datasets is 1.
@@ -397,8 +397,7 @@ class Dataset:
             getter_mode (bool, optional): Whether to build IR tree in pull mode. Default: ``False``.
 
         Returns:
-            DatasetNode, the root node of the IR tree.
-            Dataset, the root dataset of the IR tree.
+            Union[DatasetNode, Dataset], the root node of the IR tree and the root dataset of the IR tree.
         """
         parent = self.parent
         self.parent = []
@@ -524,7 +523,7 @@ class Dataset:
                 bucket if it is not a full batch. Default: ``False``.
 
         Returns:
-            Dataset, dataset bucketized and batched by length.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> # Create a dataset where certain counts rows are combined into a batch
@@ -613,7 +612,7 @@ class Dataset:
                   to create shared memory. Default: 16.
 
         Returns:
-            BatchDataset, dataset batched.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> # 1) Create a dataset where every 5 rows are combined into a batch
@@ -679,7 +678,7 @@ class Dataset:
                 to ``None``. Default: ``None``.
 
         Returns:
-            PaddedBatchDataset, dataset batched.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> # 1) Pad every sample to the largest sample's shape and batch the samples
@@ -713,7 +712,7 @@ class Dataset:
                 Default: ``None``.
 
         Returns:
-            SyncWaitDataset, dataset added a blocking condition.
+            Dataset, a new dataset with the above operation applied.
 
         Raises:
             RuntimeError: If condition name already exists.
@@ -771,7 +770,7 @@ class Dataset:
                 dataset will result in a global shuffle.
 
         Returns:
-            Dataset, dataset shuffled.
+            Dataset, a new dataset with the above operation applied.
 
         Raises:
             RuntimeError: If exist sync operations before shuffle.
@@ -797,7 +796,7 @@ class Dataset:
                 return a `Dataset` .
 
         Returns:
-            Dataset, dataset applied by the function.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -918,7 +917,7 @@ class Dataset:
               `operations` .
 
         Returns:
-            Dataset, dataset after mapping operation.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1004,7 +1003,7 @@ class Dataset:
                 in parallel. Default: ``None``.
 
         Returns:
-            Dataset, dataset filtered.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> # generator data(0 ~ 19)
@@ -1028,7 +1027,7 @@ class Dataset:
             count (int): Number of times the dataset is going to be repeated. Default: ``None``.
 
         Returns:
-            Dataset, dataset repeated.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1058,7 +1057,7 @@ class Dataset:
             count (int): Number of elements in the dataset to be skipped.
 
         Returns:
-            Dataset, dataset that containing rows like origin rows subtract skipped rows.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1083,7 +1082,7 @@ class Dataset:
             count (int, optional): Number of elements to be taken from the dataset. Default: ``-1`` .
 
         Returns:
-            Dataset, dataset taken.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1181,7 +1180,7 @@ class Dataset:
                will be different in each epoch.
 
         Returns:
-            tuple(Dataset), a tuple of datasets that have been split.
+            Tuple[Dataset], a tuple of new datasets splited from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -1236,7 +1235,7 @@ class Dataset:
                 to be zipped together with this dataset.
 
         Returns:
-            Dataset, dataset zipped.
+            Dataset, a new dataset with the above operation applied.
 
         Raises:
             TypeError: The parameter is not dataset object or tuple of dataset objects.
@@ -1276,7 +1275,7 @@ class Dataset:
                 to be concatenated together with this dataset.
 
         Returns:
-            Dataset, dataset concatenated.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1334,7 +1333,7 @@ class Dataset:
             output_columns (Union[str, list[str]]): List of names of the output columns.
 
         Returns:
-            Dataset, dataset renamed.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1360,7 +1359,7 @@ class Dataset:
             columns(Union[str, list[str]]): List of names of the columns to project.
 
         Returns:
-            Dataset, dataset projected.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1384,7 +1383,7 @@ class Dataset:
                                    return a preprocessed `Dataset` .
 
         Returns:
-            Dataset, dataset applied by the function.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1429,7 +1428,7 @@ class Dataset:
             of data transmission per time is 256M.
 
         Returns:
-            Dataset, dataset for transferring.
+            Dataset, a new dataset with the above operation applied.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1558,7 +1557,7 @@ class Dataset:
                 Default: ``True``.
 
         Returns:
-            Iterator, tuple iterator over the dataset.
+            Iterator, a dataset iterator that returns data of type Tuple.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1592,7 +1591,7 @@ class Dataset:
                 Default: ``True`` .
 
         Returns:
-            Iterator, dictionary iterator over the dataset.
+            Iterator, a dataset iterator that returns data of type Dict.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1961,12 +1960,12 @@ class Dataset:
 
     def get_class_indexing(self):
         """
-        Return the class index.
+        Get the mapping dictionary from category names to category indexes.
+
+        This dictionary can be used to look up which category name corresponds to a particular category index.
 
         Returns:
-            dict, a str-to-int mapping from label name to index.
-            dict, a str-to-list<int> mapping from label name to index for Coco ONLY. The second number
-            in the list is used to indicate the super category.
+            Dict[str, int], the mappings from category names to category indexes.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -2449,7 +2448,7 @@ class MappableDataset(SourceDataset):
                shard may not be part of the same split.
 
         Returns:
-            tuple(Dataset), a tuple of datasets that have been split.
+            Tuple[Dataset], a tuple of new datasets splited from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -4330,10 +4329,7 @@ class Schema:
     Class to represent a schema of a dataset.
 
     Args:
-        schema_file(str): Path of the schema file. Default: ``None``.
-
-    Returns:
-        Schema object, schema info about dataset.
+        schema_file (str): Path of the schema file. Default: ``None``.
 
     Raises:
         RuntimeError: If schema file failed to load.

@@ -19,7 +19,7 @@ mindspore.dataset.Dataset.shuffle
         - **buffer_size** (int) - 用于混洗的缓冲区大小（必须大于1）。将 `buffer_size` 设置为数据集大小将进行全局混洗。
 
     返回：
-        ShuffleDataset，混洗后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。
 
     异常：
         - **RuntimeError** - 混洗前存在通过 `dataset.sync_wait` 进行同步操作。

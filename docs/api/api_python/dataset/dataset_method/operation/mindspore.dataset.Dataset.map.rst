@@ -40,4 +40,4 @@ mindspore.dataset.Dataset.map
         - 不要将 `mindspore.nn` 和 `mindspore.ops` 或其他的网络计算算子添加到 `operations` 中。
 
     返回：
-        MapDataset，map操作后的数据集。
+        Dataset，应用了上述操作的新数据集对象。

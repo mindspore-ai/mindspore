@@ -355,8 +355,8 @@ class OBSMindDataset(GeneratorDataset):
             If it's OBS Service of Huawei Cloud, the endpoint is
             like ``<obs.cn-north-4.myhuaweicloud.com>`` (Region cn-north-4).
             If it's Minio which starts locally, the endpoint is like ``<https://127.0.0.1:9000>``.
-        ak (str): Access key ID of cloud storage.
-        sk (str): Secret key ID of cloud storage.
+        ak (str): The access key ID used to access the OBS data.
+        sk (str): The secret access key used to access the OBS data.
         sync_obs_path (str): Remote dir path used for synchronization, users need to
             create it on cloud storage in advance. Path is in the format of s3://bucketName/objectKey.
         columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.

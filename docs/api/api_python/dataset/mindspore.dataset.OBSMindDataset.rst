@@ -10,8 +10,8 @@
         - **server** (str) - 连接云存储的服务地址。可包含协议类型、域名、端口号。
           假如为华为云OBS，服务地址为： ``<obs.cn-north-4.myhuaweicloud.com>`` 。
           假如为Minio，服务地址为： ``<https://your-endpoint:9000>`` 。
-        - **ak** (str) - 访问密钥中的AK。
-        - **sk** (str) - 访问密钥中的SK。
+        - **ak** (str) - 用于访问OBS数据的访问密钥ID。
+        - **sk** (str) - 用于访问OBS数据的私有访问密钥。
         - **sync_obs_path** (str) - 用于同步操作云存储上的路径，用户需要提前创建，目录路径的格式为s3://bucketName/objectKey。
         - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列。默认值： ``None`` ，读取所有列。
         - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。

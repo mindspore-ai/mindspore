@@ -48,15 +48,21 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
         font_size (int, float): Font size of texts. Default: ``0.8``.
         show (bool): Whether to show the image. Default: ``True``.
         win_name (str): The window name. Default: ``"win"``.
-        wait_time (int): Value of waitKey param. Default: ``2000``, means display interval is 2000ms.
+        wait_time (int): Waiting time delay for a key event in milliseconds. During image display,
+            if there is no key pressed, wait for this time then jump to next image. If ESC is pressed,
+            quit display immediately. If any other key is pressed, stop waiting then jump to
+            next image directly. Default: ``2000`` , wait 2000ms then jump to next image.
         out_file (str, optional): The filename to write the imagee. Default: ``None``. File extension name
             is required to indicate the image compression type, e.g. 'jpg', 'png'.
 
     Returns:
         ndarray, The image with bboxes drawn on it.
 
+    Note:
+        This interface relies on the `opencv-python` library.
+
     Raises:
-        ImportError: If opencv-python is not installed.
+        ImportError: If `opencv-python` is not installed.
         AssertionError: If `image` is not in (H, W, C) or (C, H, W) format.
         AssertionError: If `bboxes` is not in (N, 4) or (N, 5) format.
         AssertionError: If `labels` is not in (N, 1) format.

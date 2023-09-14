@@ -9,7 +9,7 @@ mindspore.dataset.Dataset.flat_map
         - **func** (function) - 数据处理函数，要求输入必须为一个 `numpy.ndarray` ，返回值是一个 `Dataset` 对象。
 
     返回：
-        执行给定操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。
 
     异常：
         - **TypeError** - `func` 不是函数。

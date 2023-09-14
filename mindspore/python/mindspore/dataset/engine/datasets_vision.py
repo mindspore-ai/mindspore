@@ -1107,10 +1107,14 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
 
     def get_class_indexing(self):
         """
-        Get the class index.
+        Get the mapping dictionary from category names to category indexes.
+
+        This dictionary can be used to look up which category name corresponds to a particular category index.
 
         Returns:
-            dict, a str-to-list<int> mapping from label name to index.
+            Dict[str, List[int]], the mappings from category names to category index list. The first
+            element of the list is always the category ID. Only in Panoptic tasks, the second element
+            of the list indicates whether the category is a thing or a stuff.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -2770,7 +2774,8 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - The shape of the image column is [image_size] if `decode` flag is ``False``, or :math:`[H,W,C]` otherwise.
+        - If `decode` is ``False`` , the "image" column will get the 1D raw bytes of the image.
+          Otherwise, a decoded image with shape :math:`[H,W,C]` will be returned.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
