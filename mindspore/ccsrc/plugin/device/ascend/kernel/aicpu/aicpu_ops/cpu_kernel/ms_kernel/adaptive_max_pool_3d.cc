@@ -180,7 +180,9 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(const CpuKernelCon
       auto ind_p = indices_data + b * sizeD * osizeT * osizeH * osizeW;
       for (int64_t d = started; d < endD; ++d) {
         // loop over output
-        int64_t ot, oh, ow;
+        int64_t ot;
+        int64_t oh;
+        int64_t ow;
         for (ot = startT; ot < endT; ++ot) {
           int64_t istartT = start_index(ot, osizeT, isizeT);
           int64_t iendT = end_index(ot, osizeT, isizeT);
@@ -202,7 +204,9 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(const CpuKernelCon
               auto indp = ind_p + d * osizeT * osizeH * osizeW + ot * osizeH * osizeW + oh * osizeW + ow;
 
               // compute local max:
-              int64_t it = 0, ih = 0, iw = 0;
+              int64_t it = 0;
+              int64_t ih = 0;
+              int64_t iw = 0;
               int64_t maxindex = (it + istartT) * isizeH * isizeW + (ih + istartH) * isizeW + (iw + istartW);
               T maxval = *ip;
               for (it = 0; it < kT; ++it) {

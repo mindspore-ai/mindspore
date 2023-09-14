@@ -62,7 +62,8 @@ uint32_t GetBroadcastSize(const int index, const int in_size, const int ksize, c
 uint32_t GetOutputSize(int64_t input_size, int64_t kernel_size, int64_t stride, const std::string &padding,
                        int64_t *output_size, int64_t *padding_before, int64_t *padding_after) {
   KERNEL_CHECK_FALSE(stride > 0, KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] Stride must be positive.");
-  std::string same("SAME"), valid("VALID");
+  std::string same("SAME");
+  std::string valid("VALID");
   if (valid == padding) {
     *output_size = (input_size - kernel_size + stride) / stride;
     *padding_before = 0;
@@ -131,7 +132,8 @@ uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
 
   // check data format string, optional
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
-  std::string data_format_NCHW("NCHW"), data_format_NHWC("NHWC");
+  std::string data_format_NCHW("NCHW");
+  std::string data_format_NHWC("NHWC");
   std::string data_format;
 
   if (attr_data_format == nullptr) {
@@ -183,7 +185,8 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
 
   // data_format
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
-  std::string data_format_NCHW("NCHW"), data_format_NHWC("NHWC");
+  std::string data_format_NCHW("NCHW");
+  std::string data_format_NHWC("NHWC");
   std::string data_format;
   if (attr_data_format == nullptr) {
     data_format = data_format_NHWC;
@@ -230,7 +233,12 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
   EigenTensor output_eigen_tensor(output, output->GetData());
   output_eigen_tensor.flat<T>().setZero();
 
-  int64_t out_height, out_width, pad_rows, pad_cols, padding_rows_after, padding_cols_after;
+  int64_t out_height;
+  int64_t out_width;
+  int64_t pad_rows;
+  int64_t pad_cols;
+  int64_t padding_rows_after;
+  int64_t padding_cols_after;
 
   KERNEL_CHECK_FALSE(depth_window == 1, KERNEL_STATUS_PARAM_INVALID,
                      "Non-spatial pooling is not"
@@ -251,16 +259,23 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
                      &pad_cols, &pad_rows](int64_t start, int64_t limit) {
     typedef Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenArrayMap;
     typedef Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> EigenArrayMap;
-    const int64_t X_W = in_cols, X_H = in_rows, Y_W = out_backprop_cols, Y_H = out_backprop_rows;
+    const int64_t X_W = in_cols;
+    const int64_t X_H = in_rows;
+    const int64_t Y_W = out_backprop_cols;
+    const int64_t Y_H = out_backprop_rows;
     const int64_t batch_size = limit;
     const int64_t X_HxW = X_H * X_W;
     const int64_t Y_HxW = Y_H * Y_W;
-    const int64_t X_stride = X_HxW, Y_stride = Y_HxW;
+    const int64_t X_stride = X_HxW;
+    const int64_t Y_stride = Y_HxW;
     const T *dy_ptr = out_backprop_ptr + start * Y_stride;
     T *dx_ptr = input_backprop_ptr + start * X_stride;
-    const int64_t stride_h = row_stride, stride_w = col_stride;
-    const int64_t kernel_h = window_rows, kernel_w = window_cols;
-    const int64_t pad_t = pad_rows, pad_l = pad_cols;
+    const int64_t stride_h = row_stride;
+    const int64_t stride_w = col_stride;
+    const int64_t kernel_h = window_rows;
+    const int64_t kernel_w = window_cols;
+    const int64_t pad_t = pad_rows;
+    const int64_t pad_l = pad_cols;
     for (int64_t i = start; i < batch_size; ++i) {
       ConstEigenArrayMap dy_arr(dy_ptr, Y_W, Y_H);
       EigenArrayMap dx_arr(dx_ptr, X_W, X_H);
@@ -284,13 +299,15 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
                      &pad_rows, &pad_cols](int64_t start, int64_t limit) {
     for (int64_t b = start; b < limit; ++b) {
       for (int64_t r = 0; r < out_backprop_rows; ++r) {
-        int rindex, rsize;
+        int rindex;
+        int rsize;
         KERNEL_CHECK_FALSE(
           GetBroadcastSize(r, in_rows, window_rows, row_stride, pad_rows, &rindex, &rsize) == KERNEL_STATUS_OK,
           KERNEL_STATUS_INNER_ERROR, "[AvgPoolGrad] An error happened during calculation.")
 
         for (int64_t c = 0; c < out_backprop_cols; ++c) {
-          int cindex, csize;
+          int cindex;
+          int csize;
           KERNEL_CHECK_FALSE(
             GetBroadcastSize(c, in_cols, window_cols, col_stride, pad_cols, &cindex, &csize) == KERNEL_STATUS_OK,
             KERNEL_STATUS_INNER_ERROR, "[AvgPoolGrad] An error happened during calculation.")

@@ -62,7 +62,8 @@ uint32_t ExecArgMaxWithValue(const CpuKernelContext &ctx) {
     return KERNEL_STATUS_OK;
   }
   dim = dim < 0 ? input_shape_size + dim : dim;
-  int64_t num_outer = 1, num_inner = 1;
+  int64_t num_outer = 1;
+  int64_t num_inner = 1;
   for (int64_t i = 0; i < input_shape_size; i++) {
     if (i < dim) {
       num_outer *= input_shape[i];

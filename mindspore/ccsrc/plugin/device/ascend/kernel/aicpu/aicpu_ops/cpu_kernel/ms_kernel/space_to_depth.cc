@@ -101,7 +101,8 @@ uint32_t SpaceToDepthCpuKernel::DoCompute(CpuKernelContext &ctx) {
       if (j % input_dims[h_nhwc] == 0) {
         ++x;
       }
-      size_t number = 0, output_pos = 0;
+      size_t number = 0;
+      size_t output_pos = 0;
       size_t loc = j / input_dims[h_nhwc];
       number += (loc / (input_dims[w_nhwc] * input_dims[c_nhwc])) * input_dims[w_nhwc] * input_dims[c_nhwc];
       // Mark the position of this segment of the vector in the entire segment.

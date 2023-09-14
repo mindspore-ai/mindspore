@@ -42,73 +42,72 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType y_data_type = ctx.Output(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_INNER_ERROR;
   if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
-      y_data_type == DT_FLOAT)
+      y_data_type == DT_FLOAT) {
     ret = RegularCalculate<float, int64_t, float, float>(ctx);
-  else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<float, int64_t, std::complex<float>, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
-           y_data_type == DT_FLOAT)
+  } else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
+             y_data_type == DT_FLOAT) {
     ret = RegularCalculate<float, int32_t, float, float>(ctx);
-  else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<float, int32_t, std::complex<float>, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
-           y_data_type == DT_DOUBLE)
+  } else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
+             y_data_type == DT_DOUBLE) {
     ret = RegularCalculate<double, int64_t, double, double>(ctx);
-  else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<double, int64_t, std::complex<double>, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
-           y_data_type == DT_DOUBLE)
+  } else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
+             y_data_type == DT_DOUBLE) {
     ret = RegularCalculate<double, int32_t, double, double>(ctx);
-  else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<double, int32_t, std::complex<double>, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT64 && dense_data_type == DT_INT64 &&
-           y_data_type == DT_INT64)
+  } else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT64 && dense_data_type == DT_INT64 &&
+             y_data_type == DT_INT64) {
     ret = RegularCalculate<int64_t, int64_t, int64_t, int64_t>(ctx);
-  else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT32 && dense_data_type == DT_INT64 &&
-           y_data_type == DT_INT64)
+  } else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT32 && dense_data_type == DT_INT64 &&
+             y_data_type == DT_INT64) {
     ret = RegularCalculate<int64_t, int32_t, int64_t, int64_t>(ctx);
-  else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT64 && dense_data_type == DT_INT32 &&
-           y_data_type == DT_INT32)
+  } else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT64 && dense_data_type == DT_INT32 &&
+             y_data_type == DT_INT32) {
     ret = RegularCalculate<int32_t, int64_t, int32_t, int32_t>(ctx);
-  else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT32 && dense_data_type == DT_INT32 &&
-           y_data_type == DT_INT32)
+  } else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT32 && dense_data_type == DT_INT32 &&
+             y_data_type == DT_INT32) {
     ret = RegularCalculate<int32_t, int32_t, int32_t, int32_t>(ctx);
-  else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<std::complex<float>, int64_t, float, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<std::complex<float>, int64_t, std::complex<float>, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<std::complex<float>, int32_t, float, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
-           y_data_type == DT_COMPLEX64)
+  } else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
+             y_data_type == DT_COMPLEX64) {
     ret = RegularCalculate<std::complex<float>, int32_t, std::complex<float>, std::complex<float>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<std::complex<double>, int64_t, double, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<std::complex<double>, int64_t, std::complex<double>, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<std::complex<double>, int32_t, double, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
-           y_data_type == DT_COMPLEX128)
+  } else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
+             y_data_type == DT_COMPLEX128) {
     ret = RegularCalculate<std::complex<double>, int32_t, std::complex<double>, std::complex<double>>(ctx);
-  else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT16 &&
-           y_data_type == DT_FLOAT16)
+  } else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT16 &&
+             y_data_type == DT_FLOAT16) {
     ret = RegularCalculate<Eigen::half, int64_t, Eigen::half, Eigen::half>(ctx);
-  else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT16 &&
-           y_data_type == DT_FLOAT16)
+  } else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT16 &&
+             y_data_type == DT_FLOAT16) {
     ret = RegularCalculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
-
-  else {
+  } else {
     KERNEL_LOG_ERROR(
       "sparse_tensor_dense_mat_mul kernel wrong datatype."
       "sparse_data_type [%s],"
@@ -157,7 +156,8 @@ uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelConte
   uint64_t pairs = x1_indices_shape->GetDimSize(0);
   IndicesType *x1_indices_data = reinterpret_cast<IndicesType *>(x1_indices->GetData());
   for (uint64_t i = 0; i < pairs; i++) {
-    uint64_t row = x1_indices_data[i << 1], col = x1_indices_data[1 + (i << 1)];
+    uint64_t row = x1_indices_data[i << 1];
+    uint64_t col = x1_indices_data[1 + (i << 1)];
     SparseType a = x1_values_data[i];
     if (adjoint_a->GetBool()) {
       std::swap(row, col);
@@ -204,7 +204,8 @@ uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(const Cp
   Tensor *x1_shape = ctx.Input(2);
   Tensor *x2 = ctx.Input(3);
   Tensor *y = ctx.Output(0);
-  AttrValue *adjoint_a = ctx.GetAttr("adjoint_a"), *adjoint_b = ctx.GetAttr("adjoint_b");
+  AttrValue *adjoint_a = ctx.GetAttr("adjoint_a");
+  AttrValue *adjoint_b = ctx.GetAttr("adjoint_b");
   KERNEL_CHECK_NULLPTR(x1_indices, KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
   KERNEL_CHECK_NULLPTR(x1_values, KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
   KERNEL_CHECK_NULLPTR(x1_shape, KERNEL_STATUS_PARAM_INVALID, "Get input 2 failed.")

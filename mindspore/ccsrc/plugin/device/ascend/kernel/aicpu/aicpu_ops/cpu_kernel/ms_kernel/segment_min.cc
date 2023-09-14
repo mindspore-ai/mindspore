@@ -88,7 +88,8 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
   output->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   uint64_t output_len = output->NumElements();
   uint64_t len2 = data_len / data_shape->GetDimSize(0);
-  uint64_t _8k = 8 * 1024, _2k = 2 * 1024;
+  uint64_t _8k = 8 * 1024;
+  uint64_t _2k = 2 * 1024;
   // 输出初始化为0
   if (output_len <= _8k) {
     for (uint64_t i = 0; i < output_len; i++) output_data[i] = (T1)0;
@@ -124,12 +125,14 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
     max_core = std::min(max_core, nums_len);
     auto mt_for_nums = [&](size_t start_num, size_t end_num) {
       for (auto i = start_num; i < end_num; ++i) {
-        uint64_t st = ranges[i].first, ed = ranges[i].second;
+        uint64_t st = ranges[i].first;
+        uint64_t ed = ranges[i].second;
         uint64_t output_start = nums[i] * len2;
         for (uint64_t k = 0; k < len2; k++) {
           for (uint64_t j = st; j <= ed; j++) {
             uint64_t data_start = j * len2;
-            T1 &u = output_data[output_start + k], &v = data_data[data_start + k];
+            T1 &u = output_data[output_start + k];
+            T1 &v = data_data[data_start + k];
             if (j == st)
               u = v;
             else
@@ -142,13 +145,15 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
                         "SegmentMin Compute failed.");
   } else {
     for (uint64_t i = 0; i < nums_len; ++i) {
-      uint64_t st = ranges[i].first, ed = ranges[i].second;
+      uint64_t st = ranges[i].first;
+      uint64_t ed = ranges[i].second;
       uint64_t output_start = nums[i] * len2;
       if (len2 < _2k) {
         for (uint64_t k = 0; k < len2; k++) {
           for (uint64_t j = st; j <= ed; j++) {
             uint64_t data_start = j * len2;
-            T1 &u = output_data[output_start + k], &v = data_data[data_start + k];
+            T1 &u = output_data[output_start + k];
+            T1 &v = data_data[data_start + k];
             if (j == st) {
               u = v;
             } else {
@@ -164,7 +169,8 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
           for (uint64_t k = start_len; k < end_len; k++) {
             for (uint64_t j = st; j <= ed; j++) {
               uint64_t data_start = j * len2;
-              T1 &u = output_data[output_start + k], &v = data_data[data_start + k];
+              T1 &u = output_data[output_start + k];
+              T1 &v = data_data[data_start + k];
               if (j == st) {
                 u = v;
               } else {

@@ -116,7 +116,10 @@ uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCompute(const CpuKernelContext &ctx) {
   if (ctx.GetAttr("data_format") != nullptr) {
     dataFormat = ctx.GetAttr("data_format")->GetString();
   }
-  int32_t NIndex, CIndex, HIndex, WIndex;
+  int32_t NIndex;
+  int32_t CIndex;
+  int32_t HIndex;
+  int32_t WIndex;
   bool error = false;
   if (dataFormat == "NHWC") {
     NIndex = 0;

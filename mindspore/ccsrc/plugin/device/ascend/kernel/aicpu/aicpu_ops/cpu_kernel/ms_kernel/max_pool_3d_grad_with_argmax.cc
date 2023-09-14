@@ -161,7 +161,9 @@ void MaxPool3DGradWithArgmaxCpuKernel::MaxPool3DGradWithArgmaxSingleCompute(
   S *argmax = input_argmax;
 
   /* calculate max points */
-  int64_t ti, i, j;
+  int64_t ti;
+  int64_t i;
+  int64_t j;
   for (ti = 0; ti < oD; ti++) {
     for (i = 0; i < oH; i++) {
       for (j = 0; j < oW; j++) {

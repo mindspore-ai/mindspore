@@ -157,7 +157,9 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_5D(const CpuKernelContex
   auto H = *(data_out_size + x_size_H_5D);
   auto W = *(data_out_size + x_size_W_5D);
 
-  Eigen::VectorXd vecX, vecY, vecZ;
+  Eigen::VectorXd vecX;
+  Eigen::VectorXd vecY;
+  Eigen::VectorXd vecZ;
   vecX.setZero(W, 1);
   vecY.setZero(H, 1);
   vecZ.setZero(D, 1);
@@ -286,7 +288,8 @@ uint32_t AffineGridGradCpuKernel::AffineGridGradCompute_4D(const CpuKernelContex
   auto H = *(data_out_size + x_size_H_4D);
   auto W = *(data_out_size + x_size_W_4D);
 
-  Eigen::VectorXd vecX, vecY;
+  Eigen::VectorXd vecX;
+  Eigen::VectorXd vecY;
   vecX.setZero(W, 1);
   vecY.setZero(H, 1);
   if (W != 1) {

@@ -55,7 +55,8 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T, 
     SCALAR_T *grad_output_p_d = args.output_grad_data + d * args.out_size_h * args.out_size_w;
     INDICES_T *ind_p_d = args.indices_data + d * args.out_size_h * args.out_size_w;
     /* calculate max points */
-    int64_t oh, ow;
+    int64_t oh;
+    int64_t ow;
     for (oh = 0; oh < args.out_size_h; oh++) {
       for (ow = 0; ow < args.out_size_w; ow++) {
         /* retrieve position of max */

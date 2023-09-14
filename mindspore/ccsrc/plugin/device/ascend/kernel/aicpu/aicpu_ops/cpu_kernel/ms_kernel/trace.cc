@@ -86,7 +86,8 @@ uint32_t TraceCpuKernel::TraceCompute(Tensor *input, Tensor *output, const CpuKe
   auto inputDataAddr = reinterpret_cast<T *>(input->GetData());
   auto outputDataAddr = reinterpret_cast<T *>(output->GetData());
   auto input_shape = ctx.Input(0)->GetTensorShape();
-  int64_t inputLine = input_shape->GetDimSize(0), inputCol = input_shape->GetDimSize(1);
+  int64_t inputLine = input_shape->GetDimSize(0);
+  int64_t inputCol = input_shape->GetDimSize(1);
   auto min_shape = std::min(inputLine, inputCol);
   auto output_size = output->GetDataSize();
   auto ret = memset_s(outputDataAddr, output_size, 0, sizeof(T));

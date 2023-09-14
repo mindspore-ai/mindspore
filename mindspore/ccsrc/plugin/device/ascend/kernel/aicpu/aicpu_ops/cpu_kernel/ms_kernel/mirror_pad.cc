@@ -160,10 +160,12 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
   }
 
   std::vector<int64_t> pos;
-  std::vector<int64_t> output_pos, tmp_pos;
+  std::vector<int64_t> output_pos;
+  std::vector<int64_t> tmp_pos;
   pos.resize(dims_ - 1, 0);
   int64_t output_index = index[0].first;
-  int64_t inx = 0, copy_size = sizeof(T) * input_dim_shape[dims_ - 1];
+  int64_t inx = 0;
+  int64_t copy_size = sizeof(T) * input_dim_shape[dims_ - 1];
   while (inx < input_num_elements) {
     memcpy_s(output_data_ptr + output_index, copy_size, input_data_ptr + inx, copy_size);
     output_pos.push_back(output_index);
@@ -182,7 +184,8 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
     inx += input_dim_shape[dims_ - 1];
   }
   for (int64_t i = dims_ - 1; i >= 0; --i) {
-    int64_t block_size = output_strides_[i], count = 0;
+    int64_t block_size = output_strides_[i];
+    int64_t count = 0;
     copy_size = block_size * sizeof(T);
     for (auto item : output_pos) {
       T *base_output_ptr1 = output_data_ptr + item;

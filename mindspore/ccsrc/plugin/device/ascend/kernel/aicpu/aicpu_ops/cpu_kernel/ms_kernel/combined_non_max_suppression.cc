@@ -28,6 +28,7 @@
 namespace {
 const uint32_t kInputNum = 6;
 const uint32_t kOutputNum = 4;
+const int kDim2 = 2;
 const char *kCombinedNonMaxSuppression = "CombinedNonMaxSuppression";
 
 void alloc_zeros(float *arr, int arr_len) {
@@ -391,8 +392,8 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(co
   score_threshold = *(reinterpret_cast<float *>(ctx.Input(5)->GetData()));
   num_bath = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(0));
   num_boxes = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(1));
-  q = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(2));
-  num_class = static_cast<int>(ctx.Input(1)->GetTensorShape()->GetDimSize(2));
+  q = static_cast<int>(ctx.Input(0)->GetTensorShape()->GetDimSize(kDim2));
+  num_class = static_cast<int>(ctx.Input(1)->GetTensorShape()->GetDimSize(kDim2));
   pad_per_class = false;
   clip_boxes = true;
   if (ctx.GetAttr("pad_per_class") != nullptr) {

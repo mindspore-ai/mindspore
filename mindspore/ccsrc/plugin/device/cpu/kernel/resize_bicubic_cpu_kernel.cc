@@ -280,8 +280,9 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
   auto task = [&](size_t start, size_t end) {
     std::array<float, 4> cached_value{};
     for (size_t i = start; i < end; ++i) {  // nch
-      const int64_t b = SizeToLong(i) / out_ch, c = SizeToLong(i) % out_ch / RS.out_height,
-                    y = SizeToLong(i) % RS.out_height;
+      const int64_t b = SizeToLong(i) / out_ch;
+      const int64_t c = SizeToLong(i) % out_ch / RS.out_height;
+      const int64_t y = SizeToLong(i) % RS.out_height;
       WeightsAndIndices y_wai;
       if (half_pixel_centers_) {
         GetWeightsAndIndices<HalfPixelScaler, true>(RS.height_scale, y, RS.in_height, &y_wai);

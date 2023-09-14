@@ -117,7 +117,11 @@ uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCompute(const CpuKernelContext &ctx) {
   if (ctx.GetAttr("data_format") != nullptr) {
     dataFormat = ctx.GetAttr("data_format")->GetString();
   }
-  int32_t NIndex, CIndex, DIndex, HIndex, WIndex;
+  int32_t NIndex;
+  int32_t CIndex;
+  int32_t DIndex;
+  int32_t HIndex;
+  int32_t WIndex;
   bool error = false;
   if (dataFormat == "NDHWC") {
     NIndex = 0;
