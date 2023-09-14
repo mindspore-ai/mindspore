@@ -71,7 +71,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -101,5 +101,5 @@ def test_matmul_dtypes():
         if dtype in valid_dtypes:
             matmul(x_ms, y_ms)
         else:
-            with pytest.raises(Exception):
+            with pytest.raises(TypeError):
                 matmul(x_ms, y_ms)
