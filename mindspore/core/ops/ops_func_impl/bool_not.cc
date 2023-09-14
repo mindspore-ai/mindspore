@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/bool_not.h"
+#include "ops/ops_frontend_func_impl.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
@@ -30,5 +31,21 @@ TypePtr BoolNotFuncImpl::InferType(const PrimitivePtr &primitive,
   // Valid types: kBool.
   return kBool;
 }
+
+class BoolNotFrontendFuncImpl : public OpFrontendFuncImpl {
+ public:
+  // Do not override this interface if the op has no InferValue
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x_valueptr = input_args[0]->BuildValue();
+    if (x_valueptr == kValueAny) {
+      return nullptr;
+    }
+    auto elem_value = GetValue<bool>(x_valueptr);
+    bool res = !elem_value;
+    return MakeValue(res);
+  }
+};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("BoolNot", BoolNotFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

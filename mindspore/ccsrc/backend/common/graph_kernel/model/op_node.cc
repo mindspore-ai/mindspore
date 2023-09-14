@@ -43,6 +43,11 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
 }
 
 BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto shape_optional = abstract::InferShapeByFuncImpl(prim, abs_list, true);
+  if (shape_optional.has_value()) {
+    return shape_optional.value();
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();
@@ -55,6 +60,11 @@ BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBase
 }
 
 TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto type_optional = abstract::InferTypeByFuncImpl(prim, abs_list, true);
+  if (type_optional.has_value()) {
+    return type_optional.value();
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();
@@ -67,6 +77,11 @@ TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrLis
 }
 
 tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto value_optional = abstract::InferValueByFuncImpl(prim, abs_list);
+  if (value_optional.has_value()) {
+    return std::static_pointer_cast<tensor::Tensor>(value_optional.value());
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();

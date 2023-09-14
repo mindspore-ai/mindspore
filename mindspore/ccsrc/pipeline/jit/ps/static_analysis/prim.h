@@ -28,7 +28,7 @@
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_def.h"
-#include "frontend/operator/ops_frontend_func_impl.h"
+#include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore {
 namespace abstract {

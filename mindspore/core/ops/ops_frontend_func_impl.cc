@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/operator/ops_frontend_func_impl.h"
+#include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore::ops {
 OpsFrontendFuncImplMap *GetOpsFrontendFuncImplMapPtr() {

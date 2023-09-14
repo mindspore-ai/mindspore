@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_OPS_FRONTEND_FUNC_IMPL_H
-#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_OPS_FRONTEND_FUNC_IMPL_H
+#ifndef MINDSPORE_CORE_OPS_FRONTEND_FUNC_IMPL_H
+#define MINDSPORE_CORE_OPS_FRONTEND_FUNC_IMPL_H
 
 #include <vector>
 #include <unordered_map>
@@ -24,8 +24,7 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_def.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore::ops {
 class OpFrontendFuncImpl {
@@ -69,9 +68,9 @@ class FrontendFuncImplHolder {
 
 using OpsFrontendFuncImplMap = std::unordered_map<std::string, FrontendFuncImplHolder>;
 
-OpFrontendFuncImplPtr GetOpFrontendFuncImplPtr(const std::string &name);
+MS_CORE_API OpFrontendFuncImplPtr GetOpFrontendFuncImplPtr(const std::string &name);
 
-class RegFrontendFuncImplHelper {
+class MS_CORE_API RegFrontendFuncImplHelper {
  public:
   RegFrontendFuncImplHelper(const std::string &name, const OpFrontendFuncImplPtr &func_impl);
   ~RegFrontendFuncImplHelper() = default;
@@ -80,4 +79,4 @@ class RegFrontendFuncImplHelper {
 #define REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(name, func_impl_class) \
   static auto helper_##func_impl_class = RegFrontendFuncImplHelper(name, std::make_shared<func_impl_class>());
 }  //  namespace mindspore::ops
-#endif  //  MINDSPORE_CCSRC_FRONTEND_OPERATOR_OPS_FRONTEND_FUNC_IMPL_H
+#endif  //  MINDSPORE_CORE_OPS_FRONTEND_FUNC_IMPL_H

@@ -21,6 +21,7 @@
 #include "include/common/profiler.h"
 #include "ops/nn_op_name.h"
 #include "ops/framework_op_name.h"
+#include "ops/ops_frontend_func_impl.h"
 #include "frontend/expander/pack/packfunc.h"
 #include "frontend/expander/pack/packfunc_grad.h"
 

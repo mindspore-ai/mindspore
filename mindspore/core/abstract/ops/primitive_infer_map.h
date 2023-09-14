@@ -119,6 +119,17 @@ class RegisterStandardPrimitiveEvalHelper {
     return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                            \
   }                                                                                                           \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name)
+
+MS_CORE_API std::optional<BaseShapePtr> InferShapeByFuncImpl(const PrimitivePtr &primitive,
+                                                             const AbstractBasePtrList &input_args,
+                                                             bool compile_phase = false);
+MS_CORE_API std::optional<TypePtr> InferTypeByFuncImpl(const PrimitivePtr &primitive,
+                                                       const AbstractBasePtrList &input_args,
+                                                       bool compile_phase = false);
+MS_CORE_API std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const PrimitivePtr &primitive,
+                                                                   const AbstractBasePtrList &input_args);
+MS_CORE_API std::optional<ValuePtr> InferValueByFuncImpl(const PrimitivePtr &primitive,
+                                                         const AbstractBasePtrList &input_args);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

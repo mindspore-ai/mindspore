@@ -63,7 +63,6 @@
 #include "utils/parallel_node_check.h"
 #include "utils/shape_utils.h"
 #include "utils/symbolic.h"
-#include "frontend/operator/ops_frontend_func_impl.h"
 
 namespace mindspore {
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;

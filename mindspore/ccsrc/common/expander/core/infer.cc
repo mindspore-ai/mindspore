@@ -50,6 +50,13 @@ void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
                          }
                          return abs;
                        });
+
+  auto abstract_optional = abstract::InferAbstractByFuncImpl(prim, abs_list);
+  if (abstract_optional.has_value()) {
+    cnode->set_abstract(abstract_optional.value());
+    return;
+  }
+
   auto &infer_impl = CppInfer::infer_impl_cache()[prim];
   if (infer_impl.Get() == nullptr) {
     auto found = abstract::GetPrimitiveInferImpl(prim);
