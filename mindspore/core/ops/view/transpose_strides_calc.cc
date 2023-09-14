@@ -22,19 +22,19 @@
 namespace mindspore::ops {
 TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
   if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "inputs is invalid, size:" << inputs.size();
+    return {};
   }
 
   if (inputs[0] == nullptr || inputs[1] == nullptr) {
-    MS_LOG(EXCEPTION) << "input is null";
+    return {};
   }
 
   if (!inputs[0]->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "inputs is invalid, size:" << inputs.size();
+    return {};
   }
 
   if (!inputs[1]->isa<ValueSequence>()) {
-    MS_LOG(EXCEPTION) << "inputs is invalid, size:" << inputs.size();
+    return {};
   }
 
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
@@ -47,6 +47,9 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
 
   auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
   const auto ndim = old_shape.size();
+  if (ndim != dims.size()) {
+    return {};
+  }
 
   ShapeVector new_shape(ndim);
   std::vector<int64_t> new_strides(ndim);
@@ -55,7 +58,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   for (size_t i = 0; i < ndim; i++) {
     const auto wrap_dim = DynamicDimWrap(dims[i], ndim);
     if (seen_dims[wrap_dim]) {
-      MS_EXCEPTION(ValueError) << "duplicate dims, dim:" << wrap_dim;
+      return {};
     }
     seen_dims[wrap_dim] = true;
     new_shape[i] = old_shape[wrap_dim];

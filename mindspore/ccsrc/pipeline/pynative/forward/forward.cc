@@ -1137,9 +1137,11 @@ void ForwardExecutor::RunContiguousTaskForTensor(const tensor::TensorPtr &tensor
 
 device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                                    const TensorStorageInfoPtr &storage_info) {
+  MS_EXCEPTION_IF_NULL(device_address);
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
   auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device_address);
+  MS_EXCEPTION_IF_NULL(device_addr);
   if (storage_info == nullptr) {
     return device_addr;
   }
