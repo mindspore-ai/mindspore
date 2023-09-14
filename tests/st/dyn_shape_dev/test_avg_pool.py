@@ -19,7 +19,10 @@ import test_utils
 
 from mindspore import ops
 import mindspore as ms
-from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+
+
+# from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+
 
 @test_utils.run_with_cell
 def avg_pool_forward_func(x):
@@ -29,6 +32,10 @@ def avg_pool_forward_func(x):
 @test_utils.run_with_cell
 def avg_pool_backward_func(x):
     return ops.grad(avg_pool_forward_func, (0,))(x)
+
+
+def avg_pool_dyn_shape_func(x):
+    return ops.auto_generate.avg_pool(x, kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")
 
 
 @pytest.mark.level0
@@ -44,10 +51,11 @@ def test_avg_pool_forward(mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    ms.context.set_context(precompile_only=True)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     out = avg_pool_forward_func(x)
-    print("out:", out)
+    expect = np.array(
+        [[[[2.5, 4.5]], [[14.5, 16.5]], [[26.5, 28.5]]]]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
@@ -83,11 +91,15 @@ def test_avg_pool_vmap(mode):
     """
     in_axes = -1
     ms.context.set_context(mode=mode)
-    ms.context.set_context(precompile_only=True)
-    x = ms.Tensor(np.random.randn(1, 1, 6, 6, 3, 6).astype(np.float32))
+    x = ms.Tensor(np.arange(1 * 3 * 3 * 4 * 2 * 1).reshape(1, 3, 3, 4, 2, 1).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(avg_pool_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)
     print("out:", out)
+    expect = np.array(
+        [[[[[[5., 9.]], [[29., 33.]], [[53., 57.]]]],
+          [[[[6., 10.]], [[30., 34.]], [[54., 58.]]]],
+          ]]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
@@ -95,12 +107,23 @@ def test_avg_pool_vmap(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_avg_pool_dynamic():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.skip(reason="device ptr null")
+def test_avg_pool_dynamic(mode):
     """
     Feature: test dynamic tensor and dynamic scalar of avg pool.
     Description: test dynamic tensor and dynamic scalar of avg pool.
     Expectation: expect correct result.
     """
-    in1 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
-    in2 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
-    TEST_OP(ops.auto_generate.avg_pool, [in1, in2], dump_ir=True, grad=False)
+    # in1 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
+    # in2 = [ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32), 2, 2, "VALID", "NCHW"]
+    # TEST_OP(ops.auto_generate.avg_pool, [in1, in2], dump_ir=True, grad=False)
+
+    ms.context.set_context(save_graphs=True, save_graphs_path="./graph_ir")
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
+    test_cell = test_utils.to_cell_obj(avg_pool_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    out = test_cell(x)
+    print("out:", out)

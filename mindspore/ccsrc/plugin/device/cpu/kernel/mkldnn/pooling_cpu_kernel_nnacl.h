@@ -49,8 +49,8 @@ class PoolingCpuKernelNnaclMod : public NativeCpuKernelMod {
 
  protected:
   PoolMode pool_mode_;
-  std::string format_;
-  std::string pad_mode_;
+  Format format_;
+  PadMode pad_mode_;
   int64_t batches_{0};
   int64_t channels_{0};
   int64_t input_stride_n_{1};

@@ -19,6 +19,7 @@ from mindspore import ops
 import test_utils
 
 
+@test_utils.run_with_cell
 def sigmoid_grad_forward_func(y, dy):
     return ops.auto_generate.sigmoid_grad(y, dy)
 

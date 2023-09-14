@@ -36,3 +36,8 @@ def run_with_cell(fn):
         return cell_obj(*args)
 
     return wrapper
+
+
+def to_cell_obj(fn):
+    cell_obj = Net(fn)
+    return cell_obj
