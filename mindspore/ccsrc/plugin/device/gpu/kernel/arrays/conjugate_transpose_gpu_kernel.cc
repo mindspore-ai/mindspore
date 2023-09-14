@@ -93,7 +93,7 @@ int ConjugateTransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   x_one_shape_.resize(MAX_DIMS, 1);
   x_two_shape_.resize(MAX_DIMS, 1);
   y_shape_.resize(MAX_DIMS, 1);
-  x_one_count_ *= x_shape_one[0];
+  x_one_count_ = (shape_size_ > 0) ? x_one_count_ * x_shape_one[0] : x_one_count_;
   input_stride[shape_size_ - 1] = 1;
   for (size_t i = 1; i < x_shape_one.size(); i++) {
     x_one_count_ *= x_shape_one[i];
@@ -103,7 +103,7 @@ int ConjugateTransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = 1; i < x_shape_two.size(); i++) {
     x_two_count_ *= x_shape_two[i];
   }
-  y_count_ *= y_shape[0];
+  y_count_ = (y_shape.size() > 0) ? y_count_ * y_shape[0] : y_count_;
   output_stride[shape_size_ - 1] = 1;
   for (size_t i = 1; i < y_shape.size(); i++) {
     y_count_ *= y_shape[i];
