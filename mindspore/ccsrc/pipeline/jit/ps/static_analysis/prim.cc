@@ -3367,6 +3367,9 @@ class CondEvaluator : public TransitionPrimEvaluator {
       auto type_node = NewValueNode(TypeIdToType(kNumberTypeBool));
       new_node = cur_graph->NewCNodeInOrder({cast_node, cond_node, type_node});
       new_node->set_debug_info(cnode->debug_info());
+    } else if (cond_abs->isa<AbstractFunction>()) {
+      auto abs = std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
+      return std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
     } else {
       // The logic of truth value testing:
       //   1. If the object has __bool__ attribute, call __bool__()
