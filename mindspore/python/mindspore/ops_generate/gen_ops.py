@@ -220,6 +220,7 @@ def generate_py_op_func(yaml_data, doc_data):
                     init_args.append(arg_name)
 
         function_code = f"""
+
 def {func_name}({', '.join(arg for arg in func_args)}):
     \"\"\"
     {description}
@@ -319,6 +320,7 @@ def generate_py_primitive(yaml_data):
             init_code = f"""        pass"""
 
         primitive_code = f"""
+
 class {class_name}(Primitive):
     {signature_code}
     @prim_attr_register
@@ -494,7 +496,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 {class_name}{func_suffix_str} g{class_name}{func_suffix_str};"""
         opdef_cc += f"""
 OpDef g{class_name} = {{
-    .name_ = "{operator_name}","""
+    .name_ = "{class_name}","""
         opdef_cc += f"""
     .args_ = {{"""
         cc_index_str = f"""
@@ -509,25 +511,20 @@ OpDef g{class_name} = {{
 
             cc_index_str += f"""
                 {{"{arg_name}", {i}}},"""
-            cc_dtype_str = 'DT_' + dtype.replace('[', '_').\
-                replace(']', '').\
-                replace('tuple', 'array').\
-                replace('list', 'array').upper()
+            cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
             type_cast = arg_info.get('type_cast')
             type_cast_tuple = None
             if type_cast:
                 type_cast_tuple = (ct.strip() for ct in type_cast.split(","))
             if type_cast_tuple:
-                src_type_str = "\"" + '", "'.join(get_type_str(ct) for ct in type_cast_tuple) + "\""
-                dst_type_str = get_type_str(dtype)
+                src_type_str = ', '.join('DT_' + ct.replace('[', '_').replace(']', '').upper()
+                                         for ct in type_cast_tuple)
             else:
                 src_type_str = ""
-                dst_type_str = ""
 
             opdef_cc += f"""
-                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", 
-                .src_cast_dtype_ = {{{src_type_str}}}, .dst_cast_dtype_ = "{dst_type_str}"}},"""
+                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{src_type_str}}}}},"""
         opdef_cc += f"""
     }},"""
 
@@ -536,8 +533,7 @@ OpDef g{class_name} = {{
 
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
-            cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').replace(
-                'tuple', 'array').replace('list', 'array').upper()
+            cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
             opdef_cc += f"""
                 {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}}},"""
 
@@ -689,6 +685,8 @@ namespace mindspore::ops {{
         class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
         enum_py_func_code = f"""
 def {enum_name}_to_enum({enum_name}_str):
+    if not isinstance({enum_name}_str, str):
+        raise TypeError(f"The {enum_name} should be string, but got {{{enum_name}_str}}")
     {enum_name}_str = {enum_name}_str.upper()
 """
         gen_eum_py_def += f"""
