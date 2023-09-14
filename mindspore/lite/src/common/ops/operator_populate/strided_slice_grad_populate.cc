@@ -33,11 +33,11 @@ OpParameter *PopulateStridedSliceGradOpParameter(const BaseOperatorPtr &base_ope
     return nullptr;
   }
 
-  param->begins_mask_ = op->get_begin_mask();
-  param->ends_mask_ = op->get_end_mask();
-  param->ellipsisMask_ = op->get_ellipsis_mask();
-  param->newAxisMask_ = op->get_new_axis_mask();
-  param->shrinkAxisMask_ = op->get_shrink_axis_mask();
+  param->begins_mask_ = static_cast<int>(op->get_begin_mask());
+  param->ends_mask_ = static_cast<int>(op->get_end_mask());
+  param->ellipsisMask_ = static_cast<int>(op->get_ellipsis_mask());
+  param->newAxisMask_ = static_cast<int>(op->get_new_axis_mask());
+  param->shrinkAxisMask_ = static_cast<int>(op->get_shrink_axis_mask());
   if (param->begins_mask_ < C0NUM || param->ends_mask_ < C0NUM || param->ellipsisMask_ < C0NUM ||
       param->newAxisMask_ < C0NUM || param->shrinkAxisMask_ < C0NUM) {
     MS_LOG(ERROR) << "invalid StridedSliceGradParameter value";

@@ -45,7 +45,7 @@ OpParameter *PopulateUnsqueezeOpParameter(const BaseOperatorPtr &base_operator) 
   int i = 0;
   for (auto axis : flat_axis) {
     CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
-    param->dims_[i++] = axis;
+    param->dims_[i++] = static_cast<int>(axis);
   }
   return reinterpret_cast<OpParameter *>(param);
 }

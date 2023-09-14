@@ -36,9 +36,9 @@ OpParameter *PopulateRandomStandardNormalOpParameter(const BaseOperatorPtr &base
   }
 
   if (op->get_seed2() != 0) {
-    param->seed_ = op->get_seed2();
+    param->seed_ = static_cast<float>(op->get_seed2());
   } else {
-    param->seed_ = op->get_seed();
+    param->seed_ = static_cast<float>(op->get_seed());
   }
   param->mean_ = 0.0;
   param->scale_ = 1.0;

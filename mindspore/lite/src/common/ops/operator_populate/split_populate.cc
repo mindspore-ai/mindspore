@@ -54,7 +54,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
     free(param);
     return nullptr;
   }
-  param->num_split_ = output_num;
+  param->num_split_ = static_cast<int>(output_num);
 
   /* free split_sizes_ in split op base */
   param->split_sizes_ = reinterpret_cast<int *>(malloc(static_cast<size_t>(output_num) * sizeof(int)));
@@ -70,7 +70,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
   if (split_sizes_vector.size() <= static_cast<uint32_t>(param->num_split_)) {
     int i = 0;
     for (auto iter : split_sizes_vector) {
-      param->split_sizes_[i++] = iter;
+      param->split_sizes_[i++] = static_cast<int>(iter);
     }
     param->split_count_ = param->num_split_;
   } else {

@@ -92,7 +92,7 @@ OpParameter *PopulateSpliceOpParameter(const BaseOperatorPtr &base_operator) {
   (void)memset(param->forward_indexes_, 0, primitive_forward_indexes.size() * sizeof(int));
   (void)memcpy(param->forward_indexes_, primitive_forward_indexes.data(),
                primitive_forward_indexes.size() * sizeof(int));
-  param->output_dim_ = op->get_output_dim();
+  param->output_dim_ = static_cast<int>(op->get_output_dim());
   return reinterpret_cast<OpParameter *>(param);
 }
 
