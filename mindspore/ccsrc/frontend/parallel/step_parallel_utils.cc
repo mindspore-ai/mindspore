@@ -59,11 +59,6 @@ size_t TOTAL_OPS = 0;
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
-// maybe the input value is dynamic for these ops
-static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3};
-// split tensor only for first input
-static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
-
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   if (!cnode) {
     return false;

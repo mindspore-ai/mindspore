@@ -61,7 +61,8 @@ enum OperatorType {
   kRecFlatten,
   kRecCum,
   kRecStandAlone,
-  kRecBatchParallel
+  kRecBatchParallel,
+  kRecPadV3
 };
 
 enum InfoType { kApplication, kConstant };
@@ -93,7 +94,11 @@ class Graph {
     OperatorRec apply;
     // Tensor info. Defined in tensor.h struct <TensorParam> .
     TensorParam tensor_parm;
+
+    std::string param_name;
   };
+
+  bool dyn_shape_tmp_fix = false;
 
   int64_t batch_size;
 

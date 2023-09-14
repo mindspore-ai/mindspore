@@ -31,6 +31,12 @@
 
 namespace mindspore {
 namespace parallel {
+
+// maybe the input value is dynamic for these ops
+static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3};
+// split tensor only for first input
+static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
+
 const int64_t TWO_INPUT_SIZE = 2;
 
 constexpr char KAttrAsLossDivisor[] = "as_loss_divisor";

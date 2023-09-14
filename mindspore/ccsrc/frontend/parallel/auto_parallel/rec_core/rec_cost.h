@@ -38,7 +38,7 @@ namespace parallel {
 constexpr size_t BMM_COEF = 1;
 constexpr size_t REDIS_COEF = 16;
 constexpr double EXPERT_COEF = 1.5;
-constexpr size_t REPLICATE_BELOW = 1000;
+constexpr size_t REPLICATE_BELOW = 350;
 constexpr bool ONLY_REDIST_WITH_SAME_SHAPE = true;
 constexpr size_t NUMBER_ASCEND_CORES = 32;
 constexpr size_t NDIMS = 4;
@@ -105,6 +105,8 @@ class CostMatMul {
 
   double cost_in_r_ = 0;
 };  // class CostMatMul is used to compute the cost of MatMul operator.
+
+bool SplitOnlyOneDimension(const Graph &graph, float str);
 
 // class CostBatchMatMul is used to compute the cost of MatMul operator.
 class CostBatchMatMul {
