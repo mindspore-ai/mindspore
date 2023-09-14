@@ -146,9 +146,9 @@ class ForwardExecutor {
                               const TensorStorageInfoPtr &storage_info);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                               const size_t &input_idx);
+                               const size_t &input_idx, bool need_wait = false);
   void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                                       const size_t &input_idx, bool enable_async);
+                                       const size_t &input_idx, bool enable_async, bool need_wait = false);
   void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async);
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
