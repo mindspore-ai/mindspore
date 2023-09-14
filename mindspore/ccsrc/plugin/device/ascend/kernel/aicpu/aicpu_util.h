@@ -242,6 +242,7 @@ constexpr auto kUniformInt = "UniformInt";
 constexpr auto kUniformReal = "UniformReal";
 constexpr auto kStandardLaplace = "StandardLaplace";
 constexpr auto kLogUniformCandidateSampler = "LogUniformCandidateSampler";
+constexpr auto kGamma = "Gamma";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
@@ -356,7 +357,8 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kSqueeze,
                                               kUniformCandidateSampler,
                                               kExpandDims,
-                                              kCast};
+                                              kCast,
+                                              kGamma};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kSparseCross,
                                              kRaggedTensorToSparse,
