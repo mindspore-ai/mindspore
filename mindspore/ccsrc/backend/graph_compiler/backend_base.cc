@@ -632,6 +632,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   if ((ms_execution_mode_ == kGraphMode ||
        (ms_execution_mode_ == kPynativeMode && pynative::GraphAdapter::IsPynativeGeGraphSink(root_graph_))) &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
+    MS_LOG(DEBUG) << "Start transform";
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
