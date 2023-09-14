@@ -1535,7 +1535,8 @@ class _CellGraphExecutor:
 
         if "export.air" in phase:
             self._build_data_graph(obj, phase)
-
+        elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():
+            _parameter_broadcast(obj)
         return phase, True
 
     def _update_param_node_default_input(self, phase, replace):
