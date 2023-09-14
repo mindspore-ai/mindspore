@@ -6578,10 +6578,10 @@ def gelu(input_x, approximate='none'):
     if approximate == 'tanh':
         output = _get_cache_prim(P.GeLU)()(input_x)
     else:
-        output = _get_cache_prim(P.Sqrt)()(Tensor(2.0))
+        output = _get_cache_prim(P.Sqrt)()(Tensor(2.0, x_dtype))
         output = _get_cache_prim(P.Div)()(input_x, output)
-        output = _get_cache_prim(P.Erf)()(output) + Tensor(1.0)
-        output = input_x * output * Tensor(0.5)
+        output = _get_cache_prim(P.Erf)()(output) + Tensor(1.0, x_dtype)
+        output = input_x * output * Tensor(0.5, x_dtype)
 
     return output
 
