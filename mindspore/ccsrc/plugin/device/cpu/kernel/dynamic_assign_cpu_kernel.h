@@ -26,15 +26,19 @@
 
 namespace mindspore {
 namespace kernel {
-class DynamicAssignCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DynamicAssignCpuKernelMod : public NativeCpuKernelMod {
  public:
   DynamicAssignCpuKernelMod() = default;
   ~DynamicAssignCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+                                void *stream_ptr) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -45,7 +49,6 @@ class DynamicAssignCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t batch_size_{1};
   TypeId input_x_dtype_{kTypeUnknown};
   size_t input_x_dtype_size_{4};
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

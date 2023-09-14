@@ -24,12 +24,12 @@
 
 namespace mindspore {
 namespace kernel {
-class ShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ShiftCpuKernelMod : public NativeCpuKernelMod {
  public:
   ShiftCpuKernelMod() = default;
   ~ShiftCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {

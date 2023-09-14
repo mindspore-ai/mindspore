@@ -29,8 +29,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSparseFillEmptyRowsInputsNum = 4;
-constexpr size_t kSparseFillEmptyRowsOutputsNum = 4;
 constexpr size_t kIndicesSizeNum = 2;
 constexpr size_t kIndicesLastDim = 2;
 constexpr size_t kValuesSizeNum = 1;
@@ -46,8 +44,14 @@ const uint32_t kOutput_empty_row_indicator = 2;
 const uint32_t kOutput_reverse_index_map = 3;
 constexpr char kKernelName[] = "SparseFillEmptyRows";
 
-#define EIGEN_SHAPE_CAST0(INPUT) static_cast<Eigen::DenseIndex>(AnfAlgo::GetInputDeviceShape(node_ptr, INPUT)[0])
-#define EIGEN_SHAPE_CAST1(INPUT) static_cast<Eigen::DenseIndex>(AnfAlgo::GetInputDeviceShape(node_ptr, INPUT)[1])
+inline Eigen::DenseIndex EigenShapeCast(const std::vector<KernelTensor *> &inputs, size_t input_index, size_t index) {
+  const auto &shape = inputs[input_index]->GetShapeVector();
+  if (index >= shape.size()) {
+    MS_LOG(EXCEPTION) << "The index value of EigenShapeCast must be less than input shape [" << shape.size()
+                      << "], but got " << index;
+  }
+  return static_cast<Eigen::DenseIndex>(shape[index]);
+}
 
 #define SPARSE_FILL_EMPTY_ROWS_COMPUTE_CASE(DTYPE, TYPE) \
   case (DTYPE): {                                        \
@@ -67,28 +71,19 @@ constexpr char kKernelName[] = "SparseFillEmptyRows";
     .AddOutputAttr(kNumberType##t8)
 }  // namespace
 
-void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  node_ptr = kernel_node;
-  MS_EXCEPTION_IF_NULL(kernel_node);
-
-  // for DeprecatedNativeCpuKernelMod
-  auto output_empty_row_indicator_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex2);
-  if (IsDynamic(output_empty_row_indicator_shape)) {
-    return;
+int SparseFillEmptyRowsCpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
 
-  output_indices_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  output_values_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 1);
+  output_indices_type_ = inputs[kIndex0]->dtype_id();
+  output_values_type_ = inputs[kIndex1]->dtype_id();
   output_empty_row_indicator_type_ = kNumberTypeBool;
-  output_reverse_index_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kSparseFillEmptyRowsInputsNum, kKernelName);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseFillEmptyRowsInputsNum, kKernelName);
-  const auto indices_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 0);
-  const auto values_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 1);
-  const auto dense_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 2);
+  output_reverse_index_type_ = inputs[kIndex0]->dtype_id();
+  const auto indices_shape = inputs[kIndex0]->GetShapeVector();
+  const auto values_shape = inputs[kIndex1]->GetShapeVector();
+  const auto dense_shape = inputs[kIndex2]->GetShapeVector();
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[0] != values_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' must be a 2-D Tensor and the first dimension length "
@@ -105,45 +100,37 @@ void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (dense_shape.size() != kValuesSizeNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'dense' must be a 1-D Tensor " << dense_shape;
   }
+  return KRET_OK;
 }
 
 template <typename T>
 bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, kernel_name_);
   auto indices_ptr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
-  Eigen::DSizes<Eigen::DenseIndex, kIndex2> indices_size(EIGEN_SHAPE_CAST0(kInput_indices),
-                                                         EIGEN_SHAPE_CAST1(kInput_indices));
+  Eigen::DSizes<Eigen::DenseIndex, kIndex2> indices_size(EigenShapeCast(inputs, kInput_indices, 0),
+                                                         EigenShapeCast(inputs, kInput_indices, 1));
   Eigen::TensorMap<Eigen::Tensor<int64_t, kIndex2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> a_indices(
     indices_ptr, indices_size);
-  auto values_ptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
-  auto dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
-  const auto *default_value = reinterpret_cast<T *>(inputs[3]->device_ptr());
-  const int64_t N = AnfAlgo::GetInputDeviceShape(node_ptr, kInput_indices)[0];
+  auto values_ptr = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  const auto *default_value = reinterpret_cast<T *>(inputs[kIndex3]->device_ptr());
+  const int64_t N = inputs[kInput_indices]->GetShapeVector()[0];
   const int64_t dense_rows = dense_shape_ptr[0];
-  int64_t rank = AnfAlgo::GetInputDeviceShape(node_ptr, kInput_indices)[1];
+  int64_t rank = inputs[kInput_indices]->GetShapeVector()[1];
   auto output_empty_row_indicator_ptr = reinterpret_cast<bool *>(outputs[kOutput_empty_row_indicator]->device_ptr());
   auto output_reverse_index_map_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_reverse_index_map]->device_ptr());
-  ShapeVector out_indcie_shape;
-  ShapeVector out_values_shape;
-  ShapeVector out_empty_row_indicator_shape;
-  ShapeVector out_reverse_index_shape;
-  out_empty_row_indicator_shape.push_back(dense_rows);
-  out_reverse_index_shape.push_back(N);
+  out_empty_row_indicator_shape_.push_back(dense_rows);
+  out_reverse_index_shape_.push_back(N);
   if (dense_rows == 0) {
     if (N != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', Received SparseTensor with dense_shape[0] = 0, but indices.shape[0] =  " << N;
       return false;
     }
-    out_indcie_shape.push_back(0);
-    out_indcie_shape.push_back(rank);
-    out_values_shape.push_back(0);
-    common::AnfAlgo::SetOutputInferTypeAndShape(
-      {output_indices_type_, output_values_type_, output_empty_row_indicator_type_, output_reverse_index_type_},
-      {out_indcie_shape, out_values_shape, out_empty_row_indicator_shape, out_reverse_index_shape},
-      cnode_ptr_.lock().get());
+    dense_rows_zero = true;
+    out_indice_shape_dense_rows_zero_.push_back(0);
+    out_indice_shape_dense_rows_zero_.push_back(rank);
+    out_values_shape_dense_rows_zero_.push_back(0);
     return true;
   }
   std::vector<int64_t> scratch(dense_rows, 0);
@@ -166,9 +153,9 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
       scratch[row] += scratch[row - 1];
     }
   }
-  out_indcie_shape.push_back(scratch[dense_rows - 1]);
-  out_indcie_shape.push_back(rank);
-  out_values_shape.push_back(scratch[dense_rows - 1]);
+  out_indice_shape_.push_back(scratch[dense_rows - 1]);
+  out_indice_shape_.push_back(rank);
+  out_values_shape_.push_back(scratch[dense_rows - 1]);
   auto output_y_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_y_indices]->device_ptr());
   auto ret1 = memset_s(output_y_indices_ptr, scratch[dense_rows - 1] * rank * sizeof(int64_t), 0,
                        scratch[dense_rows - 1] * rank * sizeof(int64_t));
@@ -204,11 +191,28 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
       a_output_y_indices(starting_index, 0) = row;
     }
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(
-    {output_indices_type_, output_values_type_, output_empty_row_indicator_type_, output_reverse_index_type_},
-    {out_indcie_shape, out_values_shape, out_empty_row_indicator_shape, out_reverse_index_shape},
-    cnode_ptr_.lock().get());
   return true;
+}
+
+void SparseFillEmptyRowsCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs, void *) {
+  ShapeVector out_indice_shape;
+  ShapeVector out_values_shape;
+  if (dense_rows_zero) {
+    out_indice_shape.assign(out_indice_shape_dense_rows_zero_.begin(), out_indice_shape_dense_rows_zero_.end());
+    out_values_shape.assign(out_values_shape_dense_rows_zero_.begin(), out_values_shape_dense_rows_zero_.end());
+  } else {
+    out_indice_shape.assign(out_indice_shape_.begin(), out_indice_shape_.end());
+    out_values_shape.assign(out_values_shape_.begin(), out_values_shape_.end());
+  }
+  outputs[kIndex0]->SetShapeVector(out_indice_shape);
+  outputs[kIndex1]->SetShapeVector(out_values_shape);
+  outputs[kIndex2]->SetShapeVector(out_empty_row_indicator_shape_);
+  outputs[kIndex3]->SetShapeVector(out_reverse_index_shape_);
+  outputs[kIndex0]->set_dtype_id(output_indices_type_);
+  outputs[kIndex1]->set_dtype_id(output_values_type_);
+  outputs[kIndex2]->set_dtype_id(output_empty_row_indicator_type_);
+  outputs[kIndex3]->set_dtype_id(output_reverse_index_type_);
 }
 
 std::vector<KernelAttr> SparseFillEmptyRowsCpuKernelMod::GetOpSupport() {
@@ -234,7 +238,7 @@ bool SparseFillEmptyRowsCpuKernelMod::Launch(const std::vector<KernelTensor *> &
                                              const std::vector<KernelTensor *> &workspace,
                                              const std::vector<KernelTensor *> &outputs) {
   bool ret = false;
-  auto data_type = AnfAlgo::GetInputDeviceDataType(node_ptr, kInput_values);
+  auto data_type = inputs[kInput_values]->dtype_id();
   switch (data_type) {
     SPARSE_FILL_EMPTY_ROWS_COMPUTE_CASE(kNumberTypeInt8, int8_t)
     SPARSE_FILL_EMPTY_ROWS_COMPUTE_CASE(kNumberTypeUInt8, uint8_t)

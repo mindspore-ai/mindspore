@@ -22,24 +22,19 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kDynamicAssignInputsNum = 2;
-constexpr size_t kDynamicAssignOutputsNum = 1;
-}  // namespace
-
-void DynamicAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+int DynamicAssignCpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_x_dtype_ = inputs[kIndex0]->dtype_id();
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
+  return KRET_OK;
 }
 
 bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                        const std::vector<kernel::KernelTensor *> &,
                                        const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDynamicAssignInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicAssignOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (input_x_dtype_ == kNumberTypeInt64) {
@@ -59,12 +54,8 @@ bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *>
 template <typename T>
 void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<kernel::KernelTensor *> &) {
-  auto node = node_wpt_.lock();
-  if (!node) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
-  }
-  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  const auto &input_x_shape = inputs[kIndex0]->GetShapeVector();
+  const auto &input_y_shape = inputs[kIndex1]->GetShapeVector();
   if (AnfAlgo::IsShapesDynamic({input_x_shape, input_y_shape})) {
     return;
   }
@@ -100,17 +91,13 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error.  Error no: " << ret;
   }
+}
 
-  auto node_with_idx = common::AnfAlgo::GetPrevNodeOutput(node, 0);
-  auto out_node = node_with_idx.first;
-  if (out_node->isa<Parameter>()) {
-    auto node_ptr = out_node->cast<ParameterPtr>();
-    auto value = node_ptr->default_param();
-    auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
-    (void)tensor->set_shape(input_x_shape);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output must be a Parameter.";
-  }
+void DynamicAssignCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs, void *) {
+  const auto &input_shape = inputs[kIndex0]->GetShapeVector();
+  outputs[kIndex0]->SetShapeVector(input_shape);
+  outputs[kIndex0]->set_size(input_x_dtype_size_ * batch_size_);
 }
 
 std::vector<KernelAttr> DynamicAssignCpuKernelMod::GetOpSupport() {

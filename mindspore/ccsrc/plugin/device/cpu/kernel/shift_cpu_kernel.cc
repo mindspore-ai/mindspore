@@ -20,25 +20,26 @@
 
 namespace mindspore {
 namespace kernel {
-void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
+int ShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  size_t input_count = inputs.size();
   if (input_count != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_count
                       << " input(s).";
   }
 
-  size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_count = outputs.size();
   if (output_count != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_count
                       << " output(s).";
   }
 
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
+  auto input_shape = inputs[kInputIndex]->GetShapeVector();
 
-  periods_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, PERIODS);
-  auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  periods_ = GetValue<int64_t>(primitive_->GetAttr(PERIODS));
+  auto axis = GetValue<int64_t>(primitive_->GetAttr(AXIS));
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_t >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
@@ -64,12 +65,13 @@ void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     copy_size_ = SizeToLong(input_shape[axis]) + periods_;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Shift does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
