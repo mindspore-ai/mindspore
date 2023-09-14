@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test function grad in pynative mode"""
-import os
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -776,7 +775,6 @@ def test_get_grad_by_position_pynative():
             res = x * self.w * self.z
             return res, x, self.w
 
-    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     x = Tensor(np.array([1, 2]).astype(np.float32))
     net = ParamNetRI()
     weights = net.trainable_params()

@@ -15,7 +15,6 @@
 """st for scipy.linalg."""
 
 from typing import Generic
-import os
 import pytest
 import numpy as onp
 import scipy as osp
@@ -445,7 +444,6 @@ def test_det_graph(shape, dtype):
     Expectation: the result match to scipy
     """
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
 
     class TestNet(nn.Cell):
         def construct(self, a):
