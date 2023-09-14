@@ -424,7 +424,7 @@ class ThorGpu(Optimizer):
         self.matmul = P.MatMul()
         self.assign = P.Assign()
         self.mul = P.Mul()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one = Tensor(1, mstype.int32)
         self.feature_map = Tensor(1.0, mstype.float32)
         self.axis = 0
@@ -740,7 +740,7 @@ class ThorAscend(Optimizer):
         self.log = P.Log()
         self.exp = P.Exp()
         self.sqrt = P.Sqrt()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.assign = P.Assign()
         self.cast = P.Cast()
         self.eye = P.Eye()
