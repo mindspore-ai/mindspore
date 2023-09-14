@@ -21,9 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
 std::unordered_map<TypeId, CopyWithSliceCpuKernel::CopyWithSliceFunc> CopyWithSliceCpuKernel::func_list_ = {
   {kNumberTypeFloat16, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<float16>},
   {kNumberTypeFloat32, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<float>},
@@ -33,8 +30,8 @@ std::unordered_map<TypeId, CopyWithSliceCpuKernel::CopyWithSliceFunc> CopyWithSl
   {kNumberTypeInt32, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<int32_t>},
   {kNumberTypeInt64, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<int64_t>},
   {kNumberTypeBool, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<bool>},
-  {kNumberTypeComplex64, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<complex64>},
-  {kNumberTypeComplex128, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<complex128>},
+  {kNumberTypeComplex64, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<float>},
+  {kNumberTypeComplex128, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<double>},
   {kNumberTypeUInt8, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<uint8_t>},
   {kNumberTypeUInt16, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<uint16_t>},
   {kNumberTypeUInt32, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<uint32_t>},
@@ -48,8 +45,9 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSlice(TypeId type_id, const TensorSto
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << type_id << " is invalid";
   }
+  bool is_complex = (type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128);
 
-  return iter->second(this, src_storage_info, src_addr, dst_storage_info, dst_addr);
+  return iter->second(this, src_storage_info, src_addr, dst_storage_info, dst_addr, is_complex);
 }
 
 int64_t OffsetCalc(size_t ndim, const ShapeVector &shape, int64_t tmp_index, const std::vector<int64_t> &strides) {
@@ -67,22 +65,28 @@ template <typename T>
 bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info,
                                                      const kernel::AddressPtr &src_addr,
                                                      const TensorStorageInfoPtr &dst_storage_info,
-                                                     const kernel::AddressPtr &dst_addr) {
+                                                     const kernel::AddressPtr &dst_addr, bool is_complex) {
   MS_EXCEPTION_IF_NULL(dst_storage_info);
   T *copy_src_addr = GetDeviceAddress<T>({src_addr}, 0);
   T *self_addr = GetDeviceAddress<T>({dst_addr}, 0);
   const auto &output_shape = dst_storage_info->shape;
+  int64_t type_size = is_complex ? 2 : 1;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
+  output_size *= type_size;
   auto &dst_storage_offset = dst_storage_info->storage_offset;
   size_t src_storage_offset{0};
   if (src_storage_info != nullptr) {
+    if (src_storage_info->data_type != dst_storage_info->data_type) {
+      MS_LOG(EXCEPTION) << "src data_type:" << src_storage_info->data_type
+                        << "  dst data_type:" << dst_storage_info->data_type;
+    }
     src_storage_offset = src_storage_info->storage_offset;
   }
   auto src_is_contiguous = src_storage_info == nullptr || src_storage_info->is_contiguous;
 
   if (dst_storage_info->is_contiguous && src_is_contiguous) {
-    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size) {
+    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size * type_size) {
       MS_LOG(EXCEPTION) << "Offset is out of bounds, offset:" << (dst_storage_offset * sizeof(T))
                         << " output_size:" << (output_size * sizeof(T)) << " dst_addr->size:" << dst_addr->size;
     }

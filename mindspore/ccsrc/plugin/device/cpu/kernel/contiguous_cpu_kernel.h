@@ -38,13 +38,13 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
 
  private:
   using ContiguousFunc = std::function<bool(ContiguousCpuKernel *, const kernel::AddressPtr &,
-                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &)>;
+                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, bool)>;
 
   // const ContiguousFunc GetFunc(TypeId type_id);
 
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs);
+                            const kernel::AddressPtr &outputs, bool is_complex);
   static std::unordered_map<TypeId, ContiguousFunc> func_list_;
 };
 }  // namespace kernel
