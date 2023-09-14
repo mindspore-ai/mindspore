@@ -273,7 +273,7 @@ class _AutoIdentifyDynamicShape:
 
         for elem in args_list:
             if elem is None:
-                return False
+                continue
             if not isinstance(elem, (list, tuple, Tensor, int, float)):
                 return False
             if isinstance(elem, Tensor) and (is_shape_unknown(elem.shape) or (not elem.shape)):
@@ -430,6 +430,9 @@ class _AutoIdentifyDynamicShape:
                     logger.info("In auto dynamic shape mode, scalar/tuple/list must be equal, it can not be " \
                                 "generalize.")
                     return input_args, False
+            elif input is None and cache is None:
+                generalize_one_shape.append(input)
+
         return generalize_one_shape, True
 
 
