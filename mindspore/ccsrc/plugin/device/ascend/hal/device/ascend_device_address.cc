@@ -26,7 +26,6 @@
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
-#include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
@@ -389,9 +388,9 @@ ShapeVector AscendDeviceAddress::GetDeviceShape(ShapeVector *host_shape) const {
   return device_shape;
 }
 
-std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const ShapeVector &host_shape,
-                                                                         const std::string &ori_format,
-                                                                         const std::string &dst_format) const {
+std::shared_ptr<LaunchTransData> AscendDeviceAddress::CreateLaunchTransData(const ShapeVector &host_shape,
+                                                                            const std::string &ori_format,
+                                                                            const std::string &dst_format) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto stream = runtime_instance->compute_stream();
@@ -399,8 +398,8 @@ std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const S
   if (format_ == kOpFormat_FRAC_Z) {
     groups = GetGroupsWithCache();
   }
-  auto launch_trans_data =
-    std::make_shared<AscendLaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape, groups);
+  auto launch_trans_data = std::make_shared<LaunchTransData>(stream, static_cast<uint8_t *>(ptr_), type_id_, size_,
+                                                             ori_format, dst_format, host_shape, groups);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
@@ -416,12 +415,11 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   // launch transdata
-  launch_transdata_->SetInputAddr(static_cast<uint8_t *>(ptr_));
   launch_transdata_->LaunchOpKernel();
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
-    launch_transdata_->FreeLaunchDeviceMem();
+    launch_transdata_->FreeDeviceMem();
     MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
   }
   if (type_id_ == type) {
@@ -434,11 +432,11 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
-      launch_transdata_->FreeLaunchDeviceMem();
+      launch_transdata_->FreeDeviceMem();
       return false;
     }
   }
-  launch_transdata_->FreeLaunchDeviceMem();
+  launch_transdata_->FreeDeviceMem();
   return sync_ok;
 }
 

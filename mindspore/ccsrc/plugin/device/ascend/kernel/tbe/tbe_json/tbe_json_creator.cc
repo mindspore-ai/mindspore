@@ -26,6 +26,8 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "utils/file_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "include/common/utils/json_operation_utils.h"
@@ -485,6 +487,27 @@ void TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
   }
 }
 
+std::string TbeJsonCreator::GetPySrcPath() const {
+#ifdef WITH_BACKEND
+  static std::string path;
+  if (path.empty()) {
+    auto suffix = "/opp/built-in/op_impl/ai_core/tbe";
+    auto ascend_path = device::ascend::GetAscendPath();
+    auto tmp = ascend_path + suffix;
+    auto real_path = FileUtils::GetRealPath(tmp.c_str());
+    if (!real_path.has_value()) {
+      MS_LOG(WARNING) << "Get the path:" << tmp << "failed. Using default path:" << kPyPath
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
+                      << "(3) whether the path is too long. ";
+      return kPyPath;
+    }
+    path = real_path.value();
+  }
+  return path;
+#endif
+  return kPyPath;
+}
+
 void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
@@ -497,7 +520,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   (*compute_json)[kJFuncName] = func_name;
   auto python_module_path = op_info_ptr->impl_path();
   if (python_module_path.empty()) {
-    python_module_path = kPyPath;
+    python_module_path = GetPySrcPath();
   }
 
   auto dynamic_compile_static = op_info_ptr->dynamic_compile_static();
