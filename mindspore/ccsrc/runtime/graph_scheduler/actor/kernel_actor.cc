@@ -175,12 +175,13 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
 
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
   FetchInputDeviceTensor(context);
 
   if (is_dynamic_shape_) {
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     InferShapeAndResize();
+    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name(), false);
   }
 
   FetchOutputDeviceTensor(context);
@@ -189,7 +190,6 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
   // Set the memory address for the tensors which use the somas.
   SetSomasMemory(context);
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name(), false);
 
   // Allocate the memory address for other tensors which don't use the somas.
   if (!memory_alloc_list_.empty()) {
@@ -686,7 +686,10 @@ void KernelActor::InferShapeAndResize() {
   MS_EXCEPTION_IF_NULL(op_def);
   auto op_fun_impl = op_def->func_impl_;
   MS_EXCEPTION_IF_NULL(op_fun_impl);
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   auto base_shape = op_fun_impl->InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferInner, GetAID().Name(), false);
   MS_EXCEPTION_IF_NULL(base_shape);
 
   // Update output kernel tensor.
@@ -770,25 +773,6 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
-  if (is_dynamic_shape_) {
-    uint64_t start_time = 0;
-    PROFILER_START(start_time);
-    try {
-      MS_EXCEPTION_IF_NULL(kernel_);
-      kernel::UpdateNodeShape(kernel_);
-      AnfAlgo::UpdateOutputAddrSize(kernel_info_, kernel_);
-      AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
-    } catch (const std::exception &e) {
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        MsException::Instance().SetException();
-      }
-      std::string error_info = "Update output shape, size and internal parameter shape after launch exception: " +
-                               kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
-    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name(), false);
-  }
-
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {

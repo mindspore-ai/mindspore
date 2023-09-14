@@ -167,9 +167,6 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       output_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
     }
 
-    // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here.
-    UpdateOutputTensorShape(outputs_, output_nodes_);
-
     current_outputs_num_ = 0;
     current_count_ = 0;
     SET_OPCONTEXT_SUCCESS_RET((*context));
@@ -227,6 +224,8 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                 << ", output index: " << output_index << ", output position: " << output_position;
 
+  const auto &output_kernel_tensor = AnfAlgo::GetOrCreateOutputKernelTensor(output_node, output_index);
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
       output_node->abstract()->cast<abstract::AbstractSequencePtr>()->size() == 0) {
@@ -236,7 +235,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     TypeId type_id =
       (device_tensor->type_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64 : device_tensor->type_id());
     const auto &tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-    tensor->set_base_shape(output_node->Shape());
+    tensor->set_base_shape(output_kernel_tensor->GetShape());
     return tensor;
   }
 
@@ -246,13 +245,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   }
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
+
+  auto type_id = output_kernel_tensor->dtype_id();
+  const auto &shape = output_kernel_tensor->GetShapeVector();
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);
   // Set tensor base shape for restoring the tuple output when output node is dynamic sequence.
   if (common::AnfAlgo::IsDynamicSequence(output_node)) {
-    tensor->set_base_shape(output_node->Shape());
+    tensor->set_base_shape(output_kernel_tensor->GetShape());
   }
 
   if (output_position >= device_contexts_.size()) {
