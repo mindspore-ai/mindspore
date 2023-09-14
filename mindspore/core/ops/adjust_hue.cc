@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ TypePtr AdjustHueInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto prim_name = primitive->name();
   auto input_type_images = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type_images);
-  const std::set valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_type_images, valid_types, prim_name);
   auto input_type_delta = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type_delta);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ abstract::TupleShapePtr LSTMV2InferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr LSTMV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto op_name = prim->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[kInputSeqLengthIndex]->BuildType(),
                                                    {kInt32}, op_name);

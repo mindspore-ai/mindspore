@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,12 @@ TypePtr MultinomialInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(x_type);
   auto num_samples_type = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(num_samples_type);
-  const std::set valid_types_1 = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
-                                  kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
-  const std::set valid_types_2 = {kInt32, kInt64};
+  const std::set<TypePtr> valid_types_1 = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
+                                           kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
+  const std::set<TypePtr> valid_types_2 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_1, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("num_samples", num_samples_type, valid_types_2, prim_name);
-  const std::set valid_types_3 = {kInt32, kInt64};
+  const std::set<TypePtr> valid_types_3 = {kInt32, kInt64};
   auto dtype_attr = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   if (!dtype_attr->isa<Type>()) {

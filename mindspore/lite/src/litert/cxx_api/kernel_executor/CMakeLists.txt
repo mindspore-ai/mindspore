@@ -4,6 +4,15 @@ if(TARGET_AOS_ARM)
     string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 endif()
 
+set(KERNEL_EXECUTOR_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor_impl.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/op_converter.cc
+        ${TOP_DIR}/mindspore/lite/src/common/ops/ops_utils.cc
+        ${TOP_DIR}/mindspore/lite/src/common/primitive_t_utils.cc
+        ${TOP_DIR}/mindspore/lite/src/common/ops/ops_def.cc
+        )
+
 if(${MSLITE_ENABLE_NPU})
     if(DEFINED ENV{HWHIAI_DDK})
         message("HIAI_DDK=$ENV{HWHIAI_DDK}")
@@ -28,32 +37,16 @@ if(${MSLITE_ENABLE_NPU})
             ${CMAKE_CURRENT_SOURCE_DIR}/custom_om_kernel.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/custom_om_infer.cc
             )
-    set(KERNEL_EXECUTOR_SRC ${CUSTOM_OM_CXX})
-    add_library(kernel_executor SHARED ${KERNEL_EXECUTOR_SRC})
-
-    add_dependencies(kernel_executor fbs_inner_src fbs_src)
-
-    target_link_libraries(kernel_executor
-            mindspore-lite
-            mindspore::json
-            mindspore::flatbuffers)
-else()
-    set(KERNEL_EXECUTOR_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor_impl.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/op_converter.cc
-            ${TOP_DIR}/mindspore/lite/src/common/ops/ops_utils.cc
-            ${TOP_DIR}/mindspore/lite/src/common/primitive_t_utils.cc
-            ${TOP_DIR}/mindspore/lite/src/common/ops/ops_def.cc
-            )
-    add_library(kernel_executor SHARED ${KERNEL_EXECUTOR_SRC})
-
-    add_dependencies(kernel_executor fbs_inner_src fbs_src mindspore_core)
-
-    target_link_libraries(kernel_executor
-            mindspore-lite
-            mindspore_core
-            mindspore::json
-            mindspore::flatbuffers
-            mindspore::glog)
+    list(APPEND KERNEL_EXECUTOR_SRC ${CUSTOM_OM_CXX})
 endif()
+
+add_library(kernel_executor SHARED ${KERNEL_EXECUTOR_SRC})
+
+add_dependencies(kernel_executor fbs_inner_src fbs_src mindspore_core)
+
+target_link_libraries(kernel_executor
+        mindspore-lite
+        mindspore_core
+        mindspore::json
+        mindspore::flatbuffers
+        mindspore::glog)

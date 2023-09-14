@@ -411,6 +411,13 @@ if(NOT PLATFORM_MCU)
     install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${RUNTIME_INC_DIR}/third_party
             COMPONENT ${RUNTIME_COMPONENT_NAME})
 endif()
+
+if(ANDROID_NDK)
+    set(glog_name libmindspore_glog.so)
+else()
+    set(glog_name libmindspore_glog.so.0.4.0)
+endif()
+
 if(PLATFORM_ARM64)
     if(SUPPORT_NPU)
         install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
@@ -448,7 +455,7 @@ if(PLATFORM_ARM64)
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/convert/libruntime_convert_plugin.so
@@ -495,7 +502,7 @@ if(PLATFORM_ARM64)
         __install_micro_wrapper()
     endif()
     if(MSLITE_ENABLE_RUNTIME_GLOG)
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(MSLITE_ENABLE_TOOLS)
@@ -558,7 +565,7 @@ if(PLATFORM_ARM64)
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${TOP_DIR}/third_party/proto/ DESTINATION ${CONVERTER_ROOT_DIR}/third_party/proto
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib
+            install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                     RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             if(MSLITE_ENABLE_OPENCV)
@@ -579,7 +586,7 @@ if(PLATFORM_ARM64)
                 if(MSLITE_ENABLE_RUNTIME_CONVERT)
                     install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                             DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+                    install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                             RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -600,7 +607,7 @@ if(PLATFORM_ARM64)
             if(MSLITE_ENABLE_RUNTIME_GLOG)
                 install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
                         COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-                install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${GLOG_DIR}
+                install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${GLOG_DIR}
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
             if(MSLITE_ENABLE_RUNTIME_CONVERT)
@@ -697,7 +704,7 @@ elseif(PLATFORM_ARM32)
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/convert/libruntime_convert_plugin.so
@@ -895,7 +902,7 @@ else()
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${DNNL_DIR}
                 RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -944,7 +951,7 @@ else()
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(MSLITE_ENABLE_RUNTIME_GLOG)
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
@@ -978,7 +985,7 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib
+        install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         if(MSLITE_ENABLE_OPENCV)
@@ -1000,7 +1007,7 @@ else()
             if(MSLITE_ENABLE_RUNTIME_CONVERT)
                 install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                         DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+                install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
@@ -1020,7 +1027,7 @@ else()
         if(MSLITE_ENABLE_RUNTIME_GLOG)
             install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
                     COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-            install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
+            install(FILES ${glog_LIBPATH}/${glog_name}
                     DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_ENABLE_RUNTIME_CONVERT)
@@ -1087,7 +1094,7 @@ else()
     endif()
 endif()
 
-if(COMPILE_KERNEL_EXECUTOR STREQUAL "Linux")
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/abs.h
             ${TOP_DIR}/mindspore/core/ops/batch_norm.h
@@ -1142,12 +1149,8 @@ if(COMPILE_KERNEL_EXECUTOR STREQUAL "Linux")
             ${RUNTIME_INC_DIR}/api COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+    install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-elseif(COMPILE_KERNEL_EXECUTOR STREQUAL "Android")
-    install(FILES ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/kernel_executor/kernel_executor.h DESTINATION
-            ${RUNTIME_INC_DIR}/api COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")

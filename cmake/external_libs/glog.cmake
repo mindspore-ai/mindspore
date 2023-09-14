@@ -49,6 +49,24 @@ if(WIN32 AND NOT MSVC)
     endif()
 endif()
 
+if(ANDROID_NDK)
+    if(PLATFORM_ARM64)
+        set(glog_option -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
+                -DANDROID_NATIVE_API_LEVEL=19
+                -DANDROID_NDK=$ENV{ANDROID_NDK}
+                -DANDROID_ABI=arm64-v8a
+                -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
+                -DANDROID_STL=${ANDROID_STR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${glog_option})
+    elseif(PLATFORM_ARM32)
+        set(glog_option -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
+                -DANDROID_NATIVE_API_LEVEL=19
+                -DANDROID_NDK=$ENV{ANDROID_NDK}
+                -DANDROID_ABI=armeabi-v7a
+                -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
+                -DANDROID_STL=${ANDROID_STR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${glog_option})
+    endif()
+endif()
+
 mindspore_add_pkg(glog
         VER 0.4.0
         LIBS ${glog_lib}
