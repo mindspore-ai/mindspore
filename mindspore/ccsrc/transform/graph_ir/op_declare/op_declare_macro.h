@@ -247,6 +247,10 @@
       OUTPUT_DTYPES(name), \
   }
 
+#define DYNAMIC_SHAPE_SUPPORT(T) \
+  template <>                    \
+  const bool OpAdapter<T>::dynamic_shape_support_
+
 #define ADPT_DESC_ONE(T) std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>())
 #define ADPT_DESC_TWO(T, I) \
   std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>(), std::make_shared<OpAdapter<I>>())

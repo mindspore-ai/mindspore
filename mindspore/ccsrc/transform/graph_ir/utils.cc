@@ -431,5 +431,26 @@ bool ConvertCheck(const AnfNodePtr &node) {
   auto &adapter_map = OpAdapterMap::get();
   return adapter_map.find(prim->name()) != adapter_map.end();
 }
+
+bool DynamicShapeSupportCheck(const AnfNodePtr &node, bool train) {
+  auto adpt = FindAdapter(node, train);
+  MS_EXCEPTION_IF_NULL(adpt);
+  return adpt->GetDynamicShapeSupport();
+}
+
+bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
+  PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(node);
+  auto adpt = FindAdapter(prim->name(), train);
+  MS_EXCEPTION_IF_NULL(adpt);
+  auto input_attr_map = adpt->getInputAttrMap();
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (auto &it : input_attr_map) {
+    if (!cnode->input(it.first)->isa<ValueNode>()) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace transform
 }  // namespace mindspore

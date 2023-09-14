@@ -783,11 +783,22 @@ void MindRTBackendBase::CompileGraphFromSegment(const GraphSegmentPtr &segment, 
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
 
+    // Get segment run mode.
+    auto seg_run_mode = run_mode;
+    for (auto &node : outputs) {
+      if (node->isa<CNode>()) {
+        if (common::AnfAlgo::GetGraphSplitGroup(node) == kKernelGroup) {
+          seg_run_mode = device::RunMode::kKernelMode;
+          break;
+        }
+      }
+    }
+
     GraphId graph_id;
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
       graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
     } else {
-      graph_id = graph_compiler_->CompileGraph(segment, std::make_pair(inputs, outputs), device_context, run_mode,
+      graph_id = graph_compiler_->CompileGraph(segment, std::make_pair(inputs, outputs), device_context, seg_run_mode,
                                                ms_execution_mode_ == kPynativeMode);
       if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
         MS_LOG(INFO)

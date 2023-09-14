@@ -183,6 +183,7 @@ class BaseOpAdapter {
   virtual bool IsDynInputOp(uint64_t index) = 0;
   virtual bool IsDyOutputOp(uint64_t index) = 0;
   virtual bool IsMultipleOutputOp(const AnfNodePtr &anf) = 0;
+  virtual bool GetDynamicShapeSupport() = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }
