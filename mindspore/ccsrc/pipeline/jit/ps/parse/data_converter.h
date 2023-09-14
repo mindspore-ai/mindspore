@@ -29,6 +29,7 @@
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace parse {
@@ -80,6 +81,15 @@ class DataConverter {
 };
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj);
+
+// using OpDefConvertFunc = std::function<ValuePtr(const py::object &obj)>;
+typedef ValuePtr (*OpDefConvertFunc)(const py::object &);
+OpDefConvertFunc GetConverterByType(int32_t dtype);
+
+inline int32_t CombineTypesForTypeCast(const mindspore::ops::OP_DTYPE &src, const mindspore::ops::OP_DTYPE &dst) {
+  constexpr int32_t kShift = 15;
+  return (static_cast<int32_t>(src) << kShift) | static_cast<int32_t>(dst);
+}
 }  // namespace parse
 }  // namespace mindspore
 

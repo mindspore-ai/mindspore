@@ -767,13 +767,169 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }
 
+static std::string BuilidPyInputTypeString(const py::object &obj) {
+  if (py::isinstance<py::int_>(obj)) {
+    return "int";
+  }
+
+  if (py::isinstance<py::float_>(obj)) {
+    return "float";
+  }
+
+  if (py::isinstance<py::bool_>(obj)) {
+    return "bool";
+  }
+
+  if (py::isinstance<py::str>(obj)) {
+    return "string";
+  }
+
+  if (py::isinstance<py::none>(obj)) {
+    return "None";
+  }
+
+  if (py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return "Tensor";
+  }
+
+  if (IsStubTensor(obj)) {
+    return "Tensor";
+  }
+
+  if (py::isinstance<py::tuple>(obj)) {
+    std::stringstream ss;
+    ss << "tuple<";
+    auto tuple = obj.cast<py::tuple>();
+    for (size_t i = 0; i < tuple.size(); i++) {
+      ss << BuilidPyInputTypeString(tuple[i]) << ", ";
+    }
+    ss << ">";
+    auto str = ss.str();
+    str.replace(str.end() - 3, str.end() - 1, "");
+    return str;
+  }
+
+  if (py::isinstance<py::list>(obj)) {
+    std::stringstream ss;
+    ss << "list<";
+    auto list = obj.cast<py::list>();
+    for (size_t i = 0; i < list.size(); i++) {
+      ss << BuilidPyInputTypeString(list[i]) << ", ";
+    }
+    ss << ">";
+    auto str = ss.str();
+    str.replace(str.end() - 3, str.end() - 1, "");
+    return str;
+  }
+
+  MS_LOG(EXCEPTION) << "Unsupported python type: ";
+}
+
+std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
+  std::stringstream init_arg_ss;
+  std::stringstream input_arg_ss;
+  for (auto const &op_arg : op_def->args_) {
+    if (op_arg.as_init_arg_) {
+      init_arg_ss << op_arg.arg_name_ << "=<";
+      for (auto const &dtype : op_arg.cast_dtype_) {
+        init_arg_ss << ops::EnumToString(dtype) << ", ";
+      }
+      init_arg_ss << ops::EnumToString(op_arg.arg_dtype_) << ">, ";
+    } else {
+      input_arg_ss << op_arg.arg_name_ << "=<";
+      for (auto const &dtype : op_arg.cast_dtype_) {
+        input_arg_ss << ops::EnumToString(dtype) << ", ";
+      }
+      input_arg_ss << ops::EnumToString(op_arg.arg_dtype_) << ">, ";
+    }
+  }
+
+  auto init_arg_str = init_arg_ss.str();
+  auto input_arg_str = input_arg_ss.str();
+  init_arg_str.replace(init_arg_str.end() - 2, init_arg_str.end(), "");
+  input_arg_str.replace(input_arg_str.end() - 2, input_arg_str.end(), "");
+
+  std::stringstream real_init_arg_ss;
+  std::stringstream real_input_arg_ss;
+  for (size_t i = 0; i < op_inputs.size(); i++) {
+    auto const &op_arg = op_def->args_[i];
+    if (op_arg.as_init_arg_) {
+      real_init_arg_ss << op_arg.arg_name_ << "=";
+      real_init_arg_ss << BuilidPyInputTypeString(op_inputs[i]) << ", ";
+    } else {
+      real_input_arg_ss << op_arg.arg_name_ << "=";
+      real_input_arg_ss << BuilidPyInputTypeString(op_inputs[i]) << ", ";
+    }
+  }
+  auto real_init_arg_str = real_init_arg_ss.str();
+  auto real_input_arg_str = real_input_arg_ss.str();
+  real_init_arg_str.replace(real_init_arg_str.end() - 2, real_init_arg_str.end(), "");
+  real_input_arg_str.replace(real_input_arg_str.end() - 2, real_input_arg_str.end(), "");
+
+  std::stringstream ss;
+  ss << "Failed calling " << op_def->name_ << " with \"" << op_def->name_ << "(" << real_init_arg_str << ")("
+     << real_input_arg_str << ")\"." << std::endl;
+  ss << "The valid calling should be: " << std::endl;
+  ss << "\"" << op_def->name_ << "(" << init_arg_str << ")(" << input_arg_str << ")\".";
+  return ss.str();
+}
+
+void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
+                         std::vector<ValuePtr> *input_values) {
+  if (op_inputs.size() != op_def->args_.size()) {
+    MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
+                      << " but got " << op_inputs.size() << ".";
+  }
+
+  parse::OpDefConvertFunc convert_func;
+  for (size_t i = 0; i < op_def->args_.size(); i++) {
+    auto const &op_arg = op_def->args_[i];
+    ValuePtr value = nullptr;
+    convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
+    if (convert_func == nullptr) {
+      MS_LOG(EXCEPTION) << "Can't find convert function for dtype[" << op_arg.arg_dtype_ << "].";
+    }
+
+    value = convert_func(op_inputs[i]);
+    if (value != nullptr) {
+      input_values->emplace_back(value);
+      continue;
+    }
+
+    if (!op_arg.cast_dtype_.empty()) {
+      for (auto cast_dtype : op_arg.cast_dtype_) {
+        convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+        if (convert_func == nullptr) {
+          MS_LOG(EXCEPTION) << "Can't find convert function for src_dtype[" << cast_dtype << "] and dst_dtype["
+                            << op_arg.arg_dtype_ << "].";
+        }
+        value = convert_func(op_inputs[i]);
+        if (value != nullptr) {
+          break;
+        }
+      }
+    }
+
+    if (value == nullptr) {
+      MS_LOG(EXCEPTION) << BuildOpErrorMsg(op_def, op_inputs);
+    }
+    input_values->emplace_back(value);
+  }
+}
+
 void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs, bool stub) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
   op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
-  op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
-  for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
+
+  auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
+  if (op_def == nullptr) {
+    op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
+    for (size_t i = 0; i < op_run_info->input_size; ++i) {
+      op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
+    }
+  } else {
+    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value);
   }
   PrepareOpGradInfo(op_run_info);
 }

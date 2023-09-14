@@ -25,6 +25,7 @@
 namespace mindspore::ops {
 
 enum OP_DTYPE {
+  DT_BEGIN = 0,
   DT_BOOL,
   DT_INT,
   DT_FLOAT,
@@ -46,6 +47,7 @@ enum OP_DTYPE {
   DT_LIST_TENSOR,
   DT_LIST_STR,
   DT_LIST_ANY,
+  DT_END,
 };
 
 struct OpArg {
@@ -68,6 +70,8 @@ using OpDefPtr = OpDef *;
 
 MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
 MS_CORE_API void AddOpDef(const std::string &op_name, const OpDefPtr op_def);
+
+MS_CORE_API std::string EnumToString(OP_DTYPE dtype);
 
 class OpDefRegHelper {
  public:

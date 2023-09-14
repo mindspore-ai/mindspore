@@ -18,6 +18,7 @@
 
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include <utility>
+#include <unordered_map>
 #include "mindspore/core/ops/structure_ops.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/pipeline.h"
@@ -947,6 +948,209 @@ ValuePtr DataConverter::ConvertData(const py::object &obj) {
     }
   }
   return ConvertOtherObj(obj, forbid_reuse_);
+}
+
+ValuePtr ConvertBool(const py::object &obj) {
+  if (!py::isinstance<py::bool_>(obj)) {
+    return nullptr;
+  }
+  return PyCast<BoolImm, bool>(obj);
+}
+
+ValuePtr ConvertInt(const py::object &obj) {
+  if (!py::isinstance<py::int_>(obj)) {
+    return nullptr;
+  }
+  return ConvertIntegerWithType(obj);
+}
+
+ValuePtr ConvertFloat(const py::object &obj) {
+  if (!py::isinstance<py::float_>(obj)) {
+    return nullptr;
+  }
+  return ConvertFloatWithType(obj);
+}
+
+ValuePtr ConvertNumber(const py::object &obj) {
+  if (py::isinstance<py::int_>(obj)) {
+    return ConvertIntegerWithType(obj);
+  }
+
+  if (py::isinstance<py::float_>(obj)) {
+    return ConvertFloatWithType(obj);
+  }
+
+  if (py::isinstance<py::bool_>(obj)) {
+    return PyCast<BoolImm, bool>(obj);
+  }
+
+  return nullptr;
+}
+
+ValuePtr ConvertTensor(const py::object &obj) {
+  if (IsStubTensor(obj)) {
+    return PyStubNodeCast(obj);
+  }
+
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+
+  return ObjCast<TensorPtr>(obj);
+}
+
+ValuePtr ConvertStr(const py::object &obj) {
+  if (!py::isinstance<py::str>(obj)) {
+    return nullptr;
+  }
+  return PyCast<StringImm, string>(obj);
+}
+
+ValuePtr ConvertAny(const py::object &obj) { return parse::data_converter::PyDataToStubNode(obj); }
+
+template <typename TS, typename TD, OpDefConvertFunc func>
+ValuePtr ConvertSequence(const py::object &obj) {
+  if (!py::isinstance<TS>(obj)) {
+    return nullptr;
+  }
+  auto seq = obj.cast<TS>();
+  std::vector<ValuePtr> value_list;
+  for (size_t it = 0; it < seq.size(); ++it) {
+    auto out = func(seq[it]);
+    if (out == nullptr) {
+      return nullptr;
+    }
+    value_list.emplace_back(out);
+  }
+  return std::make_shared<TD>(value_list);
+}
+
+template <typename T, OpDefConvertFunc func>
+ValuePtr ConvertSingleElementToSequence(const py::object &obj) {
+  auto value = func(obj);
+  if (value == nullptr) {
+    return nullptr;
+  }
+  std::vector<ValuePtr> value_list{value};
+  return std::make_shared<T>(std::move(value_list));
+}
+
+template <typename T1, typename T2>
+ValuePtr ConvertSingleElementToTensor(const py::object &obj) {
+  if (!py::isinstance<T1>(obj)) {
+    return nullptr;
+  }
+
+  auto v = py::cast<T2>(obj);
+  return std::make_shared<tensor::Tensor>(v);
+}
+
+ValuePtr ConvertNumberToTensor(const py::object &obj) {
+  if (py::isinstance<py::int_>(obj)) {
+    auto v = py::cast<int64_t>(obj);
+    return std::make_shared<tensor::Tensor>(v);
+  }
+
+  if (py::isinstance<py::float_>(obj)) {
+    auto v = py::cast<double>(obj);
+    return std::make_shared<tensor::Tensor>(v);
+  }
+
+  if (py::isinstance<py::bool_>(obj)) {
+    auto v = py::cast<bool>(obj);
+    return std::make_shared<tensor::Tensor>(v);
+  }
+
+  return nullptr;
+}
+
+OpDefConvertFunc GetConverterByType(int32_t dtype) {
+  static const std::unordered_map<int32_t, OpDefConvertFunc> converters = {
+    // convert functions without type_cast
+    {(int32_t)mindspore::ops::DT_BOOL, ConvertBool},
+    {(int32_t)mindspore::ops::DT_INT, ConvertInt},
+    {(int32_t)mindspore::ops::DT_FLOAT, ConvertFloat},
+    {(int32_t)mindspore::ops::DT_NUMBER, ConvertNumber},
+    {(int32_t)mindspore::ops::DT_TENSOR, ConvertTensor},
+    {(int32_t)mindspore::ops::DT_STR, ConvertStr},
+    {(int32_t)mindspore::ops::DT_ANY, ConvertAny},
+    {(int32_t)mindspore::ops::DT_TUPLE_BOOL, ConvertSequence<py::tuple, ValueTuple, ConvertBool>},
+    {(int32_t)mindspore::ops::DT_TUPLE_INT, ConvertSequence<py::tuple, ValueTuple, ConvertInt>},
+    {(int32_t)mindspore::ops::DT_TUPLE_FLOAT, ConvertSequence<py::tuple, ValueTuple, ConvertFloat>},
+    {(int32_t)mindspore::ops::DT_TUPLE_NUMBER, ConvertSequence<py::tuple, ValueTuple, ConvertNumber>},
+    {(int32_t)mindspore::ops::DT_TUPLE_TENSOR, ConvertSequence<py::tuple, ValueTuple, ConvertTensor>},
+    {(int32_t)mindspore::ops::DT_TUPLE_STR, ConvertSequence<py::tuple, ValueTuple, ConvertStr>},
+    {(int32_t)mindspore::ops::DT_TUPLE_ANY, ConvertSequence<py::tuple, ValueTuple, ConvertAny>},
+    {(int32_t)mindspore::ops::DT_LIST_BOOL, ConvertSequence<py::list, ValueList, ConvertBool>},
+    {(int32_t)mindspore::ops::DT_LIST_INT, ConvertSequence<py::list, ValueList, ConvertInt>},
+    {(int32_t)mindspore::ops::DT_LIST_FLOAT, ConvertSequence<py::list, ValueList, ConvertFloat>},
+    {(int32_t)mindspore::ops::DT_LIST_NUMBER, ConvertSequence<py::list, ValueList, ConvertNumber>},
+    {(int32_t)mindspore::ops::DT_LIST_TENSOR, ConvertSequence<py::list, ValueList, ConvertTensor>},
+    {(int32_t)mindspore::ops::DT_LIST_STR, ConvertSequence<py::list, ValueList, ConvertStr>},
+    {(int32_t)mindspore::ops::DT_LIST_ANY, ConvertSequence<py::list, ValueList, ConvertAny>},
+
+    // TypeCast1: convert single element to sequence
+    {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_TUPLE_INT),
+     ConvertSingleElementToSequence<ValueTuple, ConvertNumber>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_LIST_INT),
+     ConvertSingleElementToSequence<ValueList, ConvertNumber>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TUPLE_INT),
+     ConvertSingleElementToSequence<ValueTuple, ConvertInt>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_LIST_INT),
+     ConvertSingleElementToSequence<ValueList, ConvertInt>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TUPLE_INT),
+     ConvertSingleElementToSequence<ValueTuple, ConvertFloat>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_LIST_INT),
+     ConvertSingleElementToSequence<ValueList, ConvertFloat>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TUPLE_INT),
+     ConvertSingleElementToSequence<ValueTuple, ConvertBool>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_LIST_INT),
+     ConvertSingleElementToSequence<ValueList, ConvertBool>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_ANY, mindspore::ops::DT_TUPLE_ANY),
+     ConvertSingleElementToSequence<ValueTuple, ConvertAny>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_ANY, mindspore::ops::DT_LIST_ANY),
+     ConvertSingleElementToSequence<ValueList, ConvertAny>},
+
+    // TypeCast2: convert sequence to sequence, such as py::tuple to ValueList
+    {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_LIST_INT),
+     ConvertSequence<py::tuple, ValueList, ConvertInt>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_LIST_FLOAT),
+     ConvertSequence<py::tuple, ValueList, ConvertFloat>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_LIST_BOOL),
+     ConvertSequence<py::tuple, ValueList, ConvertBool>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_ANY, mindspore::ops::DT_LIST_ANY),
+     ConvertSequence<py::tuple, ValueList, ConvertAny>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_TENSOR, mindspore::ops::DT_LIST_TENSOR),
+     ConvertSequence<py::tuple, ValueList, ConvertTensor>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TUPLE_INT),
+     ConvertSequence<py::list, ValueTuple, ConvertInt>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TUPLE_FLOAT),
+     ConvertSequence<py::list, ValueTuple, ConvertFloat>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TUPLE_BOOL),
+     ConvertSequence<py::list, ValueTuple, ConvertBool>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_LIST_ANY, mindspore::ops::DT_TUPLE_ANY),
+     ConvertSequence<py::list, ValueTuple, ConvertAny>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_LIST_TENSOR, mindspore::ops::DT_TUPLE_TENSOR),
+     ConvertSequence<py::list, ValueTuple, ConvertAny>},
+
+    // TypeCast3: convert single element to Tensor
+    {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TENSOR),
+     ConvertSingleElementToTensor<py::int_, int64_t>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TENSOR),
+     ConvertSingleElementToTensor<py::float_, double>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TENSOR),
+     ConvertSingleElementToTensor<py::bool_, bool>},
+    {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_TENSOR), ConvertNumberToTensor},
+
+    // TypeCast4: convert Tensor to Tuple
+  };
+
+  auto it = converters.find(dtype);
+  if (it == converters.end()) {
+    MS_LOG(EXCEPTION) << "For " << dtype << ", the Converter is not found.";
+  }
+
+  return it->second;
 }
 }  // namespace parse
 }  // namespace mindspore
