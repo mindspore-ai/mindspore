@@ -87,13 +87,20 @@ ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
     new_tensor->set_sync_status(tensor->sync_status());
     new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     return new_tensor;
-  } else if (v->isa<ValueSequence>()) {
-    const auto &v_seq = v->cast<ValueSequencePtr>();
-    ValuePtrList v_list;
-    for (const auto &ele : v_seq->value()) {
-      (void)v_list.emplace_back(CopyTensorValueWithNewId(ele));
+  } else if (v->isa<ValueTuple>()) {
+    const auto &v_tup = v->cast<ValueTuplePtr>();
+    ValuePtrList list;
+    for (const auto &ele : v_tup->value()) {
+      (void)list.emplace_back(CopyTensorValueWithNewId(ele));
     }
-    return std::make_shared<ValueTuple>(v_list);
+    return std::make_shared<ValueTuple>(list);
+  } else if (v->isa<ValueList>()) {
+    const auto &v_list = v->cast<ValueListPtr>();
+    ValuePtrList list;
+    for (const auto &ele : v_list->value()) {
+      (void)list.emplace_back(CopyTensorValueWithNewId(ele));
+    }
+    return std::make_shared<ValueList>(list);
   } else {
     return v;
   }
@@ -156,11 +163,9 @@ bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 ValuePtr ConstructOutputInVM(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &result) {
-  if (result.size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+  if (result.size() == 1) {
     return result[kIndex0];
   }
-
   return std::make_shared<ValueTuple>(result);
 }
 
