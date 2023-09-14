@@ -61,11 +61,14 @@ bool SequenceEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   const auto x_addr = GetDeviceAddress<T>(inputs, 0);
   const auto y_addr = GetDeviceAddress<S>(inputs, 1);
   bool *output_addr = GetDeviceAddress<bool>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   if (x_size_ != y_size_ || is_inputs_type_diff_) {
     *output_addr = false;
     return true;
   }
   for (int64_t i = 0; i < x_size_; ++i) {
+    MS_EXCEPTION_IF_NULL(x_addr);
+    MS_EXCEPTION_IF_NULL(y_addr);
     if (static_cast<double>(x_addr[i]) != static_cast<double>(y_addr[i])) {
       *output_addr = false;
       return true;

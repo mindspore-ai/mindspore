@@ -57,6 +57,7 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
+  MS_EXCEPTION_IF_NULL(index_addr);
   const auto target_addr = GetDeviceAddress<T>(inputs, kTargetIndex);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len_list = list_shape_[0];
@@ -82,6 +83,8 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   if (output_offset != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
+    MS_EXCEPTION_IF_NULL(input_addr);
     auto cp_ret = memcpy_s(output_addr, output_size, input_addr, output_offset * sizeof(T));
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
@@ -90,6 +93,8 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   if (target_size != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
+    MS_EXCEPTION_IF_NULL(target_addr);
     auto cp_ret = memcpy_s(output_addr + output_offset, output_size, target_addr, element_index_size * sizeof(T));
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
@@ -98,6 +103,8 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   if (input_tail != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
+    MS_EXCEPTION_IF_NULL(input_addr);
     auto cp_ret = memcpy_s(output_addr + output_offset + element_index_size, output_size, input_addr + output_offset,
                            input_tail * sizeof(T));
     if (cp_ret != EOK) {

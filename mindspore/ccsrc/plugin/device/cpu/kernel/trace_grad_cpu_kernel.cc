@@ -96,8 +96,11 @@ template <typename T>
 void TraceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   T *grad = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(grad);
   auto shape = GetDeviceAddress<int64_t>(inputs, kIndex1);
+  MS_EXCEPTION_IF_NULL(shape);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_addr);
 
   if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "Failed to init output memory.";

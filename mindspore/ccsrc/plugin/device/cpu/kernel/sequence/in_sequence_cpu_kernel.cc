@@ -57,8 +57,11 @@ template <typename T, typename S>
 bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto ele_addr = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(ele_addr);
   const auto input_addr = GetDeviceAddress<S>(inputs, 1);
+  MS_EXCEPTION_IF_NULL(input_addr);
   auto output_addr = GetDeviceAddress<bool>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto len_seq = tuple_shape_[0];
 
   if (len_seq == 0 || ele_type_ != input_type_) {

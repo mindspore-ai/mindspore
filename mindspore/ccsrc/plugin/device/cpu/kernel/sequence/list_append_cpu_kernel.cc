@@ -63,6 +63,7 @@ bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto target_size = inputs[1]->size;
 
   if (input_size != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
     auto cp_ret = memcpy_s(output_addr, output_size, input_addr, input_size);
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
@@ -73,6 +74,7 @@ bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     static_cast<size_t>(std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>()));
   size_t output_addr_offset = element_index_size * static_cast<size_t>(len_list);
   if (target_size != 0) {
+    MS_EXCEPTION_IF_NULL(output_addr);
     auto cp_ret = memcpy_s(output_addr + output_addr_offset, element_index_size * sizeof(T), target_addr, target_size);
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;

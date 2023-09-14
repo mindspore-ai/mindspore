@@ -57,7 +57,9 @@ bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<Address
                                                        const std::vector<AddressPtr> &,
                                                        const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input_addr);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
+  MS_EXCEPTION_IF_NULL(index_addr);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len_list = list_shape_[0];
   auto output_size = outputs[0]->size;
@@ -72,7 +74,7 @@ bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<Address
   if (input_size == 0) {
     MS_EXCEPTION(ValueError) << "The prim '" << kernel_name_ << "', pop from empty list";
   }
-  if (output_size == 0) {
+  if (output_size == 0 || output_addr == nullptr) {
     return true;
   }
 
