@@ -46,6 +46,7 @@
 #include "kernel/host/host_kernel_metadata.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -57,8 +58,91 @@ using mindspore::profiler::ascend::MemoryProfiling;
 
 namespace mindspore::device::ascend {
 namespace {
+static const HashMap<::ge::DataType, std::string> kGeTypeToString = {{::ge::DataType::DT_BOOL, "bool"},
+                                                                     {::ge::DataType::DT_INT8, "int8"},
+                                                                     {::ge::DataType::DT_INT16, "int16"},
+                                                                     {::ge::DataType::DT_INT32, "int32"},
+                                                                     {::ge::DataType::DT_INT64, "int64"},
+                                                                     {::ge::DataType::DT_UINT8, "uint8"},
+                                                                     {::ge::DataType::DT_UINT16, "uint16"},
+                                                                     {::ge::DataType::DT_UINT32, "uint32"},
+                                                                     {::ge::DataType::DT_UINT64, "uint64"},
+                                                                     {::ge::DataType::DT_FLOAT16, "float16"},
+                                                                     {::ge::DataType::DT_FLOAT, "float"},
+                                                                     {::ge::DataType::DT_DOUBLE, "double"},
+                                                                     {::ge::DataType::DT_STRING, "string"},
+                                                                     {::ge::DataType::DT_COMPLEX64, "complex64"},
+                                                                     {::ge::DataType::DT_COMPLEX128, "complex128"},
+                                                                     {::ge::DataType::DT_BF16, "bf16"}};
+std::string ConvertGeTypeToString(::ge::DataType type) {
+  if (kGeTypeToString.count(type) != 0) {
+    return kGeTypeToString.at(type);
+  }
+  return "";
+}
+
+void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType acl_err_type) {
+  std::stringstream ss;
+  ss << "The current [" << node->fullname_with_scope()
+     << "] operator did not match any operator prototype library. The reason is:" << std::endl;
+
+  switch (acl_err_type) {
+    case transform::kUnknownOp: {
+      ss << "The current operator needs to be supplemented with an adapter, please check in `transform` directory."
+         << std::endl;
+      break;
+    }
+    case transform::kInValidType: {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      ss << "The supported input and output data types for the current operator are:" << std::endl;
+      std::string name = GetCNodeFuncName(cnode);
+      const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
+      const auto &input_supported_dtypes = info->input_supported_dtypes();
+      for (auto [index, dtypes] : input_supported_dtypes) {
+        ss << "InputDesc [" << index << "] support {";
+        for (auto dtype : dtypes) {
+          ss << ConvertGeTypeToString(dtype) << ",";
+        }
+        ss << "}" << std::endl;
+      }
+      const auto &output_supported_dtypes = info->output_supported_dtypes();
+      for (auto [index, dtypes] : output_supported_dtypes) {
+        ss << "OutputDesc [" << index << "] support {";
+        for (auto dtype : dtypes) {
+          ss << ConvertGeTypeToString(dtype) << ",";
+        }
+        ss << "}" << std::endl;
+      }
+      ss << std::endl;
+      ss << "But current operator's input and output data types is:" << std::endl;
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+      size_t output_num = AnfUtils::GetOutputTensorNum(node);
+      for (size_t i = 0; i < input_num; ++i) {
+        ss << "InputDesc [" << i << "] is ";
+        ss << TypeIdToString(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i)) << std::endl;
+      }
+      for (size_t i = 0; i < output_num; ++i) {
+        ss << "InputDesc [" << i << "] is ";
+        ss << TypeIdToString(common::AnfAlgo::GetOutputInferDataType(node, i)) << std::endl;
+      }
+      break;
+    }
+    case transform::kSpecialOp: {
+      ss << "The current operator is specified not to select ACL. Please contact the relevant engineer for help."
+         << std::endl;
+      break;
+    }
+    default:
+      return;
+  }
+
+  MS_LOG(ERROR) << ss.str();
+}
+
 std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
-  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node);
+  transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
+  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
   // Todo: add datatype and format filter
   if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel::IsRegisteredAclnnOp(node)) {
     return {KernelType::OPAPI_KERNEL, {}};
@@ -83,6 +167,7 @@ std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> Que
   if (!kernel_info_list.empty()) {
     return {KernelType::HOST_KERNEL, kernel_info_list};
   }
+  PrintQueryAclTypeErr(node, acl_err_type);
   return {KernelType::UNKNOWN_KERNEL_TYPE, {}};
 }
 
