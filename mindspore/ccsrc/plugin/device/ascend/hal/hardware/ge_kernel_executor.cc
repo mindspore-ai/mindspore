@@ -380,10 +380,6 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   const auto &nodes = kernel_graph->execution_order();
   for (const auto &node : nodes) {
     auto op_name = common::AnfAlgo::GetCNodeName(node);
-    // Save the nop_op that needs to be memcpy
-    static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), prim::kPrimExpandDims->name(),
-                                                        prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
-                                                        prim::kPrimFlattenGrad->name()};
     // If the 2nd input of reshape is not a value node, then there are two inputs to select the host reshape operator
     bool is_host_reshape_op = false;
     if (op_name == prim::kPrimReshape->name()) {
@@ -391,7 +387,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
       MS_EXCEPTION_IF_NULL(kernel_mod);
       is_host_reshape_op = kernel_mod->GetKernelModType() == kernel::KernelModType::HostKernelMod;
     }
-    bool is_nop_op = nop_nodes.find(op_name) != nop_nodes.end();
+    bool is_nop_op = transform::AclHelper::IsNopNode(node);
     bool is_transpose_nop = (op_name == prim::kPrimTranspose->name() || op_name == prim::kPrimTransposeD->name()) &&
                             common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
     bool is_dynamic_shape_skip_execute = AnfAlgo::IsDynamicShapeSkipExecute(node);
