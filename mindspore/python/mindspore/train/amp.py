@@ -15,6 +15,7 @@
 """Auto mixed precision."""
 from __future__ import absolute_import
 
+import os
 import mindspore as ms
 from mindspore import nn
 from mindspore import _checkparam as validator
@@ -28,9 +29,6 @@ from mindspore import boost, context
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 from mindspore import log as logger
-
-
-STREE = None
 
 
 AMP_WHITE_LIST = [
@@ -193,7 +191,7 @@ def _need_removed_cast_pair(node, dtype):
     node_cast_type = node.get_args()[1]
     if node_cast_type != cast_dtype_f32:
         return False
-    # all user nodes should be P.Cast()(x, mindspore.float16) or Cell with to_float(mindspore.float16)
+    # all user nodes should be P.Cast()(x, mindspore.float16) or Cell with to_float(mindspore.float16/bfloat16)
     if not node.get_users():
         return False
     for user in node.get_users():
@@ -239,11 +237,45 @@ def _remove_duplicated_cast(stree, dtype):
 
 def _auto_white_list(network, white_list, dtype):
     """process the white list of network."""
-    global STREE
-    STREE = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator_white_list(STREE, white_list, dtype)
-    _remove_duplicated_cast(STREE, dtype)
-    return STREE.get_network()
+    stree = ms.rewrite.SymbolTree.create(network)
+    _insert_cast_operator_white_list(stree, white_list, dtype)
+    _remove_duplicated_cast(stree, dtype)
+    return stree.get_network()
+
+
+def _insert_cast_operator_black_list(stree, black_list, dtype):
+    """insert cast for operators not in black_list."""
+    allowed_list = []
+    # Ignore if net called ".to_float(dtype)"
+    net = stree.get_handler().get_origin_network()
+    to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
+    if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
+        return
+    for node in stree.nodes(all_nodes=True):
+        if node.get_targets() is None:
+            continue
+        elif node.get_instance_type() not in black_list and _allow_mix_precision(node, allowed_list, dtype):
+            _insert_cast_operator_process(node, stree, dtype)
+
+
+def _remove_duplicated_cast_rewrite(stree, dtype):
+    """remove the duplicated cast operators."""
+    for node in stree.nodes(all_nodes=True):
+        if _need_removed_cast_pair(node, dtype):
+            user_nodes = node.get_users()
+            # remove cast f16 nodes
+            for user_node in user_nodes:
+                if user_node.get_instance_type() == P.Cast:
+                    stree.erase(user_node)
+            # remove the cast f32 node
+            stree.erase(node)
+
+
+def _auto_black_list_rewrite(network, black_list, dtype):
+    stree = ms.rewrite.SymbolTree.create(network)
+    _insert_cast_operator_black_list(stree, black_list, dtype)
+    _remove_duplicated_cast_rewrite(stree, dtype)
+    return stree.get_network()
 
 
 def _auto_black_list(network, black_list, dtype):
@@ -348,11 +380,17 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     if amp_level == "O1":
         network = _auto_white_list(network, AMP_WHITE_LIST, dtype)
     elif amp_level == "O2":
-        network = _auto_black_list(network, AMP_BLACK_LIST, dtype)
-        network = _OutputTo32(network)
+        if os.environ.get("MS_AMP_BY_REWRITE"):
+            network = _auto_black_list_rewrite(network, AMP_BLACK_LIST, dtype)
+        else:
+            network = _auto_black_list(network, AMP_BLACK_LIST, dtype)
+            network = _OutputTo32(network)
     elif amp_level == "O3":
-        network.to_float(dtype)
-        network = _OutputTo32(network)
+        if os.environ.get("MS_AMP_BY_REWRITE"):
+            network = _auto_black_list_rewrite(network, [], dtype)
+        else:
+            network.to_float(dtype)
+            network = _OutputTo32(network)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
 
@@ -472,6 +510,30 @@ def _is_grad_accumulation(mcell):
     return False
 
 
+def _auto_mixed_precision_process(network, config, level):
+    """Auto mixed precision process."""
+    if os.environ.get("MS_AMP_BY_REWRITE"):
+        if config["cast_model_type"] == mstype.float16 or level == "O2":
+            level = "O2" if config["keep_batchnorm_fp32"] else "O3"
+        elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
+            # cast_model_type set by kwargs
+            level = "O0"
+        network = auto_mixed_precision(network, level)
+    else:
+        if config["cast_model_type"] == mstype.float16:
+            network.to_float(mstype.float16)
+
+            if config["keep_batchnorm_fp32"]:
+                _do_keep_batchnorm_fp32(network)
+        elif not config["keep_batchnorm_fp32"] and level == "O2":
+            network.to_float(mstype.float16)
+        elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
+            pass
+        else:
+            network = auto_mixed_precision(network, level)
+    return network
+
+
 def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
     """
     Build the mixed precision training cell automatically.
@@ -545,17 +607,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     _check_kwargs(kwargs)
     config = dict(_config_level.get(level), **kwargs)
 
-    if config["cast_model_type"] == mstype.float16:
-        network.to_float(mstype.float16)
-
-        if config["keep_batchnorm_fp32"]:
-            _do_keep_batchnorm_fp32(network)
-    elif not config["keep_batchnorm_fp32"] and level == "O2":
-        network.to_float(mstype.float16)
-    elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
-        pass
-    else:
-        network = auto_mixed_precision(network, level)
+    network = _auto_mixed_precision_process(network, config, level)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
