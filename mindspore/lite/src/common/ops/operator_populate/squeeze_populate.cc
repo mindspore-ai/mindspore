@@ -43,7 +43,7 @@ OpParameter *PopulateSqueezeOpParameter(const BaseOperatorPtr &base_operator) {
   param->axis_size_ = flat_axis.size();
   for (size_t i = 0; i < param->axis_size_; i++) {
     CHECK_LESS_RETURN_RET(INT32_MAX, flat_axis[i], nullptr, param);
-    param->axis_[i] = flat_axis[i];
+    param->axis_[i] = static_cast<int>(flat_axis[i]);
   }
 
   return reinterpret_cast<OpParameter *>(param);

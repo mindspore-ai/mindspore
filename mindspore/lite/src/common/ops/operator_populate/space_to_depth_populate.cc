@@ -33,7 +33,7 @@ OpParameter *PopulateSpaceToDepthOpParameter(const BaseOperatorPtr &base_operato
     return nullptr;
   }
 
-  param->block_size_ = op->get_block_size();
+  param->block_size_ = static_cast<int32_t>(op->get_block_size());
   if (param->block_size_ < C2NUM) {
     MS_LOG(ERROR) << "invalid block_size value: " << param->block_size_;
     free(param);

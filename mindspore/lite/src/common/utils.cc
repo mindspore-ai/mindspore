@@ -33,7 +33,8 @@ namespace lite {
 uint64_t GetTimeUs() {
 #ifdef _MSC_VER
   const int sec_to_us = 1000000;
-  LARGE_INTEGER cur_time, frequency;
+  LARGE_INTEGER cur_time;
+  LARGE_INTEGER frequency;
   QueryPerformanceCounter(&cur_time);
   QueryPerformanceFrequency(&frequency);
   uint64_t sec = cur_time.QuadPart / frequency.QuadPart;
