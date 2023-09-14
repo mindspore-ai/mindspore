@@ -1048,6 +1048,56 @@ def test_serdes_not_implemented_op_exception():
     delete_json_files("not_implemented_serdes_fail")
 
 
+def test_serdes_different_callable_object():
+    """
+    Feature: Serialize different callable objects
+    Description: Test serialize on pipeline with callable ops
+    Expectation: Exception is raised as expected
+    """
+    # common function
+    def fun1(x):
+        return x
+
+    # lambda function
+    fun2 = lambda x: x + 1
+
+    # callable class
+    class Fun3:
+        def __call__(self, x):
+            return x
+
+    # class method
+    class CLS:
+        def __init__(self):
+            self.a = 1
+        def fun4(self, x):
+            return x + 1
+
+    # class method2
+    obj = CLS()
+    fun5 = obj.fun4
+
+    dataset = ds.GeneratorDataset([1, 2, 3], ["data1"]).map(fun1)
+    ds_json = ds.serialize(dataset)
+    assert ds_json['operations'][0]['tensor_op_name'] == 'fun1'
+
+    dataset = ds.GeneratorDataset([1, 2, 3], ["data1"]).map(fun2)
+    ds_json = ds.serialize(dataset)
+    assert ds_json['operations'][0]['tensor_op_name'] == '<lambda>'
+
+    dataset = ds.GeneratorDataset([1, 2, 3], ["data1"]).map(Fun3())
+    ds_json = ds.serialize(dataset)
+    assert ds_json['operations'][0]['tensor_op_name'] == 'Fun3'
+
+    dataset = ds.GeneratorDataset([1, 2, 3], ["data1"]).map(CLS.fun4)
+    ds_json = ds.serialize(dataset)
+    assert ds_json['operations'][0]['tensor_op_name'] == 'fun4'
+
+    dataset = ds.GeneratorDataset([1, 2, 3], ["data1"]).map(fun5)
+    ds_json = ds.serialize(dataset)
+    assert ds_json['operations'][0]['tensor_op_name'] == 'fun4'
+
+
 def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files):
     """
     Utility function for testing serdes files. It is to check if a json file is indeed created with correct name

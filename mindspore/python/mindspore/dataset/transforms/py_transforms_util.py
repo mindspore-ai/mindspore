@@ -18,11 +18,12 @@ Built-in py_transforms_utils functions.
 import json
 import random
 from enum import IntEnum
-from types import FunctionType
+from types import FunctionType, MethodType
 import numpy as np
 
 from mindspore import log as logger
 from ..core.py_util_helpers import is_numpy, ExceptionHandler
+from .. import transforms as t
 
 
 class Implementation(IntEnum):
@@ -212,16 +213,37 @@ class FuncWrapper:
 
     def to_json(self):
         """ Serialize to JSON format """
-        if isinstance(self.transform, FunctionType):
-            # User-defined Python functions cannot be fully nor correctly serialized.
-            # Log a warning, and produce minimal info for the Python UDF, so that serialization of the
-            # dataset pipeline can continue.
-            # Note that the serialized JSON output is not valid to be deserialized.
-            logger.warning("Serialization of user-defined Python functions is not supported. "
-                           "Any produced serialized JSON file output for this dataset pipeline is not valid "
-                           "to be deserialized.")
+        # User-defined Python functions cannot be fully nor correctly serialized.
+        # Log a warning, and produce minimal info for the Python UDF, so that serialization of the
+        # dataset pipeline can continue.
+        # Note that the serialized JSON output is not valid to be deserialized.
+        udf_python_warning = "Serialization of user-defined Python functions is not supported. " \
+                             "Any produced serialized JSON file output for this dataset pipeline is not valid " \
+                             "to be deserialized."
+        try:
+            if isinstance(self.transform, (FunctionType, MethodType)):
+                # common function type(include lambda, class method) / object method
+                logger.warning(udf_python_warning)
+                json_obj = {}
+                json_obj["tensor_op_name"] = self.transform.__name__
+                json_obj["python_module"] = self.__class__.__module__
+                return json.dumps(json_obj)
+            if callable(self.transform) and not isinstance(self.transform, (t.c_transforms.TensorOperation,
+                                                                            t.py_transforms.PyTensorOperation,
+                                                                            t.transforms.TensorOperation,
+                                                                            t.transforms.PyTensorOperation,
+                                                                            FuncWrapper)):
+                # udf callable class
+                logger.warning(udf_python_warning)
+                json_obj = {}
+                json_obj["tensor_op_name"] = type(self.transform).__name__
+                json_obj["python_module"] = self.__class__.__module__
+                return json.dumps(json_obj)
+            # dataset operations
+            return self.transform.to_json()
+        except Exception as e:
+            logger.warning("Skip user-defined Python method which cannot be serialized, reason is: " + str(e))
             json_obj = {}
-            json_obj["tensor_op_name"] = self.transform.__name__
-            json_obj["python_module"] = self.__class__.__module__
+            json_obj["tensor_op_name"] = "unknown"
+            json_obj["python_module"] = "unknown"
             return json.dumps(json_obj)
-        return self.transform.to_json()
