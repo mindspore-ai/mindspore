@@ -30,7 +30,7 @@ class RealShape : public Operation {
  public:
   explicit RealShape(const SymbolPtr &inp) : Operation({inp}) {}
   ~RealShape() override = default;
-  std::string type_name() const override { return "RealShape"; }
+  MS_DECLARE_PARENT(RealShape, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -40,8 +40,8 @@ class BinElemwise : public Operation {
  public:
   BinElemwise(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
   ~BinElemwise() override = default;
+  MS_DECLARE_PARENT(BinElemwise, Operation)
 
-  std::string type_name() const override { return "BinElemwise"; }
   static SymbolPtrList Process(const SymbolPtrList &lhs, const SymbolPtrList &rhs, const Emitter &e, size_t shift = 0);
 
  protected:
@@ -53,8 +53,7 @@ class Reduce : public Operation {
   Reduce(const SymbolPtr &inp, const SymbolPtr &axis, const SymbolPtr &keepdims, const SymbolPtr &skip_mode)
       : Operation({inp, axis, keepdims, skip_mode}) {}
   ~Reduce() override = default;
-
-  std::string type_name() const override { return "Reduce"; }
+  MS_DECLARE_PARENT(Reduce, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -65,8 +64,7 @@ class Reshape : public Operation {
  public:
   Reshape(const SymbolPtr &input, const SymbolPtr &shape) : Operation({input, shape}) {}
   ~Reshape() override = default;
-
-  std::string type_name() const override { return "Reshape"; }
+  MS_DECLARE_PARENT(Reshape, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -83,7 +81,7 @@ class Transpose : public Operation {
  public:
   Transpose(const SymbolPtr &data, const SymbolPtr &perm) : Operation({data, perm}) {}
   ~Transpose() override = default;
-  std::string type_name() const override { return "Transpose"; }
+  MS_DECLARE_PARENT(Transpose, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -105,7 +103,8 @@ class MatMul : public Operation {
          bool has_batch = false)
       : Operation({a, b, transpose_a, transpose_b}), has_batch_(has_batch) {}
   ~MatMul() override = default;
-  std::string type_name() const override { return has_batch_ ? "BatchMatMul" : "MatMul"; }
+  MS_DECLARE_PARENT(MatMul, Operation)
+  std::string name() const override { return has_batch_ ? "BatchMatMul" : "MatMul"; }
 
  protected:
   SymbolPtr Eval() override;

@@ -31,8 +31,7 @@ void Operation::Build() {
   if (!output_->CanUpdate()) {
     need_eval_ = false;
   }
-  MS_LOG(DEBUG) << "<<< Build result of [" << type_name() << "]: " << output_->ToString()
-                << ". need_eval=" << need_eval();
+  MS_LOG(DEBUG) << "<<< Build result of [" << name() << "]: " << output_->ToString() << ". need_eval=" << need_eval();
   is_building_ = false;
 }
 }  // namespace ops

@@ -29,8 +29,7 @@ class RealValue : public Operation {
  public:
   explicit RealValue(const SymbolPtr &inp) : Operation({inp}) {}
   ~RealValue() override = default;
-
-  std::string type_name() const override { return "RealValue"; }
+  MS_DECLARE_PARENT(RealValue, Operation)
 
  protected:
   SymbolPtr Eval() override;
