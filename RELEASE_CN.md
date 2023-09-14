@@ -2,6 +2,30 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.1.1 Release Notes
+
+### Bug fixes
+
+- [I7Q9RX] 昇腾平台支持不同硬件类型自适应识别。
+- [I7SDA0] 修复了昇腾平台上CRNN网络精度劣化的问题。
+- [I6QYCD] 修复了昇腾平台上maskrcnn网络精度劣化问题。
+- [I7T4QK] 修复了昇腾平台上wgan网络推理精度劣化问题。
+- [I7TJ8Z] 修复了昇腾平台上lgtm网络推理精度劣化问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+changzherui,chenfei_mindspore,chenjianping,chenkang,chenweifeng,chujinjin,fangwenyi,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong,尤澍,zhoufeng,代宇鑫
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.1.1 Release Notes
+
+### Major Features and Improvements
+
+- [STABLE] MindSpore Lite Cloud Inference adds support for Python 3.8 and Python 3.9
+
 ## MindSpore 2.1.0 Release Notes
 
 ### 主要特性和增强
