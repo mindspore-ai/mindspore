@@ -153,11 +153,11 @@ bool RewriterAfterOptAPass(const ResourcePtr &resource) {
   return true;
 }
 
-bool ConvertPyExecuteListInputPass(const ResourcePtr &resource) {
+bool ConvertAfterRewriterPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::ConvertPyExecuteListInput(func_graph, resource);
+  (void)opt::ConvertAfterRewriter(func_graph, resource);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -1031,7 +1031,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"py_interpret_to_execute_after_opt_a", PyInterpretToExecutePass},
                                    {"slice_cell_reuse_recomputed_activation", SliceReuseRecomputedActivationPass},
                                    {"rewriter_after_opt_a", RewriterAfterOptAPass},
-                                   {"convert_pyexecute_list_input", ConvertPyExecuteListInputPass},
+                                   {"convert_after_rewriter", ConvertAfterRewriterPass},
                                    {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},

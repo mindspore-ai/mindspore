@@ -24,6 +24,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include "ops/structure_ops.h"
 #include "ops/sparse_tensor_ops.h"
@@ -724,6 +725,67 @@ std::pair<AnfNodePtr, AnfNodePtr> ExtractKwargsNode(const AnfNodePtr &node) {
   }
   MS_LOG(EXCEPTION) << "Extract kwargs only can be used to CNode[make_keyword_arg] or ValueNode(KeywordArg), but got "
                     << node->DebugString();
+}
+
+// TupleGetItem/ListGetItem(sequence, index) -> PyExecute(sequence[index], ...)
+AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  if (!allow_fallback_runtime) {
+    return nullptr;
+  }
+
+  constexpr size_t prim_index = 0;
+  constexpr size_t sequence_index = 1;
+  constexpr size_t target_index = 2;
+  constexpr size_t node_inputs_size = 3;
+  const auto &node_inputs = node->inputs();
+  auto prim = GetValueNode<PrimitivePtr>(node_inputs[prim_index]);
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &prim_name = prim->name();
+  if (node_inputs.size() != node_inputs_size) {
+    MS_LOG(EXCEPTION) << "The size of input to " << prim_name << " should be " << node_inputs_size << " but got "
+                      << node_inputs.size();
+  }
+
+  std::vector<AbstractBasePtr> inputs_abs;
+  for (size_t i = 1; i < node_inputs.size(); ++i) {
+    inputs_abs.push_back(node_inputs[i]->abstract());
+  }
+  auto output_abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(output_abs);
+  if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+      !output_abs->isa<abstract::AbstractAny>()) {
+    return nullptr;
+  }
+  auto target_node = node_inputs[target_index];
+  auto target_abs = target_node->abstract();
+  if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+    return nullptr;
+  }
+
+  const auto &fg = node->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+
+  const std::string internal_sequence_input = "__iternal_sequence_input__";
+  const std::string internal_sequence_target = "__internal_sequence_index__";
+
+  std::stringstream script_buffer;
+  script_buffer << internal_sequence_input << "[" << internal_sequence_target << "]";
+  const std::string &script = script_buffer.str();
+  const auto script_str = std::make_shared<StringImm>(script);
+
+  std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_input));
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_target));
+  const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+  std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_list.emplace_back(node_inputs[sequence_index]);
+  (void)key_value_list.emplace_back(target_node);
+  const auto key_value_tuple = fg->NewCNode(key_value_list);
+  auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+  MS_LOG(DEBUG) << "Convert sequence getitem node to PyExecute node: " << res->DebugString();
+  return res;
 }
 
 // ==================================================================
@@ -1441,65 +1503,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // TupleGetItem/ListGetItem(sequence, index) -> PyExecute(sequence[index], ...)
-  AnfNodePtr ConvertSequenceGetItem(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
-      return nullptr;
-    }
-
-    constexpr size_t prim_index = 0;
-    constexpr size_t sequence_index = 1;
-    constexpr size_t target_index = 2;
-    constexpr size_t node_inputs_size = 3;
-    const auto &node_inputs = node->inputs();
-    auto prim = GetValueNode<PrimitivePtr>(node_inputs[prim_index]);
-    MS_EXCEPTION_IF_NULL(prim);
-    const auto &prim_name = prim->name();
-    if (node_inputs.size() != node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to " << prim_name << " should be " << node_inputs_size << " but got "
-                        << node_inputs.size();
-    }
-
-    std::vector<AbstractBasePtr> inputs_abs;
-    for (size_t i = 1; i < node_inputs.size(); ++i) {
-      inputs_abs.push_back(node_inputs[i]->abstract());
-    }
-    auto output_abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(output_abs);
-    if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
-        !output_abs->isa<abstract::AbstractAny>()) {
-      return nullptr;
-    }
-    auto target_node = node_inputs[target_index];
-    auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
-      return nullptr;
-    }
-
-    const auto &fg = node->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-
-    const std::string internal_sequence_input = "__iternal_sequence_input__";
-    const std::string internal_sequence_target = "__internal_sequence_index__";
-
-    std::stringstream script_buffer;
-    script_buffer << internal_sequence_input << "[" << internal_sequence_target << "]";
-    const std::string &script = script_buffer.str();
-    const auto script_str = std::make_shared<StringImm>(script);
-
-    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_input));
-    (void)key_value_names_list.emplace_back(NewValueNode(internal_sequence_target));
-    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
-    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_list.emplace_back(node_inputs[sequence_index]);
-    (void)key_value_list.emplace_back(target_node);
-    const auto key_value_tuple = fg->NewCNode(key_value_list);
-    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
-
-    MS_LOG(DEBUG) << "Convert sequence getitem node to PyExecute node: " << res->DebugString();
-    return res;
-  }
+  AnfNodePtr ConvertSequenceGetItem(const CNodePtr &node) const { return ConvertSequenceGetItemInner(node); }
 
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
@@ -2430,6 +2434,19 @@ void FindValueWithInplace(const FuncGraphPtr &root, const pipeline::ResourcePtr 
   FindValueWithInplaceInner(root, value_with_inplace);
 }
 
+AnfNodePtr ConvertToPyExecuteGetItem(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsPrimitiveCNode(node, prim::kPrimListGetItem) && !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return nullptr;
+  }
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (!abs->isa<abstract::AbstractAny>()) {
+    return nullptr;
+  }
+  return ConvertSequenceGetItemInner(node->cast<CNodePtr>());
+}
+
 bool CheckNeedConvertList(const AbstractBasePtr &abs) {
   if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
     return false;
@@ -2452,10 +2469,11 @@ bool CheckNeedConvertList(const AbstractBasePtr &abs) {
 }
 
 AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPtr &fg) {
-  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   if (!CheckNeedConvertList(abs)) {
-    return node;
+    return nullptr;
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(seq_abs);
@@ -2472,6 +2490,9 @@ AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPt
         fg->NewCNode({NewValueNode(prim::kPrimListGetItem), node, NewValueNode(MakeValue<int64_t>(i))});
       element_node->set_abstract(element_abs);
       auto new_element_node = ConvertToPyExecuteListInner(element_node, fg);
+      if (new_element_node == nullptr) {
+        new_element_node = element_node;
+      }
       std::string element_name = element_prefix + std::to_string(i) + "__";
       script_buffer << element_name << ",";
       (void)key_value_names_list.emplace_back(NewValueNode(element_name));
@@ -2492,38 +2513,54 @@ AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPt
       fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue<int64_t>(i))});
     element_node->set_abstract(element_abs);
     auto new_element_node = ConvertToPyExecuteListInner(element_node, fg);
+    if (new_element_node == nullptr) {
+      new_element_node = element_node;
+    }
     (void)new_make_tuple_inputs.emplace_back(new_element_node);
   }
   return fg->NewCNode(new_make_tuple_inputs);
 }
 
-bool ConvertToPyExecuteList(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node, const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(fg);
+  if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+    return nullptr;
+  }
+  constexpr size_t pyexecute_min_len = 4;
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->size() < pyexecute_min_len) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The minimum len of input to PyExecute should " << pyexecute_min_len << " but got "
+                               << cnode->size() << " for node: " << cnode->DebugString();
+  }
+  constexpr size_t pyexecute_value_index = 3;
+  return ConvertToPyExecuteListInner(cnode->input(pyexecute_value_index), fg);
+}
+
+bool ConvertPyExecuteAfterRewriter(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr return_node = graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
   bool change = false;
-  constexpr size_t pyexecute_min_len = 4;
   constexpr size_t pyexecute_value_index = 3;
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode->size() < pyexecute_min_len) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The minimum len of input to PyExecute should " << pyexecute_min_len << " but got "
-                                 << cnode->size() << " for node: " << cnode->DebugString();
-    }
-    auto value_input = cnode->input(pyexecute_value_index);
-    auto new_value_input = ConvertToPyExecuteListInner(value_input, graph);
-    if (value_input == new_value_input) {
-      continue;
-    }
     auto tr = manager->Transact();
-    tr.SetEdge(cnode, pyexecute_value_index, new_value_input);
-    tr.Commit();
-    change = true;
+    auto new_node = ConvertToPyExecuteGetItem(node);
+    if (new_node != nullptr) {
+      tr.Replace(node, new_node);
+      tr.Commit();
+      change = true;
+      continue;
+    }
+    auto new_value_input = ConvertToPyExecuteList(node, graph);
+    if (new_value_input != nullptr) {
+      tr.SetEdge(node, pyexecute_value_index, new_value_input);
+      tr.Commit();
+      change = true;
+      continue;
+    }
   }
   return change;
 }
@@ -2596,15 +2633,15 @@ bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
   return change;
 }
 
-bool ConvertPyExecuteListInput(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+bool ConvertAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
   auto manager = resource->manager();
   const auto func_graphs_used_total = root->func_graphs_used_total();
   bool change = false;
   for (const auto &fg : func_graphs_used_total) {
-    auto cur_change = ConvertToPyExecuteList(fg, manager);
+    auto cur_change = ConvertPyExecuteAfterRewriter(fg, manager);
     change = change || cur_change;
   }
-  bool root_change = ConvertToPyExecuteList(root, manager);
+  bool root_change = ConvertPyExecuteAfterRewriter(root, manager);
   change = change || root_change;
   if (change) {
     abstract::AbstractBasePtrList new_args_spec;
