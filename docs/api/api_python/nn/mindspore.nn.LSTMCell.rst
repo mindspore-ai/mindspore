@@ -1,7 +1,7 @@
 mindspore.nn.LSTMCell
 ======================
 
-.. py:class:: mindspore.nn.LSTMCell(input_size: int, hidden_size: int, has_bias: bool = True)
+.. py:class:: mindspore.nn.LSTMCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype: mindspore.dtype = mstype.float32)
 
     长短期记忆网络单元（LSTMCell）。
 
@@ -27,7 +27,8 @@ mindspore.nn.LSTMCell
     参数：
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
-        - **has_bias** (bool) - cell是否有偏置 :math:`b_{ih}` 和 :math:`b_{hh}` 。默认值： ``True`` 。
+        - **has_bias** (bool) - cell是否有偏置 `b_ih` 和 `b_hh` 。默认值： ``True`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。

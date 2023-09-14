@@ -62,7 +62,8 @@ class _BatchNorm(Cell):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=None,
-                 data_format='NCHW'):
+                 data_format='NCHW',
+                 dtype=mstype.float32):
         """Initialize _BatchNorm."""
         super(_BatchNorm, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
@@ -87,13 +88,13 @@ class _BatchNorm(Cell):
         self.moving_mean_init = moving_mean_init
         self.moving_var_init = moving_var_init
         self.moving_mean = Parameter(initializer(
-            moving_mean_init, num_features), name="mean", requires_grad=False)
+            moving_mean_init, num_features, dtype=dtype), name="mean", requires_grad=False)
         self.moving_variance = Parameter(initializer(
-            moving_var_init, num_features), name="variance", requires_grad=False)
+            moving_var_init, num_features, dtype=dtype), name="variance", requires_grad=False)
         self.gamma = Parameter(initializer(
-            gamma_init, num_features), name="gamma", requires_grad=affine)
+            gamma_init, num_features, dtype=dtype), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
-            beta_init, num_features), name="beta", requires_grad=affine)
+            beta_init, num_features, dtype=dtype), name="beta", requires_grad=affine)
 
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
 
@@ -238,7 +239,7 @@ class BatchNorm1d(_BatchNorm):
         >>> import mindspore as ms
         >>> net = ms.nn.BatchNorm1d(num_features=4)
         >>> x = ms.Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
-        ...                      [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
+        ...                         [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
         >>> output = net(x)
         >>> print(output)
         [[ 0.6999965   0.4999975  0.4999975  0.59999704 ]
@@ -432,7 +433,8 @@ class BatchNorm3d(Cell):
                  beta_init='zeros',
                  moving_mean_init='zeros',
                  moving_var_init='ones',
-                 use_batch_statistics=None):
+                 use_batch_statistics=None,
+                 dtype=mstype.float32):
         """Initialize BatchNorm3d."""
         super(BatchNorm3d, self).__init__()
         self.bn2d = BatchNorm2d(num_features=num_features,
@@ -444,7 +446,8 @@ class BatchNorm3d(Cell):
                                 moving_mean_init=moving_mean_init,
                                 moving_var_init=moving_var_init,
                                 use_batch_statistics=use_batch_statistics,
-                                data_format="NCHW")
+                                data_format="NCHW",
+                                dtype=dtype)
         self.shape = P.Shape()
         self.reshape = P.Reshape()
 
@@ -579,7 +582,8 @@ class SyncBatchNorm(_BatchNorm):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=None,
-                 process_groups=None):
+                 process_groups=None,
+                 dtype=mstype.float32):
         """Initialize SyncBatchNorm."""
         super(SyncBatchNorm, self).__init__(num_features,
                                             eps,
@@ -589,7 +593,8 @@ class SyncBatchNorm(_BatchNorm):
                                             beta_init,
                                             moving_mean_init,
                                             moving_var_init,
-                                            use_batch_statistics)
+                                            use_batch_statistics,
+                                            dtype=dtype)
         self.is_global = False
         self.group_name = None
         self.process_groups = process_groups
@@ -718,7 +723,8 @@ class LayerNorm(Cell):
                  begin_params_axis=-1,
                  gamma_init='ones',
                  beta_init='zeros',
-                 epsilon=1e-7
+                 epsilon=1e-7,
+                 dtype=mstype.float32
                  ):
         """Initialize LayerNorm."""
         super(LayerNorm, self).__init__()
@@ -730,9 +736,9 @@ class LayerNorm(Cell):
         self.begin_params_axis = begin_params_axis
         self.epsilon = epsilon
         self.gamma = Parameter(initializer(
-            gamma_init, normalized_shape), name="gamma")
+            gamma_init, normalized_shape, dtype=dtype), name="gamma")
         self.beta = Parameter(initializer(
-            beta_init, normalized_shape), name="beta")
+            beta_init, normalized_shape, dtype=dtype), name="beta")
         self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis,
                                       begin_params_axis=self.begin_params_axis,
                                       epsilon=self.epsilon)
@@ -755,7 +761,8 @@ class _InstanceNorm(Cell):
                  momentum=0.1,
                  affine=True,
                  gamma_init='ones',
-                 beta_init='zeros'):
+                 beta_init='zeros',
+                 dtype=mstype.float32):
         """Initialize Normalization base class."""
         super(_InstanceNorm, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
@@ -772,12 +779,13 @@ class _InstanceNorm(Cell):
                              f"but got {momentum}.")
         self.num_features = num_features
         self.eps = eps
-        self.moving_mean = Parameter(initializer('zeros', num_features), name="mean", requires_grad=False)
-        self.moving_variance = Parameter(initializer('ones', num_features), name="variance", requires_grad=False)
+        self.moving_mean = Parameter(initializer('zeros', num_features, dtype=dtype), name="mean", requires_grad=False)
+        self.moving_variance = Parameter(initializer('ones', num_features, dtype=dtype), name="variance",
+                                         requires_grad=False)
         self.gamma = Parameter(initializer(
-            gamma_init, num_features), name="gamma", requires_grad=affine)
+            gamma_init, num_features, dtype=dtype), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
-            beta_init, num_features), name="beta", requires_grad=affine)
+            beta_init, num_features, dtype=dtype), name="beta", requires_grad=affine)
 
         self.shape = P.Shape()
         self.momentum = momentum
@@ -1096,7 +1104,8 @@ class GroupNorm(Cell):
            [0. 0. 0. 0.]]]]
     """
 
-    def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
+    def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros',
+                 dtype=mstype.float32):
         """Initialize GroupNorm."""
         super(GroupNorm, self).__init__()
         self.num_groups = validator.check_positive_int(num_groups, "num_groups", self.cls_name)
@@ -1108,9 +1117,9 @@ class GroupNorm(Cell):
         self.affine = validator.check_bool(affine, arg_name="affine", prim_name=self.cls_name)
 
         self.gamma = Parameter(initializer(
-            gamma_init, num_channels), name="gamma", requires_grad=affine)
+            gamma_init, num_channels, dtype=dtype), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
-            beta_init, num_channels), name="beta", requires_grad=affine)
+            beta_init, num_channels, dtype=dtype), name="beta", requires_grad=affine)
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.shape = F.shape

@@ -133,7 +133,8 @@ class BiDense(Cell):
                  out_channels,
                  weight_init=None,
                  bias_init=None,
-                 has_bias=True):
+                 has_bias=True,
+                 dtype=mstype.float32):
         super().__init__()
         self.in_channels = Validator.check_positive_int(in1_channels, "in1_channels", self.cls_name)
         self.in_channels = Validator.check_positive_int(in2_channels, "in2_channels", self.cls_name)
@@ -156,7 +157,8 @@ class BiDense(Cell):
                                  f"equal to 'in2_channels'. But got 'weight_init': {weight_init}, "
                                  f"'out_channels': {out_channels}, 'in_channels': {in1_channels}, "
                                  f"'in2_channels': {in2_channels}")
-        self.weight = Parameter(initializer(weight_init, (out_channels, in1_channels, in2_channels)), 'weight')
+        self.weight = Parameter(initializer(weight_init, (out_channels, in1_channels, in2_channels), dtype=dtype),
+                                'weight')
 
         if self.has_bias:
             if bias_init is None:
@@ -166,7 +168,7 @@ class BiDense(Cell):
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
                                      f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+            self.bias = Parameter(initializer(bias_init, [out_channels], dtype=dtype), name="bias")
             self.bias_add = P.BiasAdd()
         self.matmul = P.MatMul()
 

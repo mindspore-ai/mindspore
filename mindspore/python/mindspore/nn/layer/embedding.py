@@ -100,7 +100,7 @@ class Embedding(Cell):
     """
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
-                 dtype=mstype.float32, padding_idx=None):
+                 dtype=mstype.float32, padding_idx=None, para_dytpe=mstype.float32):
         """Initialize Embedding."""
         super(Embedding, self).__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
@@ -109,7 +109,7 @@ class Embedding(Cell):
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.use_one_hot = use_one_hot
         self.dtype = dtype
-        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
+        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size], dtype=para_dytpe)
         self.padding_idx = padding_idx
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_LEFT,
@@ -231,7 +231,7 @@ class EmbeddingLookup(Cell):
 
     def __init__(self, vocab_size, embedding_size, param_init='normal',
                  target='CPU', slice_mode='batch_slice', manual_shapes=None,
-                 max_norm=None, sparse=True, vocab_cache_size=0):
+                 max_norm=None, sparse=True, vocab_cache_size=0, dtype=mstype.float32):
         """Initialize EmbeddingLookup."""
         super(EmbeddingLookup, self).__init__()
         Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
@@ -255,8 +255,8 @@ class EmbeddingLookup(Cell):
         if enable_ps:
             self._process_vocab_cache(slice_mode)
         self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
-        self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
-                                         name='embedding_table')
+        self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size],
+                                                     dtype=dtype), name='embedding_table')
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         self.gather_revert = P.Gather()
@@ -267,7 +267,7 @@ class EmbeddingLookup(Cell):
         if is_auto_parallel:
             self.unique = P.Unique().shard(((1,),))
         if self.cache_enable and enable_ps:
-            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size, param_init)
+            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size, param_init, dtype=dtype)
             if is_auto_parallel:
                 self.unique.add_prim_attr('cache_enable', True)
         indices_shape_size = 2
@@ -354,7 +354,8 @@ class EmbeddingLookup(Cell):
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
 
-    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size, param_init):
+    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size, param_init,
+                                       dtype=mstype.float32):
         """PS embeddingLookup cache enable set."""
         if self.sparse:
             self.forward_unique = True
@@ -368,10 +369,10 @@ class EmbeddingLookup(Cell):
         if _enable_distributed_mindrt():
             self.rank_id = get_rank()
             if self.is_ps_server:
-                self._slice_pserver_embeddings("zeros")
+                self._slice_pserver_embeddings("zeros", dtype=dtype)
                 self._set_cache_enable_and_key_for_pserver(param_key)
 
-    def _slice_pserver_embeddings(self, param_init):
+    def _slice_pserver_embeddings(self, param_init, dtype=mstype.float32):
         '''
         Method to slice embedding tables on Parameter Servers.
         It helps to train with a large scale embedding table and is used only in Parameter Server training mode.
@@ -399,7 +400,7 @@ class EmbeddingLookup(Cell):
         for i in range(server_num):
             self.embedding_table_list.append(Parameter(initializer(param_init,
                                                                    [self.embedding_table_vocab_dim_list[i],
-                                                                    self.embedding_size]),
+                                                                    self.embedding_size], dtype=dtype),
                                                        name="embedding_table_server_" + str(i)))
 
             self.embedding_offset.append(offset)
@@ -555,10 +556,11 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
     OPERATOR_MAX = 'MAX'
 
     def __init__(self, vocab_size, embedding_size, field_size, param_init='normal', target='CPU',
-                 slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM'):
+                 slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM',
+                 dtype=mstype.float32):
         """Initialize MultiFieldEmbeddingLookup."""
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
-                                                        slice_mode, feature_num_list, max_norm, sparse)
+                                                        slice_mode, feature_num_list, max_norm, sparse, dtype=dtype)
         self.field_size = Validator.check_positive_int(field_size, 'field_size', self.cls_name)
         self.operator = operator
 

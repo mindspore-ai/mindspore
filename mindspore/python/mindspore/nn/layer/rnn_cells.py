@@ -145,7 +145,8 @@ def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 class RNNCellBase(Cell):
     '''Basic class for RNN Cells'''
-    def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int):
+    def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int,
+                 dtype=mstype.float32):
         super().__init__()
         validator.check_value_type("has_bias", has_bias, [bool], self.cls_name)
         validator.check_positive_int(hidden_size, "hidden_size", self.cls_name)
@@ -153,20 +154,20 @@ class RNNCellBase(Cell):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.has_bias = has_bias
-        self.weight_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, input_size).astype(np.float32)))
-        self.weight_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, hidden_size).astype(np.float32)))
+        self.weight_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, input_size), dtype=dtype))
+        self.weight_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size, hidden_size), dtype=dtype))
         if has_bias:
-            self.bias_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size).astype(np.float32)))
-            self.bias_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size).astype(np.float32)))
+            self.bias_ih = Parameter(Tensor(np.random.randn(num_chunks * hidden_size), dtype=dtype))
+            self.bias_hh = Parameter(Tensor(np.random.randn(num_chunks * hidden_size), dtype=dtype))
         else:
             self.bias_ih = None
             self.bias_hh = None
-        self.reset_parameters()
+        self.reset_parameters(dtype=dtype)
 
-    def reset_parameters(self):
+    def reset_parameters(self, dtype=mstype.float32):
         stdv = 1 / math.sqrt(self.hidden_size)
         for weight in self.get_parameters():
-            weight.set_data(initializer(Uniform(stdv), weight.shape))
+            weight.set_data(initializer(Uniform(stdv), weight.shape, dtype))
 
 
 class RNNCell(RNNCellBase):
@@ -179,6 +180,7 @@ class RNNCell(RNNCellBase):
     Here :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
     previous layer at time :math:`t-1` or the initial hidden state at time `0`.
+    If `nonlinearity` is `relu`, then `relu` is used instead of `tanh`.
 
     Args:
         input_size (int): Number of features of input.
@@ -186,6 +188,7 @@ class RNNCell(RNNCellBase):
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
         nonlinearity (str): The non-linearity to use. Can be either ``"tanh"`` or ``"relu"`` .
             Default: ``"tanh"`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
@@ -218,8 +221,9 @@ class RNNCell(RNNCellBase):
     """
     _non_linearity = ['tanh', 'relu']
 
-    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = "tanh"):
-        super().__init__(input_size, hidden_size, has_bias, num_chunks=1)
+    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = "tanh",
+                 dtype=mstype.float32):
+        super().__init__(input_size, hidden_size, has_bias, num_chunks=1, dtype=dtype)
         validator.check_value_type("nonlinearity", nonlinearity, [str], self.cls_name)
         validator.check_string(nonlinearity, self._non_linearity, "nonlinearity", self.cls_name)
         self.nonlinearity = nonlinearity
@@ -268,7 +272,8 @@ class LSTMCell(RNNCellBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
@@ -300,8 +305,9 @@ class LSTMCell(RNNCellBase):
         (3, 16)
     """
     @_check_lstmcell_init
-    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True):
-        super().__init__(input_size, hidden_size, has_bias, num_chunks=4)
+    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True,
+                 dtype=mstype.float32):
+        super().__init__(input_size, hidden_size, has_bias, num_chunks=4, dtype=dtype)
         self.support_non_tensor_inputs = True
 
     def construct(self, x, hx):
@@ -351,6 +357,7 @@ class GRUCell(RNNCellBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: ``True`` .
+        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
@@ -380,8 +387,9 @@ class GRUCell(RNNCellBase):
         >>> print(output[0].shape)
         (3, 16)
     """
-    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True):
-        super().__init__(input_size, hidden_size, has_bias, num_chunks=3)
+    def __init__(self, input_size: int, hidden_size: int, has_bias: bool = True,
+                 dtype=mstype.float32):
+        super().__init__(input_size, hidden_size, has_bias, num_chunks=3, dtype=dtype)
 
     def construct(self, x, hx):
         _check_is_tensor('x', x, self.cls_name)
