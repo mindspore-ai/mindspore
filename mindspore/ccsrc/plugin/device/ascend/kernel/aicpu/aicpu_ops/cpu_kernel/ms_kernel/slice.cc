@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "slice.h"
 
-#include "securec.h"
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
-#include "unsupported/Eigen/CXX11/Tensor"
+#include "cpu_kernel/ms_kernel/slice.h"
+#include <securec.h>
 #include <iostream>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "unsupported/Eigen/CXX11/Tensor"
+#include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kOutputNum = 1;
@@ -83,7 +83,7 @@ uint32_t SliceCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SliceCpuKernel::SliceCheck(CpuKernelContext &ctx) {
+uint32_t SliceCpuKernel::SliceCheck(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
   KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
   KERNEL_CHECK_NULLPTR(ctx.Input(kThirdInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
@@ -97,8 +97,6 @@ uint32_t SliceCpuKernel::SliceCheck(CpuKernelContext &ctx) {
                        "Get output 0 tensor shape failed.")
 
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> shape_offsets = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> shape_size = ctx.Input(kThirdInputIndex)->GetTensorShape()->GetDimSizes();
 
   auto offsets_tensor = ctx.Input(1);
   auto size_tensor = ctx.Input(2);
@@ -148,34 +146,8 @@ uint32_t SliceCpuKernel::SliceCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SliceCpuKernel::SliceCompute(CpuKernelContext &ctx) {
-  auto x_data = ctx.Input(0)->GetData();
-  auto y_data = ctx.Output(0)->GetData();
-  int64_t num_output = ctx.Output(0)->NumElements();
-  std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  std::vector<int64_t> shape_y = ctx.Output(0)->GetTensorShape()->GetDimSizes();
-  if (num_output == 0) {
-    return KERNEL_STATUS_OK;
-  }
-  if (is_identity) {
-    int64_t input_size = ctx.Input(0)->GetDataSize();
-    int cpret = memcpy_s(y_data, input_size, x_data, input_size);
-    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
-                       kSlice, input_size);
-    return KERNEL_STATUS_OK;
-  }
-  if (slice_dim0) {
-    int data_size = size.at(0);
-    data_size = data_size * sizeof(T);
-    int cpret = memcpy_s(y_data, data_size, static_cast<T *>(x_data) + offsets.at(0), data_size);
-    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
-                       kSlice, data_size);
-    return KERNEL_STATUS_OK;
-  }
-
-  auto input_data = reinterpret_cast<T *>(x_data);
-  auto output_data = reinterpret_cast<T *>(y_data);
-  size_t input_dims = shape_x.size();
+void SliceCpuKernel::SliceRealCompute(size_t input_dims, T *input_data, T *output_data,
+                                      const std::vector<int64_t> &shape_x, const std::vector<int64_t> &shape_y) {
   switch (input_dims) {
     case INPUT_NUM2: {
       using Eigen_Tensor_2D =
@@ -270,11 +242,44 @@ uint32_t SliceCpuKernel::SliceCompute(CpuKernelContext &ctx) {
       output_7D = input_7D.slice(offsets_7D, size_7D);
       break;
     }
-    default:
-      KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kSlice, input_dims);
-      return KERNEL_STATUS_INNER_ERROR;
+  }
+}
+
+template <typename T>
+uint32_t SliceCpuKernel::SliceCompute(const CpuKernelContext &ctx) {
+  auto x_data = ctx.Input(0)->GetData();
+  auto y_data = ctx.Output(0)->GetData();
+  int64_t num_output = ctx.Output(0)->NumElements();
+  std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> shape_y = ctx.Output(0)->GetTensorShape()->GetDimSizes();
+  if (num_output == 0) {
+    return KERNEL_STATUS_OK;
+  }
+  if (is_identity) {
+    int64_t input_size = ctx.Input(0)->GetDataSize();
+    int cpret = memcpy_s(y_data, input_size, x_data, input_size);
+    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
+                       kSlice, input_size);
+    return KERNEL_STATUS_OK;
+  }
+  if (slice_dim0) {
+    int data_size = size.at(0);
+    data_size = data_size * sizeof(T);
+    int cpret = memcpy_s(y_data, data_size, static_cast<T *>(x_data) + offsets.at(0), data_size);
+    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR, "[%s] memcpy_s to output failed, size [%llu].",
+                       kSlice, data_size);
+    return KERNEL_STATUS_OK;
   }
 
+  size_t input_dims = shape_x.size();
+  if (input_dims < INPUT_NUM2 || input_dims > INPUT_NUM7) {
+    KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kSlice, input_dims);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
+
+  auto input_data = reinterpret_cast<T *>(x_data);
+  auto output_data = reinterpret_cast<T *>(y_data);
+  SliceRealCompute(input_dims, input_data, output_data, shape_x, shape_y);
   return KERNEL_STATUS_OK;
 }
 

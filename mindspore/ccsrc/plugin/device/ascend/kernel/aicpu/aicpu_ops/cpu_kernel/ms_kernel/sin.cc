@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include "sin.h"
+#include "cpu_kernel/ms_kernel/sin.h"
 
+#include <algorithm>
 #include <complex>
 #include <unsupported/Eigen/CXX11/Tensor>
+#include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

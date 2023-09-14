@@ -104,7 +104,8 @@ bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     T *transpose_dy_addr = GetDeviceAddress<T>(workspace, kIndex1);
     T *transpose_dx_addr = GetDeviceAddress<T>(workspace, kIndex2);
 
-    TransposeInfo x_info, y_info;
+    TransposeInfo x_info;
+    TransposeInfo y_info;
     for (size_t i = 0; i < shape_size_; ++i) {
       x_info.input_shape.push_back(static_cast<int64_t>(input_shape_[i]));
       x_info.perm.push_back(static_cast<int32_t>(transpose_axis_[i]));

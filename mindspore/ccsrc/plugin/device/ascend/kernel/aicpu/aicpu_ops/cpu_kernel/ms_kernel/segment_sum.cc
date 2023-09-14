@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "segment_sum.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/segment_sum.h"
+#include <vector>
+#include <algorithm>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
 namespace {
 const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
+constexpr int64_t kValueTwo = 2;
 const char *kSegmentSum = "SegmentSum";
 const int64_t kDataSize = 2 * 1024;
 
@@ -49,6 +51,47 @@ const int64_t kDataSize = 2 * 1024;
   SEGMENTSUM_COMPUTE_CASE(DT_FLOAT16, Eigen::half, TYPE, CTX)             \
   SEGMENTSUM_COMPUTE_CASE(DT_FLOAT, float, TYPE, CTX)                     \
   SEGMENTSUM_COMPUTE_CASE(DT_DOUBLE, double, TYPE, CTX)
+
+template <typename T>
+uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
+                           std::vector<int64_t> *const segments) {
+  if (segment_ids_data_addr[0] < 0) {
+    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
+    return aicpu::KERNEL_STATUS_PARAM_INVALID;
+  }
+  int64_t seg_tmp = 1;
+  for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
+    if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
+      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
+      return aicpu::KERNEL_STATUS_PARAM_INVALID;
+    }
+    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
+      seg_tmp++;
+    } else {
+      segments->push_back(seg_tmp);
+      seg_tmp = 1;
+    }
+    if (i == segment_ids_data_num - kValueTwo) {
+      segments->push_back(seg_tmp);
+    }
+  }
+  return aicpu::KERNEL_STATUS_OK;
+}
+
+template <typename T1, typename T2>
+void InnerCompute(size_t start, size_t end, const int64_t input_addr_base, const int64_t num_compare_per,
+                  const int64_t count, const int64_t count_no, const T1 *const input_x_data_addr,
+                  T1 *const output_data_addr, const T2 *const segment_ids_data_addr) {
+  for (size_t j = start; j < end; j++) {
+    int64_t sum_init_addr = input_addr_base + j;
+    T1 sum_value = input_x_data_addr[sum_init_addr];
+    for (int64_t k = 1; k < count; k++) {
+      int cmp_addr = sum_init_addr + k * num_compare_per;
+      sum_value += input_x_data_addr[cmp_addr];
+    }
+    output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
+  }
+}
 }  // namespace
 
 namespace aicpu {
@@ -84,7 +127,7 @@ uint32_t SegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
+uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
   Tensor *input_x_data = ctx.Input(0);
   auto input_x_data_addr = reinterpret_cast<T1 *>(input_x_data->GetData());
   auto input_x_shape = input_x_data->GetTensorShape();
@@ -118,25 +161,9 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
     KERNEL_LOG_ERROR("The amount of data for input[1] must be equal to the first dimension of input[0].");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (segment_ids_data_addr[0] < 0) {
-    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  int64_t seg_tmp = 1;
-  for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
-    if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
-      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
-      return KERNEL_STATUS_PARAM_INVALID;
-    }
-    if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
-      seg_tmp++;
-    } else {
-      segments.push_back(seg_tmp);
-      seg_tmp = 1;
-    }
-    if (i == segment_ids_data_num - 2) {
-      segments.push_back(seg_tmp);
-    }
+  if (auto status = SegmentIdsCompute(segment_ids_data_addr, segment_ids_data_num, &segments);
+      status != KERNEL_STATUS_OK) {
+    return status;
   }
   const int64_t num_compare_per = input_x_data_num / (input_x_shape->GetDimSize(0));
   const int64_t num_segments = segments.size();
@@ -149,15 +176,8 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
       }
       int64_t input_addr_base = count_no * num_compare_per;
       if (num_compare_per < 2 * 1024) {
-        for (int64_t j = 0; j < num_compare_per; j++) {
-          int64_t sum_init_addr = input_addr_base + j;
-          T1 sum_value = input_x_data_addr[sum_init_addr];
-          for (int64_t k = 1; k < count; k++) {
-            int cmp_addr = sum_init_addr + k * num_compare_per;
-            sum_value += input_x_data_addr[cmp_addr];
-          }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
-        }
+        InnerCompute(0, static_cast<size_t>(num_compare_per), input_addr_base, num_compare_per, count, count_no,
+                     input_x_data_addr, output_data_addr, segment_ids_data_addr);
       } else {
         uint32_t min_core_num = 1;
         int64_t sum_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
@@ -165,15 +185,8 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
           sum_core_num = num_compare_per;
         }
         auto shard_compute = [&](size_t start, size_t end) {
-          for (size_t j = start; j < end; j++) {
-            int64_t sum_init_addr = input_addr_base + j;
-            T1 sum_value = input_x_data_addr[sum_init_addr];
-            for (int64_t k = 1; k < count; k++) {
-              int cmp_addr = sum_init_addr + k * num_compare_per;
-              sum_value += input_x_data_addr[cmp_addr];
-            }
-            output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
-          }
+          InnerCompute(start, end, input_addr_base, num_compare_per, count, count_no, input_x_data_addr,
+                       output_data_addr, segment_ids_data_addr);
         };
         KERNEL_HANDLE_ERROR(
           CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / sum_core_num, shard_compute),
@@ -194,15 +207,8 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
           count_no += segments[j];
         }
         int64_t input_addr_base = count_no * num_compare_per;
-        for (int64_t j = 0; j < num_compare_per; j++) {
-          int64_t sum_init_addr = input_addr_base + j;
-          T1 sum_value = input_x_data_addr[sum_init_addr];
-          for (int64_t k = 1; k < count; k++) {
-            int cmp_addr = sum_init_addr + k * num_compare_per;
-            sum_value += input_x_data_addr[cmp_addr];
-          }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
-        }
+        InnerCompute(0, static_cast<size_t>(num_compare_per), input_addr_base, num_compare_per, count, count_no,
+                     input_x_data_addr, output_data_addr, segment_ids_data_addr);
       }
     };
     KERNEL_HANDLE_ERROR(

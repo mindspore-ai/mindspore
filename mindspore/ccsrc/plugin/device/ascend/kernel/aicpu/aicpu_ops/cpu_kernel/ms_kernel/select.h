@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SELECT_H_
 #define AICPU_KERNELS_NORMALIZED_SELECT_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {
@@ -30,10 +30,10 @@ class SelectCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SelectParamCheck(CpuKernelContext &ctx);
+  uint32_t SelectParamCheck(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SelectCompute(CpuKernelContext &ctx);
+  uint32_t SelectCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

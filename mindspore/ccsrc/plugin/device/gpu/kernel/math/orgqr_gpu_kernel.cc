@@ -197,7 +197,8 @@ bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *d_input_x = GetDeviceAddress<T>(workspace, kIndex1);
   T *d_output_y = GetDeviceAddress<T>(workspace, kIndex2);
 
-  TransposeInfo x_info, y_info;
+  TransposeInfo x_info;
+  TransposeInfo y_info;
   for (size_t i = 0; i < input_x_dims_; ++i) {
     x_info.input_shape.push_back(static_cast<int64_t>(transpose_input_x_shape_[i]));
     x_info.perm.push_back(static_cast<int32_t>(transpose_input_x_axis_[i]));

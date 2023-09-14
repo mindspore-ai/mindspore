@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SEGMENTMEAN_H_
 #define AICPU_KERNELS_NORMALIZED_SEGMENTMEAN_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SegmentMeanCpuKernel : public CpuKernel {
@@ -29,9 +29,7 @@ class SegmentMeanCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t SegmentMeanCompute(CpuKernelContext &ctx);
-  template <typename T1, typename T2>
-  static uint32_t SegmentMeanCompute_Complex(CpuKernelContext &ctx);
+  static uint32_t SegmentMeanCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

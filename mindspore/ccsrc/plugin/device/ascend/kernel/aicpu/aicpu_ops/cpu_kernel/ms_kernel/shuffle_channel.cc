@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "shuffle_channel.h"
-
-#include "cpu_kernel_utils.h"
+#include "cpu_kernel/ms_kernel/shuffle_channel.h"
+#include <vector>
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include <vector>
 
 namespace {
 const uint32_t kInputNum = 1;
@@ -62,7 +61,7 @@ uint32_t ShuffleChannelCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(CpuKernelContext &ctx) {
+uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(const CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input = ctx.Input(0);
   auto group = 1;
@@ -83,7 +82,7 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(CpuKernelContext &ctx
 }
 
 template <typename T>
-uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(CpuKernelContext &ctx) {
+uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(const CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
   auto group = 1;
@@ -119,9 +118,8 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(CpuKernelContext &ctx) {
   temp_shape.push_back(oc);
   temp_shape.push_back(area);
   std::vector<int64_t> temp_loc = {0, 0, 0, 0};
-  bool can_plus = false;
-  int64_t dim = 0;
   while (true) {
+    int64_t dim = 0;
     for (dim = 0; dim <= minDimSize; dim++) {
       if (dim == minDimSize) {
         loc_in = loc_in + temp_loc[dim] * 1;
@@ -140,7 +138,7 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(CpuKernelContext &ctx) {
     *(out + loc_out) = *(in + loc_in);
     loc_in = 0;
     loc_out = 0;
-    can_plus = false;
+    bool can_plus = false;
     for (dim = 0; dim <= minDimSize; dim++) {
       if (temp_loc[dim] < (temp_shape[dim] - 1)) {
         can_plus = true;

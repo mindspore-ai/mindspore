@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SEGMENT_MIN_H_
 #define AICPU_KERNELS_NORMALIZED_SEGMENT_MIN_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SegmentMinCpuKernel : public CpuKernel {
@@ -29,9 +29,11 @@ class SegmentMinCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  template <typename T>
+  static uint32_t OutputInit(const CpuKernelContext &ctx, const uint64_t output_len, T *const output_data);
   template <class T1, class T2>
-  static uint32_t SegmentMinCompute(CpuKernelContext &ctx);
-  static uint32_t SegmentMinCheck(CpuKernelContext &ctx);
+  static uint32_t SegmentMinCompute(const CpuKernelContext &ctx);
+  static uint32_t SegmentMinCheck(const CpuKernelContext &ctx);
   static bool CheckType(Tensor *t);
   static bool CheckDim(Tensor *t);
   static bool CheckSorted(Tensor *t);

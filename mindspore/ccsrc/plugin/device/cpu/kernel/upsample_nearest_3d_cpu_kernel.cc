@@ -129,7 +129,9 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   ComputeNearestIndex(w_helper, 1, input_width, output_width, scales_[kIndex2]);
 
   auto loop3d = [&](int64_t begin, int64_t end) {
-    int64_t n{0}, od{0}, oh{0};
+    int64_t n{0};
+    int64_t od{0};
+    int64_t oh{0};
 
     (void)DataIndexInit(&begin, &n, &channels, &od, &output_depth, &oh, &output_height);
     for (int64_t i = begin; i < end; ++i) {

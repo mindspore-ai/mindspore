@@ -16,7 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SINC_H_
 #define AICPU_KERNELS_NORMALIZED_SINC_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
+
 namespace aicpu {
 class SincCpuKernel : public CpuKernel {
  public:
@@ -29,13 +30,13 @@ class SincCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t SincTypeSameCompute(CpuKernelContext &ctx);
+  uint32_t SincTypeSameCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SincTypeChangeCompute(CpuKernelContext &ctx);
+  uint32_t SincTypeChangeCompute(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SincBoolCompute(CpuKernelContext &ctx);
+  uint32_t SincBoolCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

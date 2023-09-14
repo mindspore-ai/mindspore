@@ -43,7 +43,8 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   half *temp_output_device = GetDeviceAddress<half>(workspace, kIndex0);
   int32_t *temp_indices_device = GetDeviceAddress<int32_t>(workspace, kIndex1);
 
-  TransposeInfo InInfo, TrInfo;
+  TransposeInfo InInfo;
+  TransposeInfo TrInfo;
   for (size_t i = 0; i < input_rank_; ++i) {
     InInfo.input_shape.push_back(static_cast<int64_t>(input_shape_[i]));
     InInfo.perm.push_back(static_cast<int32_t>(perm_[i]));

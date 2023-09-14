@@ -3538,10 +3538,10 @@ class StridedSlice(PrimitiveWithInfer):
         end_v, end_len = self._check_and_get_value(end, 'end')
         strides_v, strides_len = self._check_and_get_value(strides, 'strides')
 
-        is_dynamic_tuple = (self._is_none_in_tuple(begin_v['value'])
-                            or self._is_none_in_tuple(end_v['value'])
-                            or self._is_none_in_tuple(strides_v['value']))
-        is_dynamic = None in (begin_v['value'], end_v['value'], strides_v['value'])
+        is_dynamic_tuple = (self._is_none_in_tuple(begin_v.get('value'))
+                            or self._is_none_in_tuple(end_v.get('value'))
+                            or self._is_none_in_tuple(strides_v.get('value')))
+        is_dynamic = None in (begin_v.get('value'), end_v.get('value'), strides_v.get('value'))
 
         if not is_dynamic and (begin_len != strides_len or end_len != strides_len):
             raise ValueError(

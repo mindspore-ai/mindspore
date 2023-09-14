@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-#include "sparse_apply_momentum.h"
+#include "cpu_kernel/ms_kernel/sparse_apply_momentum.h"
 
+#include <map>
+#include <memory>
+#include <string>
 #include <securec.h>
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
+
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
+#include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
-#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace {
 const int32_t kInputNum = 6;
@@ -46,7 +50,7 @@ const char *kSparseApplyMomentum = "SparseApplyMomentum";
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseApplyMomentumCpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseApplyMomentumCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *accum_tensor = ctx.Input(1);
   Tensor *lr_tensor = ctx.Input(2);
@@ -134,7 +138,7 @@ uint32_t SparseApplyMomentumCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyMomentumCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseApplyMomentumCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   auto var_shape = var->GetTensorShape();
 
@@ -157,11 +161,14 @@ uint32_t SparseApplyMomentumCpuKernel::DoCompute(CpuKernelContext &ctx) {
     auto indices_vec = indices.flat<TI>();
 
     Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> var_flat(
-      (T *)var->GetData(), var_shape->GetDimSize(0), var_shape->NumElements() / var_shape->GetDimSize(0));
+      reinterpret_cast<T *>(var->GetData()), var_shape->GetDimSize(0),
+      var_shape->NumElements() / var_shape->GetDimSize(0));
     Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> accum_flat(
-      (T *)accum->GetData(), accum_shape->GetDimSize(0), accum_shape->NumElements() / accum_shape->GetDimSize(0));
+      reinterpret_cast<T *>(accum->GetData()), accum_shape->GetDimSize(0),
+      accum_shape->NumElements() / accum_shape->GetDimSize(0));
     Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_flat(
-      (T *)grad->GetData(), grad_shape->GetDimSize(0), grad_shape->NumElements() / grad_shape->GetDimSize(0));
+      reinterpret_cast<T *>(grad->GetData()), grad_shape->GetDimSize(0),
+      grad_shape->NumElements() / grad_shape->GetDimSize(0));
 
     T lr_scalar = *(reinterpret_cast<const T *>(lr->GetData()));
     T momentum_scalar = *(reinterpret_cast<const T *>(momentum->GetData()));

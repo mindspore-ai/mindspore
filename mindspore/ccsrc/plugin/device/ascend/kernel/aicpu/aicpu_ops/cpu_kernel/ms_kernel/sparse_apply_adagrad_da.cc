@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sparse_apply_adagrad_da.h"
+
+#include "cpu_kernel/ms_kernel/sparse_apply_adagrad_da.h"
 
 #include <securec.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "common/kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "cpu_kernel/inc/cpu_types.h"
+#include "frontend/parallel/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -28,6 +33,7 @@
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 9;
+constexpr size_t kNumTwo = 2;
 const char *kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 #define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, CTX)                       \
   case (DTYPE): {                                                      \
@@ -73,7 +79,7 @@ uint32_t SparseApplyAdagradDACpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseApplyAdagradDACpuKernel::ValidParam(CpuKernelContext &ctx) {
+uint32_t SparseApplyAdagradDACpuKernel::ValidParam(const CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *accm_tensor = ctx.Input(1);
   Tensor *square_accum_tensor = ctx.Input(2);
@@ -151,29 +157,31 @@ uint32_t SparseApplyAdagradDACpuKernel::ValidParam(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyAdagradDACpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SparseApplyAdagradDACpuKernel::DoCompute(const CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   TI first_dim_size = var->GetTensorShape()->GetDimSize(0);
   auto var_shape = var->GetTensorShape();
-  Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> var_flat((T *)var->GetData(), var_shape->GetDimSize(0),
-                                                                  var_shape->NumElements() / var_shape->GetDimSize(0));
+  Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> var_flat(
+    reinterpret_cast<T *>(var->GetData()), var_shape->GetDimSize(0),
+    var_shape->NumElements() / var_shape->GetDimSize(0));
 
   Tensor *grad_accum = ctx.Input(1);
   auto grad_accum_shape = grad_accum->GetTensorShape();
   Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_accum_flat(
-    (T *)grad_accum->GetData(), grad_accum_shape->GetDimSize(0),
+    reinterpret_cast<T *>(grad_accum->GetData()), grad_accum_shape->GetDimSize(0),
     grad_accum_shape->NumElements() / grad_accum_shape->GetDimSize(0));
 
   Tensor *grad_square_accum = ctx.Input(2);
   auto grad_square_accum_shape = grad_square_accum->GetTensorShape();
-  Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_square_accum_flat(
-    (T *)grad_square_accum->GetData(), grad_square_accum_shape->GetDimSize(0),
+  Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> grad_square_accum_flat(
+    reinterpret_cast<T *>(grad_square_accum->GetData()), grad_square_accum_shape->GetDimSize(0),
     grad_square_accum_shape->NumElements() / grad_square_accum_shape->GetDimSize(0));
 
   Tensor *grad = ctx.Input(3);
   auto grad_shape = grad->GetTensorShape();
-  Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> grad_flat(
-    (T *)grad->GetData(), grad_shape->GetDimSize(0), grad_shape->NumElements() / grad_shape->GetDimSize(0));
+  Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> grad_flat(
+    reinterpret_cast<T *>(grad->GetData()), grad_shape->GetDimSize(0),
+    grad_shape->NumElements() / grad_shape->GetDimSize(0));
 
   Tensor *indices_tensor = ctx.Input(4);
   EigenTensor indices(indices_tensor, indices_tensor->GetData());
@@ -191,11 +199,9 @@ uint32_t SparseApplyAdagradDACpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *global_step = ctx.Input(8);
   int64_t global_step_scalar_int64 = *(reinterpret_cast<const int64_t *>(global_step->GetData()));
   T global_step_scalar = static_cast<T>(global_step_scalar_int64);
-  int64_t inner_dim = 1;
   for (int d = 1; d < var_shape->GetDims(); d++) {
     KERNEL_CHECK_FALSE(var_shape->GetDimSize(d) == grad_shape->GetDimSize(d), KERNEL_STATUS_PARAM_INVALID,
                        "var and grad must match in dimension [%d]", d);
-    inner_dim *= grad_shape->GetDimSize(d);
   }
   TI indeces_dim1 = indices_tensor->GetTensorShape()->GetDimSize(0);
 

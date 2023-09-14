@@ -16,18 +16,19 @@
 #ifndef AICPU_KERNELS_SPACETODEPTH_CC_
 #define AICPU_KERNELS_SPACETODEPTH_CC_
 
-#include "space_to_depth.h"
+#include "cpu_kernel/ms_kernel/space_to_depth.h"
 
-#include "Eigen/Core"
-
-#include "cpu_kernel_utils.h"
-#include "utils/eigen_tensor.h"
-#include "utils/kernel_util.h"
-#include "unsupported/Eigen/CXX11/Tensor"
+#include <vector>
 #include <iostream>
 #include <thread>
 #include <unordered_map>
 #include <mutex>
+
+#include "Eigen/Core"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "utils/eigen_tensor.h"
+#include "utils/kernel_util.h"
+#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace {
 const uint32_t kInputNum = 1;
@@ -47,14 +48,12 @@ const char *kSpaceToDepth = "SpaceToDepth";
 
 namespace aicpu {
 template <typename T>
-uint32_t SpaceToDepthCpuKernel::DoCompute(CpuKernelContext &ctx) {
+uint32_t SpaceToDepthCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   std::cout << "in DoCompute." << std::endl;
   auto input_shape = ctx.Input(0)->GetTensorShape();
   auto output_shape = ctx.Output(0)->GetTensorShape();
   auto input_dims = input_shape->GetDimSizes();
-  std::vector<std::string> attr_name1 = {"data_format"};
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
-  std::vector<std::string> attr_name2 = {"block_size"};
   AttrValue *attr_block_size = ctx.GetAttr("block_size");
   data_format_ = (attr_data_format == nullptr) ? "NHWC" : (attr_data_format->GetString());
   int64_t block_size = (attr_block_size == nullptr) ? 2 : (attr_block_size->GetInt());
@@ -120,7 +119,7 @@ uint32_t SpaceToDepthCpuKernel::DoCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }  // DoCompute
 
-uint32_t SpaceToDepthCpuKernel::STDParamCheck(CpuKernelContext &ctx) {
+uint32_t SpaceToDepthCpuKernel::STDParamCheck(const CpuKernelContext &ctx) {
   // check params
   auto input = ctx.Input(0);
   auto output = ctx.Output(0);
@@ -133,8 +132,6 @@ uint32_t SpaceToDepthCpuKernel::STDParamCheck(CpuKernelContext &ctx) {
     ctx.GetOpType().c_str(), input->GetDataSize(), output->GetDataSize());
 
   // check data_format
-
-  std::vector<std::string> attr_name1 = {"data_format"};
   AttrValue *attr_data_format = ctx.GetAttr("data_format");
   data_format_ = (attr_data_format == nullptr) ? "NHWC" : (attr_data_format->GetString());
 
@@ -142,7 +139,6 @@ uint32_t SpaceToDepthCpuKernel::STDParamCheck(CpuKernelContext &ctx) {
                      "The data_format must be NCHW, NHWC or NCHW_VECT_C, but got: [%s]", data_format_);
 
   // check block_size
-  std::vector<std::string> attr_name2 = {"block_size"};
   const int64_t min_block_size = 2;
   int64_t block_size = ctx.GetAttr("block_size")->GetInt();
   KERNEL_CHECK_FALSE((block_size >= min_block_size), KERNEL_STATUS_PARAM_INVALID,

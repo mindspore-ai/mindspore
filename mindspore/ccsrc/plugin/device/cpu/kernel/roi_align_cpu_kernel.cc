@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include "plugin/device/cpu/kernel/roi_align_cpu_kernel.h"
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -58,7 +58,10 @@ void bilinear_interpolate(const int height, const int width, T y, T x, int *x_lo
   }
 
   // distance to nearest points
-  T lx, ly, hx, hy;
+  T lx;
+  T ly;
+  T hx;
+  T hy;
   ly = y - static_cast<T>(*y_low), lx = x - static_cast<T>(*x_low);
   hy = kOne - ly, hx = kOne - lx;
 

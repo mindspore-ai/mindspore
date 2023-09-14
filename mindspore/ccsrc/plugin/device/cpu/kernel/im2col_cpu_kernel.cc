@@ -126,8 +126,10 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   int64_t dilation_width = dilations_.back();
   MS_EXCEPTION_IF_ZERO("dilation_width", dilation_width);
 
-  int64_t pad_height = 0, pad_width = 0;
-  int64_t y_height{0}, y_width{0};
+  int64_t pad_height = 0;
+  int64_t pad_width = 0;
+  int64_t y_height{0};
+  int64_t y_width{0};
   if (!pads_.empty() && (pads_.size() <= kDim2 || pads_.size() == kDim4)) {
     pad_height = pads_.front();
     pad_width = pads_.back();
@@ -149,7 +151,9 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const float block_size = 1.0;
   for (int64_t batch = 0; batch < batch_size; ++batch) {
     auto task = [&](int64_t begin, int64_t end) {
-      int64_t c_in{0}, h_offset{0}, w_offset{0};
+      int64_t c_in{0};
+      int64_t h_offset{0};
+      int64_t w_offset{0};
       (void)data_index_init<int64_t>(&begin, &c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
 
       for (int64_t c_out = begin; c_out < end; ++c_out) {

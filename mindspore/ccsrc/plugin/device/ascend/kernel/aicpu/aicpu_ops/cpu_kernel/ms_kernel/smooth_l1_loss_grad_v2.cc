@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "smooth_l1_loss_grad_v2.h"
+#include "cpu_kernel/ms_kernel/smooth_l1_loss_grad_v2.h"
 
+#include <algorithm>
 #include <mutex>
 
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "common/kernel_log.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -32,7 +33,6 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 float sigma = 1.0;
-std::string reduction = "mean";
 std::mutex mtx;
 
 #define SmoothL1LossGradV2_COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX) \
@@ -71,7 +71,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *dout_tensor = ctx.Input(2);
@@ -124,7 +124,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
   return AttributesCheck(ctx);
 }
 
-uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(const CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *dout_tensor = ctx.Input(2);
   Tensor *gradient_tensor = ctx.Output(0);
@@ -178,7 +178,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::AttributesCheck(CpuKernelContext &ctx) {
 // -1 * dout        if  x  <= -sigma
 // x / sigma * dout if |x| <  sigma
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
   KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeSum start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
@@ -246,7 +246,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
 // Mean's result is Sum's result divided by the total number of elements per
 // element
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
   KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeMean start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
@@ -318,7 +318,7 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
 // and the end result is that result of "Sum" is multiplied by the grad_output
 // one by one, that is, the weight is increased
 template <typename T>
-uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(CpuKernelContext &ctx) {
+uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
   KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeNone start");
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);

@@ -403,7 +403,9 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   const size_t begin_index = 1;
   const size_t end_index = 2;
   const size_t stride_index = 3;
-  bool begin_dyn_tuple{false}, end_dyn_tuple{false}, stride_dyn_tuple{false};
+  bool begin_dyn_tuple{false};
+  bool end_dyn_tuple{false};
+  bool stride_dyn_tuple{false};
   bool begin_dynamic =
     CheckAndGetDynamicSlice(input_args[begin_index], "begin", &begin_v, &begin_len, &begin_dyn_tuple);
   bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len, &end_dyn_tuple);

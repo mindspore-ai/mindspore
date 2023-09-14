@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SEGMENTMAX_H_
 #define AICPU_KERNELS_NORMALIZED_SEGMENTMAX_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class SegmentMaxCpuKernel : public CpuKernel {
@@ -29,7 +29,7 @@ class SegmentMaxCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t SegmentMaxCompute(CpuKernelContext &ctx);
+  static uint32_t SegmentMaxCompute(const CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

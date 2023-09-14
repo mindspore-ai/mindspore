@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <complex>
 #include "mindspore/core/ops/im2col.h"
-#include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -103,8 +103,10 @@ bool Im2ColGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const int64_t dilation_width = dilations_.back();
   MS_EXCEPTION_IF_ZERO("dilation_width", dilation_width);
 
-  int64_t y_height{0}, y_width{0};
-  int64_t pad_height = 0, pad_width = 0;
+  int64_t y_height{0};
+  int64_t y_width{0};
+  int64_t pad_height = 0;
+  int64_t pad_width = 0;
   if (!pads_.empty() && (pads_.size() <= kDim2 || pads_.size() == kDim4)) {
     pad_height = pads_.front();
     pad_width = pads_.back();
