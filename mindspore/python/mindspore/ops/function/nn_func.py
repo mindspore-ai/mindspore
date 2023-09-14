@@ -6983,7 +6983,7 @@ def linear(x, w, b):
 def _inner_dropout(x, p, training):
     """inner dropout"""
     _dropout = _get_cache_prim(P.Dropout)(1 - p)
-    if p > 0. and training:
+    if 0. < p <= 1. and training:
         return _dropout(x)[0]
     return x
 
@@ -7039,7 +7039,8 @@ def _in_projection_packed(q, k, v, w, b, k_is_v, q_is_k):
 def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_causal, is_training, dtype):
     """scaled dot product attention"""
     embed_size = query.shape[-1]
-    scaling_factor = Tensor(embed_size, dtype).sqrt().sqrt()
+    embed_size_tensor = scalar_to_tensor_(embed_size, dtype)
+    scaling_factor = embed_size_tensor.sqrt().sqrt()
     query = query / scaling_factor
 
     if is_causal:
