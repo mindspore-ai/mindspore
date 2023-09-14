@@ -14,14 +14,18 @@
 # ============================================================================
 """Parse ast.If in construct function to node of SymbolTree."""
 
+import sys
 import ast
-import astunparse
 
 from ..symbol_tree import SymbolTree
 from .parser import Parser
 from .parser_register import reg_parser
 from ..node.node_manager import NodeManager
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class IfParser(Parser):
     """Parse ast.If in construct function to node of SymbolTree."""

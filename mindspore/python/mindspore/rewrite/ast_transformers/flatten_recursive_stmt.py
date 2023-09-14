@@ -14,15 +14,19 @@
 # ============================================================================
 """Ast optimizer for flatten recursive call."""
 
+import sys
 from typing import Any, Tuple
 import keyword
 import ast
 from ast import FunctionDef
-import astunparse
 
 from mindspore import log as logger
 from ..common import error_str
 
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class FlattenRecursiveStmt(ast.NodeTransformer):
     """Ast optimizer for flatten recursive call."""

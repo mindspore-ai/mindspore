@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Module to SymbolTrees."""
+import sys
 from typing import Any
 import os
 import ast
 import copy
 import inspect
-import astunparse
 
 from mindspore import log as logger
 from ..symbol_tree import SymbolTree
@@ -27,6 +27,11 @@ from .parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstFinder
 from ..common import error_str
 from ..node.node_manager import NodeManager
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 class ModuleParser(Parser):
     """Parse ast.Module to SymbolTrees."""

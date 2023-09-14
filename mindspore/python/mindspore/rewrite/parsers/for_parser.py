@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ Parse ast.For node """
+import sys
 import ast
-import astunparse
 
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
 from mindspore.rewrite.ast_helpers.ast_modifier import AstModifier
@@ -25,6 +25,11 @@ from .parser import Parser
 from .parser_register import reg_parser
 from ..common.event import Event
 from ..node.node_manager import NodeManager
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 EVAL_WHITE_LIST = ("self.", "range(", "zip(", "enumerate(", "reversed(")
 

@@ -14,8 +14,12 @@
 # ============================================================================
 """Error Log for Rewrite."""
 
+import sys
 import ast
-import astunparse
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 
 def error_str(reason: str, child_node: ast.expr = None, father_node: ast.expr = None) -> str:
