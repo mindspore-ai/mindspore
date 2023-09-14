@@ -799,7 +799,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
     // dynamic shape pass of graphmode
     if (graph->is_dynamic_shape()) {
-      opt::DynamicShapeConvertPass(graph);
+      if (!graph->is_graph_run_mode()) {
+        opt::DynamicShapeConvertPass(graph);
+      }
       auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
       MS_EXCEPTION_IF_NULL(profiler_manage_inst);
       profiler_manage_inst->SetNetDynamicShapeStatus();
