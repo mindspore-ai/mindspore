@@ -140,7 +140,6 @@ class JsonHelper {
         }
       }
       js[key] = value;
-      MS_LOG(INFO) << "Write outfile is: " << js << ".";
       if (out_file == "") {
         std::ofstream o(in_file, std::ofstream::out | std::ofstream::trunc);
         o << js;
@@ -154,8 +153,14 @@ class JsonHelper {
       }
     }
     // Catch any exception and convert to Status return code
-    catch (const std::exception &err) {
-      RETURN_STATUS_UNEXPECTED("Update json failed ");
+    catch (nlohmann::json::exception &e) {
+      std::string err_msg = "Parse json failed. Error info: ";
+      err_msg += e.what();
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    } catch (const std::exception &e) {
+      std::string err_msg = "Update json failed. Error info: ";
+      err_msg += e.what();
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
     return Status::OK();
   }
