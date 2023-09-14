@@ -101,11 +101,11 @@ Dimensions PrepareBatchMatMulStrategy(Graph::NodeType *node, const bool transpos
                                       const size_t iter_op_inputs, const size_t dim_num);
 Strategies PrepareBatchMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorInfo> &op);
 Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &strategy);
-Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra);
+Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix);
 Strategies PrepareSoftMax(const std::shared_ptr<OperatorInfo> &op, const Dimensions &basic_stra);
 Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra);
 Strategies PrepareOneHot(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
-Strategies PrepareGatherV2(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
+Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix);
 Dimensions PrepareGatherV2OutputStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategies PrepareL2Normalize(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
 Strategies PrepareAxisRelatedStrategy(Graph::NodeType *node, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
@@ -144,7 +144,7 @@ Dimensions ModifyStrategyIfFlattenIncoming(const std::shared_ptr<OperatorInfo> &
 Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                              const size_t iter_ops, const size_t incoming_op_index);
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                          Dimensions basic_stra);
+                                          Dimensions basic_stra, bool dyn_shape_tmp_fix);
 Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy);
 Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy, size_t first_tensor_dim,
                           size_t second_tensor_dim, bool broadcast_first_tensor);
@@ -154,7 +154,7 @@ Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<Ope
 Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
                                          size_t outgoing_op_index);
 Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops,
-                                             size_t outgoing_op_index, size_t iter_op_inputs);
+                                             size_t outgoing_op_index, size_t iter_op_inputs, bool dyn_shape_tmp_fix);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_

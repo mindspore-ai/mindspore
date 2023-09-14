@@ -199,7 +199,6 @@ Dimensions PrepareBatchMatMulStrategy(Graph::NodeType *node, const bool transpos
 }
 
 Strategies PrepareBatchMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorInfo> &op) {
-  MS_LOG(INFO) << "PrepareBatchMatMul main operator";
   Strategies strategies;
   auto attrs = op->attrs();
   bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
@@ -280,8 +279,12 @@ Dimensions PrepareOneHotOutputStrategy(const std::shared_ptr<OperatorInfo> &op) 
   return strategy;
 }
 
-Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   Strategies strategies;
+
+  if (dyn_shape_tmp_fix) {
+    return strategies;
+  }
 
   auto begin = GetValue<std::vector<int64_t>>(op->input_value().at(1));
   auto end = GetValue<std::vector<int64_t>>(op->input_value().at(2));
@@ -440,17 +443,6 @@ Strategies PrepareOneHot(const std::shared_ptr<OperatorInfo> &op, Dimensions str
     strategy.push_back(1);
   }
 
-  // When input dimension is > 1, axis must be -1, and strategy must be data parallel.
-  if (op->outputs_shape()[0].size() > 1) {
-    size_t i;
-    for (i = 1; i < strategy.size(); i++) {
-      strategy[i] = 1;
-    }
-    for (size_t j = i; j < op->outputs_shape()[0].size(); j++) {
-      strategy.push_back(1);
-    }
-  }
-
   // Partition number should not exceed the number of devices
   for (size_t i = 0; i < op->outputs_shape()[0].size(); i++) {
     if (strategy[i] > op->outputs_shape()[0][i]) {
@@ -499,16 +491,42 @@ Dimensions GenGatherStra(Shape targeted_shape) {
   return strategie;
 }
 
-Strategies PrepareGatherV2(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy) {
+Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const size_t dim) {
+  Strategies strategies;
+  auto gather_input_0_shape = op->inputs_shape()[0];
+  if (dim >= gather_input_0_shape.size()) {
+    MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
+  }
+  Dimensions gather_input_0_strategy(gather_input_0_shape.size(), 1);
+  size_t num_device = LongToSize(g_device_manager->stage_device_num());
+  size_t cut = 1;
+  while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
+    gather_input_0_shape[dim] /= SIZE_TWO;
+    cut *= SIZE_TWO;
+    gather_input_0_strategy[dim] *= SIZE_TWO;
+  }
+  strategies.push_back(gather_input_0_strategy);
+  for (size_t i = 1; i < op->inputs_shape().size(); i++) {
+    Dimensions gather_input_i_strategy(op->inputs_shape()[i].size(), 1);
+    strategies.push_back(gather_input_i_strategy);
+  }
+  return strategies;
+}
+
+Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   Strategies strategies;
   Shape targeted_shape = op->outputs_shape()[0];
   Dimensions strategie = GenGatherStra(targeted_shape);
 
   int64_t axis = GetGatherAxis(op);
   if (axis >= SizeToLong(strategy.size())) {
-    MS_LOG(EXCEPTION) << "Failure: GatherV2' axis out of range.";
+    MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
   }
   strategy.clear();
+
+  if (dyn_shape_tmp_fix) {
+    return GatherForDynamicShape(op, 0);
+  }
 
   if (axis == 0) {
     strategy.push_back(1);
@@ -1352,7 +1370,7 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
 }
 
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                          Dimensions basic_stra) {
+                                          Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
   if (iter_ops >= ops.size()) {
@@ -1374,16 +1392,10 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     return PrepareBiasAdd(s_ptr);
   }
   if (type == STRIDED_SLICE) {
-    return PrepareStridedSlice(ops[iter_ops], basic_stra);
+    return PrepareStridedSlice(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
   }
   if (type == GATHERV2) {
-    auto pos = ops[iter_ops]->name().find("Info");
-    auto name = ops[iter_ops]->name().substr(0, pos);
-    if (name == "Gather") {
-      return PrepareGatherV2(ops[iter_ops], basic_stra);
-    } else {
-      MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2.";
-    }
+    return PrepareGather(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
   }
   if (type == ONEHOT) {
     return PrepareOneHot(ops[iter_ops], basic_stra);
@@ -1530,7 +1542,6 @@ Strategies CheckDivisible(const std::shared_ptr<OperatorInfo> &op, const Dimensi
     // Make sure each tensor's dim shape is greater than 1. If not, push back strategy as 1 instead.
     for (size_t j = 0; j < op->inputs_shape()[iter_op_inputs].size(); j++) {
       if (op->inputs_shape()[iter_op_inputs][j] == 1) {
-        MS_LOG(INFO) << "dim 1 put at index " << j;
         tmp_stra.push_back(1);
       } else if (j < basic_stra.size()) {
         tmp_stra.push_back(basic_stra[j]);
@@ -1597,7 +1608,11 @@ Dimensions PrepareExpandDimsInputStrategy(const std::vector<std::shared_ptr<Oper
 }
 
 Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                       size_t outgoing_op_index) {
+                                       size_t outgoing_op_index, bool dyn_shape_tmp_fix) {
+  if (dyn_shape_tmp_fix) {
+    Dimensions empty_strategy;
+    return empty_strategy;
+  }
   auto output_shape = ops[i_ops]->outputs_shape()[0];
   auto input_shape = ops[i_ops]->inputs_shape()[0];
   auto strategy = ops[outgoing_op_index]->selected_strategy();
@@ -1668,7 +1683,7 @@ Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<Opera
 }
 
 Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops,
-                                             size_t outgoing_op_index, size_t iter_op_inputs) {
+                                             size_t outgoing_op_index, size_t iter_op_inputs, bool dyn_shape_tmp_fix) {
   Dimensions strategy;
   // Propagation not implemented for these operators
   if (ops[iter_ops]->type() == ARGMAXWITHVALUE || ops[iter_ops]->type() == ARGMINWITHVALUE) {
@@ -1685,7 +1700,7 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     if (type == EXPAND_DIMS) {
       strategy = PrepareExpandDimsInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == RESHAPE) {
-      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index);
+      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, dyn_shape_tmp_fix);
       return strategy;
     } else if (type == GATHERV2) {
       strategy = PrepareGatherV2InputStrategy(ops[outgoing_op_index], iter_op_inputs);
@@ -1735,19 +1750,18 @@ Dimensions RecStrategyPropagator::GetDefaultStrategy(size_t i_op) {
 }
 
 bool StopPropAtOP(std::string op_type) {
-  const std::set<std::string> stop_at = {ASSIGN, EXPAND_DIMS};
+  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS};
   return stop_at.find(op_type) != stop_at.end();
 }
 
 size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyForward(size_t min_devices) {
+  MS_LOG(INFO) << "There are " << no_stra_op_list_->size() << " operators left that do not have strategy.";
   size_t changes = 0;
-
   if (no_stra_op_list_->empty()) {
     return changes;
   }
 
   std::vector<size_t> no_stra_op_list_bis;
-
   for (size_t iter_list = no_stra_op_list_->size(); iter_list > 0; iter_list--) {
     size_t iter_ops = no_stra_op_list_->at(iter_list - 1);
     Strategies strategies;
@@ -1757,44 +1771,47 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyForward(size_t m
         StopPropAtOP(ops_[incoming_op_index]->type())) {
       no_stra_op_list_bis.push_back(iter_ops);
     } else {
-      strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy);
+      strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy, graph_->dyn_shape_tmp_fix);
       ApplyStrategy(iter_ops, strategies);
       ++changes;
-      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategies " << StrategyToString(strategies) << " from "
+                   << strategy;
     }
   }
-
   *no_stra_op_list_ = no_stra_op_list_bis;
 
   return changes;
 }
 
 size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyBackward(size_t min_devices) {
+  MS_LOG(INFO) << "There are " << no_stra_op_list_->size() << " operators left that do not have strategy.";
   size_t changes = 0;
-
   if (no_stra_op_list_->empty()) {
     return changes;
   }
-  std::vector<size_t> no_stra_op_list_bis;
 
+  std::vector<size_t> no_stra_op_list_bis;
   for (size_t iter_list = no_stra_op_list_->size(); iter_list > 0; iter_list--) {
     auto iter_ops = no_stra_op_list_->at(iter_list - 1);
     Strategies strategies;
     std::pair<size_t, size_t> idx = FindIndexOfOperatorOutgoing(ops_, input_tensor_names_, iter_ops);
     size_t outgoing_op_index = idx.first;
     size_t iter_op_inputs = idx.second;
-    Dimensions strategy = CopyOutgoingOperatorInputStrategy(ops_, iter_ops, outgoing_op_index, iter_op_inputs);
+    Dimensions strategy =
+      CopyOutgoingOperatorInputStrategy(ops_, iter_ops, outgoing_op_index, iter_op_inputs, graph_->dyn_shape_tmp_fix);
     if (IsDimensionsEmpty(strategy) || DevicesForDimensions(strategy) < min_devices ||
         StopPropAtOP(ops_[outgoing_op_index]->type())) {
       no_stra_op_list_bis.push_back(iter_ops);
     } else {
-      strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy);
-      ++changes;
+      strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy, graph_->dyn_shape_tmp_fix);
       ApplyStrategy(iter_ops, strategies);
-      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);
+      ++changes;
+      MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategies " << StrategyToString(strategies) << " from "
+                   << strategy;
     }
   }
   *no_stra_op_list_ = no_stra_op_list_bis;
+
   return changes;
 }
 
@@ -1809,19 +1826,20 @@ size_t RecStrategyPropagator::GenerateRemainingOperatorStrategy() {
   do {
     no_stra_op_list_size = no_stra_op_list_->size();
     changes += GenerateEliminatedOperatorStrategyForward();
-
     changes += GenerateEliminatedOperatorStrategyBackward();
   } while (no_stra_op_list_size > no_stra_op_list_->size());
 
   for (size_t iter_list = 0; iter_list < no_stra_op_list_->size(); iter_list++) {
     auto iter_ops = no_stra_op_list_->at(iter_list);
-
     Dimensions strategy = GetDefaultStrategy(iter_ops);
-    Strategies strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy);
+    if (graph_->dyn_shape_tmp_fix && strategy.empty()) {
+      continue;
+    }
+    Strategies strategies = GenerateStrategiesFromStrategy(ops_, iter_ops, strategy, graph_->dyn_shape_tmp_fix);
     ApplyStrategy(iter_ops, strategies);
-
-    MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned default strategy " << StrategyToString(strategies);
     ++changes;
+    MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned default strategies " << StrategyToString(strategies)
+                 << " from " << strategy;
   }
 
   return changes;
@@ -1983,7 +2001,21 @@ size_t RecStrategyPropagator::ApplyParamStrategy() {
   for (auto &param : params_users) {
     if (param_strategy_.find(param.first) != param_strategy_.end()) {
       for (auto &user : param.second) {
-        MS_LOG(INFO) << "Treat User " << ops_[user.first]->name();
+        if (graph_->dyn_shape_tmp_fix && ops_[user.first]->type() == GATHERV2) {
+          if (param.first.find(".output.ffn.projection.weight") != std::string::npos) {
+            ApplyStrategy(user.first, GatherForDynamicShape(ops_[user.first], 1));
+            continue;
+          }
+          if (param.first.find(".output.ffn.mapping.bias") != std::string::npos) {
+            ApplyStrategy(user.first, GatherForDynamicShape(ops_[user.first], 3));
+            continue;
+          }
+          if (param.first.find(".output.ffn.mapping.weight") != std::string::npos) {
+            ApplyStrategy(user.first, GatherForDynamicShape(ops_[user.first], 2));
+            continue;
+          }
+        }
+
         if (!HasStrategy(ops_[user.first]) ||
             param_strategy_[param.first] != ops_[user.first]->selected_strategy()->GetInputDim()[user.second]) {
           Strategies strategies;
@@ -1994,7 +2026,8 @@ size_t RecStrategyPropagator::ApplyParamStrategy() {
           } else if (ops_[user.first]->type() == STRIDED_SLICE) {
             strategies = CheckDivisible(ops_[user.first], param_strategy_[param.first]);
           } else {
-            strategies = GenerateStrategiesFromStrategy(ops_, user.first, param_strategy_[param.first]);
+            strategies =
+              GenerateStrategiesFromStrategy(ops_, user.first, param_strategy_[param.first], graph_->dyn_shape_tmp_fix);
           }
           ApplyStrategy(user.first, strategies);
           MS_LOG(INFO) << ops_[user.first]->name() << " assigned strategy " << StrategyToString(strategies)
@@ -2139,6 +2172,9 @@ void RecStrategyPropagator::FixInvalidStra() {
     if (!HasStrategy(op)) {
       continue;
     }
+    if (graph_->dyn_shape_tmp_fix && (op->type() == ASSIGN || op->type() == ONEHOT)) {
+      continue;
+    }
     StrategyPtr old_strategys = op->selected_strategy();
     Strategies new_strategys;
     for (size_t iter_op_inputs = 0; iter_op_inputs < old_strategys->GetInputDim().size(); iter_op_inputs++) {
@@ -2159,9 +2195,10 @@ void RecStrategyPropagator::FixInvalidStra() {
       new_strategys.push_back(strategies);
     }
     if (modified) {
-      MS_LOG(INFO) << "CHANGE INVALID STRATEGY FOR : " << op->name();
       StrategyPtr sp = std::make_shared<Strategy>(0, new_strategys);
       op->SetSelectedStrategyAndCost(sp, op->selected_cost());
+      MS_LOG(INFO) << "CHANGE INVALID STRATEGY FOR : " << op->name() << " from " << old_strategys->GetInputDim()
+                   << " to " << StrategyToString(new_strategys);
     }
   }
 }
@@ -2201,6 +2238,25 @@ void RecStrategyPropagator::GenerateStrategyV1() {
 
   changes = GenerateRemainingOperatorStrategy();
   MS_LOG(INFO) << "The strategies of " << changes << " operators are modified after GenerateRemainingOperatorStrategy.";
+
+  if (graph_->dyn_shape_tmp_fix) {
+    for (auto &op : ops_) {
+      if (op->type() == ASSIGN) {
+        Strategies strategies;
+        auto assign_input_0_shape = op->inputs_shape()[0];
+        Dimensions assign_input_0_strategy(assign_input_0_shape.size(), 1);
+        size_t num_device = LongToSize(g_device_manager->stage_device_num());
+        if (assign_input_0_shape[1] > 0 && assign_input_0_shape[1] % num_device == 0) {
+          assign_input_0_strategy[1] = num_device;
+        }
+        for (size_t i = 0; i < op->inputs_shape().size(); i++) {
+          strategies.push_back(assign_input_0_strategy);
+        }
+        StrategyPtr sp = std::make_shared<Strategy>(0, strategies);
+        op->SetSelectedStrategyAndCost(sp, op->selected_cost());
+      }
+    }
+  }
 
   SetParamStrategy();
   changes = ApplyParamStrategy();

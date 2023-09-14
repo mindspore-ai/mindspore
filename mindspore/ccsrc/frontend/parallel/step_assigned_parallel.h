@@ -30,7 +30,7 @@ namespace mindspore {
 namespace parallel {
 // main step of Auto-parallel
 bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, size_t device_num,
-                          size_t rank_id);
+                          size_t rank_id, bool sapp);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_ASSIGNED_PARALLEL_H_

@@ -1993,7 +1993,7 @@ FuncGraphPtr SplitMindIR(const std::string &file_name) {
   return func_graph;
 }
 
-FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num, size_t rank_id) {
+FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num, size_t rank_id, bool sapp) {
   MS_LOG(INFO) << "Start split dynamic mindir for transformer network";
   FuncGraphPtr func_graph = nullptr;
   MindIRLoader mindir_loader;
@@ -2039,7 +2039,7 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
     (void)parallel::ExtendInputArgsAbstractShape(input, i);
   }
 
-  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id);
+  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id, sapp);
   if (!res) {
     MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
     return nullptr;

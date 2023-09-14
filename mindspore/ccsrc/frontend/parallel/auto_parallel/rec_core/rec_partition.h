@@ -43,7 +43,7 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph);
 
 double GetWeights(const Graph::NodeType &node);
 
-StrategyRec PartitionNode(const Graph::NodeType &node,
+StrategyRec PartitionNode(Graph::NodeType node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                           const std::shared_ptr<Graph> &graph, const bool isTraining);
 
