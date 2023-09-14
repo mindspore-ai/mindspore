@@ -760,6 +760,31 @@ def get_args(node):
     return args
 
 
+def get_primitive_signatures(prim):
+    """Get primitive signatures."""
+    if not hasattr(prim, "__mindspore_signature__"):
+        return ()
+    signatures = getattr(prim, "__mindspore_signature__")
+    return ops.Primitive._fill_signature(prim, signatures)
+
+
+def get_class_type_by_name(cls_name):
+    """Get class type."""
+    class_type_map = {
+        "int": int,
+        "float": float,
+        "bool": bool,
+        "tuple": tuple,
+        "list": list,
+        "str": str,
+        "Tensor": Tensor,
+        "Number": (int, float, bool)
+    }
+    if cls_name not in class_type_map:
+        raise TypeError(f"'{cls_name}' is not supported as cast_dtype of primitive.")
+    return class_type_map.get(cls_name)
+
+
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):

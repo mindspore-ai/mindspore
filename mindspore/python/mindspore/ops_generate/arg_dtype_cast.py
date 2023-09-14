@@ -16,28 +16,15 @@
 # ============================================================================
 """Operator argument data type cast function."""
 
-from numbers import Number
 from mindspore import ops
 from mindspore.common.tensor import Tensor
-
-
-def int_to_tuple(data):
-    return (data,)
 
 
 def int_to_float(data):
     return float(data)
 
 
-def float_to_tuple(data):
-    return (data,)
-
-
-def bool_to_tuple(data):
-    return (data,)
-
-
-def number_to_tuple(data):
+def scalar_to_tuple(data):
     return (data,)
 
 
@@ -49,19 +36,7 @@ def tensor_to_tuple(data):
     raise NotImplementedError
 
 
-def int_to_tensor(data):
-    return ops.scalar_to_tensor(data)
-
-
-def float_to_tensor(data):
-    return ops.scalar_to_tensor(data)
-
-
-def bool_to_tensor(data):
-    return ops.scalar_to_tensor(data)
-
-
-def number_to_tensor(data):
+def scalar_to_tensor(data):
     return ops.scalar_to_tensor(data)
 
 
@@ -81,33 +56,22 @@ def type_it(data, src_type, dst_type):
         return data
     if not isinstance(data, src_type):
         raise TypeError(f"For type_it, the {data} should be {src_type}, but get {type(data)}")
-    if isinstance(data, int) and dst_type is float:
-        return int_to_float(data)
-    # to tuple
-    if isinstance(data, int) and dst_type is tuple:
-        return int_to_tuple(data)
-    if isinstance(data, float) and dst_type is tuple:
-        return float_to_tuple(data)
-    if isinstance(data, Number) and dst_type is tuple:
-        return number_to_tuple(data)
-    if isinstance(data, bool) and dst_type is tuple:
-        return bool_to_tuple(data)
-    if isinstance(data, list) and dst_type is tuple:
-        return list_to_tuple(data)
-    if isinstance(data, Tensor) and dst_type is tuple:
-        return tensor_to_tuple(data)
-    # to tensor
-    if isinstance(data, int) and dst_type is Tensor:
-        return int_to_tensor(data)
-    if isinstance(data, float) and dst_type is Tensor:
-        return float_to_tensor(data)
-    if isinstance(data, bool) and dst_type is Tensor:
-        return bool_to_tensor(data)
-    if isinstance(data, Number) and dst_type is Tensor:
-        return number_to_tensor(data)
-    if isinstance(data, tuple) and dst_type is Tensor:
-        return tuple_to_tensor(data)
-    if isinstance(data, list) and dst_type is Tensor:
-        return list_to_tensor(data)
+    if dst_type is float:
+        if isinstance(data, int):
+            return int_to_float(data)
+    elif dst_type is tuple:
+        if isinstance(data, (int, float, bool)):
+            return scalar_to_tuple(data)
+        if isinstance(data, list):
+            return list_to_tuple(data)
+        if isinstance(data, Tensor):
+            return tensor_to_tuple(data)
+    elif dst_type is Tensor:
+        if isinstance(data, (int, float, bool)):
+            return scalar_to_tensor(data)
+        if isinstance(data, tuple):
+            return tuple_to_tensor(data)
+        if isinstance(data, list):
+            return list_to_tensor(data)
 
     raise TypeError("Unsupported type cast.")

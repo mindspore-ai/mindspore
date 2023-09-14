@@ -63,6 +63,9 @@ void RaiseExceptionForConvertRefDtype(const ValuePtr &func, const std::string &r
                                       size_t index);
 void RaiseExceptionForCheckParameter(const std::string &func_name, size_t i, const std::string &source_type);
 
+std::vector<AnfNodePtr> GetNewInputsBySignatures(const FuncGraphPtr &func_graph, const std::string &func_name,
+                                                 const ValuePtr &function, const AbstractBasePtrList &args_abs_list,
+                                                 const std::vector<AnfNodePtr> &params_list);
 AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_abs_list, const AnfNodePtrList &old_node_inputs);
 }  // namespace prim

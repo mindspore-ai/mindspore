@@ -26,6 +26,7 @@
 #include <initializer_list>
 
 #include "utils/hash_map.h"
+#include "ir/signature.h"
 #include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
 #include "base/base_ref.h"
@@ -357,6 +358,11 @@ class MS_CORE_API PrimitiveFunction : public Primitive {
   bool operator==(const PrimitiveFunction &other) const;
   abstract::AbstractBasePtr ToAbstract() override;
   std::string ToString() const override { return "PrimFunc_" + name(); }
+  void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
+  const std::vector<Signature> &signatures() const { return signatures_; }
+
+ private:
+  std::vector<Signature> signatures_;
 };
 using PrimitiveFunctionPtr = std::shared_ptr<PrimitiveFunction>;
 

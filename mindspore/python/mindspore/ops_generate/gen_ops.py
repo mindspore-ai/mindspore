@@ -292,7 +292,7 @@ def process_args(args):
         if arg_handler is not None:
             assign_str = f'{arg_handler}({assign_str})'
 
-        assign_str = f"""        self._add_prim_arg("{arg_name}", {assign_str})"""
+        assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
         args_assign.append(assign_str)
     return args_name, args_assign, init_args_with_default
 

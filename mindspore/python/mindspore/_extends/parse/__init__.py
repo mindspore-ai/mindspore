@@ -27,8 +27,8 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      is_class_type, check_obj_bool, python_isinstance, ms_isinstance, convert_to_ms_csrtensor,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
                      get_obj_from_sequence, get_type, is_class_member_recursive, get_global_params,
-                     get_adapter_tensor_attr, get_obj_defined_from_obj_type,
-                     is_from_third_party_library, get_const_abs, get_const_round,
+                     get_adapter_tensor_attr, get_obj_defined_from_obj_type, get_class_type_by_name,
+                     is_from_third_party_library, get_const_abs, get_const_round, get_primitive_signatures,
                      get_const_len, is_adapter_tensor_class, is_adapter_parameter_class)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope', 'get_attr_from_object',
@@ -43,4 +43,5 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'get_type', 'is_class_member_recursive', 'get_adapter_tensor_attr', 'get_obj_defined_from_obj_type',
            'is_from_third_party_library', 'get_const_abs', 'get_const_round', 'get_const_len',
            'is_adapter_tensor_class', 'is_adapter_parameter_class', 'convert_to_namedtuple', 'get_init_args', 
-           'get_primitive_init_args', 'is_adapter_tensor_class']
+           'get_primitive_init_args', 'is_adapter_tensor_class', 'get_primitive_signatures',
+           'is_adapter_parameter_class']

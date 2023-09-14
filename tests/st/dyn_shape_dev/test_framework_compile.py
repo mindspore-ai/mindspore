@@ -81,3 +81,47 @@ def test_avg_pool_create_instance_var_args():
     net = AvgPoolCreateInstanceNet()
     out = net(x, mutable(1), mutable(1), "VALID", "NCHW")
     print("out:", out)
+
+
+class PowNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.pow = ops.Pow()
+
+    def construct(self, x, y):
+        return self.pow(x, y)
+
+
+class PowCreateInstanceNet(nn.Cell):
+    def construct(self, x, y):
+        return ops.Pow()(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu_training
+def test_pow_type_cast():
+    """
+    Feature: DynamicShape.
+    Description: Test type conversion for pow.
+    Expectation: No exception.
+    """
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    net = PowNet()
+    out = net(1, 2)
+    print("out: ", out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu_training
+def test_pow_create_instance_type_cast():
+    """
+    Feature: DynamicShape.
+    Description: Test type conversion for pow.
+    Expectation: No exception.
+    """
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    net = PowCreateInstanceNet()
+    out = net(1.0, 2)
+    print("out: ", out)

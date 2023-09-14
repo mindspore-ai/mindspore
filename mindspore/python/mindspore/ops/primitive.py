@@ -84,9 +84,9 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
-    def _add_prim_arg(self, name, value):
+    def _set_prim_arg(self, name, value):
         """
-        Store primitive initialization arguments.
+        Set primitive initialization arguments.
 
         Different from add_prim_attr, it is used internally to store Primitive
         initialization arguments in Python.
