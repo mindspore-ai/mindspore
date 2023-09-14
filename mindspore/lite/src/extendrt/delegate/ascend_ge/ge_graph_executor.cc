@@ -31,6 +31,7 @@
 #include "cxx_api/acl_utils.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/graph/remove_load_pass.h"
 #include "src/extendrt/utils/func_graph_utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "flow_graph/data_flow.h"
@@ -393,10 +394,15 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
   }
 #endif
 
+  auto remove_load_pass = std::make_shared<opt::RemoveLoadPass>();
+  remove_load_pass->Run(anf_graph);
+
   if (!UpdateGraphInputs(anf_graph)) {
     MS_LOG(ERROR) << "Failed to update graph inputs";
     return nullptr;
   }
+
+  opt::UpdateManager(anf_graph);
 
   transform::DfGraphPtr df_graph = nullptr;
   auto func_type = anf_graph->get_attr(kAttrFuncType);

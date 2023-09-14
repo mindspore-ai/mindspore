@@ -237,7 +237,7 @@ class Model:
         self._lite_incremental_predictor = None
         self._mindspore_lite = None
         self._lite_infer = True  # if backend lite infer fails, set False
-        self._mindspore_lite_model_group_id = Model.gen_model_groupid()
+        self._mindspore_lite_model_group_id = id(self)
 
 
     def _check_for_graph_cell(self, kwargs):
@@ -1484,24 +1484,6 @@ class Model:
 
         return eval_result
 
-    global_mindspore_lite_model_group_id = 0
-    @staticmethod
-    def gen_model_groupid():
-        """
-        Generate output predictions for the input samples using backend 'lite'.
-
-        Args:
-            predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
-                The predict data, can be a single tensor,
-                a list of tensor, or a tuple of tensor.
-
-        Returns:
-            Tensor, array(s) of predictions.
-        """
-        mindspore_lite_model_group_id = Model.global_mindspore_lite_model_group_id
-        Model.global_mindspore_lite_model_group_id = Model.global_mindspore_lite_model_group_id + 1
-        return mindspore_lite_model_group_id
-
     def _predict_lite(self, *predict_data, config=None):
         """
         Generate output predictions for the input samples using backend 'lite'.
@@ -1510,6 +1492,48 @@ class Model:
             predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
                 The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
+
+            config (dict, optional) - The config parameter is enabled when the backend is ‘lite’.
+                The config includes two parts: config_path (configPath, str) and config_item (str, dict).
+                When the config_item is set, its priority is higher than the config_path. Set the ranking
+                table file for inference. The content of the configuration file is as follows:
+
+                config_path defines the path of the configuration file, which is used to pass user-defined
+                    options during model building. In the following scenarios, users may need to set parameters.
+                    For example: "/home/user/config.ini". Default value: ``"" `` , here is the content of the
+                    config.ini file:
+
+                .. code-block::
+
+                    [ascend_context]
+                    rank_table_file = [path_a](storage initial path of the rank table file)
+                    [execution_plan]
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
+
+                When only the config_path is configured, it is done as follows:
+
+                .. code-block::
+
+                    config = {"configPath" : "/home/user/config.ini"}
+
+                When only the config_dict is configured, it is done as follows:
+
+                .. code-block::
+
+                    config = {"ascend_context" : {"rank_table_file" : "path_b"},
+                              "execution_plan" : {"op_name1" : "data_type:float16", "op_name2" : "data_type:float32"}}
+
+                When both the `config_path` and the `config_dict` are configured, it is done as follows:
+
+                .. code-block::
+
+                    config = {"configPath" : "/home/user/config.ini",
+                              "ascend_context" : {"rank_table_file" : "path_b"},
+                              "execution_plan" : {"op_name3" : "data_type:float16", "op_name4" : "data_type:float32"}}
+
+                Note that both the "configPath" is configured in the config_dict and the config_item,
+                    in this case, the path_b in the config_dict takes precedence.
 
         Returns:
             Tensor, array(s) of predictions.
@@ -1603,23 +1627,47 @@ class Model:
                 a list of tensor, or a tuple of tensor.
             backend (str): Select predict backend, this parameter is an experimental feature
                 and is mainly used for MindSpore Lite cloud-side inference. Default: ``False`` .
-            config (dict, optional): Enabled when the backend is 'lite'. config includes two parts,
-                config_path ('configPath', str) and config_item (str, dict). When config_item is set,
-                its priority is higher than config_path. Set rank table file for inference. The content
-                of the configuration file is as follows:
+            config (dict, optional) - The config parameter is enabled when the backend is ‘lite’.
+                The config includes two parts: config_path (configPath, str) and config_item (str, dict).
+                When the config_item is set, its priority is higher than the config_path. Set the ranking
+                table file for inference. The content of the configuration file is as follows:
+
+                config_path defines the path of the configuration file, which is used to pass user-defined
+                    options during model building. In the following scenarios, users may need to set parameters.
+                    For example: "/home/user/config.ini". Default value: ``"" `` , here is the content of the
+                    config.ini file:
 
                 .. code-block::
 
                     [ascend_context]
-                    rank_table_file=[path_a](storage initial path of the rank table file)
+                    rank_table_file = [path_a](storage initial path of the rank table file)
+                    [execution_plan]
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
 
-                When set
+                When only the config_path is configured, it is done as follows:
 
                 .. code-block::
 
-                    config_dict = {"ascend_context" : {"rank_table_file" : "path_b"}}
+                    config = {"configPath" : "/home/user/config.ini"}
 
-                The path_b from the config_dict will be used to compile the model.
+                When only the config_dict is configured, it is done as follows:
+
+                .. code-block::
+
+                    config = {"ascend_context" : {"rank_table_file" : "path_b"},
+                              "execution_plan" : {"op_name1" : "data_type:float16", "op_name2" : "data_type:float32"}}
+
+                When both the `config_path` and the `config_dict` are configured, it is done as follows:
+
+                .. code-block::
+
+                    config = {"configPath" : "/home/user/config.ini",
+                              "ascend_context" : {"rank_table_file" : "path_b"},
+                              "execution_plan" : {"op_name3" : "data_type:float16", "op_name4" : "data_type:float32"}}
+
+                Note that both the "configPath" is configured in the config_dict and the config_item,
+                    in this case, the path_b in the config_dict takes precedence.
 
         Returns:
             Tensor, array(s) of predictions.
