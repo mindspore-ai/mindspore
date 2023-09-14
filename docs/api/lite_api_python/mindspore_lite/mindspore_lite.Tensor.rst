@@ -1,12 +1,15 @@
 mindspore_lite.Tensor
 =====================
 
-.. py:class:: mindspore_lite.Tensor(tensor=None)
+.. py:class:: mindspore_lite.Tensor(tensor=None, shape=None, dtype=None, device=None)
 
     `Tensor` 类，在Mindspore Lite中定义一个张量。
 
     参数：
         - **tensor** (Tensor，可选) - 被存储在新Tensor中的数据，数据可以是来自其它Tensor。默认值： ``None`` 。
+        - **shape** (list，可选) - Tensor的shape信息。默认值： ``None`` 。
+        - **dtype** (DataType，可选) - Tensor的dtype信息。默认值： ``None`` 。
+        - **device** (str，可选) - Tensor的device信息。默认值： ``None`` 。
 
     异常：
         - **TypeError** - `tensor` 既不是Tensor类型也不是 ``None`` 。
@@ -20,6 +23,14 @@ mindspore_lite.Tensor
 
         返回：
             int，Tensor的数据大小。
+
+    .. py:method:: device
+        :property:
+
+        获取Tensor的device信息。
+
+        返回：
+            str，Tensor的device信息。
 
     .. py:method:: dtype
         :property:
