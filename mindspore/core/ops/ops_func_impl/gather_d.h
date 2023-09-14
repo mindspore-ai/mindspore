@@ -29,7 +29,6 @@ class MIND_API GatherDFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex1}; };
 };
 }  // namespace ops
 }  // namespace mindspore

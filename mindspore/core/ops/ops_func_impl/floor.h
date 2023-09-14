@@ -17,9 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLOOR_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLOOR_H_
 
-#include <map>
-#include <memory>
-#include <string>
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 

@@ -33,7 +33,6 @@ TypePtr GatherDFuncImpl::InferType(const PrimitivePtr &primitive,
 
 int32_t GatherDFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
-  auto prim_name = primitive->name();
   auto x_shape_vec = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   auto index_shape_vec = input_args[kInputIndex2]->GetShape()->GetShapeVector();
 

@@ -237,8 +237,9 @@ CUST_OUTPUT_MAP(MaskedSelectGrad) = {{0, OUTPUT_DESC(dx)}};
 REG_ADPT_DESC(MaskedSelectGrad, prim::kPrimMaskedSelectGrad->name(), CUST_ADPT_DESC(MaskedSelectGrad))
 
 // GradDGradV2
-CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(index)}, {3, INPUT_DESC(grad)}};
-CUST_ATTR_MAP(GatherDGradV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}, {4, INPUT_DESC(grad)}};
+CUST_INPUT_ATTR_MAP(GatherDGradV2) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_ATTR_MAP(GatherDGradV2) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(GatherDGradV2) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(GatherDGradV2, prim::kPrimGatherDGradV2->name(), CUST_ADPT_DESC(GatherDGradV2))
 

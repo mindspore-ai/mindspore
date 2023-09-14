@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ERFC_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ERFC_H_
 
-#include <memory>
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 

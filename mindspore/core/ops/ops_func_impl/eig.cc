@@ -17,6 +17,7 @@
 #include "ops/ops_func_impl/eig.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -45,12 +46,7 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
 
 BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-
   auto input_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-  auto compute_v = input_args[kInputIndex1]->GetValue();
   std::vector<BaseShapePtr> shapes_list(kDefaultRank);
   EigCheckShapeValid(input_shape);
 
@@ -69,10 +65,11 @@ BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   /* infer eigen_vectors shape  */
-  if (compute_v == kValueAny) {
+  auto compute_v_scalar = GetScalarValue<bool>(input_args[kInputIndex1]->GetValue());
+  if (!compute_v_scalar.has_value()) {
     shapes_list.at(kIndex1) = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   } else {
-    auto compute_v_value = GetValue<bool>(compute_v);
+    auto compute_v_value = compute_v_scalar.value();
     if (compute_v_value) {
       shapes_list.at(kIndex1) = std::make_shared<abstract::Shape>(input_shape);
     } else {
@@ -84,9 +81,7 @@ BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr EigFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_type = input_args[kInputIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
   std::vector<TypePtr> types_list;
   if (*(x_type->cast<TensorTypePtr>()->element()) == *(kFloat32)) {
     types_list = {std::make_shared<TensorType>(kComplex64), std::make_shared<TensorType>(kComplex64)};

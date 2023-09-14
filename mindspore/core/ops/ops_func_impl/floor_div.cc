@@ -22,11 +22,7 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr FloorDivFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
   auto input0_shape = input_args[kIndex0]->GetShape();
   auto input1_shape = input_args[kIndex1]->GetShape();
 
@@ -44,9 +40,7 @@ BaseShapePtr FloorDivFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr FloorDivFuncImpl::InferType(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto input_type01 = input_args[kIndex0]->GetType();
-  return input_type01->Clone();
+  return input_args[0]->GetType()->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

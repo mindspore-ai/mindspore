@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHER_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHER_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHER_D_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHER_D_GPU_KERNEL_H_
 
 #include <algorithm>
 #include <map>
@@ -31,6 +31,7 @@
 
 namespace mindspore {
 namespace kernel {
+<<<<<<< HEAD:mindspore/ccsrc/plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h
 constexpr auto kUnKnown = "UnKnown";
 constexpr auto kGather = "Gather";
 constexpr auto kSparseGatherV2 = "SparseGatherV2";
@@ -40,16 +41,12 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
   explicit GatherFwdGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~GatherFwdGpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -90,7 +87,7 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   using GatherFunc = std::function<bool(GatherFwdGpuKernelMod *, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+                                        const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, GatherFunc>> func_list_;
   GatherFunc kernel_func_;
 

@@ -15,24 +15,16 @@
  */
 
 #include "ops/ops_func_impl/expm1.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr Expm1FuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_shape = input_args[kIndex0]->GetShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  return x_shape->Clone();
+  return input_args[0]->GetShape()->Clone();
 }
 
 TypePtr Expm1FuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-  auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type->Clone();
+  return input_args[0]->GetType()->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

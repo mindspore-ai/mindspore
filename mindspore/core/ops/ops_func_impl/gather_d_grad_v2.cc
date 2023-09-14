@@ -28,5 +28,25 @@ TypePtr GatherDGradV2FuncImpl::InferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[kInputIndex0]->GetType()->Clone();
 }
+
+int32_t GatherDGradV2FuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args) const {
+  auto input_shape_vec = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  auto index_shape_vec = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+  auto grad_shape_vec = input_args[kInputIndex3]->GetShape()->GetShapeVector();
+
+  if (IsDynamicRank(input_shape_vec) || IsDynamicRank(index_shape_vec) || IsDynamicRank(grad_shape_vec)) {
+    return OP_CHECK_RETRY;
+  }
+
+  if (input_shape_vec.size() != index_shape_vec.size() || input_shape_vec.size() != grad_shape_vec.size()) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the dimension of grad and output must be the equal to the "
+                             << "dimension of index: " << index_shape_vec.size()
+                             << ", but got the dimension of grad: " << grad_shape_vec.size()
+                             << ", the dimension of input/output: " << input_shape_vec.size();
+  }
+  return OP_CHECK_SUCCESS;
+}
 }  // namespace ops
 }  // namespace mindspore
