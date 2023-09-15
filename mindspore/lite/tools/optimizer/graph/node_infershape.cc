@@ -118,6 +118,7 @@ static const std::unordered_set<PrimitivePtr> kNNACLToOpsInfer = {
   prim::kPrimGLU,
   prim::kPrimGridSampler2D,
   prim::kPrimGridSampler3D,
+  prim::kPrimDeformableConv2d,
   // grad op
   prim::kPrimActivationGrad,
   prim::kPrimAbsGrad,

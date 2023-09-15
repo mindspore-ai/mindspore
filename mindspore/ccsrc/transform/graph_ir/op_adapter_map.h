@@ -478,6 +478,7 @@ constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 constexpr const char kNameIm2Col[] = "Im2Col";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
 constexpr const char kNameMoeFFN[] = "MoeFFN";
+constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 
 class OpAdapterDesc;
 
