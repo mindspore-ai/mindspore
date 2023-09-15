@@ -355,6 +355,12 @@ int ErrCode(const DfGraphConvertorPtr &converter) {
   return converter->ErrCode();
 }
 
+void GenFakeComputeGraph(const std::string &name, const DfGraphConvertorPtr &converter,
+                         const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
+  MS_EXCEPTION_IF_NULL(converter);
+  (void)converter->ConvertAllNode().InitParam(maps).GenFakeComputeGraph(name);
+}
+
 DfGraphPtr GenFakeGraph(const std::string &name) { return GenExampleGraph(name); }
 
 DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter) {

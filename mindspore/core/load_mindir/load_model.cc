@@ -2290,7 +2290,6 @@ AnfNodePtr MSANFModelParser::GetAnfNode(const std::string &node_name) {
   if (it == anfnode_build_map_.end()) {
     return nullptr;
   }
-
   // The FunctionGraph node can't been shared.
   FuncGraphPtr func_graph_ptr = GetValueNode<FuncGraphPtr>(it->second);
   if (func_graph_ptr != nullptr) {

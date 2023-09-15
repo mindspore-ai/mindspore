@@ -1767,6 +1767,53 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
   }
 }
 
+DfGraphConvertor &DfGraphConvertor::GenFakeComputeGraph(const std::string &name) {
+  MS_LOG(INFO) << "Gen fake compute graph " << name;
+  df_graph_ = GenExampleGraph(name);
+  MS_EXCEPTION_IF_NULL(df_graph_);
+  if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    MS_EXCEPTION_IF_NULL(anf_graph_);
+    anf_graph_->set_flag(kGraphFlagHasGetNext, true);
+  }
+  if (!common::IsEnableRefMode()) {
+    return *this;
+  }
+  size_t index = 0;
+  auto params = anf_graph_->parameters();
+  std::vector<OperatorPtr> input_datas;
+  for (auto &it : params) {
+    auto name = std::static_pointer_cast<Parameter>(it)->name();
+    //  the parameters which has not been converted to var
+    if (vars_.find(name) == vars_.end()) {
+      auto abs = it->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (HasAbstractMonad(it) || abs->isa<abstract::AbstractSequence>()) {
+        MS_LOG(INFO) << it->DebugString() << " is a monad or tuple/list parameter, skip.";
+        continue;
+      }
+      auto op = Convert(it);
+      MS_EXCEPTION_IF_NULL(op);
+      UpdateDataOpDesc(it, op);
+      input_datas.push_back(op);
+    } else if (vars_[name] != nullptr) {
+      MS_LOG(INFO) << "add var input " << it->ToString() << ", index " << index;
+      auto op = Convert(it);
+      MS_EXCEPTION_IF_NULL(op);
+      if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
+        (void)ref_data->set_attr_index(index++);
+      } else {
+        MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
+      }
+      UpdateConstOpDesc(it, vars_[name]);
+      input_datas.push_back(op);
+    }
+  }
+  auto input_data_list = std::make_shared<InputDataList>();
+  input_data_list->input_datas = input_datas;
+  anf_graph_->set_user_data(input_data_list);
+  return *this;
+}
+
 DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_LOG(INFO) << "Start BuildGraph, graph: " << anf_graph_->ToString();
 

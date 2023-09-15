@@ -384,7 +384,7 @@ std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
   return str;
 }
 
-bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
+bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
@@ -397,7 +397,7 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   }
 #endif
   (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
-  if (!AddFakeGraph(anf_graph)) {
+  if (!AddFakeGraph(anf_graph, init_inputs_map)) {
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
@@ -759,7 +759,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
-    if (!BuildFakeGraph(graph)) {
+    if (!BuildFakeGraph(graph, tensor_order_map)) {
       return false;
     }
   } else {
@@ -821,7 +821,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     auto use_compile_cache = compile_cache_context.UseCompileCache();
     if (use_compile_cache) {
       MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
-      if (!BuildFakeGraph(graph)) {
+      if (!BuildFakeGraph(graph, tensor_order_map)) {
         return false;
       }
     } else {
