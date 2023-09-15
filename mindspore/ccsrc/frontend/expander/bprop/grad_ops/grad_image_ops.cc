@@ -50,7 +50,7 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
   if (allowed_types.count(image_type->type_id()) != 0) {
     x = ib->Cast(x, kFloat32);
   }
-  auto image_size = ib->Tensor(ib->GetShape(x), kInt32);
+  auto image_size = ib->Cast(ib->Shape(x, true), TypeId::kNumberTypeInt32);
   const auto max_byte = static_cast<int64_t>(2e9);  // max bytes of image gradient
   auto dimage = ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
                          {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}});

@@ -16,46 +16,9 @@
 """Generate bprop for debug ops"""
 
 from mindspore.ops import operations as P
-from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 
 # Unused parameters are placeholders.
-
-
-@bprop_getters.register(P.ScalarSummary)
-def get_bprop_scalar_summary(self):
-    """Generate bprop for ScalarSummary"""
-
-    def bprop(tag, x, out, dout):
-        return tag, zeros_like(x)
-    return bprop
-
-
-@bprop_getters.register(P.TensorSummary)
-def get_bprop_tensor_summary(self):
-    """Generate bprop for TensorSummary"""
-
-    def bprop(tag, x, out, dout):
-        return tag, zeros_like(x)
-    return bprop
-
-
-@bprop_getters.register(P.ImageSummary)
-def get_bprop_image_summary(self):
-    """Generate bprop for ImageSummary"""
-
-    def bprop(tag, x, out, dout):
-        return tag, zeros_like(x)
-    return bprop
-
-
-@bprop_getters.register(P.HistogramSummary)
-def get_bprop_histogram_summary(self):
-    """Generate bprop for HistogramSummary"""
-
-    def bprop(tag, x, out, dout):
-        return tag, zeros_like(x)
-    return bprop
 
 
 @bprop_getters.register(P.InsertGradientOf)
