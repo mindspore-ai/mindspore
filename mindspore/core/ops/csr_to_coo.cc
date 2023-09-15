@@ -45,10 +45,10 @@ AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, input_args, kCSRArgsSize);
   auto indptr = abstract::CheckArg<AbstractTensor>(op_name, input_args, 0);
+  MS_EXCEPTION_IF_NULL(indptr);
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
 
   auto nnz = abstract::CheckArg<AbstractScalar>(op_name, input_args, 1);
-  MS_EXCEPTION_IF_NULL(indptr);
   MS_EXCEPTION_IF_NULL(nnz);
 
   MS_EXCEPTION_IF_NULL(nnz->BuildValue());
