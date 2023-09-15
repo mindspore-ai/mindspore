@@ -20,6 +20,7 @@ class Registry:
     """Registry class for ms adapter."""
 
     def __init__(self):
+        self.is_registered = False
         self._tensor = None
         self._parameter = None
         self._convert_map = {}
@@ -48,6 +49,7 @@ class Registry:
         if self._tensor is not None:
             raise ValueError("Repeated registration of tensor in ms adapter config.")
         self._tensor = value
+        self.is_registered = True
 
     def register_parameter(self, value):
         """Register the parameter of ms adapter."""
