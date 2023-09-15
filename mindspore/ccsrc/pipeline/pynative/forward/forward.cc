@@ -740,6 +740,7 @@ PrimitivePtr ForwardExecutor::GetSlicePrimFromCache(const std::string &op_name, 
 
 FrontendOpRunInfoPtr ForwardExecutor::GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                                              const stub::StubNodePtr &stub_output) {
+  Init();
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   op_run_info->base_op_run_info.op_name = op_name;
   op_run_info->requires_grad = requires_grad;
