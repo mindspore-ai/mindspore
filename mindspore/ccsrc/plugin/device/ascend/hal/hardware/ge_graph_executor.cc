@@ -954,7 +954,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     real_output_size++;
     if (is_dynamic_shape) {
       auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
-      auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index);
+      auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
       auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
       output_addr->SetSize(ge_outputs[i].GetSize());
       auto actual_shapes = ge_outputs[i].GetTensorDesc().GetShape().GetDims();
