@@ -114,7 +114,7 @@ OpParameter *PopulateArithmeticFusionOpParameter(const BaseOperatorPtr &base_ope
   }
   mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kActivationType);
   if (attr != nullptr) {
-    param->activation_type_ = ActivationType(GetValue<int64_t>(attr));
+    param->activation_type_ = static_cast<int>(ActivationType(GetValue<int64_t>(attr)));
   }
   return reinterpret_cast<OpParameter *>(param);
 }

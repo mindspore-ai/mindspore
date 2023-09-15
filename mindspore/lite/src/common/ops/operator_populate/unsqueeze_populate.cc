@@ -41,7 +41,7 @@ OpParameter *PopulateUnsqueezeOpParameter(const BaseOperatorPtr &base_operator) 
     free(param);
     return nullptr;
   }
-  param->num_dim_ = flat_axis.size();
+  param->num_dim_ = static_cast<int>(flat_axis.size());
   int i = 0;
   for (auto axis : flat_axis) {
     CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
