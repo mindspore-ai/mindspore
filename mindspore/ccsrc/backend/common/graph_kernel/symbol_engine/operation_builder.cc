@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/symbol_engine/operation_builder.h"
+#include <algorithm>
+#include <utility>
 #include "ir/primitive.h"
 #include "ops/math_ops.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
@@ -126,6 +128,21 @@ SymbolPtr ReduceShape(OperationBuilder *b) {
   return b->Emit(std::make_shared<infershape::Reduce>(input, axis, keep_dims, skip_mode));
 }
 
+template <bool HAS_BATCH>
+SymbolPtr MatMulShape(OperationBuilder *b) {
+  auto x = b->RealShape(b->GetInput(1));
+  auto y = b->RealShape(b->GetInput(2));
+  auto trans_a = b->GetAttr("transpose_a");
+  if (trans_a == nullptr) {
+    trans_a = BoolSymbol::Make(false);
+  }
+  auto trans_b = b->GetAttr("transpose_b");
+  if (trans_b == nullptr) {
+    trans_b = BoolSymbol::Make(false);
+  }
+  return b->Emit(std::make_shared<infershape::MatMul>(x, y, trans_a, trans_b, HAS_BATCH));
+}
+
 REG_OP_SYMBOL_BUILDER("Abs").SetBuildShape(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Cast").SetBuildShape(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Exp").SetBuildShape(TransparentShape<1>);
@@ -153,6 +170,19 @@ REG_OP_SYMBOL_BUILDER("Reshape").SetBuildShape({DependOn::kShape, DependOn::kVal
                                                  auto shape = b->RealValue(b->GetInput(2));
                                                  return b->Emit(std::make_shared<infershape::Reshape>(input, shape));
                                                });
+REG_OP_SYMBOL_BUILDER("Transpose").SetBuildShape({DependOn::kShape, DependOn::kValue}, [](OperationBuilder *b) {
+  auto input = b->RealShape(b->GetInput(1));
+  auto perm = b->RealValue(b->GetInput(2));
+  return b->Emit(std::make_shared<infershape::Transpose>(input, perm));
+});
+REG_OP_SYMBOL_BUILDER("MatMul").SetBuildShape(MatMulShape<false>);
+REG_OP_SYMBOL_BUILDER("BatchMatMul").SetBuildShape(MatMulShape<true>);
+REG_OP_SYMBOL_BUILDER("MakeTuple").SetBuildShape([](OperationBuilder *b) -> SymbolPtr {
+  SymbolPtrList result(b->cnode()->size() - 1);
+  (void)std::transform(b->cnode()->inputs().cbegin() + 1, b->cnode()->inputs().cend(), result.begin(),
+                       [b](const AnfNodePtr &node) { return b->RealShape(node); });
+  return ListSymbol::Make(std::move(result));
+});
 }  // namespace
 }  // namespace ops::builders
 }  // namespace mindspore::graphkernel::symbol

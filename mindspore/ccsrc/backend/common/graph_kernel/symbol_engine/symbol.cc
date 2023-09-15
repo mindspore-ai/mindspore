@@ -25,7 +25,7 @@ void ScalarSymbol::UpdateImpl(const SymbolPtr &s) {
     return;
   }
   ScalarSymbol *other = s->as<ScalarSymbol>();
-  if (other == nullptr && other->tid() != tid()) {
+  if (other == nullptr || other->tid() != tid()) {
     MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a " << type_name();
     return;
   }
@@ -38,6 +38,9 @@ void ScalarSymbol::UpdateImpl(const SymbolPtr &s) {
 bool ListSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;
+  }
+  if (!has_data_ || !s.HasData()) {
+    return false;
   }
   auto *list = s.as<ListSymbol>();
   if (size() != list->size()) {
@@ -73,7 +76,6 @@ void ListSymbol::UpdateImpl(const SymbolPtr &s) {
   if (other == nullptr) {
     MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a ListSymbol";
   }
-  has_data_ = true;
   UpdateList(other->symbols());
 }
 

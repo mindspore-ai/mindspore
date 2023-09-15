@@ -190,6 +190,9 @@ class ScalarSymbol : public Symbol {
       if (this == &s) {                                                                                     \
         return true;                                                                                        \
       }                                                                                                     \
+      if (!has_data_ || !s.HasData()) {                                                                     \
+        return false;                                                                                       \
+      }                                                                                                     \
       auto p = s.as<cls>();                                                                                 \
       return p != nullptr && p->value_ == value_;                                                           \
     }                                                                                                       \
