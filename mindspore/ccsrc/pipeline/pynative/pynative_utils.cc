@@ -153,6 +153,7 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kMirrorOperatorOpName,
   kSequenceSliceOpName,
   kSequenceMulOpName,
+  kPyExecuteOpName,
 };
 }  // namespace
 
