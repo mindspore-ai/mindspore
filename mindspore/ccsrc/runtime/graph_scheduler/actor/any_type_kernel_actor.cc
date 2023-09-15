@@ -372,27 +372,33 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
   MS_LOG(DEBUG) << "Current data type:" << current_data_type_ << " for actor:" << GetAID();
   vector<AbstractActorPtr> actors;
   if (real_graphs_.find(current_data_type_) == real_graphs_.end()) {
-    std::lock_guard<std::mutex> lock(instance_lock_);
-    InferParameterAbstractForModelGraph(graph(), input_device_tensors_, any_type_parameter_indexes_);
-    graph()->InferType();
-    const auto &return_node = graph()->get_return();
-    MS_EXCEPTION_IF_NULL(return_node);
-    if (!return_node->isa<CNode>() || return_node->cast<CNodePtr>()->inputs().size() <= 1) {
-      MS_LOG(EXCEPTION) << "Invalid return node:" << return_node->DebugString() << " for graph:" << graph()->ToString();
+    try {
+      std::lock_guard<std::mutex> lock(instance_lock_);
+      InferParameterAbstractForModelGraph(graph(), input_device_tensors_, any_type_parameter_indexes_);
+      graph()->InferType();
+      const auto &return_node = graph()->get_return();
+      MS_EXCEPTION_IF_NULL(return_node);
+      if (!return_node->isa<CNode>() || return_node->cast<CNodePtr>()->inputs().size() <= 1) {
+        MS_LOG(EXCEPTION) << "Invalid return node:" << return_node->DebugString()
+                          << " for graph:" << graph()->ToString();
+      }
+      if (device_contexts().empty() || device_contexts()[0] == nullptr) {
+        MS_LOG(EXCEPTION) << "Invalid device context for actor:" << GetAID();
+      }
+      AnfNodePtrList inputs{};
+      AnfNodePtrList outputs{return_node->cast<CNodePtr>()->input(1)};
+      auto io_nodes = std::make_pair(inputs, outputs);
+      auto new_graph = compile_func_(BuildSegmentByGraph(graph()), io_nodes, device_contexts()[0], graph()->RunMode());
+      MS_EXCEPTION_IF_NULL(new_graph);
+      MS_LOG(INFO) << "Add new kernel graph:" << new_graph->ToString() << " for graph:" << graph()->ToString();
+      real_graphs_[current_data_type_] = new_graph;
+      actors = transform_func_(graph(), new_graph, device_contexts()[0]);
+      actors_[current_data_type_] = actors;
+      schedule_func_(actors);
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
     }
-    if (device_contexts().empty() || device_contexts()[0] == nullptr) {
-      MS_LOG(EXCEPTION) << "Invalid device context for actor:" << GetAID();
-    }
-    AnfNodePtrList inputs{};
-    AnfNodePtrList outputs{return_node->cast<CNodePtr>()->input(1)};
-    auto io_nodes = std::make_pair(inputs, outputs);
-    auto new_graph = compile_func_(BuildSegmentByGraph(graph()), io_nodes, device_contexts()[0], graph()->RunMode());
-    MS_EXCEPTION_IF_NULL(new_graph);
-    MS_LOG(INFO) << "Add new kernel graph:" << new_graph->ToString() << " for graph:" << graph()->ToString();
-    real_graphs_[current_data_type_] = new_graph;
-    actors = transform_func_(graph(), new_graph, device_contexts()[0]);
-    actors_[current_data_type_] = actors;
-    schedule_func_(actors);
   }
   UpdataDynamicShapeParameterForGraphInput(context);
   EraseInput(context);
