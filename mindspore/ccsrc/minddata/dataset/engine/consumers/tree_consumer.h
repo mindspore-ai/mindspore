@@ -53,9 +53,9 @@ class TreeConsumer {
   /// Initializes the consumer, this involves constructing and preparing the tree.
   /// \param root The dataset node that represent the root of the IR tree.
   /// \param global_step The global step to initialize from.
-  /// \param init_epoch The epoch to initialize from.
+  /// \param dataset_size The number of steps that one epoch has.
   /// \return Status code.
-  virtual Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch);
+  virtual Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t dataset_size);
 
   /// Internal function to perform the termination
   /// \return Status error code
@@ -67,10 +67,10 @@ class TreeConsumer {
 
   /// Function to reset the current consumer to the provided step.
   /// The consumer will terminate the pipeline and create a new one with skip injected.
-  /// \param step the step to reset the pipeline to.
-  /// \param epoch_num the epoch to reset the pipeline to.
+  /// \param step The step to reset the pipeline to.
+  /// \param dataset_size The number of steps that one epoch has.
   /// \return Status error code
-  virtual Status Reset(int64_t step, int64_t epoch_num);
+  virtual Status Reset(int64_t step, int64_t dataset_size);
 
   /// Function to stop the consumer.
   /// \return Status error code
@@ -129,24 +129,24 @@ class IteratorConsumer : public TreeConsumer {
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
   explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(num_epochs) {}
 
-  ~IteratorConsumer() = default;
+  ~IteratorConsumer() override = default;
 
-  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t init_epoch = 0) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t dataset_size = -1) override;
 
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
-  Status GetNextAsVector(std::vector<TensorPtr> *const out) override;
+  Status GetNextAsVector(std::vector<TensorPtr> *out) override;
 
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor
   /// \return Status error code
-  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out) override;
+  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out) override;
 
   /// Returns the next row in as a vector
   /// \param[out] out std::vector of pairs of string to Tensor
   /// \return Status error code
-  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) override;
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec) override;
 
   Status RegisterProfilingManager() override;
 
@@ -189,7 +189,7 @@ class SaveToDisk : public TreeConsumer {
 
  private:
   template <typename T, typename S>
-  Status TransformTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
+  Status TransformTensor(const unsigned char *src, const TensorShape &shape, int64_t num_of_elements,
                          std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
                          std::unique_ptr<S> *s, bool need_convert = false);
 
@@ -226,7 +226,7 @@ class ToDevice : public TreeConsumer {
 
   ~ToDevice() override = default;
 
-  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t init_epoch = 0) override;
+  Status Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step = 0, int64_t dataset_size = -1) override;
 
   Status RegisterProfilingManager() override;
 
@@ -246,7 +246,7 @@ class ToDevice : public TreeConsumer {
 
   /// Get data info from TDT
   /// \return  Status error code
-  virtual Status GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes);
+  virtual Status GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes);
 
   /// Get send info in sink mode
   /// \return  Status error code

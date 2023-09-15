@@ -129,8 +129,7 @@ def _reset_training_dataset(global_step, dataset_size):
     """
     dataset = _get_training_dataset()
     if dataset is not None:
-        epoch = global_step // dataset_size
-        dataset._reset(global_step, epoch)  # pylint: disable=protected-access
+        dataset._reset(global_step, dataset_size)  # pylint: disable=protected-access
     else:
         raise RuntimeError("Training dataset is not set.")
 
@@ -4151,11 +4150,11 @@ class _ToDevice:
         self._runtime_context.Init()
         self._to_device = cde.ToDevice(num_epochs)
         if dataset.get_init_step() != 0:
+            init_step = dataset.get_init_step()
             dataset_size = dataset.get_dataset_size()
-            init_epoch = dataset.get_init_step() // dataset_size
-            self._to_device.Init(ir_tree, dataset.get_init_step(), init_epoch)
+            self._to_device.Init(ir_tree, init_step, dataset_size)
         else:
-            self._to_device.Init(ir_tree, 0, 0)
+            self._to_device.Init(ir_tree, 0, -1)
         self._runtime_context.AssignConsumer(self._to_device)
 
         ITERATORS_LIST.append(weakref.ref(self))
@@ -4210,8 +4209,8 @@ class _ToDevice:
         offload_model = GetOffloadModel(self._to_device, col_names)
         return offload_model
 
-    def _reset(self, step, epoch):
-        self._to_device.Reset(step, epoch)
+    def _reset(self, step, dataset_size):
+        self._to_device.Reset(step, dataset_size)
 
 
 class TransferDataset(Dataset):
@@ -4319,10 +4318,10 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             self._to_device.release()
 
-    def _reset(self, step, epoch):
+    def _reset(self, step, dataset_size):
         if self._to_device is not None:
-            logger.info("Reset the dataset pipeline to step: " + str(step) + ", epoch: " + str(epoch))
-            self._to_device._reset(step, epoch)  # pylint: disable=protected-access
+            logger.info("Reset the dataset pipeline to step: " + str(step) + ", epoch: " + str(step // dataset_size))
+            self._to_device._reset(step, dataset_size)  # pylint: disable=protected-access
 
 
 class Schema:

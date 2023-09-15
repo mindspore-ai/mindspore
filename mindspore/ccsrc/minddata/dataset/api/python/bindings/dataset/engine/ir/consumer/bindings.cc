@@ -26,7 +26,9 @@ PYBIND_REGISTER(TreeConsumer, 0, ([](const py::module *m) {
                   (void)py::class_<TreeConsumer, std::shared_ptr<TreeConsumer>>(*m, "TreeConsumer")
                     .def(
                       "Reset",
-                      [](TreeConsumer &self, int64_t step, int64_t epoch) { THROW_IF_ERROR(self.Reset(step, epoch)); },
+                      [](TreeConsumer &self, int64_t step, int64_t dataset_size) {
+                        THROW_IF_ERROR(self.Reset(step, dataset_size));
+                      },
                       py::call_guard<py::gil_scoped_release>());
                 }));
 
@@ -37,7 +39,7 @@ PYBIND_REGISTER(PythonIteratorConsumer, 1, ([](const py::module *m) {
                     .def(
                       "Init",
                       [](PythonIteratorConsumer &self, const std::shared_ptr<DatasetNode> &root, int64_t global_step,
-                         int64_t init_epoch) { THROW_IF_ERROR(self.Init(root, global_step, init_epoch)); },
+                         int64_t dataset_size) { THROW_IF_ERROR(self.Init(root, global_step, dataset_size)); },
                       py::call_guard<py::gil_scoped_release>())
                     .def("GetNextAsMap",
                          [](PythonIteratorConsumer &self) {
@@ -152,7 +154,7 @@ PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                     .def(
                       "Init",
                       [](ToDevice &self, const std::shared_ptr<DatasetNode> &root, int64_t global_step,
-                         int64_t init_epoch) { THROW_IF_ERROR(self.Init(root, global_step, init_epoch)); },
+                         int64_t dataset_size) { THROW_IF_ERROR(self.Init(root, global_step, dataset_size)); },
                       py::call_guard<py::gil_scoped_release>())
                     .def("Send", [](ToDevice &self) { THROW_IF_ERROR(self.Send()); })
                     .def("ContinueSend", [](ToDevice &self) { THROW_IF_ERROR(self.Continue()); })

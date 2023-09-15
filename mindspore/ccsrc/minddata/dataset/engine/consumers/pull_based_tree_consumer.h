@@ -66,9 +66,9 @@ class PullBasedIteratorConsumer : public TreeConsumer {
   /// Function to reset the current consumer to the provided step.
   /// \note Reset is NOT supported for pull-based iterators.
   /// \param step the step to reset the pipeline to.
-  /// \param epoch_num the epoch to reset the pipeline to.
+  /// \param dataset_size the number of steps that one epoch has.
   /// \return Status error code
-  Status Reset(int64_t step, const int64_t epoch_num) override {
+  Status Reset(int64_t step, int64_t dataset_size) override {
     RETURN_STATUS_UNEXPECTED(
       "Failover reset is not supported for pull-based iterators (including when Debug mode is enabled).");
   }

@@ -35,7 +35,7 @@ Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, boo
                                "Invalid data, the node of child should be greater than zero.");
   // The injection is at the child of the root node
   injection_point_ = node->Children()[0];
-  num_epochs_ = node->num_epochs();
+  num_epochs_ = node->NumEpochs();
   return Status::OK();
 }
 

@@ -35,6 +35,7 @@ class MindDataNode;
 class NonMappableSourceNode;
 class ProjectNode;
 class RenameNode;
+class RootNode;
 class SkipNode;
 
 /// \class SkipPushdownPass skip_pushdown_pass.h
@@ -123,6 +124,12 @@ class SkipPushdownPass : public IRTreePass {
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
 
+    /// \brief Perform skip node pushdown check on a RootNode
+    /// \param[in] node The node being visited
+    /// \param[in, out] modified Indicator if the node was changed at all
+    /// \return Status The status code returned
+    Status Visit(std::shared_ptr<RootNode> node, bool *const modified) override;
+
     /// \brief Perform skip node pushdown completion check on a DatasetNode
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all
@@ -156,6 +163,7 @@ class SkipPushdownPass : public IRTreePass {
     std::vector<std::pair<std::shared_ptr<DatasetNode>, int64_t>> insert_skip_above_;
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_remove_;
     int64_t skip_count_;
+    int64_t skip_steps_;
   };
 
  public:

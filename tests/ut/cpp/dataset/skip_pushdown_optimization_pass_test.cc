@@ -35,8 +35,12 @@ class MindDataSkipPushdownTestOptimizationPass : public UT::DatasetOpTesting {
   /// \return Status of the function
   Status prepare_trees(std::shared_ptr<Dataset> root_original, std::shared_ptr<Dataset> root_target, int64_t step = 0) {
     auto ir_tree = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
+
+    // Get the dataset size for calculating the initial epoch
+    int64_t dataset_size = root_original->GetDatasetSize();
+
     // Compile adds a new RootNode to the top of the tree
-    RETURN_IF_NOT_OK(ir_tree->Compile(root_original->IRNode(), 1, step));
+    RETURN_IF_NOT_OK(ir_tree->Compile(root_original->IRNode(), 1, step, dataset_size));
 
     auto ir_tree_target = std::make_shared<TreeAdapter>();
     // Compile adds a new RootNode to the top of the tree

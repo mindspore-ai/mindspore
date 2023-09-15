@@ -50,27 +50,35 @@ def get_expected_result(dataset, num_epochs):
     return expected_result
 
 
-def test_init_step_with_non_mappable_source():
+@pytest.mark.parametrize("fast_recovery_mode", (True, False))
+@pytest.mark.parametrize("shuffle", (True, False, ds.Shuffle.GLOBAL, ds.Shuffle.FILES, ds.Shuffle.INFILE))
+def test_init_step_with_non_mappable_source(fast_recovery_mode, shuffle):
     """
     Feature: Pipeline resuming
     Description: Initialize TFRecordDataset from intermediate step
     Expectation: Pipeline returns data from the specified step
     """
+    original_mode = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(fast_recovery_mode)
     original_seed = ds.config.get_seed()
     ds.config.set_seed(0)
 
-    dataset_path = "../data/dataset/test_tf_file_3_images/"
-    # TODO: Need to fix
-    # When initialize dataset pipeline with shuffle from intermediate step,
-    # the samples will be in a different order than the initial, so we only verify
-    # the number of step here
-    shuffle = False
-    dataset = ds.TFRecordDataset(dataset_path + "train-0000-of-0001.data",
+    dataset_path = "../data/dataset/test_tf_file_3_images2/"
+    dataset = ds.TFRecordDataset([dataset_path + "train-0000-of-0001.data",
+                                  dataset_path + "train-0000-of-0002.data",
+                                  dataset_path + "train-0000-of-0003.data",
+                                  dataset_path + "train-0000-of-0004.data"],
                                  dataset_path + "datasetSchema.json",
-                                 shuffle=shuffle, num_samples=3)
+                                 shuffle=shuffle)
     decode = vision.Decode()
     resize = vision.Resize((32, 32))
     dataset = dataset.map([decode, resize], input_columns=["image"])
+
+    if not fast_recovery_mode:
+        # only in non fast recovery mode, we can keep random transforms the same
+        random_vertical_flip = vision.RandomVerticalFlip()
+        random_color = vision.RandomColor()
+        dataset = dataset.map([random_vertical_flip, random_color])
 
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
@@ -78,33 +86,55 @@ def test_init_step_with_non_mappable_source():
     for init_step in range(dataset_size * num_epochs):
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
+    ds.config.set_fast_recovery(original_mode)
     ds.config.set_seed(original_seed)
 
 
-def test_init_step_with_mappable_source():
+@pytest.mark.parametrize("fast_recovery_mode", (True, False))
+@pytest.mark.parametrize("shuffle", (True, False))
+def test_init_step_with_mappable_source(fast_recovery_mode, shuffle):
     """
     Feature: Pipeline resuming
     Description: Initialize ImageFolderDataset from intermediate step
     Expectation: Pipeline returns data from the specified step
     """
-    dataset = ds.ImageFolderDataset("../data/dataset/testPK/data", decode=True, num_samples=3)
-    random_resized_crop = vision.RandomResizedCrop((32, 32))
-    dataset = dataset.map([random_resized_crop], input_columns=["image"])
+    original_mode = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(fast_recovery_mode)
+    original_seed = ds.config.get_seed()
+    ds.config.set_seed(0)
+
+    dataset = ds.ImageFolderDataset("../data/dataset/testPK/data", decode=True, shuffle=shuffle)
+    resize = vision.Resize((32, 32))
+    dataset = dataset.map([resize], input_columns=["image"])
+
+    if not fast_recovery_mode:
+        # only in non fast recovery mode, we can keep random transforms the same
+        random_horizontal_flip = vision.RandomHorizontalFlip()
+        random_color_adjust = vision.RandomColorAdjust()
+        dataset = dataset.map([random_horizontal_flip, random_color_adjust])
+
     dataset = dataset.batch(4)
 
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
+    expected_result = get_expected_result(dataset, num_epochs)
     for init_step in range(dataset_size * num_epochs):
-        init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size)
+        init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
+
+    ds.config.set_fast_recovery(original_mode)
+    ds.config.set_seed(original_seed)
 
 
-def test_init_step_with_non_mappable_generator():
+@pytest.mark.parametrize("fast_recovery_mode", (True, False))
+@pytest.mark.parametrize("shuffle", (True, False))
+def test_init_step_with_non_mappable_generator(fast_recovery_mode, shuffle):
     """
     Feature: Pipeline resuming
     Description: Initialize non-mappable GeneratorDataset from intermediate step
     Expectation: Pipeline returns data from the specified step
     """
-
+    original_mode = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(fast_recovery_mode)
     original_seed = ds.config.get_seed()
     ds.config.set_seed(0)
 
@@ -113,7 +143,9 @@ def test_init_step_with_non_mappable_generator():
             yield i
 
     dataset = ds.GeneratorDataset(gen, column_names=["data"])
-    dataset = dataset.shuffle(2)
+
+    if shuffle:
+        dataset = dataset.shuffle(2)
 
     def process(data):
         return data * data
@@ -127,15 +159,22 @@ def test_init_step_with_non_mappable_generator():
     for init_step in range(dataset_size * num_epochs):
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
+    ds.config.set_fast_recovery(original_mode)
     ds.config.set_seed(original_seed)
 
 
-def test_init_step_with_mappable_generator():
+@pytest.mark.parametrize("fast_recovery_mode", (True, False))
+@pytest.mark.parametrize("shuffle", (True, False))
+def test_init_step_with_mappable_generator(fast_recovery_mode, shuffle):
     """
     Feature: Pipeline resuming
     Description: Initialize mappable GeneratorDataset from intermediate step
     Expectation: Pipeline returns data from the specified step
     """
+    original_mode = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(fast_recovery_mode)
+    original_seed = ds.config.get_seed()
+    ds.config.set_seed(0)
 
     class MyDataset:
         def __init__(self, length):
@@ -148,15 +187,22 @@ def test_init_step_with_mappable_generator():
         def __len__(self):
             return self.length
 
-    dataset = ds.GeneratorDataset(MyDataset(3), column_names=["image"], num_parallel_workers=2)
-    random_crop = vision.RandomCrop((5, 5))
-    random_horizontal_flip = vision.RandomHorizontalFlip()
-    dataset = dataset.map([random_crop, random_horizontal_flip], input_columns=["image"])
+    dataset = ds.GeneratorDataset(MyDataset(6), column_names=["image"], num_parallel_workers=2)
+
+    if shuffle:
+        dataset = dataset.shuffle(6)
+
+    dataset = dataset.repeat(2)
+    dataset = dataset.batch(3)
 
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
+    expected_result = get_expected_result(dataset, num_epochs)
     for init_step in range(dataset_size * num_epochs):
-        init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size)
+        init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
+
+    ds.config.set_fast_recovery(original_mode)
+    ds.config.set_seed(original_seed)
 
 
 @pytest.mark.parametrize("init_step", list(range(8)))
@@ -184,8 +230,8 @@ def test_getter(init_step):
 
 
 if __name__ == "__main__":
-    test_init_step_with_non_mappable_source()
-    test_init_step_with_mappable_source()
-    test_init_step_with_non_mappable_generator()
-    test_init_step_with_mappable_generator()
+    test_init_step_with_non_mappable_source(fast_recovery_mode=True, shuffle=True)
+    test_init_step_with_mappable_source(fast_recovery_mode=True, shuffle=True)
+    test_init_step_with_non_mappable_generator(fast_recovery_mode=True, shuffle=True)
+    test_init_step_with_mappable_generator(fast_recovery_mode=True, shuffle=True)
     test_getter(init_step=0)

@@ -70,7 +70,7 @@ class MyCallback(Callback):
         logger.info(f"Epoch #{cb_params.cur_epoch_num - 1} has ended")
         if cb_params.cur_epoch_num == self.reset_point:
             dataset = ds.engine.datasets._get_training_dataset()  # pylint: disable=W0212
-            dataset._reset(self.reset_point * self.dataset_size, self.reset_point)  # pylint: disable=W0212
+            dataset._reset(self.reset_point * self.dataset_size, self.dataset_size)  # pylint: disable=W0212
 
 
 @pytest.mark.level1

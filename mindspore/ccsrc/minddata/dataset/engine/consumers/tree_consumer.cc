@@ -62,7 +62,7 @@ Status TreeConsumer::Init(const std::shared_ptr<DatasetNode> &root) {
   return Status::OK();
 }
 
-Status TreeConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+Status TreeConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t dataset_size) {
   MS_LOG(WARNING) << "TreeConsumer does not support initializing from intermediate epoch or step, change to "
                      "initialize from the beginning.";
   return Init(root);
@@ -168,11 +168,11 @@ Status TreeConsumer::InitAutoTune() {
 std::string TreeConsumer::GetOffload() { return (tree_adapter_->GetOffloadJson()).dump(); }
 
 // IteratorConsumer
-Status IteratorConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+Status IteratorConsumer::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t dataset_size) {
   if (global_step != 0) {
     tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
   }
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, init_epoch));
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, dataset_size));
 #ifndef ENABLE_SECURITY
   profiling_manager_ = GlobalContext::profiling_manager();
   if (profiling_manager_->IsProfiling()) {
@@ -211,7 +211,7 @@ Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
     }
     to_keep_indices.push_back(colMap.second);
   }
-  if (to_keep_indices.size() == 0) {
+  if (to_keep_indices.empty()) {
     std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
     err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
     err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
@@ -248,7 +248,7 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
     }
     (*out_map)[colMap.first] = std::move(res[colMap.second]);
   }
-  if (out_map->size() == 0) {
+  if (out_map->empty()) {
     std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
     err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
     err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
@@ -288,7 +288,7 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
     }
   }
 
-  if (column_order_.size() == 0) {
+  if (column_order_.empty()) {
     std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
     err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
     err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
@@ -303,11 +303,11 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 }
 
 // ToDevice
-Status ToDevice::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t init_epoch) {
+Status ToDevice::Init(const std::shared_ptr<DatasetNode> &root, int64_t global_step, int64_t dataset_size) {
   if (global_step != 0) {
     tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
   }
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, init_epoch));
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(root, num_epochs_, global_step, dataset_size));
 #ifndef ENABLE_SECURITY
   profiling_manager_ = GlobalContext::profiling_manager();
   if (profiling_manager_->IsProfiling()) {
@@ -391,7 +391,7 @@ Status ToDevice::Terminate() {
   return TreeConsumer::Terminate();
 }
 
-Status TreeConsumer::Reset(int64_t step, const int64_t epoch_num) {
+Status TreeConsumer::Reset(int64_t step, const int64_t dataset_size) {
   MS_LOG(INFO) << "Resetting TreeConsumer";
 
   MS_LOG(INFO) << "Terminating pipeline with UUID:" << tree_adapter_->tree_->GetUniqueId();
@@ -412,7 +412,7 @@ Status TreeConsumer::Reset(int64_t step, const int64_t epoch_num) {
   }
 #endif
   tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
-  RETURN_IF_NOT_OK(tree_adapter_->Compile(old_root, num_epochs_, step, epoch_num));
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(old_root, num_epochs_, step, dataset_size));
   RETURN_IF_NOT_OK(tree_adapter_->Launch());
   MS_LOG(INFO) << "Launched a new pipeline after reset. UUID: " << tree_adapter_->tree_->GetUniqueId();
   std::shared_ptr<DatasetOp> root2 = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());

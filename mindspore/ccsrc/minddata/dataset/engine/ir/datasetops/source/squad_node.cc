@@ -91,7 +91,7 @@ Status SQuADNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
   // option to false.
   if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp.
-    std::shared_ptr<DatasetOp> shuffle_op = nullptr;
+    std::shared_ptr<ShuffleOp> shuffle_op = nullptr;
     int64_t num_rows = 0;
     // Get the number of rows in the dataset.
     RETURN_IF_NOT_OK(SQuADOp::CountAllFileRows(dataset_dir_, usage_, &num_rows));
@@ -105,6 +105,7 @@ Status SQuADNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
     }
     shuffle_op->SetTotalRepeats(GetTotalRepeats());
     shuffle_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
+    shuffle_op->Skip(skip_steps_);
     node_ops->push_back(shuffle_op);
   }
   squad_op->SetTotalRepeats(GetTotalRepeats());
