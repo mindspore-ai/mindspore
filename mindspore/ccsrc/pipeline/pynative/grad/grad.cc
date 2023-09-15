@@ -38,7 +38,6 @@
 #include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/expander/pack/packfunc_grad.h"
-
 namespace mindspore {
 namespace pynative {
 namespace {
@@ -481,7 +480,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
   top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
-    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio));
+    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async()));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -1440,6 +1439,11 @@ void GradExecutor::AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell) {
   }
 }
 
+void GradExecutor::WorkerJoin() {
+  bprop_queue_->WorkerJoin();
+  assist_queue_->WorkerJoin();
+}
+
 AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const {
   // Is not a tensor
   AnfNodePtr node = GetNonTensorInput(v, obj_id);
@@ -1924,6 +1928,7 @@ void GradExecutor::ClearBpropTask() const {
   if (bprop_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
     bprop_queue_->Clear();
+    assist_queue_->Clear();
     bprop_queue_->CheckException();
   }
 }
@@ -1932,7 +1937,15 @@ void GradExecutor::WaitBpropTask() const {
   if (bprop_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
     bprop_queue_->Wait();
+    assist_queue_->Wait();
     bprop_queue_->CheckException();
+  }
+}
+
+void GradExecutor::DispatchAssistQueueTask(std::function<void(void)> task) const {
+  bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
+  if (!success) {
+    assist_queue_->CheckException();
   }
 }
 }  // namespace pynative

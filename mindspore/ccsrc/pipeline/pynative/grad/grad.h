@@ -47,7 +47,8 @@ class GradExecutor {
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
         dynamic_shape_(std::make_shared<DynamicShape>()),
-        bprop_queue_(std::make_shared<AsyncHqueue>("bprop_queue")) {}
+        bprop_queue_(std::make_shared<AsyncHqueue>("bprop_queue")),
+        assist_queue_(std::make_shared<AsyncHqueue>("assist_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -119,6 +120,7 @@ class GradExecutor {
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
+  void WorkerJoin();
   void SaveDynamicInputsCells(const py::object &obj, const py::args &args);
   void SetTopCellDynamicAttr(const py::object &cell);
   bool use_dynamic_shape_process() const {
@@ -143,6 +145,7 @@ class GradExecutor {
     return dynamic_inputs_cells_.count(obj_id) > 0;
   }
   std::string GetAlreadyRunCellId(const std::string &obj_id) const;
+  void DispatchAssistQueueTask(std::function<void(void)> task) const;
 
   inline bool is_high_order_top_cell() const { return top_cell_ != nullptr && top_cell_->is_high_order_top_cell(); }
 
@@ -215,7 +218,6 @@ class GradExecutor {
   void DispatchGradQueueTask(std::function<void(void)> &&task) const;
   void WaitBpropTask() const;
   void ClearBpropTask() const;
-
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
@@ -244,7 +246,7 @@ class GradExecutor {
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};
   AsyncHqueuePtr bprop_queue_;
-  AsyncHqueuePtr bprop_assist_queue_;
+  AsyncHqueuePtr assist_queue_;
   std::set<std::string> dynamic_inputs_cells_;
   std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
   bool forward_use_dynamic_shape_process_{false};
