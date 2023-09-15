@@ -264,8 +264,7 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  static const std::set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName};
-  return kInvalidInferResultOp.find(op_run_info->base_op_run_info.op_name) == kInvalidInferResultOp.end() &&
+  return !OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name) &&
          !op_run_info->base_op_run_info.has_dynamic_output;
 }
 
@@ -841,7 +840,8 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
     cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
   }
 
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
+  if (op_run_info->base_op_run_info.has_dynamic_output ||
+      OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name)) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);

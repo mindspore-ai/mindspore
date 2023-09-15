@@ -549,6 +549,8 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
     auto output_tensor = utils::cast<tensor::TensorPtr>(outputs[0]);
     MS_EXCEPTION_IF_NULL(output_tensor);
     op_run_info->base_op_run_info.abstract = output_tensor->ToAbstract();
+    MS_LOG(DEBUG) << "Update output abstract of " << op_run_info->base_op_run_info.op_name << " to "
+                  << op_run_info->base_op_run_info.abstract->ToString();
     return;
   }
   AbstractBasePtrList elements;
@@ -558,6 +560,8 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
     (void)elements.emplace_back(output_tensor->ToAbstract());
   }
   op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(elements);
+  MS_LOG(DEBUG) << "Update output abstract of " << op_run_info->base_op_run_info.op_name << " to "
+                << op_run_info->base_op_run_info.abstract->ToString();
 }
 
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
@@ -633,7 +637,7 @@ bool DisableRunOpAsync(const OpCompilerInfoPtr &op_compiler_info, const session:
   return true;
 #else
   return op_run_info->base_op_run_info.has_dynamic_output ||  // Infer output is dynamic.
-         op_compiler_info->graph_output_dynamic_ ||           // Graph output is dynamic after IR Pass. (e.g. Dropout)
+         op_compiler_info->need_refresh_abstract_ ||          // Graph output is dynamic after IR Pass. (e.g. Dropout)
          op_compiler_info->need_erase_ ||                     // Random op cache need to be erased.
          GetExecutionMode() == kGraphMode ||                  // Cannot find a wait point before compile graph.
          EnablePyNativeSyncRunning();                         // context.set_context(pynative_synchronize=True)
@@ -1106,7 +1110,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);
 
-  if (op_run_info->base_op_run_info.has_dynamic_output || op_compiler_info->graph_output_dynamic_) {
+  if (op_run_info->base_op_run_info.has_dynamic_output || op_compiler_info->need_refresh_abstract_) {
     UpdateOutputAbstract(*outputs, op_run_info);
   }
   if (op_compiler_info->need_erase_) {
