@@ -51,20 +51,20 @@ struct MemoryInfo {
 class NUMAAdapter {
  public:
   static std::shared_ptr<NUMAAdapter> GetInstance() {
-    static std::shared_ptr<NUMAAdapter> instance = std::make_shared<NUMAAdapter>();
+    static std::shared_ptr<NUMAAdapter> const instance = std::make_shared<NUMAAdapter>();
     return instance;
   }
 
   NUMAAdapter();
   ~NUMAAdapter();
   inline bool Available() const { return available_; }
-  void Bind(int node_id);
-  void *Malloc(int node_id, size_t size);
-  void Free(void *data, size_t size);
-  int NodesNum();
-  int CPUNum();
+  void Bind(int node_id) const;
+  void *Malloc(int node_id, size_t size) const;
+  void Free(void *data, size_t size) const;
+  int NodesNum() const;
+  int CPUNum() const;
   std::vector<int> GetCPUList(int node_id);
-  MemoryInfo GetNodeSize(int node_id);
+  MemoryInfo GetNodeSize(int node_id) const;
 
  private:
   void *handle_;  // numa.so handle

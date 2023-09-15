@@ -98,7 +98,7 @@ Block *MemOperator::GetBlock() {
     if (block_count_ >= blocks_.size()) {
       blocks_.resize(blocks_.size() + kBlockSize);
     }
-    blocks_[block_count_].index_ = block_count_;
+    blocks_[block_count_].index_ = static_cast<int64_t>(block_count_);
     block = &blocks_[block_count_++];
   }
   block->used_ = false;
@@ -281,7 +281,7 @@ int MemOperator::IncRefCount(void *ptr, int ref_count) {
   if (iter != datas_.end()) {
     auto index = iter->second;
     blocks_[index].ref_count_ += ref_count;
-    return blocks_[index].ref_count_;
+    return static_cast<int>(blocks_[index].ref_count_);
   }
   return kInvalidRefCount;
 }
@@ -292,7 +292,7 @@ int MemOperator::DecRefCount(void *ptr, int ref_count) {
   if (iter != datas_.end()) {
     auto index = iter->second;
     blocks_[index].ref_count_ -= ref_count;
-    return blocks_[index].ref_count_;
+    return static_cast<int>(blocks_[index].ref_count_);
   }
   return kInvalidRefCount;
 }
@@ -301,7 +301,7 @@ int MemOperator::RefCount(void *ptr) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = datas_.find(ptr);
   if (iter != datas_.end()) {
-    return blocks_[iter->second].ref_count_;
+    return static_cast<int>(blocks_[iter->second].ref_count_);
   }
   return kInvalidRefCount;
 }
