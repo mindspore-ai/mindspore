@@ -61,7 +61,7 @@ void SuperKernelActor::Init() {
     if (output_node->isa<CNode>() && (!HasAbstractMonad(output_node))) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, output_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
-      if (device_address->is_ptr_persisted()) {
+      if (device_address->is_ptr_persisted() || graph_->is_dynamic_shape()) {
         continue;
       }
       // Free the ptr in device address of output node.
