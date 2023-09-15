@@ -220,7 +220,11 @@ void TaskManager::InterruptMaster(const Status &rc) {
     // Move log error here for some scenarios didn't call GetMasterThreadRc
     if (master->rc_.StatusCode() != mindspore::StatusCode::kMDPyFuncException) {
       // use python operation, the error had been raised in python layer. So disable log prompt here.
-      MS_LOG(ERROR) << "Task is terminated with err msg (more details are in info level logs): " << master->rc_;
+      // non-sink + non-pyfunc -> print error
+      // non-sink + pyfunc     -> don't print error (the error has been raised in python layer)
+      // sink     + non-pyfunc -> print error
+      // sink     + pyfunc     -> print error in ShutdownGroup
+      MS_LOG(ERROR) << "MindSpore dataset is terminated with err msg: " << master->rc_;
     }
   }
 }
@@ -343,7 +347,7 @@ Status TaskGroup::DoServiceStop() {
   return (join_all(Task::WaitFlag::kNonBlocking));
 }
 
-TaskGroup::TaskGroup() : grp_list_(&Task::group), intrp_svc_(nullptr) {
+TaskGroup::TaskGroup() : has_dataqueue_(false), grp_list_(&Task::group), intrp_svc_(nullptr) {
   auto alloc = Services::GetAllocator<IntrpService>();
   intrp_svc_ = std::allocate_shared<IntrpService>(alloc);
   (void)Service::ServiceStart();

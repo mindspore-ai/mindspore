@@ -153,8 +153,11 @@ class TaskGroup : public Service {
 
   std::shared_ptr<IntrpService> GetIntrpService();
 
+  void HasDataQueue(bool has_dataqueue) { has_dataqueue_ = has_dataqueue; }
+
  private:
   Status rc_;
+  bool has_dataqueue_;
   // Can't use rw_lock_ as we will lead to deadlatch. Create another mutex to serialize access to rc_.
   std::mutex rc_mux_;
   RWLock rw_lock_;
