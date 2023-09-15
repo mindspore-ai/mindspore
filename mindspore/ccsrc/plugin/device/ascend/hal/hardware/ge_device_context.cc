@@ -50,21 +50,33 @@ constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   if (IsDynamicShapeGraph(func_graph)) {
-    auto nodes = TopoSort(func_graph->get_return());
     bool all_support = true;
-    for (const auto &node : nodes) {
-      if (!node->isa<CNode>()) {
+    auto mng = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    const auto &sub_graphs = mng->func_graphs();
+    for (const auto &sub_graph : sub_graphs) {
+      if (sub_graph == nullptr) {
         continue;
       }
-      if (GetCNodeTarget(node) != kAscendDevice) {
-        all_support = false;
-        continue;
-      }
-      if (!transform::ConvertCheck(node)) {
-        all_support = false;
-        auto cnode = node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(cnode);
-        cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(kCPUDevice));
+      auto nodes = TopoSort(sub_graph->get_return());
+      for (const auto &node : nodes) {
+        if (!node->isa<CNode>()) {
+          continue;
+        }
+        if (GetCNodeTarget(node) != kAscendDevice) {
+          all_support = false;
+          continue;
+        }
+        auto prim = GetCNodePrimitive(node);
+        if (prim == nullptr) {
+          continue;
+        }
+        if (!transform::ConvertCheck(node)) {
+          all_support = false;
+          auto cnode = node->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(cnode);
+          cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(kCPUDevice));
+        }
       }
     }
     return all_support;
