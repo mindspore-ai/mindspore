@@ -191,6 +191,7 @@ def test_adam_basic(mode):
     Description: Test adam with default parameter.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamFactory(False, False)
     fact.result_cmp()
 
@@ -207,6 +208,7 @@ def test_adam_group(mode):
     Description: Test adam with grouped params.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamFactory(True, False)
     fact.result_cmp()
 
@@ -223,6 +225,7 @@ def test_adam_lr_dynamic(mode):
     Description: Test adam when lr is dynamic.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamFactory(False, True)
     fact.result_cmp()
 
@@ -239,6 +242,7 @@ def test_adam_group_lr_dynamic(mode):
     Description: Test adam with grouped params when lr is dynamic.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamFactory(True, True)
     fact.result_cmp()
 
@@ -255,5 +259,6 @@ def test_adam_group_lr_dynamic_change_param(mode):
     Description: Test adam with grouped params when optimizer params are changed.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamFactory(True, True, True)
     fact.result_cmp()

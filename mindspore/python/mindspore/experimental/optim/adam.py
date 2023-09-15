@@ -190,3 +190,4 @@ class Adam(Optimizer):
                 self.hyper_map(F.partial(_adam_opt, self.adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
                                grads, params,
                                self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id])
+        return True

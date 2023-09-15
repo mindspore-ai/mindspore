@@ -186,6 +186,7 @@ def test_sgd_basic(mode):
     Description: Test sgd with default parameter.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = SGDFactory(False, False)
     fact.result_cmp()
 
@@ -202,6 +203,7 @@ def test_sgd_group(mode):
     Description: Test sgd with grouped params.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = SGDFactory(True, False)
     fact.result_cmp()
 
@@ -218,6 +220,7 @@ def test_sgd_lr_dynamic(mode):
     Description: Test sgd when lr is dynamic.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = SGDFactory(False, True)
     fact.result_cmp()
 
@@ -234,6 +237,7 @@ def test_sgd_group_lr_dynamic(mode):
     Description: Test sgd with grouped params when lr is dynamic.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = SGDFactory(True, True)
     fact.result_cmp()
 
@@ -250,5 +254,6 @@ def test_sgd_group_lr_dynamic_change_param(mode):
     Description: Test sgd with grouped params when optimizer params are changed.
     Expectation: success.
     """
+    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = SGDFactory(True, True, True)
     fact.result_cmp()

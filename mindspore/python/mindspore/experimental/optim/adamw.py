@@ -178,3 +178,4 @@ class AdamW(Optimizer):
                                      group.get("eps"), self.state_step, beta1, beta2),
                            self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],
                            self.exp_avg_sq[start_id: end_id], self.max_exp_avg_sq[start_id: end_id])
+        return True
