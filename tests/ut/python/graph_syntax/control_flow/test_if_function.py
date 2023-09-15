@@ -16,13 +16,17 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore import context
+import mindspore as ms
 
-context.set_context(mode=context.GRAPH_MODE)
+ms.set_context(mode=ms.GRAPH_MODE)
 
 
 def test_if_function():
+    """
+    Feature: If statement.
+    Description: Condition is function.
+    Expectation: No exception.
+    """
     class Net(nn.Cell):
         def __init__(self, func):
             super(Net, self).__init__()
@@ -35,6 +39,25 @@ def test_if_function():
     def add(x, y):
         return x + y
     net = Net(add)
-    x = Tensor(np.ones([1, 2, 3], np.int32))
-    y = Tensor(np.ones([1, 2, 3], np.int32))
+    x = ms.Tensor(np.ones([1, 2, 3], np.int32))
+    y = ms.Tensor(np.ones([1, 2, 3], np.int32))
     net(x, y)
+
+
+def test_if_class_type():
+    """
+    Feature: If statement.
+    Description: Condition is class type.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            return 0
+
+    @ms.jit
+    def func():
+        if Net:  # pylint: disable=using-constant-test
+            return 0
+        return 1
+
+    assert func() == 0
