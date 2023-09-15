@@ -208,35 +208,37 @@ Status MatMul::CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_
     if (!transpose_b_ &&
         (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,16,32], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
-                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
-                    << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
-                    << ", but the shard num of second input's row is "
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << ShapeToString(mat_a_strategy) << " and mat_b "
+                    << ShapeToString(mat_b_strategy) << ". The transpose_a is: " << transpose_a_
+                    << ", and transpose_b is " << transpose_b_ << ", the shard num of first input's row is "
+                    << mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) << ", but the shard num of second input's row is "
                     << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
       return FAILED;
     } else if (transpose_b_ && (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,32,16], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
-                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
-                    << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << ShapeToString(mat_a_strategy) << " and mat_b "
+                    << ShapeToString(mat_b_strategy) << ". The transpose_a is: " << transpose_a_
+                    << ", and transpose_b is " << transpose_b_ << ", the shard num of first input's row is "
+                    << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
                     << ", but the shard num of second input's column is " << mat_b_strategy.back();
       return FAILED;
     }
   } else {
     if (!transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,16,32], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
-                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
-                    << ", the shard num of first input's column is " << mat_a_strategy.back()
-                    << ", but the shard num of second input's row is "
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << ShapeToString(mat_a_strategy) << " and mat_b "
+                    << ShapeToString(mat_b_strategy) << ". The transpose_a is: " << transpose_a_
+                    << ", and transpose_b is " << transpose_b_ << ", the shard num of first input's column is "
+                    << mat_a_strategy.back() << ", but the shard num of second input's row is "
                     << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
       return FAILED;
     } else if (transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,32,16], [16] in the example
-      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << mat_a_strategy << " and mat_b " << mat_b_strategy
-                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
-                    << ", the shard num of first input's column is " << mat_a_strategy.back()
-                    << ", but the shard num of second input's column is " << mat_b_strategy.back();
+      MS_LOG(ERROR) << name_ << ": Invalid strategy for mat_a " << ShapeToString(mat_a_strategy) << " and mat_b "
+                    << ShapeToString(mat_b_strategy) << ". The transpose_a is: " << transpose_a_
+                    << ", and transpose_b is " << transpose_b_ << ", the shard num of first input's column is "
+                    << mat_a_strategy.back() << ", but the shard num of second input's column is "
+                    << mat_b_strategy.back();
       return FAILED;
     }
   }

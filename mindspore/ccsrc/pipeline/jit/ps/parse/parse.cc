@@ -3990,17 +3990,22 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   auto [keys, values] = block->local_py_params();
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
-  const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(script_text));
-  for (const auto &id : ids) {
-    const auto &id_str = py::str(id);
-    const auto &iter = values.find(id_str);
-    if (iter != values.end()) {
-      (void)filter_keys.emplace_back(keys[iter->first]);
-      auto &val_node = iter->second;
-      // '__py_interpret_local_value_flag__' is used by 'ConvertInterpretedObjForResolve' not to convert PyExecute.
-      val_node->set_user_data("__py_interpret_local_value_flag__", std::make_shared<bool>(true));
-      (void)filter_values.emplace_back(val_node);
+  try {
+    const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(script_text));
+    for (const auto &id : ids) {
+      const auto &id_str = py::str(id);
+      const auto &iter = values.find(id_str);
+      if (iter != values.end()) {
+        (void)filter_keys.emplace_back(keys[iter->first]);
+        auto &val_node = iter->second;
+        // '__py_interpret_local_value_flag__' is used by 'ConvertInterpretedObjForResolve' not to convert PyExecute.
+        val_node->set_user_data("__py_interpret_local_value_flag__", std::make_shared<bool>(true));
+        (void)filter_values.emplace_back(val_node);
+      }
     }
+  } catch (const std::exception &e) {
+    MS_LOG(INTERNAL_EXCEPTION) << "GetPythonScriptIdAttrs failed, script: " << py::str(script_text) << ".\n"
+                               << e.what();
   }
   constexpr auto self_text = "self";
   if (keys.find(self_text) == keys.end() && script_text.find(self_text) != std::string::npos) {
