@@ -64,7 +64,8 @@ void ManifestNode::Print(std::ostream &out) const {
 Status ManifestNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   std::vector<char> forbidden_symbols = {':', '*', '?', '"', '<', '>', '|', '`', '&', '\'', ';'};
-  for (char c : dataset_file_) {
+  std::string dataset_file_base = Path(dataset_file_).Basename();
+  for (char c : dataset_file_base) {
     auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
     if (p != forbidden_symbols.end()) {
       std::string err_msg =
