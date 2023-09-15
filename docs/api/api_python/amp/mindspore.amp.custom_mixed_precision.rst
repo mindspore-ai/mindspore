@@ -9,8 +9,9 @@ mindspore.amp.custom_mixed_precision
     需要提供 `white_list` 和 `black_list` 中的一个。
 
     .. note::
-        - 使用 `custom_mixed_precision` 进行精度转换后，不支持再次使用其他接口进行精度转换。
-          如果使用 :class:`mindspore.train.Model` 和 :func:`mindspore.amp.build_train_network` 等接口来训练转换后的网络，则需要将 `amp_level` 配置
+        - 重复调用混合精度接口，如 `custom_mixed_precision` 和 `auto_mixed_precision` ，可能导致网络层数增大，性能降低。
+        - 如果使用 :class:`mindspore.train.Model` 和 :func:`mindspore.amp.build_train_network` 等接口来训练经
+          过 `custom_mixed_precision` 和 `auto_mixed_precision` 等混合精度接口转换后的网络，则需要将 `amp_level` 配置
           为 ``O0`` 以避免重复的精度转换。
         - 当使用黑名单时，Primitive类型还未支持。
 

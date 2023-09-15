@@ -70,8 +70,8 @@ class _OutputTo16(nn.Cell):
     def __init__(self, backbone, dtype=mstype.float16):
         super(_OutputTo16, self).__init__(auto_prefix=False)
         self._backbone = backbone
-        self._jit_config_dict = backbone.jit_config_dict
         self.dtype = dtype
+        self._get_attr_from_cell(backbone)
 
     def construct(self, *args, **kwargs):
         return F.cast(self._backbone(*args, **kwargs), self.dtype)
@@ -82,7 +82,7 @@ class _OutputTo32(nn.Cell):
     def __init__(self, backbone):
         super(_OutputTo32, self).__init__(auto_prefix=False)
         self._backbone = backbone
-        self._jit_config_dict = backbone.jit_config_dict
+        self._get_attr_from_cell(backbone)
 
     def construct(self, *args, **kwargs):
         out = self._backbone(*args, **kwargs)
@@ -262,6 +262,7 @@ def _auto_black_list(network, black_list, dtype):
             _auto_black_list(subcell, black_list, dtype)
     if isinstance(network, nn.SequentialCell) and change:
         network.cell_list = list(network.cells())
+    return network
 
 
 def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
@@ -275,12 +276,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     i.e. ``mstype.float32`` .
 
     The framework has a set of built-in blacklists and whitelists, and the `amp_level` determines which cells and
-    operators are specifically converted:
-
-    - When `amp_level="O0"` , no precision conversion is performed.
-    - When `amp_level="O1"` , only the cells and operators in the whitelist will be converted.
-    - When `amp_level="O2"` , all cells and operators except those in the blacklist will be converted.
-    - When `amp_level="O3"` , all cells and operators in the network are converted.
+    operators are specifically converted.
 
     The current built-in whitelist contents are:
 
@@ -299,6 +295,13 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
 
     For details on automatic mixed precision, refer to
     `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_ .
+
+    Note:
+        - Repeatedly calling mixed-precision interfaces, such as `custom_mixed_precision` and `auto_mixed_precision`,
+          can result in a larger network hierarchy and slower performance.
+        - If interfaces like `Model` and `build_train_network` is used to train the network which is converted by
+          mixed-precision interfaces such as `custom_mixed_precision` and `auto_mixed_precision`, `amp_level`
+          need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
 
     Args:
         network (Cell): Definition of the network.
@@ -336,17 +339,25 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     if amp_level == "O0":
         return network
 
-    if amp_level == "O1":
-        return _auto_white_list(network, AMP_WHITE_LIST, dtype)
+    # Return network if the same amp level has already been configurated
+    if getattr(network, "_amp_level") in ("O1", "O2", "O3"):
+        logger.warning(f"The network's auto mixed-precision level is adjusted from {getattr(network, '_amp_level')} "
+                       f"to {amp_level}, and repeated calls to mixed-precision interfaces can cause performance "
+                       f"degradation.")
 
-    if amp_level == "O2":
-        _auto_black_list(network, AMP_BLACK_LIST, dtype)
+    if amp_level == "O1":
+        network = _auto_white_list(network, AMP_WHITE_LIST, dtype)
+    elif amp_level == "O2":
+        network = _auto_black_list(network, AMP_BLACK_LIST, dtype)
+        network = _OutputTo32(network)
     elif amp_level == "O3":
         network.to_float(dtype)
+        network = _OutputTo32(network)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
-    if amp_level in ("O2", "O3"):
-        network = _OutputTo32(network)
+
+    setattr(network, "_amp_level", amp_level)
+
     return network
 
 
@@ -437,7 +448,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
             super(WithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
             self._loss_fn = loss_fn
-            self._jit_config_dict = backbone.jit_config_dict
+            self._get_attr_from_cell(backbone)
 
         def construct(self, data, label):
             out = self._backbone(data)
@@ -648,10 +659,11 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
     Only one of `white_list` and `black_list` should be provided.
 
     Note:
-        - After using `custom_mixed_precision` for precision conversion, it is not supported to use other interfaces
-          for precision conversion again. If interfaces like `Model` and `build_train_network` is used to train
-          the converted network, `amp_level` need to be configured to ``O0`` to avoid the duplicated accuracy
-          conversion.
+        - Repeatedly calling mixed-precision interfaces, such as `custom_mixed_precision` and `auto_mixed_precision`,
+          can result in a larger network hierarchy and slower performance.
+        - If interfaces like `Model` and `build_train_network` is used to train the network which is converted by
+          mixed-precision interfaces such as `custom_mixed_precision` and `auto_mixed_precision`, `amp_level`
+          need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
         - Primitives for blacklist is not support yet.
 
     Args:
@@ -696,11 +708,11 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
 
     if white_list is not None:
         _list_check(white_list, "white_list")
-        return _auto_white_list(network, white_list, dtype)
-
-    _list_check(black_list, "black_list")
-    _auto_black_list(network, black_list, dtype)
-    network = _OutputTo32(network)
+        network = _auto_white_list(network, white_list, dtype)
+    else:
+        _list_check(black_list, "black_list")
+        network = _auto_black_list(network, black_list, dtype)
+        network = _OutputTo32(network)
     return network
 
 

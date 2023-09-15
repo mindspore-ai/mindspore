@@ -114,7 +114,7 @@ class WithLossCell(Cell):
         super(WithLossCell, self).__init__(auto_prefix=False)
         self._backbone = backbone
         self._loss_fn = loss_fn
-        self._jit_config_dict = backbone.jit_config_dict
+        self._get_attr_from_cell(backbone)
 
     def construct(self, data, label):
         out = self._backbone(data)
@@ -197,7 +197,7 @@ class WithGradCell(Cell):
         else:
             self.network_with_loss = WithLossCell(self.network, self.loss_fn)
         self.network_with_loss.set_train()
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         weights = self.weights
@@ -299,8 +299,7 @@ class ForwardValueAndGrad(Cell):
         self.get_by_list = get_by_list
         self.sens_param = sens_param
         self.grad = C.GradOperation(get_all=self.get_all, get_by_list=self.get_by_list, sens_param=self.sens_param)
-        if isinstance(network, Cell) and network.jit_config_dict:
-            self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         grad_inputs = inputs
@@ -411,7 +410,7 @@ class TrainOneStepCell(Cell):
                 create_group(server_group_name, group_list[current_index])
                 group = server_group_name
             self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=group)
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         if not self.sense_flag:
@@ -510,7 +509,7 @@ class _VirtualDatasetCell(Cell):
         super(_VirtualDatasetCell, self).__init__(auto_prefix=False)
         self._backbone = backbone
         self._virtual_dataset = _VirtualDataset()
-        self._jit_config_dict = backbone.jit_config_dict
+        self._get_attr_from_cell(backbone)
 
     def construct(self, *inputs):
         output = self._virtual_dataset(*inputs)
@@ -597,7 +596,7 @@ class MicroBatchInterleaved(Cell):
             interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
             interleave_data.strided_slice.add_prim_attr("interleave_num", interleave_num)
             self.interleave_inputs.append(interleave_data)
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         output = 0.0
@@ -639,7 +638,7 @@ class PipelineCell(Cell):
             self.micro_inputs.append(micro_input)
             self.add = P.Add().add_prim_attr("pipeline_end", i)
             self.add_list.append(self.add)
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         ret = None
@@ -679,7 +678,7 @@ class GradAccumulationCell(Cell):
             self.micro_inputs.append(micro_input)
             self.add = P.Add().add_prim_attr("forward_end", i)
             self.add_list.append(self.add)
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         ret = None
@@ -708,7 +707,7 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, *inputs):
         if not self.sense_flag:
@@ -768,7 +767,7 @@ class VirtualDatasetCellTriple(Cell):
         super(VirtualDatasetCellTriple, self).__init__(auto_prefix=False)
         logger.warning("WARN_DEPRECATED: The usage of VirtualDatasetCellTriple is deprecated.")
         self._backbone = backbone
-        self._jit_config_dict = backbone.jit_config_dict
+        self._get_attr_from_cell(backbone)
 
     def construct(self, a, b, c):
         return self._backbone(a, b, c)
@@ -813,7 +812,7 @@ class WithEvalCell(Cell):
         self._network = network
         self._loss_fn = loss_fn
         self.add_cast_fp32 = validator.check_value_type("add_cast_fp32", add_cast_fp32, [bool], self.cls_name)
-        self._jit_config_dict = network.jit_config_dict
+        self._get_attr_from_cell(network)
 
     def construct(self, data, label):
         outputs = self._network(data)
