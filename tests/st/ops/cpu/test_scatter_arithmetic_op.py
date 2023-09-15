@@ -484,6 +484,38 @@ def test_scatter_div_empty_input():
     _ = P.ScatterDiv()(input_x, indices, updates)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_div_output_int16():
+    """
+    Feature: test ScatterDiv output and input_x same value.
+    Description: input is int16.
+    Expectation: output and input_x have same value
+    """
+    input_x = Parameter(Tensor(np.array([[6, 6, 6], [2, 2, 2]]), mindspore.int16), name="x")
+    indices = Tensor(np.array([0, 1]), mindspore.int32)
+    updates = Tensor(np.array([[2, 2, 2], [2, 2, 2]]), mindspore.int16)
+    output = P.ScatterDiv()(input_x, indices, updates)
+    assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_div_output_float64():
+    """
+    Feature: test ScatterDiv output and input_x same value.
+    Description: input is float64.
+    Expectation: output and input_x have same value
+    """
+    input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float64), name="x")
+    indices = Tensor(np.array([0, 1]), mindspore.int32)
+    updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float64)
+    output = P.ScatterDiv()(input_x, indices, updates)
+    assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
+
+
 class TestScatterMaxNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
         super(TestScatterMaxNet, self).__init__()
