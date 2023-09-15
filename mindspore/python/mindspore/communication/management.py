@@ -458,9 +458,9 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         >>> group = "0-4"
         >>> rank_ids = [0,4]
         >>> if get_rank() in rank_ids:
-        >>>     create_group(group, rank_ids)
-        >>>     world_rank_id = get_world_rank_from_group_rank(group, 1)
-        >>>     print("world_rank_id is: ", world_rank_id)
+        ...     create_group(group, rank_ids)
+        ...     world_rank_id = get_world_rank_from_group_rank(group, 1)
+        ...     print("world_rank_id is: ", world_rank_id)
         world_rank_id is: 4
     """
     if not isinstance(group, str):
@@ -514,9 +514,9 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         >>> group = "0-4"
         >>> rank_ids = [0,4]
         >>> if get_rank() in rank_ids:
-        >>>     create_group(group, rank_ids)
-        >>>     group_rank_id = get_group_rank_from_world_rank(4, group)
-        >>>     print("group_rank_id is: ", group_rank_id)
+        ...     create_group(group, rank_ids)
+        ...     group_rank_id = get_group_rank_from_world_rank(4, group)
+        ...     print("group_rank_id is: ", group_rank_id)
         group_rank_id is: 1
     """
     if not isinstance(group, str):
@@ -568,8 +568,8 @@ def create_group(group, rank_ids):
         >>> group = "0-7"
         >>> rank_ids = [0,7]
         >>> if get_rank() in rank_ids:
-        >>>     create_group(group, rank_ids)
-        >>>     allreduce = ops.AllReduce(group)
+        ...     create_group(group, rank_ids)
+        ...     allreduce = ops.AllReduce(group)
     """
     if not isinstance(group, str):
         raise TypeError("For 'create_group', the argument 'group' must be type of string, "
@@ -618,8 +618,8 @@ def destroy_group(group):
         >>> group = "0-2"
         >>> rank_ids = [0,2]
         >>> if get_rank() in rank_ids:
-        >>>     create_group(group, rank_ids)
-        >>>     destroy_group(group)
+        ...     create_group(group, rank_ids)
+        ...     destroy_group(group)
     """
     if not isinstance(group, str):
         raise TypeError("For 'destroy_group', the argument 'group' must be type of string, "

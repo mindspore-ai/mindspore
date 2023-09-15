@@ -2325,9 +2325,6 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                                 train_strategy_filename=None, strict_load=False, dec_key=None, dec_mode='AES-GCM'):
     """
     Load checkpoint into net for distributed predication. Used in the case of distributed inference.
-    For details of distributed inference, please check:
-    `Distributed Inference
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/distributed_inference.html>`_ .
 
     Args:
         network (Cell): Network for distributed predication.
@@ -2445,8 +2442,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         >>> load_model()
         [[-7.3259363 -7.497216  -7.398196  ... -7.374962  -7.204874  -7.234935 ]
         [ 3.362938   3.3535435  3.3832688 ...  3.4263954  3.279045   3.3202887]
-        [ 3.3689725  3.4767647  3.5473905 ...  3.432636   3.2526371  3.3652108]
         ...
+        [ 1.6067538  1.6244187  1.5384722 ...  1.5449994  1.6195512  1.6176052]]
     """
     network = Validator.check_isinstance("network", network, nn.Cell)
     _check_checkpoint_file(checkpoint_filenames)
