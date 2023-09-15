@@ -109,9 +109,9 @@ def names():
         >>> import mindspore as ms
         >>> ms.train.names()
         ['F1', 'acc', 'accuracy', 'auc', 'bleu_score', 'confusion_matrix', 'confusion_matrix_metric',
-        'cosine_similarity', 'dice', 'hausdorff_distance', 'loss', 'mae', 'mean_surface_distance', 'mase',
-        'occlusion_sensitivity', 'perplexity', 'recall', 'roc', 'root_mean_square_distance', 'top_1_accuracy',
-        'top_5_accuracy', 'topk']
+        'cosine_similarity', 'dice', 'hausdorff_distance', 'loss', 'mae', 'mean_surface_distance', 'mse',
+        'occlusion_sensitivity', 'perplexity', 'precision', 'recall', 'roc', 'root_mean_square_distance',
+        'top_1_accuracy', 'top_5_accuracy', 'topk']
     """
     return sorted(__factory__.keys())
 
