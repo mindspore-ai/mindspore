@@ -69,11 +69,12 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
     }
   } else {
     auto target_base_shape = target_abs->BuildShape();
+    MS_EXCEPTION_IF_NULL(target_base_shape);
     if (target_base_shape->isa<abstract::NoShape>()) {
       MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
     }
     auto target_shape = dyn_cast<abstract::Shape>(target_base_shape);
-    MS_EXCEPTION_IF_NULL(target_base_shape);
+    MS_EXCEPTION_IF_NULL(target_shape);
     const auto &target_shape_vec = target_shape->shape();
     if (target_shape_vec.size() != 0) {
       auto new_element_num = target_shape_vec[0];

@@ -52,10 +52,10 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
     // Record the inputs' information by their abstract types.
     const auto &input_abstract = input->abstract();
+    MS_EXCEPTION_IF_NULL(input_abstract);
     if (input_abstract->isa<abstract::AbstractMonad>()) {
       continue;
     }
-    MS_EXCEPTION_IF_NULL(input_abstract);
     if (input_abstract->isa<abstract::AbstractRefTensor>()) {
       const auto &param = dyn_cast<Parameter>(input);
       if (param != nullptr) {
