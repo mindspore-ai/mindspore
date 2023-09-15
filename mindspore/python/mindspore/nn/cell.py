@@ -1749,7 +1749,7 @@ class Cell(Cell_):
             >>> net = Net()
             >>> net.add_flags(sink_mode=True)
             >>> print(net.get_flags())
-            {'sink_mode':False}
+            {'sink_mode':True}
         """
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
