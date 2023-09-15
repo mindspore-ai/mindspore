@@ -49,8 +49,7 @@ class MatMulFusion : public OpDesc {
       a = gb.Reshape(a, new_shape);
     }
     auto matmul =
-      gb.Emit("MatMul", {a, b},
-              {{"transpose_a", transpose_a}, {"transpose_b", transpose_b}, {"dst_type", kFloat32}, {"pack_b", pack_b}});
+      gb.Emit("MatMul", {a, b}, {{"transpose_a", transpose_a}, {"transpose_b", transpose_b}, {"pack_b", pack_b}});
     if (bias != nullptr) {
       matmul = gb.Add(matmul, bias);
     }

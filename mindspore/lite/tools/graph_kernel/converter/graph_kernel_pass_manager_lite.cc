@@ -25,6 +25,8 @@
 #include "src/common/file_utils.h"
 #include "utils/file_utils.h"
 #include "src/common/utils.h"
+#include "utils/anf_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore::graphkernel {
 namespace dumpir {
@@ -287,6 +289,49 @@ void DumpShape(const AnfNodePtr &nd, const FuncGraphPtr &sub_graph, const std::s
   gsub->dumpbuf << std::endl;
 }
 
+std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
+  std::ostringstream buffer;
+  buffer << "<" << TypeIdLabel(type);
+  if (!fmt.empty()) {
+    buffer << "x" << fmt << shape;
+  }
+  buffer << ">";
+  return buffer.str();
+}
+
+std::string PrintOutputTypeShapeFormat(const std::shared_ptr<AnfNode> &node) {
+  if (node == nullptr) {
+    return "";
+  }
+  std::ostringstream buffer;
+  size_t output_num = AnfUtils::GetOutputTensorNum(node);
+  buffer << "OutputFormats:";
+  for (size_t i = 0; i < output_num; ++i) {
+    if (i != 0) {
+      buffer << ", ";
+    }
+    auto format = AnfAlgo::GetOutputFormat(node, (node->isa<Parameter>() ? 0 : i));
+    if (!format.empty()) {
+      buffer << format;
+    }
+  }
+  return buffer.str();
+}
+
+void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (node == nullptr || gsub == nullptr) {
+    return;
+  }
+  auto kernel_info = node->kernel_info();
+  if (kernel_info == nullptr || !kernel_info->has_build_info()) {
+    return;
+  }
+  gsub->dumpbuf << "      : (";
+  gsub->dumpbuf << PrintOutputTypeShapeFormat(node);
+  gsub->dumpbuf << ")";
+  gsub->dumpbuf << std::endl;
+}
+
 void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<AnfNodePtr, int32_t> *const para_map,
                const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false) {
   if (nd == nullptr || sub_graph == nullptr || para_map == nullptr || gsub == nullptr) {
@@ -312,6 +357,7 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
   DumpCNodeAttrs(nd, gsub);
   DumpCNodePrimalAttrs(nd, gsub);
   DumpShape(nd, sub_graph, gsub);
+  DumpKernelInfo(nd, gsub);
   if (dump_full_name) {
     gsub->dumpbuf << "      : (" << nd->fullname_with_scope() << ")" << std::endl;
   }

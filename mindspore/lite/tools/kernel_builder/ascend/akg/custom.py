@@ -21,6 +21,7 @@ import copy
 import functools
 import subprocess
 
+
 from tbe.common.buildcfg import get_current_build_config
 from impl.util.util_select_op_base import gen_param
 from impl.util.util_select_op_base import get_dynamic_param_in_json
@@ -31,10 +32,10 @@ FP16_MAX = 65504
 
 def copy_shape(shape):
     """Deep copy shape"""
-    res = []
-    for _, s in enumerate(shape):
-        res.append(s)
-    return res
+    ret = copy.deepcopy(shape)
+    if isinstance(ret, tuple):
+        ret = list(ret)
+    return ret
 
 
 class OpInfer:
@@ -327,8 +328,8 @@ class MatMul(OpInfer):
         self.op_desc["attr"].append({"data_type": "str", "name": "dst_type", "value": self.output_desc[0]["data_type"]})
 
 
-class ReduceSum(OpInfer):
-    """ReduceSum op."""
+class Reduce(OpInfer):
+    """Reduce op."""
 
     @staticmethod
     def _out_nz(rank, axis):
@@ -349,6 +350,15 @@ class ReduceSum(OpInfer):
                 out_shape.append(s)
         return out_shape
 
+    def _get_axis(self, axis, rank):
+        axis_attr = self.get_attr("axis")
+        axis = []
+        if isinstance(axis_attr, int):
+            axis = [axis_attr]
+        else:
+            axis = [i + rank if i < 0 else i for i in axis_attr]
+        return axis
+
     def supported_type(self):
         in_type = self.input_desc[0]["data_type"]
         if in_type == "float16":
@@ -361,7 +371,7 @@ class ReduceSum(OpInfer):
         supported_formats = ["ND,ND"]
         shape = self.input_desc[0]["shape"]
         rank = len(shape)
-        axis = [i if i >= 0 else i + rank for i in self.get_attr("axis")]
+        axis = self._get_axis(self.get_attr("axis"), rank)
         if self.is_nz(shape):
             if self._out_nz(rank, axis):
                 supported_formats.append("FRACTAL_NZ,FRACTAL_NZ")
@@ -390,7 +400,7 @@ class ReduceSum(OpInfer):
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
         rank = len(shape)
-        axis = [i + rank if i < 0 else i for i in self.get_attr("axis")]
+        axis = self._get_axis(self.get_attr("axis"), rank)
         self.output_desc[0]["ori_shape"] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
 
 
@@ -424,6 +434,33 @@ class Reshape(OpInfer):
                 item["ori_value"] = item["value"]
                 item["value"] = self.output_desc[0]["shape"]
 
+class ExpandDimAndSqueeze(Reshape):
+    def copy_axis(self, axis):
+        out_axis = []
+        if isinstance(axis, int):
+            out_axis.append(axis)
+        else:
+            out_axis = copy.deepcopy(axis)
+        return out_axis
+
+class Squeeze(ExpandDimAndSqueeze):
+    def infer_ori_shape(self):
+        axis = self.copy_axis(self.get_attr("axis"))
+        input_shape = copy_shape(self.input_desc[0]["shape"])
+        for idx in axis:
+            if input_shape[idx] != 1:
+                raise ValueError("The value of attr 'axis' is wrong , the squeezed axis must be 1, but got {}. 'axis': "
+                                 "{}, input shape: {}".format(input_shape[idx], axis, input_shape))
+            input_shape.pop(idx)
+        self.output_desc[0]["ori_shape"] = input_shape
+
+class ExpandDim(ExpandDimAndSqueeze):
+    def infer_ori_shape(self):
+        axis = self.copy_axis(self.get_attr("axis"))
+        input_shape = copy_shape(self.input_desc[0]["shape"])
+        for idx in axis:
+            input_shape.insert(idx, 1)
+        self.output_desc[0]["ori_shape"] = input_shape
 
 class BroadcastTo(OpInfer):
     """BroadcastTo op."""
@@ -480,6 +517,13 @@ class Tile(OpInfer):
         self.output_desc[0]["ori_shape"] = out_shape
 
 
+# Ge will convert dtype bool to int8, and ReLU will be expand to Greater op in expander,
+# and the dtype of Greater op is bool, which is incompatible with bool.
+# As a result akg will rise error when parsing Greater op with dtype int8.
+# Expand And Sequeeze op will be expanded into Reshape op in expander,
+# but in dynamic shape scenario, the meaning of -1 in Reshape op different from -1 in Expand And Sequeeze op.
+# So this will lead to infer shape error.
+# To solve these problems we need to cluster these ops in to subgraph and update info file here.
 prims = {
     "Abs": Elemwise,
     "Neg": Elemwise,
@@ -491,15 +535,27 @@ prims = {
     "Add": ElemwiseBinary,
     "Sub": ElemwiseBinary,
     "Mul": ElemwiseBinary,
+    "Div": ElemwiseBinary,
+    "Mod": ElemwiseBinary,
     "RealDiv": ElemwiseBinary,
     "Maximum": ElemwiseBinary,
     "Minimum": ElemwiseBinary,
     "MatMul": MatMul,
     "BatchMatMul": MatMul,
-    "ReduceSum": ReduceSum,
+    "ReduceSum": Reduce,
     "Reshape": Reshape,
+    "ExpandDims": ExpandDim,
+    "Squeeze": Squeeze,
     "BroadcastTo": BroadcastTo,
     "Tile": Tile,
+    "Log": Elemwise,
+    "Exp": Elemwise,
+    "Pow": Elemwise,
+    "Sign": Elemwise,
+    "ReLU": Elemwise,
+    "Tanh": Elemwise,
+    "ReduceMax": Reduce,
+    "ReduceMin": Reduce,
 }
 
 

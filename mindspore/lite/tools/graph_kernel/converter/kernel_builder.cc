@@ -27,6 +27,8 @@
 #include "tools/graph_kernel/converter/akg/gpu_kernel_builder.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "mindspore/ccsrc/kernel/kernel_build_info.h"
+#include "include/backend/kernel_info.h"
 
 namespace mindspore::graphkernel {
 AkgKernelBuilderPtr GetAkgBuilder(const std::string &target) {
@@ -68,6 +70,7 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
     if (!builder->GenerateAkgKernelNodes(func_graph, custom_cnode, cnode)) {
       MS_LOG(EXCEPTION) << "Copy kernel.o to tensor data fail for " << cnode->fullname_with_scope();
     }
+    custom_cnode->set_kernel_info(node->kernel_info_ptr());
     manager->Replace(node, custom_cnode);
     if (akg_node != nullptr) {
       manager->AddEdge(custom_cnode, akg_node);

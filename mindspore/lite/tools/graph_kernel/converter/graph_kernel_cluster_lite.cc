@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -34,22 +35,36 @@
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
+    {kAllTarget, OpLevel_0, prim::kPrimAbs},
     {kAllTarget, OpLevel_0, prim::kPrimAdd},
-    {kAllTarget, OpLevel_0, prim::kPrimMul},
-    {kAllTarget, OpLevel_0, prim::kPrimSub},
-    {kAllTarget, OpLevel_0, prim::kPrimSqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimDiv},
     {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
+    {kAllTarget, OpLevel_0, prim::kPrimExp},
+    {kAllTarget, OpLevel_0, prim::kPrimLog},
+    {kAllTarget, OpLevel_0, prim::kPrimMaximum},
+    {kAllTarget, OpLevel_0, prim::kPrimMinimum},
+    {kAllTarget, OpLevel_0, prim::kPrimMul},
+    {kAllTarget, OpLevel_0, prim::kPrimSqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimSub},
+    {kAllTarget, OpLevel_0, prim::kPrimNeg},
+    {kAllTarget, OpLevel_0, prim::kPrimPow},
+    {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
+    {kAllTarget, OpLevel_0, prim::kPrimReciprocal},
+    {kAllTarget, OpLevel_0, prim::kPrimRsqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimExpandDims},
+    {kAllTarget, OpLevel_0, prim::kPrimSqueeze},
+    {kAllTarget, OpLevel_0, prim::kPrimLeakyRelu},
+    {kAllTarget, OpLevel_0, prim::kPrimSign},
+    {kAllTarget, OpLevel_0, prim::kPrimMod},
+    {kAllTarget, OpLevel_0, prim::kPrimReduceMax},
+    {kAllTarget, OpLevel_0, prim::kPrimReduceMin},
+    {kAllTarget, OpLevel_0, prim::kPrimReduceSum},
     // ascend device
     {kAscendDevice, OpLevel_0, prim::kPrimMatMul},
     {kAscendDevice, OpLevel_0, prim::kPrimFastGeLU},
     {kAscendDevice, OpLevel_0, prim::kPrimTranspose},
     {kAscendDevice, OpLevel_0, prim::kPrimReshape},
     // cpu device
-    {kCPUDevice, OpLevel_0, prim::kPrimLog},
-    {kCPUDevice, OpLevel_0, prim::kPrimExp},
-    {kCPUDevice, OpLevel_0, prim::kPrimPow},
-    {kCPUDevice, OpLevel_0, prim::kPrimNeg},
-    {kCPUDevice, OpLevel_0, prim::kPrimRsqrt},
     {kCPUDevice, OpLevel_0, prim::kPrimSin},
     {kCPUDevice, OpLevel_0, prim::kPrimTanh},
     {kCPUDevice, OpLevel_0, prim::kPrimCos},
@@ -73,8 +88,10 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    return false;
+  if (!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion) {
+    if (common::AnfAlgo::IsDynamicShape(node)) {
+      return false;
+    }
   }
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
                                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });

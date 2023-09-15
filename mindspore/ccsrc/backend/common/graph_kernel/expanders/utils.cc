@@ -83,7 +83,14 @@ bool OpDesc::CheckOutputs() {
                    << outputs_info_[i].type << "]";
       return false;
     }
-    if (outputs[i]->format != outputs_info_[i].format) {
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+    bool format_check_condition =
+      (outputs[i]->format != kOpFormat_DEFAULT && outputs_info_[i].format != kOpFormat_DEFAULT) &&
+      outputs[i]->format != outputs_info_[i].format;
+#else
+    bool format_check_condition = outputs[i]->format != outputs_info_[i].format;
+#endif
+    if (format_check_condition) {
       MS_LOG(INFO) << "Op " << this->name_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["
                    << outputs_info_[i].format << "]";
       return false;

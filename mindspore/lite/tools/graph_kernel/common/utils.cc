@@ -106,4 +106,12 @@ int CalculateDynamicBatchSize(const TensorC *const *inputs, size_t inputs_size,
   }
   return RET_OK;
 }
+void SetKernelInfoWithFormatToAnfNode(const AnfNodePtr &node, const std::vector<std::string> &format) {
+  auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+  kernel_info_builder.SetOutputsFormat(format);
+  auto kernel_build_info = kernel_info_builder.Build();
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  kernel_info->set_select_kernel_build_info(kernel_build_info);
+  node->set_kernel_info(kernel_info);
+}
 }  // namespace mindspore::graphkernel
