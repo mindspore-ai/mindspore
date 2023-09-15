@@ -31,12 +31,12 @@ AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared
 ValuePtr Node::BuildValue() {
   if (value_ == nullptr) {
     if (anf_node_->isa<ValueNode>()) {
-      value_ = anf_node_->cast<ValueNodePtr>()->value();
-      MS_EXCEPTION_IF_NULL(value_);
+      return value_ = anf_node_->cast<ValueNodePtr>()->value();
     } else {
-      value_ = abstract()->BuildValue();
+      return value_ = abstract()->BuildValue();
     }
   }
+  is_used_value_ = true;
   return value_;
 }
 

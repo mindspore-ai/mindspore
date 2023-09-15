@@ -48,6 +48,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   AbstractBasePtr abstract();
 
   void SetValue(const ValuePtr &val) { value_ = val; }
+  ValuePtr Value() { return value_; }
   ValuePtr BuildValue();
 
   std::vector<int64_t> shape();
@@ -57,6 +58,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   std::vector<TypePtr> dtypes();
 
   Emitter *emitter() const { return emitter_; }
+  bool is_used_value() const { return is_used_value_; }
 
  protected:
   // the wrapped anfnode.
@@ -70,6 +72,8 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   TypePtr type_{nullptr};
   // cache the value of node
   ValuePtr value_{nullptr};
+  // whether use value
+  bool is_used_value_{false};
 };
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
