@@ -2348,41 +2348,71 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     return;
   }
 
-  for (size_t i = 1; i < input_size; i++) {
-    AnfNodePtr pred = branch_flag ? branch_input_handle_cache_[node.get()]->at(i - 1) : inputs[i];
+  std::vector<int64_t> dyn_input_sizes;
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrDynInputSizes);
+  }
+  size_t input_idx = 1;
+  size_t real_input_idx = 1;
+  while (input_idx < input_size) {
+    AnfNodePtr pred = branch_flag ? branch_input_handle_cache_[node.get()]->at(input_idx - 1) : inputs[input_idx];
     MS_EXCEPTION_IF_NULL(pred);
-    if (!IsDataInput(node, pred, i)) {
+    if (!IsDataInput(node, pred, real_input_idx)) {
       SetNodeControlInput(node, pred);
+      input_idx += 1;
+      real_input_idx += 1;
       continue;
     }
     TransformConstOp(node, pred);
     auto handles = GetInputHandles(node, pred);
     if (handles.empty()) {
       MS_LOG(INFO) << "Input handles is empty, input node: " << pred->fullname_with_scope()
-                   << ", node: " << node->fullname_with_scope() << ", index: " << i;
+                   << ", node: " << node->fullname_with_scope() << ", index: " << real_input_idx;
+      input_idx += 1;
+      real_input_idx += 1;
       continue;
     }
 
     int ret;
-    if (adpt->IsDynInputOp(i)) {
-      ret = adpt->setInput(Convert(node), static_cast<int>(i), std::make_shared<std::vector<OutHandler>>(handles));
+    int64_t dyn_input_num = -1;
+    if (!dyn_input_sizes.empty()) {
+      dyn_input_num = dyn_input_sizes.at(real_input_idx - 1);
+    } else if (adpt->IsDynInputOp(real_input_idx)) {
+      dyn_input_num = 1;
+    }
+    if (dyn_input_num != -1) {
+      for (size_t dyn_input_idx = 1; dyn_input_idx < LongToSize(dyn_input_num); ++dyn_input_idx) {
+        auto dyn_input_handle = GetInputHandles(node, inputs[input_idx + dyn_input_idx]);
+        handles.insert(handles.end(), dyn_input_handle.begin(), dyn_input_handle.end());
+      }
+      ret = adpt->setInput(src, SizeToInt(real_input_idx), std::make_shared<std::vector<OutHandler>>(handles));
+      input_idx += dyn_input_num;
     } else {
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
                           << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
-                          << ", index: " << i;
+                          << ", index: " << real_input_idx;
       }
-      ret = adpt->setInput(src, SizeToInt(i), handles[0]);
+      ret = adpt->setInput(src, SizeToInt(real_input_idx), handles[0]);
+      input_idx += 1;
     }
     if (ret != SUCCESS) {
       MS_LOG(DEBUG) << "Set node input handle failed, node:" << node->fullname_with_scope()
-                    << ", input node: " << pred->fullname_with_scope() << ", index: " << i;
+                    << ", input node: " << pred->fullname_with_scope() << ", index: " << real_input_idx;
     } else {
-      DrawOpInput(node, pred, i);
+      DrawOpInput(node, pred, real_input_idx);
       AddGraphConstInput(handles[0].op);
     }
+    real_input_idx += 1;
   }
   // Set input from attr.
+  SetOpAttrToInput(adpt, node);
+}
+
+void DfGraphConvertor::SetOpAttrToInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
+  OperatorPtr src = Convert(node);
+  auto &inputs = node->inputs();
+  size_t input_size = inputs.size();
   const auto &primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   const auto monad_size = std::count_if(inputs.begin() + kIndex1, inputs.end(), [](const AnfNodePtr &input) {
@@ -2710,11 +2740,12 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   }
 
   std::string graph_name = anf_graph->ToString();
-  if (branches_repeat_times_.count(graph_name) == 0) {
+  auto iter = branches_repeat_times_.find(graph_name);
+  if (iter == branches_repeat_times_.end()) {
     branches_repeat_times_[graph_name] = 1;
   } else {
-    branches_repeat_times_[graph_name] += 1;
-    graph_name = graph_name + "_" + std::to_string(branches_repeat_times_[graph_name]);
+    iter->second += 1;
+    graph_name = graph_name + "_" + std::to_string(iter->second);
   }
   (void)converter.ConvertAllNode().BuildGraph(graph_name);
 #ifdef ENABLE_DUMP_IR

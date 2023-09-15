@@ -24,14 +24,17 @@ namespace mindspore {
 namespace opt {
 class AscendConvertTupleInputToDynamicInput : public PatternProcessPass {
  public:
-  explicit AscendConvertTupleInputToDynamicInput(bool multigraph = true)
-      : PatternProcessPass("ascend_convert_tuple_input_to_dynamic_input", multigraph) {}
+  explicit AscendConvertTupleInputToDynamicInput(bool multigraph = true, bool is_ge = false)
+      : PatternProcessPass("ascend_convert_tuple_input_to_dynamic_input", multigraph), is_ge_(is_ge) {}
 
   ~AscendConvertTupleInputToDynamicInput() override = default;
 
   const BaseRef DefinePattern() const override;
 
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  bool is_ge_;
 };
 }  // namespace opt
 }  // namespace mindspore
