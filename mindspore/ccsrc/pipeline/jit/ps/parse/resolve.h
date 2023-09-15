@@ -164,12 +164,11 @@ using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;
 
 class MsClassObject final : public PyObjectWrapper {
  public:
-  explicit MsClassObject(const py::object &obj, const std::string &name = "ms class")
+  explicit MsClassObject(const py::object &obj, const std::string &name)
       : PyObjectWrapper(obj, "MsClassObject: \'" + name + "\'") {}
   ~MsClassObject() override = default;
   MS_DECLARE_PARENT(MsClassObject, PyObjectWrapper);
   abstract::AbstractBasePtr ToAbstract() override;
-  std::string ToString() const override { return name() + "|" + py::str(obj()).cast<std::string>(); }
 };
 using MsClassObjectPtr = std::shared_ptr<MsClassObject>;
 

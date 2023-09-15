@@ -465,7 +465,8 @@ void BindAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const Func
   for (const auto &pair : user_set) {
     const auto user_func_graph = pair.first->func_graph();
     MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", user_func_graph: " << user_func_graph->ToString();
-    if (user_func_graph != func_graph && user_func_graph != top_func_graph) {
+    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    if (user_func_graph != func_graph && (!enable_pre_lift || user_func_graph != top_func_graph)) {
       continue;
     }
     auto user_node = pair.first->cast<CNodePtr>();
