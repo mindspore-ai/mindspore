@@ -1223,7 +1223,7 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
     net = NetWork()
     with pytest.raises(IndexError) as ex:
         net(input_tensor)
-    assert "'begin[0]' must be in [-6, 6) when 'shrink_axis_mask' is greater than 0, " in str(ex.value)
+    assert "index -7 is out of bounds for dimension with size 6" in str(ex.value)
 
 
 @pytest.mark.level1
@@ -1245,7 +1245,7 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
     net = NetWork()
     with pytest.raises(IndexError) as ex:
         net(input_tensor)
-    assert "'begin[0]' must be in [-6, 6) when 'shrink_axis_mask' is greater than 0, " in str(ex.value)
+    assert "index 6 is out of bounds for dimension with size 6" in str(ex.value)
 
 
 @pytest.mark.level1

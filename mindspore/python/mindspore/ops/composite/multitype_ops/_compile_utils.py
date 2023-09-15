@@ -384,7 +384,8 @@ def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
         exp_msg = const_utils.gen_exception_msg(
             "Tuple index len({}) is not same to tensor dimension({})", len(tuple_index), data.ndim)
         const_utils.raise_index_error(exp_msg)
-    return tensor_setitem_by_tuple_with_number(data, tuple_index, nubmer_value)
+    nubmer_value = F.cast(nubmer_value, F.dtype(data))
+    return tensor_itemset_by_tuple_with_tensor(data, tuple_index, nubmer_value)
 
 
 def _broadcast(broadcast_shape, x):
@@ -1429,6 +1430,44 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
         data[True] = value
         return data
     indices = _tensor_index_setitem(data, tuple_index, value, idx_advanced)
+    updates = _generate_updates_from_tensor(data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
+    return F.tensor_scatter_update(data, indices, updates)
+
+def tensor_itemset_by_tuple_with_tensor(data, tuple_index, value):
+    """Assigns the tensor by tuple with tensor value."""
+    op_name = const_utils.TENSOR_SETITEM
+    tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
+
+    if const_utils.use_copy_slice(tuple_index) and not const_utils.is_ascend():
+        if F.is_sequence_value_unknown(F.shape(data)):
+            return tensor_copy_slice_from_tuple(data, tuple_index, value)
+        dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
+        if dim1_stop - dim1_start <= 0:
+            return data
+        dim0_start = tuple_index[0] if tuple_index[0] >= 0 else tuple_index[0] + data.shape[0]
+        start = (dim0_start, dim1_start)
+        stop = (dim0_start + 1, dim1_stop)
+        step = (1, 1)
+        value_shape = (dim1_stop - dim1_start,) + const_utils.tuple_slice(data.shape, 2, None)
+        value = _broadcast(value_shape, value)
+        return copy_slice(data, value.astype(data.dtype), start, stop, step)
+
+    tuple_index, value, idx_advanced = remove_expanded_dims(tuple_index, F.shape(data), value)
+
+    if tuple_index is False:
+        return data
+    if len(tuple_index) == 1:
+        data[tuple_index[0]] = value
+        return data
+    indexes_types = hyper_map(toptypeof, tuple_index)
+    contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
+
+    if contain_type == const_utils.ALL_TENSOR:
+        indices = _generate_indices_from_tuple_of_tensor(tuple_index, op_name)
+    else:
+        indices = _generate_indices_from_tuple(data, tuple_index, op_name, idx_advanced)
+        if indices is False:
+            return data
     updates = _generate_updates_from_tensor(data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
     return F.tensor_scatter_update(data, indices, updates)
 
