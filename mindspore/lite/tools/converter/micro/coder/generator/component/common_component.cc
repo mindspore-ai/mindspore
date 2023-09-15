@@ -496,7 +496,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   ofs << "  }\n";
   ofs << "\n";
   ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
-  ofs << "  int expect_out_types[" << outputs_num << "] = {";
+  ofs << "  int cur_out_types[" << outputs_num << "] = {";
   for (size_t i = 0; i < outputs_num; ++i) {
     ofs << ctx->graph_outputs().at(i)->data_type() << ", ";
   }
@@ -510,7 +510,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
   ofs << "  }\n";
   ofs << "  CopyOutputsData" << ctx->GetCurModelIndex()
-      << "(outputs, outputs_data_array, expect_out_types, out_type_changed);\n";
+      << "(outputs, outputs_data_array, cur_out_types, out_type_changed);\n";
   if (config.target() != kCortex_M) {
     ofs << "  UnLockBuffer(micro_model->runtime_buffer);\n";
   }
@@ -520,7 +520,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
 
 void CodeCopyOutputsState(std::ofstream &ofs, const int model_index) {
   ofs << "int CopyOutputsData" << model_index
-      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *expect_types, bool *type_changed);\n\n";
+      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *cur_types, bool *type_changed);\n\n";
 }
 
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
@@ -529,7 +529,7 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   size_t outputs_size = outputs.size();
 
   ofs << "int CopyOutputsData" << ctx->GetCurModelIndex()
-      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *expect_types, bool *type_changed) {\n"
+      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *cur_types, bool *type_changed) {\n"
          "  if (outputs_ori == NULL || outputs == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n";
@@ -547,8 +547,8 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   ofs << "};\n";
   ofs << "  for (int i = 0; i < " << outputs_size << "; i++) {\n"
       << "    MicroTensor *micro_tensor = (MicroTensor *)outputs_ori->handle_list[i];\n"
-      << "    int cur_type = micro_tensor->type;\n"
-      << "    int expect_type = expect_types[i];\n";
+      << "    int expect_type = micro_tensor->type;\n"
+      << "    int cur_type = cur_types[i];\n";
   ofs << "    if (cur_type == expect_type) {\n"
       << "      memcpy(outputs[i], buffer[i], buffer_size[i]);\n"
       << "      continue;\n"
@@ -569,10 +569,10 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
       << "      num *= micro_tensor->shape[i];\n"
       << "    }\n"
       << "    if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {\n"
-      << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)&outputs, num);\n"
+      << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)outputs[i], num);\n"
       << "      type_changed[i] = true;\n"
       << "    } else if (type_trans_mode == TypeTransMode_FP16_TO_FP32) {\n"
-      << "      Fp16CastToFp32((float16_t *)&outputs, (float *)(buffer[i]), num);\n"
+      << "      Fp16CastToFp32((float16_t *)(buffer[i]), (float *)outputs[i], num);\n"
       << "      type_changed[i] = true;\n"
       << "    }\n"
       << "#endif\n"
