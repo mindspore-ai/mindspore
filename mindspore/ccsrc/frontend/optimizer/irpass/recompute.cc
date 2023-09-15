@@ -468,8 +468,8 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
     bprop_fg = bprop_caller->func_graph();
   }
 
-  auto depend_nodes = bprop_fg->NewCNode(depend_inputs);
   MS_EXCEPTION_IF_NULL(bprop_fg);
+  auto depend_nodes = bprop_fg->NewCNode(depend_inputs);
   if (bprop_fg == fg) {
     if (!IsRecomputeCell(GetValueNode<FuncGraphPtr>(k_fg_caller_cnode->input(0)))) {
       auto depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), k_fg_caller_cnode->input(1), depend_nodes});

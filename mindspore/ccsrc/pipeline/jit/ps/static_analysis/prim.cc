@@ -1408,8 +1408,8 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
   }
 
   ValuePtr evaluated_value = RunImpl(value_list);
+  MS_EXCEPTION_IF_NULL(evaluated_value);
   if (!(*evaluated_value == *kValueAny)) {
-    MS_EXCEPTION_IF_NULL(evaluated_value);
     res_value_type = evaluated_value->type();
   }
   // for comparison primitives , return type shall have be specified to be bool.
