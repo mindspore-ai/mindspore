@@ -42,14 +42,14 @@ using ExecuteKernelInfoList = std::vector<ExecuteKernelInfo>;
 
 struct OpCompilerInfo {
   OpCompilerInfo(GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph, DeviceContext *device_context,
-                 bool need_erase, bool graph_output_dynamic, std::vector<KernelWithIndex> graph_output_nodes,
+                 bool need_erase, bool need_refresh_abstract, std::vector<KernelWithIndex> graph_output_nodes,
                  std::vector<size_t> graph_outputs_tensor_num, std::vector<std::string> graph_outputs_padding_type)
       : graph_info_(std::move(graph_info)),
         graph_id_(graph_id),
         graph_(std::move(graph)),
         device_context_(device_context),
         need_erase_(need_erase),
-        graph_output_dynamic_(graph_output_dynamic),
+        need_refresh_abstract_(need_refresh_abstract),
         graph_output_nodes_(std::move(graph_output_nodes)),
         graph_outputs_tensor_num_(std::move(graph_outputs_tensor_num)),
         graph_outputs_padding_type_(std::move(graph_outputs_padding_type)) {}
@@ -59,7 +59,7 @@ struct OpCompilerInfo {
   KernelGraphPtr graph_;
   DeviceContext *device_context_;
   bool need_erase_;
-  bool graph_output_dynamic_;
+  bool need_refresh_abstract_;
   std::vector<KernelWithIndex> graph_output_nodes_;
   std::vector<size_t> graph_outputs_tensor_num_;
   std::vector<std::string> graph_outputs_padding_type_;
@@ -97,6 +97,8 @@ class BACKEND_EXPORT OpCompiler {
 
   // Clear anf resources before process exit.
   void ClearAllCache();
+
+  bool IsInvalidInferResultOp(const std::string &op_name) const;
 
  private:
   OpCompiler();

@@ -19,7 +19,10 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 #include "include/backend/anf_runtime_algorithm.h"
+#include "ops/nn_op_name.h"
+#include "ops/conv_pool_op_name.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "runtime/device/device_address_utils.h"
@@ -211,6 +214,11 @@ OpCompiler &OpCompiler::GetInstance() {
   return instance;
 }
 
+bool OpCompiler::IsInvalidInferResultOp(const std::string &op_name) const {
+  static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName};
+  return kInvalidInferResultOp.find(op_name) != kInvalidInferResultOp.end();
+}
+
 KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                                const device::DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(session_);
@@ -308,7 +316,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   std::vector<KernelWithIndex> outputs_with_index;
   std::vector<size_t> outputs_tensor_num;
   std::vector<std::string> outputs_padding_type;
-  bool graph_output_dynamic = false;
+  bool need_refresh_abstract = IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name);
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     const auto &output_with_index = common::AnfAlgo::VisitKernel(node, 0);
@@ -325,14 +333,14 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     const auto &shape = abstract->BuildShape();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->IsDynamic()) {
-      graph_output_dynamic = true;
+      need_refresh_abstract = true;
     }
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
   auto op_compiler_info = std::make_shared<OpCompilerInfo>(
     graph_info, graph->graph_id(), graph, device_context, op_run_info->base_op_run_info.need_earse_cache,
-    graph_output_dynamic, outputs_with_index, outputs_tensor_num, outputs_padding_type);
+    need_refresh_abstract, outputs_with_index, outputs_tensor_num, outputs_padding_type);
 
   graph->set_graph_info(graph_info);
   ConvertGraphToExecuteInfo(op_compiler_info);
