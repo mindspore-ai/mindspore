@@ -41,14 +41,16 @@ class DatasetCache:
             Default: ``None`` , use default value 20.
 
     Examples:
+        >>> import subprocess
         >>> import mindspore.dataset as ds
         >>>
-        >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
-        >>> # In the following code, suppose the session_id is 780643335
-        >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
+        >>> # Create a cache instance with command line `cache_admin --start` and create a session with `cache_admin -g`
+        >>> # After creating cache with a valid session, get session id with command `cache_admin --list_sessions`
+        >>> session_id = subprocess.getoutput('cache_admin --list_sessions | tail -1 | awk -F " " \'{{print $1;}}\'')
+        >>> some_cache = ds.DatasetCache(session_id=int(session_id), size=0)
         >>>
         >>> dataset_dir = "/path/to/image_folder_dataset_directory"
-        >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
+        >>> dataset = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
     """
 
     def __init__(self, session_id, size=0, spilling=False, hostname=None, port=None, num_connections=None,
@@ -85,12 +87,18 @@ class DatasetCache:
         and number of caches in disk (num_disk_cached).
 
         Examples:
+            >>> import os
             >>> import mindspore.dataset as ds
             >>>
-            >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
-            >>> # In the following code, suppose the session_id is 780643335
-            >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
+            >>> # In example above, we created cache with a valid session id
+            >>> id = int(os.popen('cache_admin --list_sessions | tail -1 | awk -F " " \'{{print $1;}}\'').read())
+            >>> some_cache = ds.DatasetCache(session_id=id, size=0)
             >>>
+            >>> # run the dataset pipeline to trigger cache
+            >>> dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory", cache=some_cache)
+            >>> data = list(dataset)
+            >>>
+            >>> # get status of cache
             >>> stat = some_cache.get_stat()
             >>> # Average cache size
             >>> cache_sz = stat.avg_cache_sz

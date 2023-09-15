@@ -248,6 +248,8 @@ class SentencePieceVocab:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.text as text
+            >>>
             >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
@@ -571,8 +573,8 @@ class Vocab:
             >>> import mindspore.dataset.text as text
             >>> vocab = text.Vocab.from_list(["word_1", "word_2", "word_3", "word_4"])
             >>> vocabory_dict = vocab.vocab()
-            >>> print(vocabory_dict)
-            {'word_3': 2, 'word_1': 0, 'word_4': 3, 'word_2': 1}
+            >>> print(sorted(vocabory_dict.items()))
+            [('word_1', 0), ('word_2', 1), ('word_3', 2), ('word_4', 3)]
         """
         check_vocab(self.c_vocab)
         return self.c_vocab.vocab()

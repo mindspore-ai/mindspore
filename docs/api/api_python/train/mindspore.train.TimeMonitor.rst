@@ -12,6 +12,7 @@ mindspore.train.TimeMonitor
 
     异常：
         - **ValueError** - `data_size` 不是正整数。
+        - **TypeError** - `data_time` 不是布尔类型。
 
     .. py:method:: epoch_begin(run_context)
 
@@ -23,6 +24,20 @@ mindspore.train.TimeMonitor
     .. py:method:: epoch_end(run_context)
 
         在epoch结束时打印epoch的耗时。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_train_step_begin(run_context)
+
+        在step开始时记录时间。
+
+        参数：
+            - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
+
+    .. py:method:: on_train_step_end(run_context)
+
+        在step结束时记录时间。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
