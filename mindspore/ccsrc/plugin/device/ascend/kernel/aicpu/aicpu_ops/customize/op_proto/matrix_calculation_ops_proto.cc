@@ -159,4 +159,162 @@ CUST_COMMON_INFER_FUNC_REG(MatrixLogarithm, MatrixLogarithmInferShaper);
 // ----------------MatrixExp-------------------
 CUST_COMMON_INFER_FUNC_REG(MatirxExp, OneInOneOutCommonInferShape);
 // ----------------MatrixExp END-------------------
+
+// ----------------TraceGrad Begin------------------------
+IMPLEMT_COMMON_INFERFUNC(TraceGradInferShape) {
+  Shape shape = op.GetInputDescByName("y_grad").GetShape();
+  DataType input_dtype = op.GetInputDescByName("y_grad").GetDataType();
+  std::vector<std::string> input_infer_depends = {"x_shape"};
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  op_desc->SetOpInferDepends(input_infer_depends);
+  Tensor tensor_input;
+  Shape output_shape;
+  if (op.GetInputConstData("x_shape", tensor_input) == GRAPH_SUCCESS) {
+    MakeShapeFromShapeTensor(tensor_input, output_shape, op);
+  } else {
+    output_shape = Shape({UNKNOWN_RANK});
+  }
+  TensorDesc td = op.GetOutputDescByName("x_grad");
+  td.SetShape(output_shape);
+  td.SetDataType(input_dtype);
+  td.SetFormat(FORMAT_ND);
+  (void)op.UpdateOutputDesc("x_grad", td);
+  return GRAPH_SUCCESS;
+}
+CUST_IMPLEMT_VERIFIER(TraceGrad, TraceGradVerify) {
+  DataType x_shape_dtype = op.GetInputDescByName("x_shape").GetDataType();
+  if ((x_shape_dtype != DT_INT32) && (x_shape_dtype != DT_INT64)) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(TraceGrad, TraceGradInferShape);
+CUST_VERIFY_FUNC_REG(TraceGrad, TraceGradVerify);
+// ---------------TraceGrad END-------------------------------
+
+// ---------------Tril--------------
+IMPLEMT_COMMON_INFERFUNC(TrilInferShape) {
+  Shape input_shape = op.GetInputDesc(0).GetShape();
+  DataType input_dtype = op.GetInputDesc(0).GetDataType();
+  TensorDesc td = op.GetOutputDesc(0);
+  td.SetShape(ge::Shape(input_shape));
+  td.SetDataType(input_dtype);
+  (void)op.UpdateOutputDesc("y", td);
+  return GRAPH_SUCCESS;
+}
+
+IMPLEMT_VERIFIER(Tril, TrilVerify) { return GRAPH_SUCCESS; }
+
+INFER_FUNC_REG(Tril, TrilInferShape);
+VERIFY_FUNC_REG(Tril, TrilVerify);
+// ----------------Tril END----------------
+
+// -----------------ScatterNdUpdate-----------------
+IMPLEMT_VERIFIER(ScatterNdUpdate, ScatterNdUpdateVerify) {
+  if (!CheckTwoInputDtypeSame(op, "var", "updates")) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+IMPLEMT_COMMON_INFERFUNC(ScatterNdUpdateInferShape) {
+  // main part of shape infer
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  ge::GeShape var_shape = op_desc->MutableInputDesc("var")->GetShape();
+  std::vector<std::pair<int64_t, int64_t>> var_shape_range;
+  op_desc->MutableInputDesc("var")->GetShapeRange(var_shape_range);
+  DataType input_dtype = op_desc->MutableInputDesc("var")->GetDataType();
+  GeTensorDescPtr td = op_desc->MutableOutputDesc("var");
+  td->SetShape(var_shape);
+  td->SetDataType(input_dtype);
+  td->SetShapeRange(var_shape_range);
+  return GRAPH_SUCCESS;
+}
+COMMON_INFER_FUNC_REG(ScatterNdUpdate, ScatterNdUpdateInferShape);
+VERIFY_FUNC_REG(ScatterNdUpdate, ScatterNdUpdateVerify);
+// -------------------ScatterNdUpdate END----------------
+
+// -----------------TensorScatterUpdate-----------------
+IMPLEMT_VERIFIER(TensorScatterUpdate, TensorScatterUpdateVerify) {
+  if (!CheckTwoInputDtypeSame(op, "x", "updates")) {
+    return GRAPH_FAILED;
+  }
+  DataType indices_dtype = op.GetInputDescByName("indices").GetDataType();
+  if ((indices_dtype != DT_INT32) && (indices_dtype != DT_INT64)) {
+    OP_LOGE("tensor_scatter_update", "The indices type is not int32 or int64, please check!");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+IMPLEMT_INFERFUNC(TensorScatterUpdate, TensorScatterUpdateInferShape) {
+  Shape var_shape = op.GetInputDescByName("x").GetShape();
+  DataType input_dtype = op.GetInputDescByName("x").GetDataType();
+  TensorDesc td = op.GetOutputDescByName("y");
+  td.SetShape(ge::Shape(var_shape));
+  td.SetDataType(input_dtype);
+  (void)op.UpdateOutputDesc("y", td);
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(TensorScatterUpdate, TensorScatterUpdateInferShape);
+VERIFY_FUNC_REG(TensorScatterUpdate, TensorScatterUpdateVerify);
+// -------------------TensorScatterUpdate END----------------
+
+// -------------------Orgqr----------------
+CUST_COMMON_INFER_FUNC_REG(Orgqr, OneInOneOutCommonInferShape);
+// -------------------Orgqr END----------------
+
+// -----------------------Trace-----------------------
+static bool InferShapeAndTypeTrace(Operator &op, const std::string &inputName, const std::string outputName) {
+  TensorDesc vOutputDesc = op.GetOutputDescByName(outputName.c_str());
+  DataType inputDtype = op.GetInputDescByName(inputName.c_str()).GetDataType();
+  ge::Shape inputShape = op.GetInputDescByName(inputName.c_str()).GetShape();
+
+  // set output tensor dim
+  std::vector<int64_t> dimVec;
+  ge::Shape outputShape = ge::Shape(dimVec);
+  vOutputDesc.SetShape(outputShape);
+  const std::vector<DataType> unchange_dtype = {DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT,
+                                                DT_FLOAT16,    DT_INT64,     DT_UINT64};
+  if (CheckInputDataType(op, "x", unchange_dtype) == true) {
+    vOutputDesc.SetDataType(inputDtype);
+  } else {
+    vOutputDesc.SetDataType(ge::DT_INT64);
+  }
+  op.UpdateOutputDesc(outputName.c_str(), vOutputDesc);
+  return true;
+}
+
+IMPLEMT_VERIFIER(Trace, TraceVerify) {
+  AscendString op_name;
+  CHECK(op.GetName(op_name) != GRAPH_SUCCESS, OP_LOGE("", "GetName failed."), return GRAPH_FAILED);
+  ge::Shape shapeX = op.GetInputDescByName("x").GetShape();
+  DataType dtypeX = op.GetInputDescByName("x").GetDataType();
+  constexpr int64_t shapeDimsLimit = 2;
+  if (shapeX.GetDims() != UNKNOWN_RANK && shapeX.GetDimNum() != shapeDimsLimit) {
+    OP_LOGE(op_name.GetString(), "the input shape must be 2-D matrix.\n");
+    return GRAPH_FAILED;
+  }
+  const std::vector<DataType> support_list = {DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT,  DT_FLOAT16,
+                                              DT_INT8,       DT_UINT8,     DT_INT16,  DT_UINT16, DT_INT32,
+                                              DT_UINT32,     DT_INT64,     DT_UINT64};
+  if (CheckInputDataType(op, "x", support_list) == false) {
+    OP_LOGE(TbeGetName(op).c_str(), "dataType [%s] is not supported in Trace.", DTypeStr(dtypeX).c_str());
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+IMPLEMT_COMMON_INFERFUNC(TraceInferShape) {
+  if (InferShapeAndTypeTrace(op, "x", "y")) {
+    return GRAPH_SUCCESS;
+  }
+  return GRAPH_FAILED;
+}
+
+COMMON_INFER_FUNC_REG(Trace, TraceInferShape);
+VERIFY_FUNC_REG(Trace, TraceVerify);
+// ---------------------Trace END----------------------
 }  // namespace ge

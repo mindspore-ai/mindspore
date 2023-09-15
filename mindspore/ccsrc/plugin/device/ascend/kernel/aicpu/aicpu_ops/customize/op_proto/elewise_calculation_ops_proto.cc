@@ -59,6 +59,10 @@ COMMON_INFER_FUNC_REG(Cos, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Expm1, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Log1p, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Log, OneInOneOutCommonInferShape);
+COMMON_INFER_FUNC_REG(Tanh, OneInOneOutCommonInferShape);
+COMMON_INFER_FUNC_REG(Sin, OneInOneOutCommonInferShape);
+COMMON_INFER_FUNC_REG(Reciprocal, OneInOneOutCommonInferShape);
+COMMON_INFER_FUNC_REG(Sign, OneInOneOutCommonInferShape);
 // ----------------------------------OneInOneOutCommonInfer END-----------------------------
 
 // ----------------------------------TowInOneOutCommonInfer-----------------------------
@@ -68,6 +72,9 @@ CUST_COMMON_INFER_FUNC_REG(Gcd, TwoInOneOutCommonInferShape);
 CUST_COMMON_INFER_FUNC_REG(Heaviside, TwoInOneOutCommonInferShape);
 CUST_COMMON_INFER_FUNC_REG(Hypot, TwoInOneOutCommonInferShape);
 CUST_COMMON_INFER_FUNC_REG(Lcm, TwoInOneOutCommonInferShape);
+CUST_COMMON_INFER_FUNC_REG(Pow, TwoInOneOutCommonInferShape);
+CUST_COMMON_INFER_FUNC_REG(Xlogy, TwoInOneOutCommonInferShape);
+CUST_COMMON_INFER_FUNC_REG(Xdivy, TwoInOneOutCommonInferShape);
 // ----------------------------------TowInOneOutCommonInfer END-----------------------------
 
 // --------------AcosGrad----------------
@@ -399,4 +406,33 @@ IMPLEMT_VERIFIER(FloorDiv, FloorDivVerify) {
 COMMON_INFER_FUNC_REG(FloorDiv, TwoInOneOutCommonInferShape);
 VERIFY_FUNC_REG(FloorDiv, FloorDivVerify);
 // ----------------FloorDiv END------------------------
+
+// ----------------SqrtGrad Op Begin-----------------
+IMPLEMT_VERIFIER(SqrtGrad, SqrtGradVerify) {
+  if (!CheckTwoInputDtypeSame(op, "y", "dy")) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+IMPLEMT_COMMON_INFERFUNC(SqrtGradInferShape) {
+  Shape shape_x = op.GetInputDescByName("y").GetShape();
+  DataType input_dtype = op.GetInputDescByName("y").GetDataType();
+  TensorDesc tensordesc_output = op.GetOutputDescByName("z");
+  std::vector<std::pair<int64_t, int64_t>> shape_range_x;
+  op.GetInputDescByName("y").GetShapeRange(shape_range_x);
+  tensordesc_output.SetShape(shape_x);
+  tensordesc_output.SetDataType(input_dtype);
+  tensordesc_output.SetShapeRange(shape_range_x);
+  if (op.UpdateOutputDesc("z", tensordesc_output) != GRAPH_SUCCESS) {
+    std::string err_msg = UpdateParamErrMsg("z");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+COMMON_INFER_FUNC_REG(SqrtGrad, SqrtGradInferShape);
+VERIFY_FUNC_REG(SqrtGrad, SqrtGradVerify);
+// ----------------SqrtGrad Op End-------------------
 }  // namespace ge
