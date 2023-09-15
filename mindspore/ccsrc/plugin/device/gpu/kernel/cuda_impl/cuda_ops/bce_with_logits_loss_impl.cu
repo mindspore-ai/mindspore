@@ -21,9 +21,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 
 struct StrideInfo {
-  size_t inp_stride[8];
-  size_t out_stride[8];
-  size_t index_stride[8];
+  size_t inp_stride[9];
+  size_t out_stride[9];
+  size_t index_stride[9];
 };
 
 template <typename T>
