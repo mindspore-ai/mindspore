@@ -238,10 +238,10 @@ void SparseMatrixSparseMatMulGpuKernelMod::Core(int x1_num_rows, int x1_num_cols
                                                 int *x2_row_pointers, int *x2_col_indices, T *x2_values,
                                                 int *y_row_pointers, int *y_col_indices, T *y_values, bool adjoint_a,
                                                 bool adjoint_b, bool transpose_a, bool transpose_b) {
-  int d_C_nnz, m, n, k;
-  m = x1_num_rows;
-  n = x1_num_cols;
-  k = x2_num_cols;
+  int d_C_nnz;
+  int m = x1_num_rows;
+  int n = x1_num_cols;
+  int k = x2_num_cols;
   T *x1_Val_c = nullptr;
   void *x1_Val_t = nullptr;
   int *x1_RowPtr_t = nullptr;

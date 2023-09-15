@@ -423,7 +423,7 @@ def csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
 
     valid_indices_dtype = [mstype.int32, mstype.int64]
     if row_pointers.dtype in valid_indices_dtype and col_indices.dtype in valid_indices_dtype:
-        if row_pointers.dtype == mstype.int64 or col_indices.dtype == mstype.int64:
+        if mstype.int64 in (row_pointers.dtype, col_indices.dtype):
             return csr_sparse_matrix_to_dense(dense_shape.astype(mstype.int64), batch_pointers.astype(mstype.int64),
                                               row_pointers.astype(mstype.int64), col_indices.astype(mstype.int64),
                                               values)
