@@ -176,4 +176,4 @@ def get_binop_name(binop):
         return "*"
     if binop == ast.Div():
         return "/"
-    return None
+    return ""
