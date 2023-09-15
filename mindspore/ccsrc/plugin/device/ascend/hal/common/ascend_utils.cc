@@ -323,6 +323,11 @@ const bool SelectAscendPlugin = []() -> bool {
   }
   if (iter->second == k910BAscendVersion) {
     common::SetEnv("MS_ENABLE_GE", "1");
+    auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+    // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
+    if (force_acl.empty()) {
+      common::SetEnv("MS_DEV_FORCE_ACL", "1");
+    }
   }
   return true;
 }();
