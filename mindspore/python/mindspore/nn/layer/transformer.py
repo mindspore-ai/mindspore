@@ -270,7 +270,7 @@ class TransformerEncoderLayer(Cell):
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): the mask for the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*nheads, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
+          or :math:`(N*nhead, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): the mask for the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
@@ -412,7 +412,7 @@ class TransformerDecoderLayer(Cell):
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nheads, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
+          or :math:`(N*nhead, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): The mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
         - **tgt_key_padding_mask** (Tensor, optional): The mask of the tgt keys per batch. The shape is
@@ -555,7 +555,7 @@ class TransformerEncoder(Cell):
           source sequence length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*nheads, S, S)` , where `nheads` is the arguent in TransformerDecoderLayer.
+          or :math:`(N*nhead, S, S)` , where `nhead` is the arguent in TransformerDecoderLayer.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): the mask of the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
@@ -626,7 +626,7 @@ class TransformerDecoder(Cell):
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional): the mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nheads, T, T)` , where `nheads` is the arguent in TransformerDecoderLayer.
+          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in TransformerDecoderLayer.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): the mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
@@ -719,9 +719,9 @@ class Transformer(Cell):
           `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*nheads, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
+          or :math:`(N*nhead, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nheads, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
+          or :math:`(N*nhead, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): The additive mask of the encoder output. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): The mask of src keys per batch. The shape is
