@@ -940,20 +940,13 @@ class GELU(Cell):
         super(GELU, self).__init__()
         validator.check_bool(approximate, 'approximate', self.cls_name)
         self.approximate = approximate
-        if self.approximate:
-            self.gelu = P.GeLU()
+        if approximate:
+            self.approximate = 'tanh'
         else:
-            self.erf = P.Erf()
-            self.sqrt = P.Sqrt()
-            self.const0 = Tensor(0.5, mstype.float32)
-            self.const1 = Tensor(1.0, mstype.float32)
-            self.const2 = Tensor(2.0, mstype.float32)
+            self.approximate = 'none'
 
     def construct(self, x):
-        if self.approximate:
-            return self.gelu(x)
-        return x * F.cast(self.const0, x.dtype) * (F.cast(self.const1, x.dtype) + \
-                                                   self.erf(x / self.sqrt(F.cast(self.const2, x.dtype))))
+        return ops.gelu(x, approximate=self.approximate)
 
 
 class FastGelu(Cell):

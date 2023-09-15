@@ -3293,7 +3293,8 @@ def erf(input):
         >>> print(output)
         [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
     """
-    return erf_(input)
+    erf_op = _get_cache_prim(P.Erf)()
+    return erf_op(input)
 
 
 def erfc(input):
