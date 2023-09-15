@@ -25,12 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
-class UpdateCacheCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
  public:
   UpdateCacheCpuKernelMod() = default;
   ~UpdateCacheCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
@@ -77,7 +77,7 @@ class UpdateCacheCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   size_t batch_size_{1};
   int64_t update_size_{1};
@@ -86,7 +86,6 @@ class UpdateCacheCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId input_x_dtype_{kTypeUnknown};
   TypeId indices_dtype_{kTypeUnknown};
   size_t input_x_dtype_size_{4};
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

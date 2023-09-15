@@ -24,36 +24,32 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kAMatrixDimNum = 2;
-constexpr size_t kQRInputsNum = 1;
-constexpr size_t kQROutputsNum = 2;
 constexpr size_t kPivotsIndex = 1;
 constexpr size_t kPermutationIndex = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
-void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kQRInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kQROutputsNum, kernel_name_);
+int QRCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return KRET_OK;
+  }
 
-  const auto mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, MODE);
+  const auto mode = GetValue<std::string>(primitive_->GetAttr(MODE));
   if (mode != "full" && mode != "r" && mode != "economic") {
     MS_LOG(EXCEPTION) << "mode must be in [full, r, economic], but got [" << mode << "].";
   }
 
-  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto a_shape = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
   CHECK_KERNEL_INPUTS_NUM(a_shape.size(), kAMatrixDimNum, kernel_name_);
   a_row_ = a_shape[kDim0];
   a_col_ = a_shape[kDim1];
 
-  auto q_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  auto q_shape = Convert2SizeTClipNeg(outputs[kIndex0]->GetShapeVector());
   CHECK_KERNEL_INPUTS_NUM(q_shape.size(), kAMatrixDimNum, kernel_name_);
   q_row_ = q_shape[kDim0];
   q_col_ = q_shape[kDim1];
 
-  auto r_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
+  auto r_shape = Convert2SizeTClipNeg(outputs[kIndex1]->GetShapeVector());
   CHECK_KERNEL_INPUTS_NUM(r_shape.size(), kAMatrixDimNum, kernel_name_);
   r_row_ = r_shape[kDim0];
   r_col_ = r_shape[kDim1];
@@ -62,23 +58,23 @@ void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     economic_ = true;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "QR does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
-bool QRCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
-                                  const std::vector<kernel::KernelTensor *> &,
-                                  const std::vector<kernel::KernelTensor *> &outputs) {
-  T *a_value = reinterpret_cast<T *>(inputs[0]->device_ptr());
+bool QRCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                  const std::vector<KernelTensor *> &outputs) {
+  T *a_value = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_a(a_value, a_row_, a_col_);
-  T *q_value = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *q_value = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_q(q_value, q_row_, q_col_);
-  T *r_value = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  T *r_value = reinterpret_cast<T *>(outputs[kIndex1]->device_ptr());
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_r(r_value, r_row_, r_col_);
 
   auto householder_qr = input_a.householderQr();

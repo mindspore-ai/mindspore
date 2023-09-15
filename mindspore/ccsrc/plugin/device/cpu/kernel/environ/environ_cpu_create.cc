@@ -20,17 +20,22 @@
 
 namespace mindspore {
 namespace kernel {
-void EnvironCreateCpuKernelMod::InitKernel(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
+int EnvironCreateCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
   // Check the output handle.
-  auto handle_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-  auto handle_shapes = AnfAlgo::GetOutputDeviceShape(node, 0);
+  auto handle_type = outputs[kIndex0]->dtype_id();
+  const auto &handle_shapes = outputs[kIndex0]->GetShapeVector();
   if (!EnvironMgr::GetInstance().IsScalarTensor(handle_type, handle_shapes)) {
-    MS_LOG(EXCEPTION) << "The output handle checks invalid, kernel: " << node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "The output handle checks invalid, kernel: " << kernel_name_;
   }
 
   handle_size_ = sizeof(int64_t);
+  output_size_list_.clear();
   output_size_list_.push_back(handle_size_);
+  return KRET_OK;
 }
 
 bool EnvironCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
@@ -38,9 +43,9 @@ bool EnvironCreateCpuKernelMod::Launch(const std::vector<KernelTensor *> &, cons
   // Generate an unique handle.
   int64_t env_handle = EnvironMgr::GetInstance().Create();
 
-  auto output = GetDeviceAddress<int64_t>(outputs, 0);
-  output[0] = env_handle;
-  MS_LOG(DEBUG) << "Create env handle: " << output[0];
+  auto output = GetDeviceAddress<int64_t>(outputs, kIndex0);
+  output[kIndex0] = env_handle;
+  MS_LOG(DEBUG) << "Create env handle: " << output[kIndex0];
 
   return true;
 }

@@ -22,14 +22,14 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironDestroyAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class EnvironDestroyAllCpuKernelMod : public NativeCpuKernelMod {
  public:
   EnvironDestroyAllCpuKernelMod() = default;
   ~EnvironDestroyAllCpuKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
-  void InitKernel(const CNodePtr &node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeBool)};
