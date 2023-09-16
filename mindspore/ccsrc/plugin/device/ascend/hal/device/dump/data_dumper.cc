@@ -312,6 +312,7 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
 }
 
 void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+  MS_EXCEPTION_IF_NULL(kernel);
   if (!DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
     MS_LOG(INFO) << "Not need dump input for kernel: " << kernel->fullname_with_scope();
     return;
@@ -320,7 +321,6 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     MS_LOG(INFO) << "Skip dump input";
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel);
   if (common::AnfAlgo::IsNodeInputContainMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;

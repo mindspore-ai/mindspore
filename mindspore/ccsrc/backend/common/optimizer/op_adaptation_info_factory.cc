@@ -64,7 +64,8 @@ OpAdaptationInfoRegister &OpAdaptationInfoRegister::GetInstance() {
 std::string OpAdaptationInfoRegister::GenerateKey(const std::string &me_op_name, const std::string &device_name,
                                                   bool flag) {
   if (device_name != kCPUDevice && device_name != kGPUDevice && device_name != kAscendDevice) {
-    MS_LOG(ERROR) << "Backend type is error, " << device_name;
+    MS_LOG(EXCEPTION) << "Backend type is invalid, should be one of [" << kCPUDevice << ", " << kGPUDevice << ", "
+                      << kAscendDevice << "], but got " << device_name;
   }
 
   std::string flag_str = flag ? "true" : "false";
@@ -87,8 +88,8 @@ void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
   auto key = GenerateKey(reg_info->me_op_name(), reg_info->device_name(), reg_info->flag());
   auto find = GetOpInfoMap().find(key);
   if (find != GetOpInfoMap().end()) {
-    MS_LOG(ERROR) << "This key (" << key << ")"
-                  << " has been registered in me op info map.";
+    MS_LOG(WARNING) << "This key (" << key << ")"
+                    << " has been registered in me op info map.";
     return;
   }
   MS_LOG(DEBUG) << "Reg op adaptation info to factory, key: " << key;

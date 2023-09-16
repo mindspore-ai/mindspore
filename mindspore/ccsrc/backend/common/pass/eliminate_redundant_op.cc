@@ -101,6 +101,11 @@ const AnfNodePtr EliminateRedundantOp::ProcessMatchedNodes(const FuncGraphPtr &f
   auto &users = manager->node_users();
 
   auto pass_size = pass_vector->size();
+  constexpr size_t kOffset = 2;
+  if (pass_size < kOffset) {
+    MS_LOG(WARNING) << "The pass_size should >= 2.";
+    return nullptr;
+  }
   for (size_t idx = 1; idx <= pass_size - 1; ++idx) {
     auto nd = (*pass_vector)[idx].first;
     if (common::AnfAlgo::CheckPrimitiveType(nd, prim::kPrimDepend)) {
@@ -112,16 +117,12 @@ const AnfNodePtr EliminateRedundantOp::ProcessMatchedNodes(const FuncGraphPtr &f
   }
 
   // when no depend node and no node used more than once, no need to rebuild the pass nodes
-  constexpr size_t kOffset = 2;
   if (!has_depend_node) {
     return prev_cnode->input(1);
   } else if (!has_node_used_more_than_once) {
     (void)manager->Replace(prev_cnode, prev_cnode->input(1));
     return cnode->input(1);
   } else {  // rebuild the pass nodes
-    if (pass_size < kOffset) {
-      MS_LOG(ERROR) << "pass_size should >= 2";
-    }
     for (size_t idx = pass_size - kOffset; idx > 0; --idx) {
       auto new_node = NewCNode((*pass_vector)[idx].first->inputs(), func_graph);
       if (idx == pass_size - kOffset) {

@@ -774,6 +774,7 @@ class AscendAutoMonadConverter {
   ~AscendAutoMonadConverter() = default;
 
   void Run() {
+    MS_EXCEPTION_IF_NULL(kernel_graph_);
     // need inline
     if (kernel_graph_->need_inline()) {
       return;
@@ -794,7 +795,6 @@ class AscendAutoMonadConverter {
       MakeMonadDepend();
     }
     // Handle recursive call.
-    MS_EXCEPTION_IF_NULL(kernel_graph_);
     kernel_graph_->SetExecOrderByDefault();
     if (call_info_.recursive) {
       const auto &nodes = kernel_graph_->execution_order();

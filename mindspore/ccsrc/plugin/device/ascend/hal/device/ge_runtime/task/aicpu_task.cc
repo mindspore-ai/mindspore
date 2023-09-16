@@ -98,9 +98,9 @@ std::string AicpuTask::DebugString() const {
 }
 
 void AicpuTask::Distribute() {
+  MS_EXCEPTION_IF_NULL(task_info_);
   MS_LOG(INFO) << "InitAicpuTask start. node: " << task_info_->op_name();
   std::vector<void *> io_addrs;
-  MS_EXCEPTION_IF_NULL(task_info_);
   (void)io_addrs.insert(io_addrs.cend(), task_info_->input_data_addrs().cbegin(),
                         task_info_->input_data_addrs().cend());
   (void)io_addrs.insert(io_addrs.cend(), task_info_->output_data_addrs().cbegin(),
