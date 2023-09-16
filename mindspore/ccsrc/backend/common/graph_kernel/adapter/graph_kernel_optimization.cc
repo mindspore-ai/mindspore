@@ -161,12 +161,8 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
-
-  // add const inputs to attribute then eliminate those inputs for static kernels.
-  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(), OptLevel_1);
-
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
@@ -241,8 +237,8 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
-  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
 #endif

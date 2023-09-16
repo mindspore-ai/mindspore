@@ -180,37 +180,6 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   return true;
 }
 
-bool ConvertOpUtils::ConstInputToValueNode(const CNodePtr &cnode, const HashSet<size_t> &input_idx) {
-  AnfNodePtrList new_inputs;
-  auto primitive = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto inputs = cnode->inputs();
-  new_inputs.push_back(NewValueNode(primitive));
-  for (size_t i = 0; i < inputs.size() - 1; ++i) {
-    auto input_node = inputs[i + 1];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (input_idx.count(i) == 0) {
-      new_inputs.push_back(inputs[i + 1]);
-    } else {
-      auto parameter_node = input_node->cast<ParameterPtr>();
-      if (parameter_node != nullptr) {
-        auto value = parameter_node->abstract()->BuildValue();
-        auto valuenode = std::make_shared<ValueNode>(value);
-        valuenode->set_abstract(value->ToAbstract());
-        new_inputs.push_back(valuenode);
-      } else {
-        new_inputs.push_back(inputs[i + 1]);
-      }
-    }
-  }
-  cnode->set_inputs(new_inputs);
-  auto cb = Callback::Instance();
-  MS_EXCEPTION_IF_NULL(cb);
-  cb->SetBasicNodeKernelInfo(
-    cnode, {{cb->GetOutputShape(cnode, 0), cb->GetOutputType(cnode, 0), cb->GetOutputFormat(cnode, 0)}});
-  return true;
-}
-
 bool ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
   bool changed = false;
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
@@ -312,9 +281,7 @@ bool GraphKernelInputToAttrConverter::AdaptConstInput(const AnfNodePtr &graph_ke
           continue;
         }
         auto indices = ConvertOpUtils::GetIndices(primitive->name());
-        if (common::AnfAlgo::IsDynamicShape(graph_kernel_node)) {
-          (void)ConvertOpUtils::ConstInputToValueNode(node, indices);
-        } else {
+        if (!common::AnfAlgo::IsDynamicShape(graph_kernel_node)) {
           (void)ConvertOpUtils::ConstInputToAttr(node, indices);
         }
         changed = true;

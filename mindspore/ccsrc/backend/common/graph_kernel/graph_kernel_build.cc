@@ -31,6 +31,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -367,6 +368,9 @@ bool GraphKernelBuild::SplitNodesByKernelCompiler(const std::vector<kernel::Json
     compiler_splitter_.SetJson(js.dump());
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    if (!common::AnfAlgo::IsDynamicShape(cnode)) {
+      (void)ConvertOpUtils::ConvertAttrToInput(cnode);
+    }
     auto ori_sub_func_graph = GetCNodeFuncGraph(cnode);
     ori_sub_func_graph->set_attr(kAttrNodeName, MakeValue(kernel_name));
     if (!compiler_splitter_.TrySplit(cnode)) {

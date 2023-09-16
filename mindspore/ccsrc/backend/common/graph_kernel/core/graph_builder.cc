@@ -30,6 +30,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/func_graph_cloner.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 // find outputs of nodes
@@ -130,6 +131,10 @@ bool IsFiniteScalar(void *data, TypeId type_id) {
   return true;
 }
 
+bool IsKeepValueNode(const std::string &prim_name, size_t index) {
+  return ConvertOpUtils::NeedConvert(prim_name, index);
+}
+
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
   mindspore::OrderedSet<AnfNodePtr> value_nodes;
@@ -139,6 +144,11 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       const auto &tnode = inputs[i];
       auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
       if (tensor == nullptr) {
+        continue;
+      }
+      auto primitive = GetCNodePrimitive(cnode);
+      // For some primitives, the value in valuenode is required for further optimization.
+      if (IsKeepValueNode(primitive->name(), i - 1)) {
         continue;
       }
       // data is nullptr means uninitialized.

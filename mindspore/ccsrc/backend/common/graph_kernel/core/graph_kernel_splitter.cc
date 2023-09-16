@@ -27,7 +27,6 @@
 #include "utils/hash_set.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/split_model/split_model_factory.h"
 
 namespace mindspore::graphkernel {
@@ -368,7 +367,6 @@ class Splitter {
  private:
   void ResetInlinedNodesKernelInfo() const {
     for (const auto &node : inlined_nodes_) {
-      (void)ConvertOpUtils::ConvertAttrToInput(node);
       Callback::Instance()->ResetKernelInfo(node);
     }
   }

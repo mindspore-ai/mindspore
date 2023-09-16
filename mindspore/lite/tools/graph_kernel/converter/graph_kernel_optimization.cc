@@ -112,8 +112,6 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1, is_cpu);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
-  // add const inputs to attribute then eliminate those inputs for static kernels.
-  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithTuning>(), OptLevel_1);
 
@@ -129,6 +127,8 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
 
 GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageBuildKernel, "buildkernel");
+  // add const inputs to attribute then eliminate those inputs for static kernels.
+  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // build akg and replace graph kernel nodes
   pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
