@@ -91,7 +91,9 @@ void LiteTensorImpl::SetDeviceData(void *data) {
   }
 #endif
   lite_tensor_->set_device_data(data);
-  own_data_ = false;
+  if (data != nullptr) {
+    own_data_ = false;
+  }
 }
 
 void *LiteTensorImpl::GetDeviceData() {

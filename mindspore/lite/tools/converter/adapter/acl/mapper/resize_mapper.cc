@@ -128,7 +128,8 @@ STATUS ResizeMapper::ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &p
     }
     std::vector<int32_t> new_tensor_size = {new_height, new_width};
     auto func_graph = cnode->func_graph();
-    auto param_node = opt::BuildIntVecParameterNode(func_graph, new_tensor_size, scale_input->fullname_with_scope());
+    auto param_node =
+      opt::BuildIntVecParameterNode(func_graph, new_tensor_size, cnode->fullname_with_scope() + "_sizes");
     cnode->set_input(kNameInputNum - 1, param_node);
   }
   return lite::RET_OK;
