@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kRangeInputsNum = 3;
+constexpr size_t kRangeInputsNum = 4;
 constexpr size_t kRangeOutputsNum = 1;
 
 template <typename T>
@@ -35,13 +35,10 @@ T Sign(T num) {
 }
 }  // namespace
 
-bool RangeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RangeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>
@@ -71,27 +68,31 @@ bool RangeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, 
 const std::vector<std::pair<KernelAttr, RangeCpuKernelMod::KernelRunFunc>> &RangeCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, RangeCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat32),
      &RangeCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat64),
      &RangeCpuKernelMod::LaunchKernel<double>},
     {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt32),
      &RangeCpuKernelMod::LaunchKernel<int32_t>},
     {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
      &RangeCpuKernelMod::LaunchKernel<int64_t>},
   };

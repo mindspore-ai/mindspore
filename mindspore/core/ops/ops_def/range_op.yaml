@@ -1,0 +1,18 @@
+#operator range
+range:
+    args:
+        start:
+            dtype: number
+            type_cast: tensor
+        end:
+            dtype: number
+            type_cast: tensor
+        step:
+            dtype: number
+            type_cast: tensor
+        maxlen:
+            dtype: int
+            init: 1000000
+    returns:
+        output:
+            dtype: tensor

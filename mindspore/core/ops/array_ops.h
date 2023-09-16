@@ -157,7 +157,6 @@ GVAR_DEF(PrimitivePtr, kPrimSplitD, std::make_shared<Primitive>("SplitD"));
 GVAR_DEF(PrimitivePtr, kPrimSplitV, std::make_shared<Primitive>(kSplitVOpName));
 GVAR_DEF(PrimitivePtr, kPrimSplitVD, std::make_shared<Primitive>("SplitVD"));
 GVAR_DEF(PrimitivePtr, kPrimSequenceMask, std::make_shared<Primitive>("SequenceMask"));
-GVAR_DEF(PrimitivePtr, kPrimRange, std::make_shared<Primitive>("Range"));
 GVAR_DEF(PrimitivePtr, kPrimRangeV2, std::make_shared<Primitive>("RangeV2"));
 GVAR_DEF(PrimitivePtr, kPrimSpaceToBatchND, std::make_shared<Primitive>("SpaceToBatchND"));
 GVAR_DEF(PrimitivePtr, kPrimBatchToSpaceND, std::make_shared<Primitive>("BatchToSpaceND"));

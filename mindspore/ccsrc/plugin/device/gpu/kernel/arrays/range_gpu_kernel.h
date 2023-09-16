@@ -22,14 +22,14 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "mindspore/core/ops/op_name.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_range_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/range.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputSize = 3;
+constexpr size_t kInputSize = 4;
 
 template <typename T>
 class RangeGpuKernelMod : public NativeGpuKernelMod {
@@ -108,25 +108,19 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_name = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     size_t input_count = inputs.size();
     if (input_count != kInputSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 4, but got " << input_count;
     }
 
-    auto kernel_ptr = std::make_shared<ops::Range>(base_operator->GetPrim());
-
-    max_output_length_ = kernel_ptr->get_maxlen();
+    max_output_length_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
     is_need_retrieve_output_shape_ = true;
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
