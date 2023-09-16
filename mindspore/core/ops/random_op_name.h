@@ -36,6 +36,7 @@ constexpr auto kUniformIntOpName = "UniformInt";
 constexpr auto kUniformRealOpName = "UniformReal";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
 constexpr auto kLogUniformCandidateSamplerOpName = "LogUniformCandidateSampler";
+constexpr auto kGammaOpName = "Gamma";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_RANDOM_OP_NAME_H_

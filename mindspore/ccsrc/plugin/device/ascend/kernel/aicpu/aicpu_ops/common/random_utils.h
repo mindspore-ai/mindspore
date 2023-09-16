@@ -30,6 +30,8 @@ uint64_t GetSeed(const uint64_t &global_seed, const uint64_t &ops_seed);
 uint64_t GetKernelBaseRandomStates(const std::vector<uintptr_t> &ioAddrs, const uint32_t &counts_index,
                                    const uint32_t &states_index, const uint64_t &seed, const uint64_t &seed2,
                                    const std::string &kernel_name, uint32_t *kernel_ret);
+uint64_t InferOutputShape(std::vector<uint64_t> *out_shape, std::vector<uint64_t> *shape,
+                          std::vector<uint64_t> *mean_shape, std::vector<uint64_t> *stddev_shape, uint64_t *count);
 }  // namespace random
 }  // namespace aicpu
 

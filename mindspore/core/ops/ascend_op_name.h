@@ -70,7 +70,6 @@ constexpr auto kFusionOp_Conv2DBackpropInput_AddN_ReluGradV2OpName = "FusionOp_C
 constexpr auto kFusionOp_Conv2DBackpropInput_ReluGradV2OpName = "FusionOp_Conv2DBackpropInput_ReluGradV2";
 constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
 constexpr auto kGRUV2HiddenGradCellOpName = "GRUV2HiddenGradCell";
-constexpr auto kGammaOpName = "Gamma";
 constexpr auto kHardShrinkOpName = "HardShrink";
 constexpr auto kHardShrinkGradOpName = "HardShrinkGrad";
 constexpr auto kHardSigmoidOpName = "HardSigmoid";

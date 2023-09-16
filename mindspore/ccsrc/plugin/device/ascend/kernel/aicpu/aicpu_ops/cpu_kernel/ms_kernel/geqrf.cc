@@ -231,9 +231,9 @@ uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
   }
   for (int i = 0; i < m; i++) {
-    delete A[i];
+    delete[] A[i];
   }
-  delete A;
+  delete[] A;
   return KERNEL_STATUS_OK;
 }
 
@@ -271,9 +271,9 @@ uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
     }
   }
   for (int i = 0; i < m; i++) {
-    delete A[i];
+    delete[] A[i];
   }
-  delete A;
+  delete[] A;
   return KERNEL_STATUS_OK;
 }
 REGISTER_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);

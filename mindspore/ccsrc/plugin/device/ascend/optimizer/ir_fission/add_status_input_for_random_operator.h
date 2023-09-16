@@ -37,7 +37,8 @@ inline const std::set<std::string> kRandomNodeWhiteList = {kDropoutGenMaskOpName
                                                            kUniformIntOpName,
                                                            kUniformRealOpName,
                                                            kUniformCandidateSamplerOpName,
-                                                           kLogUniformCandidateSamplerOpName};
+                                                           kLogUniformCandidateSamplerOpName,
+                                                           kGammaOpName};
 
 class AddStatusInputForRandomOperator : public Pass {
  public:
