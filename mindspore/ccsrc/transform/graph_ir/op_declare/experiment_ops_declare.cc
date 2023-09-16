@@ -47,4 +47,11 @@ ATTR_MAP(IncreFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<in
                                  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())}};
 OUTPUT_MAP(IncreFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(IncreFlashAttention, "IncreFlashAttention", ADPT_DESC(IncreFlashAttention))
+
+// BlendFaceBgPartOne
+INPUT_MAP(BlendFaceBgPartOne) = {{1, INPUT_DESC(face_img)}, {2, INPUT_DESC(face_rect)}, {3, INPUT_DESC(face_mask)},
+                                 {4, INPUT_DESC(acc_face)}, {5, INPUT_DESC(acc_mask)},  {6, INPUT_DESC(max_mask)}};
+ATTR_MAP(BlendFaceBgPartOne) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BlendFaceBgPartOne) = {{0, OUTPUT_DESC(acc_face)}, {1, OUTPUT_DESC(acc_mask)}, {2, OUTPUT_DESC(max_mask)}};
+REG_ADPT_DESC(BlendFaceBgPartOne, kNameBlendFaceBgPartOne, ADPT_DESC(BlendFaceBgPartOne))
 }  // namespace mindspore::transform

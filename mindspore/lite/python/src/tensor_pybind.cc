@@ -244,23 +244,21 @@ bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
                   << tensor.Shape() << ", got shape " << py_buffer_info.shape;
     return false;
   }
-  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
-  tensor_impl->SetDevice(tensor.GetDevice());
-  tensor_impl->SetDeviceId(tensor.GetDeviceId());
-  auto numpy_tensor = MSTensor(tensor_impl);
 #ifdef ENABLE_CLOUD_INFERENCE
   if (tensor.GetDeviceData() != nullptr) {
     MS_LOG(INFO) << "device tensor data ptr is not nullptr, need copy host data to device data.";
     auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(
-      numpy_tensor.MutableData(), tensor.GetDeviceData(), tensor.DataSize());
+      py_buffer_info.ptr, tensor.GetDeviceData(), tensor.DataSize());
     if (status != kSuccess) {
       MS_LOG(ERROR) << "tensor has device data, then copy host data to device failed.";
       return false;
     }
-    numpy_tensor.SetDeviceData(tensor.GetDeviceData());
+    return true;
   }
 #endif
-  tensor = numpy_tensor;
+  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
+  MS_CHECK_TRUE_RET(tensor_impl != nullptr, false);
+  tensor = MSTensor(tensor_impl);
   return true;
 }
 

@@ -56,6 +56,7 @@ ADD_CONVERTER_ONLY_OP(TfIdfVectorizer);
 ADD_CONVERTER_ONLY_OP(MVN);
 ADD_CONVERTER_ONLY_OP(RandomUniformLike);
 ADD_CONVERTER_ONLY_OP(Rot90);
+ADD_CONVERTER_ONLY_OP(BlendFaceBgPartOne);
 }  // namespace lite
 }  // namespace mindspore
 
