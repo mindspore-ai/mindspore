@@ -265,6 +265,20 @@ class MapParameter(Parameter):
         """
         return self._map_tensor.export_data(incremental)
 
+    def export_bytes(self, incremental=False):
+        """
+        Export bytes from this map parameter.
+
+        Args:
+            incremental (bool): False for full export, otherwise for incremental export. Default: False.
+            When exporting data incrementally, the value_array does not contain unchanged data. The length
+            of the key_array and the length of the status_array are consistent.
+
+        Returns:
+            Tuple(bytes, bytes, bytes), The exported bytes as a tuple.
+        """
+        return self._map_tensor.export_bytes(incremental)
+
     def import_data(self, data):
         """
         Import this map parameter from exported data.

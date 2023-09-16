@@ -488,6 +488,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
+        if self.dtype == mstype.bfloat16:
+            return str(self.float().asnumpy())
         return str(self.asnumpy())
 
     def __getstate__(self):
@@ -917,6 +919,26 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         output = tensor_operator_registry.get('itemset')(self, *args)
         return output
 
+    def get_bytes(self):
+        r"""
+        Get raw data of tensor with type of bytes.
+
+        Supported Platforms:
+            ``CPU`` ``GPU`` ``Ascend``
+
+        Returns:
+            Bytes of tensor.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int16)
+            >>> print(x.get_bytes())
+            b'\x01\x00\x02\x00\x03\x00'
+        """
+        self._init_check()
+        return Tensor_.get_bytes(self)
+
     def asnumpy(self):
         """
         Convert tensor to numpy array. Returns self tensor as a NumPy ndarray. This tensor and the returned ndarray
@@ -937,6 +959,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [11.  2.]
         """
         self._init_check()
+        if self.dtype == mstype.bfloat16:
+            raise TypeError(f"For asnumpy, the type of tensor cannot be BFloat16, but got {self.dtype}.")
         return Tensor_.asnumpy(self)
 
     def numpy(self):

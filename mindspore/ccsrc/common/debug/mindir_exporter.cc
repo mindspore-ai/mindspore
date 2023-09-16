@@ -548,6 +548,15 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bi
   return iter->second;
 }
 
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsBFloatType(int bits) const {
+  auto iter = g_data_bits_bfloat_map.find(bits);
+  if (iter == g_data_bits_bfloat_map.end()) {
+    MS_LOG(ERROR) << "Convert bits bfloat error, unsupported bits! " << bits;
+    return mind_ir::TensorProto_DataType_UNDEFINED;
+  }
+  return iter->second;
+}
+
 mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsComplexType(int bits) const {
   auto iter = g_data_bits_complex_map.find(bits);
   if (iter == g_data_bits_complex_map.end()) {
@@ -1276,6 +1285,14 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     tensor_proto->set_name("value0");
     auto float_value = value->cast<FloatPtr>();
     auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
+  } else if (value->isa<BFloat>()) {
+    tensor_proto->set_name("value0");
+    auto bfloat_value = value->cast<BFloatPtr>();
+    auto data_type = GetMindirDataBitsBFloatType(bfloat_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;
     }

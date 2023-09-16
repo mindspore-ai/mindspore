@@ -126,7 +126,6 @@ def test_bfloat():
     a = ms.Tensor(np.ones((2, 3)), ms.bfloat16)
     assert a.shape == (2, 3)
     assert a.dtype == ms.bfloat16
-    assert a.asnumpy().all() == np.ones((2, 3)).all()
 
 
 def test_tensor_method_sub():
