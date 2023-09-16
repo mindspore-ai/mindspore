@@ -1286,6 +1286,10 @@ STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
 
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
+  if (param_->fmk_type == converter::kFmkTypeOM) {
+    // func_graph is already acl custom node
+    return true;
+  }
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   auto manager = Manage(func_graph, true);
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");

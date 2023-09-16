@@ -92,6 +92,9 @@ FuncGraphPtr ConverterFuncGraph::Load3rdModelToFuncgraph(const std::shared_ptr<C
   converter_parameters.save_type = param->save_type;
   converter_parameters.model_file = param->model_file;
   converter_parameters.weight_file = param->weight_file;
+  if (param->config_infos.find(kOMConverterOptionsSection) != param->config_infos.end()) {
+    converter_parameters.attrs = param->config_infos[kOMConverterOptionsSection];
+  }
   func_graph_base = model_parser->Parse(converter_parameters);
   if (func_graph_base == nullptr) {
     delete model_parser;

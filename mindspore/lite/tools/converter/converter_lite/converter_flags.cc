@@ -30,12 +30,12 @@ using mindspore::lite::RET_OK;
 
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk",
-          "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX | PYTORCH | MSLITE. When set MSLITE, micro "
-          "must be enabled.",
+          "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX | OM | PYTORCH | MSLITE."
+          " When set MSLITE, micro must be enabled. When set OM, device must be set to Ascend.",
           "");
   AddFlag(&Flags::modelFile, "modelFile",
           "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx | "
-          "MSLITE: *.ms",
+          "MSLITE: *.ms | OM: *.om",
           "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path.", "");
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
@@ -138,7 +138,7 @@ int Flags::InitFmk() {
   // value check not here, it is in converter c++ API's CheckValueParam method.
   std::map<std::string, FmkType> StrToEnumFmkTypeMap = {
     {"CAFFE", kFmkTypeCaffe}, {"MINDIR", kFmkTypeMs},       {"TFLITE", kFmkTypeTflite}, {"ONNX", kFmkTypeOnnx},
-    {"TF", kFmkTypeTf},       {"PYTORCH", kFmkTypePytorch}, {"MSLITE", kFmkTypeMsLite}};
+    {"TF", kFmkTypeTf},       {"PYTORCH", kFmkTypePytorch}, {"MSLITE", kFmkTypeMsLite}, {"OM", kFmkTypeOM}};
   if (StrToEnumFmkTypeMap.find(this->fmkIn) != StrToEnumFmkTypeMap.end()) {
     this->fmk = StrToEnumFmkTypeMap.at(this->fmkIn);
   } else {

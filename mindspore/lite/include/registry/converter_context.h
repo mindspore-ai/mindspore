@@ -40,6 +40,7 @@ enum MS_API FmkType : int {
   kFmkTypeTflite = 4,
   kFmkTypePytorch = 5,
   kFmkTypeMsLite = 6,
+  kFmkTypeOM = 7,
 };
 
 /// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.

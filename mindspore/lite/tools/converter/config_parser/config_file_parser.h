@@ -127,6 +127,15 @@ struct TransformQuantString {
 struct DynamicQuantString {
   std::string quant_strategy;
 };
+
+struct OMConverterString {
+  std::string input_name_vector;
+  std::string input_shape_vector;
+  std::string input_data_type_vector;
+  std::string output_name_vector;
+  std::string output_shape_vector;
+  std::string output_data_type_vector;
+};
 using GraphKernelString = std::vector<std::string>;
 
 class ConfigFileParser {
@@ -169,6 +178,7 @@ class ConfigFileParser {
   int ProcessVariableParam(const std::vector<std::string> &variable_param, std::vector<int64_t> &variable_index);
   int CheckVariableParm(const std::vector<int64_t> &variable_index);
   STATUS ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param, std::string custom_pattern_str);
+  int ParseOMConverterString(const std::map<std::string, std::map<std::string, std::string>> &maps);
 
  private:
   DataPreProcessString data_pre_process_string_;
@@ -185,6 +195,7 @@ class ConfigFileParser {
   GraphKernelString graph_kernel_string_;
   std::vector<int64_t> inputs_variable_index_;
   std::vector<int64_t> outputs_variable_index_;
+  OMConverterString om_converter_string_;
 };
 
 }  // namespace lite
