@@ -154,8 +154,9 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   auto type_id = (input_node->isa<CNode>()) ? common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0)
                                             : common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   const auto dim = shape_vec.size();
+  int64_t ddim = SizeToLong(dim);
   std::vector<int64_t> axis;
-  for (size_t i = 0; i < dim; ++i) {
+  for (int64_t i = 0; i < ddim; ++i) {
     (void)axis.emplace_back(i);
   }
   const std::vector<AnfNodePtr> square_node_inputs = {NewValueNode(std::make_shared<Primitive>(kSquareOpName)),
@@ -168,7 +169,6 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, {shape_vec}, square_node.get());
 
-  int64_t ddim = SizeToLong(dim);
   ShapeVector reduce_sum_output_shape = shape_vec;
   for (const auto &idx : axis) {
     if (idx < -ddim || idx >= ddim) {
@@ -182,6 +182,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
 
   auto axis_node = CreateValueNode(graph, MakeValue(axis));
+  MS_EXCEPTION_IF_NULL(axis_node);
   // Calc the sum of reducesum
   const std::vector<AnfNodePtr> square_sum_node_inputs = {NewValueNode(std::make_shared<Primitive>(kReduceSumOpName)),
                                                           square_node, axis_node};
@@ -253,6 +254,7 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
     // param is a side-effect operator parameter, need load with UMonad
     param_node = CreateNodeOfBinaryOp(graph, prim::kPrimLoad->name(), ori_inputs[kParamIndex], ori_inputs[kUMonadIndex],
                                       ori_inputs[kParamIndex]);
+    MS_EXCEPTION_IF_NULL(param_node);
     auto global_step_node1 = CreateNodeOfBinaryOp(graph, prim::kPrimLoad->name(), ori_inputs[kGlobalStepIndex],
                                                   ori_inputs[kUMonadIndex], ori_inputs[kGlobalStepIndex]);
 
