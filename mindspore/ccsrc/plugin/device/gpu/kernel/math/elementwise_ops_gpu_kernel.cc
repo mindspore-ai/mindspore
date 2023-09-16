@@ -235,6 +235,8 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
                                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto input_ptr = GetDeviceAddress<Inp_t>(inputs, kIndex0);
   auto output_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  MS_EXCEPTION_IF_NULL(output_ptr);
   auto ret =
     UnaryOpsCudaFunc<Op, Inp_t, Out_t>(ele_num_, input_ptr, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(ret, kernel_name_);
@@ -246,6 +248,9 @@ bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::Addre
   auto in0_ptr = GetDeviceAddress<In0_t>(inputs, kIndex0);
   auto in1_ptr = GetDeviceAddress<In1_t>(inputs, kIndex1);
   auto out_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(in0_ptr);
+  MS_EXCEPTION_IF_NULL(in1_ptr);
+  MS_EXCEPTION_IF_NULL(out_ptr);
   auto ret = BinaryOpsCudaFunc<Op, In0_t, In1_t, Out_t>(ele_num_, in0_ptr, in1_ptr, out_ptr,
                                                         reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(ret, kernel_name_);

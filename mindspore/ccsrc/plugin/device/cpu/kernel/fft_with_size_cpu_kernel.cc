@@ -262,6 +262,8 @@ bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   const int64_t choose = FFTWithSize_choose(real_, inverse_);
   auto p_x = GetDeviceAddress<T1>(inputs, kIndex0);
   auto p_y = GetDeviceAddress<T2>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(p_x);
+  MS_EXCEPTION_IF_NULL(p_y);
   if constexpr (std::is_same<T1, T2>::value) {  // fft and ifft
     if (choose == kDimNum_FFT) {
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, false, false);

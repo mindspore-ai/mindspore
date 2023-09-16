@@ -53,12 +53,16 @@ void ReduceAxes(std::vector<int64_t> *output_shape, std::vector<int64_t> *axes, 
   MS_EXCEPTION_IF_NULL(axes);
   MS_EXCEPTION_IF_NULL(output_shape);
   auto prim_name = primitive->name();
+  auto validateAndConvertAxis = [&](int64_t &axis) {
+    CheckAndConvertUtils::CheckInRange("axes value", axis, kIncludeLeft, {-input_rank, input_rank}, prim_name);
+    if (axis < 0) {
+      axis += input_rank;
+    }
+  };
+
   if (axes->size() > 1) {
     for (size_t i = 0; i < axes->size(); ++i) {
-      CheckAndConvertUtils::CheckInRange("axes value", axes->at(i), kIncludeLeft, {-input_rank, input_rank}, prim_name);
-      if (axes->at(i) < 0) {
-        axes->at(i) += input_rank;
-      }
+      validateAndConvertAxis((*axes)[i]);
     }
     constexpr int64_t place_holder = INT64_MAX;
     for (size_t i = 0; i < axes->size(); ++i) {
@@ -85,10 +89,7 @@ void ReduceAxes(std::vector<int64_t> *output_shape, std::vector<int64_t> *axes, 
       }
     }
   } else if (axes->size() == 1) {
-    CheckAndConvertUtils::CheckInRange("axes value", axes->at(0), kIncludeLeft, {-input_rank, input_rank}, prim_name);
-    if (axes->at(0) < 0) {
-      axes->at(0) += input_rank;
-    }
+    validateAndConvertAxis((*axes)[0]);
     if (!keep_dims) {
       (void)output_shape->erase(output_shape->begin() + LongToSize(axes->at(0)));
     } else {
@@ -124,7 +125,7 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
   auto input_rank = static_cast<int64_t>(input_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("the rank of axes", SizeToLong(axes_shape.size()), kEqual, axes_dim,
                                            prim_name);
-
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   if (!input_args[kInputIndex1]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex1]->BuildValue()->isa<None>()) {
     auto axes_value = input_args[kInputIndex1]->BuildValue();
