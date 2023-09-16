@@ -299,6 +299,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     MS_LOG(ERROR) << "Invalid device context for actor:" << GetAID();
     return false;
   }
+  auto device_context = device_contexts_[0];
   auto &input_nodes = graph->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if (i >= node_device_tensors_.size()) {
@@ -333,9 +334,15 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         node_device_tensor->set_from_mem_pool(false);
         continue;
       }
+      if (device_context->GetDeviceType() != node_device_tensor->GetDeviceType()) {
+        device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+          {node_device_tensor->device_name(), node_device_tensor->device_id()});
+        MS_EXCEPTION_IF_NULL(device_context);
+        MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+      }
 
       if (copy_input_device_tensors_[i] == nullptr) {
-        copy_input_device_tensors_[i] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
+        copy_input_device_tensors_[i] = device_context->device_res_manager_->CreateDeviceAddress(
           nullptr, node_device_tensor->GetSize(), node_device_tensor->format(), node_device_tensor->type_id(),
           node_device_tensor->host_shape());
         MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
@@ -344,8 +351,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       copy_device_tensor = copy_input_device_tensors_[i];
       MS_EXCEPTION_IF_NULL(copy_device_tensor);
       if ((copy_device_tensor->GetPtr() == nullptr) &&
-          (!device_contexts_[0]->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
-        MS_LOG(ERROR) << "Device(id:" << std::to_string((device_contexts_[0])->device_context_key().device_id_)
+          (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
+        MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
                       << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
                       << ", alloc size: " + std::to_string(copy_device_tensor->GetSize()) << "B.";
         continue;

@@ -120,6 +120,10 @@ class AnyTypeKernelActor : public SuperKernelActor {
   mindspore::HashMap<int, std::vector<OpData<DeviceTensor> *>> graph_output_op_data_;
   mindspore::HashMap<int, std::vector<AID *>> graph_output_op_control_;
   std::vector<DeviceTensor *> graph_ouput_device_tensors_;
+  // In any type kernel actor, the kernel in the model graph will have fallback scenario, the device type of the
+  // model graph and the real graph will be different. A new device address needs to be created for the model graph
+  // and placed here.
+  std::vector<DeviceTensorPtr> fallback_device_tensors_;
   mindspore::HashMap<std::string, size_t> graph_output_data_num_;
   mindspore::HashMap<std::string, size_t> graph_output_control_num_;
 

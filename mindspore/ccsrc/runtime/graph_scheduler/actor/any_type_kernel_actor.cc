@@ -578,8 +578,9 @@ void AnyTypeKernelActor::Init() {
                         << " index:" << node_with_index.second << " for actor:" << GetAID();
     }
     graph_ouput_device_tensors_.emplace_back(
-      AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second).get());
+      AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false).get());
   }
+  fallback_device_tensors_.resize(graph_ouput_device_tensors_.size());
 }
 
 void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
@@ -598,7 +599,8 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
         continue;
       }
       index -= graph()->input_nodes().size();
-      if (index >= graph_ouput_device_tensors_.size()) {
+      if (index >= graph_ouput_device_tensors_.size() ||
+          graph_ouput_device_tensors_.size() != fallback_device_tensors_.size()) {
         std::string error_info = "Invalid input index:" + std::to_string(index) +
                                  " total:" + std::to_string(graph_ouput_device_tensors_.size()) +
                                  " for actor:" + GetAID().Name();
@@ -608,6 +610,40 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
                     << " size:" << graph_output_data->data_->GetSize()
                     << " from device address:" << graph_output_data->data_
                     << " to:" << graph_ouput_device_tensors_[index] << " for actor:" << GetAID();
+      if (graph_ouput_device_tensors_[index]->GetDeviceType() != graph_output_data->data_->GetDeviceType()) {
+        MS_LOG(INFO) << "Different device type for actor:" << GetAID()
+                     << " front device address:" << graph_ouput_device_tensors_[index]
+                     << " device type:" << graph_ouput_device_tensors_[index]->GetDeviceType()
+                     << " backend device address:" << graph_output_data->data_
+                     << " device type:" << graph_output_data->data_->GetDeviceType();
+        if (fallback_device_tensors_[index] != nullptr) {
+          if (fallback_device_tensors_[index]->GetDeviceType() != graph_output_data->data_->GetDeviceType()) {
+            MS_LOG(ERROR) << "Invalid device type for actor:" << GetAID()
+                          << " fallback device address:" << fallback_device_tensors_[index]
+                          << " device type:" << fallback_device_tensors_[index]->GetDeviceType()
+                          << " backend device address:" << graph_output_data->data_
+                          << " device type:" << graph_output_data->data_->GetDeviceType();
+            SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), GetAID().Name() + " invalid device type.");
+          }
+        } else {
+          auto tmp_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+            {graph_output_data->data_->device_name(), graph_output_data->data_->device_id()});
+          MS_EXCEPTION_IF_NULL(tmp_device_context);
+          fallback_device_tensors_[index] = tmp_device_context->device_res_manager_->CreateDeviceAddress(
+            nullptr, graph_output_data->data_->GetSize(), graph_output_data->data_->format(),
+            graph_output_data->data_->type_id(), graph_output_data->data_->host_shape());
+          MS_EXCEPTION_IF_NULL(fallback_device_tensors_[index]);
+          MS_LOG(DEBUG) << "Create device address:" << fallback_device_tensors_[index] << " for actor:" << GetAID()
+                        << " index:" << index << " device type:" << fallback_device_tensors_[index]->GetDeviceType()
+                        << " size:" << fallback_device_tensors_[index]->GetSize();
+          fallback_device_tensors_[index]->set_ref_count(graph_ouput_device_tensors_[index]->ref_count());
+          fallback_device_tensors_[index]->set_original_ref_count(
+            graph_ouput_device_tensors_[index]->original_ref_count());
+          fallback_device_tensors_[index]->set_dynamic_ref_count(
+            graph_ouput_device_tensors_[index]->dynamic_ref_count());
+        }
+        graph_ouput_device_tensors_[index] = fallback_device_tensors_[index].get();
+      }
       graph_ouput_device_tensors_[index]->set_ptr(graph_output_data->data_->GetMutablePtr());
       graph_ouput_device_tensors_[index]->set_sync_user_data_handler(
         graph_output_data->data_->sync_user_data_handler());

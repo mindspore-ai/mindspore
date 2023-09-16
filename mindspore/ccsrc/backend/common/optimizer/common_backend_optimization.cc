@@ -358,6 +358,9 @@ void OptimizationWithoutBackend(const std::shared_ptr<session::KernelGraph> &ker
 void OptimizationForAnyTypeKernelGraph(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto common_pm = std::make_shared<opt::PassManager>("common_pm");
+  common_pm->AddPass(std::make_shared<ConvertListToTuple>("convert_list_to_tuple"));
+  common_pm->AddPass(std::make_shared<EliminateFuncDataType>());
+  common_pm->AddPass(std::make_shared<opt::ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<opt::ConvertTupleOutputToMaketuple>());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   optimizer->AddPassManager(common_pm);

@@ -92,6 +92,8 @@ class DataPrepareActor : public DebugAwareActor {
   // Prepare the device data for persistent device tensor of value node.
   void PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
+  void PrepareDataForStringValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
+                                 const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;

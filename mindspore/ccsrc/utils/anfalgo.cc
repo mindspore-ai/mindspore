@@ -294,8 +294,8 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
         real_index = 0;
       }
       MS_EXCEPTION_IF_NULL(abs);
-      if (abs->isa<abstract::AbstractTuple>()) {
-        auto tuple_abstract = abs->cast<abstract::AbstractTuplePtr>();
+      if (abs->isa<abstract::AbstractSequence>()) {
+        auto tuple_abstract = abs->cast<abstract::AbstractSequencePtr>();
         MS_EXCEPTION_IF_NULL(tuple_abstract);
         auto sub_abstracts = tuple_abstract->elements();
         if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
@@ -2137,13 +2137,31 @@ bool AnfAlgo::IsAnyTypeOutput(const AnfNodePtr &node) {
   return false;
 }
 
+namespace {
+bool IsIncludeAny(const abstract::AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return false;
+  }
+  if (abstract->isa<abstract::AbstractAny>()) {
+    return true;
+  }
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  const auto &seq_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abstract);
+  if (std::any_of(seq_abstract->elements().begin(), seq_abstract->elements().end(),
+                  [](const auto &abstract) { return IsIncludeAny(abstract); })) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
 bool AnfAlgo::IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs) {
   for (const auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
-    if (input->abstract() == nullptr) {
-      continue;
-    }
-    if (input->abstract()->isa<abstract::AbstractAny>()) {
+    if (IsIncludeAny(input->abstract())) {
       return true;
     }
   }
