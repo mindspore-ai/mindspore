@@ -543,8 +543,9 @@ enum PrimType {
   PrimType_Triu = 218,
   PrimType_Tril = 219,
   PrimType_AdamWeightDecay = 220,
+  PrimType_FillV2 = 221,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_AdamWeightDecay + 1,
+  PrimType_MAX = PrimType_FillV2 + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

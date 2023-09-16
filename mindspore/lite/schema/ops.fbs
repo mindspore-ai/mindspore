@@ -238,6 +238,7 @@ union PrimitiveType {
     Triu,
     Tril,
     AdamWeightDecay,
+    FillV2,
 }
 
 table Abs {
@@ -1331,4 +1332,7 @@ table Tril {
 
 table AdamWeightDecay {
     use_locking: bool;
+}
+
+table FillV2 {
 }
