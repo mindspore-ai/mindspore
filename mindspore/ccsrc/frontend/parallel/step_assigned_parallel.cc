@@ -221,9 +221,9 @@ AnfNodePtr NewAllGatherNode(const std::string &name, const std::string &group) {
   ValuePtr attr0_value = MakeValue(group);
   Attr attr0 = std::make_pair(GROUP, attr0_value);
   prim->AddAttr(GROUP, attr0_value);
-  prim->AddAttr("fusion", MakeValue(0));
-  prim->AddAttr("mean_flag", MakeValue(False));
-  prim->AddAttr("no_eliminate", MakeValue(True));
+  prim->AddAttr("fusion", MakeValue(static_cast<int64_t>(0)));
+  prim->AddAttr("mean_flag", MakeValue(false));
+  prim->AddAttr("no_eliminate", MakeValue(true));
   std::vector<unsigned int> rank_list = {};
   auto long_rank_list = parallel::g_device_manager->FindRankListByHashName(group);
   (void)std::transform(long_rank_list.begin(), long_rank_list.end(), std::back_inserter(rank_list),
