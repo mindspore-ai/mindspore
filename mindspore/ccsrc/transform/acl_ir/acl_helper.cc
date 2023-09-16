@@ -74,7 +74,17 @@ TypeId ConvertGeType(GeDataType type) {
 
 bool GLogIsDebug() {
   const std::string &glog = common::GetEnv("GLOG_v");
-  return !glog.empty() && glog[0] == '0';
+  auto is_debug = !glog.empty() && glog[0] == '0';
+
+  auto submodule = common::GetEnv("MS_SUBMODULE_LOG_v");
+  bool is_submodule_debug = false;
+  constexpr std::string_view kKernelSub = "KERNEL";
+  constexpr size_t kKernelPos = 7;
+  if (!submodule.empty() && submodule.find(kKernelSub) != std::string::npos) {
+    auto start_pos = submodule.find(kKernelSub) + kKernelPos;
+    is_submodule_debug = submodule[start_pos] == '0';
+  }
+  return is_debug || is_submodule_debug;
 }
 
 bool NeedNDInput(const CNodePtr &cnode, const CNodePtr &input_cnode, const std::string &format,
@@ -314,7 +324,7 @@ KernelType AclHelper::GetKernelInfoByOutputs(const AnfNodePtr &node, const std::
   return ACL_KERNEL;
 }
 
-KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
+KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *err_type) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -322,19 +332,24 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   static const std::set<std::string> excuded_nodes = {kCTCLossOpName, kGetNextOpName, kPadV3OpName, kPadV3GradOpName};
   std::string name = GetCNodeFuncName(cnode);
   if (excuded_nodes.count(name) != 0) {
+    *err_type = kSpecialOp;
     return KernelType::UNKNOWN_KERNEL_TYPE;
   }
 
   auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
   if (info == nullptr) {
+    *err_type = kUnknownOp;
     MS_LOG(DEBUG) << "Unsupported op type on acl, node name: " << node->fullname_with_scope();
     return UNKNOWN_KERNEL_TYPE;
   }
 
   // check whether all inputs are matched
   if (GetKernelInfoByInputs(cnode, info) == UNKNOWN_KERNEL_TYPE) {
+    *err_type = kInValidType;
     return UNKNOWN_KERNEL_TYPE;
   }
+
+  *err_type = kNormalOp;
   const auto &op_type = info->op_type();
   if (kHcomOps.find(op_type) != kHcomOps.end()) {
     return HCCL_KERNEL;

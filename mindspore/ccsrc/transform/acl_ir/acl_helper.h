@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace transform {
 class GeAdapterInfo;
+typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp } ErrorAclType;
 
 class AclHelper {
  public:
@@ -37,7 +38,7 @@ class AclHelper {
   // Kernel select by ge_ir.
   static KernelType GetKernelInfoByInputs(const CNodePtr &cnode, const std::shared_ptr<GeAdapterInfo> &info);
   static KernelType GetKernelInfoByOutputs(const AnfNodePtr &node, const std::shared_ptr<GeAdapterInfo> &info);
-  static KernelType GetKernelInfoFromGe(const AnfNodePtr &node);
+  static KernelType GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *err_type);
 
   // Select kernel's device format.
   static void GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
