@@ -484,7 +484,9 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
 #endif
 #ifdef ENABLE_DEBUGGER
-  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->DebuggerBackendEnabled()) {
     debugger_actor_need = true;
   }
 #endif
