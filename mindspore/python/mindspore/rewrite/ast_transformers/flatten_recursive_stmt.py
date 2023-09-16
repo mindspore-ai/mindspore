@@ -28,6 +28,8 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
+FLATTEN_BLACK_LIST = ["set_vertex_attr",]
+
 class FlattenRecursiveStmt(ast.NodeTransformer):
     """Ast optimizer for flatten recursive call."""
 
@@ -107,8 +109,25 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                 new_list.append(node)
         return results, new_list
 
+    @staticmethod
+    def _check_flatten_black_list(node: ast.AST):
+        """Check whether node in flatten black list"""
+        func_name = ""
+        # Get func name of node
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+        # Check func name of node
+        if func_name and func_name in FLATTEN_BLACK_LIST:
+            return True
+        return False
+
     def _flatten_statement(self, node: ast.AST, target_names) -> [ast.AST]:
         """Flatten recursive statement according to different node type."""
+        if FlattenRecursiveStmt._check_flatten_black_list(node):
+            return []
         flatten_config = self._flatten_table.get(type(node))
         if flatten_config is None:
             return []

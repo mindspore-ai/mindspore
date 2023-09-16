@@ -14,13 +14,12 @@
 # ============================================================================
 """SymbolTree class define of Rewrite according to forward function of a network."""
 import stat
-from typing import Optional, Union, Tuple, Any
+from typing import Optional, Union, Tuple, Any, Dict, List
 import os
 import sys
 import ast
 import importlib.util
 import time
-import collections
 
 from mindspore.nn import Cell
 from mindspore import log as logger
@@ -181,8 +180,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         self._tmp_import_strs = []
         self._tmp_unmodified_strees: {type, str} = {}
         self._tmp_replacers = []
-
-        self._import_modules_dict = collections.defaultdict(list)
+        # Record imported modules and names of each files
+        # The meanings of `module` and `name` are like code: from `module` import `nameA`, `nameB`
+        # Format: {file_path: {module: [name, ...], ...}, ...}
+        self._imported_modules: Dict[str, Dict[str, List[str]]] = {}
 
     def __del__(self):
         for tmp_file in self._tmp_files:
@@ -422,12 +423,18 @@ class SymbolTree(Observer, Observable, NodeManager):
         """Get _father_class_ast"""
         return self._father_class_ast
 
-    def get_import_modules_dict(self):
-        """Get _import_modules"""
-        return self._import_modules_dict
+    def get_imported_modules(self, file_path: str):
+        """Get all modules and module_paths in file of `file_path` ."""
+        return self._imported_modules.get(file_path, {})
 
-    def extend_import_module(self, module, module_name_list):
-        self._import_modules_dict[module].extend(module_name_list)
+    def save_imported_modules(self, file_path: str, module: str, names: List[str]):
+        """Save module and names into _imported_modules."""
+        imported_modules = self.get_imported_modules(file_path)
+        if imported_modules.get(module):
+            imported_modules[module].extend(names)
+        else:
+            imported_modules[module] = names
+        self._imported_modules[file_path] = imported_modules
 
     def get_node_inputs(self, node_or_name: Union[Node, str]) -> [Node]:
         """

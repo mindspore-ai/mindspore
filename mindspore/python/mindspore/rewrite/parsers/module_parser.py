@@ -208,13 +208,13 @@ class ModuleParser(Parser):
             if import_path:
                 ModuleParser.save_file_path_to_sys(stree, 0, import_path)
             module_name_list = [alias.name.strip() for alias in import_node.names]
-            # add the module into _import_modules_dict to direct the class
-            stree.extend_import_module(import_module, module_name_list)
+            # add the module into _imported_modules to direct the class
+            stree.save_imported_modules(file_path, import_module, module_name_list)
             import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
         elif isinstance(import_node, ast.Import):
             for alias in import_node.names:
                 name = alias.name
-                stree.extend_import_module(name.strip(), [])
+                stree.save_imported_modules(file_path, name.strip(), [])
         return import_node
 
     @staticmethod
