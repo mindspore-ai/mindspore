@@ -75,7 +75,7 @@ std::vector<std::string> SplitString(const std::string &input) {
   return words;
 }
 
-std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
+std::vector<enum ge::DataType> ParseGeTypes(const std::string &op_name, const std::string &tensor_types) {
   static HashMap<std::string, std::vector<enum ge::DataType>> kGeTypeMap = {
     {"DT_BF16", {DT_BF16}},
     {"DT_BOOL", {DT_BOOL}},
@@ -145,7 +145,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
   for (const auto &n : split_tensor_types) {
     auto iter = kGeTypeMap.find(n);
     if (iter == kGeTypeMap.end()) {
-      MS_LOG(WARNING) << "Unknown data type: " << n;
+      MS_LOG(WARNING) << "Unknown data type: " << n << " in prototype of operator " << op_name;
       continue;
     }
     auto &v = iter->second;
@@ -178,29 +178,29 @@ OpProto &OpProto::SetAttr(const std::string &name, bool is_optional) {
 OpProto &OpProto::DoNothing() { return *this; }
 
 OpProto &OpProto::DefineDataType(const std::string &name, const std::string &tensor_type) {
-  (void)alias_types_.emplace("\"" + name + "\"", ParseGeTypes(tensor_type));
+  (void)alias_types_.emplace("\"" + name + "\"", ParseGeTypes(name_, tensor_type));
   return *this;
 }
 
 OpProto &OpProto::FinishRegOperator() {
   // process types of input parameters
   for (const auto &[name, type_str] : input_types_org_) {
-    auto alias_iter = alias_types_.find(name);
+    auto alias_iter = alias_types_.find(type_str);
     if (alias_iter != alias_types_.end()) {
       (void)input_types_.emplace(name, alias_iter->second);
       continue;
     }
-    (void)input_types_.emplace(name, ParseGeTypes(type_str));
+    (void)input_types_.emplace(name, ParseGeTypes(name_, type_str));
   }
 
   // process types of output parameters
   for (const auto &[name, type_str] : output_types_org_) {
-    auto alias_iter = alias_types_.find(name);
+    auto alias_iter = alias_types_.find(type_str);
     if (alias_iter != alias_types_.end()) {
       (void)output_types_.emplace(name, alias_iter->second);
       continue;
     }
-    (void)output_types_.emplace(name, ParseGeTypes(type_str));
+    (void)output_types_.emplace(name, ParseGeTypes(name_, type_str));
   }
 
   // clear temporary fields
