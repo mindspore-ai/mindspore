@@ -203,7 +203,7 @@ int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &
       continue;
     }
     // Store Quant Param
-    auto quant_params = GetQuantParamWithFakeQuantNode(cnode, true);
+    auto quant_params = GetQuantParamWithFakeQuantNode(cnode, false);
     if (quant_params.empty()) {
       MS_LOG(ERROR) << "Fail to get quantParam with fakeQuantNode.";
       return RET_ERROR;
