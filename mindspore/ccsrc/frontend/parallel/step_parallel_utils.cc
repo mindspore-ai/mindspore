@@ -392,11 +392,11 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       }
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
+      MS_EXCEPTION_IF_NULL(param);
       if (param->has_user_data<OperatorInfo>()) {
         next_nodes->push_back(std::make_pair(node_pair, get_item_index));
         continue;
       }
-      MS_EXCEPTION_IF_NULL(param);
       RedistributionNextNode(param, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
       for (const auto &next_node : *next_nodes) {
         next_node.first.first->set_user_data<AnfNode>(FUNC_PARAM, param);
@@ -826,7 +826,7 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
     return nullptr;
   }
   auto source_element_type = source_node_type->cast<mindspore::TensorTypePtr>()->element();
-  MS_EXCEPTION_IF_NULL(input_element_type);
+  MS_EXCEPTION_IF_NULL(source_element_type);
   // We only add cast operation when the source is fp32 type, and the users is fp16 type.
   if (source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeFloat16) {
     return input_element_type;
