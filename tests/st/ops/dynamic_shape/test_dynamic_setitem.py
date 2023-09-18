@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 from mindspore import context, nn, ops
-from mindspore import Tensor, ParameterTuple
+from mindspore import Tensor, ParameterTuple, mutable
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
 import mindspore.common.dtype as mstype
@@ -586,6 +586,7 @@ def test_dynamic_rank_setitem_with_single_basic_index():
             x[1:4:2] = 1
             x[x.shape[0]-3:ops.dyn_shape(x)[0]:Tensor(2)] = 1
             x[True] = 1
+            x[()] = 1
             return x
 
     class NpSetItem():
@@ -598,6 +599,7 @@ def test_dynamic_rank_setitem_with_single_basic_index():
             x[1:4:2] = 1
             x[x.shape[0]-3:4:2] = 1
             x[True] = 1
+            x[()] = 1
             return x
 
     input_np = np.random.randn(3, 6, 4, 4, 3).astype(np.float32)
@@ -802,14 +804,15 @@ def test_dynamic_rank_setitem_with_list_index():
     class Net(Cell):
         def construct(self, x, axis):
             x = ops.reduce_min(x, axis)
-            x[[1, 2]] = 1
+            value = mutable([1])
+            x[[1, 2]] = value
             return x
 
     class NumpyNet():
         @classmethod
         def __call__(cls, x, axis):
             x = x.min(axis=axis[0]).min(axis=axis[0])
-            x[[1, 2]] = 1
+            x[[1, 2]] = [1]
             return x
 
     net_ms = Net()

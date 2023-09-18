@@ -2126,6 +2126,14 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   TensorIndex::is_ascend_ = is_ascend;
   TensorIndex::index_op_type_ = IndexOpType::SetItem;
   const TensorIndexType value_type = IsStubTensor(py_value) ? TensorIndexType::Tensor : TensorIndex(py_value).type();
+  bool valid = CheckTypeIsInstance<TensorIndexType>(
+    value_type, {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean, TensorIndexType::Tensor,
+                 TensorIndexType::List, TensorIndexType::Tuple});
+  if (!valid) {
+    MS_EXCEPTION(TypeError) << "only support numbers, Tensor, tuple, list as value, but got "
+                            << TensorIndex::py_value_handle_ << " with type "
+                            << TensorIndex::py_value_handle_.get_type();
+  }
   if (py::isinstance<py::int_>(py_index) && !py::isinstance<py::bool_>(py_index) && data_value != nullptr) {
     return SetItemByNumberWithView(data_shape, data_type, is_parameter, TensorIndex(py_index), value_type, data_value);
   }

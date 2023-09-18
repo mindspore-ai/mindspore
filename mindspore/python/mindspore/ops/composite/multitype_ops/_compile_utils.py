@@ -1080,7 +1080,7 @@ def sequence_to_tensor(value, dtype):
 
     if value_elements_type == const_utils.ALL_TENSOR:
         value = F.stack(value).astype(dtype)
-    elif value_elements_type == const_utils.NO_TENSOR:
+    elif value_elements_type == const_utils.NO_TENSOR and not F.is_sequence_value_unknown(value):
         value = const_utils.make_tensor(value, dtype)
     else:
         new_value = ()
@@ -1426,7 +1426,7 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     if special_index == 0:
         return data
     value = F.reshape(value, new_value_shape)
-    if special_index == 1:
+    if not tuple_index or special_index == 1:
         data[True] = value
         return data
     indices = _tensor_index_setitem(data, tuple_index, value, idx_advanced)
