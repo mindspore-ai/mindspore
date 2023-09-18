@@ -155,7 +155,7 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
     if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
+      MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
 }
@@ -172,7 +172,7 @@ void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }
     if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
+      MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
 }
