@@ -655,7 +655,9 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
     MS_EXCEPTION_IF_NULL(graph);
     graph->set_flag(kFlagPyNativeRunInGraph, true);
     graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
-
+    if (graph->is_any_type_input()) {
+      continue;
+    }
     if (no_multi_graph) {
       MS_LOG(INFO) << "Replace parameter format";
       // The input tensors of heterogeneous graphs or control flow graphs are null.
