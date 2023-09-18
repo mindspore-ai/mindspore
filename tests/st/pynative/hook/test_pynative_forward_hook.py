@@ -14,6 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -500,3 +501,47 @@ def test_pynative_forward_hook_in_graph_mode():
     assert len(grad) == len(expect_grad)
     assert np.allclose(grad[0][0].asnumpy(), expect_grad[0][0].asnumpy(), 0.000001, 0.000001)
     assert np.allclose(grad[1][0].asnumpy(), expect_grad[1][0].asnumpy(), 0.000001, 0.000001)
+
+
+def forward_pre_hook_fn(cell_id, inputs):
+    print("forward inputs:", inputs)
+    input_x = inputs[0]
+    return input_x
+
+class TestHookNet(nn.Cell):
+    def __init__(self):
+        super(TestHookNet, self).__init__()
+        self.relu = nn.ReLU()
+        self.handle = self.relu.register_forward_pre_hook(forward_pre_hook_fn)
+
+    def construct(self, x, y):
+        x = x + y
+        x = self.relu(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_forward_hook_delete():
+    """
+    Feature: PyNative hook function.
+    Description: Test delete forward hook.
+    Expectation: The calculation result is correct.
+    """
+    net = TestHookNet()
+    grad_net = ms.grad(net, grad_position=(0, 1))
+
+    x = ms.Tensor(np.ones([1]).astype(np.float32))
+    y = ms.Tensor(np.ones([1]).astype(np.float32))
+
+    output = net(x, y)
+    assert output.asnumpy().all() == np.array([2]).all()
+    grads = grad_net(x, y)
+    assert grads[0].asnumpy().all() == np.array([1]).all()
+    net.handle.remove()
+    grads = grad_net(x, y)
+    assert grads[1].asnumpy().all() == np.array([1]).all()
