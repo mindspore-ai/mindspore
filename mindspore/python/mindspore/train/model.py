@@ -1629,7 +1629,7 @@ class Model:
                 The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
             backend (str): Select predict backend, this parameter is an experimental feature
-                and is mainly used for MindSpore Lite cloud-side inference. Default: ``False`` .
+                and is mainly used for MindSpore Lite cloud-side inference. Default: ``None`` .
             config (dict, optional) - The config parameter is enabled when the backend is ‘lite’.
                 The config includes two parts: config_path (configPath, str) and config_item (str, dict).
                 When the config_item is set, its priority is higher than the config_path. Set the ranking

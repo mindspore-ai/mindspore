@@ -1,7 +1,6 @@
 mindspore.set_offload_context
 ====================================
 
-
 .. py:function:: mindspore.set_offload_context(offload_config)
 
     配置异构训练详细参数，来调整offload策略。
@@ -10,7 +9,7 @@ mindspore.set_offload_context
         offload配置只有在通过mindspore.set_context(memory_offload="ON")开启offload功能才会被使用。
 
     参数：
-        - **offload_config** (dict) 输入格式为{"offload_path": "./offload","offload_cpu_size":"512GB","hbm_ratio":0.9}。支持以下参数配置：
+        - **offload_config** (dict) - 输入格式为{"offload_path": "./offload","offload_cpu_size":"512GB","hbm_ratio":0.9}。支持以下参数配置：
 
           - offload_path：offload到磁盘上的路径，支持相对路径，默认值： ``"./offload"``。
           - offload_cpu_size：设置可用于offload到host侧总内存大小，格式只支持"xxGB"形式字符串。

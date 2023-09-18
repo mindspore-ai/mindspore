@@ -1,7 +1,7 @@
 mindspore.experimental.optim.lr_scheduler.LinearLR
 ========================================================
 
-.. py:class:: mindspore.experimental.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.experimental.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1)
 
     线性减小学习率乘法因子 ，并将每个参数组的学习率按照此乘法因子进行衰减，直到epoch/step数达到 `total_iters`。注意，这种衰减可能与外部对于学习率的改变同时发生。
 
@@ -14,7 +14,6 @@ mindspore.experimental.optim.lr_scheduler.LinearLR
         - **end_factor** (float，可选) - 线性变化过程结束时的乘法因子值。默认值： ``1.0``。
         - **total_iters** (int，可选) - 迭代的次数。默认值： ``5``。
         - **last_epoch** (int，可选) - epoch/step数。默认值： ``-1``。
-        - **verbose** (bool，可选) - 是否打印学习率。默认值： ``False``。
 
     异常：
         - **ValueError** - `start_factor` 不在(0, 1]范围内。

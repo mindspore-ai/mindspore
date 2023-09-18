@@ -12,7 +12,7 @@ mindspore.nn.Transformer
         - **num_decoder_layers** (int) - Decoder的层数。默认值：``6``。
         - **dim_feedforward** (int) - FeedForward层的维数。默认值：``2048``。
         - **dropout** (float) - 随机丢弃比例。默认值：``0.1``。
-        - **activation** (Union[str, callable, Cell]) - 中间层的激活函数，可以输入字符串（ ``"relu"`` 、 ``"gelu"`` ）、函数接口（ ：func:`mindspore.ops.relu` 、 ：func:`mindspore.ops.gelu` ）或激活函数层实例（ :class:`mindspore.nn.RELU` 、 :class:`mindspore.nn.GELU` ）。默认值： ``'relu'``。
+        - **activation** (Union[str, callable, Cell]) - 中间层的激活函数，可以输入字符串（ ``"relu"`` 、 ``"gelu"`` ）、函数接口（ :func:`mindspore.ops.relu` 、 :func:`mindspore.ops.gelu` ）或激活函数层实例（ :class:`mindspore.nn.ReLU` 、 :class:`mindspore.nn.GELU` ）。默认值： ``'relu'``。
         - **custom_encoder** (Cell) - 自定义Encoder层。默认值：``None``。
         - **custom_decoder** (Cell) - 自定义Decoder层。默认值：``None``。
         - **layer_norm_eps** (float) - LayerNorm层的eps值，默认值：``1e-5``。

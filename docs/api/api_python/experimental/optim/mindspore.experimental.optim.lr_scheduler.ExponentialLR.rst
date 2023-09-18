@@ -1,7 +1,7 @@
 mindspore.experimental.optim.lr_scheduler.ExponentialLR
 ==========================================================
 
-.. py:class:: mindspore.experimental.optim.lr_scheduler.ExponentialLR(optimizer, gamma, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.experimental.optim.lr_scheduler.ExponentialLR(optimizer, gamma, last_epoch=-1)
 
     每个epoch呈指数衰减的学习率，即乘以 `gamma` 。注意，这种衰减可能与外部对于学习率的改变同时发生。
 
@@ -12,4 +12,3 @@ mindspore.experimental.optim.lr_scheduler.ExponentialLR
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
         - **gamma** (float) -  学习率衰减的乘法因子。
         - **last_epoch** (int，可选) - 最后一个epoch的索引。默认值： ``-1``。
-        - **verbose** (bool，可选) - 是否打印学习率。默认值： ``False``。
