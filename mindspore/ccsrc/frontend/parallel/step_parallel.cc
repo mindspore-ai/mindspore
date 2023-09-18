@@ -1408,6 +1408,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   if (!enable_opt_shard) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(parameter);
   if (ParameterIsCloned(parameter)) {
     return;
   }
@@ -1419,7 +1420,6 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   }
 
   // set all gather type
-  MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   std::string op_name = ALL_GATHER;
   if (root->has_flag(kTraining)) {
@@ -1436,9 +1436,9 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
 static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res,
                                     const FuncGraphPtr &root) {
   // check null for param and cnode
+  MS_EXCEPTION_IF_NULL(parameter);
   auto param_shape = parameter->Shape();
 
-  MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(param_shape);
 
   CNodePtr cnode = res.first->cast<CNodePtr>();
@@ -2164,7 +2164,6 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
       }
 
       OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      MS_EXCEPTION_IF_NULL(distribute_operator);
       // StepReplace
       MS_EXCEPTION_IF_NULL(distribute_operator);
       auto replace_op = distribute_operator->replace_op();
