@@ -22,6 +22,7 @@
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/where_fp16.h"
 #endif
+#include "nnacl/base/broadcast_to.h"
 
 int WhereExcuteFp16(WhereStruct *where, int task_id) {
 #ifdef ENABLE_FP16
@@ -129,6 +130,56 @@ int WhereRunWithSingleInput(WhereStruct *where) {
   return NNACL_OK;
 }
 
+int WhereBroadCastForInput(WhereStruct *where, TensorC *condition, TensorC *x, TensorC *y,
+                           void **condition_broadcast_buf, void **x_broadcast_buf, void **y_broadcast_buf,
+                           TensorC *output) {
+  size_t broad_cast_buf_size = GetElementNum(output);
+  if (output->data_type_ == kNumberTypeFloat32) {
+    broad_cast_buf_size *= sizeof(float);
+  } else {
+    return NNACL_WHERE_BROAD_CAST_FAILED;
+  }
+  BroadcastShapeInfo condition_info;
+  condition_info.input_shape_size_ = condition->shape_size_;
+  condition_info.output_shape_size_ = output->shape_size_;
+  memcpy(condition_info.input_shape_, condition->shape_, condition->shape_size_ * sizeof(int));
+  memcpy(condition_info.output_shape_, output->shape_, output->shape_size_ * sizeof(int));
+
+  BroadcastShapeInfo x_info;
+  x_info.input_shape_size_ = x->shape_size_;
+  x_info.output_shape_size_ = output->shape_size_;
+  memcpy(x_info.input_shape_, x->shape_, x->shape_size_ * sizeof(int));
+  memcpy(x_info.output_shape_, output->shape_, output->shape_size_ * sizeof(int));
+
+  BroadcastShapeInfo y_info;
+  y_info.input_shape_size_ = y->shape_size_;
+  y_info.output_shape_size_ = output->shape_size_;
+  memcpy(y_info.input_shape_, y->shape_, y->shape_size_ * sizeof(int));
+  memcpy(y_info.output_shape_, output->shape_, output->shape_size_ * sizeof(int));
+
+  *condition_broadcast_buf = where->base_.env_->Alloc(where->base_.env_->allocator_, broad_cast_buf_size);
+  if (*condition_broadcast_buf == NULL) {
+    return NNACL_WHERE_BROAD_CAST_FAILED;
+  }
+  BroadcastToSize8(condition->data_, &condition_info, *condition_broadcast_buf);
+
+  *x_broadcast_buf = where->base_.env_->Alloc(where->base_.env_->allocator_, broad_cast_buf_size);
+  if (*x_broadcast_buf == NULL) {
+    where->base_.env_->Free(where->base_.env_->allocator_, *condition_broadcast_buf);
+    return NNACL_WHERE_BROAD_CAST_FAILED;
+  }
+  BroadcastToSize32(x->data_, &x_info, *x_broadcast_buf);
+
+  *y_broadcast_buf = where->base_.env_->Alloc(where->base_.env_->allocator_, broad_cast_buf_size);
+  if (*y_broadcast_buf == NULL) {
+    where->base_.env_->Free(where->base_.env_->allocator_, *condition_broadcast_buf);
+    where->base_.env_->Free(where->base_.env_->allocator_, *x_broadcast_buf);
+    return NNACL_WHERE_BROAD_CAST_FAILED;
+  }
+  BroadcastToSize32(y->data_, &y_info, *y_broadcast_buf);
+  return NNACL_OK;
+}
+
 int WhereRunWithTripleInputs(WhereStruct *where) {
   TensorC *condition = where->base_.in_[Index0];
   NNACL_CHECK_NULL_RETURN_ERR(condition);
@@ -156,19 +207,54 @@ int WhereRunWithTripleInputs(WhereStruct *where) {
   args->y_num_ = y_num;
   args->max_num_ = num_max;
 
+  void *condition_broadcast_buf = NULL;
+  void *x_broadcast_buf = NULL;
+  void *y_broadcast_buf = NULL;
+
   if (out_num < num_max) {
     return NNACL_WHERE_INVALID_OUT_NUM;
   }
   if (((condition_nums != 1) && (condition_nums != num_max)) || ((x_num != 1) && (x_num != num_max)) ||
       ((y_num != 1) && (y_num != num_max))) {
-    /* The length of three inputs are not equal to 1 or length of output, which is unacceptable */
-    return NNACL_WHERE_CONDITION_NUM_INVALID;
+    if (condition_nums != GetElementNum(y) && condition->shape_size_ != y->shape_size_) {
+      int ret = WhereBroadCastForInput(where, condition, x, y, &condition_broadcast_buf, &x_broadcast_buf,
+                                       &y_broadcast_buf, output);
+      if (ret != NNACL_OK) {
+        return NNACL_WHERE_BROAD_CAST_FAILED;
+      }
+      int max_num = GetElementNum(output);
+      args->condition_ = (bool *)condition_broadcast_buf;
+      where->x_ = x_broadcast_buf;
+      where->y_ = y_broadcast_buf;
+      where->output_ = output->data_;
+      args->condition_num_ = max_num;
+      args->x_num_ = max_num;
+      args->y_num_ = max_num;
+      args->max_num_ = max_num;
+    } else {
+      /* The length of three inputs are not equal to 1 or length of output, which is unacceptable */
+      return NNACL_WHERE_CONDITION_NUM_INVALID;
+    }
   }
   if (num_max <= 0) {
     /* Error, inputs' length are zero */
     return NNACL_WHERE_NUM_MAX_INVALID;
   }
-  return where->base_.env_->ParallelLaunch(where->base_.env_->thread_pool_, WhereRun, where, where->base_.thread_nr_);
+  int ret =
+    where->base_.env_->ParallelLaunch(where->base_.env_->thread_pool_, WhereRun, where, where->base_.thread_nr_);
+  if (condition_broadcast_buf != NULL) {
+    where->base_.env_->Free(where->base_.env_->allocator_, condition_broadcast_buf);
+    condition_broadcast_buf = NULL;
+  }
+  if (x_broadcast_buf != NULL) {
+    where->base_.env_->Free(where->base_.env_->allocator_, x_broadcast_buf);
+    x_broadcast_buf = NULL;
+  }
+  if (y_broadcast_buf != NULL) {
+    where->base_.env_->Free(where->base_.env_->allocator_, y_broadcast_buf);
+    y_broadcast_buf = NULL;
+  }
+  return ret;
 }
 
 int WhereCompute(KernelBase *self) {

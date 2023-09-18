@@ -17,6 +17,7 @@
 #include "nnacl/fp32/arithmetic_compare_fp32.h"
 
 inline bool EqualFp32(float x, float y);
+inline bool EqualBool(bool x, bool y);
 inline bool NotEqualFp32(float x, float y);
 inline bool LessFp32(float x, float y);
 inline bool LessEqualFp32(float x, float y);
@@ -32,6 +33,7 @@ inline bool GreaterInt32(int x, int y);
 inline bool GreaterEqualInt32(int x, int y);
 
 bool EqualFp32(float x, float y) { return x == y; }
+bool EqualBool(bool x, bool y) { return x == y; }
 bool NotEqualFp32(float x, float y) { return x != y; }
 bool LessFp32(float x, float y) { return x < y; }
 bool LessEqualFp32(float x, float y) { return x <= y; }
@@ -72,6 +74,10 @@ bool GreaterEqualInt32(int x, int y) { return x >= y; }
 // equal:
 int ElementEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size) {
   ELEMENT_COMPARE(input0, input1, output, element_size, EqualFp32);
+}
+
+int ElementEqualBool(const bool *input0, const bool *input1, uint8_t *output, int element_size) {
+  ELEMENT_COMPARE(input0, input1, output, element_size, EqualBool);
 }
 
 int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
