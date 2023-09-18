@@ -55,7 +55,9 @@ int64_t get_element_num(const std::vector<int64_t> &shape, size_t rank) {
   size_t back_itr = shape.size();
   int64_t size = 1;
   for (size_t i = 1; i <= rank; i++) {
-    size *= shape[back_itr - i];
+    auto dim = shape[back_itr - i];
+    MS_EXCEPTION_IF_CHECK_FAIL(dim > 0, "The element in shape must be positive.");
+    size *= dim;
   }
   return size;
 }
@@ -258,8 +260,8 @@ bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   std::vector<int64_t> checked_signal_size(raw_checked_signal_size_.begin(), raw_checked_signal_size_.end());
   const int64_t choose = FFTWithSize_choose(real_, inverse_);
-  auto p_x = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto p_y = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto p_x = GetDeviceAddress<T1>(inputs, kIndex0);
+  auto p_y = GetDeviceAddress<T2>(outputs, kIndex0);
   if constexpr (std::is_same<T1, T2>::value) {  // fft and ifft
     if (choose == kDimNum_FFT) {
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, false, false);

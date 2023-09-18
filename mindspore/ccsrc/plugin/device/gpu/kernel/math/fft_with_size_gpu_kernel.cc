@@ -339,6 +339,7 @@ int FFTWithSizeGpuKernelMod::ResizeRFFT(const BaseOperatorPtr &base_operator,
     workspace_size_list_ = {};
   } else {
     // cast float(input) to complex(workspace), and C2C transform
+    MS_EXCEPTION_IF_CHECK_FAIL(!output_size_list_.empty(), "output_size_list_ must be not empty!");
     workspace_size_list_ = {output_size_list_[0]};
   }
   if (!MakeCufftPlan(inputs, outputs)) {
@@ -374,6 +375,7 @@ int FFTWithSizeGpuKernelMod::ResizeIRFFT(const BaseOperatorPtr &base_operator,
   // We copy input buffer to avoid cufft overwriting, while complex-to-real.
   // onesided: false
   // C2C transform, and cast complex(workspace) to float(output).
+  MS_EXCEPTION_IF_CHECK_FAIL(!input_size_list_.empty(), "input_size_list_ must be not empty!");
   workspace_size_list_ = {input_size_list_[0]};
   if (!MakeCufftPlan(inputs, outputs)) {
     return KRET_RESIZE_FAILED;

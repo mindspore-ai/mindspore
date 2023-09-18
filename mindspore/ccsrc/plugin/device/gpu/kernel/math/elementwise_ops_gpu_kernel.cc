@@ -233,8 +233,8 @@ std::vector<KernelAttr> ElementwiseOpsGpuKernel::GetOpSupport() {
 template <ElwiseOpType Op, typename Inp_t, typename Out_t>
 bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = reinterpret_cast<Inp_t *>(inputs.at(kIndex0)->addr);
-  auto output_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->addr);
+  auto input_ptr = GetDeviceAddress<Inp_t>(inputs, kIndex0);
+  auto output_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
   auto ret =
     UnaryOpsCudaFunc<Op, Inp_t, Out_t>(ele_num_, input_ptr, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(ret, kernel_name_);
@@ -243,9 +243,9 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
 template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
 bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0_ptr = reinterpret_cast<In0_t *>(inputs.at(kIndex0)->addr);
-  auto in1_ptr = reinterpret_cast<In1_t *>(inputs.at(kIndex1)->addr);
-  auto out_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->addr);
+  auto in0_ptr = GetDeviceAddress<In0_t>(inputs, kIndex0);
+  auto in1_ptr = GetDeviceAddress<In1_t>(inputs, kIndex1);
+  auto out_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
   auto ret = BinaryOpsCudaFunc<Op, In0_t, In1_t, Out_t>(ele_num_, in0_ptr, in1_ptr, out_ptr,
                                                         reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(ret, kernel_name_);

@@ -31,17 +31,14 @@ class PositionIterator {
   PositionIterator() {}
   ~PositionIterator() {}
   PositionIterator(std::vector<T> stt, std::vector<T> sh) {
-    if (stt.size() != sh.size()) {
-      PositionIterator();
-    } else {
-      for (unsigned int i = 0; i < sh.size(); i++) {
-        if (stt[i] >= sh[i]) {
-          PositionIterator();
-        }
-      }
-      pos_ = stt;
-      shape_ = sh;
+    MS_EXCEPTION_IF_CHECK_FAIL(stt.size() == sh.size(), "Inputs of PositionIterator must have same size.");
+    for (unsigned int i = 0; i < sh.size(); i++) {
+      MS_EXCEPTION_IF_CHECK_FAIL(sh[i] > 0, "The elements of input [sh] must be positive.");
+      MS_EXCEPTION_IF_CHECK_FAIL(
+        stt[i] < sh[i], "Each element of input [stt] must be less than the corresponding element of input [sh].");
     }
+    pos_ = stt;
+    shape_ = sh;
   }
   PositionIterator operator++() {
     pos_[shape_.size() - 1] += 1;

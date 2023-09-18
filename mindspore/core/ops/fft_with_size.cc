@@ -176,9 +176,13 @@ TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(prim);
   const std::string prim_name = prim->name();
   auto tensor = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto tensor_type = tensor->BuildType()->cast<TensorTypePtr>();
+  auto type = tensor->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto tensor_type = type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
-  auto input_type = TypeIdToType(tensor_type->element()->type_id());
+  auto type_ele = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(type_ele);
+  auto input_type = TypeIdToType(type_ele->type_id());
   MS_EXCEPTION_IF_NULL(input_type);
   auto real_attr = prim->GetAttr("real");
   auto inverse_attr = prim->GetAttr("inverse");
