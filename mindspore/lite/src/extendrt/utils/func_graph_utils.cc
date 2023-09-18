@@ -190,9 +190,13 @@ bool FuncGraphUtils::GetFuncGraphInputs(const FuncGraphPtr &func_graph, std::vec
   // find parameters of graph inputs
   for (size_t i = 0; i < graph_inputs.size(); ++i) {
     auto input = graph_inputs[i];
+    if (input == nullptr) {
+      MS_LOG(ERROR) << "Input " << i << " of FuncGraph is nullptr.";
+      return false;
+    }
     auto parameter = input->cast<ParameterPtr>();
     if (!parameter) {
-      MS_LOG(ERROR) << "Input " << parameter->fullname_with_scope() << " of FuncGraph is not type of Parameter.";
+      MS_LOG(ERROR) << "Input " << input->fullname_with_scope() << " of FuncGraph is not type of Parameter.";
       return false;
     }
     if (common::AnfAlgo::IsParameterWeight(parameter)) {
@@ -291,6 +295,15 @@ std::string FuncGraphUtils::GetTensorName(const AnfWithOutIndex &tensor) {
     output_name = node->fullname_with_scope();
   }
   return output_name;
+}
+
+AbstractBasePtr FuncGraphUtils::GetAbstract(const AnfWithOutIndex &tensor) {
+  auto node = tensor.first;
+  auto idx = tensor.second;
+  MS_EXCEPTION_IF_NULL(node);
+  AbstractBasePtr abstract = node->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  return common::AnfAlgo::FetchAbstractByIndex(node->abstract(), idx);
 }
 
 void FuncGraphUtils::GetFuncGraphInputsInfo(const FuncGraphPtr &func_graph, std::vector<tensor::TensorPtr> *inputs,

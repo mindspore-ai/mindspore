@@ -31,7 +31,7 @@ STATUS ToNCHWFormat::GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTyp
     return lite::RET_OK;
   }
   if (prim->GetAttr(ops::kFormat) != nullptr) {
-    auto node_format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    auto node_format = static_cast<mindspore::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
     if (node_format == mindspore::NCHW || node_format == mindspore::KCHW) {
       MS_LOG(DEBUG) << "node's format has been nchw, no need to transfer, " << cnode->fullname_with_scope();
       return lite::RET_OK;

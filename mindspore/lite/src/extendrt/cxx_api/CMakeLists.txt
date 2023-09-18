@@ -57,6 +57,7 @@ set(MSLIB_INFER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_parallel_runner.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_parallel_runner_impl.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/resource_manager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine/llm_engine.cc
     ${API_MS_INFER_SRC}
     ${API_ACL_SRC}
     ${API_OPS_SRC}
@@ -75,3 +76,4 @@ endif()
 
 add_library(mindspore_infer_shared_lib_obj OBJECT ${MSLIB_INFER_SRC})
 add_dependencies(mindspore_infer_shared_lib_obj fbs_inner_src)
+

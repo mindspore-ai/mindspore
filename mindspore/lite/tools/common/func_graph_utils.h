@@ -32,6 +32,7 @@ class FuncGraphUtils {
   static AbstractBasePtr GetAbstractFromNode(const std::pair<AnfNodePtr, int64_t> &node);
   static void SetOutputName(const std::pair<AnfNodePtr, int64_t> &node, const std::string &name);
   static std::string GetOutputName(const std::pair<AnfNodePtr, int64_t> &node_index);
+  static tensor::TensorPtr GetParameterConstValue(const AnfNodePtr &anf_node);
 };
 }  // namespace mindspore
 

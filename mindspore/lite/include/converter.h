@@ -91,6 +91,10 @@ class MS_API Converter {
 
   inline void SetDevice(const std::string &device);
   inline std::string GetDevice();
+  void SetDeviceId(int32_t device_id);
+  int32_t GetDeviceId();
+  void SetRankId(int32_t rank_id);
+  int32_t GetRankId();
 
   inline void SetProvider(const std::string &provider);
   inline std::string GetProvider();

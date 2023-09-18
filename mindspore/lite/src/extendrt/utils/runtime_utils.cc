@@ -26,10 +26,10 @@
 #include "src/extendrt/infer_device_address.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore {
 namespace {
-constexpr auto kNameCustomAscend = "CustomAscend";
 const size_t tensor_max_size_utils = 0x1000000;
 }  // namespace
 
@@ -71,7 +71,7 @@ device::DeviceAddressPtr RuntimeUtils::CreateDeviceAddress(void *device_ptr, siz
 void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
                                               const std::vector<kernel::AddressPtr> &output_addrs) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == kNameCustomAscend) {
+  if (kernel_name == lite::kNameCustomAscend) {
     size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
     if (output_addrs.size() != output_num) {
       MS_LOG(ERROR) << "Output addr size[" << output_addrs.size() << "] is not equal to node outputs size["

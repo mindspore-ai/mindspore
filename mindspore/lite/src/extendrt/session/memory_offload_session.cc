@@ -25,9 +25,9 @@
 #include "src/extendrt/session/factory.h"
 #include "src/extendrt/memory_offload/infer_strategy_builder.h"
 #include "src/extendrt/utils/func_graph_utils.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore::lite {
-constexpr auto kNameCustomAscend = "CustomAscend";
 Status MemoryOffloadInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   context_ = context;
   return SingleOpInferSession::Init(context, config_info);
@@ -35,7 +35,7 @@ Status MemoryOffloadInferSession::Init(const std::shared_ptr<Context> &context, 
 
 kernel::KernelModKernel *MemoryOffloadInferSession::BuildCustomAscendKernelImpl(
   const CNodePtr &cnode, const lite::CompileNodePtr &compile_node) {
-  auto kernel_name = kNameCustomAscend;
+  auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Kernel mod is nullptr, kernel name: " << kernel_name;

@@ -97,6 +97,7 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &del
 
 bool ParseShapeStr(const std::string &shape_str, std::vector<int64_t> *shape_ptr) {
   if (shape_ptr == nullptr) {
+    MS_LOG_ERROR << "Input argument shape_ptr is nullptr";
     return false;
   }
   auto str_dims = lite::StrSplit(shape_str, ",");
@@ -109,14 +110,66 @@ bool ParseShapeStr(const std::string &shape_str, std::vector<int64_t> *shape_ptr
   for (size_t i = 0; i != str_dims.size(); ++i) {
     int32_t dim = 0;
     if (!ConvertStrToInt(str_dims[i], &dim)) {
-      MS_LOG_ERROR << "Invalid input shape dim, dim value range or format is invalid: " << str_dims[i];
+      MS_LOG_ERROR << "Invalid input shape dim, dim value range or format is invalid: " << shape_str;
       return false;
     }
     if (dim <= 0 && dim != -1) {
-      MS_LOG_ERROR << "Invalid input shape dim, dim can only be -1 when dim < 0： " << str_dims[i];
+      MS_LOG_ERROR << "Invalid input shape dim, dim can only be -1 when dim < 0： " << shape_str;
       return false;
     }
     shape[i] = dim;
+  }
+  return true;
+}
+
+bool ParseShapeStr(const std::string &shape_str, std::vector<ShapeDim> *shape_ptr) {
+  if (shape_ptr == nullptr) {
+    return false;
+  }
+  auto str_dims = lite::StrSplit(shape_str, ",");
+  if (str_dims.empty()) {
+    MS_LOG_ERROR << "Invalid input shape dim, dims number cannot be 0: " << shape_str;
+    return false;
+  }
+  auto &shape = *shape_ptr;
+  shape.resize(str_dims.size());
+  for (size_t i = 0; i != str_dims.size(); ++i) {
+    auto dim_range = lite::StrSplit(str_dims[i], "~");
+    if (dim_range.size() == 1) {
+      int32_t dim = 0;
+      if (!ConvertStrToInt(str_dims[i], &dim)) {
+        MS_LOG_ERROR << "Invalid input shape dim, dim value range or format is invalid: " << shape_str;
+        return false;
+      }
+      if (dim <= 0 && dim != -1) {
+        MS_LOG_ERROR << "Invalid input shape dim, dim can only be -1 when dim < 0： " << shape_str;
+        return false;
+      }
+      shape[i].dim = dim;
+      shape[i].min = dim;
+      shape[i].max = dim;
+    } else if (dim_range.size() == 2) {
+      int32_t left = 0;
+      if (!ConvertStrToInt(dim_range[0], &left)) {
+        MS_LOG_ERROR << "Invalid input shape dim range, dim value range or format is invalid: " << shape_str;
+        return false;
+      }
+      int32_t right = 0;
+      if (!ConvertStrToInt(dim_range[1], &right)) {
+        MS_LOG_ERROR << "Invalid input shape dim range, dim value range or format is invalid: " << shape_str;
+        return false;
+      }
+      if (left < 1 || right < 1 || left > right) {
+        MS_LOG_ERROR << "Invalid input shape dim range, dim value range or format is invalid: " << shape_str;
+        return false;
+      }
+      shape[i].dim = -1;
+      shape[i].min = left;
+      shape[i].max = right;
+    } else {
+      MS_LOG_ERROR << "Invalid input shape dim range, dim value range or format is invalid: " << shape_str;
+      return false;
+    }
   }
   return true;
 }

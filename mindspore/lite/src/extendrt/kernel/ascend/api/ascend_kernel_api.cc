@@ -15,8 +15,7 @@
  */
 
 #include "extendrt/kernel/ascend/api/ascend_kernel_api.h"
-
-constexpr auto kNameCustomAscend = "CustomAscend";
+#include "mindspore/lite/src/common/common.h"
 
 std::map<std::string, CreatorFunc> *CreateCustomAscendKernel() {
   CreatorFunc creator_func = []() { return std::make_shared<mindspore::kernel::acl::CustomAscendKernelMod>(); };
@@ -25,7 +24,7 @@ std::map<std::string, CreatorFunc> *CreateCustomAscendKernel() {
     MS_LOG(ERROR) << "New custom ascend kernel failed.";
     return {};
   }
-  (*func_map)[kNameCustomAscend] = creator_func;
+  (*func_map)[mindspore::lite::kNameCustomAscend] = creator_func;
   return func_map;
 }
 

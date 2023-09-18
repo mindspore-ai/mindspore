@@ -330,9 +330,9 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
     MS_LOG(ERROR) << "Transform anf graph for ge failed.";
     return status;
   }
-  auto ret = RunGeAoeOptimize(param, func_graph);
+  auto ret = RunGeOfflineConvert(param, func_graph);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Failed to Run GE Aoe Optimize";
+    MS_LOG(ERROR) << "Failed to Run GE Aoe Optimize or GE offline convert";
     return ret;
   }
   ret = RunVariableOptimize(param, func_graph);
@@ -344,24 +344,9 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
   return RET_OK;
 }
 
-STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-  if (param->model_file.empty()) {
-    MS_LOG(INFO) << "Call from Model::Build, skip Aoe optimize";
-    return RET_OK;
-  }
-  bool run_aoe = !param->aclModelOptionCfgParam.aoe_mode.empty();
-  if (!run_aoe) {
-    auto sec_it = param->config_infos.find(kAoeGlobalOptionsSection);
-    if (sec_it != param->config_infos.end()) {
-      auto &options = sec_it->second;
-      auto option_it = options.find("job_type");
-      if (option_it != options.end()) {
-        run_aoe = true;
-      }
-    }
-  }
-  if (!run_aoe) {
-    MS_LOG(INFO) << "Aoe tuning option is not found in config";
+STATUS ConverterFuncGraph::RunGeOfflineConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  if (param->is_runtime_converter) {
+    MS_LOG(INFO) << "Call from Model::Build, skip AOE optimize and GE offline convert";
     return RET_OK;
   }
   if (param->device.find("Ascend") == std::string::npos) {
@@ -377,9 +362,31 @@ STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara>
     MS_LOG(ERROR) << "Failed to converter ascend options to Model Context";
     return RET_ERROR;
   }
-  if (!AscendGeExecutorPlugin::GetInstance().AoeTuning(func_graph, context, param->config_infos)) {
-    MS_LOG(ERROR) << "Failed to call AoeTuning";
-    return RET_ERROR;
+  bool run_aoe = !param->aclModelOptionCfgParam.aoe_mode.empty();
+  if (!run_aoe) {
+    auto sec_it = param->config_infos.find(kAoeGlobalOptionsSection);
+    if (sec_it != param->config_infos.end()) {
+      auto &options = sec_it->second;
+      auto option_it = options.find("job_type");
+      if (option_it != options.end()) {
+        run_aoe = true;
+      }
+    }
+  }
+  param->config_infos[lite::kConverterParams][lite::kConverterOutputFile] = param->output_file;
+  if (!run_aoe) {
+    MS_LOG(INFO) << "GE offline model conversion begin";
+    if (!AscendGeExecutorPlugin::GetInstance().OfflineBuildGraph(func_graph, context, param->config_infos)) {
+      MS_LOG(ERROR) << "Failed to call GE offline model conversion";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "AOE tuning begin";
+    if (!AscendGeExecutorPlugin::GetInstance().AoeTuning(func_graph, context, param->config_infos)) {
+      MS_LOG(ERROR) << "Failed to call AOE Tuning";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -510,6 +517,9 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
 int ConverterFuncGraph::Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, void **buff,
                              size_t *size) {
   mindspore::lite::MindIRSerializer serializer;
+  if (param->provider == "ge") {
+    serializer.SetRemoveVariableDir(false);
+  }
   auto ret = serializer.Save(param, func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindIR serialize fail";

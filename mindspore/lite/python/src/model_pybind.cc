@@ -17,32 +17,13 @@
 #include "include/api/model_group.h"
 #include "include/api/model_parallel_runner.h"
 #include "src/common/log_adapter.h"
+#include "mindspore/lite/python/src/common_pybind.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/functional.h"
 
 namespace mindspore::lite {
 namespace py = pybind11;
-using MSTensorPtr = std::shared_ptr<MSTensor>;
-
-std::vector<MSTensorPtr> MSTensorToMSTensorPtr(const std::vector<MSTensor> &tensors) {
-  std::vector<MSTensorPtr> tensors_ptr;
-  std::transform(tensors.begin(), tensors.end(), std::back_inserter(tensors_ptr),
-                 [](auto &item) { return std::make_shared<MSTensor>(item); });
-  return tensors_ptr;
-}
-
-std::vector<MSTensor> MSTensorPtrToMSTensor(const std::vector<MSTensorPtr> &tensors_ptr) {
-  std::vector<MSTensor> tensors;
-  for (auto &item : tensors_ptr) {
-    if (item == nullptr) {
-      MS_LOG(ERROR) << "Tensor object cannot be nullptr";
-      return {};
-    }
-    tensors.push_back(*item);
-  }
-  return tensors;
-}
 
 std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensorPtr> &inputs_ptr,
                                         const std::vector<MSTensorPtr> &outputs_ptr) {

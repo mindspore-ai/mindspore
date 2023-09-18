@@ -38,7 +38,7 @@ class AclPassPlugin {
 
   typedef mindspore::opt::Pass *(*AclPassCreatorFunc)(const std::shared_ptr<ConverterPara> &);
 
-  void *handle_;
+  void *handle_ = nullptr;
   AclPassCreatorFunc creator_func_ = nullptr;
   static std::mutex mutex_;
   std::string real_path_;

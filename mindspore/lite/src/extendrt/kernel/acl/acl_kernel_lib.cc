@@ -21,6 +21,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "src/infer/graph_compiler.h"
+#include "mindspore/lite/src/common/common.h"
 
 namespace mindspore::kernel {
 std::shared_ptr<KernelMod> AclKernelLib::CreateKernelMod(const PrimitiveType &op_type, const KernelAttr &attr,
@@ -34,8 +35,7 @@ std::shared_ptr<KernelMod> AclKernelLib::CreateKernelMod(const PrimitiveType &op
     return nullptr;
   }
 
-  constexpr auto kNameCustomAscend = "CustomAscend";
-  auto kernel_name = kNameCustomAscend;
+  auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
 
   if (kernel_mod == nullptr) {

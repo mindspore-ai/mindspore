@@ -49,7 +49,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] context Define model context, which will pass to session.
   ///
   /// \return Status.
-  virtual Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) = 0;
+  virtual Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) = 0;
 
   /// \brief Compile Model Graph.
   ///
@@ -58,8 +58,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] size (Deprecated), need delete.
   ///
   /// \return Status.
-  virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
-                              uint32_t *graph_id = nullptr) = 0;
+  virtual Status CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *graph_id) = 0;
 
   /// \brief Compile Model Graph.
   ///
@@ -67,7 +66,12 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] data_size Define bytes number of model buffer.
   ///
   /// \return Status.
-  virtual Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) { return kLiteNotSupport; }
+  virtual Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) {
+    (void)model_data;
+    (void)data_size;
+    (void)graph_id;
+    return kLiteNotSupport;
+  }
 
   /// \brief Run Model Graph to inference.
   ///
@@ -98,6 +102,9 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \return Status.
   virtual Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                         const std::vector<std::vector<int64_t>> &dims) {
+    (void)graph_id;
+    (void)inputs;
+    (void)dims;
     return kSuccess;
   }
 

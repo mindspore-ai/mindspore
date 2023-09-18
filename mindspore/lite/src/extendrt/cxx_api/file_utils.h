@@ -17,10 +17,11 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_FILE_UTILS_H_
 
 #include <string>
-
+#include <vector>
 #include "include/api/types.h"
 
 namespace mindspore {
 Buffer ReadFile(const std::string &file);
+std::vector<std::string> ReadFileNames(const std::string &dir);
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_FILE_UTILS_H_

@@ -46,7 +46,7 @@ Status ModelGroup::AddModel(const std::vector<std::pair<const void *, size_t>> &
   return impl_->AddModel(model_buff_list);
 }
 
-Status ModelGroup::AddModel(const std::vector<Model> &models) {
+Status ModelGroup::AddModel(const std::vector<Model> &) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;
 }

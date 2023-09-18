@@ -147,7 +147,7 @@ void SetParamByAscendInfo(const std::shared_ptr<mindspore::ConverterPara> &param
 }
 
 int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
-                   const ConfigInfos &config_info) {
+                   const mindspore::ConfigInfos &config_info) {
   auto param = std::make_shared<mindspore::ConverterPara>();
   if (param == nullptr) {
     MS_LOG(ERROR) << "New ConverterPara failed";

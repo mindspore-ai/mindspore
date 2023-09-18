@@ -51,6 +51,7 @@ class FuncGraphUtils {
   static DataType GetTensorDataType(const AnfWithOutIndex &tensor);
   static ShapeVector GetTensorShape(const AnfWithOutIndex &tensor);
   static std::string GetTensorName(const AnfWithOutIndex &tensor);
+  static AbstractBasePtr GetAbstract(const AnfWithOutIndex &tensor);
 
   static void GetFuncGraphInputsInfo(const FuncGraphPtr &graph, std::vector<tensor::TensorPtr> *inputs,
                                      std::vector<std::string> *inputs_name);

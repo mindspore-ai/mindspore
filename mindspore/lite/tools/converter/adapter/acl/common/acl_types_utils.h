@@ -79,6 +79,7 @@ static std::shared_ptr<mindspore::Context> AsModelContext(const lite::acl::AclMo
   if (acl_config.device_id > 0) {
     ascend_info->SetDeviceID(acl_config.device_id);
   }
+  ascend_info->SetRankID(acl_config.rank_id);
   ascend_info->SetProvider(provider);
   SetAclModelInitOptions(acl_config, ascend_info);
   SetAclModelBuildOptions(acl_config, ascend_info);

@@ -536,10 +536,29 @@ void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broa
   this->broadcast_graph_ = broadcast_graph;
 }
 
-bool DfGraphConvertor::NodeInputKeepUpdate(const AnfNodePtr &node) {
+bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+  if (manager == nullptr || node == nullptr) {
+    MS_LOG(ERROR) << "Input argument manager or node is nullptr";
+    return false;
+  }
+  if (std::find(extra_variables_names_.begin(), extra_variables_names_.end(), node->fullname_with_scope()) !=
+      extra_variables_names_.end()) {
+    return true;
+  }
+  const auto &node_users = manager->node_users();
   std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr};
-  return std::any_of(vec.begin(), vec.end(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+  auto user_it = node_users.find(node);
+  if (user_it != node_users.end()) {
+    auto &users = user_it->second;
+    for (auto &user_node : users) {
+      auto &node_use = user_node.first;
+      if (node_use && std::any_of(vec.begin(), vec.end(),
+                                  [&node_use](const PrimitivePtr &prim) { return IsPrimitiveCNode(node_use, prim); })) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
@@ -557,7 +576,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       // In lite, param maybe not exist.
       MS_LOG(WARNING) << name << " is not in params, and create a new node.";
       ParameterPtr param = std::make_shared<Parameter>(nullptr);
-      if (!common::IsEnableRefMode()) {
+      if (!ref_mode_) {
         name += "_temp";
       }
       param->set_name(name);
@@ -574,43 +593,44 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
-
-    if (common::IsEnableRefMode()) {
+    bool as_ref_data = false;
+    bool as_constant = false;
+    auto node_will_update = NodeInputKeepUpdate(manager, node);
+    if (ref_mode_) {
+      if (ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) {
+        as_ref_data = true;
+      } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
+        as_constant = true;
+      }
+    } else if (!training_ && !node_will_update) {
+      // parameter will be updated, lite inference mode will treat as variables
+      as_constant = true;
+    }
+    if (as_ref_data) {
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
       auto variable = std::make_shared<RefData>(name);
       (void)variable->update_output_desc_y(*desc);
       (void)variable->update_input_desc_x(*desc);
       (void)variable->set_attr_index(SizeToInt(ref_datas_.size()));
       (void)ref_datas_.emplace_back(variable);
+      ref_data_names_.push_back(name);
       // do not use read variable while variable sink
       MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
       op_itor->second = variable;  // replace parameter with variable
       vars_[name] = variable;      // prevent the variable operator from being freed
-    } else {
-      const auto &node_users = manager->node_users();
-      bool will_be_update = false;
-      auto user_it = node_users.find(node);
-      if (user_it != node_users.end()) {
-        auto &users = user_it->second;
-        for (auto &user_node : users) {
-          if (user_node.first && NodeInputKeepUpdate(user_node.first)) {
-            will_be_update = true;
-          }
-        }
-      }
-      if (!training_ && !will_be_update) {
-        auto adpt_const = FindAdapter(kNameConst, training_);
-        if (adpt_const == nullptr) {
-          continue;
-        }
-        auto const_op = adpt_const->generate(name + "_const");
-        (void)adpt_const->setAttr(const_op, "value", it.second);
-        (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
-        const_op_to_value_[const_op] = it.second;
-        vars_[name] = const_op;
-        op_itor->second = const_op;
+    } else if (as_constant) {
+      auto adpt_const = FindAdapter(kNameConst, training_);
+      if (adpt_const == nullptr) {
         continue;
       }
+      auto const_op = adpt_const->generate(name + "_const");
+      (void)adpt_const->setAttr(const_op, "value", it.second);
+      (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
+      const_op_to_value_[const_op] = it.second;
+      vars_[name] = const_op;
+      op_itor->second = const_op;
+      continue;
+    } else {
       // we need three variable ops for each graph with same name
       // build init subgraph
       auto adpt = FindAdapter(kNameParam, training_);
@@ -641,7 +661,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       DrawParamInitSubGraph(name, node);
     }
   }
-  if (common::IsEnableRefMode()) {
+  if (ref_mode_) {
     SetupParamInitSubGraph();
   } else {
     InitLoopVar(&init_input);
@@ -834,7 +854,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   // Convert all anf node to Operator
   MS_LOG(INFO) << "Convert all node, graph: " << anf_graph_->ToString();
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
-  if (common::IsEnableRefMode()) {
+  if (ref_mode_) {
     // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
@@ -1630,6 +1650,13 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   }
 }
 
+bool DfGraphConvertor::IsConstantOp(const OperatorPtr &op) const {
+  if (op == nullptr) {
+    return false;
+  }
+  return (op->GetOpType() == "Constant" || op->GetOpType() == "Const");
+}
+
 void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas) {
   MS_LOG(WARNING) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
                   << ConfigManager::GetInstance().dataset_mode();
@@ -1671,8 +1698,11 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector
       MS_LOG(INFO) << "add var input " << it->ToString() << ", index " << index;
       auto op = Convert(it);
       MS_EXCEPTION_IF_NULL(op);
+      UpdateConstOpDesc(it, vars_[name]);
       if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
         (void)ref_data->set_attr_index(index++);
+      } else if (IsConstantOp(op)) {
+        continue;
       } else {
         MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
       }
@@ -1863,7 +1893,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
   std::vector<OperatorPtr> input_datas;
-  if (common::IsEnableRefMode()) {
+  if (ref_mode_) {
     SetGraphInputs(&inputs, &input_datas);
   } else {
     SetGraphInputs(&inputs);
@@ -1894,7 +1924,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   if (ConfigManager::GetInstance().iter_num() > 1 && ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
     df_graph_->SetNeedIteration(true);
   }
-  if (common::IsEnableRefMode()) {
+  if (ref_mode_) {
     std::sort(ref_datas_.begin(), ref_datas_.end(), [](const OperatorPtr &left, const OperatorPtr &right) -> bool {
       auto left_ref = std::dynamic_pointer_cast<::ge::op::RefData>(left);
       auto right_ref = std::dynamic_pointer_cast<::ge::op::RefData>(right);
@@ -2054,7 +2084,7 @@ void DfGraphConvertor::TransformConstOp(const CNodePtr &node, const AnfNodePtr &
     if (op_itor->second != nullptr &&
         (op_itor->second->GetOpType() == "Constant" || op_itor->second->GetOpType() == "Const") &&
         vars_.find(name) != vars_.end()) {
-      if (common::IsEnableRefMode()) {
+      if (ref_mode_) {
         auto variable = std::make_shared<RefData>(name);
         auto desc = vars_[name]->GetOutputDesc("y");
         (void)variable->update_output_desc_y(desc);
@@ -2745,7 +2775,7 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   converter.graph_type_ = GraphType::kBranch;
 
   auto &params = anf_graph->parameters();
-  if (common::IsEnableRefMode()) {
+  if (ref_mode_) {
     for (size_t i = 0; i < params.size(); i++) {
       auto &param = params[i];
       if (branch_to_parent_node_map.find(i) != branch_to_parent_node_map.end()) {

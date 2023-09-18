@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "include/api/serialization.h"
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include "utils/log_adapter.h"
@@ -86,6 +87,25 @@ Buffer ReadFile(const std::string &file) {
   ifs.close();
 
   return buffer;
+}
+
+std::vector<std::string> ReadFileNames(const std::string &dir) {
+  std::vector<std::string> files;
+  auto dp = opendir(dir.c_str());
+  if (dp == nullptr) {
+    return {};
+  }
+  while (true) {
+    auto item = readdir(dp);
+    if (item == nullptr) {
+      break;
+    }
+    if (item->d_type == DT_REG) {
+      files.push_back(item->d_name);
+    }
+  }
+  closedir(dp);
+  return files;
 }
 
 Key::Key(const char *dec_key, size_t key_len) {

@@ -1160,6 +1160,7 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
   try {
     status = converter_impl.Convert(param, model_data, data_size, not_save);
   } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Exception occurred: " << e.what();
     status = RET_ERROR;
   }
   if (status != RET_OK) {

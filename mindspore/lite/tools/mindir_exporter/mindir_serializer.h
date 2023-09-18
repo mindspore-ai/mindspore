@@ -45,6 +45,7 @@ class MindIRSerializer {
   int Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
   int GetBuffAndSize(void **buff, size_t *size);
   int PreProcSaveTogether(const FuncGraphPtr &func_graph);
+  void SetRemoveVariableDir(bool remove) { remove_variable_dir_ = remove; }
 
  private:
   int ParserPath(const std::string &output_path);
@@ -84,6 +85,7 @@ class MindIRSerializer {
   std::fstream *data_fs_ = nullptr;
   std::shared_ptr<system::FileSystem> fs_{};
   bool is_export_model_ = true;
+  bool remove_variable_dir_ = true;
 };
 // export func_graph
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool need_buff,

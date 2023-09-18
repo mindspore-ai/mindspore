@@ -32,6 +32,9 @@ class AscendGeExecutorPluginImpl : public lite::AscendGeExecutorPluginImplBase {
   bool AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
                  const ConfigInfos &config_infos) override;
 
+  bool OfflineBuildGraph(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                         const ConfigInfos &config_infos) override;
+
  private:
   std::shared_ptr<GeGraphExecutor> InitGeGraphExecutor(const std::shared_ptr<mindspore::Context> &context,
                                                        const ConfigInfos &config_infos);

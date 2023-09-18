@@ -20,6 +20,7 @@
 #include <string>
 #include "tools/converter/adapter/acl/src/acl_memory_offload_pass_impl.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/common/custom_ascend_utils.h"
 
 namespace {
 constexpr auto kCustomPrimTypeACL = "ACL";
@@ -90,7 +91,7 @@ STATUS AclMemoryOffloadPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
         return lite::RET_ERROR;
       }
 
-      auto om_parameter = CreateOmParameter(func_graph, om_data);
+      auto om_parameter = CustomAscendUtils::CreateOmParameter(func_graph, om_data, "ACL_om_data");
       MS_CHECK_TRUE_MSG(om_parameter != nullptr, lite::RET_ERROR, "Convert graph to om failed.");
 
       auto custom_prim = CreateCustomPrim();

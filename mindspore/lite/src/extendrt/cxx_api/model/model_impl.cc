@@ -356,6 +356,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     return kLiteError;
   }
   UpdateProvider();
+  auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
+  if (mindir_path.empty()) {
+    (void)UpdateConfig(lite::kConfigModelFileSection,
+                       std::pair<std::string, std::string>(lite::kConfigMindIRPathKey, model_path));
+  }
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
