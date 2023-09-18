@@ -142,7 +142,7 @@ void SchedulerHelper::AddDeviceTensorStore(const AnfNode *anf_node, const Device
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(device_tensor);
   MS_LOG(DEBUG) << "Add device tensor store:" << device_tensor << " for node:" << anf_node->DebugString()
-                << " node addr:" << anf_node;
+                << " node addr:" << anf_node << " device type:" << device_tensor->GetDeviceType();
   DeviceTensorStore::GetInstance().Insert(const_cast<AnfNode *>(anf_node), device_tensor);
   device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
   UpdateRefCount(device_tensor.get(), true);

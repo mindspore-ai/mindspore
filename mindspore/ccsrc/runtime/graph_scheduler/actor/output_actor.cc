@@ -328,7 +328,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
       }
     } else {
       MS_LOG(DEBUG) << "Swap ptr:" << tensor_device_address->GetPtr() << " from device tensor:" << device_tensor
-                    << " to :" << tensor_device_address;
+                    << " device type:" << device_tensor->GetDeviceType() << " to :" << tensor_device_address
+                    << " device type:" << tensor_device_address->GetDeviceType();
       // Move the device ptr from device_tensor to tensor_device_address.
       device_tensor->Swap(tensor_device_address.get());
       tensor_device_address->set_user_data(device_tensor->user_data());

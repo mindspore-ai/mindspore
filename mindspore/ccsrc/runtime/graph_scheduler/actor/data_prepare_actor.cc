@@ -764,7 +764,10 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   const auto &value = values[index];
   MS_EXCEPTION_IF_NULL(value);
   TensorPtr tensor = nullptr;
-  if (!value->isa<tensor::Tensor>()) {
+  if (value->isa<StringImm>()) {
+    PrepareDataForStringValue(node, index, node, device_context, context);
+    return;
+  } else if (!value->isa<tensor::Tensor>()) {
     tensor = parser->CreateTensorForValue(value);
   } else {
     tensor = value->cast<tensor::TensorPtr>();
@@ -811,6 +814,50 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   }
 }
 
+void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
+                                                 const DeviceContext *device_context,
+                                                 OpContext<DeviceTensor> *const context) const {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsValueNode<StringImm>(node)) {
+    return;
+  }
+  auto &node_value = node->value();
+  MS_EXCEPTION_IF_NULL(node_value);
+
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
+  if (device_tensor->GetPtr() != nullptr) {
+    return;
+  }
+  MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString();
+
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
+                                                     0);
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
+                                                device_tensor->GetSize());
+  }
+  if (common::IsNeedProfileMemory()) {
+    auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
+    auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
+                    << output_address << ", device address size: " << device_tensor->GetSize()
+                    << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
+                    << ", device address addr: " << device_tensor->GetPtr();
+  }
+
+  // Copy data from value to device.
+  auto value = GetValue<std::string>(node_value);
+  size_t tensor_size = value.size();
+  ShapeVector shape = {1, SizeToLong(tensor_size)};
+  if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
+    std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+  }
+  CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+}
+
 // Prepare the device data for persistent device tensor of value node.
 void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
                                                const DeviceContext *device_context,
@@ -825,38 +872,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
   if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueSequence>() || node_value->isa<Scalar>()) {
     PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
-    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
-    if (device_tensor->GetPtr() != nullptr) {
-      return;
-    }
-    MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope();
-
-    device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(),
-                                                       device::AllocatorType::kConstantValue, 0);
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
-                                                  node->fullname_with_scope(), device_tensor->GetSize());
-    }
-    if (common::IsNeedProfileMemory()) {
-      auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
-      auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
-      MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
-                      << output_address << ", device address size: " << device_tensor->GetSize()
-                      << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
-                      << ", device address addr: " << device_tensor->GetPtr();
-    }
-
-    // Copy data from value to device.
-    auto value = GetValue<std::string>(node_value);
-    size_t tensor_size = value.size();
-    ShapeVector shape = {1, SizeToLong(tensor_size)};
-    if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
-      std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
-    }
-    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+    PrepareDataForStringValue(node, 0, front_node, device_context, context);
   } else {
     MS_LOG(WARNING) << "Not support the value type: " << node->fullname_with_scope();
   }
@@ -900,7 +916,8 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
     }
 
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()
-                 << ", device name:" << another_device_name;
+                 << ", device name:" << another_device_name << " from device address:" << host_tensor_address
+                 << " to:" << another_device_tensor;
     if (!Copy(another_device_tensor.get(), host_tensor_address.get())) {
       std::string error_info = "Sync data error.";
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);

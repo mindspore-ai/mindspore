@@ -20,6 +20,7 @@
 #include <utility>
 #include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
+#include "runtime/graph_scheduler/scheduler_helper.h"
 
 namespace mindspore {
 namespace runtime {
@@ -330,7 +331,7 @@ void AnyTypeGraphScheduler::TransArrowInActorSetToAnyTypeKernelActor(const Actor
   CollectBackendParameterForDynamicShape(any_type_kernel_actor, model_graph, real_graph);
 }
 
-void PrepareDataForValueNode(const AnfNodePtr &node, DeviceContext *const device_context) {
+void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const device_context) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   if (!node->isa<ValueNode>()) {
@@ -420,6 +421,26 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
                     << " front node addr:" << front_node.get();
       if (!front_node->isa<Parameter>() ||
           find(front_parameters.begin(), front_parameters.end(), front_node) != front_parameters.end()) {
+        // In any type kernel actor, if the fallback kernel has a device tensor store, the device type in model graph
+        // and real graph will be different, and should be fixed.
+        if (actor->device_contexts().size() != 0 && actor->device_contexts()[0] != nullptr &&
+            DeviceTensorStore::GetInstance().Fetch(front_node.get(), actor->device_contexts_[0]->GetDeviceType()) ==
+              nullptr) {
+          auto device_tensor =
+            DeviceTensorStore::GetInstance().Fetch(pair.second.get(), actor->device_contexts()[0]->GetDeviceType());
+          if (device_tensor != nullptr) {
+            MS_LOG(DEBUG) << "Add device tensor store for front node:" << front_node->DebugString()
+                          << " by node:" << pair.second->DebugString() << " device tensor:" << device_tensor
+                          << " for actor:" << actor->GetAID();
+            SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
+            PrepareDataForValueNode(pair.second, actor->device_contexts_[0]);
+          } else {
+            MS_LOG(WARNING) << "Failed to get device tensor store by front node:" << front_node->DebugString()
+                            << " backend node:" << pair.second->DebugString()
+                            << " device type:" << actor->device_contexts()[0]->GetDeviceType()
+                            << " for actor:" << actor->GetAID();
+          }
+        }
         pair.second = front_node;
         device_tensor_store_keys.emplace_back(pair);
         continue;
@@ -494,6 +515,8 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   std::for_each(actor_set->super_kernel_actors_.begin(), actor_set->super_kernel_actors_.end(),
                 [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
   std::for_each(actor_set->fusion_actors_.begin(), actor_set->fusion_actors_.end(),
+                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
+  std::for_each(actor_set->copy_actors_.begin(), actor_set->copy_actors_.end(),
                 [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
 
   const auto &any_type_kernel_actor_name = model_graph->ToString() + kAnyTypeKernelActorNameSuffix;

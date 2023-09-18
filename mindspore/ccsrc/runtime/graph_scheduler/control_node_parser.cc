@@ -380,8 +380,9 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
                                                                        output_type_id, ShapeVector());
   }
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node)
-                << " index:" << front_node_with_index.second << " addr:" << address << " size:" << tensor_size;
+  MS_LOG(DEBUG) << "Create address for front node:" << front_node->DebugString()
+                << " backend node:" << backend_node->DebugString() << " index:" << front_node_with_index.second
+                << " addr:" << address << " size:" << tensor_size;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
   UpdateRefCount(address.get(), true);
 }
@@ -1917,9 +1918,10 @@ void ControlNodeParser::CreateDeviceTensors(const std::vector<AnfNodePtr> &contr
         MS_LOG(DEBUG) << "Create device tensor for value node:" << input_with_index.first->DebugString()
                       << " index:" << i << " in control node:" << control_node->DebugString();
         const auto &node_with_index_with_context = FetchBackendParameterWithContextByFrontParameter(input_with_index);
-        if (node_with_index_with_context.first.first != nullptr) {
-          CreateDeviceTensorForValueNode(input_with_index, node_with_index_with_context.first.first,
-                                         node_with_index_with_context.second);
+        const auto &backend_node = node_with_index_with_context.first.first;
+        if (backend_node != nullptr &&
+            (backend_node->abstract() == nullptr || (!backend_node->abstract()->isa<abstract::AbstractAny>()))) {
+          CreateDeviceTensorForValueNode(input_with_index, backend_node, node_with_index_with_context.second);
           (void)front_value_nodes_.emplace(input_with_index, node_with_index_with_context.second);
         } else {
           CreateDeviceTensorForFrontNode(input_with_index, default_context);
@@ -1942,11 +1944,11 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
 
       const auto &node_with_index_to_context =
         FetchBackendParameterWithContextByFrontParameter(real_parameter_with_index);
-
-      if (node_with_index_to_context.first.first != nullptr) {
+      const auto &backend_node = node_with_index_to_context.first.first;
+      if (backend_node != nullptr &&
+          (backend_node->abstract() == nullptr || (!backend_node->abstract()->isa<abstract::AbstractAny>()))) {
         (void)front_value_nodes_.emplace(real_parameter_with_index, node_with_index_to_context.second);
-        CreateDeviceTensorForValueNode(real_parameter_with_index, node_with_index_to_context.first.first,
-                                       node_with_index_to_context.second);
+        CreateDeviceTensorForValueNode(real_parameter_with_index, backend_node, node_with_index_to_context.second);
       } else {
         (void)front_value_nodes_.emplace(real_parameter_with_index, default_context);
         CreateDeviceTensorForFrontNode(real_parameter_with_index, default_context);
