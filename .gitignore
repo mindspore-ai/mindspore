@@ -127,3 +127,4 @@ mindspore/python/mindspore/ops_generate/ops_doc.yaml
 mindspore/python/mindspore/ops_generate/inner_ops.yaml
 mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml
 mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
+mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py

@@ -19,63 +19,60 @@ import mindspore as ms
 from mindspore import ops, Tensor
 
 
+@ms.jit
+def expm1_forward_func(x):
+    return ops.auto_generate.expm1(x)
+
 
 @ms.jit
-def erf_forward_func(x):
-    return ops.auto_generate.erf(x)
-
-
-@ms.jit
-def erf_backward_func(x):
-    return ops.grad(erf_forward_func, (0,))(x)
+def expm1_backward_func(x):
+    return ops.grad(expm1_forward_func, (0,))(x)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-def test_erf_forward():
+def test_expm1_forward():
     """
     Feature: Ops.
-    Description: test op erf.
+    Description: test op expm1.
     Expectation: expect correct result.
     """
-    x = Tensor(np.array([-1, 0, 1, 2, 3]), ms.float32)
-    output = erf_forward_func(x)
-    expect = np.array([-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765], dtype=np.float32)
-    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
+    x = Tensor(np.array([0.0, 1.0, 2.0, -1]), ms.float32)
+    output = expm1_forward_func(x)
+    expect = [0., 1.718282, 6.389056, -0.63212055]
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-def test_erf_backward():
+def test_expm1_backward():
     """
     Feature: Auto grad.
-    Description: test auto grad of op erf.
+    Description: test auto grad of op expm1.
     Expectation: expect correct result.
     """
-    x = Tensor(np.array([-1, 0, 1, 2, 3]), ms.float32)
-    output = erf_backward_func(x)
-    expect = np.array([4.1510752e-01, 1.1283791e+00, 4.1510752e-01, 2.0666985e-02, 1.3925304e-04])
-    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
+    x = Tensor(np.array([1, -1]), ms.float32)
+    output = expm1_backward_func(x)
+    expect = [2.7182817, 0.36787948]
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_erf_vmap():
+def test_expm1_vmap():
     """
     Feature: test vmap function.
-    Description: test erf op vmap.
+    Description: test expm1 op vmap.
     Expectation: expect correct result.
     """
-    x = Tensor(np.array([[[-1., 0.], [1., 2.]]]))
-    nest_vmap = ops.vmap(ops.vmap(erf_forward_func, in_axes=0), in_axes=0)
+    x = Tensor(np.array([[[0.0, 1.0], [2.0, -1]]]))
+    nest_vmap = ops.vmap(ops.vmap(expm1_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)
-    expect = [[[-0.8427168, 0.], [0.8427168, 0.99530876]]]
+    expect = [[[0., 1.718282], [6.389056, -0.63212055]]]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
