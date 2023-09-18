@@ -14,15 +14,28 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/embedding_lookup_impl.cuh"
 #include "include/cuda_fp16.h"
 
-template <typename T>
-__global__ void SubOffset(T *indices, size_t size, int64_t offset) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    indices[pos] -= static_cast<T>(offset);
+template <typename T, typename S>
+__global__ void EmbeddingLookupKernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
+                                      size_t output_dim2, size_t input_dim1, int64_t offset) {
+  size_t size = output_dim0 * output_dim1 * output_dim2;
+  size_t i, j;
+  for (size_t write_idx = blockIdx.x * blockDim.x + threadIdx.x; write_idx < size;
+       write_idx += blockDim.x * gridDim.x) {
+    i = write_idx / output_dim2 % output_dim1;
+    j = write_idx % output_dim2;
+
+    S index_after_offset = indices[i] - static_cast<S>(offset);
+    if ((index_after_offset >= 0) && (index_after_offset < input_dim1)) {
+      size_t read_idx = index_after_offset * output_dim2 + j;
+      output[write_idx] = input[read_idx];
+    } else {
+      output[write_idx] = 0;
+    }
   }
+
   return;
 }
 
@@ -30,11 +43,8 @@ template <typename T, typename S>
 cudaError_t CalEmbeddingLookup(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
                                size_t output_dim2, size_t input_dim1, int64_t offset, cudaStream_t stream) {
   size_t size = output_dim0 * output_dim1 * output_dim2;
-  SubOffset<<<GET_BLOCKS(output_dim1), GET_THREADS, 0, stream>>>(indices, output_dim1, offset);
-  GatherV2Kernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
-                                                               output_dim2, input_dim1);
-  // restore indices
-  SubOffset<<<GET_BLOCKS(output_dim1), GET_THREADS, 0, stream>>>(indices, output_dim1, -offset);
+  EmbeddingLookupKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
+                                                                      output_dim2, input_dim1, offset);
   return GetCudaStatus();
 }
 
