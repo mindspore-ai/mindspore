@@ -84,10 +84,6 @@ void AddDependCtrl(AnfNodePtr first_node, AnfNodePtr second_node, const FuncGrap
 bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &node_list,
                                       const std::map<int64_t, std::vector<AnfNodePtr>> &fusion_allgather_nodes,
                                       const std::map<AnfNodePtr, size_t> &node_index_map) {
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
-    return false;
-  }
   bool changed = false;
   std::map<int64_t, std::vector<AnfNodePtr>> fusion_allgather_outputs;
   auto iter = fusion_allgather_nodes.begin();
@@ -150,6 +146,10 @@ bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vect
 }
 
 bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
