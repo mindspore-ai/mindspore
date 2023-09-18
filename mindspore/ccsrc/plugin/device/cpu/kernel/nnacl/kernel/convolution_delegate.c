@@ -336,6 +336,7 @@ KernelBase *CreateConvolutionDepthwise(ConvParameter *conv_param) {
 
 KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
   ConvParameter *conv_param = (ConvParameter *)param;
+  conv_param->thread_num_ = param->thread_num_;
   KernelBase *kernel;
   if (conv_param->group_ == 1) {
     kernel = CreateConvlutionDelegate(conv_param);
