@@ -248,10 +248,10 @@ class ClassDefParser(Parser):
         ast.fix_missing_locations(cls_ast)
 
     @staticmethod
-    def _need_append_to_ast(stree: SymbolTree, father_class_name: str) -> bool:
+    def _need_append_to_ast(stree: SymbolTree, father_class_name: str, net_path: str) -> bool:
         """If the class is imported and only has one init func(self), it does not need to append to symbol stree."""
         import_modules_set = set()
-        for module_list in stree.get_import_modules_dict().values():
+        for module_list in stree.get_imported_modules(net_path).values():
             import_modules_set = import_modules_set.union(set(module_list))
         if father_class_name in import_modules_set and ClassDefParser.dict_init_args[father_class_name] == 1:
             return False
@@ -270,8 +270,6 @@ class ClassDefParser(Parser):
                      from mindformers.modules.transformer import TransformerEncoderLayer
                      the priority of mindformers.modules.transformer is higher
         """
-        # a dict of which key is module name, value is the imported modules list
-        import_modules_dict = stree.get_import_modules_dict()
         # get the current module file path
         net_path = inspect.getfile(cur_class_def)
         curr_file_path = os.path.abspath(net_path)[:-3]
@@ -280,16 +278,21 @@ class ClassDefParser(Parser):
         # if the module is the current file, no need to skip
         if curr_file_path.endswith(module_name):
             return False
-        # In the following example, the current module cannot directly get the father class(a.FatherNet),
-        # the imported module aaa should be considered.
-        # e.g. from .. import aaa
-        #      class Net(a.FatherNet):
-        import_name = ""
-        if isinstance(base, ast.Attribute):
-            import_name = astunparse.unparse(base).split('.')[0]
-        # the module is imported explicitly, no need to skip
-        if module_name in import_modules_dict and import_name in import_modules_dict[module_name]:
-            return False
+
+        # If the module is imported in file of network, no need to skip
+        imported_modules = stree.get_imported_modules(net_path)
+        if module_name in imported_modules:
+            # In the following example, the current module cannot directly get the father class(aaa.FatherNet),
+            # the imported module aaa should be considered.
+            # e.g. from .. import aaa
+            #      class Net(aaa.FatherNet):
+            base_prefix = ""
+            if isinstance(base, ast.Attribute):
+                base_prefix = astunparse.unparse(base).split('.')[0]
+            if not base_prefix:
+                return False
+            if base_prefix in imported_modules[module_name]:
+                return False
         # In other situations, need to skip
         return True
 
@@ -351,7 +354,7 @@ class ClassDefParser(Parser):
                 if need_add_init_func or len(body.args.args) > 1:
                     ClassDefParser._process_init_func_ast(body, father_classes, father_class_ast.name)
         # save father class's ast into symbol tree
-        if ClassDefParser._need_append_to_ast(stree, father_class_name):
+        if ClassDefParser._need_append_to_ast(stree, father_class_name, net_path):
             stree.get_father_class_ast().append(father_class_ast)
 
     @staticmethod
