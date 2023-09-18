@@ -21,7 +21,7 @@ mindspore.train.ROC
             tuple，由 `fpr`、`tpr` 和 `thresholds` 组成。
 
         - **fpr** (np.array) - 假正率。二分类情况下，返回不同阈值下的fpr；多分类情况下，则为fpr(false positive rate)的列表，列表的每个元素代表一个类别。
-        - **tps** (np.array) - 真正率。二分类情况下，返回不同阈值下的tps；多分类情况下，则为tps(true positive rate)的列表，列表的每个元素代表一个类别。
+        - **tpr** (np.array) - 真正率。二分类情况下，返回不同阈值下的tpr；多分类情况下，则为tpr(true positive rate)的列表，列表的每个元素代表一个类别。
         - **thresholds** (np.array) - 用于计算假正率和真正率的阈值。
 
         异常：

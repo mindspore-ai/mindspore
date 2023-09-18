@@ -764,6 +764,7 @@ class UniformReal(Primitive):
         >>> print(result)
         (2, 2)
     """
+
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformReal"""
@@ -1017,7 +1018,9 @@ class UniformCandidateSampler(Primitive):
         range_max (int): The number of possible classes, must be non-negative.
         seed (int, optional): Used for random number generation, must be non-negative. If seed has a value of 0,
             the seed will be replaced with a randomly generated value. Default: ``0`` .
-        remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: ``False`` .
+        remove_accidental_hits (bool, optional): Whether accidental hit is removed.
+            Accidental hit is when one of the true classes matches one of the sample classes.
+            Set ``True`` to remove which accidentally sampling the true class as sample class. Default: ``False`` .
 
     Inputs:
         - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of
@@ -1071,7 +1074,6 @@ class UniformCandidateSampler(Primitive):
         Validator.check("value of seed", seed, '', 0, Validator.GE, self.name)
         self.num_sampled = num_sampled
         self.add_prim_attr("side_effect_hidden", True)
-
 
 
 class LogUniformCandidateSampler(Primitive):

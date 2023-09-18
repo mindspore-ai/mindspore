@@ -49,7 +49,8 @@ class RootMeanSquareDistance(Metric):
 
     Args:
         distance_metric (string): Three measurement methods are supported:
-                "euclidean", "chessboard" or "taxicab". Default: ``"euclidean"`` .
+                ``"euclidean"`` (Euclidean Distance) ,  ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
+                or  ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
         symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
                 y_pred and y. If False, only calculates :math:`RmsSurDis(y\_pred, y)` surface distance,
                 otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
@@ -175,7 +176,7 @@ class RootMeanSquareDistance(Metric):
         if residual_mean_square_distance.shape == (0,):
             return np.inf
 
-        rms_surface_distance = (residual_mean_square_distance**2).mean()
+        rms_surface_distance = (residual_mean_square_distance ** 2).mean()
 
         if not self.symmetric:
             return rms_surface_distance
@@ -184,7 +185,7 @@ class RootMeanSquareDistance(Metric):
         if contrary_residual_mean_square_distance.shape == (0,):
             return np.inf
 
-        contrary_rms_surface_distance = (contrary_residual_mean_square_distance**2).mean()
+        contrary_rms_surface_distance = (contrary_residual_mean_square_distance ** 2).mean()
 
         rms_distance = np.sqrt(np.mean((rms_surface_distance, contrary_rms_surface_distance)))
         return rms_distance

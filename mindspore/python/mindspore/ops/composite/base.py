@@ -892,7 +892,7 @@ class Map(Map_):
           If `ops` is `None`, the first input is the operation, and the other is inputs.
 
     Outputs:
-        Sequence, the sequence of output after applying the function. e.g. `operation(args[0][i], args[1][i])`.
+        Sequence, the sequence of output after applying the ops function. e.g. `ops(args[0][i], args[1][i])`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
