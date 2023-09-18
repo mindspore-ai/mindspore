@@ -14,10 +14,10 @@ mindspore.experimental.optim.lr_scheduler.SequentialLR
         - **milestones** (list) - 反应里程碑节点的整数列表。
         - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。
 
-    .. py:method:: step()
-
-        按照定义的计算逻辑计算并修改学习率。
-
     .. py:method:: get_last_lr()
 
         返回当前使用的学习率。
+
+    .. py:method:: step()
+
+        按照定义的计算逻辑计算并修改学习率。

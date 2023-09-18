@@ -321,7 +321,7 @@ class LazyAdam(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, :class:`~.train.LearningRateSchedule`]): Default: ``1e-3`` .
+        learning_rate (Union[float, int, Tensor, Iterable, :class:`~.train.LearningRateScheduler`]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 

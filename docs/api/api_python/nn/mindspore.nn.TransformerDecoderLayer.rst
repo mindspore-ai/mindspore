@@ -10,7 +10,7 @@ mindspore.nn.TransformerDecoderLayer
         - **nhead** (int) - MultiheadAttention模块中注意力头的数量。
         - **dim_feedforward** (int) - FeedForward层的维数。默认值：``2048``。
         - **dropout** (float) - 随机丢弃比例。默认值：``0.1``。
-        - **activation** (Union[str, callable, Cell]) - 中间层的激活函数，可以输入字符串（ ``"relu"`` 、 ``"gelu"`` ）、函数接口（ ：func:`mindspore.ops.relu` 、 ：func:`mindspore.ops.gelu` ）或激活函数层实例（ :class:`mindspore.nn.RELU` 、 :class:`mindspore.nn.GELU` ）。默认值： ``'relu'``。
+        - **activation** (Union[str, callable, Cell]) - 中间层的激活函数，可以输入字符串（ ``"relu"`` 、 ``"gelu"`` ）、函数接口（ ：func:`mindspore.ops.relu` 、 ：func:`mindspore.ops.gelu` ）或激活函数层实例（ :class:`mindspore.nn.ReLU` 、 :class:`mindspore.nn.GELU` ）。默认值： ``'relu'``。
         - **layer_norm_eps** (float) - LayerNorm层的eps值，默认值：``1e-5``。
         - **batch_first** (bool) - 如果为 ``True`` 则输入输出shape为 :math:`(batch, seq, feature)` ，反之，shape为 :math:`(seq, batch, feature)` 。默认值： ``False``。
         - **norm_first** (bool) - 如果为 ``True``， 则LayerNorm层位于Self Attention层、MultiheadAttention层和FeedForward层之前，反之，位于其后。默认值： ``False``。
@@ -19,10 +19,10 @@ mindspore.nn.TransformerDecoderLayer
     输入：
         - **tgt** (Tensor) - 目标序列。如果目标序列没有batch，shape是 :math:`(T, E)` ；否则如果 batch_first=False，则shape为 :math:`(T, N, E)` ，如果batch_first=True，则shape为 :math:`(T, N, E)`。 :math:`(T)` 是目标序列的长度。数据类型：float16、float32或者float64。
         - **memory** (Tensor) - TransformerEncoder的最后一层输出序列。数据类型：float16、float32或者float64。
-        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。数据类型：：float16、float32、float64或者布尔。默认值：``None``。
-        - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：：float16、float32、float64或者布尔。默认值：``None``。
-        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：：float16、float32、float64或者布尔。默认值：``None``。
-        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。hape是 :math:`(S)` 。数据类型：：float16、float32、float64或者布尔。默认值：``None``。
+        - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``。
+        - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``。
+        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``
+        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。hape是 :math:`(S)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``。
 
     输出：
         Tensor。
