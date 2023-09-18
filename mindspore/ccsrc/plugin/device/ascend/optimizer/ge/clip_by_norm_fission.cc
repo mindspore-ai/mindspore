@@ -225,6 +225,8 @@ AnfNodePtr ClipByNormFissionGe::CreateSelectNode(const FuncGraphPtr &func_graph,
                                                  const AnfNodePtr &inp_a, const AnfNodePtr &inp_b,
                                                  const ShapeVector &shape_vec, const TypeId &type_id) const {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(inp_a);
+  MS_EXCEPTION_IF_NULL(inp_b);
   auto select = CreateCNodeBase(func_graph, {cond, inp_a, inp_b}, kSelectOpName, inp_a);
   MS_EXCEPTION_IF_NULL(select);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
@@ -309,8 +311,7 @@ AnfNodePtr ClipByNormFissionGe::CreateCastNode(const FuncGraphPtr &func_graph, c
 }
 
 std::vector<std::string> ClipByNormFissionGe::MustExistPrimitiveName() const {
-  std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimClipByNorm->name());
+  std::vector<std::string> ret = {prim::kPrimClipByNorm->name()};
   return ret;
 }
 
