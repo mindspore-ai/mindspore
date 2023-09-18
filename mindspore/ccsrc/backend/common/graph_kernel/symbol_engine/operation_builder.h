@@ -63,13 +63,20 @@ class SymbolCache {
 };
 namespace ops::builders {
 class OperationBuilder;
+enum class DependOn : int { kShape, kValue, kNone };
 using InferFunc = std::function<SymbolPtr(OperationBuilder *)>;
-enum class DependOn { kShape, kValue, kNone };
+using DependFunc = std::function<std::vector<DependOn>(const CNodePtr &)>;
 struct OperationBuilderInfo {
   InferFunc build_shape_func{nullptr};
   InferFunc build_value_func{nullptr};
+  DependFunc shape_depend_func{nullptr};
+  DependFunc value_depend_func{nullptr};
   std::vector<DependOn> build_shape_depend;
   std::vector<DependOn> build_value_depend;
+  std::vector<DependOn> GetDepends(const CNodePtr &cnode, bool build_value) const {
+    return build_value ? (value_depend_func != nullptr ? value_depend_func(cnode) : build_value_depend)
+                       : (shape_depend_func != nullptr ? shape_depend_func(cnode) : build_shape_depend);
+  }
 };
 
 class OperationBuilder {
@@ -78,6 +85,7 @@ class OperationBuilder {
       : emitter_(emitter), cache_(cache), symbol_builder_info_(info) {}
   ~OperationBuilder() = default;
   inline SymbolPtr BuildShape(const CNodePtr &cnode) {
+    is_building_shape_ = true;
     if (symbol_builder_info_.build_shape_func == nullptr) {
       return nullptr;
     }
@@ -85,6 +93,7 @@ class OperationBuilder {
     return symbol_builder_info_.build_shape_func(this);
   }
   inline SymbolPtr BuildValue(const CNodePtr &cnode) {
+    is_building_shape_ = false;
     if (symbol_builder_info_.build_value_func == nullptr) {
       return nullptr;
     }
@@ -97,13 +106,17 @@ class OperationBuilder {
   SymbolPtr RealShape(const AnfNodePtr &node) const;
   SymbolPtr RealValue(const AnfNodePtr &node) const;
   AnfNodePtr GetInput(size_t i) const { return cnode_->input(i); }
+  SymbolPtr GetInputShape(size_t i) const { return RealShape(GetInput(i)); }
+  SymbolPtr GetInputValue(size_t i) const { return RealValue(GetInput(i)); }
   SymbolPtr GetAttr(const std::string &attr_name) const;
+  bool is_building_shape() const { return is_building_shape_; }
 
  protected:
   OperationEmitter *emitter_;
   SymbolCache *cache_;
-  CNodePtr cnode_;
   const OperationBuilderInfo &symbol_builder_info_;
+  CNodePtr cnode_;
+  bool is_building_shape_{false};
 };
 using OperationBuilderPtr = std::unique_ptr<OperationBuilder>;
 
@@ -112,13 +125,20 @@ class OperationBuilderRegistry {
   inline static bool HasBuilder(const std::string &name) {
     return OperationBuilderRegistry::Instance().builders_.count(name) > 0;
   }
-  inline static OperationBuilderPtr GetBuilder(const std::string &name, OperationEmitter *e, SymbolCache *cache) {
+
+  inline static const OperationBuilderInfo *GetBuildInfo(const std::string &name) {
     const auto &builders = OperationBuilderRegistry::Instance().builders_;
     auto iter = builders.find(name);
-    if (iter == builders.end()) {
-      return nullptr;
+    return (iter == builders.end() ? nullptr : &(iter->second));
+  }
+
+  inline static OperationBuilderPtr GetBuilder(const std::string &name, OperationEmitter *e, SymbolCache *cache) {
+    auto *build_info = GetBuildInfo(name);
+    if (build_info == nullptr) {
+      static OperationBuilderInfo empty_build_info{};
+      return std::make_unique<OperationBuilder>(e, cache, empty_build_info);
     }
-    return std::make_unique<OperationBuilder>(e, cache, iter->second);
+    return std::make_unique<OperationBuilder>(e, cache, *build_info);
   }
 
   inline static OperationBuilderRegistry &Instance() {
@@ -129,26 +149,33 @@ class OperationBuilderRegistry {
   class RegHelper {
    public:
     explicit RegHelper(const std::string &name) { builder_ = OperationBuilderRegistry::Instance().NewBuilder(name); }
-    RegHelper &SetBuildShape(const std::initializer_list<DependOn> &depends, const InferFunc &func) {
+    RegHelper &SetShapeDepend(const std::initializer_list<DependOn> &depends) {
       builder_->build_shape_depend = depends;
+      return *this;
+    }
+    RegHelper &SetShapeDepend(const DependFunc &func) {
+      builder_->shape_depend_func = func;
+      return *this;
+    }
+    RegHelper &SetShapeFunc(const InferFunc &func) {
       builder_->build_shape_func = func;
       return *this;
     }
-    RegHelper &SetBuildShape(const InferFunc &func) {
-      builder_->build_shape_func = func;
-      return *this;
-    }
-    RegHelper &SetBuildValue(const std::initializer_list<DependOn> &depends, const InferFunc &func) {
+
+    RegHelper &SetValueDepend(const std::initializer_list<DependOn> &depends) {
       builder_->build_value_depend = depends;
-      builder_->build_value_func = func;
       return *this;
     }
-    RegHelper &SetBuildValue(const InferFunc &func) {
+    RegHelper &SetValueDepend(const DependFunc &func) {
+      builder_->value_depend_func = func;
+      return *this;
+    }
+    RegHelper &SetValueFunc(const InferFunc &func) {
       builder_->build_value_func = func;
       return *this;
     }
     OperationBuilderInfo *builder_;
-  };
+  };  // class RegHelper
 
  private:
   OperationBuilderInfo *NewBuilder(const std::string &name) { return &builders_[name]; }

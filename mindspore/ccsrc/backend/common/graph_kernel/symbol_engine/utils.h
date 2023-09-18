@@ -38,5 +38,23 @@ inline bool AsBool(const Symbol *s) {
   return v->value();
 }
 inline bool AsBool(const SymbolPtr &s) { return AsBool(s.get()); }
+
+// calculations of the Range value
+inline int64_t Sign(int64_t x) { return x < 0 ? -1 : 1; }
+inline int64_t GenInf(int64_t x) { return Sign(x) * kINF; }
+inline int64_t RangeAdd(int64_t a, int64_t b) { return std::abs(a) == kINF ? a : std::abs(b) == kINF ? b : a + b; }
+inline int64_t RangeSub(int64_t a, int64_t b) { return RangeAdd(a, -b); }
+inline int64_t RangeMul(int64_t a, int64_t b) {
+  return (std::abs(a) == kINF || std::abs(b) == kINF) ? GenInf(a * b) : a * b;
+}
+inline int64_t RangeDiv(int64_t a, int64_t b) {
+  if (b == 0) {
+    return GenInf(a);
+  }
+  if (std::abs(b) == kINF) {
+    return 0;
+  }
+  return std::abs(a) == kINF ? GenInf(a * b) : a / b;
+}
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_UTILS_H_

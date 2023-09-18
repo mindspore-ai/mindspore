@@ -16,7 +16,6 @@
 #include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
 #include <algorithm>
 #include <utility>
-#include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
@@ -26,12 +25,123 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops::infershape {
+void InferShapeOp::SetPositive(ListSymbol *list) {
+  for (auto &s : list->symbols()) {
+    auto list_s = s->as<ListSymbol>();
+    if (list_s != nullptr) {
+      SetPositive(list_s);
+    } else {
+      auto int_s = s->as<IntSymbol>();
+      MS_EXCEPTION_IF_NULL(int_s);
+      if (!int_s->is_positive()) {
+        int_s->SetRangeMin(1);
+      }
+    }
+  }
+}
+
+SymbolPtr RealShape::SearchPrevSymbols(ListSymbol *cur, size_t axis) {
+  for (size_t i = 0; i < shape_hint_->input_index; i++) {
+    if (shape_hint_->cnode_inputs[i] == nullptr || shape_hint_->param_inputs[i] == nullptr) {
+      continue;
+    }
+    auto prev = shape_hint_->cnode_inputs[i]->as<ListSymbol>();
+    if (prev == nullptr) {
+      continue;
+    }
+    if (*prev == *cur) {
+      MS_LOG(DEBUG) << "The inputshape " << shape_hint_->input_index + 1 << " is same as input " << i + 1;
+      return shape_hint_->param_inputs[i];
+    }
+    for (size_t j = 0; j < prev->size(); j++) {
+      if (cur->symbols()[axis]->EqualsTo(prev->symbols()[j])) {
+        auto param_i = shape_hint_->param_inputs[i]->as<ListSymbol>();
+        if (param_i != nullptr && j < param_i->size() && param_i->symbols()[j] != nullptr) {
+          MS_LOG(DEBUG) << "The inputshape[" << shape_hint_->input_index + 1 << "][" << axis << "] is same as input["
+                        << i + 1 << "][" << j << "]";
+          return param_i->symbols()[j];
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+SymbolPtr RealShape::ParseTensorShape(const abstract::TensorShapePtr &shape_ptr) {
+  const auto &shape_vec = shape_ptr->shape();
+  if (IsDynamicRank(shape_vec)) {
+    return GenVList();
+  }
+  if (shape_hint_ == nullptr || !shape_ptr->IsDynamic() ||
+      shape_hint_->cnode_inputs[shape_hint_->input_index] == nullptr) {
+    return this->FromShape(shape_vec);
+  }
+  auto cur = shape_hint_->cnode_inputs[shape_hint_->input_index]->as<ListSymbol>();
+  if (cur == nullptr || shape_vec.size() != cur->size()) {
+    return this->FromShape(shape_vec);
+  }
+  bool all_use_hint = true;
+  SymbolPtrList result(shape_vec.size());
+  for (size_t axis = 0; axis < shape_vec.size(); axis++) {
+    if (shape_vec[axis] > 0) {
+      result[axis] = IntSymbol::Make(shape_vec[axis]);
+      continue;
+    }
+    // search the previous inputs for same symbol with current input.
+    result[axis] = SearchPrevSymbols(cur, axis);
+    if (result[axis] != nullptr) {
+      if (result[axis]->is<ListSymbol>()) {
+        // found the same shape symbol from previous inputs.
+        DoNotEvalOnRun();
+        return result[axis];
+      }
+      continue;
+    }
+    // cannot find the same symbol from previous parameters, create a new one, and set range according to outer input.
+    all_use_hint = false;
+    auto ints = IntSymbol::Make(shared_from_this());
+    result[axis] = ints;
+    auto cur_int = cur->symbols()[axis]->as<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(cur_int);
+    ints->SetRange(cur_int->range_min(), cur_int->range_max());
+  }
+  if (all_use_hint) {
+    DoNotEvalOnRun();
+  }
+  return GenList(std::move(result));
+}
+
+SymbolPtr RealShape::ParseBaseShape(const BaseShapePtr &base_shape_ptr) {
+  if (base_shape_ptr->isa<abstract::TensorShape>()) {
+    return ParseTensorShape(base_shape_ptr->cast<abstract::TensorShapePtr>());
+  }
+  if (base_shape_ptr->isa<abstract::SequenceShape>()) {
+    auto shape_ptr = base_shape_ptr->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    SymbolPtrList result(shape_ptr->size());
+    const auto &shapes = shape_ptr->shape();
+    (void)std::transform(shapes.cbegin(), shapes.cend(), result.begin(), [this](auto &s) { return ParseBaseShape(s); });
+    return ListSymbol::Make(std::move(result), shared_from_this());
+  }
+  if (base_shape_ptr->isa<abstract::DynamicSequenceShape>()) {
+    return ListSymbol::Make(shared_from_this());
+  }
+  if (base_shape_ptr->isa<abstract::NoShape>()) {
+    return GenList({});
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "The " << base_shape_ptr->ToString() << " is not supported in 'RealShape'";
+}
+
 SymbolPtr RealShape::Eval() {
   auto base_shape_ptr = input_as<InputSymbol>(0)->abstract()->BuildShape();
-  // todo, support tuple shape
-  auto shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  return FromShape(shape_ptr->shape());
+  if (!base_shape_ptr->isa<abstract::TensorShape>()) {
+    // parameter with tuple output does not support hint.
+    shape_hint_ = nullptr;
+  }
+  auto ret = ParseBaseShape(base_shape_ptr);
+  // the shape hint is only used in building stage.
+  shape_hint_ = nullptr;
+  return ret;
 }
 
 SymbolPtr BinElemwise::Eval() {
@@ -64,11 +174,21 @@ SymbolPtrList BinElemwise::Process(const SymbolPtrList &lhs, const SymbolPtrList
       // rule 1: s1 & s2 -> s3=max(s1, s2)
       // rule 2: s1 & 1  -> s1
       // rule 3: s1 & n  -> n  (n != 1)
-      if (!(*a)->HasData() && !(*b)->HasData()) {
-        result[i] = e.Emit(std::make_shared<ScalarMax>(*a, *b));
-      } else if ((*a)->HasData() && AsInt(*a) == 1) {
+      auto int_a = (*a)->as<IntSymbol>();
+      auto int_b = (*b)->as<IntSymbol>();
+      MS_EXCEPTION_IF_NULL(int_a);
+      MS_EXCEPTION_IF_NULL(int_b);
+      if (!int_a->HasData() && !int_b->HasData()) {
+        if (int_a->range_min() > 1) {
+          result[i] = *a;
+        } else if (int_b->range_min() > 1) {
+          result[i] = *b;
+        } else {
+          result[i] = e.Emit(std::make_shared<ScalarMax>(*a, *b));
+        }
+      } else if (int_a->HasData() && int_a->value() == 1) {
         result[i] = *b;
-      } else if ((*b)->HasData() && AsInt(*b) != 1) {
+      } else if (int_b->HasData() && int_b->value() != 1) {
         result[i] = *b;
       } else {
         result[i] = *a;
@@ -172,7 +292,23 @@ SymbolPtr Reshape::Eval() {
     if (shape->is_dyn_len()) {
       return GenVList();
     } else {
-      return GenVIntList(shape->size());
+      // if the symbol in "shape" is positive number, it's unnecessary to create a new symbol.
+      SymbolPtrList result(shape->size());
+      bool has_new_symbol = false;
+      (void)std::transform(shape->symbols().cbegin(), shape->symbols().cend(), result.begin(),
+                           [this, &has_new_symbol](const SymbolPtr &s) {
+                             auto ints = s->as<IntSymbol>();
+                             MS_EXCEPTION_IF_NULL(ints);
+                             if (ints->is_positive()) {
+                               return s;
+                             }
+                             has_new_symbol = true;
+                             return this->GenVInt();
+                           });
+      if (!has_new_symbol) {
+        DoNotEvalOnRun();
+      }
+      return GenList(std::move(result));
     }
   }
   // "shape" is constant tensor and "-1" exists in it.
@@ -299,6 +435,79 @@ SymbolPtr MatMul::Eval() {
   }
   output_as<ListSymbol>()->UpdateList(std::move(result));
   return nullptr;
+}
+
+SymbolPtr ExpandDims::Eval() {
+  auto inp = input_as<IListSymbol>(0);
+  auto axis = input(1);
+  if (!inp->HasData() || !axis->HasData()) {
+    if (inp->HasData() && axis->is<IntSymbol>()) {
+      return GenVIntList(inp->size() + 1);
+    }
+    return GenVList();
+  }
+  DoNotEvalOnRun();
+  auto rank = inp->size();
+  SymbolPtrList result(inp->symbols());
+  SymbolPtr const1 = GenInt(1);
+  auto expand_dims = [&result, rank, &const1](int64_t axis_val) {
+    if (axis_val + static_cast<int64_t>(rank) + 1 < 0 || axis_val > static_cast<int64_t>(rank)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The axis value should be in range [" << -rank - 1 << "," << rank << "], but got "
+                                 << axis_val;
+    }
+    (void)result.insert(result.begin() + static_cast<size_t>(NormAxis(axis_val, rank + 1)), const1);
+  };
+  auto axis_list = axis->as<IListSymbol>();
+  if (axis_list == nullptr) {
+    auto axis_smbl = axis_list->as<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(axis_smbl);
+    expand_dims(axis_smbl->value());
+  } else {
+    for (size_t i = 0; i < axis_list->size(); i++) {
+      expand_dims(axis_list->item(i));
+    }
+  }
+  if (is_building()) {
+    return GenList(std::move(result));
+  }
+  output_as<ListSymbol>()->UpdateList(std::move(result));
+  return nullptr;
+}
+
+SymbolPtr BiasAddGrad::Eval() {
+  auto x = input_as<IListSymbol>(0);
+  if (!x->HasData()) {
+    return GenVIntList(1);
+  }
+  DoNotEvalOnRun();
+  std::string fmt = input_as<StrSymbol>(1)->value();
+  MS_EXCEPTION_IF_CHECK_FAIL(x->size() >= 2, "input rank of BiasAddGrad should be >= 2. symbol x: " + x->ToString());
+  return GenList({fmt.back() == 'C' ? x->symbols().back() : x->symbols()[1]});
+}
+
+SymbolPtr LayerNorm::Eval() {
+  auto x = input_as<IListSymbol>(0);
+  auto begin_axis = input_as<IntSymbol>(1)->value();
+  if (begin_axis < -1) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The begin_norm_axis should be in range [-1, x_rank), but got " << begin_axis;
+  }
+  if (!x->HasData() && begin_axis > 0) {
+    auto mean_var = GenVList();
+    return ListSymbol::Make({input(0), mean_var, mean_var}, shared_from_this());
+  }
+  DoNotEvalOnRun();
+  SymbolPtr axis = nullptr;
+  if (begin_axis < 0) {
+    axis = input(1);
+  } else if (begin_axis == 0) {
+    axis = GenList({});
+  } else {
+    std::vector<int64_t> vec(LongToSize(static_cast<int64_t>(x->size()) - begin_axis));
+    std::iota(vec.begin(), vec.end(), begin_axis);
+    axis = FromShape(vec, true);
+  }
+  auto mean_var = Emit(std::make_shared<Reduce>(input(0), axis, BoolSymbol::Make(true), BoolSymbol::Make(false)));
+  return ListSymbol::Make({input(0), mean_var, mean_var}, shared_from_this());
 }
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

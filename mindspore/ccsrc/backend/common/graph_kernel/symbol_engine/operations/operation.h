@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <utility>
 
 #include "base/base.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
@@ -89,6 +90,8 @@ class Operation : public Base {
       }
       return op->output();
     }
+    SymbolPtr RealShape(const SymbolPtr &inp_symbol) const;
+    SymbolPtr RealValue(const SymbolPtr &inp_symbol) const;
 
    private:
     OpPtrList *ops_;
@@ -97,6 +100,8 @@ class Operation : public Base {
  protected:
   virtual SymbolPtr Eval() = 0;
   virtual void EvalOnRun() { output_->Update(Eval()); }
+  virtual void UpdateMathInfo() {}
+
   bool is_building() const { return is_building_; }
   void DoNotEvalOnRun() {
     if (is_building_) {
@@ -123,7 +128,7 @@ class Operation : public Base {
   SymbolPtr GenVIntList(size_t n) {
     SymbolPtrList list(n);
     std::generate(list.begin(), list.end(), [this]() { return this->GenVInt(); });
-    return GenList(list);
+    return GenList(std::move(list));
   }
   SymbolPtr FromShape(const ShapeVector &shape, bool real_value = false) {
     return IListSymbol::FromShape(shape, real_value, shared_from_this());

@@ -41,6 +41,11 @@ SymbolPtr ScalarAdd::Eval() {
   }
   return GenVInt();
 }
+void ScalarAdd::UpdateMathInfo() {
+  auto a = input_as<IntSymbol>(0);
+  auto b = input_as<IntSymbol>(1);
+  output_as<IntSymbol>()->SetRange(RangeAdd(a->range_min(), b->range_min()), RangeAdd(a->range_max(), b->range_max()));
+}
 
 SymbolPtr ScalarSub::Eval() {
   // only eval on Building
@@ -49,15 +54,16 @@ SymbolPtr ScalarSub::Eval() {
   if (lhs->HasData() && rhs->HasData()) {
     return GenInt(lhs->value() - rhs->value());
   }
-  if (lhs->HasData() && lhs->value() == 0) {
-    DoNotEvalOnRun();
-    return input(1);
-  }
   if (rhs->HasData() && rhs->value() == 0) {
     DoNotEvalOnRun();
     return input(0);
   }
   return GenVInt();
+}
+void ScalarSub::UpdateMathInfo() {
+  auto a = input_as<IntSymbol>(0);
+  auto b = input_as<IntSymbol>(1);
+  output_as<IntSymbol>()->SetRange(RangeSub(a->range_min(), b->range_max()), RangeSub(a->range_max(), b->range_min()));
 }
 
 SymbolPtr ScalarMul::Eval() {
@@ -80,6 +86,19 @@ SymbolPtr ScalarMul::Eval() {
   }
   return GenVInt();
 }
+void ScalarMul::UpdateMathInfo() {
+  auto input1 = input_as<IntSymbol>(0);
+  auto input2 = input_as<IntSymbol>(1);
+  int64_t min1 = input1->range_min();
+  int64_t max1 = input1->range_max();
+  int64_t min2 = input2->range_min();
+  int64_t max2 = input2->range_max();
+  int64_t a = RangeMul(min1, min2);
+  int64_t b = RangeMul(min1, max2);
+  int64_t c = RangeMul(max1, min2);
+  int64_t d = RangeMul(max1, max2);
+  output_as<IntSymbol>()->SetRange(std::min({a, b, c, d}), std::max({a, b, c, d}));
+}
 
 SymbolPtr ScalarDiv::Eval() {
   // only eval on Building
@@ -98,6 +117,29 @@ SymbolPtr ScalarDiv::Eval() {
   return GenVInt();
 }
 
+void ScalarDiv::UpdateMathInfo() {
+  auto input1 = input_as<IntSymbol>(0);
+  auto input2 = input_as<IntSymbol>(1);
+  int64_t min1 = input1->range_min();
+  int64_t max1 = input1->range_max();
+  int64_t min2 = input2->range_min();
+  int64_t max2 = input2->range_max();
+  std::vector<int64_t> v;
+  v.push_back(RangeDiv(min1, min2));
+  v.push_back(RangeDiv(min1, max2));
+  v.push_back(RangeDiv(max1, min2));
+  v.push_back(RangeDiv(max1, max2));
+  if (min2 <= -1 && -1 <= max2) {
+    v.push_back(-min1);
+    v.push_back(-max1);
+  }
+  if (min2 <= 1 && 1 <= max2) {
+    v.push_back(min1);
+    v.push_back(max1);
+  }
+  output_as<IntSymbol>()->SetRange(*std::min_element(v.begin(), v.end()), *std::max_element(v.begin(), v.end()));
+}
+
 SymbolPtr ScalarMax::Eval() {
   // only eval on Building
   auto lhs = input_as<IntSymbol>(0);
@@ -109,7 +151,21 @@ SymbolPtr ScalarMax::Eval() {
     DoNotEvalOnRun();
     return input(0);
   }
+  if (lhs->range_min() > rhs->range_max()) {
+    DoNotEvalOnRun();
+    return input(0);
+  }
+  if (rhs->range_min() > lhs->range_max()) {
+    DoNotEvalOnRun();
+    return input(1);
+  }
   return GenVInt();
+}
+void ScalarMax::UpdateMathInfo() {
+  auto lhs = input_as<IntSymbol>(0);
+  auto rhs = input_as<IntSymbol>(1);
+  output_as<IntSymbol>()->SetRange(std::max(lhs->range_min(), rhs->range_min()),
+                                   std::max(lhs->range_max(), rhs->range_max()));
 }
 
 SymbolPtr ScalarMin::Eval() {
@@ -123,7 +179,21 @@ SymbolPtr ScalarMin::Eval() {
     DoNotEvalOnRun();
     return input(0);
   }
+  if (lhs->range_max() < rhs->range_min()) {
+    DoNotEvalOnRun();
+    return input(0);
+  }
+  if (rhs->range_max() < lhs->range_min()) {
+    DoNotEvalOnRun();
+    return input(1);
+  }
   return GenVInt();
+}
+void ScalarMin::UpdateMathInfo() {
+  auto lhs = input_as<IntSymbol>(0);
+  auto rhs = input_as<IntSymbol>(1);
+  output_as<IntSymbol>()->SetRange(std::min(lhs->range_min(), rhs->range_min()),
+                                   std::min(lhs->range_max(), rhs->range_max()));
 }
 
 SymbolPtr Product::Eval() {

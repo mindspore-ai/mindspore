@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/symbol_engine/operations/infervalue_op.h"
-
+#include <algorithm>
+#include <utility>
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "utils/check_convert_utils.h"
@@ -22,21 +23,43 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops::infervalue {
+SymbolPtr RealValue::GenVarByShape(const IListSymbol &shape) {
+  if (shape.HasData()) {
+    // scalar value
+    if (shape.size() == 0) {
+      return GenVInt();
+    }
+    if (shape.AllHaveData() && shape.size() == 1) {
+      return GenVIntList(LongToSize(shape.item(0)));
+    }
+  }
+  return GenVList();
+}
+
+SymbolPtr RealValue::GenListVariables(const ListSymbol &list) {
+  auto ilist = list.as<IListSymbol>();
+  if (ilist != nullptr) {
+    return GenVarByShape(*ilist);
+  }
+  if (!list.HasData()) {
+    return ListSymbol::Make(shared_from_this());
+  }
+  SymbolPtrList result(list.size());
+  (void)std::transform(list.symbols().begin(), list.symbols().end(), result.begin(), [this](const SymbolPtr &shape) {
+    auto inner_list = shape->as<ListSymbol>();
+    MS_EXCEPTION_IF_NULL(inner_list);
+    return GenListVariables(*inner_list);
+  });
+  return ListSymbol::Make(std::move(result));
+}
+
 SymbolPtr RealValue::Eval() {
   auto v = input_as<InputSymbol>(0)->abstract()->BuildValue();
   if (is_building() && v->isa<ValueAny>()) {
     OperationEmitter e;
-    auto s = e.Emit(std::make_shared<infershape::RealShape>(input(0)))->as<IListSymbol>();
-    if (s != nullptr && s->HasData()) {
-      if (s->symbols().empty()) {
-        // scalar value
-        return GenVInt();
-      }
-      if (s->AllHaveData()) {
-        return GenVIntList(LongToSize(s->item(0)));
-      }
-    }
-    return GenVList();
+    auto list = e.RealShape(input(0))->as_sptr<ListSymbol>();
+    MS_EXCEPTION_IF_NULL(list);
+    return GenListVariables(*list);
   }
   if (v->isa<ValueSequence>()) {
     return FromShape(GetValue<std::vector<int64_t>>(v), true);
