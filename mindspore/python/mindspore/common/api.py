@@ -84,6 +84,9 @@ def _convert_python_data(data):
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
     if isinstance(data, tuple):
+        # Skip namedtuple since its type is tuple.
+        if hasattr(data, "_fields"):
+            return data
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
         # Keep list object not change for inplace operation.

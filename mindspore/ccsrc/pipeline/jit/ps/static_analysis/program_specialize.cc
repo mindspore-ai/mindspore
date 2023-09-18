@@ -796,6 +796,85 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   cnode->set_input(index, new_input);
 }
+
+void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpecializer *const specializer) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &old_input = cnode->input(index);
+  MS_EXCEPTION_IF_NULL(old_input);
+  auto sequence_value = GetValuePtr<ValueNamedTuple>(old_input);
+  if (sequence_value == nullptr) {
+    return;
+  }
+  auto flags = GetSequenceNodeElementsUseFlags(old_input);
+  if (flags == nullptr) {
+    return;
+  }
+  auto old_input_abs = old_input->abstract();
+  MS_EXCEPTION_IF_NULL(old_input_abs);
+  auto old_sequence_abs = dyn_cast<AbstractSequence>(old_input_abs);
+  MS_EXCEPTION_IF_NULL(old_sequence_abs);
+  // Dynamic len abstract sequence no need purify.
+  if (IsInvalidAbstractSequence(old_sequence_abs)) {
+    return;
+  }
+
+  std::vector<size_t> dead_node_positions;
+  ValuePtrList elements;
+  AbstractBasePtrList elements_abs{};
+  auto sequence_value_size = sequence_value->value().size();
+  if (flags->size() < sequence_value_size) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Inner exception. CNode: " << cnode->ToString() << " input: " << old_input->ToString()
+                               << " flags size: " << flags->size()
+                               << " values size: " << sequence_value->value().size();
+  }
+  for (size_t i = 0; i < sequence_value_size; ++i) {
+    ValuePtr old_sequence_value = sequence_value->value()[i];
+    MS_EXCEPTION_IF_NULL(old_sequence_value);
+    auto old_sequence_err_value = old_sequence_value->cast_ptr<ValueProblem>();
+    if (old_sequence_err_value != nullptr && old_sequence_err_value->IsDead()) {
+      MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
+                    << ", which is inputs[" << index << "] of " << cnode->DebugString();
+      (void)dead_node_positions.emplace_back(i);
+    }
+    if (!(*flags)[i]) {
+      auto zero = MakeValue(0);
+      (void)elements.emplace_back(zero);
+      (void)elements_abs.emplace_back(zero->ToAbstract());
+      MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
+                    << index << "] of " << cnode->DebugString();
+    } else {
+      (void)elements.emplace_back(old_sequence_value);
+      (void)elements_abs.emplace_back(old_sequence_abs->elements()[i]);
+    }
+  }
+
+  auto name = sequence_value->name();
+  auto keys = sequence_value->key();
+  abstract::AbstractBasePtrList key_abs;
+  (void)std::transform(keys.begin(), keys.end(), std::back_inserter(key_abs), [](const ValuePtr &key) {
+    MS_EXCEPTION_IF_NULL(key);
+    return key->ToAbstract();
+  });
+  auto new_sequence_value = std::make_shared<ValueNamedTuple>(name, keys, elements);
+  auto new_input = NewValueNode(new_sequence_value);
+  auto new_sequence_abs = std::make_shared<AbstractNamedTuple>(name, key_abs, elements_abs);
+  std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
+  new_sequence_abs->set_sequence_nodes(sequence_nodes);
+
+  new_input->set_abstract(new_sequence_abs);
+
+  // Always reset tuple value node's use flags as non-use.
+  SetSequenceNodeElementsUseFlags(new_input, flags);
+  MS_LOG(DEBUG) << "Update ValueNamedTuple, " << old_input->DebugString() << " --> " << new_input->DebugString()
+                << ", which is inputs[" << index << "] of " << cnode->DebugString() << ", flags: " << (*flags);
+  // Keep the node not to release before we purify its abstract.
+  (void)specializer->sequence_abstract_list().emplace_back(std::pair(new_sequence_abs, old_input));
+  for (size_t pos : dead_node_positions) {
+    (void)specializer->dead_node_list().emplace_back(std::pair(new_input, pos));
+  }
+  cnode->set_input(index, new_input);
+}
 }  // namespace
 
 // First elimination.
@@ -860,7 +939,11 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   // Purify each Tuple/List ValueNode in CNode.
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     if (IsValueNode<ValueTuple>(cnode->input(i))) {
-      PurifySequenceValueNode<ValueTuple, AbstractTuple>(cnode, i, specializer_);
+      if (IsValueNode<ValueNamedTuple>(cnode->input(i))) {
+        PurifyNamedTupleValueNode(cnode, i, specializer_);
+      } else {
+        PurifySequenceValueNode<ValueTuple, AbstractTuple>(cnode, i, specializer_);
+      }
     } else if (IsValueNode<ValueList>(cnode->input(i))) {
       PurifySequenceValueNode<ValueList, AbstractList>(cnode, i, specializer_);
     }

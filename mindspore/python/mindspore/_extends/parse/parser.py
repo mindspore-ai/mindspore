@@ -24,6 +24,7 @@ import re
 import hashlib
 import inspect
 import types
+from collections import namedtuple
 from typing import NamedTuple
 from textwrap import dedent
 import numpy
@@ -606,6 +607,12 @@ def convert_to_ms_cootensor(data):
     return COOTensor(coo_tensor=data)
 
 
+def convert_to_namedtuple(type_name, key_sequeue, value_sequeue):
+    """Convert C++ namedtuple to python object namedtuple."""
+    logger.debug(f"type_name: {type_name}, key_sequeue: {key_sequeue}, value_sequeue: {value_sequeue}")
+    return namedtuple(type_name, [*key_sequeue])(*value_sequeue)
+
+
 def get_object_description(obj, fname, fline):
     """Return method or funcition description for error report, include location, class name, etc."""
     if isinstance(obj, types.MethodType):
@@ -762,6 +769,9 @@ def _convert_stub_tensor(data):
     if is_stub_tensor(data):
         return data.stub_sync()
     if isinstance(data, tuple):
+        # Skip namedtuple since its type is tuple.
+        if hasattr(data, "_fields"):
+            return data
         return tuple(_convert_stub_tensor(x) for x in data)
     if isinstance(data, list):
         # Keep the list object not change.

@@ -17,7 +17,7 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, jit
 from typing import NamedTuple
 from collections import namedtuple
 from mindspore import ops
@@ -236,3 +236,45 @@ def test_namedtuple_get_attr8():
     label1, label2 = net(data)
     assert label1.shape == data.label1.shape
     assert label2.shape == data.label2.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_create_namedtuple():
+    """
+    Feature: Support namedtuple in graph mode.
+    Description: Support create namedtuple in graph mode.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def _max():
+        point = namedtuple('max', 'values, indices')
+        rtl = point(1, 2)
+        return rtl.values, rtl.indices
+    output = _max()
+    point = namedtuple('max', 'values, indices')
+    expect = point(1, 2)
+    assert output[0] == expect.values
+    assert output[1] == expect.indices
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_create_and_return_namedtuple():
+    """
+    Feature: Support namedtuple in graph mode.
+    Description: Support create and return namedtuple in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def _max():
+        point = namedtuple('max', 'values, indices')
+        rtl = point(1, 2)
+        return rtl
+    output = _max()
+    point = namedtuple('max', 'values, indices')
+    expect = point(1, 2)
+    assert output.values == expect.values
+    assert output.indices == expect.indices

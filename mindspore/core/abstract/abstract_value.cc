@@ -1581,6 +1581,24 @@ AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
   return res;
 }
 
+ValuePtr AbstractNamedTuple::RealBuildValue() const {
+  std::vector<ValuePtr> element_value_list;
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    auto element_value = element->BuildValue();
+    MS_EXCEPTION_IF_NULL(element_value);
+    element_value_list.push_back(element_value);
+  }
+  std::vector<ValuePtr> key_value_list;
+  for (const auto &key : keys_) {
+    MS_EXCEPTION_IF_NULL(key);
+    auto key_value = key->BuildValue();
+    MS_EXCEPTION_IF_NULL(key_value);
+    key_value_list.push_back(key_value);
+  }
+  return std::make_shared<ValueNamedTuple>(type_name_, key_value_list, element_value_list);
+}
+
 TypePtr AbstractSlice::BuildType() const {
   MS_EXCEPTION_IF_NULL(start_);
   MS_EXCEPTION_IF_NULL(stop_);

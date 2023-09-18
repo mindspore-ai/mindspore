@@ -190,13 +190,14 @@ ValuePtr MakeValue(const T &vec) {
   return std::make_shared<ValueTuple>(list);
 }
 
+/// \brief ValueNamedTuple defines a Value class whose type is Tuple but the object is namedtuple.
 class MS_CORE_API ValueNamedTuple : public ValueTuple {
  public:
   /// \brief Constructor of ValueNamedTuple.
   ///
   /// \param[in] elements Define the elements of the object.
-  explicit ValueNamedTuple(const std::vector<ValuePtr> &keys, const std::vector<ValuePtr> &values)
-      : ValueTuple(values), keys_(keys) {}
+  ValueNamedTuple(const std::string &type_name, const std::vector<ValuePtr> &keys, const std::vector<ValuePtr> &values)
+      : ValueTuple(values), type_name_(type_name), keys_(keys) {}
 
   /// \brief Destructor of ValueNamedTuple.
   ~ValueNamedTuple() override = default;
@@ -205,8 +206,25 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   //
   // \return The abstract of the ValueNamedTuple object.
   abstract::AbstractBasePtr ToAbstract() override;
+  /// \brief Show the type name of namedtuple.
+  ///
+  /// \return The type name of the namedtuple object.
+  std::string name() const { return type_name_; }
+  /// \brief Show the label of namedtuple.
+  ///
+  /// \return The Label of the namedtuple object.
+  const std::vector<ValuePtr> &key() const { return keys_; }
+  /// \brief Show the ValueNamedTuple object.
+  ///
+  /// \return The description of the ValueNamedTuple object.
+  std::string ToString() const override;
+  /// \brief Show the ValueNamedTuple object DumpText.
+  ///
+  /// \return The description of the ValueNamedTuple object.
+  std::string DumpText() const override { return ToString(); }
 
  private:
+  std::string type_name_;
   std::vector<ValuePtr> keys_;
 };
 using ValueNamedTuplePtr = std::shared_ptr<ValueNamedTuple>;
