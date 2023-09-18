@@ -606,6 +606,7 @@ void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir
   // Dump constant to npy file
   MS_LOG(INFO) << "Start e2e dump Const values";
   auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
   E2eDump::DumpConstantData(graph.get(), target_dir, debugger.get());
 }
 #else

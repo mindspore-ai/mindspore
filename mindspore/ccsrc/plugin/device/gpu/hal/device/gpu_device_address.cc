@@ -347,9 +347,9 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   if (size_ == 0) {
     return true;
   }
-
-  MS_EXCEPTION_IF_NULL(Debugger::GetInstance());
-  if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name) && !force_update) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->TensorExistsInCurrent(tensor_name) && !force_update) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
     return true;
   }
@@ -380,7 +380,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   tensor_data->SetShape(out_tensor->shape());
   tensor_data->SetRootGraphId(root_graph_id);
   tensor_data->SetFormat(host_fmt);
-  ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
+  ret = debugger->LoadNewTensor(tensor_data, keep_prev);
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   return ret;
 }

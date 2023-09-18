@@ -427,6 +427,7 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
  */
 bool DebugServices::CompareCurrentRootGraph(uint32_t id) const {
   auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -449,7 +450,9 @@ bool DebugServices::CompareCurrentRootGraph(uint32_t id) const {
  */
 const void *DebugServices::PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name) {
   std::shared_ptr<TensorData> prev_tensor_data;
-  if (!CompareCurrentRootGraph(Debugger::GetInstance()->GetPrevRootGraphId())) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (!CompareCurrentRootGraph(debugger->GetPrevRootGraphId())) {
     // not supporting watchpoints that need prev tensor for multi root graph networks.
     MS_LOG(DEBUG) << "Previous root graph is different from current root graph, setting prev_tensor to nullptr.";
     prev_tensor_data = nullptr;
@@ -1759,10 +1762,11 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
       continue;
     }
 #ifndef OFFLINE_DBG_MODE
+    auto debugger = Debugger::GetInstance();
+    MS_EXCEPTION_IF_NULL(debugger);
     if (!CompareCurrentRootGraph(std::get<1>(result)->GetRootGraphId())) {
       MS_LOG(INFO) << "tensor root_graph_id: " << std::get<1>(result)->GetRootGraphId()
-                   << " is different from cur_root_graph_id: " << Debugger::GetInstance()->GetCurrentRootGraphId()
-                   << ".";
+                   << " is different from cur_root_graph_id: " << debugger->GetCurrentRootGraphId() << ".";
       MS_LOG(INFO) << "Not reading tensor: " << std::get<0>(result) << ".";
     }
 #endif

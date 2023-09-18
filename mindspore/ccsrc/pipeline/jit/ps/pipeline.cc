@@ -2257,7 +2257,9 @@ void ClearResPart2() {
   abstract::AnalysisSchedule::GetInstance().Stop();
   MS_LOG(INFO) << "End clear AnalysisSchedule...";
 #ifdef ENABLE_DEBUGGER
-  Debugger::GetInstance()->Reset();
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  debugger->Reset();
 #endif
   kArgsCache.clear();
   kCellArgsMap.clear();

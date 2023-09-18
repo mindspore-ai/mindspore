@@ -191,7 +191,9 @@ bool IsDeviceTargetGPU() {
 }
 
 bool GetTransFlag() {
-  if (Debugger::GetInstance()->debugger_enabled() || IsDeviceTargetGPU()) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->debugger_enabled() || IsDeviceTargetGPU()) {
     return true;
   }
   return DumpJsonParser::GetInstance().trans_flag();
@@ -258,6 +260,7 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   bool sink_mode =
     ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph_ptr->IsDatasetGraph();
   auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
   if (debugger->CheckDebuggerDumpEnabled() && sink_mode && IsDeviceTargetGPU()) {
     error_info = "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }

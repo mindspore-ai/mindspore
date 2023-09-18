@@ -75,7 +75,9 @@ bool E2eDump::IsDeviceTargetAscend() {
 }
 
 bool E2eDump::IsMindRTKernelByKernel() {
-  return IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag();
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  return IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag();
 }
 
 /*
@@ -513,6 +515,7 @@ void E2eDump::UpdateIterOldRTDump(const session::KernelGraph *graph) {
  */
 void E2eDump::UpdateIterMindRTDump() {
   auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
   // Dataset graph is always the first graph in the list when dataset_sink_mode is true.
   auto graph_list = debugger->GetStepGraphPtrList();
   if (graph_list.empty()) {
@@ -550,7 +553,9 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     MS_LOG(INFO) << "graph: " << graph->graph_id() << " is dataset graph, not creating graph history file.";
     return;
   }
-  if (!Debugger::GetInstance()->GetAscendKernelByKernelFlag() && !IsDeviceTargetGPU() &&
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (!debugger->GetAscendKernelByKernelFlag() && !IsDeviceTargetGPU() &&
       (graph->graph_id() != graph->root_graph_id())) {
     // when device target is ascend, we only dump graph run iter for the root graph.
     return;
@@ -571,11 +576,11 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     MS_LOG(WARNING) << "Open file for saving graph global execution order failed.";
     return;
   }
-  if (sink_mode && json_parser.async_dump_enabled() && !Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
+  if (sink_mode && json_parser.async_dump_enabled() && !debugger->GetAscendKernelByKernelFlag()) {
     // for async dump when sink_mode = true, cur_dump_iter() = current_epoch
     // dump history for all iterations in the epoch
-    Debugger::GetInstance()->UpdateGraphIterMap(graph->graph_id(), iter_num);
-    auto graph_iter_map = Debugger::GetInstance()->GetGraphIterMap();
+    debugger->UpdateGraphIterMap(graph->graph_id(), iter_num);
+    auto graph_iter_map = debugger->GetGraphIterMap();
     auto step_per_epoch = IntToSize(graph_iter_map[graph->graph_id()]);
     for (size_t i = 0; i < step_per_epoch; i++) {
       auto step = (json_parser.cur_dump_iter() * step_per_epoch) + i;
