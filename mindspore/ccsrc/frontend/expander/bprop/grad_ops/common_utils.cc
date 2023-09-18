@@ -95,7 +95,7 @@ NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodeP
   auto [need_shapecalc, reduce_axis] = DynBroadcastGradientArgs(shape[0], shape[1]);
   NodePtrList broadcast_axes;
   if (need_shapecalc[0] || need_shapecalc[1]) {
-    broadcast_axes = ib->BroadcastGradientArgs(inputs[0], inputs[1]);
+    broadcast_axes = ib->BroadcastGradientArgs(inputs[0], inputs[1], shift);
   }
   for (size_t i = 0; i < kDim2; i++) {
     if (!need_shapecalc[i]) {
