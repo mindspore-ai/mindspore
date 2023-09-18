@@ -141,6 +141,9 @@ const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> &Med
 template <typename T>
 bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
   constexpr bool dtype_support_nan = std::is_same_v<T, float> || std::is_same_v<T, double>;
   if (global_median_ == false) {
     if constexpr ((!dtype_support_nan)) {
