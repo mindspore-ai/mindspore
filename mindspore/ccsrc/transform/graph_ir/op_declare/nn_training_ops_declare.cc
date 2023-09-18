@@ -103,8 +103,8 @@ REG_ADPT_DESC(SparseApplyAdagradV2, kSparseApplyAdagradV2OpName, ADPT_DESC(Spars
 
 // DataFormatDimMap
 INPUT_MAP(DataFormatDimMap) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(DataFormatDimMap) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
-                              {"dst_format", ATTR_DESC(dst_format, AnyTraits<std::string>())}};
+ATTR_MAP(DataFormatDimMap) = {{"dst_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
+                              {"src_format", ATTR_DESC(dst_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(DataFormatDimMap) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DataFormatDimMap, kNameDataFormatDimMap, ADPT_DESC(DataFormatDimMap))
 
