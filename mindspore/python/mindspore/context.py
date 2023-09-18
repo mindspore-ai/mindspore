@@ -913,8 +913,11 @@ def reset_auto_parallel_context():
 @args_type_check(offload_config=dict)
 def set_offload_context(offload_config):
     r"""
-    Set offload context.
-    Some configurations are offload specific, see the below table for details:
+    Configure heterogeneous training detailed parameters to adjust the offload strategy.
+
+    Note:
+        The offload configuration is only used if the memory offload feature is enabled
+        via mindspore.set_context(memory_offload="ON").
 
     Args:
         offload_config (dict): A dict contains the keys and values for setting the offload context
@@ -947,6 +950,7 @@ def set_offload_context(offload_config):
 def get_offload_context():
     """
     Get offload context.
+
     Examples:
         >>> from mindspore import context
         >>> offload_config = context.get_offload_context()
