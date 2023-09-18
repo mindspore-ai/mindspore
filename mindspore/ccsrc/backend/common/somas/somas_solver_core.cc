@@ -124,6 +124,7 @@ void SomasSolverCore::BuildBlocks() {
   uint64_t tensors_block_count = 0;
   for (auto tensor : tensors_) {
     SomasSolverTensorDescPtr pTensor = tensor.second;
+    MS_EXCEPTION_IF_NULL(pTensor);
     if (pTensor->blocked_) {
       continue;
     }

@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace opt {
 void ReduceOptimization(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Reduce optimization start, graph: " << func_graph->ToString() << ".";
 
 #ifdef ENABLE_DUMP_IR
@@ -40,7 +41,9 @@ void ReduceOptimization(const FuncGraphPtr &func_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph_ReduceOptimization", 0, 0, 0);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("reduce_optimization_pm");
+  MS_EXCEPTION_IF_NULL(pm);
   pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
+  MS_EXCEPTION_IF_NULL(optimizer);
   optimizer->AddPassManager(pm);
 
   (void)optimizer->Optimize(func_graph);
