@@ -643,7 +643,7 @@ class Broadcast(PrimitiveWithInfer):
         if not isinstance(x_dtype, tuple):
             raise TypeError(f"For '{self.name}', the 'input_x' must be a tuple, but got {type(x_dtype).__name__}!")
         for _ele in x_dtype:
-            check_collective_target_dtype('input_x', _ele, self.name)
+            check_collective_target_dtype('tuple input_x', _ele, self.name)
         return x_dtype
 
 
