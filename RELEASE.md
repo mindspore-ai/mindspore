@@ -2,6 +2,30 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.1.1 Release Notes
+
+### Bug fixes
+
+- [I7Q9RX] The Ascend platform supports adaptive identification of different hardware types.
+- [I7SDA0] Fixed an issue where the accuracy of the CRNN network deteriorates on the NES platform.
+- [I6QYCD] Fixed an issue where the precision of the maskrcnn network deteriorates on the OptiX OSN 8800 platform.
+- [I7T4QK] Fixed an issue where the inference precision of the WGAN network deteriorates on the OptiX OSN 8800 platform.
+- [I7TJ8Z] Fixed an issue where the inference precision of the LGTM network deteriorates on the OptiX OSN 8800 platform.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+changzherui,chenfei_mindspore,chenjianping,chenkang,chenweifeng,chujinjin,fangwenyi,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong, You Shu, Zhou Feng, Dai Yuxin
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.1.1 Release Notes
+
+### Major Features and Improvements
+
+- [STABLE] MindSpore Lite Cloud Inference adds support for Python 3.8 and Python 3.9
+
 ## MindSpore 2.1.0 Release Notes
 
 ### Major Features and Improvements
