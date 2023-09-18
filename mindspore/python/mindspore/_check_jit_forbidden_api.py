@@ -102,3 +102,5 @@ def is_invalid_or_jit_forbidden_method(obj, obj_type, attr):
     return method_info in _jit_forbidden_method
 
 add_jit_forbidden_module("mindspore.common.initializer")
+add_jit_forbidden_module("mindspore.context")
+add_jit_forbidden_module("mindspore.log")
