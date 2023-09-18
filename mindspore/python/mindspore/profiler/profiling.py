@@ -605,7 +605,8 @@ class Profiler:
         """
         self._model_iteration_dict = model_iteration_dict
         if offline_path:
-            self._ascend_graph_analyse()
+            if self._is_offline_parser():
+                self._ascend_graph_analyse()
             _offline_parse(offline_path)
             return
         if self._msprof_enable:
