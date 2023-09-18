@@ -63,6 +63,7 @@ void *AclAllocator::GetAddrFromBlock(void *block) {
 
 AclAllocatorRegister::AclAllocatorRegister() {
   allocator_obj_ = new AclAllocator();
+  MS_EXCEPTION_IF_NULL(allocator_obj_);
   allocator_obj_->Initialize();
 
   allocator_desc_ = aclrtAllocatorCreateDesc();

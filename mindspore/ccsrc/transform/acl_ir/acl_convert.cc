@@ -249,6 +249,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
                                      const std::vector<TensorParams> &input_params) {
   auto &prim_name = prim->name();
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   auto flags = info->GetInputMappingFlags();
   if ((flags & GeTensorInfo::kEmptyParam) != 0) {
     return;
@@ -329,6 +330,7 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
                                       const std::vector<TensorParams> &output_params) {
   // Get output real index
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   auto flags = info->GetOutputMappingFlags();
 
   // pre-allocate output buffer
@@ -391,6 +393,7 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
   MS_LOG(DEBUG) << "Start convert attr to acl input";
   MS_EXCEPTION_IF_NULL(inputs_on_host);
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   for (const auto &[input_idx, ms_attr_name] : info->attr_input_map()) {
     auto iter = attrs.find(ms_attr_name);
     if (iter == attrs.end()) {
@@ -446,6 +449,7 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
 void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name) {
   MS_LOG(DEBUG) << "Start convert input to acl attr";
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   for (const auto &[input_idx, attr_name] : info->input_attr_map()) {
     auto input_tensor = inputs.get(input_idx);
     if (input_tensor == nullptr) {
@@ -466,6 +470,7 @@ void AclConverter::ConvertToAclAttr(const mindspore::HashMap<std::string, ValueP
                                     const std::string &prim_name, std::vector<std::string> *ms_attr_str) {
   MS_LOG(DEBUG) << "Start convert mindspore attr to acl attr";
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   auto &ms_ge_attr_map = info->attr_map();
 
   for (const auto &[ms_attr_name, ge_attr_name] : ms_ge_attr_map) {
@@ -491,13 +496,16 @@ void AclConverter::ConvertToAclAttr(const mindspore::HashMap<std::string, ValueP
 
 void AclConverter::ConvertToAclOpType(const std::string &prim_name) {
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   auto op_type = info->op_type();
   runner_.SetName(op_type);
 }
 
 void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  MS_EXCEPTION_IF_NULL(info);
   auto flags = info->GetInputMappingFlags();
   size_t num_max_inputs = info->GetNumInputsOfMsOpProto();
 
@@ -662,6 +670,7 @@ std::string AclConverter::DebugString() const {
 void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
                                             const std::vector<TensorParams> &output_params) {
   auto opinfo = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  MS_EXCEPTION_IF_NULL(opinfo);
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     // Default fuzz compile.
