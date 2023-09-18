@@ -246,7 +246,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
     if (is_not_same) {
       std::ostringstream oss;
       oss << "There are " << (arg_pairs.size() + 1) << " inputs of `" << name_ << "`, corresponding type info:\n"
-          << trace::GetDebugInfo(func_graph->debug_info()) << ".\n";
+          << trace::GetDebugInfoStr(func_graph->debug_info()) << ".\n";
       int64_t idx = 0;
       std::string str_index = "first";
       for (auto &item : arg_pairs) {

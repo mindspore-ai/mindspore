@@ -246,9 +246,9 @@ class Parser {
                               const py::object &node, const py::object &generator_node);
   AnfNodePtr ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ParseFormattedValue(const FunctionBlockPtr &block, const py::object &node);
-  std::vector<AnfNodePtr> ParseException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
+  std::vector<AnfNodePtr> HandleException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
-  void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
+  void HandleStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
 
   bool GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const;
   py::object GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,

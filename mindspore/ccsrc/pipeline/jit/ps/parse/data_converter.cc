@@ -311,7 +311,6 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
-
   auto dict_values = obj.cast<py::dict>();
   std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (auto item : dict_values) {

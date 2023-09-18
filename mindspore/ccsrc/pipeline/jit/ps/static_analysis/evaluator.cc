@@ -59,10 +59,10 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
     MS_EXCEPTION_IF_NULL(node);
     if (IsValueNode<Primitive>(node)) {
       MS_LOG(ERROR) << "Evaluator " << evaluator->ToString() << " run failed for node " << node->fullname_with_scope()
-                    << ", with debug info: " << trace::GetDebugInfo(node->debug_info());
+                    << ", with debug info: " << trace::GetDebugInfoStr(node->debug_info());
     } else {
       MS_LOG(ERROR) << "Evaluator " << evaluator->ToString() << " run failed for node " << node->DebugString()
-                    << ", with debug info: " << trace::GetDebugInfo(node->debug_info());
+                    << ", with debug info: " << trace::GetDebugInfoStr(node->debug_info());
     }
   }
 }
@@ -472,7 +472,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     MS_EXCEPTION(TypeError) << "The parameters number of the function is " << fg->parameters().size()
                             << ", but the number of provided arguments is " << args_abs_list.size() << ".\n"
                             << "FunctionGraph : " << fg->ToString()
-                            << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+                            << "\nNodeInfo: " << trace::GetDebugInfoStr(fg->debug_info());
   }
   MS_LOG(DEBUG) << GetInferThread() << "@" << fg->ToString() << ArgsToString(args_abs_list) << " { ";
   if (parent_context_->func_graph() != nullptr) {

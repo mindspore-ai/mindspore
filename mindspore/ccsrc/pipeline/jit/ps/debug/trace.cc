@@ -77,7 +77,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::Abstr
     oss << parameter->ToString() << ":<" << GetAbstractStr(args_abs_list[i]) << ">,";
   }
   oss << "]";
-  oss << GetDebugInfo(graph->debug_info(), kSourceLineTipDiscard);
+  oss << GetDebugInfoStr(graph->debug_info(), "", kSourceLineTipDiscard);
   return oss.str();
 }
 
@@ -423,7 +423,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     }
 
     auto debug_info = cnode->debug_info();
-    auto this_location_info = trace::GetDebugInfo(debug_info, std::string(""));
+    auto this_location_info = trace::GetDebugInfoStr(debug_info);
     if (this_location_info.empty() || this_location_info == last_location_info) {
       continue;
     }
@@ -521,12 +521,12 @@ void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
   StaticAnalysisException::Instance().AppendMsg(oss.str());
   GetEvalStackInfo(trace_info);
   if (trace_info.str().empty()) {
-    DebugInfoPtr debug_info = TraceManager::record_debug_info();
-    if (debug_info != nullptr && TraceManager::record_debug_info_flag() == true) {
-      auto debug_str = trace::GetDebugInfo(debug_info);
+    const DebugInfoPtr &debug_info = TraceManager::parser_debug_info();
+    if (debug_info != nullptr && TraceManager::parser_debug_info_flag() == true) {
+      auto debug_str = trace::GetTracedDebugInfoStr(debug_info);
       if (!debug_str.empty()) {
         std::ostringstream content;
-        content << "\n\n# " << debug_str;
+        content << "\n\n" << debug_str;
         PrintMessage(oss, content.str(), add_title);
       }
     }

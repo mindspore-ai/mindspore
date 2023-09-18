@@ -610,12 +610,12 @@ void AnfExporter::OutputCNodes(std::ostringstream &oss, const std::vector<AnfNod
     auto cnode = node->cast<CNodePtr>();
     OutputCNode(oss, cnode, func_graph, &idx, &apply_map);
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
-      oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+      oss << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
           << trace::Label(cnode->debug_info()) << "\n";
     } else {
-      std::string dgi = trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
+      std::string dgi = trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
       if (dgi != "") {
-        oss << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+        oss << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
       }
     }
   }
@@ -653,12 +653,12 @@ void AnfExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::
     }
     DumpCNode(cnode, func_graph, *para_map, gsub);
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
-      gsub->buffer << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+      gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
                    << trace::Label(cnode->debug_info()) << "\n";
     } else {
-      std::string dgi = trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
+      std::string dgi = trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
       if (dgi != "") {
-        gsub->buffer << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+        gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
       }
     }
   }
@@ -709,10 +709,10 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
   }
   oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
   if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
-    oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
         << trace::Label(func_graph->debug_info()) << "\n";
   } else {
-    oss << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
   }
   oss << "subgraph @" << func_graph->ToString();
   if (func_graph->parent() != nullptr) {

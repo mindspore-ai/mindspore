@@ -338,7 +338,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
     if (is_not_same) {
       std::ostringstream oss;
       oss << "There are " << arg_map.size() << " inputs of `" << name_ << "`, corresponding type info:\n"
-          << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
+          << trace::GetDebugInfoStr(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       std::string str_index = "first";
       const int64_t diff_index = 2;
@@ -982,7 +982,7 @@ FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list
   if (elements.size() < args_least_size) {
     MS_LOG(EXCEPTION) << "When has_aux is True, origin fn requires more than one outputs, but got " << elements.size()
                       << " outputs.\n"
-                      << trace::GetDebugInfo(fg->debug_info());
+                      << trace::GetDebugInfoStr(fg->debug_info());
   }
   fg->set_output(fg->NewCNodeInOrder(elements));
   return fg;

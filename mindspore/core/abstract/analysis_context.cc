@@ -106,7 +106,7 @@ AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const Abs
     MS_LOG(INTERNAL_EXCEPTION) << "BUG: Failed to find parent context in current context: " << this->ToString()
                                << ", func_graph: " << fg->ToString()
                                << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString())
-                               << " " << trace::GetDebugInfo(fg->debug_info());
+                               << " " << trace::GetDebugInfoStr(fg->debug_info());
   }
   // Create or find child context from the parent context.
   auto result = parent_context->children_.emplace(std::make_pair(fg, args_abs_list), nullptr);
@@ -127,7 +127,7 @@ AnalysisContextPtr AnalysisContext::GetCachedContext(const FuncGraphPtr &fg, con
     MS_LOG(INTERNAL_EXCEPTION) << "BUG: Failed to find parent context in current context: " << this->ToString()
                                << ", func_graph: " << fg->ToString()
                                << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString())
-                               << " " << trace::GetDebugInfo(fg->debug_info());
+                               << " " << trace::GetDebugInfoStr(fg->debug_info());
   }
   auto it = parent_context->children_.find(std::make_pair(fg, args_abs_list));
   if (it == parent_context->children_.cend()) {
@@ -171,7 +171,7 @@ AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(FuncGraph *fg) {
   for (auto p = parent_; p != nullptr; p = p->parent_) {
     oss << ", " << p->ToString();
   }
-  oss << "] " << trace::GetDebugInfo(fg->debug_info());
+  oss << "] " << trace::GetDebugInfoStr(fg->debug_info());
   MS_LOG(INTERNAL_EXCEPTION) << oss.str();
 }
 

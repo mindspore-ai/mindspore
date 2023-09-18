@@ -513,6 +513,8 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   if (manager == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Manager is nullptr.";
   }
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
+                << ", loc: " << trace::GetDebugInfoStr(node->debug_info());
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   auto obj = GetSymbolObject(name_space, symbol, node);
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);

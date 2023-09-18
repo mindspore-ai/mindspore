@@ -1799,7 +1799,7 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     MS_EXCEPTION_IF_NULL(out_conf->node());
     MS_LOG(DEBUG) << "Evaluate " << data_value->ToString() << " attribute: " << item_value->ToString()
                   << ".\nnode: " << out_conf->node()->DebugString() << "\n"
-                  << trace::GetDebugInfo(out_conf->node()->debug_info());
+                  << trace::GetDebugInfoStr(out_conf->node()->debug_info());
     auto res = InterpretGetAttrNode(args_abs_list, out_conf);
     if (res == nullptr) {
       MS_EXCEPTION(AttributeError) << data_value->ToString() << " object has no attribute: " << item_value->ToString();
@@ -1933,7 +1933,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
         constexpr auto recursive_level = 3;
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
-                      << trace::GetDebugInfo(out_conf->node()->debug_info());
+                      << trace::GetDebugInfoStr(out_conf->node()->debug_info());
         auto res = InterpretGetAttrNode(args_abs_list, out_conf);
         if (res == nullptr) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
@@ -2115,11 +2115,11 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
   fallback::FormatedVariableTypeFunc func = [&node, &args_abs_list](const std::string &type_var_str) -> TypePtr {
     // For PyInterpret, the args[1] is global dict, and the args[2] is local dict.
     // For PyExecute, the args[1] is local dict keys, and the args[2] is local dict values.
+    ValuePtr type_value = nullptr;
     const auto &keys_tuple_abs = args_abs_list[1];
     MS_EXCEPTION_IF_NULL(keys_tuple_abs);
     const auto &keys_tuple = keys_tuple_abs->BuildValue();
     const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
-    ValuePtr type_value = nullptr;
     bool is_py_execute = (keys != nullptr);
     if (is_py_execute) {  // PyExecute.
       bool found = false;
@@ -2221,14 +2221,14 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
       MS_EXCEPTION_IF_NULL(node);
       MS_LOG(INFO) << "Tensor dtype found, set as unique dtype: " << dtype->ToString()
                    << ", node: " << node->DebugString() << "\n\n"
-                   << trace::GetDebugInfo(node->debug_info());
+                   << trace::GetDebugInfoStr(node->debug_info());
       res = dtype;
       return true;
     }
     if (res != dtype) {
       MS_EXCEPTION_IF_NULL(node);
       MS_LOG(INFO) << "More than one tensor dtype found, not set unique dtype. node: " << node->DebugString() << "\n\n"
-                   << trace::GetDebugInfo(node->debug_info());
+                   << trace::GetDebugInfoStr(node->debug_info());
       return false;
     }
     return true;
@@ -2260,7 +2260,7 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
 
   if (res != nullptr) {
     MS_LOG(INFO) << "Apply unique dtype: " << res->ToString() << " to node: " << node->DebugString() << "\n\n"
-                 << trace::GetDebugInfo(node->debug_info());
+                 << trace::GetDebugInfoStr(node->debug_info());
   }
   return res;
 }
@@ -2622,11 +2622,29 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     auto params = py::tuple(params_size - 1);
 
     // Make the global parameters.
-    auto global_dict = dyn_cast<AbstractDictionary>(args_abs_list[1]);  // Global parameters dict.
-    if (global_dict == nullptr) {
-      MS_EXCEPTION_IF_NULL(args_abs_list[1]);
-      MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a dictionary, but got "
+    MS_EXCEPTION_IF_NULL(args_abs_list[1]);
+    // Get global parameters dict from InterpretedObject.
+    auto global_dict_scalar = dyn_cast<AbstractScalar>(args_abs_list[1]);
+    if (global_dict_scalar == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a scalar(InterpretedObject), but got "
                                  << args_abs_list[1]->ToString();
+    }
+    auto global_dict_scalar_value = global_dict_scalar->BuildValue();
+    MS_EXCEPTION_IF_NULL(global_dict_scalar_value);
+    auto global_dict_interpreted = dyn_cast<parse::InterpretedObject>(global_dict_scalar_value);
+    MS_EXCEPTION_IF_NULL(global_dict_interpreted);
+    const py::object &global_params_dict_obj = global_dict_interpreted->obj();
+    MS_LOG(DEBUG) << "Convert global dict: " << py::str(global_params_dict_obj);
+    ValuePtr globals_converted_value = nullptr;
+    if (!parse::ConvertData(global_params_dict_obj, &globals_converted_value)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
+    }
+    MS_EXCEPTION_IF_NULL(globals_converted_value);
+    // Filter global parameters dict.
+    auto global_dict = dyn_cast<AbstractDictionary>(globals_converted_value->ToAbstract());
+    if (global_dict == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a dictionary, but got "
+                                 << globals_converted_value->ToAbstract()->ToString();
     }
     auto filtered_global_dict = FilterParameters(global_dict);
     MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
@@ -2636,7 +2654,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     py::object global_params_dict = ValueToPyData(global_dict_value);
     MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
                   << py::str(global_params_dict);
-
     // Add global python function to global_params_dict.
     AddGlobalPythonFunction(global_dict, &global_params_dict);
     params[0] = global_params_dict;
@@ -2658,7 +2675,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
     params[1] = local_params_dict;
-
     CheckInterpretInput(filtered_local_dict, script);
 
     return params;

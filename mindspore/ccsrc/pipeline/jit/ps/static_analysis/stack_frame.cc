@@ -104,7 +104,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
     MS_EXCEPTION(TypeError) << "The parameters number of the function is " << fg->parameters().size()
                             << ", but the number of provided arguments is " << args_abs_list.size() << ".\n"
                             << "FunctionGraph ID : " << fg->ToString()
-                            << "\nNodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+                            << "\nNodeInfo: " << trace::GetDebugInfoStr(fg->debug_info());
   }
   MS_LOG(DEBUG) << "Not eval before, current_node: " << current_cnode->DebugString() << ", fg: " << fg->ToString()
                 << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;

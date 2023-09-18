@@ -1198,7 +1198,7 @@ void CheckInterpretNodeLineInfos() {
   ss << "----------------------------------------\n";
   size_t num = 1;
   for (const auto &node : py_interpret_nodes) {
-    const auto line_info = trace::GetDebugInfo(node->debug_info());
+    const auto line_info = trace::GetDebugInfoStr(node->debug_info());
     ss << "# No. " << num << ":\n" << line_info << "\n";
     ++num;
   }
@@ -1234,7 +1234,7 @@ void CheckInterpretNodeLineInfos() {
     } else {
       ss << "Node: " << node->DebugString() << "\n\n";
     }
-    const auto line_info = trace::GetDebugInfo(node->debug_info());
+    const auto line_info = trace::GetDebugInfoStr(node->debug_info());
     ss << line_info << "\n";
     ++num;
   }

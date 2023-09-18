@@ -922,7 +922,7 @@ FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(
     auto fv_func_graph = fv_node->func_graph();
     if (fv_func_graph == nullptr) {
       MS_LOG(INFO) << "Meet a FV '" << fv_node->DebugString() << "' whose func graph is null, during seeking for "
-                   << fg->ToString() << "\nFV: " << trace::GetDebugInfo(fv_node->debug_info());
+                   << fg->ToString() << "\nFV: " << trace::GetDebugInfoStr(fv_node->debug_info());
       continue;
     }
     parents->add(fv_func_graph);

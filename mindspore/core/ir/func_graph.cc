@@ -298,7 +298,7 @@ void FuncGraph::DropValueNode(const AnfNodePtr &node) {
       value_nodes_[node]--;
       if (value_nodes_[node] < 0) {
         MS_LOG(INTERNAL_EXCEPTION) << "Count of ValueNode '" << node
-                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfoStr(debug_info());
       }
     }
   }
@@ -339,7 +339,7 @@ bool FuncGraph::DropFreeVariable(const AnfNodePtr &node) {
       free_variables_[node]--;
       if (free_variables_[node] < 0) {
         MS_LOG(INTERNAL_EXCEPTION) << "Count of free variable '" << node
-                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfoStr(debug_info());
       }
     }
   }
@@ -409,7 +409,7 @@ bool FuncGraph::DropFuncGraphUsed(const FuncGraphPtr &fg) {
       func_graphs_used_[fg]--;
       if (func_graphs_used_[fg] < 0) {
         MS_LOG(INTERNAL_EXCEPTION) << "Count of FuncGraph '" << fg
-                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfoStr(debug_info());
       }
     }
   }
@@ -458,7 +458,7 @@ void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
       func_graph_cnodes_index_[pair]--;
       if (func_graph_cnodes_index_[pair] < 0) {
         MS_LOG(INTERNAL_EXCEPTION) << "Count of CNode/Index '" << pair->first << "/" << pair->second
-                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfoStr(debug_info());
       }
     }
   }
@@ -494,7 +494,7 @@ void FuncGraph::DropMetaFgPrimValueNode(const AnfNodePtr &value_node) {
       meta_fg_prim_value_nodes_[value_node]--;
       if (meta_fg_prim_value_nodes_[value_node] < 0) {
         MS_LOG(INTERNAL_EXCEPTION) << "Count of MetaFgPrim ValueNode '" << value_node->DebugString()
-                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfoStr(debug_info());
       }
     }
   }
@@ -504,7 +504,7 @@ FuncGraphPtr FuncGraph::parent() {
   // report the bug early.
   if (manager_.lock() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
-                               << " NodeInfo: " << trace::GetDebugInfo(debug_info());
+                               << " NodeInfo: " << trace::GetDebugInfoStr(debug_info());
   }
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);

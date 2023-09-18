@@ -138,7 +138,7 @@ int64_t AclCompileGraph::Ref(const AnfNodePtr &node) {
     } else {
       MS_LOG(DEBUG) << "Push.";
       if (IsValueNode<Primitive>(node)) {
-        MS_LOG(EXCEPTION) << "must not be primitive in here NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+        MS_LOG(EXCEPTION) << "must not be primitive in here NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
       } else if (IsValueNode<tensor::Tensor>(node)) {
         auto tensor_node = std::dynamic_pointer_cast<tensor::Tensor>(node->cast<ValueNodePtr>()->value());
         MS_EXCEPTION_IF_NULL(tensor_node);

@@ -192,7 +192,7 @@ void CheckAssignReturnValue(const AnfNodePtr &node) {
                       << "in subsequent releases.\n"
                       << "You can modify the code from:\na = P.Assign()(param, value)\nb = a * 2\nto: \n"
                       << "P.Assign()(param, value)\nb = param * 2\n"
-                      << "Please check your code:" << trace::GetDebugInfo(node->debug_info());
+                      << "Please check your code:" << trace::GetDebugInfoStr(node->debug_info());
     }
   }
 }
@@ -205,7 +205,7 @@ void CheckDeadNodeInOutputRecursively(const AnfNodePtr &node, const AbstractBase
   MS_EXCEPTION_IF_NULL(type);
   if (type->isa<Problem>() || type->isa<Function>()) {
     MS_LOG(EXCEPTION) << "Function in output is not supported. Please check your code. "
-                      << trace::GetDebugInfo(node->debug_info());
+                      << trace::GetDebugInfoStr(node->debug_info());
   }
   if (abstract->isa<AbstractSequence>()) {
     auto abs_seq = abstract->cast_ptr<AbstractSequence>();
