@@ -197,8 +197,10 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   auto adjoint_b = primitive->GetAttr("adjoint_dt");
   bool adjoint_av = GetValue<bool>(adjoint_a);
   bool adjoint_bv = GetValue<bool>(adjoint_b);
-  int64_t x1_row = -1, x1_col = -1;
-  int64_t x2_row = -1, x2_col = -1;
+  int64_t x1_row = -1;
+  int64_t x1_col = -1;
+  int64_t x2_row = -1;
+  int64_t x2_col = -1;
   if (is_dynamic_rank) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{x1_row, x2_col});
   }
