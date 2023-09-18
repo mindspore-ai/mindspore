@@ -49,7 +49,9 @@ abstract::ShapePtr TriuInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = primitive->name();
 
   const int64_t kShapeSize = 2;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = input_args[0];
+  MS_EXCEPTION_IF_NULL(input_shape);
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape->BuildShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -61,11 +63,15 @@ abstract::ShapePtr TriuInferShape(const PrimitivePtr &primitive, const std::vect
 
 TypePtr TriuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[0]->BuildType();
+  auto prim_name = prim->name();
+
+  auto input_shape = input_args[0];
+  MS_EXCEPTION_IF_NULL(input_shape);
+  auto x_type = input_shape->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,  kInt32,
                                          kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64, kBool};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   return x_type;
 }
 }  // namespace

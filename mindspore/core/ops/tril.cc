@@ -50,8 +50,10 @@ TypePtr TrilInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto input_shape = input_args[0];
+  MS_EXCEPTION_IF_NULL(input_shape);
+  auto x_type = input_shape->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
   std::set<TypePtr> valid_x_types(common_valid_types);
   (void)valid_x_types.emplace(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_x_types, prim_name);

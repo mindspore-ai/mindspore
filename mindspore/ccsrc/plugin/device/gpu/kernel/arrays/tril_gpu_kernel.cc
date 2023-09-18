@@ -89,10 +89,10 @@ int TrilGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 template <typename T>
 bool TrilGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
   auto status = CalTril(input_elements_, input, diagonal_, matrix_row_, matrix_col_, output, device_id_,
                         reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);

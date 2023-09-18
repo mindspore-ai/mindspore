@@ -22,8 +22,8 @@ bool TrilIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::TrilIndices>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
   MS_EXCEPTION_IF_NULL(kernel_ptr_);
+  kernel_name_ = kernel_ptr_->name();
   if (outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty outputs, which is invalid.";
     return false;
@@ -73,8 +73,8 @@ template <typename T>
 bool TrilIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
   if (tril_size_ > 0) {
     auto m_first_row = offset_ > 0 ? std::min<int64_t>(col_, 1 + offset_) : row_ + offset_ > 0;
     auto trapezoid_row_offset = std::max<int64_t>(0, -offset_);

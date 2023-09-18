@@ -43,8 +43,6 @@ int TriuCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -60,13 +58,13 @@ int TriuCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
 template <typename T>
 bool TriuCpuKernelMod::TriuCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTriuInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTriuOutputsNum, kernel_name_);
 
-  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
 
   size_t input_size = 1;
   for (size_t i = 0; i < input_dims_; ++i) {
