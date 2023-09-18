@@ -149,7 +149,8 @@ AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, c
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto prim_node =
-      (type == SpecialType::kZerosLikeType ? NewValueNode(prim::kPrimZerosLike) : NewValueNode(prim::kPrimOnesLike));
+      (type == SpecialType::kZerosLikeType ? NewValueNode(std::make_shared<Primitive>(*prim::kPrimZerosLike))
+                                           : NewValueNode(std::make_shared<Primitive>(*prim::kPrimOnesLike)));
     auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
     auto special_like_value = tape->FuncGraph::NewCNode({prim_node, value_node});
     special_like_value->set_abstract(value_node->abstract());
