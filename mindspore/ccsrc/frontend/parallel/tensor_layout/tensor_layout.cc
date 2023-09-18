@@ -340,6 +340,20 @@ Arrangement TensorLayout::slice_shape() const {
   }
 }
 
+Shape TensorLayout::shard_strategy() const {
+  Shape ret;
+  for (size_t index = 0; index < tensor_map_.GetDimSize(); index++) {
+    int64_t dim = tensor_map_.GetDimByIdx(index);
+    if (dim == -1) {
+      ret.push_back(1);
+    } else {
+      int64_t divisor = device_arrangement_.GetDimByReverseIdx(LongToUlong(dim));
+      ret.push_back(divisor);
+    }
+  }
+  return ret;
+}
+
 Status TensorLayout::UpdateTensorMap(size_t index, int64_t value) {
   if (index >= tensor_map_.GetDimSize()) {
     MS_LOG(ERROR) << "Index is out of the size of the tensor map!";
