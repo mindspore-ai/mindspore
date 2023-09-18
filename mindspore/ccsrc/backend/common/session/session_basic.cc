@@ -474,6 +474,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
 
   pynative::BaseOpRunInfo base_op_run_info;
   base_op_run_info.is_mixed_precision_cast = false;
+  base_op_run_info.has_dynamic_output = shape->IsDynamic();
   base_op_run_info.op_name = primitive->name();
   base_op_run_info.next_op_name = std::string();
   base_op_run_info.device_target = GetOpRunDeviceTarget(primitive);
