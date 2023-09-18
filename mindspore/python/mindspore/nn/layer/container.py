@@ -723,7 +723,7 @@ class CellDict(_CellDictBase, Cell):
                 if len(k_v) != 2:
                     raise ValueError("CellDict update sequence element "
                                      "#" + str(id) + ", length should be 2; but has length " +
-                                     "str(len(k_v))")
+                                     str(len(k_v)))
                 self[k_v[0]] = k_v[1]
 
     def construct(self, *inputs):
