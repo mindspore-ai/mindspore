@@ -353,7 +353,7 @@ bool GraphAdapter::IsPynativeGeGraphSink(const GraphCompilerInfo &graph_compiler
 bool GraphAdapter::IsPynativeGeGraphSink(const FuncGraphPtr &func_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->backend_policy() == "ge")) {
+  if (context_ptr->backend_policy() != "ge" || !context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     return false;
   }
 
@@ -375,6 +375,7 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
 
   MS_EXCEPTION_IF_NULL(func_graph);
   if (GraphAdapter::IsPynativeGeGraphSink(func_graph)) {
+    MS_LOG(DEBUG) << "Enable graph sink for PyNative";
     return true;
   }
 
