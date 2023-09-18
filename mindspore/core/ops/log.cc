@@ -74,7 +74,7 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
   auto x_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, op_name);
   return x_type;
@@ -111,6 +111,10 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
       ImpleLog<float16>(x_datac, result_datac, data_size);
       break;
     }
+    case kNumberTypeBFloat16: {
+      ImpleLog<bfloat16>(x_datac, result_datac, data_size);
+      break;
+    }
     case kNumberTypeFloat32: {
       ImpleLog<float>(x_datac, result_datac, data_size);
       break;
@@ -130,7 +134,8 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     default: {
       MS_EXCEPTION(TypeError)
         << "For '" << prim->name()
-        << "', the supported data types are ['float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
+        << "', the supported data types are ['float16', 'float32', 'float64', 'complex64', 'complex128', 'bfloat16'], "
+           "but got "
         << x_tensor->ToString();
     }
   }
