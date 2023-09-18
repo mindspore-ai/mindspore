@@ -662,9 +662,19 @@ int TrainExport::SaveWeightsToFile(bool enable_fp16, const std::vector<std::stri
         changeable_weights_name.end()) {
       auto shape = tensor->dims;
       weights.write(reinterpret_cast<const char *>(shape.data()), shape.size() * sizeof(uint32_t));
+      if (weights.fail()) {
+        MS_LOG(ERROR) << "Write weights failed, weight file: " << file_name_;
+        weights.close();
+        return RET_ERROR;
+      }
     }
     if (!enable_fp16 || tensor->dataType != kNumberTypeFloat32) {
       weights.write(reinterpret_cast<const char *>(tensor->data.data()), tensor->data.size());
+      if (weights.fail()) {
+        MS_LOG(ERROR) << "Write weights failed, weight file: " << file_name_;
+        weights.close();
+        return RET_ERROR;
+      }
     } else {
       std::vector<uint16_t> data_fp16(tensor->data.size() / sizeof(float));
 #ifndef ENABLE_ARM
@@ -679,11 +689,16 @@ int TrainExport::SaveWeightsToFile(bool enable_fp16, const std::vector<std::stri
       Float32ToFloat16_fp16_handler(tensor->data.data(), data_fp16.data(), data_fp16.size(), true);
 #endif
       weights.write(reinterpret_cast<const char *>(data_fp16.data()), data_fp16.size() * sizeof(uint16_t));
+      if (weights.fail()) {
+        MS_LOG(ERROR) << "Write weights failed, weight file: " << file_name_;
+        weights.close();
+        return RET_ERROR;
+      }
     }
   }
   weights.close();
 #ifndef _MSC_VER
-  chmod(file_name_.c_str(), S_IRUSR);
+  chmod(file_name_.c_str(), S_IRUSR | S_IWUSR);
 #endif
   return RET_OK;
 }

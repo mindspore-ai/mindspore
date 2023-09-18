@@ -95,6 +95,7 @@ int DynamicQuantCPUKernel::ReSize() {
   } else {
     min_max_array_size = kBucketNums;
   }
+  freeTmpBuffer();
   real_min_ = reinterpret_cast<float *>(malloc(min_max_array_size * sizeof(float)));
   real_max_ = reinterpret_cast<float *>(malloc(min_max_array_size * sizeof(float)));
   if (real_min_ == nullptr || real_max_ == nullptr) {
@@ -107,6 +108,25 @@ int DynamicQuantCPUKernel::ReSize() {
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
+}
+
+void DynamicQuantCPUKernel::freeTmpBuffer() {
+  if (real_min_ != nullptr) {
+    free(real_min_);
+    real_min_ = nullptr;
+  }
+  if (real_max_ != nullptr) {
+    free(real_max_);
+    real_max_ = nullptr;
+  }
+  if (scale_ != nullptr) {
+    free(scale_);
+    scale_ = nullptr;
+  }
+  if (zero_point_ != nullptr) {
+    free(zero_point_);
+    zero_point_ = nullptr;
+  }
 }
 
 int DynamicQuantCPUKernel::CalculateMinMax(int task_id) {

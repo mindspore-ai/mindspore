@@ -28,24 +28,7 @@ class DynamicQuantCPUKernel : public LiteKernel {
   DynamicQuantCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {}
-  ~DynamicQuantCPUKernel() override {
-    if (real_min_ != nullptr) {
-      free(real_min_);
-      real_min_ = nullptr;
-    }
-    if (real_max_ != nullptr) {
-      free(real_max_);
-      real_max_ = nullptr;
-    }
-    if (scale_ != nullptr) {
-      free(scale_);
-      scale_ = nullptr;
-    }
-    if (zero_point_ != nullptr) {
-      free(zero_point_);
-      zero_point_ = nullptr;
-    }
-  };
+  ~DynamicQuantCPUKernel() override { freeTmpBuffer(); };
 
   int Prepare() override;
   int ReSize() override;
@@ -57,6 +40,7 @@ class DynamicQuantCPUKernel : public LiteKernel {
  private:
   void CalculatePerlayerScaleZp();
   void CalculatePerChannelScaleZp();
+  void freeTmpBuffer();
 
  private:
   int thread_num_;
