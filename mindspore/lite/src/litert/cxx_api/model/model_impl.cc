@@ -47,6 +47,11 @@ constexpr size_t kMaxConfigNumPerSection = 1000;
 constexpr auto kSharingWorkspaceSection = "inner_common";  // don't support external user configuration
 constexpr auto kSharingWorkspaceKey = "inner_sharing_workspace";
 constexpr auto kSharingWorkspaceValue = "true";
+constexpr auto kBuildSection = "build_session";
+constexpr auto kObfRatioKey = "obf_ratio";
+constexpr auto kObfNodeName = "obf_op-obf_mul";
+constexpr size_t kFloatSize = 4;
+constexpr int kDataIndex = 1;
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
 constexpr auto kCommonSection = "common";  // support external user configuration
 constexpr auto kEnablePreInferenceKey = "enable_pre_inference";
@@ -205,6 +210,9 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
+
+  ModelDeObfuscate();
+
   return kSuccess;
 }
 
@@ -242,6 +250,9 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
+
+  ModelDeObfuscate();
+
   return kSuccess;
 }
 
@@ -279,6 +290,7 @@ Status ModelImpl::Build() {
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";
+      ModelDeObfuscate();
       return kSuccess;
     }
   }
@@ -322,6 +334,7 @@ Status ModelImpl::Build() {
   model->buf = model_buf;
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
+  ModelDeObfuscate();
   return kSuccess;
 }
 
@@ -954,5 +967,45 @@ lite::LiteSession *ModelImpl::CreateLiteSession(const std::shared_ptr<lite::Inne
     return nullptr;
   }
   return session;
+}
+
+void ModelImpl::ModelDeObfuscate() {
+  float obf_ratio = 0.0;
+  auto iter = config_info_.find(kBuildSection);
+  if (iter != config_info_.end()) {
+    auto item_runner = iter->second.find(kObfRatioKey);
+    if (item_runner != iter->second.end()) {
+      obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+    }
+  } else {
+    MS_LOG(INFO) << "No obfuscate key find in config file";
+    return;
+  }
+
+  if (obf_ratio != 1.0 && obf_ratio != 0.0) {
+    auto model = graph_->graph_data_->lite_model();
+    std::string tensor_name = "";
+    for (auto node : model->graph_.all_nodes_) {
+      if (node->name_.find(kObfNodeName) != std::string::npos) {
+        auto idx = node->input_indices_[kDataIndex];
+        auto *tensor = model->graph_.all_tensors_[idx];
+        tensor_name = tensor->name()->str();
+      }
+    }
+    if (tensor_name.empty()) {
+      return;
+    }
+    MS_LOG(DEBUG) << "Find obfuscate value in tensor " << tensor_name;
+    float data[1] = {obf_ratio};
+    auto new_tensor =
+      MSTensor::CreateTensor(tensor_name, mindspore::DataType::kNumberTypeFloat32, {1, 1}, data, kFloatSize);
+    std::vector<mindspore::MSTensor> modify_tensors;
+    modify_tensors.emplace_back(*new_tensor);
+    auto ret = this->UpdateWeights(modify_tensors);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateWeights failed.";
+      return;
+    }
+  }
 }
 }  // namespace mindspore

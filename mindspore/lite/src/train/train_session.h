@@ -87,7 +87,6 @@ class TrainSession : virtual public lite::LiteSession {
     return lite::LiteSession::GetOutputByTensorName(tensor_name);
   }
   int Resize(const std::vector<lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
-  int UpdateWeights(std::vector<lite::Tensor *> new_weights) override;
 
   std::vector<lite::Tensor *> GetPredictions() const override {
     std::vector<lite::Tensor *> outputs;
@@ -177,6 +176,10 @@ class TrainSession : virtual public lite::LiteSession {
   template <typename DestType>
   int ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type, FormatType,
                   std::vector<std::string> out_put_tensor_name = {});
+  lite::Tensor *FindObfTensor();
+  void ChangeObfWeight(std::string tensor_name, float obf_ratio);
+  float ModelRecoverObfuscate();
+  void ModelDeObfuscate(float obf_ratio);
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   std::vector<Tensor *> trainable_parameters_;
   int virtual_batch_idx_ = 0;

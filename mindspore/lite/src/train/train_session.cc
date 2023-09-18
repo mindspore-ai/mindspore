@@ -78,6 +78,9 @@ void AddNonConstTrainableParams(const std::vector<kernel::KernelExec *> &in_kern
 }  // namespace
 const char *kGradName = "Gradients";
 const char *kOptimizerName = "optimizer";
+constexpr auto kObfNodeName = "obf_op-obf_mul";
+constexpr size_t kFloatSize = 4;
+constexpr int kDataIndex = 1;
 
 TrainSession::TrainSession() {
   is_train_session_ = true;
@@ -200,96 +203,6 @@ int TrainSession::InitCallBack() {
     return is_fp16;
   };
   return RET_OK;
-}
-
-static int ReshapeWeightTensor(Tensor *orig_tensor, lite::Tensor *new_tensor) {
-  if (orig_tensor->data_type() != new_tensor->data_type()) {
-    MS_LOG(ERROR) << "Cannot reshape tensor of different type: " << new_tensor->tensor_name();
-    return RET_PARAM_INVALID;
-  }
-
-  if (orig_tensor->category() != lite::Category::CONST_TENSOR) {
-    MS_LOG(ERROR) << "Cannot reshape non const tensor: " << new_tensor->tensor_name();
-    return RET_ERROR;
-  }
-
-  auto orig_size = orig_tensor->Size();
-  uint8_t *new_data = reinterpret_cast<uint8_t *>(new_tensor->data());
-  if (new_data == nullptr) {
-    // Copy original data into new_tensor
-    new_data = reinterpret_cast<uint8_t *>(new_tensor->MutableData());
-    if (new_data == nullptr) {
-      MS_LOG(ERROR) << "Allocation of Data Failed" << new_tensor->tensor_name();
-      return RET_ERROR;
-    }
-    if (orig_size == 0) {
-      MS_LOG(ERROR) << "Operation failed: Both new tensors and original one have no data";
-      return RET_ERROR;
-    }
-    uint8_t *orig_data = reinterpret_cast<uint8_t *>(orig_tensor->data());
-    for (unsigned int loc = 0; loc < new_tensor->Size(); loc++) {
-      new_data[loc] = orig_data[loc % orig_size];
-    }
-  }
-
-  if (orig_tensor->shape() != new_tensor->shape()) {
-    orig_tensor->FreeData();
-    orig_tensor->set_data(nullptr);
-    orig_tensor->set_shape(new_tensor->shape());
-  }
-
-  uint8_t *dst_data = reinterpret_cast<uint8_t *>(orig_tensor->MutableData());
-  if (dst_data == nullptr) {
-    MS_LOG(ERROR) << "Allocation of Data Failed";
-    return RET_ERROR;
-  }
-  std::copy(new_data, new_data + orig_tensor->Size(), dst_data);
-  return RET_OK;
-}
-
-int TrainSession::UpdateWeights(std::vector<lite::Tensor *> modify_tensors) {
-  unsigned int num_of_found_tensors = 0;
-  for (auto tensor : tensors_) {
-    for (auto modify : modify_tensors) {
-      if (modify == nullptr) {
-        MS_LOG(ERROR) << "Tensor is nullptr";
-        return RET_PARAM_INVALID;
-      }
-      if (modify->tensor_name() == tensor->tensor_name()) {
-        if (tensor->Size() != modify->Size()) {
-          model_buff_changed_ = true;
-        }
-        auto ret = ReshapeWeightTensor(tensor, modify);
-        num_of_found_tensors++;
-        if (ret != RET_OK) {
-          model_buff_changed_ = false;
-          return ret;
-        }
-        break;
-      }
-    }
-  }
-  if (num_of_found_tensors != modify_tensors.size()) {
-    MS_LOG(ERROR) << "Did not find all the given tensors in the model";
-    return RET_ERROR;
-  }
-  auto ret = ReSizeKernels(kernels_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Resize kernels fail!";
-    model_buff_changed_ = false;
-    return ret;
-  }
-
-  bool is_eval = IsEval();
-  ret = Train();  // This will trigger proper Allocation of static data;
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "General failure occurred during Update of Weights";
-    return ret;
-  }
-  if (is_eval) {
-    ret = Eval();
-  }
-  return ret;
 }
 
 int TrainSession::AllocTensors(const std::vector<kernel::KernelExec *> &kernels) {
@@ -1210,6 +1123,7 @@ int TrainSession::FindExportKernels(std::vector<kernel::KernelExec *> *export_ke
 template <typename DestType>
 int TrainSession::ExportByDifferentType(DestType destination, ModelType model_type, QuantizationType quant_type,
                                         bool orig_train_state, std::vector<std::string> output_tensor_name) {
+  float obf_ratio = ModelRecoverObfuscate();
   TrainExport texport(destination);
   int status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to init export");
@@ -1233,6 +1147,9 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
         status = Train();
         TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Train failed.");
       }
+      if (obf_ratio != 1.0) {
+        ModelDeObfuscate(obf_ratio);
+      }
       return status;
     } else {
       status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
@@ -1251,11 +1168,17 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
     status = texport.SaveToFile();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "failed to save to " << destination;
+      if (obf_ratio != 1.0) {
+        ModelDeObfuscate(obf_ratio);
+      }
       return status;
     }
   } else {
     status = texport.SaveToBuffer();
     TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "fail to save to model buffer.");
+  }
+  if (obf_ratio != 1.0) {
+    ModelDeObfuscate(obf_ratio);
   }
   return RET_OK;
 }
@@ -1435,6 +1358,50 @@ size_t TrainSession::GetInplaceTensorOffset(kernel::KernelExec *kernel,
   auto tensor = kernel->in_tensors().at(input_idx);
   ref_count->at(tensor) = ref_count->at(tensor) + 1;
   return offset_map.at(tensor);
+}
+
+lite::Tensor *TrainSession::FindObfTensor() {
+  for (auto node : model_->graph_.all_nodes_) {
+    if (node->name_.find(kObfNodeName) != std::string::npos) {
+      auto idx = node->input_indices_[kDataIndex];
+      return tensors_[idx];
+    }
+  }
+  return nullptr;
+}
+
+void TrainSession::ChangeObfWeight(std::string tensor_name, float obf_ratio) {
+  float data[1] = {obf_ratio};
+  auto new_tensor = lite::Tensor::CreateTensor(tensor_name, TypeId::kNumberTypeFloat32, {1, 1}, data, kFloatSize);
+  std::vector<lite::Tensor *> modify_tensors;
+  modify_tensors.emplace_back(new_tensor);
+  auto ret = this->UpdateWeights(modify_tensors);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "UpdateWeights failed.";
+    return;
+  }
+}
+
+float TrainSession::ModelRecoverObfuscate() {
+  auto tensor = FindObfTensor();
+  float true_obf_ratio = 1.0;
+  if (tensor != nullptr) {
+    std::string tensor_name = tensor->tensor_name();
+    true_obf_ratio = *(reinterpret_cast<float *>(tensor->data()));
+    float init_obf_ratio = 1.0;
+    ChangeObfWeight(tensor_name, init_obf_ratio);
+  }
+  return true_obf_ratio;
+}
+
+void TrainSession::ModelDeObfuscate(float obf_ratio) {
+  if (obf_ratio != 1.0 && obf_ratio != 0.0) {
+    auto *tensor = FindObfTensor();
+    if (tensor != nullptr) {
+      std::string tensor_name = tensor->tensor_name();
+      ChangeObfWeight(tensor_name, obf_ratio);
+    }
+  }
 }
 }  // namespace lite
 }  // namespace mindspore
