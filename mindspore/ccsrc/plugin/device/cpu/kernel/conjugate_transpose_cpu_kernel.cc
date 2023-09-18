@@ -140,7 +140,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   transpose_param_.num_axes_ = SizeToInt(num_axes);
   transpose_param_.strides_[num_axes - 1] = 1;
   transpose_param_.out_strides_[num_axes - 1] = 1;
-  for (int i = num_axes - 1; i >= 1; i--) {
+  for (size_t i = num_axes - 1; i >= 1; i--) {
     transpose_param_.strides_[i - 1] = SizeToInt(input_shape_[i]) * transpose_param_.strides_[i];
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
@@ -213,7 +213,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
   transpose_param_.num_axes_ = SizeToInt(num_axes);
   transpose_param_.strides_[num_axes - 1] = 1;
   transpose_param_.out_strides_[num_axes - 1] = 1;
-  for (int i = num_axes - 1; i >= 1; i--) {
+  for (size_t i = num_axes - 1; i >= 1; i--) {
     transpose_param_.strides_[i - 1] = SizeToInt(input_shape_[i]) * transpose_param_.strides_[i];
     transpose_param_.out_strides_[i - 1] = SizeToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }

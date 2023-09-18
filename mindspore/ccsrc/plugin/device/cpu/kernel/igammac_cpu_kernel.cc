@@ -345,6 +345,7 @@ bool IgammacCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
   dtype_ = inputs[kInputIndex0]->GetDtype();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());

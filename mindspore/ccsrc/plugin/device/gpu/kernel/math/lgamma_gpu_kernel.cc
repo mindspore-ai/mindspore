@@ -20,6 +20,7 @@ namespace mindspore {
 namespace kernel {
 bool LgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Lgamma>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
@@ -66,7 +67,9 @@ template <typename T>
 bool LgammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input);
   T *output = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output);
   auto status = CalLgamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

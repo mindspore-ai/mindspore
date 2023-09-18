@@ -59,8 +59,7 @@ TypePtr LgammaInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32};
   auto x_type = input_args[kInputIndex0]->BuildType();
-  TypeId tensor_type_id = x_type->cast<TensorTypePtr>()->element()->type_id();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  TypeId tensor_type_id = CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name)->type_id();
   if (tensor_type_id == kNumberTypeInt32) {
     return std::make_shared<TensorType>(kFloat32);
   } else {
