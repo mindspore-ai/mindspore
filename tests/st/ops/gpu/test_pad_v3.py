@@ -18,6 +18,7 @@ import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import nn_ops
 from mindspore.ops import functional as F
 
@@ -50,6 +51,25 @@ class NetDynamic(nn.Cell):
             out = self.ops(x, paddings, value)
         else:
             out = self.ops(x, paddings)
+        return out
+
+
+class NetDynamicRank(nn.Cell):
+    def __init__(self, padding, mode, paddings_contiguous, value=0):
+        super(NetDynamicRank, self).__init__()
+        self.padv3 = nn_ops.PadV3(mode, paddings_contiguous)
+        self.reduce_mean = math_ops.ReduceMean()
+        self.padding = padding
+        self.mode = mode
+        if mode == "constant":
+            self.value = value
+
+    def construct(self, x, axis):
+        reduce_out = self.reduce_mean(x, axis)
+        if self.mode == "constant":
+            out = self.padv3(reduce_out, self.padding, self.value)
+        else:
+            out = self.padv3(reduce_out, self.padding)
         return out
 
 
@@ -329,3 +349,25 @@ def test_padv3_padding_list():
                        [1.5, 1.5, 1.5, 1.5, 1.5],
                        [1.5, 1.5, 1.5, 1.5, 1.5]]).astype(np.float32)
     np.testing.assert_almost_equal(expect, out.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_padv3_constant_dynamic_rank():
+    """
+    Feature: test padv3 constant mode with dynamic rank in pynative backend
+    Description: test padv3 constant mode with dynamic ran
+    Expectation: Success
+    """
+    mode = 'constant'
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x = np.arange(9).reshape(1, 1, 1, 3, 3).astype(np.float32)
+    padding = Tensor((-1, 1, 0, 0))
+    value = 1.5
+    axis = Tensor([0])
+    net = NetDynamicRank(padding, mode, True, value)
+    out = net(Tensor(x), axis)
+    res_ms = out.asnumpy()
+    expect = [[[[1., 2., 1.5], [4., 5., 1.5], [7., 8., 1.5]]]]
+    np.testing.assert_almost_equal(expect, res_ms)

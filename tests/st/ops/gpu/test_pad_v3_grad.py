@@ -19,6 +19,7 @@ import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
+import mindspore.ops.operations.math_ops as P
 import mindspore.ops.operations._grad_ops as Grad
 
 
@@ -29,6 +30,17 @@ class PadV3GradNet(nn.Cell):
 
     def construct(self, x, paddings):
         return self.op(x, paddings)
+
+
+class PadV3GradDynamicRankNet(nn.Cell):
+    def __init__(self, mode):
+        super(PadV3GradDynamicRankNet, self).__init__()
+        self.padv3_grad = Grad.PadV3Grad(mode)
+        self.reduce_mean = P.ReduceMean()
+
+    def construct(self, x, paddings, axis):
+        reduce_out = self.reduce_mean(x, axis)
+        return self.padv3_grad(reduce_out, paddings)
 
 
 @pytest.mark.level1
@@ -89,4 +101,25 @@ def test_padv3grad_circular_5d():
     output = net(x, paddings)
     expect = np.array([[[[[246., 252., 498.], [222., 228., 450.]],
                          [[164., 168., 332.], [148., 152., 300.]]]]]).astype(np.float64)
+    np.testing.assert_almost_equal(expect, output.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_padv3grad_circular_3d_dynamic_rank():
+    """
+    Feature: test PadV3Grad with dynamic rank
+    Description: test PadV3Grad circular mode with dynamic rank in pynative backend.
+    Expectation: Success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, save_graphs=False, device_target="GPU")
+    net = PadV3GradDynamicRankNet('circular')
+
+    x = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mindspore.float32).reshape((1, 1, 2, 4))
+    paddings = Tensor(np.array([1, 1], dtype=np.int32))
+    axis = Tensor([0])
+
+    output = net(x, paddings, axis)
+    expect = np.array([[[6, 4], [14, 12]]]).astype(np.float32)
     np.testing.assert_almost_equal(expect, output.asnumpy())
