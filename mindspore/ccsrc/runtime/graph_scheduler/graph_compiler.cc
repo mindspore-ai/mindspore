@@ -710,8 +710,6 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   if (CompileCacheEnable()) {
     CompileCacheContext::GetInstance().Clear();
   }
-  // Set summary nodes for all graphs.
-  session_->SetSummaryNodesForAllGraphs(root_graph.get(), all_graphs);
 
   // dump all graphs.
   // for ascend mindRT.
@@ -792,7 +790,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     }
 
 #ifndef ENABLE_SECURITY
-    session_->SetSummaryNodes(graph.get());
+    session_->RecurseSetSummaryNodesForAllGraphs(graph.get());
     // Update needed dump kernels for mindRT.
     DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif
