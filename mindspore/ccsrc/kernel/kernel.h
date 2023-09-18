@@ -623,7 +623,7 @@ class BACKEND_EXPORT KernelMod {
   virtual std::vector<KernelAttr> GetOpSupport() = 0;
 
   virtual bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    return true;
+    MS_LOG(EXCEPTION) << "The KernelMod[" << kernel_name_ << "] doesn't implement virtual function 'Init'";
   }
 
   inline bool Init(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
