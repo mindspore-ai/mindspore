@@ -7889,6 +7889,8 @@ def combinations(input, r=2, with_replacement=False):
         raise TypeError(f"For 'combinations', 'x' must be a tensor, but got {type(input)}")
     if input.ndim != 1:
         raise ValueError(f"For 'combinations', the dimension 'x' must be 1, but got {input.ndim}")
+    if not isinstance(r, int):
+        raise TypeError(f"For 'combinations', 'r' must be an integer, but got {type(r)}")
     comb_func = _combinations_with_replacement if with_replacement else _combinations
     ret = comb_func(input, r)
     if ret.size == 0:
