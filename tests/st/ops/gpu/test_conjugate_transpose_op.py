@@ -17,7 +17,6 @@ import pytest
 from mindspore import Tensor, complex64
 from mindspore.ops.operations import array_ops as P
 import mindspore.common.dtype as ms
-from mindspore.common.api import _pynative_executor
 
 
 @pytest.mark.level1
@@ -105,11 +104,9 @@ def test_conjugate_transpose_zero_rank():
     """
     Feature:  ConjugateTranspose input with zero rank.
     Description: Compatible with Tensorflow's ConjugateTranspose.
-    Expectation: raise error and no core dump.
+    Expectation: no core dump.
     """
     perm = ()
     input_c = Tensor(np.random.uniform(-10, 10, size=())).astype(complex64)
     conjugate_transpose_net = P.ConjugateTranspose()
-    with pytest.raises(RuntimeError):
-        _ = conjugate_transpose_net(input_c, perm)
-        _pynative_executor.sync()
+    _ = conjugate_transpose_net(input_c, perm)

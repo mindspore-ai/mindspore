@@ -18,7 +18,8 @@ import numpy as np
 
 import mindspore.ops.operations.array_ops as P
 from mindspore.common import dtype as mstype
-from mindspore import Tensor, nn, context
+from mindspore import Tensor, nn, context, complex64
+from mindspore.common.api import _pynative_executor
 
 
 class Net(nn.Cell):
@@ -59,3 +60,20 @@ def test_conjugate_transpose_dyn():
     dyn_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
     dyn_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_conjugate_transpose_zero_rank():
+    """
+    Feature:  ConjugateTranspose input with zero rank.
+    Description: Compatible with Tensorflow's ConjugateTranspose.
+    Expectation: raise error and no core dump.
+    """
+    perm = ()
+    input_c = Tensor(np.random.uniform(-10, 10, size=())).astype(complex64)
+    conjugate_transpose_net = P.ConjugateTranspose()
+    with pytest.raises(RuntimeError):
+        _ = conjugate_transpose_net(input_c, perm)
+        _pynative_executor.sync()
