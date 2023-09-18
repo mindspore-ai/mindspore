@@ -19,22 +19,24 @@
 #include <vector>
 #include <string>
 
+#include "base/base.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
 #include "backend/common/graph_kernel/symbol_engine/utils.h"
 
 namespace mindspore::graphkernel::symbol {
 namespace ops {
-class Operation : public std::enable_shared_from_this<Operation> {
+class Operation : public Base {
  public:
   explicit Operation(SymbolPtrList &&inputs) : inputs_(inputs) {}
   virtual ~Operation() = default;
+  MS_DECLARE_PARENT(Operation, Base)
 
   void Build();
   inline void Run() {
     MS_LOG(DEBUG) << ">>> Run operation " << ToString();
     MS_EXCEPTION_IF_NULL(output_);
     EvalOnRun();
-    MS_LOG(DEBUG) << "<<< Run result of [" << type_name() << "] : " << output_->ToString();
+    MS_LOG(DEBUG) << "<<< Run result of [" << name() << "] : " << output_->ToString();
   }
 
   const SymbolPtrList &inputs() const { return inputs_; }
@@ -50,26 +52,29 @@ class Operation : public std::enable_shared_from_this<Operation> {
   const T *input_as(size_t i) const {
     const T *p = input(i)->as<T>();
     if (p == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << type_name();
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << name();
     }
     return p;
   }
   template <typename T>
   T *output_as() const {
     if (output_ == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The output of " << type_name() << " is not initialized.";
+      MS_LOG(INTERNAL_EXCEPTION) << "The output of " << name() << " is not initialized.";
     }
     T *p = output_->as<T>();
     if (p == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for output of " << type_name();
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for output of " << name();
     }
     return p;
   }
 
   bool need_eval() const { return need_eval_; }
 
-  virtual std::string type_name() const = 0;
-  virtual std::string ToString() const { return type_name() + SymbolListToStr(inputs(), "(", ")"); }
+  virtual std::string name() const { return type_name(); }
+
+  // overwrite shared_from_this to get OpPtr directly
+  OpPtr shared_from_this() { return shared_from_base<Operation>(); }
+  virtual std::string ToString() const { return name() + SymbolListToStr(inputs(), "(", ")"); }
 
   class Emitter {
    public:

@@ -104,7 +104,7 @@ std::string QuerySymbolExprHelper(const SymbolPtr &s,
   if (s->is<ListSymbol>() || s->HasData()) {
     return s->ToExpr();
   }
-  if (s->operation()->type_name() == "RealShape" || s->operation()->type_name() == "RealValue") {
+  if (s->operation()->name() == "RealShape" || s->operation()->name() == "RealValue") {
     return s->ToExpr();
   }
   if (symbol_expr_map.find(s->ToExpr()) != symbol_expr_map.end()) {
@@ -113,7 +113,7 @@ std::string QuerySymbolExprHelper(const SymbolPtr &s,
   auto operation = s->operation();
   MS_EXCEPTION_IF_NULL(operation);
   std::ostringstream oss;
-  oss << operation->type_name() << "(";
+  oss << operation->name() << "(";
   bool first = true;
   for (auto &input : operation->inputs()) {
     if (first == true) {

@@ -29,7 +29,7 @@ namespace ops {
 class ScalarAdd : public Operation {
  public:
   ScalarAdd(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarAdd"; }
+  MS_DECLARE_PARENT(ScalarAdd, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -39,7 +39,7 @@ class ScalarAdd : public Operation {
 class ScalarSub : public Operation {
  public:
   ScalarSub(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarSub"; }
+  MS_DECLARE_PARENT(ScalarSub, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -49,7 +49,7 @@ class ScalarSub : public Operation {
 class ScalarMul : public Operation {
  public:
   ScalarMul(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarMul"; }
+  MS_DECLARE_PARENT(ScalarMul, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -59,7 +59,7 @@ class ScalarMul : public Operation {
 class ScalarDiv : public Operation {
  public:
   ScalarDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarDiv"; }
+  MS_DECLARE_PARENT(ScalarDiv, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -69,7 +69,7 @@ class ScalarDiv : public Operation {
 class ScalarMax : public Operation {
  public:
   ScalarMax(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarMax"; }
+  MS_DECLARE_PARENT(ScalarMax, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -79,7 +79,7 @@ class ScalarMax : public Operation {
 class ScalarMin : public Operation {
  public:
   ScalarMin(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  std::string type_name() const override { return "ScalarMin"; }
+  MS_DECLARE_PARENT(ScalarMin, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -90,7 +90,7 @@ class Product : public Operation {
  public:
   explicit Product(const SymbolPtr &input) : Operation({input}) {}
   ~Product() = default;
-  std::string type_name() const override { return "Product"; }
+  MS_DECLARE_PARENT(Product, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -100,7 +100,7 @@ class Find : public Operation {
  public:
   Find(const SymbolPtr &input, const SymbolPtr &value) : Operation({input, value}) {}
   ~Find() override = default;
-  std::string type_name() const override { return "Find"; }
+  MS_DECLARE_PARENT(Find, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -110,7 +110,7 @@ class SetValue : public Operation {
  public:
   SetValue(const SymbolPtr &input, const SymbolPtr &index, const SymbolPtr &value) : Operation({input, index, value}) {}
   ~SetValue() override = default;
-  std::string type_name() const override { return "SetValue"; }
+  MS_DECLARE_PARENT(SetValue, Operation)
 
  protected:
   SymbolPtr Eval() override;
@@ -120,7 +120,7 @@ class ListAppend : public Operation {
  public:
   ListAppend(const SymbolPtr &a, const SymbolPtr &b) : Operation({a, b}) {}
   ~ListAppend() override = default;
-  std::string type_name() const override { return "ListAppend"; }
+  MS_DECLARE_PARENT(ListAppend, Operation)
 
  protected:
   SymbolPtr Eval() override;
