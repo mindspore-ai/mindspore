@@ -133,8 +133,10 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
   }
 }
 
-bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
+bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
   MS_EXCEPTION_IF_NULL(anf_graph);
+  auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
+  transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
   auto graph_name = GetGraphName(anf_graph);
   if (!common::IsEnableRefMode()) {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
@@ -142,14 +144,14 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
       graph_name = kg->GetFuncGraph()->ToString();
     }
   }
-  std::string init_graph = "init_subgraph." + graph_name;
-  std::string checkpoint_name = "save." + graph_name;
+  std::string init_graph = "init_subgraph_" + graph_name;
+  std::string checkpoint_name = "save_" + graph_name;
   ShapeArray shape_array;
   bool dynamic_shape_inputs = false;
   auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  if (transform::AddGraph(graph_name, transform::GenFakeGraph(anf_graph->ToString()), options, true) !=
+  if (transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, true) !=
       transform::Status::SUCCESS) {
     return false;
   }
@@ -198,8 +200,8 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
       graph_name = kg->GetFuncGraph()->ToString();
     }
   }
-  std::string init_graph = "init_subgraph." + graph_name;
-  std::string checkpoint_name = "save." + graph_name;
+  std::string init_graph = "init_subgraph_" + graph_name;
+  std::string checkpoint_name = "save_" + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
