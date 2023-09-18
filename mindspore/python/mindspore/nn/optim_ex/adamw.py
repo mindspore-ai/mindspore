@@ -55,7 +55,7 @@ class AdamW(Optimizer):
             &\hspace{10mm}\theta_t \leftarrow \theta_t - \gamma \widehat{m_t}/
                 \big(\sqrt{\widehat{v_t}} + \epsilon \big)                                       \\
             &\bf{return} \:  \theta_t                                                     \\[-1.ex]
-       \end{aligned}
+        \end{aligned}
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
