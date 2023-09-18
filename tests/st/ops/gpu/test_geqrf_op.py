@@ -16,7 +16,9 @@
 import numpy as np
 import torch
 import pytest
-from mindspore import nn, Tensor
+import mindspore as ms
+from mindspore import nn
+from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops.operations.linalg_ops import Geqrf
 
@@ -90,6 +92,28 @@ def test_geqrf_rank3_float_fp():
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    y, tau = net(Tensor(x_np))
+    assert np.allclose(expect_y, y.asnumpy(), rtol=RTOL, atol=ATOL)
+    assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_geqrf_acl():
+    """
+    Feature: Geqrf operator.
+    Description: test cases for Geqrf operator on ACL.
+    Expectation: the result match expectation.
+    """
+    x_np = np.array([[15.5862, 10.6579],
+                     [0.1885, -10.0553],
+                     [4.4496, 0.7312]]).astype(np.float64)
+    expect_y, expect_tau = torch.geqrf(torch.tensor(x_np))
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
+    net = GeqrfNet()
+    x_dyn = Tensor(shape=[None for _ in x_np.shape], dtype=ms.float64)
+    net.set_inputs(x_dyn)
     y, tau = net(Tensor(x_np))
     assert np.allclose(expect_y, y.asnumpy(), rtol=RTOL, atol=ATOL)
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)

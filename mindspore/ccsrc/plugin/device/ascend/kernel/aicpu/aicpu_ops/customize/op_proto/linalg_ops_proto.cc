@@ -119,11 +119,11 @@ CUST_IMPLEMT_INFERFUNC(Geqrf, GeqrfInfer) {
   Vector(p, tau_shape);
 
   DataType type = op.GetInputDescByName("x").GetDataType();
-  TensorDesc r_desc = op.GetOutputDescByName("r");
+  TensorDesc r_desc = op.GetOutputDescByName("y");
   r_desc.SetShape(Shape(r_shape));
   r_desc.SetDataType(type);
-  if (op.UpdateOutputDesc("r", r_desc) != GRAPH_SUCCESS) {
-    OP_LOGE(TbeGetName(op).c_str(), "Update r desc failed.");
+  if (op.UpdateOutputDesc("y", r_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update y desc failed.");
     return GRAPH_FAILED;
   }
 
