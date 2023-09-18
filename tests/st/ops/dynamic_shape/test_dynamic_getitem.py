@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, ops, ParameterTuple
+from mindspore import Tensor, ops, ParameterTuple, mutable
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
 
@@ -555,7 +555,8 @@ def test_dynamic_rank_getitem_with_list_index():
     class Net(Cell):
         def construct(self, x, axis):
             x = ops.reduce_min(x, axis)
-            x = x[[1, 2]]
+            index = mutable([1, 2])
+            x = x[index]
             return x
 
     class NumpyNet():
