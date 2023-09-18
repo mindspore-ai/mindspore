@@ -686,6 +686,13 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_lazy_inline = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (enable_lazy_inline) {
+    MS_LOG(EXCEPTION) << "GPU does not support the lazy_inline feature, "
+                      << "please do not mark @lazy_inline in cell's __init__ func.";
+  }
   if (kernel_graph->is_from_single_op()) {
     RunOpOptimize(kernel_graph);
 
@@ -708,8 +715,6 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     // SetOperatorInfo may generate new node, so need set kernel object type again.
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
 #ifdef ENABLE_DUMP_IR
-    const auto &ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
     if (ms_context->CanDump(kIntroductory)) {
       DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
     }
