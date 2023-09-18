@@ -28,6 +28,7 @@ typedef struct ArithmeticCompareFuncions {
   int (*compute_i64)(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size);
   int (*optimize_i64)(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size,
                       bool first_scalar);
+  int (*compute_bool)(const bool *input0, const bool *input1, uint8_t *output, int element_size);
 } ArithmeticCompareFuncions;
 
 typedef struct ArithmeticCompareStruct {
@@ -40,16 +41,17 @@ void InitArithmeticCompareRunFunction(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_VOID(arithmetic_compare);
 
   ArithmeticCompareFuncions fun_table[] = {
-    {PrimType_Equal, ElementEqualFp32, ElementEqualInt32, ElementOptEqualFp32, ElementOptEqualInt32, NULL, NULL},
+    {PrimType_Equal, ElementEqualFp32, ElementEqualInt32, ElementOptEqualFp32, ElementOptEqualInt32, NULL, NULL,
+     ElementEqualBool},
     {PrimType_NotEqual, ElementNotEqualFp32, ElementNotEqualInt32, ElementOptNotEqualFp32, ElementOptNotEqualInt32,
-     ElementNotEqualInt64, ElementOptNotEqualInt64},
-    {PrimType_Less, ElementLessFp32, ElementLessInt32, ElementOptLessFp32, ElementOptLessInt32, NULL, NULL},
+     ElementNotEqualInt64, ElementOptNotEqualInt64, NULL},
+    {PrimType_Less, ElementLessFp32, ElementLessInt32, ElementOptLessFp32, ElementOptLessInt32, NULL, NULL, NULL},
     {PrimType_LessEqual, ElementLessEqualFp32, ElementLessEqualInt32, ElementOptLessEqualFp32, ElementOptLessEqualInt32,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {PrimType_Greater, ElementGreaterFp32, ElementGreaterInt32, ElementOptGreaterFp32, ElementOptGreaterInt32, NULL,
-     NULL},
+     NULL, NULL},
     {PrimType_GreaterEqual, ElementGreaterEqualFp32, ElementGreaterEqualInt32, ElementOptGreaterEqualFp32,
-     ElementOptGreaterEqualInt32, NULL, NULL}};
+     ElementOptGreaterEqualInt32, NULL, NULL, NULL}};
 
   size_t length = sizeof(fun_table) / sizeof(ArithmeticCompareFuncions);
   for (size_t i = 0; i < length; i++) {
@@ -103,6 +105,15 @@ int ArithmeticCompareExecute(KernelBase *base, const void *input0, const void *i
                                                         (uint8_t *)output, size);
     }
   }
+  if (data_type == kNumberTypeBool) {
+    if (!arithmetic_compare->arithmetic_.scalar_opt_) {
+      NNACL_CHECK_NULL_RETURN_ERR(arithmetic_compare->functions_.compute_bool);
+      return arithmetic_compare->functions_.compute_bool((const bool *)input0, (const bool *)input1, (uint8_t *)output,
+                                                         size);
+    } else {
+      return NNACL_UNSUPPORTED_DATA_TYPE;
+    }
+  }
 
   return NNACL_UNSUPPORTED_DATA_TYPE;
 }
@@ -140,6 +151,7 @@ KernelBase *CreateArithmeticCompare(OpParameter *param, int data_type) {
 }
 
 REG_KERNEL_CREATOR(PrimType_Equal, kNumberTypeFloat32, CreateArithmeticCompare)
+REG_KERNEL_CREATOR(PrimType_Equal, kNumberTypeBool, CreateArithmeticCompare)
 REG_KERNEL_CREATOR(PrimType_Equal, kNumberTypeInt32, CreateArithmeticCompare)
 REG_KERNEL_CREATOR(PrimType_NotEqual, kNumberTypeFloat32, CreateArithmeticCompare)
 REG_KERNEL_CREATOR(PrimType_NotEqual, kNumberTypeInt32, CreateArithmeticCompare)
