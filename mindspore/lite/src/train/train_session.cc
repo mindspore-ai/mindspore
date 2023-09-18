@@ -1411,21 +1411,26 @@ lite::Tensor *TrainSession::FindObfTensor() {
   return nullptr;
 }
 
-void TrainSession::ChangeObfWeight(std::string tensor_name, float obf_ratio) {
+int TrainSession::ChangeObfWeight(std::string tensor_name, float obf_ratio) {
   float data[1] = {obf_ratio};
   auto new_tensor = lite::Tensor::CreateTensor(tensor_name, TypeId::kNumberTypeFloat32, {1, 1}, data, kFloatSize);
   std::vector<lite::Tensor *> modify_tensors;
+  if (new_tensor == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed";
+    return RET_ERROR;
+  }
   modify_tensors.emplace_back(new_tensor);
   auto ret = this->UpdateWeights(modify_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "UpdateWeights failed.";
-    return;
+    return RET_ERROR;
   }
+  return RET_OK;
 }
 
 float TrainSession::ModelRecoverObfuscate() {
-  auto tensor = FindObfTensor();
   float true_obf_ratio = 1.0;
+  auto tensor = FindObfTensor();
   if (tensor != nullptr) {
     std::string tensor_name = tensor->tensor_name();
     true_obf_ratio = *(reinterpret_cast<float *>(tensor->data()));
@@ -1435,14 +1440,18 @@ float TrainSession::ModelRecoverObfuscate() {
   return true_obf_ratio;
 }
 
-void TrainSession::ModelDeObfuscate(float obf_ratio) {
-  if (obf_ratio != 1.0 && obf_ratio != 0.0) {
+int TrainSession::ModelDeObfuscate(float obf_ratio) {
+  if (obf_ratio != 0.0) {
     auto *tensor = FindObfTensor();
     if (tensor != nullptr) {
       std::string tensor_name = tensor->tensor_name();
-      ChangeObfWeight(tensor_name, obf_ratio);
+      return ChangeObfWeight(tensor_name, obf_ratio);
     }
+    MS_LOG(ERROR) << "Obfuscate tensor is null";
+    return RET_ERROR;
   }
+  MS_LOG(ERROR) << "Obfuscate value is 0";
+  return RET_ERROR;
 }
 }  // namespace lite
 }  // namespace mindspore
