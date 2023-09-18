@@ -18,30 +18,26 @@
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "ops/gen_ops_name.h"
+
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr auto kReLU6Grad = "ReLU6Grad";
-constexpr auto kEluGrad = "EluGrad";
-}  // namespace
-
 std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelMod::ActivationGradFunc>>>
   ActivationGradGpuKernelMod::kernel_attr_map_ = {
-    {kReLU6Grad,
+    {ops::kNameReLU6Grad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
-    {kEluGrad,
+    {ops::kNameEluGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
 };
 
-bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ActivationGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
 
   auto iter = kernel_attr_map_.find(kernel_name_);
@@ -62,7 +58,7 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   static const std::map<std::string, cudnnActivationMode_t> activation_mode_map = {
-    {kReLU6Grad, CUDNN_ACTIVATION_CLIPPED_RELU}, {kEluGrad, CUDNN_ACTIVATION_ELU}};
+    {ops::kNameReLU6Grad, CUDNN_ACTIVATION_CLIPPED_RELU}, {ops::kNameEluGrad, CUDNN_ACTIVATION_ELU}};
   auto mode_iter = activation_mode_map.find(kernel_name_);
   if (mode_iter == activation_mode_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', only support these activations: "
@@ -76,17 +72,12 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ActivationGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  size_t input_num = inputs.size();
-  if (input_num != 2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-    return KRET_RESIZE_FAILED;
-  }
+
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   is_null_input_ = CHECK_NULL_INPUT(input_shape_);
   if (is_null_input_) {
@@ -157,8 +148,8 @@ bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::KernelT
   return true;
 }
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, ReLU6Grad,
-                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(kReLU6Grad); });
+                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(ops::kNameReLU6Grad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, EluGrad,
-                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(kEluGrad); });
+                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(ops::kNameEluGrad); });
 }  // namespace kernel
 }  // namespace mindspore

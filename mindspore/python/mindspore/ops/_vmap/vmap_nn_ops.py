@@ -2067,8 +2067,26 @@ def get_logit_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Elu)
+def get_elu_vmap_rule(prim, axis_size):
+    """VmapRule for Elu operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, alpha_bdim):
+        var, dim = x_bdim
+        alpha, alpha_dim = alpha_bdim
+
+        if alpha_dim is not None:
+            _raise_value_error("The source alpha of `alpha` in ELu must be None, but got {}.".format(alpha_dim))
+
+        out = prim(var, alpha)
+        return out, dim
+
+    return vmap_rule
+
+
 # Unary vmap
-get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SeLU)(get_unop_vmap_rule)

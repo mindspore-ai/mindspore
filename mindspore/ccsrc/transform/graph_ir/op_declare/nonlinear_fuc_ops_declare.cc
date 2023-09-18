@@ -39,7 +39,8 @@ REG_ADPT_DESC(ReluV2, kReluV2OpName, ADPT_DESC(ReluV2))
 
 // Elu
 INPUT_MAP(Elu) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Elu) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};
+INPUT_ATTR_MAP(Elu) = {{2, ATTR_DESC(alpha, AnyTraits<float>())}};
+ATTR_MAP(Elu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Elu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Elu, kNameElu, ADPT_DESC(Elu))
 

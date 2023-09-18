@@ -31,17 +31,25 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
     {ops::kNameElu,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     {{KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat64),
        &ActivationFwdGpuKernelMod::LaunchKernel<double>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
 };
 
-bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ActivationFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
 
   auto iter = kernel_attr_map_.find(kernel_name_);
@@ -76,17 +84,12 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  size_t input_num = inputs.size();
-  if (input_num != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
-    return KRET_RESIZE_FAILED;
-  }
+
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   is_null_input_ = CHECK_NULL_INPUT(input_shape_);
   if (is_null_input_) {
@@ -102,7 +105,7 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
   if (mode_ == CUDNN_ACTIVATION_ELU) {
-    auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
+    auto alpha = inputs[kIndex1]->GetValueWithCheck<double>();
     coef = static_cast<double>(alpha);
   }
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(

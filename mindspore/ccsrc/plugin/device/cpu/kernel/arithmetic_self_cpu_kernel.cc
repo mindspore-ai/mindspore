@@ -30,8 +30,6 @@
 #include "ops/nn_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
@@ -90,7 +88,6 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
                 const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
-  std::vector<KernelTensor *> attr_inputs;
 
  private:
   template <typename T>
@@ -690,21 +687,6 @@ void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 }
 
 template <typename T>
-void Elu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto alpha = content->attr_inputs[kIndex0]->GetValueWithCheck<float>();
-  auto task = [in, out, alpha](size_t start, size_t end) {
-    if constexpr (std::is_same_v<T, float>) {
-      (void)::Elu(in + start, SizeToInt(end - start), out + start, alpha);
-      return;
-    }
-    for (size_t i = start; i < end; i++) {
-      out[i] = in[i] > 0 ? in[i] : (std::expm1(in[i]) * alpha);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-}
-
-template <typename T>
 void Sigmoid(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
@@ -759,16 +741,11 @@ void ArithmeticSelfCpuKernelFunc::InitFunc(const std::string &kernel_name, const
                                            const std::vector<KernelTensor *> &) {
   kernel_name_ = kernel_name;
   dtype_ = inputs[kIndex0]->dtype_id();
-  if (inputs.size() > 1) {
-    attr_inputs = std::vector<KernelTensor *>(inputs.begin() + 1, inputs.end());
-  }
 }
 
 bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
                                           const std::vector<kernel::KernelTensor *> &,
                                           const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -865,7 +842,6 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<KernelTensor *>
                           {prim::kPrimSoftsign->name(), Softsign<T>},
                           {prim::kPrimReLU->name(), Relu<T>},
                           {prim::kPrimReLU6->name(), Relu6<T>},
-                          {prim::kPrimElu->name(), Elu<T>},
                           {prim::kPrimSoftplus->name(), Softplus<T>},
                           {prim::kPrimMish->name(), Mish<T>},
                           {prim::kPrimSigmoid->name(), Sigmoid<T>},
@@ -1139,9 +1115,6 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
   {kReLU6, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {ops::kNameElu,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     CreateArithSelfFunc}}},
   {kSoftplus, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kMish, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kSigmoid,
@@ -1284,7 +1257,6 @@ ARITHMETIC_SELF_CPU_REGISTER(Erfc, ops::kNameErfc);
 ARITHMETIC_SELF_CPU_REGISTER(Softsign, kSoftsign);
 ARITHMETIC_SELF_CPU_REGISTER(ReLU, kReLU);
 ARITHMETIC_SELF_CPU_REGISTER(ReLU6, kReLU6);
-ARITHMETIC_SELF_CPU_REGISTER(Elu, ops::kNameElu);
 ARITHMETIC_SELF_CPU_REGISTER(Softplus, kSoftplus);
 ARITHMETIC_SELF_CPU_REGISTER(Mish, kMish);
 ARITHMETIC_SELF_CPU_REGISTER(Sigmoid, kSigmoid);

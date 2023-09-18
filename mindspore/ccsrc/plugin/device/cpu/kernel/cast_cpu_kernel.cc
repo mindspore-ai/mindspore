@@ -813,10 +813,8 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
    CreateCastFunc<std::complex<double>, std::complex<double>>}};
 }  // namespace
 
-bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
+bool CastCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   source_dtype_ = inputs[kIndex0]->dtype_id();
   target_dtype_ = outputs[kIndex0]->dtype_id();
 
@@ -833,17 +831,15 @@ std::vector<KernelAttr> CastCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-int CastCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CastCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->dtype_id())->ToString()
                 << ", out : " << TypeIdToType(outputs[0]->dtype_id())->ToString();
   ResetKernelFunc(inputs, outputs);
-  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  return KernelMod::Resize(inputs, outputs);
 }
 
-void CastCpuKernelMod::ResetKernelFunc(const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+void CastCpuKernelMod::ResetKernelFunc(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
