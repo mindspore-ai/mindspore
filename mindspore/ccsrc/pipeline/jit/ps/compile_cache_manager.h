@@ -37,7 +37,7 @@ class CompileCacheManager {
   ~CompileCacheManager() = default;
 
   // Get cached data queue name
-  static std::string GetCachedDataQueueName();
+  static std::string GetCachedDataQueueName(const std::string &dataset_phase);
   // Get the hash of dependent files when compiling graph.
   void InitCompileCacheHash(const py::list &compile_cache_dep_files);
   // Init group checkpoint file path for parallel mode.

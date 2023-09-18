@@ -35,6 +35,7 @@
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
 #include "include/common/utils/compile_cache_context.h"
+#include "include/common/utils/config_manager.h"
 
 namespace mindspore {
 #ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
@@ -241,10 +242,34 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
   return true;
 }
 
-bool ExportDataQueueName(const string &queue_name) {
+bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_name) {
+  MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
   const auto &filename = GetDataQueueNameCachePath();
-  nlohmann::json queue_name_json = queue_name;
-  return Common::SaveStringToFile(filename, queue_name_json.dump());
+  nlohmann::json name_json;
+  if (!Common::FileExists(filename)) {
+    name_json[dataset_phase] = queue_name;
+    return Common::SaveStringToFile(filename, name_json.dump());
+  }
+  std::ifstream json_fs(filename);
+  if (!json_fs.good()) {
+    return false;
+  }
+  try {
+    json_fs >> name_json;
+    json_fs.close();
+  } catch (std::exception &e) {
+    MS_LOG(INFO) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
+    json_fs.close();
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalMilliSeconds));
+    std::ifstream retry_tmp(filename);
+    if (!retry_tmp.good()) {
+      MS_LOG(EXCEPTION) << "Open json file: " << filename << " error.";
+    }
+    retry_tmp >> name_json;
+    retry_tmp.close();
+  }
+  name_json[dataset_phase] = queue_name;
+  return Common::SaveStringToFile(filename, name_json.dump());
 }
 
 bool CreateParallelGroupsByCkptFile() {
@@ -279,10 +304,14 @@ std::string GetDataQueueName(const FuncGraphPtr &fg) {
 }
 }  // namespace
 
-std::string CompileCacheManager::GetCachedDataQueueName() {
+std::string CompileCacheManager::GetCachedDataQueueName(const std::string &dataset_phase) {
   std::string queue_name;
   if (!CompileCacheEnable()) {
     return queue_name;
+  }
+  auto &config_mng = ConfigManager::GetInstance();
+  if (config_mng.dataset_phase().empty()) {
+    config_mng.set_dataset_phase(dataset_phase);
   }
   const auto &filename = GetDataQueueNameCachePath();
   std::ifstream json_fs(filename);
@@ -304,7 +333,7 @@ std::string CompileCacheManager::GetCachedDataQueueName() {
     retry_tmp >> name_json;
     retry_tmp.close();
   }
-  queue_name = name_json;
+  queue_name = name_json[dataset_phase];
   return queue_name;
 }
 
@@ -315,7 +344,8 @@ void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraph
   }
 
   const auto &queue_name = GetDataQueueName(fg);
-  if (!ExportDataQueueName(queue_name)) {
+  auto dataset_phase = ConfigManager::GetInstance().dataset_phase();
+  if (!ExportDataQueueName(dataset_phase, queue_name)) {
     MS_LOG(ERROR) << "Failed to cache data queue name: " << queue_name;
     return;
   }
