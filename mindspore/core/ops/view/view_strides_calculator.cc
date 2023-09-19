@@ -34,6 +34,16 @@ bool HasZero(const std::vector<int64_t> &value) {
   return false;
 }
 
+bool CheckInputsNull(const std::vector<ValuePtr> &inputs, const size_t &input_num) {
+  if (inputs.size() != input_num) {
+    MS_LOG(DEBUG) << "inputs.size() is not equal to input_num, inputs.size():" << inputs.size()
+                  << " input_num:" << input_num;
+    return true;
+  }
+
+  return std::any_of(inputs.cbegin(), inputs.cend(), [](const ValuePtr &v) { return v == nullptr; });
+}
+
 std::vector<int64_t> GetOriStrides(const std::vector<int64_t> &shape) {
   if (shape.empty()) {
     return {};
@@ -72,7 +82,7 @@ int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr) {
     }
     return dim;
   }
-  MS_LOG(EXCEPTION) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
+  MS_EXCEPTION(ValueError) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
 }
 
 OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor) {

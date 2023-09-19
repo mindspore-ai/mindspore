@@ -18,7 +18,7 @@
 #include <memory>
 
 namespace mindspore::ops {
-constexpr size_t kStridedSliceInputsNum = 4;
+constexpr size_t kStridedSliceCalcInputsNum = 4;
 void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, const std::vector<int64_t> &tensor_shape) {
   if (begin->size() != tensor_shape.size()) {
     MS_EXCEPTION(ValueError) << "Convert shape size is not equal";
@@ -42,6 +42,10 @@ void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, con
       (*end)[i] = (*begin)[i];
     } else if ((*end)[i] >= tensor_shape[i]) {
       (*end)[i] = tensor_shape[i];
+    }
+    if ((*begin)[i] == (*end)[i]) {
+      (*begin)[i] = 0;
+      (*end)[i] = 0;
     }
   }
 }
@@ -93,13 +97,9 @@ bool CheckAttrIsNull(const PrimitivePtr &primitive) {
 }
 
 TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (!CheckAttrIsNull(prim) || inputs.size() != kStridedSliceInputsNum) {
+  if (!CheckAttrIsNull(prim) || CheckInputsNull(inputs, kStridedSliceCalcInputsNum)) {
     return {};
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(inputs[1]);
-  MS_EXCEPTION_IF_NULL(inputs[2]);
-  MS_EXCEPTION_IF_NULL(inputs[3]);
 
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);

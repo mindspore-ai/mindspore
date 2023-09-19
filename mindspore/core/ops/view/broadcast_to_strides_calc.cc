@@ -48,9 +48,10 @@ bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int
 }
 
 TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kBroadCastToInputsNum) {
+  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
     return {};
   }
+
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto value_ptr = prim->GetAttr(kShape);

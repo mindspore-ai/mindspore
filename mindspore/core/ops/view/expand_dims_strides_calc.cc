@@ -21,9 +21,11 @@ namespace mindspore::ops {
 constexpr size_t kExpandDimsInputsNum = 2;
 
 TensorStorageInfoPtrList ExpandDimsCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kExpandDimsInputsNum) {
+  if (CheckInputsNull(inputs, kExpandDimsInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
+      !inputs[1]->isa<IntegerImm>()) {
     return {};
   }
+
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
