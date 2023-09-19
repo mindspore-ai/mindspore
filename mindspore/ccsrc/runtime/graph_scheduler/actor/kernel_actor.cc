@@ -773,6 +773,22 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
+  if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
+    try {
+      kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
+    } catch (const std::exception &e) {
+      if (strategy_ == GraphExecutionStrategy::kPipeline) {
+        MsException::Instance().SetException();
+      }
+      std::string error_info =
+        "Update output shape and size after launch failed for kernel: " + kernel_->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    }
+    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name(), false);
+  }
+
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {

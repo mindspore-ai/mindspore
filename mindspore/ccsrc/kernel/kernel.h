@@ -647,7 +647,7 @@ class BACKEND_EXPORT KernelMod {
   // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
   virtual bool IsNeedUpdateOutputShapeAndSize() { return false; }
   virtual void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {}
+                                        const std::vector<KernelTensor *> &outputs) {}
 
   // Some kernels, e.g., Shape/Reshape, don't use some input addresses in the kernel launch.
   virtual std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {}; }

@@ -94,7 +94,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
 }
 
 void DynamicAssignCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                                         const std::vector<KernelTensor *> &outputs, void *) {
+                                                         const std::vector<KernelTensor *> &outputs) {
   const auto &input_shape = inputs[kIndex0]->GetShapeVector();
   outputs[kIndex0]->SetShapeVector(input_shape);
   outputs[kIndex0]->set_size(input_x_dtype_size_ * batch_size_);

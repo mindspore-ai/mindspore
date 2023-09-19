@@ -195,7 +195,7 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
 }
 
 void SparseFillEmptyRowsCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                                               const std::vector<KernelTensor *> &outputs, void *) {
+                                                               const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_indice_shape;
   ShapeVector out_values_shape;
   if (dense_rows_zero) {
