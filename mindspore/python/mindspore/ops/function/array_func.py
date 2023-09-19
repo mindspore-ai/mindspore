@@ -6845,8 +6845,9 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
 
     e = _get_cache_prim(P.Eye)()(n, m, dtype)
     if offset >= m or offset <= -n:
-        e = F.fill(dtype, (n, m), 0)
-    elif offset != 0:
+        zero_shape = x_shape[:-2] + (0,)
+        return ops.zeros(zero_shape, dtype)
+    if offset != 0:
         e = e.astype(mstype.float32)
         if offset > 0:
             e_left = F.fill(mstype.float32, (n, offset), 0)

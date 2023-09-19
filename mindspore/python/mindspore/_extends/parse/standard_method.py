@@ -1438,8 +1438,9 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
 
     e = F.eye(n, m, dtype)
     if offset >= m or offset <= -n:
-        e = F.fill(dtype, (n, m), 0)
-    elif offset != 0:
+        zero_shape = shape[:-2] + (0,)
+        return F.zeros(zero_shape, dtype)
+    if offset != 0:
         e = e.astype(mstype.float32)
         if offset > 0:
             e_left = F.fill(dtype, (n, offset), 0)
