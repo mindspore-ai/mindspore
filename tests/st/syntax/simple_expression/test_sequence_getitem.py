@@ -16,13 +16,12 @@
 
 import pytest
 import numpy as np
-from mindspore import context, jit
+from mindspore import context, jit, mutable
 from mindspore.common.tensor import Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -44,7 +43,6 @@ def test_tuple_getitem_with_constant_bool_index():
     assert ret2 == 1
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -66,7 +64,6 @@ def test_tuple_getitem_with_constant_bool_index_2():
     assert np.all(ret2.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -92,7 +89,48 @@ def test_tuple_getitem_with_variable_bool_index():
     assert np.all(ret2.asnumpy() == np.array([1]))
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tuple_getitem_with_variable_bool_index_2():
+    """
+    Feature: sequence getitem with bool index
+    Description: sequence getitem
+    Expectation: No exception
+    """
+    @jit
+    def foo(x, a):
+        m = (x, x+1, x+2, x+3)
+        return m[a == 1], m[a == 2]
+
+    ret1, ret2 = foo(Tensor([1]), mutable(1))
+    assert np.all(ret1.asnumpy() == np.array([2]))
+    assert np.all(ret2.asnumpy() == np.array([1]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tuple_getitem_with_variable_bool_index_3():
+    """
+    Feature: sequence getitem with bool index
+    Description: sequence getitem
+    Expectation: No exception
+    """
+    @jit
+    def foo(a):
+        m = (1, 2, 3, 4)
+        return m[a == 1], m[a == 2]
+
+    ret1, ret2 = foo(mutable(1))
+    assert ret1 == 2
+    assert ret2 == 1
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -114,7 +152,6 @@ def test_list_getitem_with_constant_bool_index():
     assert ret2 == 1
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -136,7 +173,6 @@ def test_list_getitem_with_constant_bool_index_2():
     assert np.all(ret2.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.skip(reason="Sequence getItem do not support to use bool as index")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -158,5 +194,26 @@ def test_list_getitem_with_variable_bool_index():
         return m[index], m[not index]
 
     ret1, ret2 = foo(Tensor([1]))
+    assert np.all(ret1.asnumpy() == np.array([2]))
+    assert np.all(ret2.asnumpy() == np.array([1]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_getitem_with_variable_bool_index_2():
+    """
+    Feature: sequence getitem with bool index
+    Description: sequence getitem
+    Expectation: No exception
+    """
+    @jit
+    def foo(x, a):
+        m = [x, x+1, x+2, x+3]
+        return m[a == 1], m[a == 2]
+
+    ret1, ret2 = foo(Tensor([1]), mutable(1))
     assert np.all(ret1.asnumpy() == np.array([2]))
     assert np.all(ret2.asnumpy() == np.array([1]))
