@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
+
 from mindspore import context, nn, Tensor, Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
@@ -40,4 +42,6 @@ def test_x():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.arange(10 * 2 * 3).reshape(10, 2, 3).astype(np.float32))
     net = Net(x)
-    net(x)
+    with pytest.raises(ValueError) as ex:
+        net(x)
+        assert "the dimension of \'indices\' must be greater than or equal to 2" in str(ex.value)

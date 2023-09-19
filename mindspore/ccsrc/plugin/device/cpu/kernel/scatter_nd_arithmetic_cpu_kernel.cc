@@ -64,9 +64,22 @@ int ScatterNdArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto updates_shape = inputs.at(kIndex2)->GetShapeVector();
+  auto input_shape_null = CheckNullInput(input_shape);
+  auto indices_shape_null = CheckNullInput(indices_shape);
+  auto updates_shape_null = CheckNullInput(updates_shape);
+  has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
+  if (has_null_input_) {
+    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
+    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
+    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
+    output_size_list_.clear();
+    output_size_list_.push_back(input_size_list_[kIndex0]);
+    return KRET_OK;
+  }
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+
   const auto indices_rank = indices_shape.size();
   const auto last_indices_value = LongToSize(indices_shape.back());
   const auto update_rank = updates_shape.size();
@@ -138,6 +151,9 @@ template <typename T, typename S>
 bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &,
                                                    const std::vector<kernel::AddressPtr> &) {
+  if (has_null_input_) {
+    return true;
+  }
   auto init_compute_func_result = InitComputeFunc<T>();
   if (!init_compute_func_result.first) {
     return false;
