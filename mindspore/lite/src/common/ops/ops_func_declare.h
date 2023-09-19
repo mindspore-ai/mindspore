@@ -20,7 +20,6 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/manually_defined_lite_ops.h"
 #include "ops/adam.h"
 #include "ops/adder.h"
 #include "ops/addn.h"

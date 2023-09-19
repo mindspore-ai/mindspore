@@ -22,8 +22,8 @@
 #include <string>
 #include <algorithm>
 #include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/nn_op_name.h"
 #include "ops/op_utils.h"
-#include "ops/manually_defined_lite_ops.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"

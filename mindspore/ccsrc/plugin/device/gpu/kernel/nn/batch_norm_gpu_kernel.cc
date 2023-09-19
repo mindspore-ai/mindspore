@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,25 +80,27 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
 
 bool BatchNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  auto activation_type_attr = primitive_->GetAttr(mindspore::ops::kActivationType);
-  if (activation_type_attr != nullptr) {
-    activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
-  }
-
   if (kernel_name_ == kBatchNormOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::RELU) {
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-  } else if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::SWISH) {
-    // batch_norm + silu cuda kernel fusion
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormWithAddAndActivationOpName) {
-    bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
-    MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormOpName << ", "
-                      << kBatchNormWithActivationOpName << ", " << kBatchNormWithAddAndActivationOpName << ", but got "
-                      << kernel_name_;
+    auto activation_type_attr = primitive_->GetAttr(mindspore::ops::kActivationType);
+    if (activation_type_attr != nullptr) {
+      activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
+    }
+    if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::RELU) {
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
+    } else if (kernel_name_ == kBatchNormWithActivationOpName && activation_type_ == mindspore::ActivationType::SWISH) {
+      // batch_norm + silu cuda kernel fusion
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
+    } else if (kernel_name_ == kBatchNormWithAddAndActivationOpName) {
+      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
+    } else {
+      MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormOpName << ", "
+                        << kBatchNormWithActivationOpName << ", " << kBatchNormWithAddAndActivationOpName
+                        << ", but got " << kernel_name_;
+    }
   }
+  attr_pos0_ = kernel_name_ == kBatchNormWithAddAndActivationOpName ? 6 : 5;
 
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
@@ -120,27 +122,20 @@ bool BatchNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
   InitResource();
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
-  size_t input_num = inputs.size();
-  if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-    if (input_num != CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
-                        << CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM << ", but got " << input_num;
-    }
-  } else {
-    if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
-                        << NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM << ", but got " << input_num;
-    }
-  }
   return true;
 }
 
 int BatchNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   int ret = KernelMod::Resize(inputs, outputs);
-  if (ret != 0) {
+  if (ret != KRET_OK) {
     return ret;
   }
+
+  is_train_ = inputs[attr_pos0_]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[attr_pos0_ + kIndex1]->GetValueWithCheck<float>();
+  exp_avg_factor_ = inputs[attr_pos0_ + kIndex2]->GetValueWithCheck<float>();
+  format_ = static_cast<mindspore::Format>(inputs[attr_pos0_ + kIndex3]->GetValueWithCheck<int64_t>());
 
   auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
@@ -189,8 +184,6 @@ void BatchNormGpuKernelMod::ResetResource() noexcept {
   activation_desc_ = nullptr;
   handle_ = nullptr;
   cudnn_data_type_ = CUDNN_DATA_FLOAT;
-  output_size_list_.clear();
-  workspace_size_list_.clear();
 }
 
 void BatchNormGpuKernelMod::DestroyResource() noexcept {
@@ -297,84 +290,52 @@ void BatchNormGpuKernelMod::SetTensorDescriptor(const Format &format, const Shap
   }
 }
 
+#define BATCH_NORM_GPU_REG(MS, S)                        \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(kNumberTypeFloat32)                   \
+    .AddOutputAttr(kNumberTypeFloat32)                   \
+    .AddOutputAttr(kNumberTypeFloat32)                   \
+    .AddOutputAttr(kNumberTypeFloat32),                  \
+    &BatchNormGpuKernelMod::LaunchKernel<S>
+
+#define BATCH_NORM_WITH_ADD_AND_ACTIVATION_GPU_REG(MS, S) \
+  KernelAttr()                                            \
+    .AddInputAttr(MS)                                     \
+    .AddInputAttr(kNumberTypeFloat32)                     \
+    .AddInputAttr(kNumberTypeFloat32)                     \
+    .AddInputAttr(kNumberTypeFloat32)                     \
+    .AddInputAttr(kNumberTypeFloat32)                     \
+    .AddInputAttr(MS)                                     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)    \
+    .AddOutputAttr(MS)                                    \
+    .AddOutputAttr(kNumberTypeFloat32)                    \
+    .AddOutputAttr(kNumberTypeFloat32)                    \
+    .AddOutputAttr(kNumberTypeFloat32)                    \
+    .AddOutputAttr(kNumberTypeFloat32),                   \
+    &BatchNormGpuKernelMod::LaunchKernel<S>
+
 std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::BatchNormFunc>>>
-  BatchNormGpuKernelMod::kernel_attr_map_ = {{kBatchNormOpName,
-                                              {{KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<float>},
-                                               {KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat16)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat16)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<half>}}},
-                                             {kBatchNormWithActivationOpName,
-                                              {{KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<float>},
-                                               {KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat16)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat16)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<half>}}},
-                                             {kBatchNormWithAddAndActivationOpName,
-                                              {{KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<float>},
-                                               {KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat16)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat32)
-                                                  .AddInputAttr(kNumberTypeFloat16)
-                                                  .AddOutputAttr(kNumberTypeFloat16)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32)
-                                                  .AddOutputAttr(kNumberTypeFloat32),
-                                                &BatchNormGpuKernelMod::LaunchKernel<half>}}}};
+  BatchNormGpuKernelMod::kernel_attr_map_ = {
+    {kBatchNormOpName,
+     {{BATCH_NORM_GPU_REG(kNumberTypeFloat32, float)}, {BATCH_NORM_GPU_REG(kNumberTypeFloat16, half)}}},
+    {kBatchNormWithActivationOpName,
+     {{BATCH_NORM_GPU_REG(kNumberTypeFloat32, float)}, {BATCH_NORM_GPU_REG(kNumberTypeFloat16, half)}}},
+    {kBatchNormWithAddAndActivationOpName,
+     {{BATCH_NORM_WITH_ADD_AND_ACTIVATION_GPU_REG(kNumberTypeFloat32, float)},
+      {BATCH_NORM_WITH_ADD_AND_ACTIVATION_GPU_REG(kNumberTypeFloat16, half)}}}};
 
 std::vector<KernelAttr> BatchNormGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);

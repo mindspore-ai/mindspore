@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAYER_NORM_GRAD_GRAD_GPU_KERNEL_H_
 
 #include <map>
-#include <vector>
 #include <utility>
+#include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batch_norm_grad_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batch_norm_grad_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -31,13 +31,16 @@ class BatchNormGradGradGpuKernelMod : public NativeGpuKernelMod {
   BatchNormGradGradGpuKernelMod() = default;
   ~BatchNormGradGradGpuKernelMod() override = default;
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    return execute_func_(this, inputs, workspace, outputs, stream_ptr);
+  }
 
  protected:
-  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

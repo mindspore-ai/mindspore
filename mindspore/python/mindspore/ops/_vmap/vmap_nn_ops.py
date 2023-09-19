@@ -1248,7 +1248,8 @@ def get_batchnorm_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNorm` operation."""
     bn_min_dim = 3
     bn_max_dim = 5
-    prim_name = prim.name
+    prim_name = "BatchNorm"
+    NCHW = PyFormat.NCHW.value
 
     def vmap_rule(*inputs):
         is_all_none, result = vmap_general_preprocess(prim, *inputs)
@@ -1273,7 +1274,7 @@ def get_batchnorm_vmap_rule(prim, axis_size):
             raise ValueError("The dim of `input_x` in `{}` must be larger than {} and less than {}, "
                              "but got {}.".format(prim_name, bn_min_dim - 1, bn_max_dim + 1, x_ndim))
         # Move input_x axis to the dim front of C
-        out_axis = 1 if data_format == "NCHW" else x_ndim - 2
+        out_axis = 1 if data_format == NCHW else x_ndim - 2
         input_x = _bdim_at_any(input_x, input_x_dim, out_axis, axis_size)
         scale = _bdim_at_front(scale, scale_dim, axis_size)
         offset = _bdim_at_front(offset, offset_dim, axis_size)
@@ -1281,7 +1282,7 @@ def get_batchnorm_vmap_rule(prim, axis_size):
         var = _bdim_at_front(var, var_dim, axis_size)
         x_shape = input_x.shape
         other_shape = scale.shape
-        vmap_shape = (x_shape[0], -1,) + x_shape[3:] if data_format == "NCHW" else x_shape[:-2] + (-1,)
+        vmap_shape = (x_shape[0], -1,) + x_shape[3:] if data_format == NCHW else x_shape[:-2] + (-1,)
         input_x = F.reshape(input_x, vmap_shape)
         scale = scale.flatten()
         offset = offset.flatten()

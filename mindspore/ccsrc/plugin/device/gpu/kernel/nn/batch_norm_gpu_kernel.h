@@ -17,19 +17,17 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BATCH_NORM_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BATCH_NORM_GPU_KERNEL_H_
 
-#include <string>
-#include <vector>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
+#include "include/common/utils/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 6;
-constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 5;
 class BatchNormGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormGpuKernelMod() { ResetResource(); }
@@ -64,6 +62,7 @@ class BatchNormGpuKernelMod : public NativeGpuKernelMod {
   static std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGpuKernelMod::BatchNormFunc>>>
     kernel_attr_map_;
 
+  size_t attr_pos0_{5};
   size_t input_x_size_;
   size_t input_z_size_;
   size_t para_size_;

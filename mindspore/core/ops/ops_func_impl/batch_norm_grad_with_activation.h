@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_DEF_H_
-#define MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_DEF_H_
+#ifndef MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ACTIVATION_H_
+#define MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ACTIVATION_H_
 
-#include <memory>
-#include "ir/anf.h"
-#include "ir/primitive.h"
-#include "ops/manually_defined_ops_name.h"
+#include "ops/ops_func_impl/batch_norm_grad.h"
 
-namespace mindspore::prim {
-GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>(ops::kNameBatchNorm));
-}  // namespace mindspore::prim
-#endif  // MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_DEF_H_
+namespace mindspore::ops {
+class MIND_API BatchNormGradWithActivationFuncImpl : public BatchNormGradFuncImpl {
+ protected:
+  size_t GetAttrPosZero() const override { return 8; }
+};
+}  // namespace mindspore::ops
+
+#endif  // MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ACTIVATION_H_

@@ -32,8 +32,6 @@ class MIND_API BatchNormFuncImpl : public OpFuncImpl {
 
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {5, 6, 7, 8}; }
-
  protected:
   virtual size_t GetAttrPosZero() const { return 5; }
 };

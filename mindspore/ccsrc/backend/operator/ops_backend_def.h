@@ -23,18 +23,6 @@
 
 namespace mindspore::ops {
 constexpr auto kNameDemo = "Demo";
-constexpr auto kNameBatchNormWithActivation = "BatchNormWithActivation";
-constexpr auto kNameBatchNormWithAddAndActivation = "BatchNormWithAddAndActivation";
-constexpr auto kNameBatchNormGradWithActivation = "BatchNormGradWithActivation";
-constexpr auto kNameBatchNormGradWithAddAndActivation = "BatchNormGradWithAddAndActivation";
-
 GVAR_DEF(PrimitivePtr, kPrimDemo, std::make_shared<Primitive>(kNameDemo));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>(ops::kNameBatchNormWithActivation));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
-         std::make_shared<Primitive>(ops::kNameBatchNormWithAddAndActivation));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithActivation,
-         std::make_shared<Primitive>(ops::kNameBatchNormGradWithActivation));
-GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithAddAndActivation,
-         std::make_shared<Primitive>(ops::kNameBatchNormGradWithAddAndActivation));
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CCSRC_BACKEND_OPERATOR_OPS_BACKEND_DEF

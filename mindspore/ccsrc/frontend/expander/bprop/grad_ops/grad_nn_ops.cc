@@ -1297,19 +1297,36 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto data_format = ib->GetInput(kIndex8);
   auto out = ib->GetInput(kIndex9);
   auto dout = ib->GetInput(kIndex10);
-  auto cond_out = ib->Conditional(
-    is_training,
-    [&](Emitter *e) -> NodePtrList {
-      return {e->TupleGetItem(out, 3), e->TupleGetItem(out, 4), e->TupleGetItem(out, 2)};
-    },
-    [&](Emitter *e) -> NodePtrList {
-      return {mean, variance, e->TupleGetItem(out, 2)};
-    });
-  auto saved_mean = ib->TensorGetItem(cond_out, 0);
-  auto saved_variance = ib->TensorGetItem(cond_out, 1);
-  auto reserve = ib->TensorGetItem(cond_out, 2);
-  out = ib->Emit("BatchNormGrad", {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve,
-                                   is_training, epsilon, data_format});
+
+  NodePtr saved_mean{nullptr};
+  NodePtr saved_variance{nullptr};
+  auto is_training_value_ptr = is_training->BuildValue();
+  if (!is_training_value_ptr->isa<ValueAny>()) {
+    auto is_traing_value = GetValue<bool>(is_training_value_ptr);
+    if (is_traing_value) {
+      saved_mean = ib->TupleGetItem(out, 3);
+      saved_variance = ib->TupleGetItem(out, 4);
+    } else {
+      saved_mean = mean;
+      saved_variance = variance;
+    }
+  } else {
+    auto cond_out = ib->Conditional(
+      is_training,
+      [&out](Emitter *e) -> NodePtrList {
+        return {e->TupleGetItem(out, 3), e->TupleGetItem(out, 4)};
+      },
+      [&mean, &variance, &out](Emitter *e) -> NodePtrList {
+        return {mean, variance};
+      });
+    saved_mean = ib->TupleGetItem(cond_out, 0);
+    saved_variance = ib->TupleGetItem(cond_out, 1);
+  }
+  auto reserve = ib->TupleGetItem(out, 2);
+
+  out = ib->Emit(
+    "BatchNormGrad",
+    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format}, {});
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);

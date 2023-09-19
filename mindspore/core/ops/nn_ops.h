@@ -21,7 +21,6 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ops/nn_op_name.h"
-#include "ops/manually_defined_ops_primitive.h"
 #include "utils/hash_map.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 

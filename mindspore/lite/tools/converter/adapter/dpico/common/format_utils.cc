@@ -17,8 +17,6 @@
 #include "common/format_utils.h"
 #include <set>
 #include <string>
-#include "ops/manually_defined_lite_ops.h"
-#include "ops/manually_defined_ops_name.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/tuple_get_item.h"
 #include "ops/depend.h"
@@ -46,7 +44,7 @@ namespace mindspore {
 namespace dpico {
 namespace {
 const std::set<std::string> kAssignedFormatOpSet = {
-  mindspore::ops::kNameAvgPoolFusion, mindspore::ops::kNameBatchNorm,
+  mindspore::ops::kNameAvgPoolFusion, mindspore::KBatchNormOpName,
   mindspore::ops::kNameBatchToSpace,  mindspore::ops::kNameBiasAdd,
   mindspore::ops::kNameConv2DFusion,  mindspore::ops::kNameConv2dTransposeFusion,
   mindspore::ops::kNameDepthToSpace,  mindspore::ops::kNameFusedBatchNorm,

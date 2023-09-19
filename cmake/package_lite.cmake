@@ -45,8 +45,6 @@ include(${TOP_DIR}/cmake/package_micro.cmake)
 
 function(__install_white_list_ops)
     install(FILES
-            ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
-            ${TOP_DIR}/mindspore/core/ops/manually_defined_ops_name.h
             ${TOP_DIR}/mindspore/core/ops/nn_op_name.h
             ${TOP_DIR}/mindspore/core/ops/adam.h
             ${TOP_DIR}/mindspore/core/ops/addn.h
@@ -1054,7 +1052,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
-            ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/concat.h
             ${TOP_DIR}/mindspore/core/ops/strided_slice.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h

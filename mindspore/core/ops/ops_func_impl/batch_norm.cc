@@ -20,7 +20,6 @@
 #include <utility>
 
 #include "abstract/dshape.h"
-#include "ops/manually_defined_ops_name.h"
 #include "ops/op_def.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
@@ -138,15 +137,15 @@ int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return OP_CHECK_RETRY;
   }
   MS_CHECK_VALUE(epsilon_value.value() > 0 && epsilon_value.value() <= 1,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg<float>("epsilon", epsilon_value.value(), kIncludeRight,
-                                                                    {0., 1.}, primitive));
+                 CheckAndConvertUtils::FormatCheckInRangeMsg<pyfloat>("epsilon", epsilon_value.value(), kIncludeRight,
+                                                                      {0., 1.}, primitive));
 
   auto momentum_value = GetScalarValue<pyfloat>(input_args[attr_pos + 2]->GetValue());
   if (MS_UNLIKELY(!momentum_value.has_value())) {
     return OP_CHECK_RETRY;
   }
   auto momentum = momentum_value.value();
-  MS_CHECK_VALUE(momentum >= 0 && momentum <= 1, CheckAndConvertUtils::FormatCheckInRangeMsg<float>(
+  MS_CHECK_VALUE(momentum >= 0 && momentum <= 1, CheckAndConvertUtils::FormatCheckInRangeMsg<pyfloat>(
                                                    "momentum", momentum, kIncludeRight, {0., 1.}, primitive));
 
   auto format_opt = GetScalarValue<int64_t>(input_args[attr_pos + 3]->GetValue());
@@ -160,36 +159,5 @@ int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   }
   return OP_CHECK_SUCCESS;
 }
-
-auto gBatchNormFuncImpl = BatchNormFuncImpl();
-OpDef gBatchNorm = {
-  .name_ = kNameBatchNorm,
-  .args_ = {{.arg_name_ = "input_x", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-            {.arg_name_ = "scale", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-            {.arg_name_ = "bias", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-            {.arg_name_ = "mean", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-            {.arg_name_ = "variance", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-            {.arg_name_ = "is_training", .arg_dtype_ = DT_BOOL, .as_init_arg_ = 1},
-            {.arg_name_ = "epsilon", .arg_dtype_ = DT_FLOAT, .as_init_arg_ = 1},
-            {.arg_name_ = "momentum", .arg_dtype_ = DT_FLOAT, .as_init_arg_ = 1},
-            {.arg_name_ = "data_format", .arg_dtype_ = DT_INT, .as_init_arg_ = 1}},
-  .returns_ = {{.arg_name_ = "output_x", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-               {.arg_name_ = "batch_mean", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-               {.arg_name_ = "batch_variance", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-               {.arg_name_ = "reserve_space_1", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-               {.arg_name_ = "reserve_space_2", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0}},
-  .indexes_ = {{"input_x", 0},
-               {"scale", 1},
-               {"bias", 2},
-               {"mean", 3},
-               {"variance", 4},
-               {"is_training", 5},
-               {"epsilon", 6},
-               {"momentum", 7},
-               {"data_format", 8}},
-  .func_impl_ = gBatchNormFuncImpl,
-};
-
-REGISTER_PRIMITIVE_OP_DEF(kNameBatchNorm, &gBatchNorm);
 }  // namespace ops
 }  // namespace mindspore

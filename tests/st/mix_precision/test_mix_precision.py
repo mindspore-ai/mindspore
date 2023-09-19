@@ -20,6 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore.amp import auto_mixed_precision
 from mindspore.common import dtype
+from mindspore._c_expression import security
 from mindspore import nn
 from mindspore import ops
 from mindspore import amp
@@ -32,7 +33,18 @@ from utils import allclose_nparray
 from utils import FakeDataInitMode
 from utils import find_newest_validateir_file
 from utils import clean_all_ir_files
-from tests.security_utils import security_off_wrap
+from functools import wraps
+
+def security_off_wrap(func):
+    """Wrapper for tests which do not need to run security on."""
+
+    @wraps(func)
+    def pass_test_when_security_on(*args, **kwargs):
+        if security.enable_security():
+            return None
+        return func(*args, **kwargs)
+
+    return pass_test_when_security_on
 
 def read_validateir_file(path_folder):
     filename = find_newest_validateir_file(path_folder)

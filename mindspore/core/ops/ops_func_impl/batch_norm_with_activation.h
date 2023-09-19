@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_NAME_H_
-#define MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_NAME_H_
+#ifndef MINDSPORE_CORE_OPS_BATCH_NORMAL_WITH_ACTIVATION_H_
+#define MINDSPORE_CORE_OPS_BATCH_NORMAL_WITH_ACTIVATION_H_
+
+#include "ops/ops_func_impl/batch_norm.h"
+
 namespace mindspore::ops {
-constexpr auto kNameBatchNorm = "BatchNorm";
+class MIND_API BatchNormWithActivationFuncImpl : public BatchNormFuncImpl {};
 }  // namespace mindspore::ops
-#endif  // MINDSPORE_CORE_OPS_MANUAL_DEFINED_OPS_NAME_H_
+
+#endif  // MINDSPORE_CORE_OPS_BATCH_NORMAL_WITH_ACTIVATION_H_

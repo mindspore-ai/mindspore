@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBatchNormInputsNum = 5;
-constexpr size_t kBatchNormOutputsNum = 5;
 constexpr size_t kBatchNormInputShapeMaxSize = 4;
 }  // namespace
 
@@ -39,9 +37,13 @@ bool BatchNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int BatchNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
+
+  is_train_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[kIndex6]->GetValueWithCheck<float>();
+  momentum_ = inputs[kIndex7]->GetValueWithCheck<float>();
 
   auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeMaxSize - x_shape.size(), 1);
@@ -89,8 +91,6 @@ void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor *> 
 bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &workspace,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
   auto wksp = reinterpret_cast<float *>(workspace[0]->device_ptr());
   auto scale_ret = memcpy_s(wksp, workspace[0]->size(), inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size());
   auto max_size = workspace[0]->size() - inputs[kIndex1]->size();
@@ -124,6 +124,28 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
     ExecutePrimitive();
   }
   return true;
+}
+
+#define BATCH_NORM_CPU_REG(T)                            \
+  KernelAttr()                                           \
+    .AddInputAttr(T)                                     \
+    .AddInputAttr(T)                                     \
+    .AddInputAttr(T)                                     \
+    .AddInputAttr(T)                                     \
+    .AddInputAttr(T)                                     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(T)                                    \
+    .AddOutputAttr(T)                                    \
+    .AddOutputAttr(T)                                    \
+    .AddOutputAttr(T)                                    \
+    .AddOutputAttr(T)
+
+std::vector<KernelAttr> BatchNormCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {BATCH_NORM_CPU_REG(kNumberTypeFloat32)};
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNorm, BatchNormCpuKernelMod);

@@ -22,7 +22,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/image_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "ops/manually_defined_lite_ops.h"
+#include "ops/nn_op_name.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/adam.h"
 #include "ops/addn.h"
@@ -79,8 +79,8 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameApplyMomentum, {4}},
   {ops::kNameAvgPoolFusion, {1}},
   {ops::kNameAvgPoolGrad, {}},
-  {ops::kNameBatchNorm, {1}},
-  {ops::kNameBatchNormGrad, {1, 2}},
+  {kBatchNormOpName, {1}},
+  {kBatchNormGradOpName, {1, 2}},
   {ops::kNameBatchToSpace, {1}},
   {ops::kNameBiasAdd, {1}},
   {ops::kNameBiasAddGrad, {1}},
@@ -114,8 +114,8 @@ static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = 
   {ops::kNameApplyMomentum, {4}},
   {ops::kNameAvgPoolFusion, {1}},
   {ops::kNameAvgPoolGrad, {}},
-  {ops::kNameBatchNorm, {1}},
-  {ops::kNameBatchNormGrad, {1, 2}},
+  {kBatchNormOpName, {1}},
+  {kBatchNormGradOpName, {1, 2}},
   {ops::kNameBatchToSpace, {1}},
   {ops::kNameBiasAdd, {1}},
   {ops::kNameBiasAddGrad, {1}},

@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBatchNormGradInputsNum = 6;
-constexpr size_t kBatchNormGradOutputsNum = 3;
 constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
 constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 constexpr size_t kScaleShiftNum = 2;
@@ -40,14 +38,16 @@ bool BatchNormGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int BatchNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
+
+  is_train_ = inputs[kIndex6]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[kIndex7]->GetValueWithCheck<float>();
 
   auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
   (void)x_shape.insert(x_shape.end(), kBatchNormGradInputShapeMaxSize - x_shape_size, 1);
-
   batch_size_ = x_shape[N];
   channel_ = x_shape[C];
   hw_size_ = x_shape[H] * x_shape[W];
@@ -103,8 +103,6 @@ void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor
 bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                        const std::vector<kernel::KernelTensor *> &workspace,
                                        const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
   auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->device_ptr());
   auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size(), inputs[SCALE]->device_ptr(), inputs[SCALE]->size());
   if (scale_ret != EOK) {
@@ -137,6 +135,26 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *>
     MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
   }
   return true;
+}
+
+#define BATCH_NORM_GRAD_CPU_REG(MS)                      \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(MS)
+
+std::vector<KernelAttr> BatchNormGradCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {BATCH_NORM_GRAD_CPU_REG(kNumberTypeFloat32)};
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNormGrad, BatchNormGradCpuKernelMod);

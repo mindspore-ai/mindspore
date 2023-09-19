@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_GRAD_CPU_KERNEL_H_
 
-#include <vector>
 #include <map>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -33,6 +33,7 @@ class BatchNormGradGradCpuKernelMod : public NativeCpuKernelMod {
   ~BatchNormGradGradCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -108,7 +109,7 @@ class BatchNormGradGradCpuKernelMod : public NativeCpuKernelMod {
 
   float epsilon_;
   bool is_training_;
-  std::string data_format_;
+  mindspore::Format data_format_;
   int x_num_;
   int C_num_;
   int N_num_;

@@ -345,7 +345,7 @@ OP_SCHEMA_DEF_END(AvgPoolGrad)
 
 OP_SCHEMA_DEF(BatchNorm)
 OP_ATTR(epsilon, float)
-OP_ATTR_ENUM(format, Format)
+OP_ATTR_ENUM_SRC(format, Format, data_format, Format)
 OP_ATTR(is_training, bool)
 OP_SCHEMA_DEF_END(BatchNorm)
 

@@ -44,6 +44,7 @@
 #include "pipeline/pynative/grad/bprop_pass.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "utils/info.h"
+#include "utils/anf_utils.h"
 #include "utils/profile.h"
 
 namespace mindspore {
@@ -921,6 +922,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString() << ", " << cnode->fullname_with_scope();
+    prim->AddAttr(kSkipCheckInputNum, MakeValue(true));
     AnfNodePtrList cnode_inputs{std::make_shared<ValueNode>(prim)};
     auto input_value = GetInputArgs(cnode, &cnode_inputs);
     bprop_pass::ProcessAttrNode(ad_param()->tape_, cnode, &input_value, &cnode_inputs);

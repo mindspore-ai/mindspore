@@ -17,20 +17,18 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GRAD_GPU_KERNEL_H_
 
-#include <string>
-#include <vector>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 #include "include/common/utils/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 6;
-constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 8;
 class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormGradGpuKernelMod() { ResetResource(); }
@@ -44,6 +42,7 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   void ResetResource() noexcept {
@@ -96,6 +95,7 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
   int channel_;
   int height_;
   int width_;
+  size_t attrs_pos0_;
   size_t x_size_;
   size_t para_size_;
   size_t workspace_size_;

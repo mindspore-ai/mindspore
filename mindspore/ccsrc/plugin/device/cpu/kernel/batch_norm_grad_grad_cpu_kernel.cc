@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputsNum = 8;
-constexpr size_t kOutputsNum = 3;
 constexpr float num_1 = 1.0;
 constexpr float num_3 = 3.0;
 }  // namespace
@@ -38,28 +36,6 @@ bool BatchNormGradGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
-  if (epsilon_ <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'epsilon' must be greater than 0.";
-  }
-  if (data_format_ != kOpFormat_NHWC && data_format_ != kOpFormat_NCHW) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'data_format' must be NHWC or NCHW, but got "
-                             << data_format_;
-  }
-  data_format_ = (data_format_ == kOpFormat_NHWC) ? "NHWC" : "NCHW";
-
-  std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
-  std::vector<int64_t> scale_shape = inputs.at(kIndex2)->GetShapeVector();
-  (void)std::transform(scale_shape.begin(), scale_shape.end(), std::back_inserter(scale_shape_), LongToSize);
-
-  x_num_ = static_cast<int>(std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>()));
-  N_num_ = static_cast<int>(x_shape_[0]);
-  C_num_ = static_cast<int>(std::accumulate(scale_shape_.begin(), scale_shape_.end(), 1, std::multiplies<size_t>()));
-  CHW_num_ = static_cast<int>(x_num_ / N_num_);
-  NHW_num_ = static_cast<int>(x_num_ / C_num_);
-  HW_num_ = static_cast<int>(NHW_num_ / N_num_);
-  M_ = static_cast<float>(NHW_num_);
-
   kernel_func_ = func_list_[index].second;
   return true;
 }
@@ -70,29 +46,23 @@ int BatchNormGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
-  std::vector<int64_t> dy_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> reserve_space_1_shape = inputs.at(kIndex3)->GetShapeVector();
-  std::vector<int64_t> reserve_space_2_shape = inputs.at(kIndex4)->GetShapeVector();
-  std::vector<int64_t> ddx_shape = inputs.at(kIndex5)->GetShapeVector();
-  std::vector<int64_t> ddscale_shape = inputs.at(kIndex6)->GetShapeVector();
-  std::vector<int64_t> ddoffset_shape = inputs.at(kIndex7)->GetShapeVector();
-  if (x_shape_.size() != kDim4) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', dim of x must be equal 4, but got" << x_shape_.size();
-  }
-  if (x_shape_ != dy_shape || x_shape_ != ddx_shape) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'x' 'dy' 'ddx' must have the same shape.";
-  }
-  if (scale_shape_ != reserve_space_1_shape || scale_shape_ != reserve_space_2_shape || scale_shape_ != ddscale_shape ||
-      scale_shape_ != ddoffset_shape) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << kernel_name_
-      << "', 'scale' 'reserve_space_1' 'reserve_space_2' 'ddscale' 'ddoffset' must have the same shape";
-  }
-  if ((data_format_ == "NHWC" && x_shape_[kIndex3] != C_num_) ||
-      (data_format_ == "NCHW" && x_shape_[kIndex1] != C_num_)) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', the size of 1D tensor should be equal to the size of C dim of 'x'";
-  }
+
+  std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
+  std::vector<int64_t> scale_shape = inputs.at(kIndex2)->GetShapeVector();
+  (void)std::transform(scale_shape.begin(), scale_shape.end(), std::back_inserter(scale_shape_), LongToSize);
+  x_num_ = static_cast<int>(std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>()));
+  N_num_ = static_cast<int>(x_shape_[0]);
+  C_num_ = static_cast<int>(std::accumulate(scale_shape_.begin(), scale_shape_.end(), 1, std::multiplies<size_t>()));
+  CHW_num_ = static_cast<int>(x_num_ / N_num_);
+  NHW_num_ = static_cast<int>(x_num_ / C_num_);
+  HW_num_ = static_cast<int>(NHW_num_ / N_num_);
+  M_ = static_cast<float>(NHW_num_);
+
+  is_training_ = inputs[kIndex8]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[kIndex9]->GetValueWithCheck<float>();
+  data_format_ = static_cast<mindspore::Format>(inputs[kIndex10]->GetValueWithCheck<int64_t>());
+
   size_t float_type_size = sizeof(float);
   workspace_size_list_.clear();
   if (is_training_) {
@@ -128,22 +98,19 @@ template <typename T>
 bool BatchNormGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                                  const std::vector<kernel::KernelTensor *> &workspace,
                                                  const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-
   auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->device_ptr());  // fp32
   for (int j = 0; j < C_num_; j++) {
     if (*(reserve_space_2 + j) < 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'reserve_space_2' must be no less than zero.";
     }
   }
-  if (is_training_ && data_format_ == "NHWC") {
+  if (is_training_ && data_format_ == Format::NHWC) {
     TrainingComputeNHWC<T>(inputs, workspace, outputs);
-  } else if (!is_training_ && data_format_ == "NHWC") {
+  } else if (!is_training_ && data_format_ == Format::NHWC) {
     InferenceComputeNHWC<T>(inputs, workspace, outputs);
-  } else if (is_training_ && data_format_ == "NCHW") {
+  } else if (is_training_ && data_format_ == Format::NCHW) {
     TrainingComputeNCHW<T>(inputs, workspace, outputs);
-  } else if (!is_training_ && data_format_ == "NCHW") {
+  } else if (!is_training_ && data_format_ == Format::NCHW) {
     InferenceComputeNCHW<T>(inputs, workspace, outputs);
   }
 
@@ -757,33 +724,28 @@ void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDscale(const std::vecto
   }
   return;
 }
+
+#define BATCH_NORM_GRAD_GRAD_REG(MS, S)                  \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kNumberTypeFloat32)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(kNumberTypeFloat32),                  \
+    &BatchNormGradGradCpuKernelMod::LaunchKernel<S>
+
 std::vector<std::pair<KernelAttr, BatchNormGradGradCpuKernelMod::BatchNormGradGradFunc>>
-  BatchNormGradGradCpuKernelMod::func_list_ = {{KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat32)    // x
-                                                  .AddInputAttr(kNumberTypeFloat32)    // dy
-                                                  .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                  .AddInputAttr(kNumberTypeFloat32)    // reserve_space_1
-                                                  .AddInputAttr(kNumberTypeFloat32)    // reserve_space_2
-                                                  .AddInputAttr(kNumberTypeFloat32)    // ddx
-                                                  .AddInputAttr(kNumberTypeFloat32)    // ddscale
-                                                  .AddInputAttr(kNumberTypeFloat32)    // ddoffset
-                                                  .AddOutputAttr(kNumberTypeFloat32)   // dx
-                                                  .AddOutputAttr(kNumberTypeFloat32)   // ddy
-                                                  .AddOutputAttr(kNumberTypeFloat32),  // dscale
-                                                &BatchNormGradGradCpuKernelMod::LaunchKernel<float>},
-                                               {KernelAttr()
-                                                  .AddInputAttr(kNumberTypeFloat16)    // x
-                                                  .AddInputAttr(kNumberTypeFloat16)    // dy
-                                                  .AddInputAttr(kNumberTypeFloat32)    // scale
-                                                  .AddInputAttr(kNumberTypeFloat32)    // reserve_space_1
-                                                  .AddInputAttr(kNumberTypeFloat32)    // reserve_space_2
-                                                  .AddInputAttr(kNumberTypeFloat16)    // ddx
-                                                  .AddInputAttr(kNumberTypeFloat32)    // ddscale
-                                                  .AddInputAttr(kNumberTypeFloat32)    // ddoffset
-                                                  .AddOutputAttr(kNumberTypeFloat16)   // dx
-                                                  .AddOutputAttr(kNumberTypeFloat16)   // ddy
-                                                  .AddOutputAttr(kNumberTypeFloat32),  // dscale
-                                                &BatchNormGradGradCpuKernelMod::LaunchKernel<float16>}};
+  BatchNormGradGradCpuKernelMod::func_list_ = {{BATCH_NORM_GRAD_GRAD_REG(kNumberTypeFloat32, float)},
+                                               {BATCH_NORM_GRAD_GRAD_REG(kNumberTypeFloat16, float16)}};
 
 std::vector<KernelAttr> BatchNormGradGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

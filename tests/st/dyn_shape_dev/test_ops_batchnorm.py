@@ -15,41 +15,200 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, context, Parameter
-from mindspore.ops import auto_generate as P
+from mindspore import ops
 import test_utils
 
 
 @test_utils.run_with_cell
-def bn_forward_func(x, scale, bias, mean, variance, is_training):
-    return P.BatchNorm(is_training=is_training,
-                       epsilon=1e-5,
-                       momentum=0.1,
-                       data_format="NCHW")(x, scale, bias, mean, variance)
+def batch_norm_forward_func(x, scale, bias, mean, var, is_train=False):
+    out = ops.auto_generate.batch_norm_(x,
+                                        scale,
+                                        bias,
+                                        mean,
+                                        var,
+                                        is_train,
+                                        epsilon=1e-5,
+                                        momentum=0.1,
+                                        data_format="NCHW")
+    return out[0]
+
+
+@test_utils.run_with_cell
+def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False):
+    return ops.grad(batch_norm_forward_func, 0)(x, scale, bias, mean, var,
+                                                is_train)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("is_training", [True, False])
-@pytest.mark.parametrize("data_type", [np.float32, np.float16])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize("device", ["GPU", "CPU"])
-def test_bn_op(is_training, data_type, mode, device):
+def test_bn_forward(is_training, mode):
     """
-    Feature: BatchNormGrad cpu/gpu kernel
-    Description: test default attr
-    Expectation: match to np benchmark.
+    Feature: Ops.
+    Description: test BatchNorm.
+    Expectation: expect correct result.
     """
-    x = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
-    scale = Tensor(np.random.rand(36).astype(data_type))
-    bias = Tensor(np.random.rand(36).astype(data_type))
-    mean = Tensor(np.random.rand(36).astype(data_type))
-    variance = Tensor(np.random.rand(36).astype(data_type))
+    context.set_context(mode=mode)
+    x = Tensor((3 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32))
+    scale = Tensor(np.ones(2).astype(np.float32))
+    bias = Tensor(np.ones(2).astype(np.float32))
+    mean = Tensor(np.ones(2).astype(np.float32))
+    variance = Tensor(np.ones(2).astype(np.float32))
+
+    expect = None
+    if is_training:
+        expect = np.array([1.0000305])
+    else:
+        expect = np.array([2.99999])
+    expect = expect.repeat(16).astype(np.float32).reshape(2, 2, 1, 4)
+
     if is_training:
         scale = Parameter(scale)
         bias = Parameter(bias)
         mean = Parameter(mean)
         variance = Parameter(variance)
-    context.set_context(mode=mode, device_target=device, precompile_only=True)
-    output = bn_forward_func(x, scale, bias, mean, variance, is_training)
-    print(output)
-    assert output is None
+    output = batch_norm_forward_func(x, scale, bias, mean, variance,
+                                     is_training)
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("is_training", [True, False])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_backward(is_training, mode):
+    """
+    Feature: Ops.
+    Description: test BatchNormGrad.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    x = Tensor((3 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32))
+    scale = Tensor(np.ones(2).astype(np.float32))
+    bias = Tensor(np.ones(2).astype(np.float32))
+    mean = Tensor(np.ones(2).astype(np.float32))
+    variance = Tensor(np.ones(2).astype(np.float32))
+    if is_training:
+        scale = Parameter(scale)
+        bias = Parameter(bias)
+        mean = Parameter(mean)
+        variance = Parameter(variance)
+    grad = batch_norm_backward_func(x, scale, bias, mean, variance,
+                                    is_training)
+
+    expect = None
+    if is_training:
+        expect = np.array([0.])
+    else:
+        expect = np.array([0.999995])
+    expect = expect.repeat(16).astype(np.float32).reshape(2, 2, 1, 4)
+
+    assert np.allclose(grad.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("is_training", [True, False])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_backward_ascend(is_training, mode):
+    """
+    Feature: Ops.
+    Description: test BatchNormGrad.
+    Expectation: expect correct result.
+    """
+    if mode == context.PYNATIVE_MODE:
+        # There are still some problems in ascend acl.
+        return
+    context.set_context(mode=mode)
+    x = Tensor((3 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32))
+    scale = Tensor(np.ones(2).astype(np.float32))
+    bias = Tensor(np.ones(2).astype(np.float32))
+    mean = Tensor(np.ones(2).astype(np.float32))
+    variance = Tensor(np.ones(2).astype(np.float32))
+    if is_training:
+        scale = Parameter(scale)
+        bias = Parameter(bias)
+        mean = Parameter(mean)
+        variance = Parameter(variance)
+    grad = batch_norm_backward_func(x, scale, bias, mean, variance,
+                                    is_training)
+
+    expect = None
+    if is_training:
+        expect = np.array([0.])
+    else:
+        expect = np.array([0.999995])
+    expect = expect.repeat(16).astype(np.float32).reshape(2, 2, 1, 4)
+
+    assert np.allclose(grad.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_vmap(mode):
+    """
+    Feature: test vmap function.
+    Description: test BatchNorm op vmap.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    shape = (2, 2, 2, 2)
+    in_axes = (-1, -1, -1, -1, -1, None)
+    x = np.ones(16).astype(np.float32)
+    x = Tensor(x.reshape(shape))
+    scale = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    bias = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    mean = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    var = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    nest_vmap = ops.vmap(ops.vmap(batch_norm_forward_func,
+                                  in_axes=in_axes,
+                                  out_axes=0),
+                         in_axes=in_axes,
+                         out_axes=0)
+    out = nest_vmap(x, scale, bias, mean, var, False)
+
+    expect = np.ones(16).astype(np.float32)
+    expect = expect.reshape(shape)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.skip(reason="There are still some problems in ascend.")
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_vmap_ascend(mode):
+    """
+    Feature: test vmap function.
+    Description: test BatchNorm op vmap.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    shape = (2, 2, 2, 2)
+    in_axes = (-1, -1, -1, -1, -1, None)
+    x = np.ones(16).astype(np.float32)
+    x = Tensor(x.reshape(shape))
+    scale = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    bias = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    mean = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    var = Tensor(np.ones((2, 2, 2)).astype(np.float32))
+    nest_vmap = ops.vmap(ops.vmap(batch_norm_forward_func,
+                                  in_axes=in_axes,
+                                  out_axes=0),
+                         in_axes=in_axes,
+                         out_axes=0)
+    out = nest_vmap(x, scale, bias, mean, var, False)
+
+    expect = np.ones(16).astype(np.float32)
+    expect = expect.reshape(shape)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)

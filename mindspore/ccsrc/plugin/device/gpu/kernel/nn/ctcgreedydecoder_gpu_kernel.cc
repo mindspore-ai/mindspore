@@ -84,7 +84,7 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const std::vector<KernelTensor *> &input
 int CTCGreedyDecoderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
-    return false;
+    return KRET_OK;
   }
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();

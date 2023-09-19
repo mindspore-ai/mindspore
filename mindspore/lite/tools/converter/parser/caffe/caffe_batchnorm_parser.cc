@@ -18,7 +18,7 @@
 #include <cmath>
 #include <memory>
 #include "tools/common/tensor_util.h"
-#include "ops/manually_defined_lite_ops.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 #include "include/registry/converter_context.h"
 #include "nnacl/op_base.h"

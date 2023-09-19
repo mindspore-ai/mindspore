@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2023 Huawei Technologies Co., Ltd
  *
@@ -14,18 +15,15 @@
  * limitations under the License.
  */
 
-#include "abstract/dshape.h"
-#include "backend/operator/ops_backend_def.h"
-#include "ops/op_def.h"
-#include "ops/op_name.h"
-#include "ops/op_utils.h"
-#include "ops/ops_func_impl/batch_norm_grad.h"
-#include "utils/check_convert_utils.h"
-#include "utils/convert_utils_base.h"
-#include "utils/log_adapter.h"
-#include "utils/shape_utils.h"
+#ifndef MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATION_H_
+#define MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATION_H_
 
-namespace mindspore::ops {
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "ops/ops_func_impl/batch_norm_grad.h"
+
 class MIND_API BatchNormGradWithAddAndActivationFuncImpl : public BatchNormGradFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
@@ -49,50 +47,8 @@ class MIND_API BatchNormGradWithAddAndActivationFuncImpl : public BatchNormGradF
                                                                   scale_type_ptr->Clone(), x_type_ptr->Clone()}));
   }
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {9, 10}; }
-
  protected:
   size_t GetAttrPosZero() const override { return 8; }
 };
 
-auto gBatchNormGradWithAddAndActivationFuncImpl = BatchNormGradWithAddAndActivationFuncImpl();
-OpDef gBatchNormGradWithAddAndActivation = {
-  .name_ = kNameBatchNormGradWithAddAndActivation,
-  .args_ =
-    {
-      {.arg_name_ = "dy", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "x", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "scale", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "saved_mean", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "saved_variance", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "reserve", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "bias", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "y", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "is_training", .arg_dtype_ = DT_BOOL, .as_init_arg_ = 1},
-      {.arg_name_ = "epsilon", .arg_dtype_ = DT_FLOAT, .as_init_arg_ = 1},
-      {.arg_name_ = "data_format", .arg_dtype_ = DT_INT, .as_init_arg_ = 1},
-    },
-  .returns_ =
-    {
-      {.arg_name_ = "dx", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "dscale", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-      {.arg_name_ = "dbias", .arg_dtype_ = DT_TENSOR, .as_init_arg_ = 0},
-    },
-  .indexes_ =
-    {
-      {"dy", 0},
-      {"x", 1},
-      {"scale", 2},
-      {"saved_mean", 3},
-      {"saved_variance", 4},
-      {"reserve", 5},
-      {"bias", 6},
-      {"y", 7},
-      {"is_training", 8},
-      {"epsilon", 9},
-      {"data_format", 10},
-    },
-  .func_impl_ = gBatchNormGradWithAddAndActivationFuncImpl,
-};
-REGISTER_PRIMITIVE_OP_DEF(kNameBatchNormGradWithAddAndActivation, &gBatchNormGradWithAddAndActivation);
-}  // namespace mindspore::ops
+#endif  // MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_WITH_ADD_AND_ACTIVATION_H_

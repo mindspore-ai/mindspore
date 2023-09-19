@@ -27,8 +27,7 @@
 #include "abstract/dshape.h"
 
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/manually_defined_lite_ops.h"
-#include "ops/manually_defined_ops_name.h"
+#include "ops/nn_op_name.h"
 #include "ops/adam.h"
 #include "ops/apply_momentum.h"
 #include "ops/batch_to_space.h"
@@ -59,8 +58,8 @@ static const std::set<std::string> FormatAwareOp = {ops::kNameAdam,
                                                     ops::kNameApplyMomentum,
                                                     ops::kNameAvgPoolFusion,
                                                     ops::kNameAvgPoolGrad,
-                                                    ops::kNameBatchNorm,
-                                                    ops::kNameBatchNormGrad,
+                                                    kBatchNormOpName,
+                                                    kBatchNormGradOpName,
                                                     ops::kNameBatchToSpace,
                                                     ops::kNameBiasAdd,
                                                     ops::kNameBiasAddGrad,

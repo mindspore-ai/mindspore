@@ -20,7 +20,6 @@
 #include <vector>
 #include <set>
 
-#include "ops/manually_defined_ops_name.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
@@ -32,8 +31,6 @@ class MIND_API BatchNormGradFuncImpl : public OpFuncImpl {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  std::set<int64_t> GetValueDependArgIndices() const override { return {7, 8}; }
 
  protected:
   virtual size_t GetAttrPosZero() const { return 6; }

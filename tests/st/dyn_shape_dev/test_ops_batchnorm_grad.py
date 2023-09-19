@@ -14,42 +14,71 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore import Tensor, context, Parameter
-from mindspore.ops import auto_generate as P
+from mindspore import Tensor, context
+from mindspore import ops
 import test_utils
 
 
 @test_utils.run_with_cell
-def batchnorm_grad_forward_func(dout, x, scale, mean, variance, reserve, is_training):
-    return P.BatchNormGrad(is_training=is_training,
-                           epsilon=1e-5,
-                           data_format="NCHW")(dout, x, scale, mean, variance, reserve)
+def batch_norm_grad_forward_func(dout, x, scale, mean, variance, reserve):
+    batch_norm_grad = ops.auto_generate.BatchNormGrad(is_training=True,
+                                                      epsilon=1e-5,
+                                                      data_format="NCHW")
+    out = batch_norm_grad(dout, x, scale, mean, variance, reserve)
+    return out[0]
+
+
+@test_utils.run_with_cell
+def batch_norm_grad_backward_func(dout, x, scale, mean, variance, reserve):
+    return ops.grad(batch_norm_grad_forward_func, 0)(dout, x, scale, mean,
+                                                     variance, reserve)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("is_training", [True, False])
-@pytest.mark.parametrize("data_type", [np.float32, np.float16])
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize("device", ["GPU", "CPU"])
-def test_bn_grad_op(is_training, data_type, mode, device):
+def test_bn_grad_forward(mode):
     """
-    Feature: BatchNorm cpu/gpu kernel
-    Description: test default attr
-    Expectation: match to np benchmark.
+    Feature: Ops.
+    Description: test BatchNormGrad.
+    Expectation: expect correct result.
     """
-    dout = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
-    x = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
-    scale = Tensor(np.random.rand(36).astype(data_type))
-    mean = Tensor(np.random.rand(36).astype(data_type))
-    variance = Tensor(np.random.rand(36).astype(data_type))
-    reserve = Tensor(np.random.rand(36).astype(data_type))
-    if is_training:
-        scale = Parameter(scale)
-        mean = Parameter(mean)
-        variance = Parameter(variance)
-        reserve = Parameter(reserve)
-    context.set_context(mode=mode, device_target=device, precompile_only=True)
-    output = batchnorm_grad_forward_func(dout, x, scale, mean, variance, reserve, is_training)
-    print(output)
-    assert output is None
+    if mode == context.PYNATIVE_MODE:
+        # There are still some problems in ascend acl.
+        return
+    context.set_context(mode=mode)
+    dout = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    x = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    scale = Tensor(np.random.rand(36).astype(np.float32))
+    mean = Tensor(np.random.rand(36).astype(np.float32))
+    variance = Tensor(np.random.rand(36).astype(np.float32))
+    reserve = Tensor(np.random.rand(36).astype(np.float32))
+    output = batch_norm_grad_forward_func(dout, x, scale, mean, variance,
+                                          reserve)
+    print(f"output:\n{output}")
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_grad_backward(mode):
+    """
+    Feature: Ops.
+    Description: test BatchNormGradGrad.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    dout = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    x = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    scale = Tensor(np.random.rand(36).astype(np.float32))
+    mean = Tensor(np.random.rand(36).astype(np.float32))
+    variance = Tensor(np.random.rand(36).astype(np.float32))
+    reserve = Tensor(np.random.rand(36).astype(np.float32))
+    grads = batch_norm_grad_backward_func(dout, x, scale, mean, variance,
+                                          reserve)
+    print(f"grads:\n{grads}")

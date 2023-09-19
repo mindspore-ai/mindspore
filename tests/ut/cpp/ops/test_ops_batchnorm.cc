@@ -21,7 +21,6 @@
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "ops/manually_defined_ops_name.h"
 #include "ops/ops_func_impl/batch_norm.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
@@ -76,7 +75,7 @@ TEST_P(TestBatchNorm, dyn_shape) {
     {param.y_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape, param.batch_mean_shape},
     {param.x_type, param.scale_type, param.scale_type, param.scale_type, param.scale_type});
   DoFuncImplInferAndCompare<BatchNormFuncImpl>(
-    kNameBatchNorm, {x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format}, expect_shape,
+    "BatchNorm", {x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format}, expect_shape,
     expect_type);
 }
 
