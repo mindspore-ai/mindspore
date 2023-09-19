@@ -15,18 +15,14 @@
 
 import numpy as np
 import pytest
-from mindspore import ops
 import mindspore as ms
+from mindspore import ops
+from mindspore.ops.auto_generate.gen_ops_def import _relu_grad
 
 
 @ms.jit
-def relu_forward_func(x):
-    return ops.auto_generate.relu(x)
-
-
-@ms.jit
-def relu_backward_func(x):
-    return ops.grad(relu_forward_func, (0,))(x)
+def relu_grad_func(dy, x):
+    return _relu_grad(dy, x)
 
 
 @pytest.mark.level0
@@ -34,41 +30,39 @@ def relu_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_relu():
+def test_relu_grad():
     """
     Feature: Ops.
-    Description: test op relu.
+    Description: test op relu grad.
     Expectation: expect correct result.
     """
-    x = ms.Tensor(np.array([[[[-1, 1, 10],
+    dy = ms.Tensor(np.array([[[[1, 0, 1],
+                               [0, 1, 0],
+                               [1, 1, 1]]]]).astype(np.float32))
+    x = ms.Tensor(np.array([[[[-1, 1, 1],
                               [1, -1, 1],
-                              [10, 1, -1]]]]).astype(np.float32))
-    out = relu_forward_func(x)
-    expect_out = np.array([[[[0, 1, 10],
-                             [1, 0, 1],
-                             [10, 1, 0.]]]]).astype(np.float32)
+                              [1, 1, -1]]]]).astype(np.float32))
+    out = relu_grad_func(dy, x)
+    expect_out = np.array([[[[0, 0, 1],
+                             [0, 0, 0],
+                             [1, 1, 0]]]]).astype(np.float32)
     assert (out.asnumpy() == expect_out).all()
-
-    grad = relu_backward_func(x)
-    expect_grad = np.array([[[[0, 1, 1],
-                              [1, 0, 1],
-                              [1, 1, 0]]]]).astype(np.float32)
-    assert (grad.asnumpy() == expect_grad).all()
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_relu_vmap():
+def test_relu_grad_vmap():
     """
     Feature: test vmap function.
     Description: test relu op vmap.
     Expectation: expect correct result.
     """
-    axes = -1
+    axes = (-1, -1)
+    dy = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))
     x = ms.Tensor(np.random.randint(low=-10, high=10, size=(4, 3, 2)).astype(np.float32)) * 0.1
-    net_vmap = ops.vmap(ops.vmap(relu_forward_func, in_axes=axes, out_axes=axes), in_axes=axes, out_axes=axes)
-    out = net_vmap(x)
-    expect_out = relu_forward_func(x)
+    net_vmap = ops.vmap(ops.vmap(relu_grad_func, in_axes=axes, out_axes=-1), in_axes=axes, out_axes=-1)
+    out = net_vmap(dy, x)
+    expect_out = relu_grad_func(dy, x)
     assert (out.asnumpy() == expect_out.asnumpy()).all()

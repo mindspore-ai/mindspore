@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2103,3 +2103,5 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Tanh)(get_unop_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.TanhGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.SoftplusGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register('ReluGrad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('ReLU6Grad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('RsqrtGrad')(get_unary_grad_vmap_rule)

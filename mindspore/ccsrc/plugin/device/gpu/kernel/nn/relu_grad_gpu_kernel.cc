@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool ReLUGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool ReLUGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -37,10 +35,9 @@ bool ReLUGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int ReLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ReLUGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
