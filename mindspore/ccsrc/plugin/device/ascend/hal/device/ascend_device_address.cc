@@ -433,10 +433,12 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
       launch_transdata_->FreeDeviceMem();
+      launch_transdata_ = nullptr;
       return false;
     }
   }
   launch_transdata_->FreeDeviceMem();
+  launch_transdata_ = nullptr;
   return sync_ok;
 }
 
