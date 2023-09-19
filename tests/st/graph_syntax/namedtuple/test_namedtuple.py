@@ -55,7 +55,7 @@ def test_namedtuple_get_attr1():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr2():
@@ -85,7 +85,7 @@ def test_namedtuple_get_attr2():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr3():
@@ -111,7 +111,7 @@ def test_namedtuple_get_attr3():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr4():
@@ -137,7 +137,7 @@ def test_namedtuple_get_attr4():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr5():
@@ -165,7 +165,7 @@ def test_namedtuple_get_attr5():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr6():
@@ -192,7 +192,7 @@ def test_namedtuple_get_attr6():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr7():
@@ -215,7 +215,7 @@ def test_namedtuple_get_attr7():
     assert label2.shape == data.label2.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_namedtuple_get_attr8():

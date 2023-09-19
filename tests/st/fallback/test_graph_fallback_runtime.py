@@ -143,7 +143,7 @@ def test_pyexecute_with_scalar_input():
     assert not ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -168,7 +168,7 @@ def test_pyexecute_with_scalar_input_2():
     assert ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -193,7 +193,7 @@ def test_pyexecute_with_scalar_input_3():
     assert not ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -572,7 +572,7 @@ def test_np_save_with_call_kw1():
     os.remove("data_from_kw.npy")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -632,7 +632,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
     assert np.allclose(ret.asnumpy(), np.array([0.0, 3.0, 4.0, 5.0]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

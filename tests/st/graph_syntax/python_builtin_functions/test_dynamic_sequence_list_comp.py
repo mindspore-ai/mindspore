@@ -44,7 +44,7 @@ def test_dynamic_sequence_list_comp_1():
     assert res == [101, 201, 301, 401]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -66,7 +66,7 @@ def test_dynamic_sequence_list_comp_2():
     assert res == [101, 201, 301, 401]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

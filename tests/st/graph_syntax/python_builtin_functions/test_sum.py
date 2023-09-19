@@ -42,7 +42,7 @@ def test_fallback_sum_tensor_n_default_1():
     assert out == 12
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -84,7 +84,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_1():
     assert out == 16
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -168,7 +168,7 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_1():
     assert "unsupported operand type" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -117,7 +117,7 @@ def test_fallback_any_asnumpy():
     assert out[0] and out[1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

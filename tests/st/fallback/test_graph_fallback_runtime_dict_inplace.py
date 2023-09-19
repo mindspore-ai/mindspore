@@ -47,7 +47,7 @@ def test_global_dict_used_in_graph():
 global_dict_2 = {"1": [1, 2, 3, 4]}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -69,7 +69,7 @@ def test_global_dict_used_in_graph_2():
 global_dict_3 = {"1": ([np.array([1, 2, 3]), np.array([4, 5, 6])], "test")}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -113,7 +113,7 @@ def test_global_dict_as_graph_input():
 global_input_dict_2 = {"1": [1, 2, 3, 4]}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -135,7 +135,7 @@ def test_global_dict_as_graph_input_2():
 global_input_dict_3 = {"1": ([1, 2, 3, 4], 5, 6)}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

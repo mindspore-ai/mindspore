@@ -67,7 +67,7 @@ def test_while_after_while_tensor_2():
     assert res == 6
 
 
-@case_register.level0
+@case_register.level1
 @case_register.target_gpu
 @case_register.target_ascend
 def test_while_after_while_numpy_2():
