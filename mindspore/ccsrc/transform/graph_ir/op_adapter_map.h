@@ -481,6 +481,8 @@ constexpr const char kNameAffineGrid[] = "AffineGrid";
 constexpr const char kNameMoeFFN[] = "MoeFFN";
 constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 constexpr const char kNameNonZeroV2[] = "NonZeroV2";
+constexpr const char kNameResize[] = "Resize";
+constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
 
 class OpAdapterDesc;
 

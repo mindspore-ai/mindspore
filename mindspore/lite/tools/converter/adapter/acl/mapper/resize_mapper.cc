@@ -68,9 +68,19 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::LINEAR)) {
     dst_prim = std::make_shared<acl::ResizeBilinearV2>();
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::AREA)) {
-    dst_prim = std::make_shared<acl::ResizeArea>();
+    dst_prim = std::make_shared<acl::AdaptiveAvgPool>();
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::CUBIC)) {
-    dst_prim = std::make_shared<acl::ResizeBicubic>();
+    ops::Resize op_resize;
+    dst_prim = op_resize.GetPrim();
+    dst_prim->set_attr("coordinate_transformation_mode", MakeValue("pytorch_half_pixel"));
+    dst_prim->set_attr("mode", MakeValue("cubic"));
+    auto func_graph = cnode->func_graph();
+    auto roi_node = opt::BuildFloatValueParameterNode(func_graph, 0, cnode->fullname_with_scope() + "_roi");
+    auto scales_node = opt::BuildFloatVecParameterNode(func_graph, {0}, cnode->fullname_with_scope() + "_scales");
+    auto inputs = cnode->inputs();
+    (void)inputs.insert(inputs.begin() + kNameSizeTwo, scales_node);
+    (void)inputs.insert(inputs.begin() + kNameSizeTwo, roi_node);
+    cnode->set_inputs(inputs);
   } else {
     MS_LOG(ERROR) << "Not support resize method " << method << ", cnode " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -84,6 +94,7 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   if (coordinate_transformation_mode_ptr != nullptr &&
       GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::ALIGN_CORNERS) {
     dst_prim->set_attr("align_corners", MakeValue(true));
+    dst_prim->set_attr("coordinate_transformation_mode", MakeValue("align_corners"));
   }
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
