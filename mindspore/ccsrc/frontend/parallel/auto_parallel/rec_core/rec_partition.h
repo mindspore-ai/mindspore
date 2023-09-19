@@ -52,7 +52,7 @@ Status PartitionForAllDevices(size_t num_device, double device_memory, const std
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
-Status DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph);
+void DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph);
 
 StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str, StrategyRec new_str);
 

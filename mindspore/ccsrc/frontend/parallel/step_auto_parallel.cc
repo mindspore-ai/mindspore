@@ -1322,9 +1322,7 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
 
   for (auto op : ops) {
     if (op->type() == GET_NEXT) {
-      auto outputs_tensor_size = op->outputs_tensor_info().size();
-      for (size_t i = 0; i < outputs_tensor_size; i++) {
-        auto shape = op->outputs_tensor_info()[i].shape();
+      for (auto shape : op->outputs_shape()) {
         if (!shape.empty()) {
           total_batch_size = shape[0];
           break;

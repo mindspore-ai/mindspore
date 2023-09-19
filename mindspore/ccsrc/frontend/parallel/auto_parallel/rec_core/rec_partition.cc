@@ -408,9 +408,7 @@ Status PartitionForAllDevices(size_t num_device, double device_memory, const std
     PartitionPipelineStages(device_memory, graph);
   }
 
-  if (DevicesMemoryControl(num_device, device_memory, graph) != SUCCESS) {
-    return FAILED;
-  }
+  DevicesMemoryControl(num_device, device_memory, graph);
   return SUCCESS;
 }
 
@@ -432,7 +430,7 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node) {
   return Node;
 }
 
-Status DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph) {
+void DevicesMemoryControl(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (num_device == 0) {
     MS_LOG(EXCEPTION) << "Failure: device number is 0.";
@@ -455,9 +453,7 @@ Status DevicesMemoryControl(const size_t num_device, const double device_memory,
   }
 
   if (device_memory < (used_memory / num_device)) {
-    MS_LOG(EXCEPTION) << "Failure: Out of memory!";
-  } else {
-    return SUCCESS;
+    MS_LOG(WARNING) << "It is estimated that the task may collapse due to out of memory!";
   }
 }
 
