@@ -21,6 +21,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kInputNum = 2;
+constexpr size_t kOutputNum = 1;
 template <typename T>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateIgammacKernelPtr(const std::string &kernel_name,
                                                                       const uint32_t &device_id) {
@@ -41,6 +43,7 @@ bool IgammacGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
+  MS_EXCEPTION_IF_NULL(helper_ptr_);
   if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
     return false;
   }
@@ -49,6 +52,7 @@ bool IgammacGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
 bool IgammacGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Igammac>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
@@ -64,6 +68,8 @@ bool IgammacGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int IgammacGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
@@ -75,6 +81,7 @@ int IgammacGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   input_shapes.emplace_back(a_shape);
   input_shapes.emplace_back(x_shape);
   output_shapes.emplace_back(out_shape);
+  MS_EXCEPTION_IF_NULL(helper_ptr_);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }

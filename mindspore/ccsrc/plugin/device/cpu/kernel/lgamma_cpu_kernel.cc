@@ -57,6 +57,8 @@ inline Eigen::half ScalarLgamma(Eigen::half x) {
 int LgammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others) == KRET_RESIZE_FAILED) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return KRET_RESIZE_FAILED;
@@ -74,8 +76,10 @@ bool LgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto input_x = reinterpret_cast<Tin *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<Tout *>(outputs[0]->addr);
+  auto input_x = GetDeviceAddress<Tin>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input_x);
+  auto output_y = GetDeviceAddress<Tout>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_y);
 
   for (int64_t i = 0; i < input_tensor_size_; i++) {
     *(output_y + i) = ScalarLgamma<Tin, Tout>(*(input_x + i));

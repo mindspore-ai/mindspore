@@ -61,7 +61,8 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       T *ws_dx = GetDeviceAddress<T>(workspace, kIndex3);
       float *ws_scale = GetDeviceAddress<float>(workspace, kIndex4);
 
-      TransposeInfo InInfo, OutInfo;
+      TransposeInfo InInfo;
+      TransposeInfo OutInfo;
       InInfo.input_shape = input_shape_;
       InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
       OutInfo.input_shape = transpose_shape_;

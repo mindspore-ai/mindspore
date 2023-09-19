@@ -1962,7 +1962,8 @@ class TupleToArray(PrimitiveWithInfer):
             ret = np.array(x, np.float32)
         return Tensor(ret)
 
-    def __call__(self, x):
+    def __call__(self, *args):
+        x, = args
         args = list()
         if isinstance(x, range):
             args.append(tuple(x))
@@ -2426,7 +2427,8 @@ class Tile(PrimitiveWithInfer):
         """Initialize Tile"""
         self.init_prim_io_names(inputs=['x', 'multiples'], outputs=['output'])
 
-    def check_elim(self, base_tensor, multiplier):
+    def check_elim(self, *args):
+        base_tensor, multiplier = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")

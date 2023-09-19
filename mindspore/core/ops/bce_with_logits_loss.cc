@@ -86,7 +86,7 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
       << "', the two input 'weight' and 'pos_weight' shape can not broadcast to logits and label.";
   }
   if (!IsDynamic(logits_shape) && !IsDynamic(broadcast_weight_shape)) {
-    (void)CheckAndConvertUtils::Check("label_shape", logits_shape, kEqual, broadcast_weight_shape, op_name);
+    CheckAndConvertUtils::Check("label_shape", logits_shape, kEqual, broadcast_weight_shape, op_name);
   }
 
   // For BCEWithLogitsLoss, if reduction in ('mean', 'sum'), output will be a scalar.

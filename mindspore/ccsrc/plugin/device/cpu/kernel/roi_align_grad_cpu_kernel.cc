@@ -62,7 +62,10 @@ void bilinear_interpolate(const int height, const int width, T y, T x, int *x_lo
   }
 
   // distance to nearest points
-  T lx, ly, hx, hy;
+  T lx;
+  T ly;
+  T hx;
+  T hy;
   ly = y - static_cast<T>(*y_low), lx = x - static_cast<T>(*x_low);
   hy = kOne - ly, hx = kOne - lx;
 

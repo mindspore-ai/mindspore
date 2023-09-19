@@ -66,8 +66,10 @@ int DigammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 template <typename T>
 bool DigammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs) {
-  T *input = GetDeviceAddress<T>(inputs, 0);
-  T *output = GetDeviceAddress<T>(outputs, 0);
+  auto input = GetDeviceAddress<T>(inputs, 0);
+  MS_EXCEPTION_IF_NULL(input);
+  auto output = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output);
   auto status = CalDigamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

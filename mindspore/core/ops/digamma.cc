@@ -38,7 +38,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr DigammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr DigammaInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Digamma", input_args, 0);
   auto input_shape = input_shape_ptr->shape();
   if (IsDynamicRank(input_shape)) {

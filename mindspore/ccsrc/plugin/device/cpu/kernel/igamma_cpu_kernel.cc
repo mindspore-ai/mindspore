@@ -347,6 +347,7 @@ bool IgammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
   dtype_ = inputs[kInputIndex0]->GetDtype();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -359,6 +360,8 @@ bool IgammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 int IgammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -387,6 +390,12 @@ void IgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  for (size_t i = 0; i < kInputNum; ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+  }
+  for (size_t i = 0; i < kOutputNum; ++i) {
+    MS_EXCEPTION_IF_NULL(outputs[i]);
+  }
   size_t in0_elements_nums = get_element_num(a_shape_);
   size_t in1_elements_nums = get_element_num(x_shape_);
   bool isNeedBcast = (a_shape_ == x_shape_) || (in0_elements_nums == 1) || (in1_elements_nums == 1);
