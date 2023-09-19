@@ -20,48 +20,56 @@
 
 namespace mindspore {
 namespace kernel {
-void EnvironGetCpuKernelMod::InitKernel(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!EnvironMgr::GetInstance().CheckEnvInput(node)) {
-    MS_LOG(EXCEPTION) << "The input checks invalid, kernel: " << node->fullname_with_scope();
+int EnvironGetCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  if (!EnvironMgr::GetInstance().CheckEnvInput(primitive_, inputs, outputs)) {
+    MS_LOG(EXCEPTION) << "The input checks invalid, kernel: " << kernel_name_;
   }
 
-  value_type_attr_ = TypeId(common::AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
-  MS_LOG(INFO) << "The EnvironGet kernel " << node->fullname_with_scope() << " value type: " << value_type_attr_;
+  value_type_attr_ = TypeId(GetValue<int>(primitive_->GetAttr(kEnvValueTypeAttr)));
+  MS_LOG(INFO) << "The EnvironGet kernel " << kernel_name_ << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);
 
-  auto value_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-  auto value_shapes = AnfAlgo::GetOutputDeviceShape(node, 0);
-  auto default_value_type = AnfAlgo::GetInputDeviceDataType(node, 2);
-  auto default_value_shapes = AnfAlgo::GetInputDeviceShape(node, 2);
-  if (AnfAlgo::IsShapesDynamic({value_shapes, default_value_shapes})) {
-    return;
+  auto value_type = outputs[kIndex0]->dtype_id();
+  const auto &value_shapes = outputs[kIndex0]->GetShapeVector();
+  auto default_value_type = inputs[kIndex2]->dtype_id();
+  const auto &default_value_shapes = inputs[kIndex2]->GetShapeVector();
+  if (IsDynamic(default_value_shapes)) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+  if (IsDynamic(value_shapes)) {
+    return KRET_UNKNOWN_OUT_SHAPE;
   }
   if ((value_type != default_value_type) || (value_shapes != default_value_shapes)) {
-    MS_LOG(EXCEPTION) << "The env value checks invalid, kernel: " << node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "The env value checks invalid, kernel: " << kernel_name_;
   }
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
     value_size_ *= static_cast<size_t>(i);
   }
-
+  input_size_list_.clear();
   input_size_list_.push_back(handle_size_);
   input_size_list_.push_back(key_size_);
   input_size_list_.push_back(value_size_);
+  output_size_list_.clear();
   output_size_list_.push_back(value_size_);
+  return KRET_OK;
 }
 
 bool EnvironGetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto input_handle = GetDeviceAddress<int64_t>(inputs, 0);
-  auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
-  auto input_default_value = GetDeviceAddress<void>(inputs, 2);
-  auto output_value = GetDeviceAddress<int64_t>(outputs, 0);
+  auto input_handle = GetDeviceAddress<int64_t>(inputs, kIndex0);
+  auto input_key = GetDeviceAddress<int64_t>(inputs, kIndex1);
+  auto input_default_value = GetDeviceAddress<void>(inputs, kIndex2);
+  auto output_value = GetDeviceAddress<int64_t>(outputs, kIndex0);
 
   // Get host handle and host key.
-  int64_t host_handle = input_handle[0];
-  int64_t host_key = input_key[0];
+  int64_t host_handle = input_handle[kIndex0];
+  int64_t host_key = input_key[kIndex0];
 
   // Get env and value by handle and key.
   const auto &env = EnvironMgr::GetInstance().Get(host_handle);
@@ -72,16 +80,14 @@ bool EnvironGetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, c
   const auto &env_value = env->Get(host_key);
   // Default value.
   auto value = input_default_value;
-  auto value_size = inputs[2]->size();
+  auto value_size = inputs[kIndex2]->size();
   auto value_type = value_type_attr_;
   if (env_value != nullptr) {
     value = env_value->addr_;
     value_size = env_value->size_;
     value_type = env_value->value_type_;
   } else {
-    auto node = cnode_ptr_.lock();
-    const std::string &prim_name = (node == nullptr) ? "" : common::AnfAlgo::GetCNodeName(node);
-    MS_LOG(INFO) << "Use the default input value for kernel: " << prim_name << ", env handle: " << host_handle
+    MS_LOG(INFO) << "Use the default input value for kernel: " << kernel_name_ << ", env handle: " << host_handle
                  << ", env key: " << host_key;
   }
 

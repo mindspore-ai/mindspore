@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <functional>
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
@@ -29,22 +30,25 @@ namespace {
 using rolling::Method;
 
 template <typename T, typename S>
-class RollingCpuKernelFunc : public DeprecatedCpuKernelFunc {
+class RollingCpuKernelFunc : public CpuKernelFunc {
  public:
   RollingCpuKernelFunc() = default;
+  explicit RollingCpuKernelFunc(const PrimitivePtr prim, std::vector<size_t> *size_list)
+      : primitive(prim), workspace_size_list(size_list) {}
   ~RollingCpuKernelFunc() override = default;
 
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &, std::vector<size_t> *, std::vector<size_t> *,
-                           std::vector<size_t> *workspace_size_list) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
     // input values
-    (void)workspace_size_list->emplace_back((sizeof(size_t) * element_size));
+    workspace_size_list->clear();
+    workspace_size_list->emplace_back((sizeof(size_t) * element_size));
+    return KRET_OK;
   }
 
  private:
@@ -80,38 +84,40 @@ class RollingCpuKernelFunc : public DeprecatedCpuKernelFunc {
   std::vector<size_t> starts_{};
   std::vector<size_t> ends_{};
   std::string kernel_name_;
+  PrimitivePtr primitive;
+  std::vector<size_t> *workspace_size_list;
 };
 
 template <typename T, typename S>
-void RollingCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+void RollingCpuKernelFunc<T, S>::InitFunc(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  kernel_name_ = primitive->name();
+  const auto &input_shape = inputs[kIndex0]->GetShapeVector();
 
   static const std::map<std::string, Method> kValidMethods = {
     {"max", Method::Max}, {"min", Method::Min}, {"mean", Method::Mean},
     {"sum", Method::Sum}, {"std", Method::Std}, {"var", Method::Var},
   };
-  auto method = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
+  auto method = GetValue<std::string>(primitive->GetAttr(METHOD));
   if (kValidMethods.find(method) == kValidMethods.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'method' must be in (max, min, sum, mean, std, var), but got " << method;
   }
   method_ = kValidMethods.at(method);
-  auto window = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
+  auto window = GetValue<int64_t>(primitive->GetAttr(WINDOW));
   if (window <= 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'window' must be greater than 0, but got " << window;
   }
   window_ = LongToInt(window);
-  min_periods_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, MIN_PERIODS);
+  min_periods_ = GetValue<int64_t>(primitive->GetAttr(MIN_PERIODS));
   if (min_periods_ <= 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'min_periods' must be greater than 0, but got "
                       << min_periods_;
   }
-  center_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CENTER);
-  auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  center_ = GetValue<bool>(primitive->GetAttr(CENTER));
+  auto axis = GetValue<int64_t>(primitive->GetAttr(AXIS));
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
-  closed_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, CLOSED);
+  closed_ = GetValue<std::string>(primitive->GetAttr(CLOSED));
   if (axis_t >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_t;
@@ -212,9 +218,6 @@ template <typename T, typename S>
 bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &workspace,
                                          const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   auto workspace_addr = reinterpret_cast<size_t *>(workspace[kIndex0]->device_ptr());
   auto output_addr = reinterpret_cast<S *>(outputs[kIndex0]->device_ptr());
@@ -256,10 +259,11 @@ bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<KernelTensor *> &inpu
 }
 
 template <typename T, typename S>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeRollingFunc() {
-  return std::make_shared<RollingCpuKernelFunc<T, S>>();
+std::shared_ptr<CpuKernelFunc> SpecializeRollingFunc(const PrimitivePtr prim, std::vector<size_t> *size_list) {
+  return std::make_shared<RollingCpuKernelFunc<T, S>>(prim, size_list);
 }
-using SpecializeRollingFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using SpecializeRollingFuncCreator =
+  std::function<std::shared_ptr<CpuKernelFunc>(const PrimitivePtr prim, std::vector<size_t> *size_list)>;
 static std::vector<std::pair<KernelAttr, SpecializeRollingFuncCreator>> kernel_attr_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    SpecializeRollingFunc<float, float>},
@@ -275,16 +279,24 @@ static std::vector<std::pair<KernelAttr, SpecializeRollingFuncCreator>> kernel_a
    SpecializeRollingFunc<int64_t, double>}};
 }  // namespace
 
-void RollingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool RollingCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Arithmetic does not support this kernel data type: " << kernel_attr;
   }
 
-  func_obj_ = kernel_attr_list[index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_ = kernel_attr_list[index].second(primitive_, &workspace_size_list_);
+  func_obj_->InitFunc(inputs, outputs);
+  return true;
+}
+
+int RollingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> RollingCpuKernelMod::GetOpSupport() {

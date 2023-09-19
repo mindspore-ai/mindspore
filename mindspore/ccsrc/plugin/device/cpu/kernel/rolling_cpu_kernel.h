@@ -34,12 +34,14 @@ enum Method : int {
 };
 }  // namespace rolling
 
-class RollingCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RollingCpuKernelMod : public NativeCpuKernelMod {
  public:
   RollingCpuKernelMod() = default;
   ~RollingCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
@@ -48,14 +50,8 @@ class RollingCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override {
-    DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-    func_obj_->InitInputOutputSize(kernel_node, &input_size_list_, &output_size_list_, &workspace_size_list_);
-  }
-
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
 }  // namespace kernel
 }  // namespace mindspore

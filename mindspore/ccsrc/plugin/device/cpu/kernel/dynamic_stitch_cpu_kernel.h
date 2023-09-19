@@ -26,17 +26,21 @@
 namespace mindspore {
 namespace kernel {
 
-class DynamicStitchCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
  public:
   DynamicStitchCpuKernelMod() = default;
   ~DynamicStitchCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
+
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>
@@ -46,6 +50,7 @@ class DynamicStitchCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, DynamicStitchFunc>> func_list_;
   DynamicStitchFunc kernel_func_;
   size_t input_tuple_num_{1};
+  ShapeVector result_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
