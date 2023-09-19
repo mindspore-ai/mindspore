@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 from mindspore import Tensor, context, jit, ops, Parameter
 from mindspore.ops.operations._sequence_ops import SequenceAddN
 
@@ -23,7 +24,9 @@ class ListClass:
 
 list_obj = ListClass()
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_base():
     """
     Feature: Backend support any type.
@@ -40,7 +43,9 @@ def test_fallback_base():
     assert ret
 
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_add_weight():
     """
     Feature: Backend support any type.
@@ -65,6 +70,9 @@ def test_fallback_add_weight():
     assert ret2
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_call_twice():
     """
     Feature: Backend support any type.
@@ -83,6 +91,9 @@ def test_fallback_call_twice():
     assert ret2
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_return_tuple():
     """
     Feature: Backend support any type.
@@ -103,6 +114,9 @@ def test_fallback_return_tuple():
     assert ret2
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_if():
     """
     Feature: Backend support any type.
@@ -132,6 +146,9 @@ def test_fallback_if():
     assert ret2
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_while():
     """
     Feature: Backend support any type.
@@ -159,6 +176,9 @@ def test_fallback_while():
     assert ret2
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_input_value_node():
     """
     Feature: Backend support any type.
@@ -177,6 +197,9 @@ def test_fallback_input_value_node():
     assert ret
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_heter():
     """
     Feature: Backend support any type.
@@ -198,6 +221,9 @@ def test_fallback_heter():
     assert ret
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_output_batch():
     """
     Feature: Backend support any type.
@@ -216,6 +242,9 @@ def test_fallback_output_batch():
     assert ret
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_output_parameter():
     """
     Feature: Backend support any type.
@@ -234,6 +263,9 @@ def test_fallback_output_parameter():
     assert ret
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_fallback_output_valuenode():
     """
     Feature: Backend support any type.
