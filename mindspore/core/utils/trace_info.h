@@ -39,7 +39,6 @@ class TraceInfo {
   virtual std::string full_name() const { return name(); }
   virtual TraceInfoPtr clone() { return std::make_shared<TraceInfo>(*this); }
   virtual std::string action_name() const { return ""; }
-  std::string GetActionBetweenNode(const DebugInfoPtr &info) const;
   void set_debug_info(const DebugInfoPtr &info) { debug_info_ = info; }
   const DebugInfoPtr &debug_info() const { return debug_info_; }
   template <typename T>
@@ -329,6 +328,14 @@ class TraceEvaluatorGenGraph : public TraceInfo {
   ~TraceEvaluatorGenGraph() override = default;
   MS_DECLARE_TRACE_NAME_SYMBOL("GenEvaluatorGraph", "gen_evaluator_graph_");
   TraceInfoPtr clone() override { return std::make_shared<TraceEvaluatorGenGraph>(*this); }
+};
+
+class TraceParse : public TraceInfo {
+ public:
+  explicit TraceParse(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceParse() override = default;
+  MS_DECLARE_TRACE_NAME_SYMBOL("parse", "");
+  TraceInfoPtr clone() override { return std::make_shared<TraceParse>(*this); }
 };
 
 class TraceResolve : public TraceInfo {

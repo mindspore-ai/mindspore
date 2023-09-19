@@ -562,7 +562,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     if (!bprop_graph->free_variables_nodes().empty()) {
       MS_LOG(EXCEPTION) << "The user defined 'bprop' function in scope " << primal->output()->scope()->name()
                         << " does not support using Parameter.\n"
-                        << trace::GetDebugInfo(bprop_graph->debug_info());
+                        << trace::GetDebugInfoStr(bprop_graph->debug_info());
     }
     // Check the func decorated by @custom_vjp.
     if (g_k_prims.CheckCustomVjp(bprop_graph)) {

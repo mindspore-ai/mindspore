@@ -441,7 +441,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
     constexpr auto recursive_level = 2;
     MS_LOG(INTERNAL_EXCEPTION) << "Specializer should not be null, node: " << node->DebugString(recursive_level)
                                << ", NodeInfo: \n"
-                               << trace::GetDebugInfo(node->debug_info()) << "\n"
+                               << trace::GetDebugInfoStr(node->debug_info()) << "\n"
                                << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " has no parent context?";
   }
 
@@ -503,7 +503,7 @@ AnfNodePtr FuncGraphSpecializer::GetReplicatedNode(const AnfNodePtr &node) {
     constexpr auto recursive_level = 2;
     MS_LOG(INTERNAL_EXCEPTION) << "Specializer should not be null, node: " << node->DebugString(recursive_level)
                                << ", NodeInfo: \n"
-                               << trace::GetDebugInfo(node->debug_info()) << "\n"
+                               << trace::GetDebugInfoStr(node->debug_info()) << "\n"
                                << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " has no parent context?";
   }
   auto iter = specializer->cloned_nodes().find(node);
@@ -532,12 +532,12 @@ std::shared_ptr<FuncGraphSpecializer> FuncGraphSpecializer::GetTopSpecializer(co
       if (top_context->func_graph() == fg) {  // `fg` is top func graph.
         MS_LOG(INFO) << "Used top func graph specializer as parent for "
                      << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << ", node: " << node->DebugString()
-                     << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+                     << ", NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
         specializer = specializer_->GetFuncGraphSpecializer(top_context);
         if (specializer == nullptr) {
           constexpr auto recursive_level = 2;
           MS_LOG(INTERNAL_EXCEPTION) << "Specializer must not be null, node: " << node->DebugString(recursive_level)
-                                     << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+                                     << ", NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
         }
       } else {
         MS_EXCEPTION_IF_NULL(top_context->func_graph());
@@ -590,11 +590,12 @@ void FuncGraphSpecializer::FirstPass() {
         // If `parent_` is null and forwarded `node` is a Parameter, we'll try to use top func graph as parent.
         parent = specializer_->GetFuncGraphSpecializer(specializer_->top_context());
         MS_LOG(INFO) << "Used top func graph specializer as parent for " << func_graph_->ToString()
-                     << ", node: " << node->DebugString() << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+                     << ", node: " << node->DebugString()
+                     << ", NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
       }
       if (parent == nullptr) {
         MS_LOG(INTERNAL_EXCEPTION) << "Parent must not be null, node: " << node->DebugString()
-                                   << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+                                   << ", NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
       }
       parent->AddTodoItem(node);
       parent->FirstPass();
@@ -1110,7 +1111,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
 
   if (func_abs->context() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Func context is nullptr NodeInfo: "
-                               << trace::GetDebugInfo(func_graph_->debug_info());
+                               << trace::GetDebugInfoStr(func_graph_->debug_info());
   }
   auto context = GetAnalysisContext(engine_, real_eval, args_abs_list);
   if (context == nullptr) {

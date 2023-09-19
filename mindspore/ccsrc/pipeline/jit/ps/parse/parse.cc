@@ -54,7 +54,8 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     MS_LOG(ERROR) << "Parse the python code failed, obj is nullptr or none";
     return nullptr;
   }
-  MS_LOG(DEBUG) << "ast obj: " << py::str(obj) << ", python_mod_get_parse_method: " << python_mod_get_parse_method;
+  MS_LOG(DEBUG) << "Parse ast obj: " << py::str(obj)
+                << ", python_mod_get_parse_method: " << python_mod_get_parse_method;
 
   auto ast = std::make_shared<ParseFunctionAst>(obj);
   bool success = ast->InitParseAstInfo(python_mod_get_parse_method);
@@ -72,6 +73,7 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     return nullptr;
   }
 
+  MS_LOG(DEBUG) << "Finish Parsing " << py::str(obj);
   return func_graph;
 }
 
@@ -170,6 +172,7 @@ void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraph
                  << ". FuncGraph: " << func_graph->ToString()
                  << ". We will add a 'return None' statement automatically.";
     // If the def function has no return statement, mean that return none.
+    MS_EXCEPTION_IF_NULL(fn->debug_info()->location());
     TraceGuard trace_guard_none(fn->debug_info()->location());
     auto none_node = NewValueNode(kNone);
     auto return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
@@ -685,7 +688,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   ScopePtr scope = GetScopeForParseFunction();
   // The node created in the parsefunction context, will inherit the scope created using scope_guard
   ScopeGuard scope_guard(scope);
-  TraceGuard trace_guard(data_converter::GetObjKey(ast_->obj())[0], GetLocation(node));
+  TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
   FunctionBlockPtr func_block = MakeFunctionBlock();
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
@@ -695,7 +698,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   func_block->Mature();
   auto current_fg = func_block->func_graph();
   auto function_name = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "name"));
-  MS_LOG(DEBUG) << "The function name is " << function_name;
+  MS_LOG(DEBUG) << "The function name is " << function_name << ", loc: " << GetLocation(node)->ToString();
   // Replace the construct function name with the cell name
   constexpr auto cell_construct = "construct";
   bool is_construct_function = false;
@@ -780,7 +783,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   MS_EXCEPTION_IF_NULL(ast_);
   ScopePtr scope = GetScopeForParseFunction();
   ScopeGuard scope_guard(scope);
-  TraceGuard trace_guard(data_converter::GetObjKey(ast_->obj())[0], GetLocation(node));
+  TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
   FunctionBlockPtr func_block = MakeFunctionBlock();
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
@@ -802,6 +805,11 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
   current_fg->debug_info()->set_name(function_name);
   GenerateArgsNodeForFunction(func_block, node);
+
+  // When parsing the top graph of construct, save the top graph
+  if (GetTopFuncGraph() == nullptr) {
+    UpdateTopFuncGraph(func_block->func_graph());
+  }
 
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
@@ -986,7 +994,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       MS_LOG(INFO) << "Isolated node found(NoReturn), no_return_node: " << no_return_node->DebugString()
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
-                   << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
+                   << ", Line: " << trace::GetDebugInfoStr(no_return_node->debug_info(), "", kSourceLineTipDiscard);
       // Some builtin functions need to be implemented using fallback.
       auto isolated_node = HandleInterpret(block, no_return_node, value_object);
       block->AddIsolatedNode(isolated_node);
@@ -1037,6 +1045,7 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
                                              res[column_index].cast<int64_t>(), res[line_end_index].cast<int64_t>(),
                                              res[column_end_index].cast<int64_t>(),
                                              res[expr_src_index].cast<std::string>(), std::move(comments_str_list));
+  MS_LOG(DEBUG) << "node: " << py::str(node) << ",\n" << location->DebugString();
   return location;
 }
 
@@ -1332,7 +1341,7 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
   return block->MakeResolve(name_space, symbol);
 }
 
-void Parser::ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes) {
+void Parser::HandleStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes) {
   for (size_t i = 0; i < args.size(); ++i) {
     AnfNodePtr node = ParseExprNode(block, args[i]);
     node = HandleInterpret(block, node, args[i]);
@@ -1340,11 +1349,11 @@ void Parser::ParseStrInError(const FunctionBlockPtr &block, const py::list &args
   }
 }
 
-std::vector<AnfNodePtr> Parser::ParseException(const FunctionBlockPtr &block, const py::list &args,
-                                               const std::string &name) {
+std::vector<AnfNodePtr> Parser::HandleException(const FunctionBlockPtr &block, const py::list &args,
+                                                const std::string &name) {
   auto exception_type_node = NewValueNode(name);
   std::vector<AnfNodePtr> node_inputs = {exception_type_node};
-  ParseStrInError(block, args, &node_inputs);
+  HandleStrInError(block, args, &node_inputs);
   return node_inputs;
 }
 
@@ -1379,7 +1388,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name = python_adapter::GetPyObjAttr(function_ast_node, "id");
     auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
-    auto node_list = ParseException(block, args, name_id);
+    auto node_list = HandleException(block, args, name_id);
     if (block->CheckHasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
@@ -1688,6 +1697,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
       return ParseSuper(block, args);
     }
   }
+  MS_LOG(DEBUG) << "Process ast Call, name_id: " << name_id;
   auto call_function_node = ParseExprNode(block, function_ast_node);
   // Function call arguments should be passed in as groups and unpacked later using unpack call
   ArgsContext args_context = ArgsContext();
@@ -2960,11 +2970,9 @@ AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block,
 }
 
 CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter_node, const AnfNodePtr &loop_var) {
-  // Construct global dict node.
-  auto global_dict_key = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
-  auto global_dict_value = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
-  auto global_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), global_dict_key, global_dict_value});
-
+  // Create empty global dict node.
+  PyObjectWrapperPtr empty_interpreted_global_dict = std::make_shared<InterpretedObject>(py::dict());
+  auto empty_global_dict_node = NewValueNode(empty_interpreted_global_dict);
   // Construct local dict node.
   auto local_dict_key = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), NewValueNode("x"), NewValueNode("i")});
   auto local_dict_value = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), iter_node, loop_var});
@@ -2975,7 +2983,7 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   auto script_node = NewValueNode(script);
 
   auto prim = NewValueNode(prim::kPrimPyInterpret);
-  auto interpret_get_item = fg->NewCNodeInOrder({prim, script_node, global_dict_node, local_dict_node});
+  auto interpret_get_item = fg->NewCNodeInOrder({prim, script_node, empty_global_dict_node, local_dict_node});
   interpret_get_item->set_debug_info(iter_node->debug_info());
   return interpret_get_item;
 }
@@ -3613,6 +3621,7 @@ AnfNodePtr Parser::ParseDictComp(const FunctionBlockPtr &block, const py::object
 
 AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast JoinedStr.";
+  TraceGuard trace_guard(GetLocation(node));
   MS_EXCEPTION_IF_NULL(block);
   const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
   py::list py_values = python_adapter::GetPyObjAttr(node, "values");
@@ -3639,6 +3648,7 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
 
 AnfNodePtr Parser::ParseFormattedValue(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast FormattedValue.";
+  TraceGuard trace_guard(GetLocation(node));
   MS_EXCEPTION_IF_NULL(block);
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   AnfNodePtr value_node = ParseExprNode(block, value_object);
@@ -3716,7 +3726,7 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
                               << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
                               << py::str(obj_type).cast<std::string>() << ".\n\n"
-                              << trace::GetDebugInfo(target_node->debug_info());
+                              << trace::GetDebugInfoStr(target_node->debug_info());
     }
     MS_LOG(DEBUG) << "Erase unused node: " << target_node->DebugString();
     block->func_graph()->EraseUnusedNodeInOrder(target_node);
@@ -3834,7 +3844,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
       MS_EXCEPTION(TypeError) << "'" << var_name
                               << "' should be initialized in the '__init__' function before subscript.\n\n"
-                              << trace::GetDebugInfo(value_node->debug_info());
+                              << trace::GetDebugInfoStr(value_node->debug_info());
     }
     auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
     if (py::hasattr(obj, "__cell_as_list__") || py::hasattr(obj, "__cell_as_dict__")) {
@@ -3849,7 +3859,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
                                 << " should be initialized as a 'Parameter' in the '__init__' function"
                                 << " to perform assign subscript, but got: " << py::str(obj).cast<std::string>()
                                 << "' with type '" << py::str(obj_type).cast<std::string>() << "'.\n\n"
-                                << trace::GetDebugInfo(value_node->debug_info());
+                                << trace::GetDebugInfoStr(value_node->debug_info());
       }
     }
     block->WriteVariable(var_name, setitem_app);
@@ -3963,7 +3973,7 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(node);
   // Check if script_text is in global/local params.
-  py::dict global_dict = block->global_py_params();
+  const py::dict &global_dict = block->global_py_params();
   auto keys = std::get<0>(block->local_py_params());
   if (IsScriptInParams(script_text, global_dict, keys, block->func_graph())) {
     return false;
@@ -3980,12 +3990,8 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   }
 
   // Prepare global parameters.
-  ValuePtr globals_converted_value = nullptr;
-  py::dict global_dict = block->global_py_params();
-  if (!ConvertData(global_dict, &globals_converted_value)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
-  }
-  auto global_dict_node = NewValueNode(globals_converted_value);
+  PyObjectWrapperPtr interpreted_global_dict = std::make_shared<InterpretedObject>(block->global_py_params());
+  auto global_dict_node = NewValueNode(interpreted_global_dict);
   // Prepare local parameters. Select the needed local parameters for script.
   auto [keys, values] = block->local_py_params();
   std::vector<AnfNodePtr> filter_keys;
@@ -4027,7 +4033,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
                << ",\ninterpreted_node: " << interpreted_node->DebugString(recursive_level);
 
   // Print a hint for user.
-  auto line_info = trace::GetDebugInfo(value_node->debug_info());
+  auto line_info = trace::GetDebugInfoStr(value_node->debug_info());
   MS_LOG(INFO) << "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter:"
                << "\n\n"
                << line_info;
@@ -4149,6 +4155,7 @@ FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::obje
 
 FunctionBlockPtr Parser::ParseRaise(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process raise statement";
+  TraceGuard trace_guard(GetLocation(node));
   MS_EXCEPTION_IF_NULL(block);
   auto func_graph = block->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);

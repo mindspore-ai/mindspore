@@ -217,7 +217,7 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
     MS_LOG(EXCEPTION)
       << "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only "
       << cloned_bprop_fg->parameters().size() << ".\n"
-      << trace::GetDebugInfo(cloned_bprop_fg->debug_info());
+      << trace::GetDebugInfoStr(cloned_bprop_fg->debug_info());
   }
   AnfNodePtr bout = BuildOutput(cloned_bprop_fg, current_primal_fg);
   cloned_bprop_fg->set_output(bout);

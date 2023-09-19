@@ -30,15 +30,15 @@ namespace {
 thread_local std::vector<TraceContext> trace_context_stack_;
 
 /// \brief Record a debug info for print.
-thread_local DebugInfoPtr record_debug_info_ = nullptr;
+thread_local DebugInfoPtr parser_debug_info_ = nullptr;
 
 /// \brief A flag to decide whether record a debug info or not.
-thread_local bool record_debug_info_flag_ = false;
+thread_local bool parser_debug_info_flag_ = false;
 }  // namespace
 
 void ClearThreadLocal() {
   trace_context_stack_.clear();
-  record_debug_info_.reset();
+  parser_debug_info_.reset();
 }
 
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
@@ -62,6 +62,19 @@ std::string HighLightLine(const std::string &line, int col_begin, int col_end, S
     return oss.str();
   }
   return temp_line;
+}
+
+std::string Location::DebugString() const {
+  std::stringstream ss;
+  ss << "Location{\n";
+  ss << "\tfile_name_: " << file_name_ << ",\n";
+  ss << "\tline_: " << line_ << ",\n";
+  ss << "\tline_end_: " << line_end_ << ",\n";
+  ss << "\tcolumn_: " << column_ << ",\n";
+  ss << "\tcolumn_end_: " << column_end_ << ",\n";
+  ss << "\tcomments_: " << comments_ << "\n";
+  ss << "}\n";
+  return ss.str();
 }
 
 // Generate debug information for the location node .
@@ -330,51 +343,45 @@ TraceContextPtr TraceManager::CurrentContextInfo() {
   return nullptr;
 }
 
-void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &location) {
+bool TraceManager::DebugTrace(const LocationPtr &location) {
   MS_EXCEPTION_IF_NULL(location);
-  (void)trace_context_stack_.emplace_back(location, func_name);
-}
-
-void TraceManager::DebugTrace(const LocationPtr &location) {
-  MS_EXCEPTION_IF_NULL(location);
-  (void)trace_context_stack_.emplace_back(location);
-  if (record_debug_info_flag_) {
-    record_debug_info_ = std::make_shared<DebugInfo>(location);
+  if (location->invalid()) {
+    MS_LOG(DEBUG) << "Trace failed";
+    return false;
   }
+  (void)trace_context_stack_.emplace_back(location);
+  if (parser_debug_info_flag_) {
+    parser_debug_info_ = std::make_shared<DebugInfo>(location);
+  }
+  MS_LOG(DEBUG) << "location: " << location->ToString();
+  return true;
 }
 
-void TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
+bool TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
   MS_EXCEPTION_IF_NULL(trace_info);
   auto &debug_info = trace_info->debug_info();
   MS_EXCEPTION_IF_NULL(debug_info);
   (void)trace_context_stack_.emplace_back(trace_info);
-  if (record_debug_info_flag_) {
-    record_debug_info_ = debug_info;
+  if (parser_debug_info_flag_) {
+    parser_debug_info_ = debug_info;
   }
+  return true;
 }
 
-void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info) {
-  MS_EXCEPTION_IF_NULL(debug_info);
-  MS_EXCEPTION_IF_NULL(trace_info);
-  auto cloned_info = trace_info->clone();
-  cloned_info->set_debug_info(debug_info);
-  (void)trace_context_stack_.emplace_back(cloned_info);
+void TraceManager::EndTrace() noexcept { trace_context_stack_.pop_back(); }
+
+DebugInfoPtr TraceManager::parser_debug_info() { return parser_debug_info_; }
+
+void TraceManager::ClearParserDebugInfo() { parser_debug_info_ = nullptr; }
+
+void TraceManager::CloseParserDebugInfoFlag() {
+  parser_debug_info_flag_ = false;
+  ClearParserDebugInfo();
 }
 
-void TraceManager::EndTrace() noexcept {
-  trace_context_stack_.pop_back();
-  ClearParseOrResolveDebugInfo();
-}
+void TraceManager::OpenParserDebugInfoFlag() { parser_debug_info_flag_ = true; }
 
-DebugInfoPtr TraceManager::record_debug_info() { return record_debug_info_; }
-
-void TraceManager::ClearParseOrResolveDebugInfo() { record_debug_info_ = nullptr; }
-
-void TraceManager::CloseRecordDebugInfoFlag() { record_debug_info_flag_ = false; }
-
-void TraceManager::OpenRecordDebugInfoFlag() { record_debug_info_flag_ = true; }
-
-bool TraceManager::record_debug_info_flag() { return record_debug_info_flag_; }
+bool TraceManager::parser_debug_info_flag() { return parser_debug_info_flag_; }
 
 LocationPtr GetFirstLocation(const DebugInfoPtr &debug_info) {
   auto tmp = debug_info;

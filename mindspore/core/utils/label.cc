@@ -84,7 +84,8 @@ NameWithTrace CollectTraceInfos(const DebugInfoPtr &debug_info, TraceLabelType t
     if (root_info->trace_info() == nullptr) {
       break;
     }
-    if (root_info->trace_info()->isa<mindspore::TraceResolve>() ||
+    if (root_info->trace_info()->isa<mindspore::TraceParse>() ||
+        root_info->trace_info()->isa<mindspore::TraceResolve>() ||
         root_info->trace_info()->isa<mindspore::TraceExpandJ>() ||
         root_info->trace_info()->isa<mindspore::TraceGenMetaFuncGraph>() ||
         root_info->trace_info()->isa<mindspore::TraceGenerateVarArg>() ||

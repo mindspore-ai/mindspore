@@ -34,6 +34,7 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     }
     main_func();
   } catch (const py::error_already_set &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (already_set_error_handler) {
       already_set_error_handler();
     }
@@ -44,6 +45,7 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     // Re-throw this exception to Python interpreter to handle it
     throw(py::error_already_set(ex));
   } catch (const py::type_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -55,10 +57,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::type_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::type_error(ss.str());
     }
   } catch (const py::value_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -70,10 +73,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::value_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::value_error(ss.str());
     }
   } catch (const py::index_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -85,10 +89,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::index_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::index_error(ss.str());
     }
   } catch (const py::key_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -100,10 +105,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::key_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::key_error(ss.str());
     }
   } catch (const py::attribute_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -115,10 +121,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::attribute_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::attribute_error(ss.str());
     }
   } catch (const py::name_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -130,10 +137,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::name_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::name_error(ss.str());
     }
   } catch (const py::assertion_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -145,10 +153,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::assertion_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::assertion_error(ss.str());
     }
   } catch (const py::base_exception &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -160,10 +169,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::base_exception(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::base_exception(ss.str());
     }
   } catch (const py::keyboard_interrupt &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -175,10 +185,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::keyboard_interrupt(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::keyboard_interrupt(ss.str());
     }
   } catch (const py::stop_iteration &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -190,10 +201,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::stop_iteration(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::stop_iteration(ss.str());
     }
   } catch (const py::overflow_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -205,10 +217,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::overflow_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::overflow_error(ss.str());
     }
   } catch (const py::zero_division_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -220,10 +233,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::zero_division_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::zero_division_error(ss.str());
     }
   } catch (const py::environment_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -235,10 +249,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::environment_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::environment_error(ss.str());
     }
   } catch (const py::io_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -250,10 +265,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::io_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::io_error(ss.str());
     }
   } catch (const py::os_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -265,10 +281,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::os_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::os_error(ss.str());
     }
   } catch (const py::memory_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -280,10 +297,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::memory_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::memory_error(ss.str());
     }
   } catch (const py::unbound_local_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -295,10 +313,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::unbound_local_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::unbound_local_error(ss.str());
     }
   } catch (const py::not_implemented_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -310,10 +329,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::not_implemented_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::not_implemented_error(ss.str());
     }
   } catch (const py::indentation_error &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -325,10 +345,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::indentation_error(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::indentation_error(ss.str());
     }
   } catch (const py::runtime_warning &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -340,10 +361,11 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::runtime_warning(ex);
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw py::runtime_warning(ss.str());
     }
   } catch (const std::exception &ex) {
+    MS_LOG(INFO) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
@@ -356,7 +378,7 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw std::runtime_error(ex.what());
     } else {
       std::stringstream ss;
-      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfoStr(debug_info);
       throw std::runtime_error(ss.str());
     }
   } catch (...) {

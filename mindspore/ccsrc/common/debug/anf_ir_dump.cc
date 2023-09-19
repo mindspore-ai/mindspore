@@ -689,7 +689,7 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
   for (const auto &cur_debug_info : need_dump_debug_infos) {
     if (cur_debug_info->location() != nullptr) {
       auto prefix = cur_debug_info->inlined() ? "      # inlined:" : "      # ";
-      auto debug_info_str = trace::GetDebugInfo(cur_debug_info, "", kSourceLineTipDiscard);
+      auto debug_info_str = trace::GetDebugInfoStr(cur_debug_info, "", kSourceLineTipDiscard);
       if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
         gsub->buffer << prefix << debug_info_str << "\n";
         (void)visited_locations.insert(debug_info_str);
@@ -704,7 +704,7 @@ void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIR
   if (!primal_debug_infos.empty()) {
     for (const auto &primal_debug_info : primal_debug_infos) {
       std::string lines;
-      auto debug_info_str = trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard);
+      auto debug_info_str = trace::GetDebugInfoStr(primal_debug_info, "      # ", kSourceLineTipDiscard);
       if (!debug_info_str.empty()) {
         lines += debug_info_str + "\n";
       }
@@ -740,7 +740,7 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
       for (const auto &debug_info : fused_debug_infos) {
         std::string lines;
         gsub->buffer << "      # Corresponding code candidate:\n";
-        auto debug_info_str = trace::GetDebugInfo(debug_info, "      # ", kSourceLineTipDiscard);
+        auto debug_info_str = trace::GetDebugInfoStr(debug_info, "      # ", kSourceLineTipDiscard);
         if (!debug_info_str.empty()) {
           lines += debug_info_str + "\n";
         }
@@ -749,7 +749,7 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
         }
       }
     } else {
-      auto debug_info_str = trace::GetDebugInfo(node->debug_info(), "      # ", kSourceLineTipDiscard);
+      auto debug_info_str = trace::GetDebugInfoStr(node->debug_info(), "      # ", kSourceLineTipDiscard);
       if (!debug_info_str.empty()) {
         gsub->buffer << debug_info_str << "\n";
       }
@@ -906,10 +906,10 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     }
     oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
-      oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+      oss << trace::GetDebugInfoStr(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
           << trace::Label(sg.first->debug_info()) << "\n";
     } else {
-      oss << trace::GetDebugInfo(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+      oss << trace::GetDebugInfoStr(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
     }
     oss << "subgraph @" << sg.first->ToString();
     if (sg.first->manager() != nullptr && sg.first->parent() != nullptr) {

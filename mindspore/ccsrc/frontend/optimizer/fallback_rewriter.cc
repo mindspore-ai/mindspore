@@ -2102,7 +2102,7 @@ class AfterOptARewriter : public BaseRewriter {
         }
       }
       auto debug_info = value_node->debug_info();
-      auto location_info = trace::GetDebugInfo(debug_info, std::string(""));
+      auto location_info = trace::GetDebugInfoStr(debug_info);
       if (location_info.empty()) {
         value_node->set_debug_info(cnode->debug_info());
       }

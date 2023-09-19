@@ -1220,9 +1220,9 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
       auto true_out = GetFuncGraphFromBranchNode(inputs[kSwitchTrueBranchIndex])->get_return();
       auto false_out = GetFuncGraphFromBranchNode(inputs[kSwitchFalseBranchIndex])->get_return();
       buffer << ", true branch: " << inputs.at(kSwitchTrueBranchIndex)->ToString() << "\n"
-             << trace::GetDebugInfo(true_out->debug_info())
+             << trace::GetDebugInfoStr(true_out->debug_info())
              << "\n, false branch: " << inputs.at(kSwitchFalseBranchIndex)->ToString() << "\n"
-             << trace::GetDebugInfo(false_out->debug_info());
+             << trace::GetDebugInfoStr(false_out->debug_info());
     } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
       constexpr int branch_index = 2;
@@ -1233,11 +1233,11 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
           auto out_node = GetValueNode<FuncGraphPtr>(tuple_inputs.at(i))->get_return();
           MS_EXCEPTION_IF_NULL(out_node);
           buffer << ", branch" << i << ": " << tuple_inputs.at(i)->ToString() << "\n"
-                 << trace::GetDebugInfo(out_node->debug_info());
+                 << trace::GetDebugInfoStr(out_node->debug_info());
         }
       }
     } else {
-      buffer << trace::GetDebugInfo(node->debug_info());
+      buffer << trace::GetDebugInfoStr(node->debug_info());
     }
   }
   buffer << "\n";

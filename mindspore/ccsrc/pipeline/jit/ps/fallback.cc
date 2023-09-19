@@ -62,7 +62,7 @@ std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &com
   err_buf << "Wrong comment format for JIT type annotation: '" << comment
           << "'.\ne.g. '# @jit.typing: () -> tensor_type[int32]' or:"
           << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor_type[{dtype_var}]\n\t...\n---\n\n"
-          << trace::GetDebugInfo(node->debug_info());
+          << trace::GetDebugInfoStr(node->debug_info());
   return err_buf.str();
 }
 
@@ -205,7 +205,7 @@ TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std
     if (!dtype->isa<Number>()) {
       MS_LOG(EXCEPTION) << "Cannot get dtype for by input string: '" << dtype_str << "', for '" << container_type_str
                         << "'\n"
-                        << trace::GetDebugInfo(node->debug_info());
+                        << trace::GetDebugInfoStr(node->debug_info());
     }
     container_type->cast<TensorTypePtr>()->set_element(dtype);
   } else if (container_type->isa<Tuple>() || container_type->isa<List>()) {  // Handle list_/tuple_ type.
@@ -213,7 +213,7 @@ TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std
     if (!dtype->isa<Number>() && !dtype->isa<TensorType>()) {
       MS_LOG(EXCEPTION) << "Cannot get element type for by input string: '" << dtype_str << "', for '"
                         << container_type_str << "'\n"
-                        << trace::GetDebugInfo(node->debug_info());
+                        << trace::GetDebugInfoStr(node->debug_info());
     }
     if (container_type->isa<Tuple>()) {
       container_type->cast<TuplePtr>()->set_elements(TypePtrList({dtype}));
@@ -302,32 +302,31 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
 
 AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                         const AnfNodePtr &node, bool replace) {
-  auto prim = NewValueNode(prim::kPrimPyInterpret);
   auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
+  // Set the value node into dict firstly.
+  SetPyObjectToLocalVariable(value_node_key, value);
+
+  // Build the script
   std::stringstream script_buffer;
   script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
   const std::string &script = script_buffer.str();
   auto script_str = std::make_shared<parse::Script>(script);
   auto script_node = NewValueNode(script_str);
 
+  // Build the global dict.
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto python_get_dict = "get_global_params";
   const auto &global_dict = python_adapter::CallPyModFn(mod, python_get_dict);
-  ValuePtr globals_converted_value = nullptr;
-  if (!parse::ConvertData(global_dict, &globals_converted_value)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
-  }
-  auto global_dict_node = NewValueNode(globals_converted_value);
-  // Set the value node into dict firstly.
-  SetPyObjectToLocalVariable(value_node_key, value);
+  parse::PyObjectWrapperPtr interpreted_global_dict = std::make_shared<parse::InterpretedObject>(global_dict);
+  auto global_dict_node = NewValueNode(interpreted_global_dict);
 
-  // Build new CNode for value node.
-  ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
-  ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
-  auto make_dict_op = NewValueNode(prim::kPrimMakeDict);
-  auto key_tuple = NewValueNode(std::make_shared<ValueTuple>(keys));
-  auto value_tuple = NewValueNode(std::make_shared<ValueTuple>(values));
-  auto local_dict_node = fg->NewCNode({make_dict_op, key_tuple, value_tuple});
+  // Build the local dict.
+  ValuePtrList local_keys({std::make_shared<StringImm>(value_node_key)});
+  ValuePtrList local_values({std::make_shared<StringImm>(value_node_key)});
+  auto local_key_tuple = NewValueNode(std::make_shared<ValueTuple>(local_keys));
+  auto local_value_tuple = NewValueNode(std::make_shared<ValueTuple>(local_values));
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_tuple, local_value_tuple});
+  auto prim = NewValueNode(prim::kPrimPyInterpret);
   auto interpret_node = fg->NewCNode({prim, script_node, global_dict_node, local_dict_node});
   if (replace) {
     fg->ReplaceInOrder(node, interpret_node);

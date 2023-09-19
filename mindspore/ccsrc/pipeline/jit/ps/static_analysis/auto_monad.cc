@@ -1216,7 +1216,7 @@ class SideEffectFinder {
     }
     // Something is wrong if we reached here.
     MS_LOG(WARNING) << "The effect info of the node is untraceable: " << node->DebugString()
-                    << ".\nLine:" << trace::GetDebugInfo(node->debug_info());
+                    << ".\nLine:" << trace::GetDebugInfoStr(node->debug_info());
     return {EffectInfo::kDetected, false, false, false, false};
   }
 

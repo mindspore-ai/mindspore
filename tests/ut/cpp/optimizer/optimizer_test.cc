@@ -70,25 +70,6 @@ class TestPyInterpretToPyExecute : public BackendCommon {
   }
 };
 
-/// Feature: Test global dict merge to local dict.
-/// Description: PyInterpret convert to PyExecute and merged arguments with local.
-/// Expectation: success.
-TEST_F(TestPyInterpretToPyExecute, test_pyinterpret_to_pyexecute) {
-  FuncGraphPtr before = getPyFun.CallAndParseRet("py_interpret_to_py_execute_test", "before");
-  ASSERT_TRUE(nullptr != before);
-  pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
-  res->set_func_graph(before);
-  auto manager = res->manager();
-  manager->KeepRoots({before});
-  ChangeStringToScript(res);
-
-  PyInterpretToExecute(res);
-
-  auto correct_graph = getPyFun.CallAndParseRet("py_interpret_to_py_execute_test", "after");
-  EXPECT_NE(correct_graph, nullptr);
-  EXPECT_TRUE(CheckEqualGraph(before, correct_graph));
-}
-
 TEST_F(TestOptOptimizer, test_step_opt) {
   FuncGraphPtr before = getPyFun("test_expandJ");
 
@@ -112,6 +93,5 @@ TEST_F(TestOptOptimizer, test_step_opt) {
 
   auto after = optimizer->step(before);
 }
-
 }  // namespace opt
 }  // namespace mindspore

@@ -328,7 +328,7 @@ void SetMindIRLoadFlag(const ResourcePtr &resource) {
 
 bool ParseAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  TraceManager::OpenRecordDebugInfoFlag();
+  TraceManager::OpenParserDebugInfoFlag();
   if (!resource->source_input()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Parse error";
   }
@@ -889,7 +889,7 @@ bool VmOptimizeAction(const ResourcePtr &resource) {
   }
 #endif
   auto ret = OptimizeAction(resource, kVmPasses);
-  TraceManager::CloseRecordDebugInfoFlag();
+  TraceManager::CloseParserDebugInfoFlag();
   return ret;
 }
 
@@ -1126,7 +1126,7 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
             MS_LOG(WARNING) << "On the Ascend platform, if you read-only access to the parameter, "
                             << "you can take the value of the parameter, so that the system can do more optimization. "
                             << "For example, change 'return param' to 'return param.value()'\n"
-                            << "Please check your code:" << trace::GetDebugInfo(user_node->debug_info());
+                            << "Please check your code:" << trace::GetDebugInfoStr(user_node->debug_info());
           }
           return true;
         }

@@ -77,7 +77,7 @@ void CompileGraph::Push(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (slots_.count(node) > 0) {
     MS_LOG(WARNING) << "Push failed node in slots:" << node->DebugString()
-                    << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+                    << " NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
     return;
   }
   MS_LOG(DEBUG) << "Push node: " << node->DebugString(true) << " height_: " << height_
@@ -114,7 +114,7 @@ int64_t CompileGraph::Ref(const AnfNodePtr &node) {
     } else {
       MS_LOG(DEBUG) << "Push.";
       if (IsValueNode<Primitive>(node)) {
-        MS_LOG(EXCEPTION) << "must not be primitive in here NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+        MS_LOG(EXCEPTION) << "must not be primitive in here NodeInfo: " << trace::GetDebugInfoStr(node->debug_info());
       } else {
         AddInst(Instruction::kPush, GetValueNode(node));
       }
@@ -166,7 +166,7 @@ int64_t CompileGraph::LinConvert(const FuncGraphPtr &graph, const GraphSegmentPt
   if (!(*result.run)) {
     if (result.inputs.size() != result.outputs.size()) {
       MS_EXCEPTION_IF_NULL(graph);
-      MS_LOG(EXCEPTION) << "must inputs equal outputs NodeInfo: " << trace::GetDebugInfo(graph->debug_info());
+      MS_LOG(EXCEPTION) << "must inputs equal outputs NodeInfo: " << trace::GetDebugInfoStr(graph->debug_info());
     } else {
       size_t size = result.inputs.size();
       for (size_t i = 0; i < size; i++) {
@@ -249,7 +249,7 @@ bool CompileGraph::Compile(const FuncGraphPtr &graph) {
       auto &cut_node = segment->nodes_[0];
       MS_EXCEPTION_IF_NULL(cut_node);
       if (!cut_node->isa<CNode>()) {
-        MS_LOG(EXCEPTION) << "must be anfnode here NodeInfo: " << trace::GetDebugInfo(graph->debug_info());
+        MS_LOG(EXCEPTION) << "must be anfnode here NodeInfo: " << trace::GetDebugInfoStr(graph->debug_info());
       }
       auto node = cut_node->cast<CNodePtr>();
       ret = InterpretNode(graph, node);

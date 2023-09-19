@@ -237,7 +237,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
       MS_LOG(EXCEPTION)
         << "The Hook operation is not supported in graph mode, which is only supported in pynative mode.\n"
-        << trace::GetDebugInfo(cnode->debug_info());
+        << trace::GetDebugInfoStr(cnode->debug_info());
     }
     bprop_fg = BpropCut(value_node, resources);
   } else {
@@ -259,7 +259,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   if (expanded_fg == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Failed convert " << prim->name()
                                << " prim bprop function to J expanded func graph. NodeInfo: "
-                               << trace::GetDebugInfo(bprop_fg->debug_info());
+                               << trace::GetDebugInfoStr(bprop_fg->debug_info());
   }
   if (lift_fv_before_grad && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
     // Inline fprop_switch before renormalize;
@@ -307,7 +307,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
         MS_EXCEPTION(TypeError)
           << "The params of function 'bprop' of Primitive or Cell requires the forward inputs as well "
              "as the 'out' and 'dout'.\n"
-          << trace::GetDebugInfo(bprop_fg->debug_info());
+          << trace::GetDebugInfoStr(bprop_fg->debug_info());
       }
       extra_monad_args.push_back(extra_node);
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
@@ -501,7 +501,7 @@ FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const Fu
   if (expanded_fg == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Failed convert " << primal_fg->ToString()
                                << " Cell bprop function to K expanded func graph. NodeInfo: "
-                               << trace::GetDebugInfo(primal_fg->debug_info());
+                               << trace::GetDebugInfoStr(primal_fg->debug_info());
   }
   return expanded_fg;
 }

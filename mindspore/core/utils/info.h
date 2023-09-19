@@ -56,6 +56,7 @@ class Location {
         comments_(std::move(comments)) {}
   ~Location() = default;
   MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine, int start_line = 0) const;
+  MS_CORE_API std::string DebugString() const;
   std::string file_name() const { return file_name_; }
   int line() const { return line_; }
   int line_end() const { return line_end_; }
@@ -64,6 +65,8 @@ class Location {
   const std::string &expr_src() const { return expr_src_; }
   void set_expr_src(const std::string &expr_src) { expr_src_ = expr_src; }
   const std::vector<std::string> &comments() const { return comments_; }
+
+  bool invalid() const { return line() == 0 && line_end() == 0 && column() == 0 && column_end() == 0; }
 
   bool operator<(const Location &other) const;
 
@@ -80,18 +83,14 @@ class Location {
 class TraceContext {
  public:
   explicit TraceContext(const LocationPtr &loc);
-  explicit TraceContext(const std::string &func_name);
   explicit TraceContext(const TraceInfoPtr &trace_info);
-  TraceContext(const LocationPtr &loc, const std::string &func_name);
   ~TraceContext() = default;
   const LocationPtr &location() const { return location_; }
   const TraceInfoPtr &trace_info() const { return trace_info_; }
-  const std::string &func_name() const { return func_name_; }
 
  private:
   LocationPtr location_;
   TraceInfoPtr trace_info_;
-  std::string func_name_;
 };
 
 using TraceContextPtr = TraceContext *;
@@ -110,62 +109,53 @@ class MS_CORE_API TraceManager {
   /// \return The current trace context.
   static TraceContextPtr CurrentContextInfo();
 
-  /// \brief Debug trace with the given function name and location.
-  ///
-  /// \param[in] func_name The function name for debug trace.
-  /// \param[in] location The source code location for debug trace.
-  static void DebugTrace(const std::string &func_name, const LocationPtr &location);
-
   /// \brief Debug trace with the given location.
   ///
   /// \param[in] location The source code location for debug trace.
-  static void DebugTrace(const LocationPtr &location);
+  /// \return If trace successfully.
+  static bool DebugTrace(const LocationPtr &location);
 
   /// \brief Debug trace with the given trace info.
   ///
   /// \param[in] trace_info The trace info for debug.
-  static void DebugTrace(const TraceInfoPtr &trace_info);
-
-  /// \brief Debug trace with a cloned trace info and debug info.
-  ///
-  /// \param[in] debug_info The debug info for debug trace.
-  /// \param[in] trace_info The trace info for debug trace.
-  static void DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info);
+  /// \return If trace successfully.
+  static bool DebugTrace(const TraceInfoPtr &trace_info);
 
   /// \brief End current debug trace.
   static void EndTrace() noexcept;
 
   /// \brief Clear debug info for parse or resolve.
-  static void ClearParseOrResolveDebugInfo();
+  static void ClearParserDebugInfo();
 
   /// \brief Get debug info for parse or resolve.
   ///
   /// \return The debug info for parse or resolve.
-  static DebugInfoPtr record_debug_info();
+  static DebugInfoPtr parser_debug_info();
 
   /// \brief Get the flag of recording a debug info.
   ///
   /// \return A bool.
-  static bool record_debug_info_flag();
+  static bool parser_debug_info_flag();
 
   /// \brief Set the flag to false for not recording a debug info.
-  static void CloseRecordDebugInfoFlag();
+  static void CloseParserDebugInfoFlag();
 
   /// \brief Set the flag to true for recording a debug info.
-  static void OpenRecordDebugInfoFlag();
+  static void OpenParserDebugInfoFlag();
 };
 
 class TraceGuard {
  public:
-  TraceGuard(const std::string &func_name, const LocationPtr &location) {
-    TraceManager::DebugTrace(func_name, location);
+  explicit TraceGuard(const LocationPtr &location) { tracing_ = TraceManager::DebugTrace(location); }
+  explicit TraceGuard(const TraceInfoPtr &trace_info) { tracing_ = TraceManager::DebugTrace(trace_info); }
+  ~TraceGuard() {
+    if (tracing_) {
+      TraceManager::EndTrace();
+    }
   }
-  explicit TraceGuard(const LocationPtr &location) { TraceManager::DebugTrace(location); }
-  explicit TraceGuard(const TraceInfoPtr &trace_info) { TraceManager::DebugTrace(trace_info); }
-  TraceGuard(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info) {
-    TraceManager::DebugTrace(debug_info, trace_info);
-  }
-  ~TraceGuard() { TraceManager::EndTrace(); }
+
+ private:
+  bool tracing_{false};
 };
 
 /// \brief DebugInfo defines information for debug trace.
@@ -341,32 +331,21 @@ inline TraceContext::TraceContext(const LocationPtr &loc) : location_(loc) {
   auto top = TraceManager::CurrentContextInfo();
   if (top != nullptr) {
     trace_info_ = top->trace_info();
-    func_name_ = top->func_name();
   }
-}
-
-inline TraceContext::TraceContext(const std::string &func_name) : func_name_(func_name) {
-  auto top = TraceManager::CurrentContextInfo();
-  if (top != nullptr) {
-    location_ = top->location();
-    trace_info_ = top->trace_info();
-  }
+  MS_LOG(DEBUG) << "location_: " << location_->DebugString();
 }
 
 inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(trace_info) {
-  auto top = TraceManager::CurrentContextInfo();
-  if (top != nullptr) {
-    location_ = top->location();
-    func_name_ = top->func_name();
+  if (trace_info->debug_info() != nullptr && trace_info->debug_info()->location() != nullptr &&
+      !trace_info->debug_info()->location()->invalid()) {
+    location_ = trace_info->debug_info()->location();
+  } else {
+    auto top = TraceManager::CurrentContextInfo();
+    if (top != nullptr) {
+      location_ = top->location();
+    }
   }
-}
-
-inline TraceContext::TraceContext(const LocationPtr &loc, const std::string &func_name)
-    : location_(loc), func_name_(func_name) {
-  auto top = TraceManager::CurrentContextInfo();
-  if (top != nullptr) {
-    trace_info_ = top->trace_info();
-  }
+  MS_LOG(DEBUG) << "location_: " << location_->DebugString();
 }
 
 struct MS_CORE_API DebugInfoCompare {

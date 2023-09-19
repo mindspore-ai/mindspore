@@ -82,7 +82,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     MS_LOG(DEBUG) << "The node is " << node->DebugString(kRecursiveLevel)
                   << "added in the isolated list.\nBlock: " << this << "/"
                   << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
-                  << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
+                  << ", Line: " << trace::GetDebugInfoStr(node->debug_info(), "", kSourceLineTipDiscard);
     AddIsolatedNode(node);
     return;
   }
@@ -103,7 +103,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
                    << " is hidden by " << node->DebugString(kRecursiveLevel)
                    << " with the same name, var_name: " << var_name << ", block: " << this << "/"
                    << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
-                   << ", Line: " << trace::GetDebugInfo(hidden_node->debug_info(), "", kSourceLineTipDiscard);
+                   << ", Line: " << trace::GetDebugInfoStr(hidden_node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(hidden_node);
     }
     MS_LOG(INFO) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " update var `" << var_name
@@ -683,7 +683,7 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
   }
   if (func_graph_->get_return() != nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! NodeInfo: "
-                               << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
+                               << trace::GetDebugInfoStr(func_graph_->get_return()->debug_info());
   }
   std::vector<AnfNodePtr> input_nodes;
   input_nodes.emplace_back(NewValueNode(target_block->func_graph()));
@@ -703,9 +703,9 @@ CNodePtr FunctionBlock::ConditionalJump(const AnfNodePtr &cond_node, const AnfNo
   MS_EXCEPTION_IF_NULL(false_block_call);
   if (func_graph_->get_return() != nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! fg: " << func_graph_->ToString()
-                               << "\nNodeInfo: " << trace::GetDebugInfo(func_graph_->get_return()->debug_info())
+                               << "\nNodeInfo: " << trace::GetDebugInfoStr(func_graph_->get_return()->debug_info())
                                << "\ncond_node: " << cond_node->DebugString()
-                               << "\nNodeInfo: " << trace::GetDebugInfo(cond_node->debug_info());
+                               << "\nNodeInfo: " << trace::GetDebugInfoStr(cond_node->debug_info());
   }
   CNodePtr switch_app =
     func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, true_block_call, false_block_call});
@@ -731,7 +731,7 @@ void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &s
   const int recursive_level = 2;
   MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(recursive_level)
                 << ", block: " << this << "/" << func_graph_->ToString()
-                << ", Line: " << trace::GetDebugInfo(assign_node->debug_info(), "", kSourceLineTipDiscard);
+                << ", Line: " << trace::GetDebugInfoStr(assign_node->debug_info(), "", kSourceLineTipDiscard);
   AddIsolatedNode(assign_node);
 }
 
@@ -747,7 +747,7 @@ void FunctionBlock::ConvertUnusedNodesToIsolated(const std::pair<std::string, st
     MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(recursive_level)
                  << ", var_name: " << var_name << ", block: " << this << "/"
                  << (func_graph() ? func_graph()->ToString() : "FG(Null)")
-                 << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
+                 << ", Line: " << trace::GetDebugInfoStr(node->debug_info(), "", kSourceLineTipDiscard);
     AddIsolatedNode(node);
   }
 }
