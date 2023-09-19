@@ -46,19 +46,14 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
   void FromValue(const ValuePtr &value) override { shift_ = GetValue<size_t>(value); }
   ShapeArray Calc(const ShapeArray &inputs) const override {
     auto shape_x = inputs.at(kIndex0);
-    ShapeVector broadcast_shape_of_x;
-    auto x_shape_num = shape_x.size() > shift_ ? (shape_x.size() - shift_) : 0;
-    for (size_t i = 0; i < x_shape_num; ++i) {
-      broadcast_shape_of_x.push_back(shape_x[i]);
-    }
     auto shape_y = inputs.at(kIndex1);
-    ShapeVector broadcast_shape_of_y;
-    auto y_shape_num = shape_y.size() > shift_ ? (shape_y.size() - shift_) : 0;
-    for (size_t i = 0; i < y_shape_num; ++i) {
-      broadcast_shape_of_y.push_back(shape_y[i]);
+    if (shift_ == 0) {
+      return bprop::BroadcastGradientArgs(shape_x, shape_y);
+    } else {
+      ShapeVector broadcast_shape_of_x(shape_x.begin(), shape_x.end() - shift_);
+      ShapeVector broadcast_shape_of_y(shape_y.begin(), shape_y.end() - shift_);
+      return bprop::BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
     }
-    auto broadcast_axis = bprop::BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
-    return broadcast_axis;
   }
   std::vector<int64_t> Infer(const ShapeArray &, const HashSet<size_t> &) const override {
     constexpr int64_t kShapeDimAny = -1;
