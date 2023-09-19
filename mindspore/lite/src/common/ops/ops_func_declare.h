@@ -70,6 +70,7 @@
 #include "ops/fft_imag.h"
 #include "ops/fft_real.h"
 #include "ops/fill.h"
+#include "ops/fill_v2.h"
 #include "ops/flatten.h"
 #include "ops/floor.h"
 #include "ops/floor_div.h"
@@ -339,6 +340,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(FakeQuantWithMinMaxVarsPerChannel)
 FUNC_MSOP2SCHEMAOP_DECLARE(FftImag)
 FUNC_MSOP2SCHEMAOP_DECLARE(FftReal)
 FUNC_MSOP2SCHEMAOP_DECLARE(Fill)
+FUNC_MSOP2SCHEMAOP_DECLARE(FillV2)
 FUNC_MSOP2SCHEMAOP_DECLARE(Flatten)
 FUNC_MSOP2SCHEMAOP_DECLARE(FlattenGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(Floor)

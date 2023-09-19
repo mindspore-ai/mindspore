@@ -73,6 +73,7 @@
 #include "nnacl/infer/fft_imag_infer.h"
 #include "nnacl/infer/fft_real_infer.h"
 #include "nnacl/infer/fill_infer.h"
+#include "nnacl/infer/fillv2_infer.h"
 #include "nnacl/infer/flatten_grad_infer.h"
 #include "nnacl/infer/flatten_infer.h"
 #include "nnacl/infer/full_connection_infer.h"
@@ -245,6 +246,7 @@ void RegAllInferFunc2() {
   g_infer_func[PrimType_FftImag] = FftImagInferShape;
   g_infer_func[PrimType_FftReal] = FftRealInferShape;
   g_infer_func[PrimType_Fill] = FillInferShape;
+  g_infer_func[PrimType_FillV2] = FillInferShape;
   g_infer_func[PrimType_Flatten] = FlattenInferShape;
   g_infer_func[PrimType_FlattenGrad] = FlattenGradInferShape;
   g_infer_func[PrimType_Floor] = CommonInferShapeWithOneInput;

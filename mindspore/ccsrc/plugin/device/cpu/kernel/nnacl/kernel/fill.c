@@ -95,3 +95,8 @@ REG_KERNEL_CREATOR(PrimType_Fill, kNumberTypeBool, CreateFill);
 REG_KERNEL_CREATOR(PrimType_Fill, kNumberTypeInt32, CreateFill);
 REG_KERNEL_CREATOR(PrimType_Fill, kNumberTypeFloat32, CreateFill);
 REG_KERNEL_CREATOR(PrimType_Fill, kNumberTypeFloat16, CreateFill);
+
+REG_KERNEL_CREATOR(PrimType_FillV2, kNumberTypeBool, CreateFill);
+REG_KERNEL_CREATOR(PrimType_FillV2, kNumberTypeInt32, CreateFill);
+REG_KERNEL_CREATOR(PrimType_FillV2, kNumberTypeFloat32, CreateFill);
+REG_KERNEL_CREATOR(PrimType_FillV2, kNumberTypeFloat16, CreateFill);

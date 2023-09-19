@@ -15,6 +15,7 @@
  */
 #include "src/common/ops/populate/populate_register.h"
 using mindspore::schema::PrimitiveType_Fill;
+using mindspore::schema::PrimitiveType_FillV2;
 
 namespace mindspore {
 namespace lite {
@@ -33,5 +34,6 @@ OpParameter *PopulateFillParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_Fill, PopulateFillParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_FillV2, PopulateFillParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
