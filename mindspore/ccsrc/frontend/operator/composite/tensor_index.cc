@@ -741,6 +741,13 @@ void TensorIndexGetitem::GetItemByTuple(const AnfNodePtr &input_data_node, const
   size_t expand_dims_cnt = expand_dims_mask.count();
   // Expand dims if there are bool/None index
   auto data_node = ExpandDimsByTupleIndex(input_data_node, tuple_abs_ptr, tuple_index_types, expand_dims_cnt);
+  auto data_dim = data_shape_.size();
+  constexpr int min_data_dim = 1;
+  constexpr int max_data_dim = 8;
+  if (data_dim < min_data_dim || data_dim > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [" << min_data_dim << ", " << max_data_dim
+                             << "], but got '" << data_dim << "'.";
+  }
   const auto &indices_abs = tuple_abs_ptr->elements();
   if (std::all_of(indices_abs.begin(), indices_abs.end(), [](AbstractBasePtr index_abs) {
         if (index_abs->BuildType()->type_id() == kObjectTypeTensorType) {
@@ -856,6 +863,20 @@ AnfNodePtr PreSetitemByTuple::FormatIndex(const abstract::AbstractBasePtr &index
       auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
       ValueNodePtr cast_vnode = NewValueNode(cast);
       new_index_node = res_graph_->NewCNode({cast_vnode, index_node, NewValueNode(kInt64)});
+      if (!IsDynamic(data_shape_)) {
+        size_t normalize_dim_index = NormalizeDimIndex(data_shape_.size(), cur_dim, tuple_index_types);
+        // Equal to python: idx = F.select(idx < 0, idx + data_shape[cur_dim], idx)
+        auto less = prim::GetPythonOps("less", "mindspore.ops.functional");
+        ValueNodePtr less_vnode = NewValueNode(less);
+        auto less_cnode = res_graph_->NewCNode({less_vnode, new_index_node, NewValueNode(static_cast<int64_t>(0))});
+        auto add = prim::GetPythonOps("add", "mindspore.ops.functional");
+        ValueNodePtr add_vnode = NewValueNode(add);
+        auto add_cnode =
+          res_graph_->NewCNode({add_vnode, new_index_node, NewValueNode(data_shape_[normalize_dim_index])});
+        auto select = prim::GetPythonOps("select", "mindspore.ops.functional");
+        ValueNodePtr select_vnode = NewValueNode(select);
+        new_index_node = res_graph_->NewCNode({select_vnode, less_cnode, add_cnode, new_index_node});
+      }
     } else if (tensor_abs->element()->BuildType()->type_id() != kNumberTypeBool) {
       MS_EXCEPTION(IndexError) << "The tensor element in tuple index must be int or bool type, but got"
                                << tensor_abs->element()->BuildType();

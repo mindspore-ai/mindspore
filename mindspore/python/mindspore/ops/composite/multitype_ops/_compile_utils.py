@@ -679,7 +679,8 @@ def tensor_index_by_list(data, list_index):
 
     data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, list_index)
-    if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)):
+    if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)) \
+        and not F.is_sequence_value_unknown(list_index):
         if not F.isconstant(data_shape[0]):
             if all(isinstance(i, bool) for i in list_index):
                 tensor_index = Tensor(list_index).nonzero()
@@ -1451,7 +1452,6 @@ def tensor_itemset_by_tuple_with_tensor(data, tuple_index, value):
         value_shape = (dim1_stop - dim1_start,) + const_utils.tuple_slice(data.shape, 2, None)
         value = _broadcast(value_shape, value)
         return copy_slice(data, value.astype(data.dtype), start, stop, step)
-
     tuple_index, value, idx_advanced = remove_expanded_dims(tuple_index, F.shape(data), value)
 
     if tuple_index is False:

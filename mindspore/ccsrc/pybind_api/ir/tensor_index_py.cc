@@ -1458,10 +1458,20 @@ static void JudgeTupleIndexDim(int64_t data_dim, const std::vector<TensorIndex> 
   }
 }
 
-size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index) {
-  return std::count_if(new_tuple_index.begin(), new_tuple_index.end(), [](auto const &obj) {
+size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index, size_t data_dims) {
+  size_t specified_dimensions = std::count_if(new_tuple_index.begin(), new_tuple_index.end(), [](auto const &obj) {
     return (obj != Py_None && obj != Py_Ellipsis && obj != Py_True && obj != Py_False);
   });
+  constexpr size_t min_data_dim = 1;
+  constexpr size_t max_data_dim = 8;
+  if (data_dims < min_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [" << min_data_dim << ", " << max_data_dim
+                             << "], but got '" << data_dims << "'.";
+  }
+  if (specified_dimensions > data_dims) {
+    MS_EXCEPTION(IndexError) << "too many indices for tensor of dimension" << data_dims;
+  }
+  return specified_dimensions;
 }
 
 bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
@@ -1475,14 +1485,12 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
 
   size_t data_dims = data_shape.size();
   auto new_tuple_index = py_index.cast<py::tuple>();
-  size_t specified_dimensions = GetSpecifiedDimensions(new_tuple_index);
+  size_t specified_dimensions = GetSpecifiedDimensions(new_tuple_index, data_dims);
 
-  if (specified_dimensions > data_dims) {
-    MS_EXCEPTION(IndexError) << "too many indices for tensor of dimension" << data_dims;
-  }
   auto new_data_shape = data_shape;
   size_t dim = 0;
   std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
+  size_t ellipsis_count = 0;
   for (auto const &obj : new_tuple_index) {
     if (py::isinstance<py::int_>(obj) && !py::isinstance<py::bool_>(obj)) {
       auto index = py::cast<int64_t>(obj);
@@ -1530,7 +1538,11 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       new_data_shape[dim] = 1 + (slice_info.stop() - 1 - slice_info.start()) / slice_info.step();
       dim++;
     } else if (py::isinstance<py::ellipsis>(obj)) {
+      if (ellipsis_count > 0) {
+        MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
+      }
       dim += data_shape.size() - specified_dimensions;
+      ellipsis_count += 1;
     } else if (py::isinstance<py::none>(obj)) {
       auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
       slice_op_info->slice_op_name = prim::kPrimExpandDims->name();
@@ -1545,6 +1557,11 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       data_transfer_args->clear();
       return false;
     }
+  }
+  constexpr size_t max_data_dim = 8;
+  if (new_data_shape.size() > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
+                             << data_dims << "'.";
   }
 
   py::object slice_output;

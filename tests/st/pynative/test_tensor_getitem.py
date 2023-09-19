@@ -1037,6 +1037,15 @@ def test_tensor_assign_exception_2():
     net(Ta, b)
     with pytest.raises(ValueError):
         net(Ta, Tb)
+    net = TensorAssignWithMultiEllipsis()
+    with pytest.raises(IndexError):
+        net(Ta)
+
+
+class TensorAssignWithMultiEllipsis(Cell):
+    def construct(self, a):
+        a[0:, ..., ...] = 1
+        return a
 
 
 class TensorAssignWithTupleEllipsis2(Cell):
