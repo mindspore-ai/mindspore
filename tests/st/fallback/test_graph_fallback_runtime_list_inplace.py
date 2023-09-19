@@ -1333,6 +1333,61 @@ def test_list_inplace_with_attribute_of_jit_class_3():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_list_inplace_with_attribute_of_jit_class_4():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    class ListNet(nn.Cell):
+        def __init__(self, obj):
+            super().__init__()
+            self.obj = obj
+
+        def construct(self):
+            y = self.obj.pop()
+            self.obj.pop(1)
+            z = self.obj.pop(-1)
+            return self.obj, y, z
+
+    obj = [1, 2, Tensor([3]), "x", (3, 4, 5)]
+    x, y, _ = ListNet(obj)()
+    assert id(obj) == id(x)
+    assert y == (3, 4, 5)
+
+
+@pytest.mark.skip(reason="The pop operation is not converted to inplace operation")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_attribute_of_jit_class_5():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self, x):
+            super(Net, self).__init__()
+            self.x = x
+
+        def construct(self):
+            a = self.x.pop()
+            return a, self.x
+
+    x = [1, 2, 3, 4]
+    net = Net(x)
+    ret1, ret2 = net()
+    assert ret1 == 4
+    assert ret2 == [1, 2, 3]
+    assert id(ret2) == id(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_list_inplace_with_stub_tensor():
     """
     Feature: Enable list used as graph input do inplace operation.
