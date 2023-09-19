@@ -236,7 +236,6 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
   auto val = value_sequence[0];
   if (val->isa<Scalar>()) {
     *data_type = val->type();
-    MS_EXCEPTION_IF_NULL(data_type);
   }
   if (val->isa<ValueSequence>()) {
     const auto &sub_sequence = val->cast<ValueSequencePtr>()->value();
