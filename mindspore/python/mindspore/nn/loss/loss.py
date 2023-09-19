@@ -638,7 +638,7 @@ class SoftMarginLoss(LossBase):
     (containing 1 or -1).
 
     .. math::
-        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
+        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{x.nelement()}
 
     :math:`x.nelement()` represents the number of element of `x` .
 

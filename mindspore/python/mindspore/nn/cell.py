@@ -531,7 +531,7 @@ class Cell(Cell_):
         in_strategy and out_strategy define the input and output layout respectively.
         in_strategy/out_strategy should be a tuple, each element of which corresponds to the desired layout of
         this input/output, and None represents data_parallel,
-        which can refer to the description of `mindspore.ops.Primitive.shard`.
+        which can refer to the description of :func:`mindspore.ops.Primitive.shard`.
         The parallel strategies of remaining operators are derived from the strategy specified by the input and output.
 
         Note:
@@ -1636,8 +1636,8 @@ class Cell(Cell_):
         set to true, the training branch will be executed, otherwise another branch.
 
         Note:
-            When execute function Model.train(), framework will call Cell.set_train(True).
-            When execute function Model.eval(), framework will call Cell.set_train(False).
+            When execute :func:`mindspore.train.Model.train`, framework will call Cell.set_train(True).
+            When execute :func:`mindspore.train.Model.eval`, framework will call Cell.set_train(False).
 
         Args:
             mode (bool): Specifies whether the model is training. Default: ``True`` .

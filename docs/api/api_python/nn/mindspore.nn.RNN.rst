@@ -12,14 +12,14 @@ mindspore.nn.RNN
     .. math::
         h_t = activation(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
 
-    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。如果 `nonlinearity` 是'relu'，则使用 :math:`\text{ReLU}` 而不是 :math:`\tanh` 。
+    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。
 
     参数：
         - **input_size** (int) - 输入层输入的特征向量维度。
         - **hidden_size** (int) - 隐藏层输出的特征向量维度。
         - **num_layers** (int) - 堆叠RNN的层数。默认值： ``1`` 。
         - **nonlinearity** (str) - 用于选择非线性激活函数。取值可为'tanh'或'relu'。默认值： ``'tanh'`` 。
-        - **has_bias** (bool) - Cell是否有偏置项 `b_ih` 和 `b_hh` 。默认值： ``True`` 。
+        - **has_bias** (bool) - Cell是否有偏置项 :math:`b\_ih` 和 :math:`b\_hh` 。默认值： ``True`` 。
         - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
         - **dropout** (float) - 指的是除第一层外每层输入时的Dropout概率。Dropout的范围为[0.0, 1.0)。默认值： ``0.0`` 。
         - **bidirectional** (bool) - 指定是否为双向RNN，如果bidirectional=True，则num_directions=2，否则为1。默认值： ``False`` 。
