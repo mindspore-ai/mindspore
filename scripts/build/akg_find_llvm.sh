@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,11 @@
 # This error is caused because of running `cmake` in script mode.
 # Finally the `cmake` command exit with status `1`.
 
-
-echo "find_package(LLVM QUIET)" > akg_llvm_tmp.cmake
+echo "find_package(LLVM 16 QUIET)" > akg_llvm_tmp.cmake
+echo "find_package(LLVM 15 QUIET)" >> akg_llvm_tmp.cmake
+echo "find_package(LLVM 14 QUIET)" >> akg_llvm_tmp.cmake
+echo "find_package(LLVM 13 QUIET)" >> akg_llvm_tmp.cmake
+echo "find_package(LLVM 12 QUIET)" >> akg_llvm_tmp.cmake
 cmake -P akg_llvm_tmp.cmake > /dev/null 2>&1
 result=$?
 rm akg_llvm_tmp.cmake
