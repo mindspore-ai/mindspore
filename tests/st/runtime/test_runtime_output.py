@@ -14,7 +14,7 @@
 
 import pytest
 import numpy as np
-from mindspore import context, nn, Tensor
+from mindspore import context, nn, Tensor, jit
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 
@@ -74,3 +74,27 @@ def test_subgraph_output_with_load():
     net2.biass_add2.add_prim_attr("primitive_target", "CPU")
     output2 = net2(x)
     assert (output1 == output2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_runtime_heter():
+    """
+    Feature: Runtime heter.
+    Description: Test multi graph share same parameter.
+    Expectation: Not throw exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    mul = P.Mul().add_prim_attr("primitive_target", "CPU")
+    add = P.Add()
+
+    @jit
+    def foo(a, b):
+        c = add(a, b)
+        d = mul(a, c)
+        e = add(a, d)
+        f = mul(a, e)
+        return f
+    ret = foo(Tensor(1), Tensor(2))
+    assert ret
