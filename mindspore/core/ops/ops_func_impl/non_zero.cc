@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include "ops/ops_func_impl/non_zero.h"
+#include "ops/ops_frontend_func_impl.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -42,5 +43,24 @@ TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
   return std::make_shared<TensorType>(kInt64);
 }
+
+class NonZeroFrontendFuncImpl : public OpFrontendFuncImpl {
+ public:
+  // Do not override this interface if the op has no InferValue
+  AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+    const auto &x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    auto x_rank = SizeToLong(x_shape.size());
+    MS_CHECK_VALUE(x_rank >= kNonZeroInputMinDim,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg("dimension of 'x'", x_rank, kGreaterEqual,
+                                                               kNonZeroInputMinDim, primitive));
+    if (IsDynamicRank(x_shape)) {
+      x_rank = abstract::Shape::kShapeDimAny;
+    }
+    auto output_shape = ShapeVector({abstract::Shape::kShapeDimAny, x_rank});
+    return std::make_shared<abstract::AbstractTensor>(kInt64, output_shape);
+  }
+};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("NonZero", NonZeroFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

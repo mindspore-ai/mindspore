@@ -30,9 +30,7 @@ constexpr int kNonZeroInputsNum = 1;
 constexpr int kNonZeroOutputsNum = 1;
 }  // namespace
 
-bool NonZeroGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool NonZeroGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNonZeroInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNonZeroOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -56,9 +54,7 @@ void NonZeroGpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int NonZeroGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   auto shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(input_shape_),
@@ -103,10 +99,12 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   return true;
 }
 
-void NonZeroGpuKernelMod::SyncOutputShape() {
+void NonZeroGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "NonZero cudaStreamSynchronized failed");
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * input_shape_.size() * index_size_);
 }
 
 std::vector<std::pair<KernelAttr, NonZeroGpuKernelMod::NonZeroLaunchFunc>> NonZeroGpuKernelMod::func_list_ = {

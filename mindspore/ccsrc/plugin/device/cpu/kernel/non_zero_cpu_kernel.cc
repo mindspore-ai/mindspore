@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/plugin/device/cpu/kernel/non_zero_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/non_zero_cpu_kernel.h"
 #include <algorithm>
 #include <typeinfo>
 #include <functional>
@@ -29,10 +29,7 @@ constexpr size_t kInputMinDim = 1;
 constexpr size_t kOutputDim = 2;
 }  // namespace
 
-bool NonZeroCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NonZeroCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -48,10 +45,8 @@ bool NonZeroCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int NonZeroCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int NonZeroCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
@@ -91,9 +86,11 @@ bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   return true;
 }
 
-void NonZeroCpuKernelMod::SyncOutputShape() {
+void NonZeroCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * input_shape_.size() * index_size_);
 }
 
 template <typename T>

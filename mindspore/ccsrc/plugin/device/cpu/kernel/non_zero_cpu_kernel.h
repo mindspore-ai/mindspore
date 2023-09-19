@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NON_ZERO_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NON_ZERO_CPU_KERNEL_H_
 
-#include "plugin/device/cpu/kernel/non_zero_cpu_kernel.h"
 #include <complex>
 #include <vector>
 #include <memory>
@@ -36,11 +35,9 @@ class NonZeroCpuKernelMod : public NativeCpuKernelMod {
   NonZeroCpuKernelMod() = default;
   ~NonZeroCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs) override {
@@ -48,7 +45,9 @@ class NonZeroCpuKernelMod : public NativeCpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override;
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
