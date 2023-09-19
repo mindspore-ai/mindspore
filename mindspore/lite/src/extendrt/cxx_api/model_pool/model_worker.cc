@@ -261,7 +261,6 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   } else {
     model_outputs = model_->GetOutputs();
     for (size_t i = 0; i < outputs->size(); i++) {
-      outputs->at(i).SetShape(model_outputs[i].Shape());
       // user's data, not belong to model.
       model_outputs[i].SetData(nullptr, false);
       model_outputs[i].SetDeviceData(nullptr);
