@@ -304,9 +304,9 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 
   // Collect Host info.
   if (profiler_manager->NeedCollectHostTime()) {
-    auto now = std::chrono::steady_clock::now();
-    int64_t ns = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
-    uint64_t time_stamp = static_cast<uint64_t>(ns);
+    auto now = std::chrono::system_clock::now();
+    int64_t us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    uint64_t time_stamp = static_cast<uint64_t>(us);
     host_profile_data.time_stamp = time_stamp;
   }
   if ((profile_framework == profile_all || profile_framework == profile_memory) &&
