@@ -91,6 +91,10 @@ inline void *GetOpApiFunc(const char *api_name) {
   }
 
   auto ascend_path = device::ascend::GetAscendPath();
+  std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
+  for (const auto &dep_lib : depend_libs) {
+    (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
+  }
   auto lib_path = ascend_path + GetOpApiLibName();
   static auto handle = GetOpApiLibHandler(lib_path);
   if (handle == nullptr) {
