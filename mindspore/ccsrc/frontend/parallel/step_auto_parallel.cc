@@ -1286,8 +1286,6 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
   // However, the shape of the first dimension is not the batch_size assigned by users.
   // This function helps to calculate the real batch size.
 
-  int64_t data_user_size = 0;
-  int64_t total_batch_size = 0;
   auto manager = root->manager();
   auto ops = entire_costgraph->GetOperators();
   AnfNodePtr virtual_dataset_;
@@ -1308,6 +1306,8 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
   }
   auto node_user_map = manager->node_users();
   auto node_users = node_user_map[virtual_dataset_];
+  int64_t data_user_size = 0;
+  int64_t total_batch_size = 0;
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager->node_users()[node_user.first];
