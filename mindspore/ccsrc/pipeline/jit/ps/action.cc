@@ -39,7 +39,6 @@
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "pipeline/jit/ps/backend_adapter.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/jit/ps/pass.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
@@ -179,10 +178,6 @@ void TaskEmitActionForMindRT(const ResourcePtr &resource) {
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
-  if (common::GetEnv("MS_ENABLE_DYNAMIC_LEN_RENORMALIZE") == "1") {
-    // Check the dynamic len attr for tuple in control flow.
-    backend_adapter::CheckDynamicLenUnify(resource);
-  }
   auto actor_info = mindrt_bc_ptr->CompileGraphs(resource->func_graph());
   resource->SetResult(kOutput, actor_info);
   resource->SetResult(kActorInfo, actor_info);

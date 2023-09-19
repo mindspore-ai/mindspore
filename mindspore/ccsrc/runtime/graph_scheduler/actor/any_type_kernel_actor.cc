@@ -300,7 +300,7 @@ TypeId GetElementType(const abstract::AbstractBasePtr &abstract) {
     const auto &sequence_abs = abstract->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
     if (sequence_abs->dynamic_len() || sequence_abs->elements().empty() || sequence_abs->elements()[0] == nullptr) {
-      MS_LOG(ERROR) << "Invalid abstract:" << abstract->ToString();
+      MS_LOG(INFO) << "Invalid abstract:" << abstract->ToString();
       return TypeId::kNumberTypeInt64;
     }
     return GetElementType(sequence_abs->elements()[0]);
