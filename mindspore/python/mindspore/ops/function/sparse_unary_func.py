@@ -1980,7 +1980,7 @@ def coo_acosh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        out_i = \cosh^{-1}(input_i)
+        y_i = \cosh^{-1}(x_i)
 
     .. warning::
         Given an input COOTensor x, the function computes inverse hyperbolic cosine of every element.
