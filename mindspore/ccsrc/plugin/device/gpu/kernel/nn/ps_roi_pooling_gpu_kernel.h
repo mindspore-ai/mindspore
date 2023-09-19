@@ -66,6 +66,10 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     T *out_data = GetDeviceAddress<T>(outputs, 0);
     int *out_mapping_channel = GetDeviceAddress<int>(outputs, 1);
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(rois);
+    MS_EXCEPTION_IF_NULL(out_data);
+    MS_EXCEPTION_IF_NULL(out_mapping_channel);
 
     auto status = PSROIPoolForwardLauncher(x, spatial_scale_, num_rois_, height_, width_, channels_, pooled_height_,
                                            pooled_width_, rois, group_size_, out_dim_, out_data, out_mapping_channel,

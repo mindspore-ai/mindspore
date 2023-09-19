@@ -153,11 +153,11 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 template <typename T>
 bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs,
                                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_data = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input_data);
-  auto rois = reinterpret_cast<T *>(inputs[1]->addr);
+  T *rois = GetDeviceAddress<T>(inputs, kIndex1);
   MS_EXCEPTION_IF_NULL(rois);
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_data = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_data);
 
   auto status = PSROIPoolForwardV2Launcher(input_data, static_cast<T>(spatial_scale_), output_n_, height_, width_,

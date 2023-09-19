@@ -220,11 +220,11 @@ bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &input
                                             const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (data_type_id_ == kNumberTypeFloat32) {
-    auto top_diff = static_cast<float *>(inputs[0]->addr);
+    auto *top_diff = GetDeviceAddress<float>(inputs, kIndex0);
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto rois = static_cast<float *>(inputs[1]->addr);
+    auto *rois = GetDeviceAddress<float>(inputs, kIndex1);
     MS_EXCEPTION_IF_NULL(rois);
-    auto output_diff = static_cast<float *>(outputs[0]->addr);
+    auto *output_diff = GetDeviceAddress<float>(outputs, kIndex0);
     MS_EXCEPTION_IF_NULL(output_diff);
     auto status =
       PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<float>(spatial_scale_),

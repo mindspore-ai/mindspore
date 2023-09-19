@@ -67,6 +67,7 @@ TypePtr LrnInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);

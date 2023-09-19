@@ -47,17 +47,20 @@ template <typename T>
 bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) const {
-  auto *IndicesData = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *DimsData = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *OutputData = reinterpret_cast<T *>(outputs[0]->addr);
+  T *IndicesData = GetDeviceAddress<T>(inputs, kIndex0);
+  T *DimsData = GetDeviceAddress<T>(inputs, kIndex1);
+  T *OutputData = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(IndicesData);
+  MS_EXCEPTION_IF_NULL(DimsData);
+  MS_EXCEPTION_IF_NULL(OutputData);
   T DimsMulti = 1;
-  for (size_t i = 0; i < (inputs[1]->size) / sizeof(T); i++) {
+  for (size_t i = 0; i < (inputs[kIndex1]->size) / sizeof(T); i++) {
     if (DimsData[i] <= 0) {
       MS_EXCEPTION(ValueError) << "All dimensions must be greater than 0.";
     }
     DimsMulti = DimsMulti * (DimsData[i]);
   }
-  for (size_t i = 0; i < (inputs[0]->size) / sizeof(T); i++) {
+  for (size_t i = 0; i < (inputs[kIndex0]->size) / sizeof(T); i++) {
     if (IndicesData[i] < 0) {
       MS_EXCEPTION(ValueError) << "Index must be greater than 0.";
     }
@@ -65,11 +68,12 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       MS_EXCEPTION(ValueError) << "Index out of boundary.";
     }
   }
-  if ((inputs[0]->size) / sizeof(T) <= kParallelDataNums) {
-    for (size_t j = 0; j < (inputs[0]->size) / sizeof(T); j++) {
+  if ((inputs[kIndex0]->size) / sizeof(T) <= kParallelDataNums) {
+    for (size_t j = 0; j < (inputs[kIndex0]->size) / sizeof(T); j++) {
       T Quotient = IndicesData[j];
-      for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-        OutputData[IntToSize(i) * ((inputs[0]->size) / sizeof(T)) + IntToSize(j)] = Quotient % DimsData[IntToSize(i)];
+      for (int i = SizeToInt((inputs[kIndex1]->size) / sizeof(T) - 1); i >= 0; i--) {
+        OutputData[IntToSize(i) * ((inputs[kIndex0]->size) / sizeof(T)) + IntToSize(j)] =
+          Quotient % DimsData[IntToSize(i)];
         Quotient = (Quotient / DimsData[IntToSize(i)]);
       }
     }
@@ -77,13 +81,14 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
         T Quotient = IndicesData[j];
-        for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-          OutputData[IntToSize(i) * ((inputs[0]->size) / sizeof(T)) + IntToSize(j)] = Quotient % DimsData[IntToSize(i)];
+        for (int i = SizeToInt((inputs[kIndex1]->size) / sizeof(T) - 1); i >= 0; i--) {
+          OutputData[IntToSize(i) * ((inputs[kIndex0]->size) / sizeof(T)) + IntToSize(j)] =
+            Quotient % DimsData[IntToSize(i)];
           Quotient = (Quotient / DimsData[IntToSize(i)]);
         }
       }
     };
-    CPUKernelUtils::ParallelFor(task, (inputs[0]->size) / sizeof(T));
+    CPUKernelUtils::ParallelFor(task, (inputs[kIndex0]->size) / sizeof(T));
   }
   return true;
 }
