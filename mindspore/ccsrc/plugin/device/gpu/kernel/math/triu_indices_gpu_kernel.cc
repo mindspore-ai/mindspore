@@ -73,8 +73,8 @@ template <typename T>
 bool TriuIndicesGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
   if (triu_size_ > 0) {
     auto m_first_row = offset_ > 0 ? std::max<int64_t>(col_ - offset_, 0) : col_;
     int64_t rectangle_size = 0;
