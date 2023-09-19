@@ -34,11 +34,7 @@ class SiLUGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     const int64_t input_num = 2;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                             prim_name);
-    for (const auto &item : input_args) {
-      MS_EXCEPTION_IF_NULL(item);
-    }
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     return input_args[0]->BuildShape();
   }
 
@@ -51,7 +47,7 @@ class SiLUGradInfer : public abstract::OpInferBase {
     auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
     auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
     (void)abstract::CheckDtypeSame(prim_name, out, dout);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = dout->BuildType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

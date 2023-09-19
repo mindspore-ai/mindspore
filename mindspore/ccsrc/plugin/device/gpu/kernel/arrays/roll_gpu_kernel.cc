@@ -62,6 +62,8 @@ bool RollGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
+  MS_EXCEPTION_IF_NULL(helper_ptr_);
+  MS_EXCEPTION_IF_NULL(attr_ptr_);
   attr_ptr_->axis = kernel_ptr->get_axis();
   attr_ptr_->shift = kernel_ptr->get_shift();
   helper_ptr_->SetKernelParam(attr_ptr_);
@@ -75,6 +77,7 @@ int RollGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
       return KRET_UNKNOWN_SHAPE;
@@ -84,6 +87,7 @@ int RollGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(outputs[0]);
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
   input_shapes.emplace_back(inp_shape);
   output_shapes.emplace_back(out_shape);

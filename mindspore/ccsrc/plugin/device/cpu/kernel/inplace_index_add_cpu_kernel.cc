@@ -34,6 +34,7 @@ constexpr size_t kInplaceIndexAddOutputsNum = 1;
 
 bool InplaceIndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceIndexAdd>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast InplaceIndexAdd ops failed!";
@@ -60,6 +61,7 @@ int InplaceIndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   var_shape = inputs[kIndex0]->GetShapeVector();
   updates_shape = inputs[kIndex2]->GetShapeVector();
   indices_shape = inputs[kIndex1]->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(op_);
   axis_ = GetValue<int64_t>(op_->GetAttr(AXIS));
   return KRET_OK;
 }
@@ -124,10 +126,10 @@ bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
                                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInplaceIndexAddOutputsNum, kernel_name_);
-  auto *x = static_cast<T *>(inputs[kIndex0]->addr);
-  auto *indices = static_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto *y = static_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = static_cast<T *>(outputs[kIndex0]->addr);
+  auto x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
+  auto y = GetDeviceAddress<T>(inputs, kIndex2);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   CheckParams();
   // check indices's value is valid
   auto axis = LongToSize(axis_);

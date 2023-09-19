@@ -215,9 +215,9 @@ bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto workspace_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
-  auto output_addr = reinterpret_cast<S *>(outputs[0]->addr);
+  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto workspace_addr = GetDeviceAddress<size_t>(workspace, kIndex0);
+  auto output_addr = GetDeviceAddress<S>(outputs, kIndex0);
 
   T nan_value;
   if constexpr (std::is_same_v<T, float>) {
