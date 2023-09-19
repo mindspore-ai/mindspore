@@ -120,8 +120,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterMaxFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterMinFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorShapeForGE>());
-  // just rename primitive name
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
 }
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
