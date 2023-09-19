@@ -1401,3 +1401,72 @@ def test_list_inplace_with_any_input_2():
 
     ret = foo([[1], [2], [3], [4]])
     assert ret == [[2], [5], [4], [6], [3], 2]
+
+
+empty_global_list_1 = []
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_empty_list():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        return empty_global_list_1
+
+    ret = foo()
+    assert ret == []
+    assert id(ret) == id(empty_global_list_1)
+
+
+empty_global_list_2 = []
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_empty_list_2():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        empty_global_list_2.extend([3, 4])
+        return empty_global_list_2
+
+    ret = foo()
+    assert ret == [3, 4]
+    assert id(ret) == id(empty_global_list_2)
+
+
+empty_global_list_3 = []
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_empty_list_3():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        for i in range(3):
+            empty_global_list_3.extend([i,])
+        return empty_global_list_3
+
+    ret = foo()
+    assert ret == [0, 1, 2]
+    assert id(ret) == id(empty_global_list_3)

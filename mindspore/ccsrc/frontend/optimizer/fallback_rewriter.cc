@@ -2282,16 +2282,15 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(value);
     auto value_list = value->cast<ValueListPtr>();
     MS_EXCEPTION_IF_NULL(value_list);
-    if (value_list->size() == 0) {
-      // Currently, do not convert empty value list to PyExecute,
-      // since the format is not supported in backend.
-      return value_node;
-    }
 
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (list_abs->dynamic_len()) {
+      return value_node;
+    }
 
     bool has_object = fallback::HasObjInExtraInfoHolder(list_abs);
     py::list list_object = has_object ? fallback::GetObjFromExtraInfoHolder(list_abs) : ValueToPyData(value);
