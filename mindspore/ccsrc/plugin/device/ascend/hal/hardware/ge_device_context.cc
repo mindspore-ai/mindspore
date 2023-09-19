@@ -202,6 +202,7 @@ void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
 // ge.exec.allow_hf32 default value is "10"(enable Conv, disable Matmul) set by CANN
 void SetAscendHF32Config(const std::shared_ptr<MsContext> &ms_context_ptr,
                          std::map<std::string, std::string> *ge_options) {
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
   std::string allow_matmul_hf32 = ms_context_ptr->get_param<std::string>(MS_CTX_MATMUL_ALLOW_HF32);
   std::string allow_conv_hf32 = ms_context_ptr->get_param<std::string>(MS_CTX_CONV_ALLOW_HF32);
   if (allow_matmul_hf32.empty() && allow_conv_hf32.empty()) {

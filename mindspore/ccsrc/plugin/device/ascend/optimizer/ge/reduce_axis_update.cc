@@ -40,6 +40,7 @@ tensor::TensorPtr CreateTensor(const std::vector<int64_t> &values) {
   auto type_ptr = kInt64;
   auto data_length = sizeof(int64_t);
   std::vector<int64_t> tensor_shape = {SizeToLong(values.size())};
+  MS_EXCEPTION_IF_NULL(type_ptr);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
@@ -86,6 +87,7 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
     return list->size() == 0;
   } else if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
     return tensor->DataSize() == 0;
   }
 
@@ -108,6 +110,7 @@ bool IsAxisEmptySequence(const AnfNodePtr &node) {
     return false;
   }
   const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().size() <= kAxisIndex) {
     return false;
   }
@@ -158,8 +161,8 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
   }
 
   const auto &inputs = cnode->inputs();
-  const AnfNodePtr &input_x = inputs[kXInputIndex];
-  const AnfNodePtr &input_axis = inputs[kAxisInputIndex];
+  const AnfNodePtr &input_x = inputs.at(kXInputIndex);
+  const AnfNodePtr &input_axis = inputs.at(kAxisInputIndex);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_axis);
   MS_LOG(INFO) << "X input is " << input_x->DebugString() << ".";
@@ -177,6 +180,7 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
 
 AnfNodePtr BuildAxis(const PatternMap &m) {
   auto node = m.Get(m_reduce);
+  MS_EXCEPTION_IF_NULL(node);
   ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   size_t x_dim_len = x_shape.size();
   MS_LOG(INFO) << "Input x dim len: " << x_dim_len;
@@ -198,6 +202,7 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);
   kernel_info->set_select_kernel_build_info(builder->Build());
+  MS_EXCEPTION_IF_NULL(kernel_info->select_kernel_build_info());
   kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsFormat({kOpFormat_DEFAULT});
   kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsDeviceType({TypeId::kNumberTypeInt64});
@@ -224,7 +229,7 @@ void ReduceAxisUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
 
 void ReduceAxisUpdate::DefineDstPattern(DstPattern *dst_pattern) {
   auto reduce_input = Unpacking(kXs);
-  reduce_input[kAxisInputIndex - 1] = v_axis;
+  reduce_input.at(kAxisInputIndex - 1) = v_axis;
   (void)(*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {kV, reduce_input}, BuildReduce);
 }
 }  // namespace opt
