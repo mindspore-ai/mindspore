@@ -509,8 +509,8 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphOutput(OpContext<Dev
     if (real_output_index >= graph_ouput_device_tensors_.size() ||
         graph_ouput_device_tensors_[real_output_index] == nullptr ||
         graph_ouput_device_tensors_[real_output_index]->user_data() == nullptr) {
-      MS_LOG(ERROR) << "Invalid output index:" << real_output_index << " by output node:" << node->DebugString()
-                    << " index:" << index << " for graph:" << graph()->ToString();
+      MS_LOG(INFO) << "Invalid output index:" << real_output_index << " by output node:" << node->DebugString()
+                   << " index:" << index << " for graph:" << graph()->ToString();
       continue;
     }
     const auto &user_data_obj =
