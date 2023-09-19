@@ -22,7 +22,11 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#ifndef ENABLE_ASAN
 #include "plugin/device/gpu/hal/device/gpu_hash_table.h"
+#else
+#include "plugin/device/gpu/hal/device/gpu_hash_table_dummy.h"
+#endif
 
 namespace mindspore {
 namespace kernel {
