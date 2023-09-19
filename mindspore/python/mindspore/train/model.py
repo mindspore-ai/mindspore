@@ -1636,9 +1636,9 @@ class Model:
                 table file for inference. The content of the configuration file is as follows:
 
                 config_path defines the path of the configuration file, which is used to pass user-defined
-                    options during model building. In the following scenarios, users may need to set parameters.
-                    For example: "/home/user/config.ini". Default value: ``"" `` , here is the content of the
-                    config.ini file:
+                options during model building. In the following scenarios, users may need to set parameters.
+                For example: "/home/user/config.ini". Default value: ``""`` , here is the content of the
+                config.ini file:
 
                 .. code-block::
 

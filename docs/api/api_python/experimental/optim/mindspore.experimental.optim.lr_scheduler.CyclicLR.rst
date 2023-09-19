@@ -17,7 +17,7 @@ mindspore.experimental.optim.lr_scheduler.CyclicLR
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
         - **base_lr** (Union(float, list)) - 初始学习率，也是优化器参数组中学习率的下界值。
-        - **max_lr** (float) - 每个参数组的学习率上界值。在功能上，（max_lr - base_lr）定义了学习率周期变化的幅度。周期内，当前的学习率的计算方式为base_lr和振幅乘以缩放系数的加和。
+        - **max_lr** (Union(float, list)) - 每个参数组的学习率上界值。在功能上，（max_lr - base_lr）定义了学习率周期变化的幅度。周期内，当前的学习率的计算方式为base_lr和振幅乘以缩放系数的加和。
         - **step_size_up** (int, 可选) - 递增半周期内的训练迭代次数。默认值：``2000``。
         - **step_size_down** (int, 可选) - 递减半周期内的训练迭代次数。如果 `step_size_down` 为None，则设置为 `step_size_up` 的值。默认值：``None``。
         - **mode** (str, 可选) - "triangular", "triangular2" 或 "exp_range"}。对应的计算策略详见上文，如果 `scale_fn` 不是None，则此参数无效。默认值：``"triangular"``。

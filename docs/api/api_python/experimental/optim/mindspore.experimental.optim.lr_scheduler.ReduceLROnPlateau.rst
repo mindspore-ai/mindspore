@@ -1,7 +1,7 @@
 mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
 ============================================================
 
-.. py:class:: mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, threshold=1e-4, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-8, verbose=False)
+.. py:class:: mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, threshold=1e-4, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-8)
 
     当指标停止改进时降低学习率。训练中学习停滞情况下，模型通常会受益于将学习率降低2-10倍。该调度程序在执行过程中读取 `step` 方法中传入的指标 `metrics`，如果在 `patience` 的时期内没有得到改进，则学习率会降低。
 

@@ -1,7 +1,7 @@
 mindspore.experimental.optim.lr_scheduler.OneCycleLR
 =======================================================
 
-.. py:class:: mindspore.experimental.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, total_steps=None, epochs=None, steps_per_epoch=None, pct_start=0.3, anneal_strategy='cos', div_factor=25., final_div_factor=1e4, three_phase=False, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.experimental.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, total_steps=None, epochs=None, steps_per_epoch=None, pct_start=0.3, anneal_strategy='cos', div_factor=25., final_div_factor=1e4, three_phase=False, last_epoch=-1)
 
     按照1cycle学习率策略设置各参数组的学习率。 1cycle 策略将学习率从初始学习率增加到某个最大学习率，然后从该最大学习率退火到远低于初始学习率的某个最小学习率。详情请参考论文 `Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates <https://arxiv.org/abs/1708.07120>`_。
 
@@ -30,4 +30,3 @@ mindspore.experimental.optim.lr_scheduler.OneCycleLR
         - **final_div_factor** (float，可选) - 最终的除法因子。按照 `min_lr = initial_lr/final_div_factor` 确定最小学习率。默认值： ``1e4``。
         - **three_phase** (bool，可选) - 如果为 ``True``，则使 three_phase 策略调整学习率，否则使用 two_phase 策略，具体算法细节请参考上述论文。默认值： ``False``。
         - **last_epoch** (int，可选) - epoch/step数。默认值： ``-1``。
-        - **verbose** (bool，可选) - 是否打印学习率。默认值： ``False``。
