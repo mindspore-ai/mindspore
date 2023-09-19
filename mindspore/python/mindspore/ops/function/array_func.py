@@ -6745,7 +6745,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         A Tensor, with same type as `input` . And its shape is as described above.
 
     Raises:
-        TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `kernel_size` is not int, tuple or list.
+        TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `padding` is not int, tuple or list.
         ValueError: If `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
         ValueError: If `padding` value is less than zero.

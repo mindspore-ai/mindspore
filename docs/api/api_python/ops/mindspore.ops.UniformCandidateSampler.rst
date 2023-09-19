@@ -15,7 +15,7 @@
         - **unique** (bool) - 表示一个batch中的所有采样类是否唯一。
         - **range_max** (int) - 可能的类数，该值必须是非负的。
         - **seed** (int，可选) - 随机种子，该值必须是非负的。如果 `seed` 的值为 ``0`` ，则 `seed` 的值将被随机生成的值替换。默认值： ``0`` 。
-        - **remove_accidental_hits** (bool，可选) - 表示是否移除accidental hit。默认值： ``False`` 。
+        - **remove_accidental_hits** (bool，可选) - 表示是否移除accidental hit。accidental hit表示其中一个 `true_classes` 目标类匹配 `sampled_candidates` 采样类之一，设置为 ``True`` 表示移除等于目标类的采样类。默认值： ``False`` 。
 
     输入：
         - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch\_size, num\_true)`。

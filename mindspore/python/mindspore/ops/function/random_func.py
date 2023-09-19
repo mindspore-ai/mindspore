@@ -368,7 +368,9 @@ def uniform_candidate_sampler(true_classes,
         range_max (int): The number of possible classes, must be positive.
         seed (int): Used for random number generation, must be non-negative. If seed has a value of 0,
             the seed will be replaced with a randomly generated value. Default: ``0`` .
-        remove_accidental_hits (bool): Whether accidental hit is removed. Default: ``False`` .
+        remove_accidental_hits (bool): Whether accidental hit is removed.
+            Accidental hit is when one of the true classes matches one of the sample classes.
+            Set ``True`` to remove which accidentally sampling the true class as sample class. Default: ``False`` .
 
     Returns:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.

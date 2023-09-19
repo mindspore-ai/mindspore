@@ -42,6 +42,6 @@ mindspore.ops.unfold
         Tensor，数据类型与 `input` 相同，其shape如上所述。
 
     异常：
-        - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `kernel_size` 的数据类型不是int、tuple或者list。
+        - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `padding` 的数据类型不是int、tuple或者list。
         - **ValueError** - 如果 `kernel_size` 、 `dilation` 、 `stride` 包含元素的值小于等于0或者元素个数大于 `2` 。
         - **ValueError** - 如果 `padding` 包含元素的值小于零。

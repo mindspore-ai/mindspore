@@ -15,4 +15,4 @@ mindspore.ops.Map
         - **args** (Tuple[sequence]) - 如果 `ops` 不是 ``None`` ，则所有输入的序列和序列的每一行都应该是相同长度。例如，如果 `args` 的长度为2，那么每个序列 `(args[0][i],args[1][i])` 长度的 `i` 将作为操作的输入。如果 `ops` 为 ``None`` ，则第一个输入是操作，另一个输入是输入。
 
     输出：
-        序列，进行函数操作后的输出序列。例如 `operation(args[0][i], args[1][i])` 。
+        序列，进行ops函数操作后的输出序列。例如 `ops(args[0][i], args[1][i])` 。

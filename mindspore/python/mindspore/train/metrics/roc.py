@@ -172,8 +172,8 @@ class ROC(Metric):
             - **fpr** (np.array) - False positive rate. In binary classification case, a fpr numpy array under different
               thresholds will be returned, otherwise in multiclass case, a list of
               fpr numpy arrays will be returned and each element represents one category.
-            - **tpr** (np.array) - True positive rates. n binary classification case, a tps numpy array under different
-              thresholds will be returned, otherwise in multiclass case, a list of tps numpy arrays
+            - **tpr** (np.array) - True positive rates. n binary classification case, a tpr numpy array under different
+              thresholds will be returned, otherwise in multiclass case, a list of tpr numpy arrays
               will be returned and each element represents one category.
             - **thresholds** (np.array) - Thresholds used for computing fpr and tpr.
 
