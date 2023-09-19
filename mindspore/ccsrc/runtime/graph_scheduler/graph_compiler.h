@@ -177,7 +177,7 @@ class GraphCompiler {
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
 
   // Update forward op output ref count of PyNative back graph.
-  void UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+  void UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
                                      std::map<std::string, size_t> *forward_op_output_tensor_id) const;
 
   // Handle single op output tensor and recover output of original complete kernel graph.

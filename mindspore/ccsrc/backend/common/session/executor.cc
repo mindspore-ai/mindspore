@@ -151,16 +151,6 @@ void RunGraphTask::Run() {
   ExecutorManager::Instance().OnEvent(ExecutorEvent::kRunGraphFinished);
 }
 
-void RunOpTask::Run() {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->RunOpImpl(graph_info_, op_run_info_, input_tensors_, &outputs_, tensors_mask_);
-}
-
-void RunOpsInGraphTask::Run() {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->RunOpsInGraphImpl(graph_id_, input_tensors_, &outputs_);
-}
-
 void CreateCommGroupTask::Run() { result_ = CommManager::GetInstance().CreateGroupSync(group_name_, ranks_); }
 
 void DestroyCommGroupTask::Run() { result_ = CommManager::GetInstance().DestroyGroup(group_name_); }
@@ -413,57 +403,6 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     }
   }
   RunTask(task, false);
-}
-
-void Executor::RunOp(const SessionPtr &session, const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-                     vector<TensorPtr> *input_tensors, VectorRef *outputs, const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(session);
-  MS_EXCEPTION_IF_NULL(outputs);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  auto ms_context = MsContext::GetInstance();
-  auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (target == kGPUDevice) {
-    for (auto &tensor : *input_tensors) {
-      if (tensor->NeedWait()) {
-        tensor->Wait();
-      }
-    }
-    {
-      // Release GIL before calling into (potentially long-running) C++ code
-      if (Py_IsInitialized() != 0) {
-        py::gil_scoped_release release;
-        session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-      } else {
-        session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-      }
-    }
-  } else {
-    auto task = std::make_shared<RunOpTask>();
-    task->session_ = session;
-    task->op_run_info_ = op_run_info;
-    task->graph_info_ = graph_info;
-    task->input_tensors_ = input_tensors;
-    task->tensors_mask_ = tensors_mask;
-    for (auto &tensor : *input_tensors) {
-      if (tensor->NeedWait()) {
-        tensor->Wait();
-      }
-    }
-    RunTask(task, true, true);
-    *outputs = task->outputs_;
-  }
-}
-
-void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
-                             const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
-  MS_EXCEPTION_IF_NULL(session);
-  MS_EXCEPTION_IF_NULL(outputs);
-  auto task = std::make_shared<RunOpsInGraphTask>();
-  task->session_ = session;
-  task->graph_id_ = graph_id;
-  task->input_tensors_ = inputs;
-  RunTask(task, true, true);
-  *outputs = task->outputs_;
 }
 
 bool Executor::CreateCommGroup(const std::string &group_name, const std::vector<uint32_t> &ranks) {

@@ -491,6 +491,19 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   return input_value_node;
 }
 
+ValueNodePtr KernelGraph::NewValueNode(const ValuePtr &input_value) {
+  if (input_value->isa<tensor::Tensor>()) {
+    return NewValueNode(input_value->cast<tensor::TensorPtr>());
+  }
+
+  auto value_node = std::make_shared<ValueNode>(input_value);
+  value_node->set_abstract(input_value->ToAbstract());
+  // add value node to graph
+  auto input_value_node = NewValueNode(value_node);
+  AddValueNodeToGraph(input_value_node);
+  return input_value_node;
+}
+
 AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(value);

@@ -413,7 +413,7 @@ const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
 const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
-const int kValueNodeTensorMask = 2;
+const int kValueNodeMask = 2;
 constexpr auto kNCHWShapeSize = 4;
 
 // define special index in special node

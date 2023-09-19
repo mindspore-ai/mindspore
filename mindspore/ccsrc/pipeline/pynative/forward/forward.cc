@@ -640,7 +640,7 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
     const auto &top_cell = op_run_info->requires_grad ? grad()->top_cell() : nullptr;
     for (size_t index = 0; index < op_run_info->input_size; ++index) {
       const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
-      PyNativeAlgo::DataConvert::ConvertValueToTensor(op_run_info, input_object, index, top_cell);
+      PyNativeAlgo::DataConvert::MarkInputs(op_run_info, input_object, index, top_cell);
     }
   }
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
@@ -978,8 +978,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       op_run_info->op_grad_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetValueGradInfo(
         op_run_info->op_grad_info->input_value[i], nullptr, TensorGradType::kConstant);
-      (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
-        op_run_info->op_grad_info->input_value[i]->cast<tensor::TensorPtr>());
+      (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(op_run_info->op_grad_info->input_value[i]);
     }
   }
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
@@ -1260,8 +1259,11 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
-  for (const auto &tensor : op_run_info->base_op_run_info.input_tensor) {
-    RefreshTensorContiguous(tensor);
+  for (const auto &value : op_run_info->base_op_run_info.expanded_input_values) {
+    if (!value->isa<tensor::Tensor>()) {
+      continue;
+    }
+    RefreshTensorContiguous(value->cast<tensor::TensorPtr>());
   }
 }
 

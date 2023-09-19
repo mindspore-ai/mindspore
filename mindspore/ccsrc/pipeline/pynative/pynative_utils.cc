@@ -1102,8 +1102,8 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
         (void)fake_tensor_list.emplace_back(Common::CreateFakeTensorWithoutDeviceAddress(tensor));
       }
     }
-    (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(tensor_mask);
   }
   if (op_run_info->requires_grad && !top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
     op_run_info->op_grad_info->input_value[index] = std::make_shared<ValueTuple>(fake_tensor_list);
@@ -1126,22 +1126,6 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   }
 }
 
-void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info,
-                                            const ValueSequencePtr &value_seq) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(value_seq);
-  ValueTuplePtr value_tuple;
-  if (value_seq->isa<ValueList>()) {
-    value_tuple = std::make_shared<ValueTuple>(value_seq->value());
-  } else {
-    value_tuple = value_seq->cast<ValueTuplePtr>();
-  }
-  MS_EXCEPTION_IF_NULL(value_tuple);
-  auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
-}
-
 ValuePtr DataConvert::ConvertValueDictToValueTuple(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   const auto &dic_v = v->cast<ValueDictionaryPtr>();
@@ -1162,12 +1146,11 @@ void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, cons
     MS_LOG(DEBUG) << "input_names are nullptr";
     return;
   }
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(map_tensor);
-  const auto it = op_run_info->base_op_run_info.input_mask.end();
-  (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterWeightTensorMask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(map_tensor);
+  const auto it = op_run_info->base_op_run_info.input_masks.end();
+  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterWeightTensorMask);
   if (op_run_info->requires_grad) {
-    op_run_info->op_grad_info->input_value_grad_type[index] =
-      Common::SetTensorGradInfo(op_run_info->base_op_run_info.input_tensor.back(), top_cell);
+    op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(map_tensor, top_cell);
   }
 }
 
@@ -1183,18 +1166,18 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
     return;
   }
 
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetIndptr());
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetIndices());
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetValues());
-  const auto it = op_run_info->base_op_run_info.input_mask.end();
-  (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterDataTensorMask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndptr());
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndices());
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetValues());
+  const auto it = op_run_info->base_op_run_info.input_masks.end();
+  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterDataTensorMask);
   op_run_info->op_grad_info->op_prim->set_attr("is_csr", MakeValue(true));
   op_run_info->op_grad_info->op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
   if (op_run_info->requires_grad) {
     op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
     for (int i = 0; i < input_num; ++i) {
-      auto iter = op_run_info->base_op_run_info.input_tensor.rbegin() + i;
-      auto grad_type = Common::SetTensorGradInfo(*iter, top_cell);
+      auto iter = op_run_info->base_op_run_info.expanded_input_values.rbegin() + i;
+      auto grad_type = Common::SetTensorGradInfo((*iter)->cast<tensor::TensorPtr>(), top_cell);
       if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
@@ -1209,32 +1192,31 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
 
   const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
-    std::vector<int64_t> axis = {};
-    (void)op_run_info->base_op_run_info.input_tensor.emplace_back(std::make_shared<tensor::Tensor>(axis, kInt64));
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
   }
   if (tuple_inputs[0]->isa<tensor::Tensor>()) {
     PlantTensorTupleToVector(op_run_info, value_seq, index, top_cell);
   } else {
-    ConvertValueTupleToTensor(op_run_info, value_seq);
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
   }
 }
 
-void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
-                                       const TopCellInfoPtr &top_cell) {
+void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
+                             const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
   tensor::TensorPtr tensor_ptr = nullptr;
-  int64_t tensor_mask = kParameterDataTensorMask;
+  int64_t input_mask = kParameterDataTensorMask;
   if (v->isa<tensor::MapTensor>()) {
     ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), top_cell, index);
     return;
   } else if (v->isa<tensor::Tensor>()) {
     tensor_ptr = v->cast<tensor::TensorPtr>();
     if (tensor_ptr->is_parameter()) {
-      tensor_mask = kParameterWeightTensorMask;
+      input_mask = kParameterWeightTensorMask;
     }
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
@@ -1242,31 +1224,19 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
         op_run_info->op_grad_info->input_value[index] = Common::CreateFakeTensorWithoutDeviceAddress(tensor_ptr);
       }
     }
-  } else if (v->isa<FloatImm>()) {
-    double input_value = v->cast<FP32ImmPtr>()->value();
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<BoolImm>()) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(v->cast<BoolImmPtr>()->value(), kBool);
-    tensor_mask = kValueNodeTensorMask;
+  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>()) {
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    return;
   } else if (v->isa<IntegerImm>()) {
-    int64_t input = v->cast<Int64ImmPtr>()->value();
     if (op_run_info->op_grad_info->op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+      int64_t input = v->cast<Int64ImmPtr>()->value();
       op_run_info->op_grad_info->op_prim->set_attr("axis", MakeValue(input));
       return;
     }
-    tensor_ptr = std::make_shared<tensor::Tensor>(input, kInt64);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<Type>()) {
-    int64_t type_id = v->cast<TypePtr>()->type_id();
-    tensor_ptr = std::make_shared<tensor::Tensor>(type_id, kInt64);
-    tensor_ptr->set_user_data(kTensorValueIsType, v);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<StringImm>()) {
-    auto value_string = GetValue<std::string>(v);
-    const ShapeVector shape = {1, SizeToLong(value_string.size())};
-    tensor_ptr = std::make_shared<tensor::Tensor>(kObjectTypeString, shape, value_string.data(), value_string.size());
-    tensor_mask = kValueNodeTensorMask;
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    return;
   } else if (v->isa<ValueSequence>()) {
     ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), index, top_cell);
     return;
@@ -1281,8 +1251,8 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
   }
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor_ptr);
+  (void)op_run_info->base_op_run_info.input_masks.emplace_back(input_mask);
 }
 
 void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
@@ -1290,10 +1260,10 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   if (!common::AnfAlgo::IsReduceOp(op_run_info->base_op_run_info.op_name)) {
     return;
   }
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  const auto &inputs = op_run_info->base_op_run_info.expanded_input_values;
   constexpr size_t kReduceOpInputNum = 2;
-  if (input_tensors.size() < kReduceOpInputNum) {
-    MS_LOG(EXCEPTION) << "Invalid input tensor size " << input_tensors.size() << " of Op "
+  if (inputs.size() < kReduceOpInputNum) {
+    MS_LOG(EXCEPTION) << "Invalid input tensor size " << inputs.size() << " of Op "
                       << op_run_info->base_op_run_info.op_name;
   }
 
@@ -1304,16 +1274,17 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
 
-  const auto &axis_shape = input_tensors[1]->shape();
+  auto seq = inputs[1]->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq);
   // 2nd input tensor is {}, means reduce all axis.
-  if (axis_shape.size() == 1 && axis_shape[0] == 0) {
-    auto size = input_tensors[0]->shape().size();
+  if (seq->size() == 0) {
+    auto size = inputs[0]->cast<tensor::TensorPtr>()->shape().size();
     // For example, input 0 is Tensor(shape=[], value=1), the axis to reduce is 0.
-    std::vector<int64_t> axis = {0};
+    std::vector<ValuePtr> axis = {std::make_shared<Int64Imm>(0)};
     for (size_t i = 1; i < size; ++i) {
-      axis.push_back(SizeToLong(i));
+      axis.push_back(std::make_shared<Int64Imm>(static_cast<int64_t>(i)));
     }
-    op_run_info->base_op_run_info.input_tensor[1] = std::make_shared<tensor::Tensor>(axis);
+    op_run_info->base_op_run_info.expanded_input_values[1] = std::make_shared<ValueTuple>(axis);
   }
 }
 
@@ -1324,8 +1295,8 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
 
   auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
     std::replace_if(
-      op_run_info->base_op_run_info.input_mask.begin(), op_run_info->base_op_run_info.input_mask.end(),
-      [](auto mask) { return mask == kValueNodeTensorMask; }, kParameterDataTensorMask);
+      op_run_info->base_op_run_info.input_masks.begin(), op_run_info->base_op_run_info.input_masks.end(),
+      [](auto mask) { return mask == kValueNodeMask; }, kParameterDataTensorMask);
   };
 
   // value to parameter(onehot)
@@ -1337,8 +1308,8 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
 void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
 
-  (void)op_run_info->base_op_run_info.input_tensor.reserve(op_run_info->input_size);
-  (void)op_run_info->base_op_run_info.input_mask.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.expanded_input_values.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.input_masks.reserve(op_run_info->input_size);
   // Get input tensors.
   op_run_info->op_grad_info->op_prim->BeginRecordAddAttr();
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
@@ -1348,7 +1319,7 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
       continue;
     }
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
-    ConvertValueToTensor(op_run_info, input_object, index, top_cell);
+    MarkInputs(op_run_info, input_object, index, top_cell);
     // -1 indicates input_object is not a dynInput
     if (!op_run_info->base_op_run_info.dyn_input_sizes.empty() && !input_object->isa<ValueSequence>()) {
       (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(-1);

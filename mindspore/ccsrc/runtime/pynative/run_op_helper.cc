@@ -1057,15 +1057,19 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
 std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   std::vector<tensor::TensorPtr> tensors_without_value_node;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
+  const auto &input_values = op_run_info->base_op_run_info.expanded_input_values;
+  const auto &input_masks = op_run_info->base_op_run_info.input_masks;
+  if (input_values.size() != input_masks.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_values.size() << " should be equal to tensors mask size "
+                      << input_masks.size();
   }
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask.at(index) != kValueNodeTensorMask) {
-      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
+  for (size_t index = 0; index < input_masks.size(); ++index) {
+    if (input_masks.at(index) != kValueNodeMask) {
+      if (!input_values[index]->isa<tensor::Tensor>()) {
+        MS_LOG(EXCEPTION) << "The " << index << "' input shoulde be a Tensor, but got "
+                          << input_values[index]->ToString();
+      }
+      (void)tensors_without_value_node.emplace_back(input_values.at(index)->cast<tensor::TensorPtr>());
     }
   }
   return tensors_without_value_node;

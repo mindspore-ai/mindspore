@@ -99,14 +99,13 @@ struct DataConvert {
                                            size_t index);
   static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
                                const TopCellInfoPtr &top_cell, size_t index);
-  static void ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq);
   static ValuePtr ConvertValueDictToValueTuple(const ValuePtr &v);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                        size_t index, const TopCellInfoPtr &top_cell);
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                         size_t index, const TopCellInfoPtr &top_cell);
-  static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
-                                   const TopCellInfoPtr &top_cell);
+  static void MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
+                         const TopCellInfoPtr &top_cell);
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                            size_t input_index);
 };

@@ -157,6 +157,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const;
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
+  ValueNodePtr NewValueNode(const ValuePtr &input_value);
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }

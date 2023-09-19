@@ -218,28 +218,6 @@ void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
   }
 }
 
-KernelGraphPtr CPUSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-                                       const std::vector<tensor::TensorPtr> &input_tensors,
-                                       const std::vector<int64_t> &tensors_mask) {
-  // Check if the graph cache exists.
-  auto it = run_op_graphs_.find(graph_info);
-  if (it != run_op_graphs_.end()) {
-    return it->second;
-  }
-
-  // Prepare the graph
-  const auto &kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  SetKernelInfo(kernel_graph.get());
-  Optimize(kernel_graph);
-  BuildKernel(kernel_graph.get());
-  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_op_graph_cache) {
-    run_op_graphs_[graph_info] = kernel_graph;
-  }
-  return kernel_graph;
-}
-
 void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
   for (size_t i = 0; i < base_ref.size(); ++i) {
     if (utils::isa<VectorRef>(base_ref[i])) {
@@ -264,45 +242,6 @@ void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, Kern
       (void)tensor_node.first->set_shape(shape);
     }
   }
-}
-
-void CPUSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                                 const std::vector<int64_t> &tensors_mask) {
-  RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-}
-
-void CPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                           std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                           const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  ProcessInputTensorsForHeterogeneous("CPU", *input_tensors);
-  const auto &kernel_graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  EraseValueNodeTensor(tensors_mask, input_tensors);
-
-  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
-  auto execution_order = kernel_graph->execution_order();
-  Reorder(&execution_order);
-  kernel_graph->set_execution_order(execution_order);
-
-  // runtime init
-  if (!runtime_.Init()) {
-    MS_LOG(EXCEPTION) << "Kernel runtime init error.";
-  }
-  runtime_.AssignKernelGraphAddress(kernel_graph.get());
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
-  runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
-  runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);
-
-  bool ret = runtime_.Run(*kernel_graph, false);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Run Op failed";
-  }
-  UpdateDynamicOutputShape(tensor_to_node);
-  SetOutputFlags(*outputs);
-  runtime_.RunOpClearMemory(*kernel_graph);
 }
 
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) const {

@@ -265,7 +265,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
     }
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
-    if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
+    if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueSequence>()) {
       auto address_list = CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
       // Deal with tensor and tuple
       if (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end()) {

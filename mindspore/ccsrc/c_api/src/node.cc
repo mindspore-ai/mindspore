@@ -1760,8 +1760,8 @@ STATUS MSRunOpWithInfo(ResMgrHandle res_mgr, const char *op_type, TensorHandle c
     }
 
     // clear used input tensor
-    op_run_info->base_op_run_info.input_tensor.clear();
-    op_run_info->base_op_run_info.input_mask.clear();
+    op_run_info->base_op_run_info.expanded_input_values.clear();
+    op_run_info->base_op_run_info.input_masks.clear();
 
     // get output tensor
     const std::vector<TensorPtr> &ref_outputs = ConvertOutputToTensor(op_run_info->real_out);

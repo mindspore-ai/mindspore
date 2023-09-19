@@ -51,8 +51,8 @@ struct BaseOpRunInfo {
 #else
   size_t next_input_index = 0;
 #endif
-  std::vector<tensor::TensorPtr> input_tensor;
-  std::vector<int64_t> input_mask;
+  std::vector<ValuePtr> expanded_input_values;
+  std::vector<int64_t> input_masks;
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
   std::vector<int64_t> dyn_input_sizes;

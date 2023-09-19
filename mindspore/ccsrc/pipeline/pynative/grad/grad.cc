@@ -291,14 +291,14 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
     //    so if y is a valuenode, the dy is useless, we can free x in ahead.
     bool x_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex0]);
     bool y_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex1]);
-    if (x_is_const_value) {
-      op_run_info->op_grad_info->input_value[kIndex1] =
-        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex1]);
+    if (x_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex1]->isa<tensor::Tensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex1] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex1]->cast<tensor::TensorPtr>());
       MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << op_name;
     }
-    if (y_is_const_value) {
-      op_run_info->op_grad_info->input_value[kIndex0] =
-        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex0]);
+    if (y_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex0]->isa<tensor::Tensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex0] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex0]->cast<tensor::TensorPtr>());
       MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << op_name;
     }
   } else if (kDivOp.find(op_name) != kDivOp.end()) {

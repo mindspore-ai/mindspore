@@ -927,11 +927,11 @@ void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernel
   session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
 }
 
-void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
                                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
-  session_->ReleaseForwardOpOutput(input_tensor, forward_op_output_tensor_id);
+  session_->ReleaseForwardOpOutput(input_values, forward_op_output_tensor_id);
 }
 
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,

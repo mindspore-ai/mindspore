@@ -295,7 +295,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   }
 
   VectorRef outputs;
-  // Call ms RunGraphAsync or RunOpsInGraph (graphId, input ,output)
+  // Call ms RunGraphAsync
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
   MS_EXCEPTION_IF_NULL(exe_session);
 
@@ -310,10 +310,9 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
-    exe_session->RunOpsInGraph(g, inputs, &outputs);
-  } else {
-    exe_session->RunGraphAsync(g, inputs, &outputs);
+    MS_LOG(EXCEPTION) << "Pynative can't call this function anymore!";
   }
+  exe_session->RunGraphAsync(g, inputs, &outputs);
 
   MS_LOG(DEBUG) << "RunGraph finished:" << outputs.size();
   return outputs;
@@ -892,8 +891,8 @@ void MindRTBackend::EraseSingleOpCache(const GraphInfo &graph_info) const {
   pynative::OpCompiler::GetInstance().ClearOpCache(graph_info);
 }
 
-void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
-  graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
+void MindRTBackend::ReleaseForwardOutput(const std::vector<ValuePtr> &input_values) {
+  graph_compiler_->UpdateForwardOpOutputRefCount(input_values, &forward_op_output_tensor_id_);
 }
 
 void MindRTBackend::CompileSingleOpGraphs(
@@ -931,7 +930,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
-    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);
   }
 
   ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info()->is_gradient_out);
@@ -954,7 +953,7 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskC
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
-    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);
   }
 
   ClearInputDeviceAddressDynamic(context->graph(), context->device_context());
@@ -1112,7 +1111,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
 
   if (!op_run_info->is_infer) {
-    ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(op_run_info->base_op_run_info.expanded_input_values);
   }
   UpdateOutput(op_run_info, output_nodes, outputs);
 
@@ -1181,7 +1180,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   runtime::RunSingleOpDynamic(op_run_info, op_compiler_info, &device_address_list);
 
   if (!op_run_info->is_infer) {
-    ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(op_run_info->base_op_run_info.expanded_input_values);
   }
 
   // Create output tensor
@@ -1249,8 +1248,9 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
     {base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
 
-  for (size_t idx = 0; idx < base_op_run_info.input_tensor.size(); idx++) {
-    auto input_tensor = base_op_run_info.input_tensor[idx];
+  for (size_t idx = 0; idx < base_op_run_info.expanded_input_values.size(); idx++) {
+    auto input_tensor = base_op_run_info.expanded_input_values[idx]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(input_tensor);
     if (input_tensor->device_address() == nullptr) {
       if (idx == 0) {
         MS_LOG(EXCEPTION) << "First tensor can not be nullptr";
