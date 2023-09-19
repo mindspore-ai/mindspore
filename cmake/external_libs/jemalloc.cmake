@@ -6,6 +6,11 @@ set(PRE_CONFIGURE_CMD "./autogen.sh")
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     message("jemalloc thirdparty do not support windows currently.")
 else()
+    set(jemalloc_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -fstack-protector-all")
+    set(jemalloc_CFLAGS "-D_FORTIFY_SOURCE=2 -O2 -fstack-protector-all")
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(jemalloc_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
+    endif()
     mindspore_add_pkg(jemalloc
             VER 5.3.0
             LIBS jemalloc
