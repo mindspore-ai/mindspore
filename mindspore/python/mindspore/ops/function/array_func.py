@@ -4098,6 +4098,7 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
         Tensor after embedding, has the same shape and type as `input` .
 
     Raises:
+        ValueError: The shape of `src` is not the same as the shape of `input` slice.
         TypeError: If `input` is not a Tensor.
         TypeError: If `src` is not a Tensor.
         TypeError: If `axis` or `step` is not an integer.
@@ -4126,23 +4127,13 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
     for _ in builtins.range(axis):
         index_tensor = index_tensor.expand_dims(0)
 
-    if index_shape == src_shape:
-        for _ in builtins.range(input_rank - axis - 1):
-            index_tensor = index_tensor.expand_dims(-1)
-        index_tensor = index_tensor.broadcast_to(src.shape)
-        return tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
-
-    for _ in builtins.range(axis):
-        src = src.expand_dims(0)
-    if axis == input_rank - 1:
-        src = src.broadcast_to(input.shape[0:axis] + src_shape)
-    else:
-        for _ in builtins.range(len(src_shape)):
-            index_tensor = index_tensor.expand_dims(-1)
-        src = src.broadcast_to(input.shape[0:axis] + (len(index),) + src_shape)
+    if index_shape != src_shape:
+        raise ValueError(f"For slice_scatter, src shape should be equal to the slice size,"
+                         f"but got src shape {src_shape} and slice shape {index_shape}")
+    for _ in builtins.range(input_rank - axis - 1):
+        index_tensor = index_tensor.expand_dims(-1)
     index_tensor = index_tensor.broadcast_to(src.shape)
-    output = tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
-    return output
+    return tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
 
 
 def select_scatter(input, src, axis, index):
@@ -4159,6 +4150,7 @@ def select_scatter(input, src, axis, index):
         Tensor after embedding, has the same shape and type as `input` .
 
     Raises:
+        ValueError: The shape of `src` is not the same as the shape scattered over `input` .
         TypeError: If `input` is not a Tensor.
         TypeError: If `src` is not a Tensor.
         TypeError: If `axis` or `index` is not an integer.
@@ -4180,6 +4172,9 @@ def select_scatter(input, src, axis, index):
           [0. 0. 0.]]]
     """
     src = src.expand_dims(axis=axis)
+    x_rank = input.ndim
+    axis = axis if axis >= 0 else axis + x_rank
+    index = index if index >= 0 else index + x_rank
     return slice_scatter(input, src, axis, start=index, end=index + 1)
 
 
