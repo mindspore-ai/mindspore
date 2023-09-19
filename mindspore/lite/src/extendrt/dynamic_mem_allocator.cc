@@ -34,28 +34,28 @@ void DynamicMemAllocator::Free(void *ptr) {
 }
 
 int DynamicMemAllocator::RefCount(void *ptr) {
-  if (ptr == nullptr) {
+  if (mem_oper_ == nullptr || ptr == nullptr) {
     return -1;
   }
   return mem_oper_->RefCount(ptr);
 }
 
 int DynamicMemAllocator::SetRefCount(void *ptr, int ref_count) {
-  if (ptr == nullptr) {
+  if (mem_oper_ == nullptr || ptr == nullptr) {
     return -1;
   }
   return mem_oper_->SetRefCount(ptr, ref_count);
 }
 
 int DynamicMemAllocator::IncRefCount(void *ptr, int ref_count) {
-  if (ptr == nullptr) {
+  if (mem_oper_ == nullptr || ptr == nullptr) {
     return -1;
   }
   return mem_oper_->IncRefCount(ptr, ref_count);
 }
 
 int DynamicMemAllocator::DecRefCount(void *ptr, int ref_count) {
-  if (ptr == nullptr) {
+  if (mem_oper_ == nullptr || ptr == nullptr) {
     return -1;
   }
   return mem_oper_->DecRefCount(ptr, ref_count);

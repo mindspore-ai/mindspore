@@ -70,8 +70,10 @@ const AnfNodePtr AddActivationFusion::Process(const FuncGraphPtr &func_graph, co
   auto act_quant_params_valueptr = act_primitive->GetAttr("quant_params");
   if (act_quant_params_valueptr != nullptr) {
     auto act_quant_param_holder = act_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(act_quant_param_holder != nullptr, nullptr);
     if (act_quant_param_holder->IsOutputExistInited()) {
       auto quant_params = act_quant_param_holder->get_output_quant_params();
+      MS_CHECK_TRUE_RET(!quant_params.empty(), nullptr);
       auto add_quant_params_valueptr = add_primitive->GetAttr("quant_params");
       if (add_quant_params_valueptr != nullptr) {
         auto add_quant_params_holder = add_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();

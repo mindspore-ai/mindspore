@@ -210,8 +210,10 @@ bool MulAddFusion::MulInputAnodeIsInferred(const AnfNodePtr &mul_input_anode) co
 
 bool MulAddFusion::CopyNodeFormat(CNodePtr node, mindspore::ops::PrimitiveCPtr prim) const {
   auto src_prim = GetValueNode<PrimitiveCPtr>(node->input(0));
+  MS_CHECK_TRUE_RET(src_prim != nullptr, false);
   if (src_prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
     auto value = src_prim->GetAttr(mindspore::ops::kFormat);
+    MS_CHECK_TRUE_RET(value != nullptr, false);
     if (value->isa<mindspore::Int64Imm>()) {
       auto format = GetValue<int64_t>(value);
       prim->AddAttr(mindspore::ops::kFormat, MakeValue(format));

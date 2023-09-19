@@ -38,8 +38,11 @@ bool CheckValueIsEqual(const ValuePtr &left, const ValuePtr &right) {
   if (utils::isa<tensor::Tensor>(left) && utils::isa<tensor::Tensor>(right)) {
     auto left_tensor = left->cast<tensor::TensorPtr>();
     auto right_tensor = right->cast<tensor::TensorPtr>();
-    return left_tensor->tensor::MetaTensor::operator==(*right_tensor) &&
-           left_tensor->data_ptr()->equals(*right_tensor->data_ptr());
+    MS_CHECK_TRUE_RET(left_tensor != nullptr && right_tensor != nullptr, false);
+    auto left_data = left_tensor->data_ptr();
+    auto right_data = right_tensor->data_ptr();
+    MS_CHECK_TRUE_RET(left_data != nullptr && right_data != nullptr, false);
+    return left_tensor->tensor::MetaTensor::operator==(*right_tensor) && left_data->equals(*right_data);
   }
   return *left == *right;
 }
@@ -67,12 +70,17 @@ bool ReduceSameOpInHorizon::CheckCNodeIsEqual(const CNodePtr &left, const CNodeP
       if (param_->train_model) {
         return false;
       }
-      left_value = left_input->cast<ParameterPtr>()->default_param();
-      right_value = right_input->cast<ParameterPtr>()->default_param();
+      auto left_param = left_input->cast<ParameterPtr>();
+      auto right_param = right_input->cast<ParameterPtr>();
+      MS_CHECK_TRUE_RET(left_param != nullptr && right_param != nullptr, false);
+      left_value = left_param->default_param();
+      right_value = right_param->default_param();
     }
     if (utils::isa<ValueNode>(left_input) && utils::isa<ValueNode>(right_input)) {
-      left_value = left_input->cast<ValueNodePtr>()->value();
-      right_value = right_input->cast<ValueNodePtr>()->value();
+      auto left_value_node = left_input->cast<ValueNodePtr>();
+      auto right_value_node = right_input->cast<ValueNodePtr>();
+      left_value = left_value_node->value();
+      right_value = right_value_node->value();
     }
     if (!CheckValueIsEqual(left_value, right_value)) {
       return false;
@@ -89,6 +97,7 @@ int ReduceSameOpInHorizon::Process(const FuncGraphPtr &func_graph) {
     return lite::RET_NULL_PTR;
   }
   auto return_node = func_graph->get_return();
+  MS_CHECK_TRUE_RET(return_node != nullptr, lite::RET_NULL_PTR);
   auto origin_outputs = return_node->inputs();
   if (lite::RemoveIfMakeTuple(return_node)) {
     return_node->set_inputs(origin_outputs);
