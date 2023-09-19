@@ -73,7 +73,7 @@ void BackendTask::SetException(const std::exception_ptr &e) {
 void AllocViewMemBackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      std::string("AllocView"), false);
-  run_func_(op_run_info_, input_tensor_, input_idx_);
+  run_func_(op_run_info_, input_tensor_, input_idx_, need_wait_);
   op_run_info_ = nullptr;
   input_tensor_ = nullptr;
 }

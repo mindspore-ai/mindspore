@@ -450,7 +450,13 @@ void ForwardExecutor::DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_inf
 
 void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info,
                                                       const tensor::TensorPtr &input_tensor, const size_t &input_idx,
-                                                      bool enable_async) {
+                                                      bool enable_async, bool need_wait) {
+  if (need_wait) {
+    auto device_address = input_tensor->device_address();
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_is_view(true);
+    return;
+  }
   const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {op_run_info->base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
@@ -1076,39 +1082,50 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
 void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor,
                                                   const FrontendOpRunInfoPtr &op_run_info, const size_t &input_idx) {
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto check_device_address = [&]() {
-    return input_tensor->address_future() != nullptr || input_tensor->device_address() != nullptr;
+  auto check_view_device_address = [&input_tensor]() {
+    if (input_tensor->address_future() == nullptr && input_tensor->device_address() != nullptr) {
+      input_tensor->device_address()->set_is_view(true);
+      return true;
+    }
+    return false;
   };
-  if (check_device_address()) {
+  if (check_view_device_address()) {
     return;
   }
   backend_queue_->Wait();
-  if (check_device_address()) {
+  if (check_view_device_address()) {
     return;
   }
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
-    DeviceAddressPromisePtr promise =
-      std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
-    auto future = promise->GetFuture();
-    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
-    input_tensor->set_address_future(device_address_future);
-    (void)op_run_info->device_sync_promises.emplace_back(std::move(promise));
-    DispatchAllocateMemTask(op_run_info, input_tensor, input_idx);
+    if (input_tensor->address_future() != nullptr) {
+      DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, true);
+    } else {
+      DeviceAddressPromisePtr promise =
+        std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+      auto future = promise->GetFuture();
+      auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
+      input_tensor->set_address_future(device_address_future);
+      (void)op_run_info->device_sync_promises.emplace_back(std::move(promise));
+      DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, false);
+    }
   } else {
+    // Sync address_future is nullptr
     CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, false);
   }
 }
 
 void ForwardExecutor::DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info,
-                                              const tensor::TensorPtr &input_tensor, const size_t &input_idx) {
+                                              const tensor::TensorPtr &input_tensor, const size_t &input_idx,
+                                              bool need_wait) {
   static auto alloc_mem_func = [this](const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                                      const size_t &input_idx) {
-    CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, true);
+                                      const size_t &input_idx, bool need_wait) {
+    CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, true, need_wait);
   };
 
-  auto view_task = std::make_shared<AllocViewMemBackendTask>(alloc_mem_func, op_run_info, input_tensor, input_idx);
+  auto view_task =
+    std::make_shared<AllocViewMemBackendTask>(alloc_mem_func, op_run_info, input_tensor, input_idx, need_wait);
   backend_queue_->Push(view_task);
 }
 

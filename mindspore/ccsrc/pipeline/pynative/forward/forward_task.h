@@ -110,27 +110,29 @@ class ViewKernelBackendTask : public AsyncTask {
 
 class AllocViewMemBackendTask : public AsyncTask {
  public:
-  AllocViewMemBackendTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info,
-                                             const tensor::TensorPtr &input_tensor, const size_t &input_idx)>
-                            run_func,
-                          FrontendOpRunInfoPtr op_run_info, const tensor::TensorPtr &input_tensor,
-                          const size_t &input_idx)
+  AllocViewMemBackendTask(
+    std::function<void(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                       const size_t &input_idx, bool need_wait)>
+      run_func,
+    FrontendOpRunInfoPtr op_run_info, const tensor::TensorPtr &input_tensor, const size_t &input_idx, bool need_wait)
       : AsyncTask(kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         input_tensor_(input_tensor),
-        input_idx_(input_idx) {}
+        input_idx_(input_idx),
+        need_wait_(need_wait) {}
   ~AllocViewMemBackendTask() override = default;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
 
  private:
   std::function<void(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                     const size_t &input_idx)>
+                     const size_t &input_idx, bool need_wait)>
     run_func_;
   FrontendOpRunInfoPtr op_run_info_;
   tensor::TensorPtr input_tensor_;
   size_t input_idx_{0};
+  bool need_wait_{false};
 };
 
 class ContiguousBackendTask : public AsyncTask {
