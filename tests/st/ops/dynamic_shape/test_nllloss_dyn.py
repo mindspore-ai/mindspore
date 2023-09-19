@@ -55,7 +55,7 @@ target = Tensor(np.array([1, 0, 4]).astype(np.int32))
 weight = Tensor(np.array([0.2, 0.3, 0.1, 0.15, 0.25]).astype(np_type))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nllloss_cpu_none_dynamic_shape():
@@ -81,7 +81,7 @@ def test_nllloss_cpu_none_dynamic_shape():
     assert expect_grad[2].asnumpy().shape == weight.asnumpy().shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nllloss_cpu_mean_dynamic_shape():

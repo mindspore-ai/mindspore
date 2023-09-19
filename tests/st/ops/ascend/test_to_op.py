@@ -35,7 +35,7 @@ def test_to_tensor_api(dtype):
     assert dtype_op(output) == dtype
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

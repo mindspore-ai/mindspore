@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.select(cond_op, input_x, input_y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,

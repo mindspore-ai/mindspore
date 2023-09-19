@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_monad_vmap():

@@ -82,7 +82,7 @@ def test_tensor_copy_slices():
     test_tensor_copy_slices_net_many_dtype((10, 10, 10), (5, 10), (9, 5,), (10, 10,), (1, 1,), support_dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_bprop():
@@ -130,7 +130,7 @@ def test_tensor_copy_slices_gpu_pynative():
     test_tensor_copy_slices()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_cpu_graph():
@@ -138,7 +138,7 @@ def test_tensor_copy_slices_cpu_graph():
     test_tensor_copy_slices()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_cpu_pynative():

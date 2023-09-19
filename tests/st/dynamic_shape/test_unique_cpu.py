@@ -77,7 +77,7 @@ def test_unique_square():
     assert (output.asnumpy() == expect1).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unqiue_func_1d():
@@ -95,7 +95,7 @@ def test_unqiue_func_1d():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unqiue_func_2d():

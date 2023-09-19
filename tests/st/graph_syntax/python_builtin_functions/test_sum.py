@@ -21,7 +21,7 @@ from mindspore import dtype as mstype
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -63,7 +63,7 @@ def test_fallback_sum_tensor_n_default_2():
     assert np.allclose(out.asnumpy(), np.array([4, 6]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -105,7 +105,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_2():
     assert np.allclose(out.asnumpy(), np.array([9, 12]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -126,7 +126,7 @@ def test_fallback_sum_with_x_list_of_tensor():
     assert np.allclose(out.asnumpy(), np.array([[4, 6], [8, 10]]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -148,7 +148,7 @@ def test_fallback_sum_with_tensor_0d(mode):
         net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

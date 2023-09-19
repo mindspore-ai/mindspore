@@ -75,7 +75,7 @@ class Read(nn.Cell):
         return success
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_read_write_model_gpu():
@@ -103,7 +103,7 @@ def test_read_write_model_gpu():
     assert np.allclose(source_param[0].asnumpy(), 0.1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_read_write_model_cpu():

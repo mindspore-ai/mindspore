@@ -93,7 +93,7 @@ class CmpNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -137,7 +137,7 @@ def test_pynative_dyn_shape_output_without_user_sens():
     assert np.allclose(grad[1].asnumpy(), net_cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

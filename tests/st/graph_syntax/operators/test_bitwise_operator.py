@@ -22,7 +22,7 @@ from mindspore import context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -88,7 +88,7 @@ def test_bitwise_and_3():
     assert np.allclose(result.asnumpy(), np.array([1, 0, 0]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -220,7 +220,7 @@ def test_bitwise_xor_3():
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

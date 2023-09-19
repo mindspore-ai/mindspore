@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -47,7 +47,7 @@ def test_fallback_getattr_asnumpy():
     assert out[0] == out[1] == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -79,7 +79,7 @@ def test_fallback_getattr_asnumpy_custom_class():
     assert out[0] == out[1] == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

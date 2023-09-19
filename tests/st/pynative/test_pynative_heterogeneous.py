@@ -89,7 +89,7 @@ def test_heterogeneous_default_gpu_prim_cpu():
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_heterogeneous_default_cpu_prim_gpu():

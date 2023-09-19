@@ -23,7 +23,7 @@ import mindspore.common.dtype as mstype
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -90,7 +90,7 @@ def test_dict_return_2():
     assert out == {'a': ms.Tensor(np.array(1), ms.int64)}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -138,7 +138,7 @@ def test_dict_get_3():
     assert out == {'y': ms.Tensor(np.array(1), ms.int64), 'a': 'a', 'b': 'c'}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -483,7 +483,7 @@ def test_net_dict_2_grad():
     assert np.allclose(outputs1.asnumpy(), outputs2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -613,7 +613,7 @@ def test_nested_dict_with_parameter():
     assert out2 == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -641,7 +641,7 @@ def test_return_nested_dict_with_parameter1():
 
 
 @pytest.mark.skip('Not support list to PyExecute yet.')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -668,7 +668,7 @@ def test_return_nested_dict_with_parameter2():
     assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -728,7 +728,7 @@ def test_nested_dict_with_parameter_constant2():
     assert out2 == net.x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -836,7 +836,7 @@ def test_return_nested_dict_with_parameter_constant4():
     assert out == {'params': [net.x, net.y], 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -860,7 +860,7 @@ def test_return_dict_with_dict_values():
     assert out['x'] == x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -932,7 +932,7 @@ def test_return_dict_in_if_else():
     assert out == {"cba": x, "number": [3, 2, 1]}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

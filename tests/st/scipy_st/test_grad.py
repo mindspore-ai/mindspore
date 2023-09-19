@@ -51,7 +51,7 @@ def test_cho_factor_grad():
     assert onp.allclose(c.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -89,7 +89,7 @@ def test_cho_solve_grad(lower, shape, data_type):
     assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -132,7 +132,7 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
     assert gradient_check(Tensor(a), net, epsilon) < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -169,7 +169,7 @@ def test_trsm_grad_pynative(shapes, trans, lower, unit_diagonal, data_type):
     assert gradient_check([Tensor(a), Tensor(b)], net, epsilon) < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

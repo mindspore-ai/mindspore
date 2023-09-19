@@ -50,7 +50,7 @@ def test_random_gamma_grad_graph():
     assert output.shape == out_expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_random_gamma_grad_pynative():

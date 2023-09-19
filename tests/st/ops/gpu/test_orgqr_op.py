@@ -33,7 +33,7 @@ class OrgqrNet(nn.Cell):
         return self.orgqr(x, tau)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_orgqr_rank2_double_fp():

@@ -40,7 +40,7 @@ class SolveTriangularNet(nn.Cell):
         return self.solve(a, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -61,7 +61,7 @@ def test_cholesky(n: int, dtype: Generic):
     assert np.allclose(expect, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -130,7 +130,7 @@ def test_eig(shape, data_type, rtol, atol):
     compare_eigen_decomposition((mw,), (sw,), False, rtol, atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2, 4, 4)])
@@ -257,7 +257,7 @@ def test_eigh(n: int):
     assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -281,7 +281,7 @@ def test_solve_triangular_2d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -305,7 +305,7 @@ def test_solve_triangular_1d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -339,7 +339,7 @@ def test_solve_triangular_matrix(shape: int, dtype, lower: bool, unit_diagonal: 
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

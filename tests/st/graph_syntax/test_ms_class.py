@@ -130,7 +130,7 @@ def test_ms_class_create_instance_method():
     assert out.asnumpy() == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -196,7 +196,7 @@ def test_ms_class_create_instance_call():
     assert out == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -124,7 +124,7 @@ def test_complex_datatypes():
         assert out.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pow_dynamic_shape():

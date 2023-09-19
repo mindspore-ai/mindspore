@@ -260,7 +260,7 @@ def test_sparse_tensor_dense_matmul_int64_float16():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_int64_float():

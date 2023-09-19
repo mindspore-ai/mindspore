@@ -57,7 +57,7 @@ def test_random_shuffle_op_dtype(mode, dtype):
     assert output.shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

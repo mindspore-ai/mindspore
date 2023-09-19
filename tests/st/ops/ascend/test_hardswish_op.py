@@ -45,7 +45,7 @@ class Net(nn.Cell):
         return self.hswish(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -104,7 +104,7 @@ def generate_test_cases(np_type, mode):
     judge_result_correct(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -161,7 +161,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

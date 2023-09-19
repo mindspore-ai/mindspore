@@ -30,7 +30,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.nn.optim import Adam
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard

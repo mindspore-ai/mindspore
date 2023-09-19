@@ -58,7 +58,7 @@ def test_log_normal_reverse_float16_4d():
     assert output.shape == expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_log_normal_reverse_float32_3d():

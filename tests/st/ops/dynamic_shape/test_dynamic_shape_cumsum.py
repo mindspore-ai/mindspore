@@ -39,7 +39,7 @@ class CumSumDyNet(nn.Cell):
         return real_x, self.cumsum(real_x, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

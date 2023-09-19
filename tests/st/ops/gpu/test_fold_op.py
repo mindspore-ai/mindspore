@@ -50,7 +50,7 @@ def test_fold_tensor_api():
     assert output.shape == expected_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fold_tensor_functional_api_modes():

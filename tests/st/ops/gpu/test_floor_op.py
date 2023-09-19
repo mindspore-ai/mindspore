@@ -58,7 +58,7 @@ def test_floor_op_dtype(mode, dtype):
     assert np.allclose(out_np, out_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

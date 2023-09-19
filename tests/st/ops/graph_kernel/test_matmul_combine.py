@@ -84,7 +84,7 @@ def test_parallel_matmul_combine_ascend():
     run()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_parallel_matmul_combine_gpu():

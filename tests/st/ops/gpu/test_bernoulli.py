@@ -85,7 +85,7 @@ def test_bernoulli_dynamic():
     assert elem_count * 0.4 < nonzero_count < elem_count * 0.6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bernoulli_dynamic_x_type_error():

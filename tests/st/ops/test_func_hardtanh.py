@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return ops.hardtanh(x, min_val=-50, max_val=50)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

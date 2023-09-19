@@ -68,7 +68,7 @@ def test_polar_graph_float():
     polar(loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polar_pynative_double():

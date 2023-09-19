@@ -275,7 +275,7 @@ def fat_matrix(alignment=None, data_type=None):
     return mat, pack_diagonals_in_matrix(tests, num_rows, num_cols, alignment)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

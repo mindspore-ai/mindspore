@@ -119,7 +119,7 @@ class OverflowCheckV1vsV2(OverflowCheckNet):
         return cond
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -136,7 +136,7 @@ def test_v2_overflow_get_after_clear(mode):
     assert not output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -153,7 +153,7 @@ def test_v2_clear_overflow_get(mode):
     assert output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

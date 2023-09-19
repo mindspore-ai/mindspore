@@ -49,7 +49,7 @@ def test_operation_grad_checker():
                    input_selector=[1], sampling_times=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_checker_primitive():
@@ -68,7 +68,7 @@ def test_grad_checker_primitive():
                    grad_checker_class=OperationGradChecker, sampling_times=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nn_jacobian_checker():
@@ -122,7 +122,7 @@ def test_nn_grad_checker():
                    grad_checker_class=NNGradChecker, sampling_times=3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_operation_jacobian_checker():

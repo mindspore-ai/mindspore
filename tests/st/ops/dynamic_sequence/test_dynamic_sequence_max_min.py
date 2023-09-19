@@ -102,7 +102,7 @@ def test_seq_max_grad():
     print("grad=:", grad_func(x, dout))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -120,7 +120,7 @@ def test_seq_min_grad():
     print("grad=:", grad_func(x, dout))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

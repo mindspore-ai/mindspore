@@ -623,7 +623,7 @@ def test_cast32():
     assert type1 == 'float64'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_two_cast():

@@ -22,7 +22,7 @@ import mindspore.ops.operations as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_joinedstr_basic_variable_gpu():
@@ -45,7 +45,7 @@ def test_joinedstr_basic_variable_gpu():
     assert out == f"res: {result_tensor}"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -70,7 +70,7 @@ def test_joinedstr_basic_variable_ascend():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -94,7 +94,7 @@ def test_joinedstr_basic_variable_2():
     assert str(out) == "[1 2 3 4 5]"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

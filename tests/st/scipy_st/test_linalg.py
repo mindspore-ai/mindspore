@@ -31,7 +31,7 @@ onp.random.seed(0)
 context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -50,7 +50,7 @@ def test_block_diag(args):
     match_array(ms_res.asnumpy(), scipy_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -72,7 +72,7 @@ def test_inv(data_type, shape):
     match_array(ms_res.asnumpy(), scipy_res, error=3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -97,7 +97,7 @@ def test_cholesky(n: int, lower: bool, data_type: Generic):
     assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -129,7 +129,7 @@ def test_cho_factor(n: int, lower: bool, data_type: Generic):
     assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -158,7 +158,7 @@ def test_cholesky_solve(n: int, lower: bool, data_type):
     assert onp.allclose(onp.dot(a, osp_x), mnp.dot(tensor_a, msp_x).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -187,7 +187,7 @@ def test_eigh(n: int, lower, data_type, rtol, atol):
     assert onp.allclose(w.asnumpy(), w0.asnumpy(), rtol, atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -308,7 +308,7 @@ def test_eigh_error_not_implemented():
         msp.linalg.eigh(Tensor(a), eigvals=42)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -331,7 +331,7 @@ def test_lu(shape: (int, int), data_type):
     assert onp.allclose(m_u.asnumpy(), s_u, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -385,7 +385,7 @@ def test_lu_solve(n: int, data_type):
     assert onp.allclose(msp_x.asnumpy(), osp_x, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -431,7 +431,7 @@ def test_block_diag_graph(args):
     match_array(ms_res.asnumpy(), scipy_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

@@ -149,7 +149,7 @@ def test_chinese_path_on_windows():
     os.chdir(current_pwd)
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_backslash_path_on_windows():

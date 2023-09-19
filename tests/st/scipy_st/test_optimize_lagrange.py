@@ -32,7 +32,7 @@ def f_ieqcon(x):
     return -(x[0] - x[1] - 1.0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_minimize_lagrange():

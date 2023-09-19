@@ -25,7 +25,7 @@ from mindspore.ops import composite as C
 from mindspore import export, load
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_simple_graph_compile_export():
@@ -55,7 +55,7 @@ def test_simple_graph_compile_export():
         print("data:", data)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('ms_type', [ms.int32, ms.int64])
@@ -128,7 +128,7 @@ def test_mapparameter_ckpt_save_load(ms_type):
         os.remove(file_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_get():
@@ -158,7 +158,7 @@ def test_map_parameter_get():
         print("data4:", data4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_put():
@@ -178,7 +178,7 @@ def test_map_parameter_put():
         print("data1:", data1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_erase():
@@ -198,7 +198,7 @@ def test_map_parameter_erase():
         print("data1:", data1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_operations():
@@ -229,7 +229,7 @@ def test_basic_operations():
         print("data:", data)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_simple_graph_compile():
@@ -263,7 +263,7 @@ def test_simple_graph_compile():
         assert out[0].shape == (2, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_export_update_api():
@@ -288,7 +288,7 @@ def test_export_update_api():
         print("new_data1:", new_data1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_clone():
@@ -324,7 +324,7 @@ def test_map_parameter_clone():
     assert clone_same.default_value == 'zeros'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_grad_net():
@@ -364,7 +364,7 @@ def test_grad_net():
         grad(t)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_in_construct():
@@ -395,7 +395,7 @@ def test_map_parameter_in_construct():
         print("out:", out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -439,7 +439,7 @@ def test_map_parameter_filter():
         print("out:", out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_simple_graph_export_load():
@@ -481,7 +481,7 @@ def test_simple_graph_export_load():
         load(file_path)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -533,7 +533,7 @@ def test_grad_net_on_ascend():
     print(out[0].get_values())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

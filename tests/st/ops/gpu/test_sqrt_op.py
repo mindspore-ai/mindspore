@@ -30,7 +30,7 @@ class SqrtNet(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64,

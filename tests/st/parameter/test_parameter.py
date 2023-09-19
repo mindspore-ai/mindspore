@@ -284,7 +284,7 @@ def test_parameter(mode):
     assert net.param_list[1].name == "Parameter$4"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -314,7 +314,7 @@ def test_parameter_argument_and_fv(mode):
     assert x == y
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

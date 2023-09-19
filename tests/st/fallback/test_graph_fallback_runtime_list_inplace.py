@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE)
 global_list_1 = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,7 +71,7 @@ def test_global_list_used_in_graph_2():
 global_numpy_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_global_numpy_list_used_in_graph():
 global_list_2 = [1, 2, 3, 4, [3, 4], None]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -112,7 +112,7 @@ def test_global_nested_list_getitem_in_graph():
     assert id(res) == id(global_list_2[4])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -195,7 +195,7 @@ def test_global_nested_list_return_in_graph_3():
     assert id(res[1]) == id(global_list_3[3][1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -342,7 +342,7 @@ def test_local_sequence_used_in_graph_with_operator():
 global_list_for_reverse = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -419,7 +419,7 @@ def test_list_inplace_reverse_3():
 global_list_for_reverse_4 = [[1, 2], [3, 4]]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -441,7 +441,7 @@ def test_list_inplace_reverse_element():
     assert global_list_for_reverse_4 == [[2, 1], [3, 4]]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -489,7 +489,7 @@ def test_list_inplace_reverse_local_list_2():
 global_list_for_pop = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -538,7 +538,7 @@ def test_list_inplace_pop_2():
     assert id(out[1]) == id(global_list_for_pop_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -612,7 +612,7 @@ def test_list_inplace_pop_local_3():
 global_list_for_pop_extend = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -635,7 +635,7 @@ def test_list_inplace_extend():
 global_list_for_pop_extend_2 = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -653,7 +653,7 @@ def test_list_inplace_extend_no_return():
     assert global_list_for_pop_extend_2 == [1, 2, 3, 4, 1, 2, 3]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -680,7 +680,7 @@ def test_list_inplace_extend_local_list():
 global_list_for_pop_insert = [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -700,7 +700,7 @@ def test_list_inplace_insert():
     assert id(out) == id(global_list_for_pop_insert)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -749,7 +749,7 @@ def test_list_inplace_insert_local_list_2():
     assert out[1] == [("a", "b"), 1, 2, 3]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -814,7 +814,7 @@ def test_list_inplace_reverse_with_variable_3():
     assert out == [3, 2, 1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -860,7 +860,7 @@ def test_dynamic_len_list_inplace_op_2():
 global_list_all_str = ['a', 'b', 'c']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -904,7 +904,7 @@ def test_list_inplace_with_all_str_2():
     assert global_tuple_with_list_all_str == (['a', 'b', 'c', 'd', 'e'], 1, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -77,7 +77,7 @@ def test_dropout(dtype=np.float16):
     dropout_net(net, x, indices, is_dynamic=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -90,7 +90,7 @@ def test_float16():
     test_dropout(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -25,7 +25,7 @@ class Net2(Cell):
         return tuple(a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_list_slice_tensor_no_step():
@@ -53,7 +53,7 @@ def test_pynative_list_slice_tensor_no_step():
     assert graph_out == python_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_list_slice_tensor_with_step():
@@ -81,7 +81,7 @@ def test_pynative_list_slice_tensor_with_step():
     assert python_out == graph_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_graph_list_slice_assign_extended_number():

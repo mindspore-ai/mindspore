@@ -487,7 +487,7 @@ def test_forward_with_parameter():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_with_parameter_in_sub_cell():
@@ -650,7 +650,7 @@ def test_pynative_forward_with_parameter():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_forward_with_parameter_in_sub_cell():
@@ -768,7 +768,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dde_self_define_cell_output_not_use():
@@ -811,7 +811,7 @@ def test_dde_self_define_cell_output_not_use():
     assert out[0] == ms.Tensor([3])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bprop_defined_in_cell_attr_register():

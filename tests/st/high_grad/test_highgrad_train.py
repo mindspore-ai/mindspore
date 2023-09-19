@@ -116,7 +116,7 @@ def test_high_grad_train():
         train_network(Tensor([x_train[i]]), Tensor([y_train[i]]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

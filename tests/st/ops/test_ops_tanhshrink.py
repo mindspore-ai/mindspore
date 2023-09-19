@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return ops.tanhshrink(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -48,7 +48,7 @@ def test_tanhshrink_normal(mode):
     assert np.allclose(output, expected_output, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -70,7 +70,7 @@ def test_tanhshrink_negative(mode):
     assert np.allclose(output, expected_output, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -82,7 +82,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -126,7 +126,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
         return self.func(x, segment_ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

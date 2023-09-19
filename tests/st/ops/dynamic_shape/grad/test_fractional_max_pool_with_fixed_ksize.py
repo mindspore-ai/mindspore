@@ -47,7 +47,7 @@ def grad_dyn_case(is_dynamic_rank):
         (input_x, random_samples), is_dynamic_rank)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_shape_fractional_max_pool_with_fixed_ksize():
@@ -64,7 +64,7 @@ def test_dynamic_shape_fractional_max_pool_with_fixed_ksize():
     grad_dyn_case(False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_fractional_max_pool_with_fixed_ksize():

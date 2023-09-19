@@ -20,7 +20,7 @@ from mindspore import Tensor, context
 from mindspore.ops.operations.sparse_ops import SparseSplit
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ops_sparse_split_vs_tf_output_int64():

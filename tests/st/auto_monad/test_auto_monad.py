@@ -1652,7 +1652,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 
 # op_cast should be located in order_list after abstract_specialize.
 # Besides Ascend, it can work on CPU.
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1866,7 +1866,7 @@ def test_print_assign_print():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_print_in_constant_returned_func():
@@ -1893,7 +1893,7 @@ def test_print_in_constant_returned_func():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

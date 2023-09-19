@@ -32,7 +32,7 @@ class NetHypot(nn.Cell):
         return self.hypot(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_hypot_fp32():

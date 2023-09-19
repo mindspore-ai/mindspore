@@ -35,7 +35,7 @@ input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
 target = Tensor(np.array([-1, -1, 1]), ms.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

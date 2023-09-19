@@ -24,7 +24,7 @@ def test_nccl_lenet():
     assert return_code == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_all_reduce_op():
@@ -32,7 +32,7 @@ def test_nccl_all_reduce_op():
     assert return_code == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_all_gather_op():
@@ -40,14 +40,14 @@ def test_nccl_all_gather_op():
     assert return_code == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_reduce_scatter_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_reduce_scatter_op.py")
     assert return_code == 0
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_broadcast_op():
@@ -68,7 +68,7 @@ def test_nccl_all_to_all_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_to_all_op.py")
     assert return_code == 0
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_nccl_neighbor_exchange_op():
