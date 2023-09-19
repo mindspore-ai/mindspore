@@ -59,6 +59,7 @@ bool SequenceCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   T *seq_addr = GetDeviceAddress<T>(inputs, 0);
   T *target_addr = GetDeviceAddress<T>(inputs, 1);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto seq_size = inputs[0]->size;
 
   int64_t count = 0;
