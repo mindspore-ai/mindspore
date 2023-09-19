@@ -370,7 +370,8 @@ class LazyAdam(Optimizer):
         Tensor[bool], the value is ``True`` .
 
     Raises:
-        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, :class:`~.train.LearningRateSchedule`.
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable,
+            :class:`~.train.LearningRateScheduler`.
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.

@@ -252,8 +252,8 @@ class TransformerEncoderLayer(Cell):
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
             can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
-             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
-             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
+            :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+            :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
         batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
@@ -393,8 +393,8 @@ class TransformerDecoderLayer(Cell):
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
             can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
-             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
-             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
+            :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+            :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
         batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)`.
@@ -695,8 +695,8 @@ class Transformer(Cell):
         dropout (float): The dropout value. Default: ``0.1``.
         activation (Union[str, callable, Cell]): The activation function of the intermediate layer,
             can be a string (``"relu"`` or ``"gelu"``), Cell instance (:class:`mindspore.nn.ReLU` or
-             :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
-             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
+            :class:`mindspore.nn.GELU` ) or a callable ( :func:`mindspore.ops.relu` or
+            :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         custom_encoder (Cell): Custom encoder. Default: ``None``.
         custom_decoder (Cell): Custom decoder. Default: ``None``.
         layer_norm_eps (float): the epsilion value in layer normalization module. Default: ``1e-5``.
