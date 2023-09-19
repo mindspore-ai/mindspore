@@ -317,15 +317,15 @@ def tensor_item(data, *args):
     # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
     if data.ndim == 0:
         _check_scalar_tensor_args(args)
-        return data
+        return data.asnumpy().item()
     if len(args) == 1 and isinstance(args[0], tuple):
         args = args[0]
 
     args_types = hyper_map(F.typeof, args)
     if not args or const_utils.judge_index_type(args_types[0], mstype.type_none):
         if data.shape == (1,):
-            return data[0]
-        const_utils.raise_value_error("Can only convert an array of size 1 to a Tensor scalar")
+            return data.asnumpy().item()
+        const_utils.raise_value_error("Can only convert an array of size 1 to a Python scalar")
 
     if not const_utils.judge_indexes_types(args_types, mstype.int64):
         const_utils.raise_type_error("The index object cannot be interpreted as an integer")
