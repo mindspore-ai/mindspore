@@ -1528,7 +1528,7 @@ class AdaptiveMaxPool2d(Cell):
 
     Outputs:
         Tensor, with the same type as the `input`.
-        Shape of the output is `input_shape[:len(input_shape) - len(out_shape)] + out_shape`.
+        Shape of the output is :math:`input\_shape[:len(input\_shape) - len(out\_shape)] + out\_shape`.
 
     Raises:
         TypeError: If `output_size` is not int or tuple.

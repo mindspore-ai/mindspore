@@ -293,7 +293,7 @@ class FileWriter:
 
         Args:
            raw_data (list[dict]): List of raw data.
-           parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
+           parallel_writer (bool, optional): Write raw data in parallel if it equals to ``True`` . Default: ``False`` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

@@ -393,8 +393,11 @@ class ReLU(Cell):
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
 
-    It returns element-wise :math:`\max(0, x)`. Specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
+    It returns element-wise :math:`\max(0, x)`.
+
+    .. note::
+        The neurons with the negative output
+        will be suppressed and the active neurons will stay the same.
 
     ReLU Activation Function Graph:
 

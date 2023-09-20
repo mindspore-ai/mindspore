@@ -66,7 +66,7 @@ class AdaMax(Optimizer):
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector,
     :math:`g` represents `gradients`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
     :math:`t` represents the current step, :math:`beta_1^t` represent `beta1_power`,
-    :math:`\l` represents `learning_rate`, :math:`w` represents `params`,
+    :math:`l` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
     Note:

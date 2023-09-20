@@ -32,7 +32,7 @@
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
-            list[str]，候选category字段。
+            list[str]，category字段。
 
 
     .. py:method:: read_at_page_by_id(category_id, page, num_row)
