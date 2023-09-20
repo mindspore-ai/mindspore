@@ -125,7 +125,7 @@ std::string DumpSourceLines(const AnfNodePtr &node, bool has_title) {
   if (oss.str().empty()) {
     return "";
   }
-  const std::string prefix = has_title ? "#dmsg#The Function Call Stack:#dmsg#" : "\nThe function call stack:\n";
+  const std::string prefix = has_title ? "#dmsg#The Function Call Stack:#dmsg#" : "\n";
   return prefix + oss.str();
 }
 
