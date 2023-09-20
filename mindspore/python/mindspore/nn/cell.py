@@ -394,11 +394,11 @@ class Cell(Cell_):
             del self._params[name]
         elif name in self._cells:
             del self._cells[name]
+        elif '_params_list' in self.__dict__ and name in self._params_list:
+            del self._params_list[name]
+        elif '_tensor_list' in self.__dict__ and name in self._tensor_list:
+            del self._tensor_list[name]
         else:
-            if '_params_list' in self.__dict__ and name in self._params_list:
-                del self._params_list[name]
-            elif '_tensor_list' in self.__dict__ and name in self._tensor_list:
-                del self._tensor_list[name]
             object.__delattr__(self, name)
         self._attr_synced = False
 

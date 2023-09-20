@@ -564,7 +564,7 @@ def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
 def check_str_and_none_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     if reg is None:
         # Named string regular expression
-        reg = r"^\w*[0-9a-zA-Z\_\.]*$"
+        reg = r"^\w*[0-9a-zA-Z\_\.\-]*$"
     if re.match(reg, target, flag) is None:
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
         raise ValueError(f"{prim_name} '{target}' is illegal, it must be match regular'{reg}' by flags'{flag}.'")
