@@ -550,3 +550,27 @@ def test_pipeline_split_stage1_device_num_48():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_split_stage1_shape_is_not_divisible_by_micro_size():
+    """
+    Feature: test PipelineSplit with input shape is not divisible by micro size.
+    Description: net with pipeline parallel in auto parallel mode using 48 devices, stage1.
+    Expectation: success.
+    """
+    context.set_auto_parallel_context(device_num=48, global_rank=24, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(device_target="Ascend")
+    data = Tensor(np.ones([32 * 6, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64 * 6, 64]), dtype=ms.float32)
+    strategy1 = ((3, 8), (8, 1))
+    strategy2 = ((24, 1), (1, 1))
+    net = PipelineCell(PipelineSplit(strategy1, strategy2), 7)
+    params = net.network.cell.block[1].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+
+    with pytest.raises(ValueError) as e:
+        model.train(2, dataset, dataset_sink_mode=False)
+    assert "the 0th dimension shape of input(4608) must be divided by micro size(7)" in str(e.value)
