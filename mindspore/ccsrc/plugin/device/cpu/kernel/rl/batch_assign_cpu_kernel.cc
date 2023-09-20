@@ -24,17 +24,20 @@ std::shared_mutex BatchAssignCpuBaseMod::rw_mutex_;
 
 BatchAssignCpuKernelMod::BatchAssignCpuKernelMod() : elements_num_(0), lock_(false) {}
 
-void BatchAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  lock_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "lock");
-  size_t input_num = common::AnfAlgo::GetInputNum(kernel_node);
+int BatchAssignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  lock_ = GetValue<bool>(primitive_->GetAttr("lock"));
+  size_t input_num = inputs.size();
   elements_num_ = input_num / kHalf;
   // Compute the size for each input. There has two input lists.
   // Each list has the same elements number, shape series， type series.
+  input_size_list_.clear();
   for (size_t i = 0; i < elements_num_; i++) {
-    auto type = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+    auto type = inputs[i]->dtype_id();
+    auto shape = inputs[i]->GetShapeVector();
     auto element_size =
       std::accumulate(shape.begin(), shape.end(), GetTypeByte(TypeIdToType(type)), std::multiplies<size_t>());
     input_size_list_.push_back(element_size);
@@ -44,11 +47,13 @@ void BatchAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     input_size_list_.push_back(input_size_list_[i]);
   }
   // Set an output for placeholder.
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(float));
+  return KRET_OK;
 }
 
-bool BatchAssignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &) {
+bool BatchAssignCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &) {
   if (lock_) {
     std::unique_lock<std::shared_mutex> lock(rw_mutex_);
   } else {

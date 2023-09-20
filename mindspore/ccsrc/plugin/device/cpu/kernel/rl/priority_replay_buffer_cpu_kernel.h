@@ -28,17 +28,15 @@
 
 namespace mindspore {
 namespace kernel {
-class PriorityReplayBufferCreateCpuKernel : public DeprecatedNativeCpuKernelMod {
+class PriorityReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferCreateCpuKernel() = default;
   ~PriorityReplayBufferCreateCpuKernel() override = default;
 
-  // Collect and prepare kernel algorithm parameter.
-  void InitKernel(const CNodePtr &kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
@@ -50,34 +48,30 @@ class PriorityReplayBufferCreateCpuKernel : public DeprecatedNativeCpuKernelMod 
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferPushCpuKernel : public DeprecatedNativeCpuKernelMod {
+class PriorityReplayBufferPushCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferPushCpuKernel() = default;
   ~PriorityReplayBufferPushCpuKernel() override = default;
 
-  // Init kernel from CNode.
-  void InitKernel(const CNodePtr &kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t handle_{-1};
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferSampleCpuKernel : public DeprecatedNativeCpuKernelMod {
+class PriorityReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferSampleCpuKernel() = default;
   ~PriorityReplayBufferSampleCpuKernel() override = default;
 
-  // Init kernel from CNode.
-  void InitKernel(const CNodePtr &kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t handle_{-1};
@@ -86,17 +80,15 @@ class PriorityReplayBufferSampleCpuKernel : public DeprecatedNativeCpuKernelMod 
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod {
+class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferUpdateCpuKernel() = default;
   ~PriorityReplayBufferUpdateCpuKernel() override = default;
 
-  // Init kernel from CNode.
-  void InitKernel(const CNodePtr &kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
@@ -111,17 +103,15 @@ class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod 
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferDestroyCpuKernel : public DeprecatedNativeCpuKernelMod {
+class PriorityReplayBufferDestroyCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferDestroyCpuKernel() = default;
   ~PriorityReplayBufferDestroyCpuKernel() override = default;
 
-  // Collect and prepare kernel algorithm parameter.
-  void InitKernel(const CNodePtr &kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
