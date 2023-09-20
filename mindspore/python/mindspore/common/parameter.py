@@ -139,6 +139,9 @@ class Parameter(Tensor_):
           If there are two or more `Parameter` objects with the same name in a network,
           will be prompted to set a unique name when defining.
 
+        - When directly printing a `Parameter`, you cannot view the actual values contained inside it.
+          You need to use the `Parameter.asnumpy()` method to access the actual values.
+
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
             to initialize the parameter data.
