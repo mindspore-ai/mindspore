@@ -87,6 +87,21 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
       return nullptr;
     }
   }
+  if (acl_contexts_.find(device_id) == acl_contexts_.end()) {
+    aclrtContext context;
+    auto ret = aclrtCreateContext(&context, device_id);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Acl create context failed.";
+      return nullptr;
+    }
+    acl_contexts_[device_id] = context;
+  } else {
+    auto ret = aclrtSetCurrentContext(acl_contexts_[device_id]);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Acl set context from stored map failed.";
+      return nullptr;
+    }
+  }
   void *device_data = nullptr;
   auto acl_ret = aclrtMalloc(&device_data, size, ACL_MEM_MALLOC_HUGE_FIRST);
   if (acl_ret != ACL_ERROR_NONE) {
@@ -99,10 +114,41 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
   return device_data;
 }
 
-void AclAllocator::Free(void *device_data) {
+void AclAllocator::Free(void *device_data, int device_id) {
   if (device_data != nullptr) {
+    if (acl_contexts_.find(device_id) == acl_contexts_.end()) {
+      MS_LOG(ERROR) << "context with device " << device_id << " is nullptr";
+      return;
+    } else {
+      auto ret = aclrtSetCurrentContext(acl_contexts_[device_id]);
+      if (ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Acl set context from stored map failed.";
+        return;
+      }
+    }
     aclrtFree(device_data);
     device_data = nullptr;
+  }
+}
+
+void *AclAllocator::MallocHost(size_t size) {
+  if (size == 0) {
+    MS_LOG(WARNING) << "malloc host data size is zero.";
+    return nullptr;
+  }
+  void *host_data = nullptr;
+  auto acl_ret = aclrtMallocHost(&host_data, size);
+  if (acl_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMallocHost failed, err_code = " << acl_ret;
+    return nullptr;
+  }
+  return host_data;
+}
+
+void AclAllocator::FreeHost(void *host_data) {
+  if (host_data != nullptr) {
+    aclrtFreeHost(host_data);
+    host_data = nullptr;
   }
 }
 

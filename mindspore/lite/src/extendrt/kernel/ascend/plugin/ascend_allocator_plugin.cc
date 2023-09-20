@@ -122,7 +122,7 @@ void *AscendAllocatorPlugin::Malloc(size_t size, int device_id) {
   return nullptr;
 }
 
-void AscendAllocatorPlugin::Free(void *device_data) {
+void AscendAllocatorPlugin::Free(void *device_data, int device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -136,7 +136,42 @@ void AscendAllocatorPlugin::Free(void *device_data) {
     MS_LOG(ERROR) << "device data is nullptr.";
     return;
   }
-  ascend_allocator_plugin_impl_->Free(device_data);
+  ascend_allocator_plugin_impl_->Free(device_data, device_id);
+#endif
+  return;
+}
+
+void *AscendAllocatorPlugin::MallocHost(size_t size) {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return nullptr;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
+    return nullptr;
+  }
+  auto device_data = ascend_allocator_plugin_impl_->MallocHost(size);
+  return device_data;
+#endif
+  return nullptr;
+}
+
+void AscendAllocatorPlugin::FreeHost(void *host_data) {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
+    return;
+  }
+  if (host_data == nullptr) {
+    MS_LOG(ERROR) << "host data is nullptr.";
+    return;
+  }
+  ascend_allocator_plugin_impl_->FreeHost(host_data);
 #endif
   return;
 }

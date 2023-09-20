@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ACL_ALLOCATOR_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ACL_ALLOCATOR_H_
 #include <mutex>
+#include <unordered_map>
+#include "acl/acl_base.h"
+#include "acl/acl_rt.h"
 #include "include/api/status.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_allocator_plugin.h"
 
@@ -25,11 +28,19 @@ namespace acl {
 class AclAllocator : public AscendAllocatorPluginImpl {
  public:
   AclAllocator() = default;
-  ~AclAllocator() = default;
+  ~AclAllocator() {
+    for (auto &pair : acl_contexts_) {
+      if (pair.second != nullptr) {
+        (void)aclrtDestroyContext(pair.second);
+      }
+    }
+  }
 
   int GetCurrentDeviceId() override;
   void *Malloc(size_t size, int device_id = -1) override;
-  void Free(void *device_data) override;
+  void Free(void *device_data, int device_id) override;
+  void *MallocHost(size_t size) override;
+  void FreeHost(void *host_data) override;
   Status CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size) override;
   Status CopyHostDataToDevice(void *host_data, void *device_data, size_t data_size) override;
   Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size, int src_device_id,
@@ -40,6 +51,7 @@ class AclAllocator : public AscendAllocatorPluginImpl {
   void ResetDeviceId(int device_id);
   uint32_t device_count_ = 0;
   std::mutex acl_allocator_mutex_;
+  std::unordered_map<int, aclrtContext> acl_contexts_;
 };
 
 extern "C" MS_API AclAllocator *CreateAclAllocator();
