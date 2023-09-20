@@ -386,3 +386,47 @@ def test_attention_reshape_dst_shape_is_not_a_value_node():
     assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0'])
     assert validator.check_parameter_shape('w1', [32, 8])
     assert validator.check_parameter_shape('bias', [8])
+
+
+class StridedSliceReshapeNet(Cell):
+    def __init__(self, strategy1=None, strategy2=None, strategy3=None):
+        super().__init__()
+        self.slice = P.StridedSlice().shard(strategy1).add_prim_attr("skip_redistribution", True)
+        self.gather = P.Gather().shard(strategy2)
+        self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)
+        self.begin = (0, 0)
+        self.strides = (1, 1)
+        self.gather_w = Parameter(Tensor(np.ones([8, 16]), dtype=ms.float32), "w1")
+        self.mul = P.Mul().shard(strategy3)
+        self.mul_w = Parameter(Tensor(np.ones([32, 1]), dtype=ms.float32), "w2")
+        self.shape = P.Shape()
+
+    def construct(self, x):
+        shape = P.Shape()(x)[-1]
+        end = (32, shape)
+        out = self.slice(x, self.begin, end, self.strides)
+        out = self.gather(self.gather_w, out, 0)
+        s = self.shape(out)
+        out = self.reshape(out, (32, s[1] * s[2]))
+        out = self.mul(out, self.mul_w)
+        return out
+
+
+def test_modify_inputs_of_stridedslice_and_reshape():
+    """
+    Feature: test modify inputs
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
+    strategy1 = ((8, 1),)
+    strategy2 = ((1, 1), (8, 1))
+    strategy3 = ((8, 1), (8, 1))
+    net = StridedSliceReshapeNet(strategy1, strategy2, strategy3)
+    input_x = Tensor(shape=[32, None], dtype=ms.int32)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('MakeTuple-1', [4])
+    assert validator.check_node_inputs_has('MakeTuple-2', [4])

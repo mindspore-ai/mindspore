@@ -52,7 +52,9 @@ class StridedSliceInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetMask(const std::string &mask_name, int64_t *mask_value);
-  void ChangeCNodeBeginEnd();
+  void ChangeCNodeBegin();
+  void ChangeCNodeEnd();
+  void ChangeMakeTupleConstant(const CNodePtr &cnode, size_t make_tuple_index);
 
  private:
   std::vector<int64_t> begin_;

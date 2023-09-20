@@ -144,6 +144,10 @@ class ParallelValidator:
         for i in range(expect_len):
             found = False
             for j in range(inputs_len):
+                if isinstance(inputs[j], int):
+                    if inputs[j] == expect_inputs[i]:
+                        return True
+                    continue
                 if inputs[j].find(expect_inputs[i]) != -1:
                     found = True
                     break

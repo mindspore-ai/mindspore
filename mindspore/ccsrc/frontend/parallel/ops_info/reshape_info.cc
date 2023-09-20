@@ -226,6 +226,83 @@ bool DstShapeIsConstant(const AnfNodePtr &shape_input_node) {
                     << shape_input_node->fullname_with_scope();
 }
 
+void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &shape_input_node) {
+  MS_EXCEPTION_IF_NULL(shape_input_node);
+  if (!IsPrimitiveCNode(shape_input_node, prim::kPrimMakeTuple)) {
+    return;
+  }
+
+  auto make_tuple_cnode = shape_input_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+  Shape out_strategy = output_layout_.shard_strategy();
+
+  // two consecutive reshape: op1---reshape1---reshape2---op2,
+  // the in_layout and out_layout of reshape1 are the layout of op1's output,
+  // but the size of out_strategy's size may be not equal to the size of dst shape for reshape1,
+  // here find the total shard num in the constant part of the original shape,
+  // and find a constant shape from the dst shape that can be divided by it and perform the division
+  if (out_strategy.size() != (make_tuple_cnode->inputs().size() - 1)) {
+    MS_LOG(WARNING) << name_ << ": It may be a scene of two consecutive reshapes， the out_strategy size is "
+                    << out_strategy.size() << ", but the size of make_tuple's input is "
+                    << make_tuple_cnode->inputs().size() - 1 << ", the input shape is " << inputs_shape_[0]
+                    << ", the output shape is " << outputs_shape_[0];
+    Shape input_shape = inputs_shape_[0];
+    if (input_shape.size() != out_strategy.size()) {
+      MS_LOG(EXCEPTION) << name_ << ": the size of input shape is not equal to the size of out_strategy";
+    }
+    int64_t constant_shard_num = 1;
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      if (input_shape[i] > 0) {
+        constant_shard_num *= out_strategy[i];
+      }
+    }
+    MS_LOG(INFO) << name_ << ": the shard num of constant shape is " << constant_shard_num;
+    if (constant_shard_num <= 1) {
+      return;
+    }
+    for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+      auto input_node = make_tuple_cnode->input(i);
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto value_node = GetValueNode(input_node);
+      if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+        int64_t origin_shape_ele = GetValue<int64_t>(value_node);
+        if (origin_shape_ele > 0 && origin_shape_ele % constant_shard_num == 0) {
+          int64_t replace_shape = origin_shape_ele / constant_shard_num;
+          auto replace_value_ptr = MakeValue(replace_shape);
+          auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+          make_tuple_cnode->set_input(i, replace_value_node);
+          return;
+        }
+      }
+    }
+    MS_LOG(EXCEPTION) << name_ << ": do not support this scenes, the output shape is  " << outputs_shape_[0]
+                      << ", the out strategy is " << out_strategy;
+  }
+
+  // common reshape, handle the constant part of the dst shape, div by the corresponding out_strategy
+  for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+    if (out_strategy[i - 1] <= 1) {
+      continue;
+    }
+    auto input_node = make_tuple_cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto value_node = GetValueNode(input_node);
+    if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+      auto origin_shape_ele = GetValue<int64_t>(value_node);
+      if (origin_shape_ele > 0) {
+        if (origin_shape_ele % out_strategy[i - 1] != 0) {
+          MS_LOG(EXCEPTION) << name_ << ": the origin shape is " << origin_shape_ele
+                            << ", can not be div by shard size " << out_strategy[i - 1];
+        }
+        int64_t replace_shape = origin_shape_ele / out_strategy[i - 1];
+        auto replace_value_ptr = MakeValue(replace_shape);
+        auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+        make_tuple_cnode->set_input(i, replace_value_node);
+      }
+    }
+  }
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   if (is_skip_) {
     if (DstShapeIsConstant(cnode_->input(2))) {
@@ -238,6 +315,9 @@ Status ReshapeInfo::ComputeReplaceOp() {
       replace_op_.clear();
       replace_op_info_.clear();
       MS_LOG(WARNING) << name_ << ": dst shape is dynamic, and skip redistribution";
+
+      // need to modify the dst shape
+      ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
     }
   } else {
     // handle dynamic shape, now the dynamic dimension can not be split
