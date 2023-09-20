@@ -697,11 +697,12 @@ def set_auto_parallel_context(**kwargs):
     device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
     gradients_mean               search_mode
-    parallel_mode                strategy_ckpt_load_file
-    all_reduce_fusion_config     strategy_ckpt_save_file
-    enable_parallel_optimizer    dataset_strategy
-    parallel_optimizer_config    pipeline_stages
-    enable_alltoall              auto_parallel_search_mode
+    parallel_mode                parameter_broadcast
+    all_reduce_fusion_config     strategy_ckpt_load_file
+    enable_parallel_optimizer    strategy_ckpt_save_file
+    parallel_optimizer_config    dataset_strategy
+    enable_alltoall              pipeline_stages
+               \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
     ===========================  ===========================
@@ -770,7 +771,6 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
-        grad_accumulation_step (int): This interface is deprecated. Default: ``1`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use
@@ -1188,7 +1188,12 @@ def set_context(**kwargs):
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
-            For example, :code:`mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")` .
+            For example,
+
+            .. code-block::
+
+                mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
+
             Some general options:
 
             - opt_level: Set the optimization level.
@@ -1205,7 +1210,6 @@ def set_context(**kwargs):
 
             - dump_as_text: dumps detail info as text files. Default: ``False`` .
 
-            More options can refer to the implementation code.
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: ``True`` .

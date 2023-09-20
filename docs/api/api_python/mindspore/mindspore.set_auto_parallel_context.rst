@@ -17,11 +17,11 @@ mindspore.set_auto_parallel_context
     device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
     gradients_mean               search_mode
-    parallel_mode                strategy_ckpt_load_file
-    all_reduce_fusion_config     strategy_ckpt_save_file
-    enable_parallel_optimizer    dataset_strategy
-    parallel_optimizer_config    pipeline_stages
-    enable_alltoall              grad_accumulation_step
+    parallel_mode                parameter_broadcast
+    all_reduce_fusion_config     strategy_ckpt_load_file
+    enable_parallel_optimizer    strategy_ckpt_save_file
+    parallel_optimizer_config    dataset_strategy
+    enable_alltoall              pipeline_stages
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
@@ -56,7 +56,6 @@ mindspore.set_auto_parallel_context
         - **enable_alltoall** (bool) - 允许在通信期间生成 `AllToAll` 通信算子的开关。如果其值为 False，则将由 `AllGather` 、 `Split` 和 `Concat` 等通信算子的组合来代替 `AllToAll` 。默认值： ``False`` 。
         - **all_reduce_fusion_config** (list) - 通过参数索引设置 AllReduce 融合策略。仅支持ReduceOp.SUM和HCCL_WORLD_GROUP/NCCL_WORLD_GROUP。没有默认值。如果不设置，则关闭算子融合。
         - **pipeline_stages** (int) - 设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。默认值： ``1`` 。
-        - **grad_accumulation_step** (int) - 在自动和半自动并行模式下设置梯度的累积step。其值应为正整数。默认值： ``1`` 。
         - **parallel_optimizer_config** (dict) - 用于开启优化器并行后的行为配置。仅在enable_parallel_optimizer=True的时候生效。目前，它支持关键字如下的关键字：
 
           - gradient_accumulation_shard(bool)：设置累积梯度变量是否在数据并行维度上进行切分。开启后，将进一步减小模型的显存占用，但是会在反向计算梯度时引入额外的通信算子（ReduceScatter）。此配置仅在流水线并行训练和梯度累积模式下生效。默认值： ``True`` 。
