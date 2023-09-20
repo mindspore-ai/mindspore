@@ -57,9 +57,11 @@ def set_dump(target, enabled=True):
         ``Ascend``
 
     Examples:
-        >>> # Please set the dump config file and environment variable before
-        >>> # running this example to actually get the dump data.
-        >>> # See the document of this API for details.
+        .. node::
+            Please set environment variable `MINDSPORE_DUMP_CONFIG` to the dump config file and set `dump_mode` field
+            in dump config file to 2 before running this example.
+            See `dump document <https://www.mindspore.cn/tutorials/experts/en/master/debug/dump.html>`_ for details.
+
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn

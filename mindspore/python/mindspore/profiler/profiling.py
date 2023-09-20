@@ -352,10 +352,15 @@ class Profiler:
             Default value: ``True`` .
         timeline_limit (int, optional): (Ascend/GPU) Set the maximum storage size of the timeline file (unit M).
             When using this parameter, `op_time` must be set to True. Default value: ``500`` .
-        profile_framework (str, optional): (Ascend/GPU) Whether to collect host memory and time, it must be one of
-            ["all", "time", "memory", None]. When is enabled, a subdirectory host_info will be generated in the
+        profile_framework (str, optional): (Ascend/GPU) The host information to collect, it must be one of
+            ["all", "time", "memory", None], When is not set to None, a subdirectory host_info will be generated in the
             specified profiler directory, which stores the collected memory and time files on the Host side.
             Default: "all".
+
+            - "all": Record both host timestamp and host memory usage.
+            - "time": Only record host timestamp.
+            - "memory": Only record host memory usage.
+            - None: Not record host information.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
