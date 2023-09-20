@@ -287,6 +287,12 @@ class DfGraphConvertor {
   void SetGraphOutputs(bool is_main_graph = false);
   std::vector<OutHandler> GetInputHandles(const AnfNodePtr &node, const AnfNodePtr &input);
   void FillEmptyInputsWithNoInputOp(std::vector<Operator> *);
+  bool IsDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt, int *ge_input_size,
+                                       mindspore::HashMap<int, int> *ge_input_to_ms_input);
+  void SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt, const CNodePtr &node,
+                                        const std::vector<AnfNodePtr> &inputs, const int &ge_input_size,
+                                        const mindspore::HashMap<int, int> &ge_input_to_ms_input,
+                                        std::vector<int64_t> *dyn_input_sizes);
 
   // Identity Optimization
   void IdentityOptimization();

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cinttypes>
 #include <functional>
+#include <limits>
 #include <queue>
 #include <stack>
 #include <unordered_set>
@@ -2399,6 +2400,129 @@ void DfGraphConvertor::SetNodeControlInput(const AnfNodePtr &node, const AnfNode
   }
 }
 
+bool DfGraphConvertor::IsDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt, int *ge_input_size,
+                                                       mindspore::HashMap<int, int> *ge_input_to_ms_input) {
+  MS_EXCEPTION_IF_NULL(adpt);
+  const auto &input_map = adpt->getInputMap();
+  const auto &dyn_input_map = adpt->getDynInputMap();
+
+  // If adpt has no dynamic input, return false.
+  if (dyn_input_map.empty()) {
+    return false;
+  }
+
+  // If dynamic input is behind the normal input, return false
+  int min_dynamic_idx = std::numeric_limits<int>::max();
+  int max_normal_idx = -1;
+  for (const auto &iter : dyn_input_map) {
+    int ms_order = iter.first - kIndex1;
+    int ge_order = iter.second.index;
+    min_dynamic_idx = std::min(min_dynamic_idx, ge_order);
+    *ge_input_size = std::max(*ge_input_size, ge_order + 1);
+    (*ge_input_to_ms_input)[ge_order] = ms_order;
+  }
+  for (const auto &iter : input_map) {
+    int ms_order = iter.first - kIndex1;
+    int ge_order = iter.second.index;
+    max_normal_idx = std::max(max_normal_idx, ge_order);
+    *ge_input_size = std::max(*ge_input_size, ge_order + 1);
+    (*ge_input_to_ms_input)[ge_order] = ms_order;
+  }
+  if (min_dynamic_idx == std::numeric_limits<int>::max() || max_normal_idx == -1 || min_dynamic_idx > max_normal_idx) {
+    return false;
+  }
+  return true;
+}
+
+void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt, const CNodePtr &node,
+                                                        const std::vector<AnfNodePtr> &inputs, const int &ge_input_size,
+                                                        const mindspore::HashMap<int, int> &ge_input_to_ms_input,
+                                                        std::vector<int64_t> *dyn_input_sizes) {
+  //  If dynamic input is ahead of the normal input, use 'create_dynamic_input_by_index_name' to create dynamic input,
+  //  and this func must be called before set normal input.
+  OperatorPtr src = Convert(node);
+  MS_EXCEPTION_IF_NULL(adpt);
+  const auto &dyn_input_map = adpt->getDynInputMap();
+  if (dyn_input_sizes->empty()) {
+    *dyn_input_sizes = std::vector<int64_t>(ge_input_size, -1);
+    for (const auto iter : dyn_input_map) {
+      dyn_input_sizes->at(iter.first - kIndex1) = 1;
+    }
+  }
+  std::vector<int64_t> new_dyn_input_sizes(ge_input_size, -1);
+  std::vector<int> ge_tensor_orders(ge_input_size, -1);
+  for (int ge_idx = 0; ge_idx < ge_input_size; ++ge_idx) {
+    int ms_idx = ge_input_to_ms_input.at(ge_idx);
+    new_dyn_input_sizes[ge_idx] = dyn_input_sizes->at(ms_idx);
+    int begin_idx = 0;
+    for (int i = 0; i < ms_idx; ++i) {
+      begin_idx += dyn_input_sizes->at(i) == -1 ? 1 : dyn_input_sizes->at(i);
+    }
+    ge_tensor_orders[ge_idx] = begin_idx;
+  }
+
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (HasAbstractMonad(inputs[i])) {
+      ge_tensor_orders.push_back(i - kIndex1);
+    }
+  }
+
+  MS_LOG(INFO) << "Adjust the dyn input order and use create_dynamic_input_byindex_name for node: "
+               << node->fullname_with_scope();
+  // ge_input_idx: the real ge input order
+  // ge_tensor_orders: the tensor input order
+  // ge_input_to_ms_input: the relationship between ge input order and ms input order
+  // new_dyn_input_sizes:  tensor size of dynamic input
+  for (int ge_input_idx = 0; ge_input_idx < ge_input_size; ++ge_input_idx) {
+    int ms_input_idx = ge_input_to_ms_input.at(ge_input_idx) + kIndex1;
+    // ge_tensor_idx: the ge input idx of unfold mindspore inputs
+    int ge_tensor_idx = ge_tensor_orders[ge_input_idx] + kIndex1;
+    AnfNodePtr pred = inputs[ge_tensor_idx];
+    if (!IsDataInput(node, pred, ge_input_idx)) {
+      SetNodeControlInput(node, pred);
+      continue;
+    }
+    auto handles = GetInputHandles(node, pred);
+    if (handles.empty()) {
+      MS_LOG(INFO) << "Input handles is empty, input node: " << pred->fullname_with_scope()
+                   << ", node: " << node->fullname_with_scope() << ", index: " << ms_input_idx;
+      continue;
+    }
+    int ret;
+    int64_t dyn_input_num = new_dyn_input_sizes[ge_input_idx];
+    if (dyn_input_num != -1) {
+      for (size_t dyn_input_idx = 1; dyn_input_idx < LongToSize(dyn_input_num); ++dyn_input_idx) {
+        auto dyn_input_handle = GetInputHandles(node, inputs[ge_tensor_idx + dyn_input_idx]);
+        handles.insert(handles.end(), dyn_input_handle.begin(), dyn_input_handle.end());
+      }
+      size_t dyn_input_begin_idx = 0;
+      for (size_t i = 0; i < IntToSize(ge_input_idx); ++i) {
+        dyn_input_begin_idx += new_dyn_input_sizes[i] == -1 ? 1 : new_dyn_input_sizes[i];
+      }
+      ret = adpt->setInput(src, SizeToInt(ms_input_idx), std::make_shared<std::vector<OutHandler>>(handles), true,
+                           dyn_input_begin_idx);
+    } else {
+      if (handles.size() != 1) {
+        MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
+                          << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
+                          << ", index: " << ms_input_idx;
+      }
+      ret = adpt->setInput(src, SizeToInt(ms_input_idx), handles[0]);
+    }
+    if (ret != SUCCESS) {
+      MS_LOG(DEBUG) << "Set node input handle failed, node:" << node->fullname_with_scope()
+                    << ", input node: " << pred->fullname_with_scope() << ", index: " << ms_input_idx;
+    } else {
+      DrawOpInput(node, pred, ge_input_idx);
+      AddGraphConstInput(handles[0].op);
+    }
+  }
+
+  // Set input from attr.
+  SetOpAttrToInput(adpt, node);
+  return;
+}
+
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);
   bool branch_flag = false;
@@ -2428,6 +2552,13 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   std::vector<int64_t> dyn_input_sizes;
   if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node)) {
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrDynInputSizes);
+  }
+
+  int ge_input_size = 1;
+  mindspore::HashMap<int, int> ge_input_to_ms_input;
+  if (IsDynamicInputBeforeNormalInput(adpt, &ge_input_size, &ge_input_to_ms_input)) {
+    SetDynamicInputBeforeNormalInput(adpt, node, inputs, ge_input_size, ge_input_to_ms_input, &dyn_input_sizes);
+    return;
   }
   size_t input_idx = 1;
   size_t real_input_idx = 1;
