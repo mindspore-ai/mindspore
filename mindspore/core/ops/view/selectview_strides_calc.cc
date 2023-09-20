@@ -22,7 +22,7 @@ namespace mindspore::ops {
 constexpr size_t kGatherInputsNum = 3;
 
 TensorStorageInfoPtrList SelectViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kGatherInputsNum) {
+  if (CheckInputsNull(inputs, kGatherInputsNum)) {
     return {};
   }
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();

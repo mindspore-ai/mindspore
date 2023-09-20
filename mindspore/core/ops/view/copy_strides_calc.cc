@@ -22,7 +22,7 @@ namespace mindspore::ops {
 constexpr size_t kCopyInputsNum = 2;
 
 TensorStorageInfoPtrList CopyWithSliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kCopyInputsNum) {
+  if (CheckInputsNull(inputs, kCopyInputsNum)) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
   auto self_tensor = inputs[0]->cast<tensor::TensorPtr>();

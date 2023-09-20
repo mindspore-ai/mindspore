@@ -20,20 +20,11 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
+constexpr size_t kTransposeCalcInputsNum = 2;
+
 TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != 2) {
-    return {};
-  }
-
-  if (inputs[0] == nullptr || inputs[1] == nullptr) {
-    return {};
-  }
-
-  if (!inputs[0]->isa<tensor::Tensor>()) {
-    return {};
-  }
-
-  if (!inputs[1]->isa<ValueSequence>()) {
+  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
+      !inputs[1]->isa<ValueSequence>()) {
     return {};
   }
 

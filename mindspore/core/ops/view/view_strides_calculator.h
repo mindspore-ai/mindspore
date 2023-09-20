@@ -37,6 +37,7 @@ bool IsContiguous(const ShapeVector &shape, const std::vector<int64_t> &strides)
 int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr);
 bool IsDynamic(const std::vector<int64_t> &shape);
 bool HasZero(const std::vector<int64_t> &value);
+bool CheckInputsNull(const std::vector<ValuePtr> &inputs, const size_t &input_num);
 
 struct OldTensorInfo {
   std::vector<int64_t> old_shape;
