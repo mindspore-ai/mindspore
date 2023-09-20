@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include "./op_name.h"
+#include "include/api/visible.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
@@ -115,7 +116,7 @@ std::optional<T> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
-std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
+MS_API std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
 const std::set<TypePtr> common_valid_types_with_bool = {
   kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};

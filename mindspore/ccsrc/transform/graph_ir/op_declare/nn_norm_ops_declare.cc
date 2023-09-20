@@ -224,8 +224,9 @@ REG_ADPT_DESC(MultilabelMarginLoss, prim::kPrimMultilabelMarginLoss->name(), ADP
 
 // Roll
 INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                  {"axis", ATTR_DESC(dims, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Roll) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Roll) = {{kIndex2, ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())},
+                        {kIndex3, ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Roll, mindspore::kRollOpName, ADPT_DESC(Roll))
 

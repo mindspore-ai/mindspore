@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,66 @@ using RollPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, RollPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateRollKernelPtr<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateRollKernelPtr<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateRollKernelPtr<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateRollKernelPtr<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateRollKernelPtr<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateRollKernelPtr<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateRollKernelPtr<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateRollKernelPtr<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateRollKernelPtr<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateRollKernelPtr<bool>}};
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateRollKernelPtr<half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateRollKernelPtr<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateRollKernelPtr<double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateRollKernelPtr<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateRollKernelPtr<int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateRollKernelPtr<int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateRollKernelPtr<int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateRollKernelPtr<uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateRollKernelPtr<uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateRollKernelPtr<bool>}};
 }  // namespace
 
 bool RollGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -58,18 +108,10 @@ bool RollGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  MS_EXCEPTION_IF_NULL(helper_ptr_);
-  MS_EXCEPTION_IF_NULL(attr_ptr_);
-  attr_ptr_->axis = GetValue<std::vector<int64_t>>(primitive_->GetAttr("batch_rank"));
-  attr_ptr_->shift = GetValue<std::vector<int64_t>>(primitive_->GetAttr("shift"));
-  helper_ptr_->SetKernelParam(attr_ptr_);
-  Resize(inputs, outputs);
   return true;
 }
 
 int RollGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   for (const auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto input_shape = input->GetShapeVector();
@@ -85,6 +127,11 @@ int RollGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
   input_shapes.emplace_back(inp_shape);
   output_shapes.emplace_back(out_shape);
+
+  MS_EXCEPTION_IF_NULL(attr_ptr_);
+  attr_ptr_->shift = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  attr_ptr_->axis = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  helper_ptr_->SetKernelParam(attr_ptr_);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }

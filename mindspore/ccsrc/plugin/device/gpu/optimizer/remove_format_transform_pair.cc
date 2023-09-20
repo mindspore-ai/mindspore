@@ -68,10 +68,16 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
   }
   auto perm1 = common::AnfAlgo::GetInputNode(transpose1, 1);
   auto perm2 = common::AnfAlgo::GetInputNode(transpose2, 1);
-  auto perm1_value = perm1->cast<ValueNodePtr>()->value();
-  auto perm2_value = perm2->cast<ValueNodePtr>()->value();
-  auto perm1_vec = CheckAndConvertUtils::CheckTensorIntValue("permutation1", perm1_value, prim_name);
-  auto perm2_vec = CheckAndConvertUtils::CheckTensorIntValue("permutation2", perm2_value, prim_name);
+  auto perm1_node = perm1->cast<ValueNodePtr>();
+  auto perm2_node = perm2->cast<ValueNodePtr>();
+  if (perm1_node == nullptr || perm2_node == nullptr) {
+    MS_LOG(DEBUG) << "The permutation input of transpose is not constant, can't remove this transpose pair.";
+    return nullptr;
+  }
+  auto perm1_value = perm1_node->value();
+  auto perm2_value = perm2_node->value();
+  auto perm1_vec = CheckAndConvertUtils::CheckTupleInt("permutation1", perm1_value, prim_name);
+  auto perm2_vec = CheckAndConvertUtils::CheckTupleInt("permutation2", perm2_value, prim_name);
   auto dim = perm1_vec.size();
   for (size_t i = 0; i < dim; i++) {
     MS_EXCEPTION_IF_CHECK_FAIL(i < perm2_vec.size(), "perm is out of bound");

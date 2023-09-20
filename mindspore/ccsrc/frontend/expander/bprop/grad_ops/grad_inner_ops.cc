@@ -19,6 +19,7 @@
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "ops/array_op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 
@@ -106,8 +107,25 @@ REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto shift = ib->GetInput(kIndex1);
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto neg_shift = ib->Neg(shift);
-  return {ib->Emit("Roll", {dout, axis, neg_shift}), ib->OutZeros(axis), ib->OutZeros(shift)};
+  auto shift_value = shift->BuildValue();
+  MS_EXCEPTION_IF_NULL(shift_value);
+  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift_value);
+  if (!shift_array_opt.has_value()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  auto shift_array = shift_array_opt.value();
+  if (shift_array.HasUnknownValue()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  std::vector<int64_t> shift_vec = shift_array.ToVector();
+  std::vector<int64_t> neg_shift(shift_vec.size());
+  (void)std::transform(shift_vec.begin(), shift_vec.end(), neg_shift.begin(),
+                       [](const int64_t &shift) { return shift * -1; });
+  return {ib->Emit("Roll", {dout, ib->Value(neg_shift), axis}), ib->OutZeros(shift), ib->OutZeros(axis)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dynamic_resize_nearest_neighbor)

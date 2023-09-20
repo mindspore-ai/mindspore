@@ -44,13 +44,12 @@ int PackFwdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if (ret != KRET_OK) {
     return ret;
   }
-  // Todo:
-  // auto kernel_ptr = std::make_shared<ops::Stack>(primitive_);
-  // axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
-  // if (axis_ < 0) {
-  //   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  //   axis_ += (SizeToInt(input_shape.size()) + 1);
-  // }
+
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  if (axis_ < 0) {
+    auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+    axis_ += (SizeToInt(input_shape.size()) + 1);
+  }
 
   dims_behind_axis_ = 1;
   // calculate elements while dim >= axis

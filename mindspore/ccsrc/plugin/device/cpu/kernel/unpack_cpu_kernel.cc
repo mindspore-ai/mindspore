@@ -30,19 +30,12 @@ constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
 bool UnpackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  // Todo:
-  // kernel_name_ = base_operator->name();
-  // auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
-  // if (kernel_ptr == nullptr) {
-  //   MS_LOG(ERROR) << "cast unstack ops failed!";
-  //   return false;
-  // }
-  // unstack_param_.axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
-  // origin_axis_ = unstack_param_.axis_;
-  // unstack_param_.pre_dims_ = 1;
-  // unstack_param_.axis_dim_ = 1;
-  // unstack_param_.after_dims_ = 1;
-  // input_size_ = 1;
+  unstack_param_.axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  origin_axis_ = unstack_param_.axis_;
+  unstack_param_.pre_dims_ = 1;
+  unstack_param_.axis_dim_ = 1;
+  unstack_param_.after_dims_ = 1;
+  input_size_ = 1;
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
