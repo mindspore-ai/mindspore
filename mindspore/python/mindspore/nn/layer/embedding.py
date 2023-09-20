@@ -100,7 +100,7 @@ class Embedding(Cell):
     """
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
-                 dtype=mstype.float32, padding_idx=None, para_dytpe=mstype.float32):
+                 dtype=mstype.float32, padding_idx=None):
         """Initialize Embedding."""
         super(Embedding, self).__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
@@ -109,7 +109,7 @@ class Embedding(Cell):
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.use_one_hot = use_one_hot
         self.dtype = dtype
-        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size], dtype=para_dytpe)
+        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_LEFT,
