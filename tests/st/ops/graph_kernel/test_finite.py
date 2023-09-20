@@ -42,10 +42,10 @@ def run(x):
     assert np.allclose(expect_np, out.asnumpy(), 1.e-4, 1.e-7)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test():
+def test_finite():
     """
     Feature: test nan/inf case in graph kernel
     Description: input tensor is nan/inf with shape (1,)

@@ -259,7 +259,7 @@ def test_dynamic_conv2d():
     common_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -331,7 +331,7 @@ def test_dynamic_reducesum2():
     assert compare(gradients, gradients_cmp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -358,7 +358,7 @@ def test_dynamic_add1():
     assert compare(gradients, gradients_cmp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -473,7 +473,7 @@ def test_dynamic_square_sum_all():
     assert compare(out, out_expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('dtype', [np.float32])

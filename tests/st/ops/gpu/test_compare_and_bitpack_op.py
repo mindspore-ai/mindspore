@@ -31,7 +31,7 @@ class NetCompareAndBitpack(nn.Cell):
         return self.compare_and_bitpack(x, threshold)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_compare_and_bitpack_graph():

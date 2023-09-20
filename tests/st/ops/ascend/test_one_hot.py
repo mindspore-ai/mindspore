@@ -128,7 +128,7 @@ def one_hot_static_shape_all_types():
     one_hot_static_shape_test_case(np.int32, mstype.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -143,7 +143,7 @@ def test_ascend_graph_mode():
     one_hot_dynamic_shape_test_case(np.int32, mstype.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

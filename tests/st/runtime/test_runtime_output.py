@@ -40,7 +40,7 @@ class NetSubGraphOutputWithLoad(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_node_with_depend():
@@ -56,7 +56,7 @@ def test_value_node_with_depend():
     assert output == [5, 0, 7, 8]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

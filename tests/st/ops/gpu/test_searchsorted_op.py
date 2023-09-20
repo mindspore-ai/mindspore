@@ -49,7 +49,7 @@ def test_search_sorted_graph_int32():
     search_sorted(loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_search_sorted_pynative_int32():

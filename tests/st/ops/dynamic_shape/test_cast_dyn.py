@@ -101,7 +101,7 @@ def test_cast_float16():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float32():

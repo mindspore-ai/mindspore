@@ -23,7 +23,7 @@ from mindspore import Tensor, mutable
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,7 +78,7 @@ def test_fallback_add_meta_2():
     assert ret == 7
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -217,7 +217,7 @@ def test_fallback_mul_meta():
     assert np.all(ret.asnumpy() == np.array([10, 20, 30]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -271,7 +271,7 @@ def test_fallback_negative_meta_2():
     assert np.allclose(ret.asnumpy(), Tensor([-11, -12, -13]).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -334,7 +334,7 @@ def test_fallback_compare_meta_2():
     assert ret == [True, True, True, True]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -420,7 +420,7 @@ def test_fallback_in_meta():
     assert ret == (True, True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -477,7 +477,7 @@ def test_fallback_meta_fg_not_support_type_in_3():
     assert net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -500,7 +500,7 @@ def test_fallback_meta_fg_not_support_type_add():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -523,7 +523,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_and():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -546,7 +546,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_or():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -592,7 +592,7 @@ def test_fallback_meta_fg_not_support_type_div():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -614,7 +614,7 @@ def test_fallback_meta_fg_not_support_type_equal():
     assert res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -637,7 +637,7 @@ def test_fallback_meta_fg_not_support_type_floordiv():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -706,7 +706,7 @@ def test_fallback_meta_fg_not_support_type_less_equal():
     assert "'<=' not supported between" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -730,7 +730,7 @@ def test_fallback_meta_fg_not_support_type_aug_assign():
     assert "For 'Sub', the 2th input var can not be implicitly converted" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -753,7 +753,7 @@ def test_fallback_meta_fg_not_support_type_less():
     assert "'<' not supported between" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -775,7 +775,7 @@ def test_fallback_meta_fg_not_support_type_or():
     assert res == [1, 2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -798,7 +798,7 @@ def test_fallback_meta_fg_not_support_type_mod():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -844,7 +844,7 @@ def test_fallback_meta_fg_not_support_type_right_shift():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -867,7 +867,7 @@ def test_fallback_meta_fg_not_support_type_sub():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -890,7 +890,7 @@ def test_fallback_meta_fg_not_support_type_uadd():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -911,7 +911,7 @@ def test_fallback_meta_fg_not_support_type_not():
     assert res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -933,7 +933,7 @@ def test_fallback_meta_fg_not_support_type_and():
     assert res == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1014,7 +1014,7 @@ def test_fallback_setitem_meta_2():
     assert ret == [10, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -57,7 +57,7 @@ def test_conjugate_transpose_float64_3x3():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conjugate_transpose_float32_4x4():

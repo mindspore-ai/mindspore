@@ -20,7 +20,7 @@ from mindspore import jit
 from mindspore import context
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_generate_mutable_sequence_with_dynamic_length_with_jit():

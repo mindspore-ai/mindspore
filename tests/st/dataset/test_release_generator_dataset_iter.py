@@ -24,7 +24,7 @@ import numpy as np
 import mindspore.dataset as ds
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("num_epochs", (-1, 10))

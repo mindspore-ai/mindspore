@@ -123,7 +123,7 @@ class ControlGraphSupportNotEqual(Cell):
         return out, out2, out3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -149,7 +149,7 @@ def test_ctrl_if_while_graph_support_not_equal_true():
     allclose_nparray(out3, out_me[2].asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -435,7 +435,7 @@ class SideEffectReturnParameterNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

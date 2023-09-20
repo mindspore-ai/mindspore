@@ -51,7 +51,7 @@ class UNet(ms.nn.Cell):
         return out, self.para + 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_assign():
@@ -133,7 +133,7 @@ def test_fallback_side_effect_dict_2():
     assert out[1] == {'a': 1, 'b': 4, 'c': 3, 'd': 22}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_nested_net():
@@ -175,7 +175,7 @@ def test_fallback_side_effect_nested_net():
     assert output == 52
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_control_flow():
@@ -207,7 +207,7 @@ def test_fallback_control_flow():
     assert out[2] == {'a': 1, 'b': 2}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_side_effect_asnumpy():
@@ -330,7 +330,7 @@ class PrintPyExecuteNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -348,7 +348,7 @@ def test_print_pyexecute():
     assert output == 200
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -371,7 +371,7 @@ def test_fallback_dtype_is_cond():
     assert out == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_after_for_in_if_numpy():

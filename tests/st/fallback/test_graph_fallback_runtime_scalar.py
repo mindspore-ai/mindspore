@@ -30,7 +30,7 @@ class GradNet(ms.nn.Cell):
         return grads
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_return_scalar():
@@ -51,7 +51,7 @@ def test_return_scalar():
     assert isinstance(out3, float) and abs(out3 - 11) < 1e-6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_return_scalar_tuple():
@@ -70,7 +70,7 @@ def test_return_scalar_tuple():
     assert isinstance(out[2], int) and out[2] == 24
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ def test_builtin_int():
     assert isinstance(out, int) and out == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -112,7 +112,7 @@ def test_builtin_float():
     assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -133,7 +133,7 @@ def test_builtin_bool():
     assert out is True
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -156,7 +156,7 @@ def test_builtin_scalar_grad():
     assert out_grad == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -178,7 +178,7 @@ def test_scalar_in_tuple_output():
     assert isinstance(out[1], float) and math.isclose(out[1], 10, abs_tol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -199,7 +199,7 @@ def test_int_asnumpy():
     assert out == 5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -220,7 +220,7 @@ def test_int_asnumpy_calculation():
     assert out == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -241,7 +241,7 @@ def test_int_tensor_asnumpy_calculation():
     assert out == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -261,7 +261,7 @@ def test_int_mutable():
     assert isinstance(out, int) and out == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -281,7 +281,7 @@ def test_float_mutable():
     assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -304,7 +304,7 @@ def test_bool_condition():
     assert out == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -327,7 +327,7 @@ def test_int_condition():
     assert out == 7
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -350,7 +350,7 @@ def test_float_condition():
     assert out == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -373,7 +373,7 @@ def test_tensor_condition():
     assert out == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -393,7 +393,7 @@ def test_bool_asnumpy():
     assert out is True
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -416,7 +416,7 @@ def test_bool_asnumpy_condition():
     assert out == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -437,7 +437,7 @@ def test_scalar_int_calculation():
     assert isinstance(out, int) and out == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -460,7 +460,7 @@ def test_combine_calculation():
     assert isinstance(out[2], float) and abs(out[2] - 6.5) < 1e-6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -486,7 +486,7 @@ def test_scalar_in_inner_function():
     assert out == 11
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -512,7 +512,7 @@ def test_scalar_tuple_in_inner_function():
     assert out[0] == 11
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_in_list():
@@ -530,7 +530,7 @@ def test_scalar_in_list():
     assert out == [1, 2, 3, 4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_in_dict():
@@ -549,7 +549,7 @@ def test_scalar_in_dict():
     assert isinstance(out.get('y'), int)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_in_dict_with_int_value():
@@ -567,7 +567,7 @@ def test_scalar_in_dict_with_int_value():
     assert out == {'x': 1, 'y': 2}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_in_dict_with_tuple_value():
@@ -585,7 +585,7 @@ def test_scalar_in_dict_with_tuple_value():
     assert out == {'x': (1, 2), 'y': (3, 4)}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_in_dict_with_empty_tuple():

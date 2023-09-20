@@ -320,7 +320,7 @@ class MaxPool(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -338,7 +338,7 @@ def test_dynamic_custom_dense():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -355,7 +355,7 @@ def test_dynamic_batchnorm1d():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -372,7 +372,7 @@ def test_dynamic_batchnorm1d_single_op():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -449,7 +449,7 @@ def test_dynamic_nms_with_mask():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -483,7 +483,7 @@ def test_dynamic_stack():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -500,7 +500,7 @@ def test_dynamic_maxpool1():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -517,7 +517,7 @@ def test_dynamic_maxpool2():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -534,7 +534,7 @@ def test_dynamic_maxpool3():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

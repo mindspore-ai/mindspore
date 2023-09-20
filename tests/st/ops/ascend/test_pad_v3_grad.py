@@ -32,7 +32,7 @@ class PadV3GradNet(nn.Cell):
         return self.op(x, paddings)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -54,7 +54,7 @@ def test_padv3grad_circular_3d(mode):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -76,7 +76,7 @@ def test_padv3grad_circular_4d(mode):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

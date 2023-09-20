@@ -366,7 +366,7 @@ def test_custom_vjp_fn_with_net():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_custom_vjp_forward_net_call_fn():

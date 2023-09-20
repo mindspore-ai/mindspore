@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.nms(boxes, scores, max_output_size, iou_threshold, score_threshold)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_boxes_float32_scores_float32():

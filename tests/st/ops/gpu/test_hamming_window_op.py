@@ -66,7 +66,7 @@ def test_blackman_window_graph_int32_true_float32():
     hamming_window(periodic=True, loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_blackman_window_pynative_int64_false_float64():

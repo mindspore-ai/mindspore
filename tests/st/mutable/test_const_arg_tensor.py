@@ -24,7 +24,7 @@ from mindspore.common import mutable
 from mindspore import jit
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cal_constant_tensor():
@@ -53,7 +53,7 @@ def test_cal_constant_tensor():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cal_constant_tensor_jit_function():
@@ -77,7 +77,7 @@ def test_cal_constant_tensor_jit_function():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_const_arg_tensor_to_mutable():
@@ -122,7 +122,7 @@ def test_grad_const_arg_tensor_to_mutable():
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_function_grad_const_arg_tensor_to_mutable():

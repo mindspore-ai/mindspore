@@ -226,7 +226,7 @@ def test_argmax_support_types():
     assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_functional():

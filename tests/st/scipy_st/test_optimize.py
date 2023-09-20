@@ -253,7 +253,7 @@ def _scalar_func_3(np):
     return f, fprime
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -339,7 +339,7 @@ def test_line_search(maxiter, func, x, p):
     match_array(msp_res.f_k, osp_res[3], error=5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

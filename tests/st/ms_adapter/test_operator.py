@@ -20,7 +20,7 @@ import tests.st.ms_adapter as adapter
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_arithmetic_operator():
@@ -78,7 +78,7 @@ def test_arithmetic_operator():
     check_output_type(pow_fn)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_binary_operator():
@@ -144,7 +144,7 @@ def test_binary_operator():
     check_output_type(bitwise_xor_fn)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unary_operator():
@@ -169,7 +169,7 @@ def test_unary_operator():
     assert type(negative_fn(adapter_x)) is adapter.Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logical_operator():
@@ -233,7 +233,7 @@ def test_contain_operator():
     assert type(not_in_fn(adapter_x, adapter_y, adapter_z)) is adapter.Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_matmul():
@@ -254,7 +254,7 @@ def test_matmul():
     assert type(func(adapter_x, adapter_y)) is adapter.Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_getitem():
@@ -285,7 +285,7 @@ def test_getitem():
     assert type(getitem_slice_fn(adapter_x)) is adapter.Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_setitem():

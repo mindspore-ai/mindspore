@@ -122,7 +122,7 @@ def test_lcm_int64():
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gcd_int64_and_int32():
@@ -141,7 +141,7 @@ def test_gcd_int64_and_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lcm_int32_and_int64():

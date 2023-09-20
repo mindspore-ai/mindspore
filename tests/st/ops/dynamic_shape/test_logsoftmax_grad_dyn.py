@@ -70,7 +70,7 @@ def case_logsoftmax_grad_dyn(mode, device_target):
     assert np.allclose(dyn_rank_out, static_out, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmax_grad_dyn_gpu():

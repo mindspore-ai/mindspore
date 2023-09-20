@@ -171,7 +171,7 @@ def test_net_int64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_addn_support_type():

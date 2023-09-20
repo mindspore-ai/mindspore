@@ -65,7 +65,7 @@ def aot_fused_kernel():
     assert np.allclose(expected, output.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_aot_fused_kernel():

@@ -68,7 +68,7 @@ def test_sparse_apply_rms_prop():
     assert (abs(output_mom.asnumpy() - expect_mom) <= tol).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_apply_rms_prop_fp32():

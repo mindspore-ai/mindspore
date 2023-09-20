@@ -43,7 +43,7 @@ class NetGradGrad(nn.Cell):
         return backward_net(y, grad, dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -67,7 +67,7 @@ def test_rsqrt_grad_grad_float16():
     assert np.allclose(dgrad_ms.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

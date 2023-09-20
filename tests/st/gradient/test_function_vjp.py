@@ -32,7 +32,7 @@ class MultipleInputsOutputNet(nn.Cell):
         return 2 * x, y ** 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -170,7 +170,7 @@ def test_vjp_construct_single_input_single_output_default_v_graph(mode):
     assert np.allclose(gradient[0].asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -70,7 +70,7 @@ def dyn_case_beta():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uss_dyn_cpu():
@@ -85,7 +85,7 @@ def test_uss_dyn_cpu():
     dyn_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uss_dyn_gpu():
@@ -100,7 +100,7 @@ def test_uss_dyn_gpu():
     dyn_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uss_dyn_cpu_beta():

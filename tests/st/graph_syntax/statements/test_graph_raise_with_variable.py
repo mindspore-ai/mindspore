@@ -26,7 +26,7 @@ from mindspore.ops.operations._inner_ops import TopTypeof
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_variable_1():
@@ -169,7 +169,7 @@ def test_raise_with_variable_tuple_2():
             raise_info_string_tuple.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_variable_joinedstr_tensor():
@@ -293,7 +293,7 @@ class CheckNet(ms.nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_isolated_raise():
@@ -310,7 +310,7 @@ def test_isolated_raise():
     assert "Check failed. Wrong shape," in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_list_in_control_flow():
@@ -408,7 +408,7 @@ def test_raise_parse_with_interpret():
     assert "x:" in str(raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_parse_with_interpret_2():
@@ -430,7 +430,7 @@ def test_raise_parse_with_interpret_2():
     assert net(input_x, input_y, input_z) is None
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_input_error_type_1():
@@ -475,7 +475,7 @@ def test_raise_with_input_error_type_2():
     assert "The input can not be 11." in str(raise_info.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -546,7 +546,7 @@ class CellInList(nn.Cell):
         return self.cell_list[index](x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -567,7 +567,7 @@ def test_cell_in_list():
     assert ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -591,7 +591,7 @@ def test_raise_constant_folding():
     assert "The input can not be 11." in str(raise_info_constant.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -615,7 +615,7 @@ def test_raise_constant_folding_int64():
     assert "The input can not be 11." in str(raise_info_constant_int64.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -662,7 +662,7 @@ def judge_tuple_index_dim(data, tuple_index, x):
     judge_tuple_index_dim_check_error(index_dim, data_dim, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

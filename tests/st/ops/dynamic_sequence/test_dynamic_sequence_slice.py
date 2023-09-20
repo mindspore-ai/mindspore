@@ -85,7 +85,7 @@ def test_seq_slice_grad():
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_mutable():

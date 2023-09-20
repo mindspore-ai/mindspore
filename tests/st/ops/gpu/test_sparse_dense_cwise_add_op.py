@@ -30,7 +30,7 @@ class SparseDenseCwiseadd(Cell):
         return self.sparsedensecwiseddd(x1_indices, x1_values, x1_shape, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_dense_cwise_add():

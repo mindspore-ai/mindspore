@@ -55,7 +55,7 @@ def num_to_asterisk(data):
     # Convert number and +/- to asterisk
     return re.sub(r'\d|\+|\-', '*', data.group())
 
-# @pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -76,7 +76,7 @@ def test_tensor_print():
         assert (repr(value) == repr(expect)), repr("output: " + value + ", expect: " + expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -92,7 +92,7 @@ def test_print():
     run_net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

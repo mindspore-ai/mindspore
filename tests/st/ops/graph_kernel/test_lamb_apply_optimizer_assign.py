@@ -74,7 +74,7 @@ def lamb_apply_optimizer_assign():
     assert np.allclose(o3, e3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

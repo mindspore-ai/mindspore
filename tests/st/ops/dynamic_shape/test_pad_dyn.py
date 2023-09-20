@@ -48,7 +48,7 @@ def run_case():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_dyn_cpu():
@@ -63,7 +63,7 @@ def test_pad_dyn_cpu():
     run_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_dyn_gpu():

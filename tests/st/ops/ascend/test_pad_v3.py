@@ -36,7 +36,7 @@ class PadV3Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -64,7 +64,7 @@ def test_padv3_circular_dynamic_shape_3d(mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -91,7 +91,7 @@ def test_padv3_circular_dynamic_shape_4d(mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

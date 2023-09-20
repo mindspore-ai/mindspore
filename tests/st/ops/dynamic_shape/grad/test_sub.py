@@ -35,7 +35,7 @@ def sub_test(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

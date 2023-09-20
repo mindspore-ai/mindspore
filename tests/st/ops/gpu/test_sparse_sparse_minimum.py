@@ -76,7 +76,7 @@ def test_sparse_sparse_maximum_graph_float32():
     sparse_sparse_minimum(loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_sparse_minimum_pynative_float32():
