@@ -53,20 +53,21 @@ int GcdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  x1_shape_ = inputs[0]->GetShapeVector();
-  x2_shape_ = inputs[1]->GetShapeVector();
-  y_shape_ = outputs[0]->GetShapeVector();
+  x1_shape_ = inputs[kIndex0]->GetShapeVector();
+  x2_shape_ = inputs[kIndex1]->GetShapeVector();
+  y_shape_ = outputs[kIndex0]->GetShapeVector();
   return KRET_OK;
 }
 
 template <typename T>
 bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  const T *x1 = static_cast<const T *>(inputs[0]->addr);
+  const T *x1 = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(x1);
-  const T *x2 = static_cast<const T *>(inputs[1]->addr);
+  const T *x2 = GetDeviceAddress<T>(inputs, kIndex1);
   MS_EXCEPTION_IF_NULL(x2);
-  T *y = static_cast<T *>(outputs[0]->addr);
+  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(y);
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
   }

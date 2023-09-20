@@ -47,6 +47,7 @@ namespace {
 abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(x_shape)) {
@@ -62,16 +63,16 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
   const size_t divisible_num = 8;
   auto threshold_shape_size = SizeToLong(threshold_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("threshold's rank'", threshold_shape_size, kEqual, SizeToLong(kShapeSize_),
-                                           primitive->name());
+                                           prim_name);
 
   // Input should be at least a vector
   (void)CheckAndConvertUtils::CheckInteger("x's rank'", SizeToLong(x_rank), kNotEqual, SizeToLong(kShapeSize_),
-                                           primitive->name());
+                                           prim_name);
 
   // check the innermost dimension of `x`'s shape is disvisible by 8.
   if (x_shape[x_rank - 1] != -1) {
     CheckAndConvertUtils::Check("x innermost dimension % 8", x_shape[x_rank - 1] % SizeToLong(divisible_num), kEqual, 0,
-                                primitive->name());
+                                prim_name);
   }
   std::vector<int64_t> out_shape;
   for (int dim = 0; dim < SizeToLong(x_rank - 1); dim = dim + 1) {

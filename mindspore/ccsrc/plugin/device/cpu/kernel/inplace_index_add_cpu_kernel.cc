@@ -130,6 +130,10 @@ bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
   auto y = GetDeviceAddress<T>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(output);
   CheckParams();
   // check indices's value is valid
   auto axis = LongToSize(axis_);

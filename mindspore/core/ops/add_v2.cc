@@ -39,8 +39,8 @@ abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   if (!is_gpu) {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape())[kShape];
     CheckAndConvertUtils::Check("input_shape", x_shape, kEqual, y_shape, primitive->name(), ValueError);
   }
   return BroadCastInferShape(primitive->name(), input_args);
@@ -53,10 +53,10 @@ TypePtr AddV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim->name());
   const std::set<TypePtr> valid_types = {kInt8,   kInt16, kInt32,   kInt64,   kUInt8,   kUInt16,    kUInt32,
                                          kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[kIndex0]->BuildType());
+  (void)types.emplace("y", input_args[kIndex1]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[0]->BuildType();
+  return input_args[kIndex0]->BuildType();
 }
 }  // namespace
 

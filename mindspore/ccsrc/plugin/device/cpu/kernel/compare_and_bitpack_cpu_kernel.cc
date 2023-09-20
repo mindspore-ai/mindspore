@@ -32,6 +32,7 @@ bool CompareAndBitpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCompareAndBitpackInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCompareAndBitpackOutputsNum, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   dtype_ = inputs[kIndex0]->GetDtype();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
@@ -40,11 +41,11 @@ template <typename T>
 bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input0 = static_cast<T *>(inputs[0]->addr);
+  T *input0 = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input0);
-  T *input1 = static_cast<T *>(inputs[1]->addr);
+  T *input1 = GetDeviceAddress<T>(inputs, kIndex1);
   MS_EXCEPTION_IF_NULL(input1);
-  uint8_t *output = static_cast<uint8_t *>(outputs[0]->addr);
+  uint8_t *output = GetDeviceAddress<uint8_t>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output);
   int64_t data_num = SizeToLong(outputs[0]->size);
   T thresh = *input1;
@@ -60,7 +61,8 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     // Specialization for bool on systems where sizeof(bool) == 1.
     for (int64_t i = 0; i < data_num; ++i) {
       uint8_t *out = output + i;
-      bool *input0_data = static_cast<bool *>(inputs[0]->addr);
+      bool *input0_data = GetDeviceAddress<bool>(inputs, kIndex0);
+      MS_EXCEPTION_IF_NULL(input0_data);
       uint64_t block = *reinterpret_cast<uint64_t *>(input0_data + 8 * i);
       *out = ((((block & (1LL << (shift_num7 * shift_num8))) >> (shift_num7 * shift_num8 - shift_num7))) |
               (((block & (1LL << (shift_num6 * shift_num8))) >> (shift_num6 * shift_num8 - shift_num6))) |
