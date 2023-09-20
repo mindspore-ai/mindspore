@@ -835,7 +835,9 @@ void GraphExecutorPy::ClearRes() {
   executor_ = nullptr;
 }
 
-std::string GraphExecutorPy::get_queue_name() { return CompileCacheManager::GetCachedDataQueueName(); }
+std::string GraphExecutorPy::get_queue_name(const std::string &dataset_phase) {
+  return CompileCacheManager::GetCachedDataQueueName(dataset_phase);
+}
 
 GraphExecutorPy::~GraphExecutorPy() {
   MS_LOG(INFO) << "Release Executor!";
