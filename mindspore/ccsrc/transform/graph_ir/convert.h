@@ -200,6 +200,9 @@ class DfGraphConvertor {
 
   bool is_training() const { return training_; }
   void set_training(bool is_training) { training_ = is_training; }
+
+  bool export_air() const { return export_air_; }
+  void set_export_air(bool export_air) { export_air_ = export_air; }
   bool dynamic_shape_inputs() const { return dynamic_shape_inputs_; }
   std::vector<ShapeVector> input_shapes() { return input_shapes_; }
 
@@ -334,6 +337,7 @@ class DfGraphConvertor {
   ShapeArray input_shapes_;
   Status error_ = SUCCESS;
   bool training_ = false;
+  bool export_air_ = false;
   bool distribute_ = false;
   bool use_inputs_ = false;
   bool dynamic_shape_inputs_ = false;

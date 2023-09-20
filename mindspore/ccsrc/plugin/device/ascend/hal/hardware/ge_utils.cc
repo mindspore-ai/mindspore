@@ -181,6 +181,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
+    transform::SetExportAir(converter, true);
     is_train = false;
   }
   transform::BuildGraph(anf_graph->ToString(), converter, init_inputs_map);

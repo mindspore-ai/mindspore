@@ -597,7 +597,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     bool as_constant = false;
     auto node_will_update = NodeInputKeepUpdate(manager, node);
     if (ref_mode_) {
-      if (ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) {
+      if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
         as_ref_data = true;
       } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
         as_constant = true;
@@ -629,7 +629,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       const_op_to_value_[const_op] = it.second;
       vars_[name] = const_op;
       op_itor->second = const_op;
-      continue;
     } else {
       // we need three variable ops for each graph with same name
       // build init subgraph
@@ -1893,7 +1892,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
   std::vector<OperatorPtr> input_datas;
-  if (ref_mode_) {
+  if (ref_mode_ && !export_air_) {
     SetGraphInputs(&inputs, &input_datas);
   } else {
     SetGraphInputs(&inputs);
