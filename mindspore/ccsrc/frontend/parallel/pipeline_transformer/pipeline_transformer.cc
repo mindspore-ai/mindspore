@@ -127,19 +127,18 @@ bool PipelineTransformer::MainGraph() {
     MS_LOG(WARNING) << "Can't find main graph, possible reason is can't find virtual dataset.";
     return false;
   }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  enable_share_cell_ = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (!enable_share_cell_) {
-    return true;
-  }
   auto value_nodes = main_graph_->value_nodes();
   for (auto value_pair = value_nodes.cbegin(); value_pair != value_nodes.cend(); ++value_pair) {
     auto node = (*value_pair).first;
     if (!IsValueNode<FuncGraph>(node)) {
       continue;
     }
-    shared_cell_ = GetValueNode<FuncGraphPtr>(node);
+    auto graph = GetValueNode<FuncGraphPtr>(node);
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      continue;
+    }
+    shared_cell_ = graph;
     auto node_users = manager_->node_users()[node];
     for (auto &node_user : node_users) {
       auto user = node_user.first;
@@ -147,12 +146,13 @@ bool PipelineTransformer::MainGraph() {
         shared_cell_users_.push_back(user);
       }
     }
+    break;
+  }
+  if (!shared_cell_) {
     return true;
   }
-  if (shared_cell_ == nullptr) {
-    MS_LOG(WARNING) << "Can't find reused cell, but exist at least a cell marked with lazy_inline.";
-    return false;
-  }
+  MS_LOG(INFO) << "Enable micro-fold, the folded cell is " << shared_cell_->ToString();
+  enable_share_cell_ = true;
   return true;
 }
 

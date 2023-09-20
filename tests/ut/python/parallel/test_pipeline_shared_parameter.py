@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -152,8 +151,6 @@ def test_pipeline_lazy_inline_stage0():
     """
     context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    exec_shell = "export MS_DEV_CELL_REUSE=2"
-    os.system(exec_shell)
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     stra1 = ((16, 1), (1, 1))
@@ -164,8 +161,6 @@ def test_pipeline_lazy_inline_stage0():
     optim = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optim)
     model.train(2, dataset, dataset_sink_mode=False)
-    exec_shell = "unset MS_DEV_CELL_REUSE"
-    os.system(exec_shell)
 
 
 def test_pipeline_lazy_inline_stage1():
@@ -176,8 +171,6 @@ def test_pipeline_lazy_inline_stage1():
     """
     context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    exec_shell = "export MS_DEV_CELL_REUSE=2"
-    os.system(exec_shell)
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     stra1 = ((16, 1), (1, 1))
@@ -188,8 +181,6 @@ def test_pipeline_lazy_inline_stage1():
     optim = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optim)
     model.train(2, dataset, dataset_sink_mode=False)
-    exec_shell = "unset MS_DEV_CELL_REUSE"
-    os.system(exec_shell)
 
 
 def test_pipeline_auto_parallel_lazy_inline_stage0():
