@@ -2202,7 +2202,6 @@ void ClearResPart1() {
   device::StreamSynchronizer::GetInstance()->Finalize();
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
 
-  (void)distributed::collective::CollectiveManager::instance()->Finalize();
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
@@ -2242,6 +2241,9 @@ void ClearResPart2() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
+
+  // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper
+  (void)distributed::collective::CollectiveManager::instance()->Finalize();
 
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
