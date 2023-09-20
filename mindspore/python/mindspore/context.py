@@ -515,7 +515,7 @@ class _Context:
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', open or load the 'env_config_path' file {} "
                                         "failed, please check whether 'env_config_path' is json file and correct, "
-                                        "or may not have permission to read it.".format(env_config_path))
+                                        "or may not have permission to read it.".format(env_config_path)) from exo
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
     def set_runtime_num_threads(self, runtime_num_threads):
@@ -644,7 +644,8 @@ class _Context:
             raise ValueError(str(exo) + "\nFor 'context.set_context', "
                                         "open or load the 'speedup_config_path' file {} "
                                         "failed, please check whether 'speedup_config_path' is json file and correct, "
-                                        "or may not have permission to read it.".format(speedup_config_real_path))
+                                        "or may not have permission to read it.".format(speedup_config_real_path)) \
+                                        from exo
 
 
 def _context():

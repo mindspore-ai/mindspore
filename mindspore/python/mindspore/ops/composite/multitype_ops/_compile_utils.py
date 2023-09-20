@@ -553,10 +553,6 @@ class _TensorIndexGetitem(base.TensorIndexGetitem_):
         Type is the same as the element type of data.
     """
 
-    def __init__(self, name):
-        """Initialize _TensorIndexGetitem."""
-        base.TensorIndexGetitem_.__init__(self, name)
-
     def __call__(self, *args):
         pass
 
@@ -1166,10 +1162,6 @@ class _TensorIndexSetitem(base.TensorIndexSetitem_):
     Returns:
         Type is the same as the element type of data.
     """
-
-    def __init__(self, name):
-        """Initialize _TensorIndexGetitem."""
-        base.TensorIndexSetitem_.__init__(self, name)
 
     def __call__(self, *args):
         pass

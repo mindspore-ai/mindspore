@@ -1217,7 +1217,8 @@ class MultiHeadAttention(Cell):
     def _get_batch_size_from_query(self, query):
         r"""Get the batch size from query tensor"""
         # For the incremental prediction, the seq length for the input is 1.
-        if len(F.shape(query)) == 2 and ((self.use_past and self.is_first_iteration) or (not self.use_past)):
+        incr_infer = self.use_past and self.is_first_iteration
+        if len(F.shape(query)) == 2 and ((incr_infer) or (not self.use_past)):
             return F.shape(query)[0] // self.src_seq_length
         return F.shape(query)[0]
 

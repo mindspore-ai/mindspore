@@ -24,7 +24,7 @@ class Shard(Shard_):
 
     def __init__(self):
         """Initialize Shard."""
-        Shard_.__init__(self, 'Shard')
+        super().__init__('Shard')
         self.shard_fn = None
         self.fn = None
         self.in_strategy = None
