@@ -543,8 +543,9 @@ class ModelCheckpoint(Callback):
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
 
-            # todo delete when remove MS_ENABLE_REF_MODE env
-            if context.get_context("enable_ge") and not os.getenv('MS_ENABLE_REF_MODE'):
+            # TODO(MS_ENABLE_REF_MODE): Delete when remove MS_ENABLE_REF_MODE env.
+            if context.get_context("enable_ge") and not os.getenv('MS_ENABLE_REF_MODE') \
+                    and context.get_context("mode") == context.GRAPH_MODE:
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
             if "epoch_num" in self._append_dict:
