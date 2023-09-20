@@ -77,6 +77,7 @@ class BiDense(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter.
             The values of str refer to the function `initializer`. Default: ``None`` .
         has_bias (bool): Specifies whether the layer uses :math:`\text{bias}` vector. Default: ``True`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Shape:
         - **input1** - :math:`(*, H_{in1})` where :math:`H_{in1}=\text{in1_channels}` and
@@ -90,8 +91,8 @@ class BiDense(Cell):
           are the same shape as the inputs.
 
     Dtype:
-        - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input2**.
-        - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input1**.
+        - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input2** .
+        - **input2** (Tensor) - The dtype must be float16 or float32 and be same as **input1** .
         - **output** (Tensor) - With the same dtype as the inputs.
 
     Weights:

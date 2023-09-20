@@ -1,7 +1,7 @@
 mindspore.nn.GroupNorm
 =======================
 
-.. py:class:: mindspore.nn.GroupNorm(num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros')
+.. py:class:: mindspore.nn.GroupNorm(num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros', dtype=mstype.float32)
 
     在mini-batch输入上进行组归一化。
 
@@ -21,6 +21,7 @@ mindspore.nn.GroupNorm
         - **affine** (bool) - Bool类型，当设置为True时，给该层添加可学习的仿射变换参数，即gama与beta。默认值： ``True`` 。
         - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'ones'`` 。如果gamma_init是Tensor，则shape必须为 :math:`(num\_channels)` 。
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'zeros'`` 如果gamma_init是Tensor，则shape必须为 :math:`(num\_channels)` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C, H, W)` 的特征输入。

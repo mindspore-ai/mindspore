@@ -70,6 +70,7 @@ class Embedding(Cell):
         dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mstype.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: ``None`` . The feature is inactivated.
+
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
@@ -190,6 +191,7 @@ class EmbeddingLookup(Cell):
             parameter server trainning mode and 'DEVICE' target. And the moment parameter of corresponding
             optimizer will also be set to the cache size. In addition, it should be noted that it will cost the 'DEVICE'
             memory, so suggests setting a reasonable value to avoid insufficient memory.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
@@ -512,6 +514,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             Default: ``True`` .
         operator (str): The pooling method for the features in one field. Support ``'SUM'`` , ``'MEAN'`` and
             ``'MAX'`` . Default: ``'SUM'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.

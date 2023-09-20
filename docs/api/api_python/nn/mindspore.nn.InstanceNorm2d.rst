@@ -1,7 +1,7 @@
 mindspore.nn.InstanceNorm2d
 ============================
 
-.. py:class:: mindspore.nn.InstanceNorm2d(num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros')
+.. py:class:: mindspore.nn.InstanceNorm2d(num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros', dtype=mstype.float32)
 
     该层在四维输入（带有额外通道维度的mini-batch二维输入）上应用实例归一化。详见论文 `Instance Normalization:
     The Missing Ingredient for Fast Stylization <https://arxiv.org/abs/1607.08022>`_ 。
@@ -26,6 +26,7 @@ mindspore.nn.InstanceNorm2d
         - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值： ``True`` 。
         - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)`。默认值： ``'ones'`` 。
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)`。默认值： ``'zeros'`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C, H, W)` 的Tensor。数据类型为float16或float32。

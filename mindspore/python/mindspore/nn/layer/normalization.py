@@ -216,6 +216,7 @@ class BatchNorm1d(_BatchNorm):
             evaluation process will use the running mean and variance. Default: ``None`` .
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C)` or :math:`(N, C, L)` ,
@@ -316,6 +317,7 @@ class BatchNorm2d(_BatchNorm):
 
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Supported types: float16, float32.
@@ -397,6 +399,7 @@ class BatchNorm3d(Cell):
             ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
             will use the mean and variance of current batch data and track the running mean and variance, the
             evaluation process will use the running mean and variance. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -520,6 +523,7 @@ class SyncBatchNorm(_BatchNorm):
             Each subtraction list contains int numbers identifying rank ids which need to be synchronized in the same
             group. All int values must be in [0, rank_size) and different from each other. Default: ``None`` ,
             indicating synchronization across all devices.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -690,6 +694,7 @@ class LayerNorm(Cell):
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
         epsilon (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-7`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - The shape of `x` is :math:`(x_1, x_2, ..., x_R)`,
@@ -849,6 +854,7 @@ class InstanceNorm1d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, L)`. Data type: float16 or float32.
@@ -926,6 +932,7 @@ class InstanceNorm2d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
@@ -1002,6 +1009,7 @@ class InstanceNorm3d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D, H, W)`. Data type: float16 or float32.
@@ -1070,6 +1078,7 @@ class GroupNorm(Cell):
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` . If beta_init is a Tensor, the shape
             must be :math:`(num\_channels)`.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - The input feature with shape :math:`(N, C, H, W)` .

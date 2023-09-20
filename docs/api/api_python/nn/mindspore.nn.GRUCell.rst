@@ -20,11 +20,11 @@ mindspore.nn.GRUCell
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
         - **has_bias** (bool) - cell是否有偏置项 `b_in` 和 `b_hn` 。默认值： ``True`` 。
-        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。
-        - **hx** (Tensor) - 数据类型为mindspore.float32、shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。 `hx` 的数据类型必须与 `x` 相同。
+        - **hx** (Tensor) - 数据类型为mindspore.float32，shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。
 
     输出：
         - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。

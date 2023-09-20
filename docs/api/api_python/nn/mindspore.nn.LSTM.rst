@@ -34,10 +34,11 @@ mindspore.nn.LSTM
         - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
         - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值： ``0`` 。dropout的范围为[0.0, 1.0)。
         - **bidirectional** (bool) - 是否为双向LSTM。默认值： ``False`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(seq\_len, batch\_size, input\_size)` 或 :math:`(batch\_size, seq\_len, input\_size)` 的Tensor。
-        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。`hx` 的数据类型必须与 `x` 相同。
+        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。
         - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 :math:`(batch\_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
 
     输出：
