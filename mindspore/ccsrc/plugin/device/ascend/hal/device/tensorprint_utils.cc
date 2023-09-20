@@ -184,18 +184,17 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
       MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
-    if ((tensor_shape.size() == 1 && tensor_shape[0] == 0) || tensor_shape.size() == 0) {
-      if (!judgeLengthValid(acl_data_size, acl_data_type)) {
-        MS_LOG(EXCEPTION) << "Print op receive data length is invalid.";
-      }
-      ConvertDataItem2Scalar(reinterpret_cast<void *>(acl_data), acl_data_type, &buf);
-      continue;
-    }
-
     if (acl_data_type == ACL_STRING) {
       std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
       buf << data << std::endl;
     } else {
+      if ((tensor_shape.size() == 1 && tensor_shape[0] == 0) || tensor_shape.size() == 0) {
+        if (!judgeLengthValid(acl_data_size, acl_data_type)) {
+          MS_LOG(EXCEPTION) << "Print op receive data length is invalid.";
+        }
+        ConvertDataItem2Scalar(reinterpret_cast<void *>(acl_data), acl_data_type, &buf);
+        continue;
+      }
       auto type_iter = kPrintAclDataTypeMap.find(acl_data_type);
       if (type_iter == kPrintAclDataTypeMap.end()) {
         MS_LOG(ERROR) << "type of tensor need to print is not support " << GetParseType(acl_data_type);
@@ -250,17 +249,16 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
       MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
-    if ((tensor_shape.size() == 1 && tensor_shape[0] == 0) || tensor_shape.size() == 0) {
-      if (!judgeLengthValid(acl_data_size, acl_data_type)) {
-        MS_LOG(ERROR) << "Print op receive data length is invalid.";
-        ret_end_thread = true;
-      }
-    }
-
     if (acl_data_type == ACL_STRING) {
       std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
       value->set_desc(data);
     } else {
+      if ((tensor_shape.size() == 1 && tensor_shape[0] == 0) || tensor_shape.size() == 0) {
+        if (!judgeLengthValid(acl_data_size, acl_data_type)) {
+          MS_LOG(ERROR) << "Print op receive data length is invalid.";
+          ret_end_thread = true;
+        }
+      }
       auto parse_type = GetParseType(acl_data_type);
       prntpb::TensorProto *tensor = value->mutable_tensor();
       if (tensor_shape.size() > 1 || (tensor_shape.size() == 1 && tensor_shape[0] != 1)) {

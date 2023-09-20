@@ -224,6 +224,7 @@
 #include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 #include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
+#include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
 #include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
@@ -653,6 +654,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
+  opt_ge_pm->AddPass(std::make_shared<opt::PrintToStringFormatPrint>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());

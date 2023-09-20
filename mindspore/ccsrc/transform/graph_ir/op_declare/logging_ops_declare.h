@@ -21,8 +21,8 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
-DECLARE_OP_ADAPTER(Print)
-DECLARE_OP_USE_DYN_INPUT(Print)
+DECLARE_OP_ADAPTER(PrintV2)
+DECLARE_OP_ATTR(PrintV2)
 
 DECLARE_OP_ADAPTER(Assert)
 DECLARE_OP_USE_DYN_INPUT(Assert)
