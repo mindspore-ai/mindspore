@@ -1396,13 +1396,14 @@ def test_tensor_reshape():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_squeeze():
+    context.set_context(pynative_synchronize=True)
     lst = [[[1.0], [2.0], [3.0]]]
     tensor_list = to_tensor(lst)
     assert tensor_list.squeeze().shape == (3,)

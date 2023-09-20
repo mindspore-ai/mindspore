@@ -2875,8 +2875,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         e = tensor_operator_registry.get('eye')(n, m, dtype)
         if offset >= m or offset <= -n:
-            e = tensor_operator_registry.get('fill')(dtype, (n, m), 0)
-        elif offset != 0:
+            zero_shape = shape[:-2] + (0,)
+            return tensor_operator_registry.get("zeros")(zero_shape, dtype)
+        if offset != 0:
             e = e.astype(mstype.float32)
             if offset > 0:
                 e_left = tensor_operator_registry.get('fill')(mstype.float32, (n, offset), 0)
