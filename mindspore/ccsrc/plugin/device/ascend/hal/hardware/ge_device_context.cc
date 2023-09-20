@@ -46,10 +46,23 @@ namespace ascend {
 namespace {
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+
+bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return false;
+  }
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  return std::any_of(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) {
+    if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
+      return false;
+    }
+    return common::AnfAlgo::IsDynamicShape(node);
+  });
+}
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
-  if (IsDynamicShapeGraph(func_graph)) {
+  if (IsDynamicShapeFuncGraph(func_graph)) {
     bool all_support = true;
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
