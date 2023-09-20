@@ -607,10 +607,10 @@ Communication Operator
 Distributed training involves communication operations for data transfer. For more details, refer to `Distributed Set Communication Primitives <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html>`_ .
 
 Note that the APIs in the following list need to preset communication environment variables. For
-the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `Ascend tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
-For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_.
+the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `rank table Startup \
+<https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_ for more details.
+For the GPU device, users need to prepare the host file and mpi, please see the `mpirun Startup \
+<https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_.
 
 .. msplatwarnautosummary::
     :toctree: ops

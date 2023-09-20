@@ -2206,9 +2206,6 @@ def restore_group_info_list(group_info_file_name):
 def build_searched_strategy(strategy_filename):
     """
     Build strategy of every parameter in network. Used in the case of distributed inference.
-    For details of it, please check:
-    `Saving and Loading Models in Hybrid Parallel Mode
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.
@@ -2230,8 +2227,6 @@ def build_searched_strategy(strategy_filename):
 def merge_sliced_parameter(sliced_parameters, strategy=None):
     """
     Merge parameter slices into one parameter. Used in the case of distributed inference.
-    For details of it, please check:
-    `<https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank id.

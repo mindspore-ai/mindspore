@@ -547,8 +547,8 @@ class SyncBatchNorm(_BatchNorm):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
             for more details.
 
-            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with multiple devices.
 
