@@ -456,6 +456,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
         (param_counter >= param_size - func_graph->fv_param_count() || (is_kernel_graph_ && param->has_default()))) {
       if (!ExportWeight(param, param_name, graph_proto)) {
         MS_LOG(ERROR) << "Failed to export parameter weight:" << param->DebugString();
+        return false;
       }
     } else {
       // export graph input
