@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph raise """
+# pylint: disable=R1705
 import os
 import pytest
 import numpy as np
@@ -685,3 +686,29 @@ def test_raise_in_sub_func_graph_with_isolate_node():
         output = bool_index(data, index, Tensor([1]))
         print(output)
     assert "The dim of index cannot be greater than indexed data" in str(err)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_raise_in_method():
+    """
+    Feature: graph raise.
+    Description: Test raise in graph mode.
+    Expectation: No exception.
+    """
+    class NetRaiseInMethod(nn.Cell):
+        def construct(self, x, y, z):
+            if x == 1:
+                return Tensor(10, mstype.int32)
+            elif x == 20:
+                raise ValueError('Illegal case')
+            else:
+                return y + z
+
+    net = NetRaiseInMethod()
+    x = Tensor(0, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    z = Tensor(2, mstype.int32)
+    out = net(x, y, z)
+    assert out == 7

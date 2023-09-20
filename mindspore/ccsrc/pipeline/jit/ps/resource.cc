@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ BuiltInTypeMap &GetMethodMap() {
     {kObjectTypeString,
      {{"__bool__", std::string("str_bool")},  // C.str_bool
       {"format", std::string("_format")},
-      {"__ms_iter__", prim::kPrimIdentity},
       {"lower", prim::kPrimLower}}},
     {kMetaTypeNone,
      {
@@ -129,7 +128,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimSequenceLen},               // P.sequence_len,
        {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
        {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
-       {"__ms_iter__", prim::kPrimIdentity},              // P.identity,
        {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
        {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
        {"count", prim::kPrimSequenceCount},               // P.sequence_count
@@ -140,7 +138,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimSequenceLen},              // P.sequence_len,
        {"__getitem__", prim::kPrimListGetItem},          // P.list_getitem,
        {"__setitem__", prim::kPrimListSetItem},          // P.list_setitem,
-       {"__ms_iter__", prim::kPrimIdentity},             // P.identity
        {"__ms_next__", std::string("list_next")},        // C.list_next
        {"append", std::string("list_append")},           // C.list_append
        {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
@@ -157,7 +154,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimDictLen},                  // P.dict_len
        {"__getitem__", prim::kPrimDictGetItem},          // P.dict_getitem
        {"__setitem__", std::string("dict_setitem")},     // C.dict_setitem,
-       {"__ms_iter__", prim::kPrimDictGetKeys},          // P.dict_getkeys,
        {"__ms_hasnext__", std::string("dict_hasnext")},  // C.array_hasnext
        {"__ms_next__", std::string("dict_next")},        // C.array_next
        {"keys", prim::kPrimDictGetKeys},                 // P.dict_getkeys,
@@ -214,7 +210,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
-       {"__ms_iter__", prim::kPrimIdentity},                               // C.array_iter
        {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
        {"__ms_next__", std::string("array_next")},                         // C.array_next
        {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
@@ -559,6 +554,10 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
+    {kObjectTypeString, {{"__ms_iter__", prim::kPrimIdentity}}},
+    {kObjectTypeTuple, {{"__ms_iter__", prim::kPrimIdentity}}},
+    {kObjectTypeList, {{"__ms_iter__", prim::kPrimIdentity}}},
+    {kObjectTypeDictionary, {{"__ms_iter__", prim::kPrimDictGetKeys}}},
     {kObjectTypeTensorType,
      {
        {"shape", prim::kPrimShape},             // C.shape_
@@ -572,6 +571,7 @@ BuiltInTypeMap &GetAttrMap() {
        {"strides", std::string("strides_")},    // C.strides_
        {"mH", std::string("adjoint")},          // C.adjoint
        {"mT", std::string("mT")},               // C.mT_
+       {"__ms_iter__", prim::kPrimIdentity},    // C.array_iter
      }},
     {kObjectTypeRowTensorType,
      {
