@@ -105,6 +105,8 @@ class MS_CORE_API ValueSequence : public Value {
   /// \return The description of the ValueSequence object.
   std::string DumpText() const override;
 
+  bool ContainsValueAny() const override;
+
  protected:
   ValuePtrList elements_;
 };
@@ -506,6 +508,8 @@ class MS_CORE_API ValueAny final : public Value {
   ///
   /// \return The abstract of the ValueAny object.
   abstract::AbstractBasePtr ToAbstract() override;
+
+  bool ContainsValueAny() const override { return true; }
 };
 
 GVAR_DEF(ValuePtr, kValueAny, std::make_shared<ValueAny>());

@@ -803,7 +803,7 @@ class SideEffectFinder {
       return TraceTupleListCNodeEffectInfo(cnode, indexes);
     }
     // Should not reach here.
-    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr. Invalid node: " << node->DebugString();
   }
 
   EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {

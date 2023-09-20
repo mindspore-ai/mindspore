@@ -908,7 +908,14 @@ bool NeedConvertPrimitiveArgs(const PrimitivePtr &prim) {
   if (prim->isa<PrimitiveFunction>() || prim->isa<prim::DoTransPrimitiveFunction>()) {
     return false;
   }
-  return mindspore::ops::GetOpDef(prim->name()) != nullptr;
+  if (mindspore::ops::GetOpDef(prim->name()) != nullptr) {
+    if (!prim->isa<PrimitivePy>()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Prim should be a PrimitivePy, but got:" << prim->ToString();
+    }
+    return true;
+  }
+  // Primitive not rewritten no need convert to primitive function.
+  return false;
 }
 
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
@@ -930,16 +937,15 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (enable_pre_lift && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
     return std::make_shared<SwitchEvaluator>();
   }
+  if (prim->isa<PrimitiveFunction>()) {
+    return std::make_shared<PrimitiveFunctionEvaluator>(prim->cast<PrimitiveFunctionPtr>());
+  }
   if (NeedConvertPrimitiveArgs(prim)) {
     return std::make_shared<PrimitiveArgsToInputsEvaluator>(prim);
   }
   if (prim->isa<prim::DoTransPrimitiveFunction>()) {
     return std::make_shared<DoTransPrimitiveFunctionEvaluator>(prim);
   }
-  if (prim->isa<PrimitiveFunction>()) {
-    return std::make_shared<PrimitiveFunctionEvaluator>(prim->cast<PrimitiveFunctionPtr>());
-  }
-
   auto standard_evaluator = GetStandardPrimEvaluator(prim);
   if (standard_evaluator != nullptr) {
     return standard_evaluator;

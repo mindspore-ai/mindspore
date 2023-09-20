@@ -794,6 +794,8 @@ class MS_CORE_API Value : public Base {
   /// \return Whether the input is the current Value object.
   Value &operator=(const Value &other);
 
+  virtual bool ContainsValueAny() const;
+
  protected:
   TypePtr type_{nullptr};
 };

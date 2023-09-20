@@ -461,16 +461,32 @@ Value &Value::operator=(const Value &other) {
   return *this;
 }
 
-ValueNode::ValueNode(const ValuePtr &value) : value_(value) {}
+bool Value::ContainsValueAny() const { return false; }
+
+ValueNode::ValueNode(const ValuePtr &value) : value_(value) {
+  if (value->ContainsValueAny()) {
+    MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+}
 
 ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
-    : ANode(nullptr, std::move(debug_info)), value_(value) {}
+    : ANode(nullptr, std::move(debug_info)), value_(value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->ContainsValueAny()) {
+    MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+}
 
 void ValueNode::set_func_graph(const FuncGraphPtr &) {
   MS_INTERNAL_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
 }
 
-void ValueNode::set_value(const ValuePtr &value) { value_ = value; }
+void ValueNode::set_value(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->ContainsValueAny()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+}
 
 const ValuePtr &ValueNode::value() const { return value_; }
 

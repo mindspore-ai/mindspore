@@ -185,6 +185,11 @@ std::string ValueSequence::DumpText() const {
   return oss.str();
 }
 
+bool ValueSequence::ContainsValueAny() const {
+  return std::any_of(elements_.cbegin(), elements_.cend(),
+                     [](const ValuePtr &elem) { return elem->ContainsValueAny(); });
+}
+
 bool FP64Imm::operator==(const FP64Imm &other) const {
   if ((std::isinf(v_) && std::isinf(other.v_)) || (std::isnan(v_) && std::isnan(other.v_))) {
     return true;

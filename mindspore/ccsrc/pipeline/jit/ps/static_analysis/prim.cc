@@ -1583,7 +1583,7 @@ ValuePtr UniformPrimEvaluator::RunImpl(const ValuePtrList &args) const {
   } else {
     if (std::any_of(args.begin(), args.end(), [](const ValuePtr &arg) {
           MS_EXCEPTION_IF_NULL(arg);
-          return arg->isa<ValueAny>();
+          return arg->ContainsValueAny();
         })) {
       return kValueAny;
     }
