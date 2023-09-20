@@ -365,14 +365,7 @@ class _MindsporeFunctionExecutor:
                                f"pynative mode and remove 'jit' decorator.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
         compile_args = self._generate_compile_args(args)
-        if isinstance(self.obj, ms.nn.Cell):
-            key_id = str(id(self.obj)) + str(self.obj.create_time)
-        else:
-            key_id = str(id(self.obj)) + str(self._create_time)
-
-        if _pynative_executor.grad_flag():
-            key_id = key_id + ".grad"
-
+        key_id = self._get_key_id()
         compile_args = get_auto_dynamic_shape_args_with_check_input_signature(compile_args, key_id,
                                                                               self.input_signature)
 
@@ -430,9 +423,15 @@ class _MindsporeFunctionExecutor:
 
         if self.obj is None:
             # Set an attribute to fn as an identifier.
-            setattr(self.fn, "__jit_function__", True)
+            if isinstance(self.fn, types.MethodType):
+                setattr(self.fn.__func__, "__jit_function__", True)
+            else:
+                setattr(self.fn, "__jit_function__", True)
             is_compile = self._graph_executor.compile(self.fn, compile_args, kwargs, phase, True)
-            delattr(self.fn, "__jit_function__")
+            if isinstance(self.fn, types.MethodType):
+                delattr(self.fn.__func__, "__jit_function__")
+            else:
+                delattr(self.fn, "__jit_function__")
         else:
             if isinstance(self.obj, ms.nn.Cell):
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
@@ -466,6 +465,7 @@ class _MindsporeFunctionExecutor:
 
         function_phases[full_function_name].add(create_time)
 
+
     @staticmethod
     def _optimizer_state_init(opt_states):
         """set data for all optimizer states in case it is executed in graph mode"""
@@ -475,6 +475,18 @@ class _MindsporeFunctionExecutor:
             prefix = opt_param.name[:opt_param.name.find(".")]
             if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
                 opt_param.init_data()
+
+
+    def _get_key_id(self):
+        """get key id."""
+        if isinstance(self.obj, ms.nn.Cell):
+            key_id = str(id(self.obj)) + str(self.obj.create_time)
+        else:
+            key_id = str(id(self.obj)) + str(self._create_time)
+
+        if _pynative_executor.grad_flag():
+            key_id = key_id + ".grad"
+        return key_id
 
 
     def _get_generate_name(self):

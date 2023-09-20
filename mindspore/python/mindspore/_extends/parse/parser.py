@@ -940,9 +940,8 @@ class ThirdPartyLibraryChecker:
         """Check if value is from a third-party library."""
         if inspect.ismodule(value):
             module = value
-        elif inspect.isfunction(value) or inspect.ismethod(value):
-            if hasattr(value, "__jit_function__"):
-                return False
+        elif (isinstance(value, types.FunctionType) and not hasattr(value, "__jit_function__")) or \
+            (isinstance(value, types.MethodType) and not hasattr(value.__func__, "__jit_function__")):
             if value in _convert_map():
                 return False
             module = inspect.getmodule(value)
