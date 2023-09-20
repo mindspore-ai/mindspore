@@ -8,11 +8,8 @@ mindspore.dataset.vision.RandomPerspective
     参数：
         - **distortion_scale** (float，可选) - 失真程度，取值范围为[0.0, 1.0]。默认值： ``0.5`` 。
         - **prob** (float，可选) - 执行透视变换的概率，取值范围：[0.0, 1.0]。默认值： ``0.5`` 。
-        - **interpolation** (:class:`~.vision.Inter`，可选) - 插值方式，取值可为 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 或 ``Inter.BICUBIC`` 。默认值： ``Inter.BICUBIC`` 。
-
-          - **Inter.BILINEAR**：双线性插值。
-          - **Inter.NEAREST**：最近邻插值。
-          - **Inter.BICUBIC**：双三次插值。
+        - **interpolation** (:class:`~.vision.Inter`，可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
+          默认值： ``Inter.BICUBIC``。
 
     异常：
         - **TypeError** - 当 `distortion_scale` 的类型不为float。

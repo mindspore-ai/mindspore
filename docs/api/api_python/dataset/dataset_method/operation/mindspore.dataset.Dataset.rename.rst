@@ -10,4 +10,4 @@ mindspore.dataset.Dataset.rename
         - **output_columns** (Union[str, list[str]]) - 重命名后的列名列表。
 
     返回：
-        RenameDataset，rename操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

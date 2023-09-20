@@ -3,41 +3,35 @@ mindspore.dataset.utils.LineReader
 
 .. py:class:: mindspore.dataset.utils.LineReader(filename)
 
-    高效的（基于行的）文件读取。
+    基于行的文件读取器。
 
-    该类缓存基于行的文件元信息，可以让用户方便的获取文件总行数、读取文件指定行内容等。
-
-    该类提供如下方法：
-
-    - len()：返回文件的总行数。
-    - readline(line)：打开文件并读取文件的第line行。
-    - close()：关闭文件句柄。
+    通过提前缓存文件基于行的元信息，实现对文件各行的随机访问读取。
 
     参数：
-        - **filename** (str) - 基于行的文件名。
+        - **filename** (str) - 待读取的文件名。
 
     异常：
         - **TypeError** - `filename` 无效。
-        - **RuntimeError** - `filename` 不存在或者不是普通文件。
+        - **RuntimeError** - `filename` 不存在或者不是常规文件。
 
     .. py:method:: close()
 
-        关闭文件。
+        关闭文件句柄。
 
     .. py:method:: len()
 
-        获取文件总行数。
+        获取当前文件的总行数。
 
     .. py:method:: readline(line)
 
-        读取指定行内容。
+        读取指定行的内容。
 
         参数：
-            - **line** (int) - 指定行号。
+            - **line** (int) - 待读取的行号，起始行号为1。
 
         返回：
-            str，一行的内容，包括换行符。
+            str，对应行的内容，不包含换行符。
 
         异常：
-            - **TypeError** - 参数 `line` 类型错误。
-            - **ValueError** - 参数 `line` 取值越界。
+            - **TypeError** - 如果 `line` 不是int类型。
+            - **ValueError** - 如果 `line` 取值大于文件总行数。

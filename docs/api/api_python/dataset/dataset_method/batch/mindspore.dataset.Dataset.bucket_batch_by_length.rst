@@ -28,4 +28,4 @@ mindspore.dataset.Dataset.bucket_batch_by_length
         - **drop_remainder** (bool, 可选) - 当每个分桶中的最后一个批处理数据数据条目小于 `bucket_batch_sizes` 时，是否丢弃该批处理数据。默认值： ``False`` ，不丢弃。
 
     返回：
-        Dataset，按长度进行分桶和批处理操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

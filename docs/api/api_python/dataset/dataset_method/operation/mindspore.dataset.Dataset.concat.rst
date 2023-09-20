@@ -12,4 +12,4 @@ mindspore.dataset.Dataset.concat
         - **datasets** (Union[list, Dataset]) - 与当前数据集对象拼接的数据集对象列表或单个数据集对象。
 
     返回：
-        Dataset，拼接后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

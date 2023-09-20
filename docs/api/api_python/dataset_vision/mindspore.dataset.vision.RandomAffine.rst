@@ -20,12 +20,8 @@ mindspore.dataset.vision.RandomAffine
           如果 `shear` 是一个包含2个值的元组或列表，则在 (shear[0],shear[1]) 范围内进行水平(X)方向的剪切变换。
           如果 `shear` 是一个包含4个值的元组或列表，则在 (shear[0],shear[1]) 范围内进行水平(X)方向的剪切变换，并在(shear[2], shear[3])范围内进行垂直(Y)方向的剪切变换。
           如果为None，则不应用任何剪切。
-        - **resample** (:class:`~.vision.Inter`, 可选) - 图像插值方式。它可以是 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 、 ``Inter.BICUBIC`` 、 ``Inter.AREA`` 。默认值： ``Inter.NEAREST`` 。
-
-          - **Inter.BILINEAR**: 双线性插值。
-          - **Inter.NEAREST**: 最近邻插值。
-          - **Inter.BICUBIC**: 双三次插值。
-          - **Inter.AREA**: 像素区域插值。
+        - **resample** (:class:`~.vision.Inter`, 可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
+          默认值： ``Inter.NEAREST``。
 
         - **fill_value** (Union[int, tuple[int]], 可选) - 用于填充输出图像中变换之外的区域。元组中必须有三个值，取值范围是[0, 255]。默认值： ``0`` 。
 

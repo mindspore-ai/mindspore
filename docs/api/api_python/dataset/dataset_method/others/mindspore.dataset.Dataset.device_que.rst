@@ -14,4 +14,4 @@ mindspore.dataset.Dataset.device_que
         如果设备类型为Ascend，数据的特征将被逐一传输。每次传输的数据大小限制为256MB。
 
     返回：
-        Dataset，用于帮助发送数据到设备上的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

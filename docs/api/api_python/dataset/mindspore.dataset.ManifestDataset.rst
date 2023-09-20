@@ -35,7 +35,7 @@
           <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     .. note::
-        - 如果 `decode` 参数的值为 ``False`` ，则得到的 `image` 列的shape为[undecoded_image_size]，如果为 ``True`` 则 `image` 列的shape为 :math:`[H,W,C]` 。
+        - 如果 `decode` 为 ``False`` ，`image` 列返回图像的一维原始字节。否则，将返回 shape 为 :math:`[H,W,C]` 的解码图像。
         - 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
     .. include:: mindspore.dataset.sampler.rst

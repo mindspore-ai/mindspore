@@ -425,17 +425,8 @@ class Affine(ImageTensorOperation):
         shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between -180 to 180.
             If float is provided, shear along the x axis with this value, without shearing along the y axis;
             If Sequence[float, float] is provided, shear along the x axis and y axis with these two values separately.
-        resample (Inter, optional): An optional resampling filter. Default: ``Inter.NEAREST``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``.
-
-            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
-
-            - ``Inter.AREA`` :, means resample method is pixel area interpolation.
-
+        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Optional `fill_value` to fill the area
             outside the transform in the output image. There must be three elements in tuple and the value
             of single element is [0, 255]. Default: ``0``.
@@ -512,17 +503,8 @@ class AutoAugment(ImageTensorOperation):
 
             - ``AutoAugmentPolicy.SVHN``, means to apply AutoAugment learned on SVHN dataset.
 
-        interpolation (Inter, optional): Image interpolation mode for Resize operation. Default: ``Inter.NEAREST``.
-            It can be ``Inter.NEAREST``, ``Inter.BILINEAR``, ``Inter.BICUBIC``, ``Inter.AREA``.
-
-            - ``Inter.NEAREST`` : means interpolation method is nearest-neighbor interpolation.
-
-            - ``Inter.BILINEA`` : means interpolation method is bilinear interpolation.
-
-            - ``Inter.BICUBIC`` : means the interpolation method is bicubic interpolation.
-
-            - ``Inter.AREA`` : means the interpolation method is pixel area interpolation.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int]], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255].
@@ -1229,15 +1211,18 @@ class GaussianBlur(ImageTensorOperation):
     Blur input image with the specified Gaussian kernel.
 
     Args:
-        kernel_size (Union[int, Sequence[int]]): Size of the Gaussian kernel to use. The value must be positive and odd.
-            If only an integer is provided, the kernel size will be (kernel_size, kernel_size). If a sequence of integer
-            is provided, it must be a sequence of 2 values which represents (width, height).
-        sigma (Union[float, Sequence[float]], optional): Standard deviation of the Gaussian kernel to use.
-            Default: ``None``. The value must be positive. If only a float is provided, the sigma will be
-            (sigma, sigma).
-            If a sequence of float is provided, it must be a sequence of 2 values which represents (width, height).
-            If ``None`` is provided, the sigma will be calculated as
-            :math:`((kernel\_size - 1) * 0.5 - 1) * 0.3 + 0.8`.
+        kernel_size (Union[int, Sequence[int, int]]): The size of the Gaussian kernel. Must be positive and odd.
+            If the input type is int, the value will be used as both the width and height of the Gaussian kernel.
+            If the input type is Sequence[int, int], the two elements will be used as the width and height of the
+            Gaussian kernel respectively.
+        sigma (Union[float, Sequence[float, float]], optional): The standard deviation of the Gaussian kernel.
+            Must be positive.
+            If the input type is float, the value will be used as the standard deviation of both the width and
+            height of the Gaussian kernel.
+            If the input type is Sequence[float, float], the two elements will be used as the standard deviation
+            of the width and height of the Gaussian kernel respectively.
+            Default: ``None`` , the standard deviation of the Gaussian kernel will be obtained by the
+            formula :math:`((kernel\_size - 1) * 0.5 - 1) * 0.3 + 0.8` .
 
     Raises:
         TypeError: If `kernel_size` is not of type int or Sequence[int].
@@ -1968,18 +1953,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         end_points (Sequence[Sequence[int, int]]): Sequence of the ending point coordinates, containing four
             two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
             quadrilateral in the target image.
-        interpolation (Inter, optional): Method of interpolation. It can be ``Inter.BILINEAR``, ``Inter.LINEAR``,
-            ``Inter.NEAREST``, ``Inter.AREA``, ``Inter.PILCUBIC``, ``Inter.CUBIC`` or ``Inter.BICUBIC``.
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
             Default: ``Inter.BILINEAR``.
-
-            - ``Inter.BILINEA`` , bilinear interpolation.
-            - ``Inter.LINEAR`` , linear interpolation, the same as Inter.BILINEAR.
-            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
-            - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.CUBIC`` , cubic interpolation, the same as Inter.BICUBIC.
-            - ``Inter.PILCUBIC`` , cubic interpolation based on the implementation of Pillow,
-              only numpy.ndarray input is supported.
-            - ``Inter.AREA`` :, pixel area interpolation, only numpy.ndarray input is supported.
 
     Raises:
         TypeError: If `start_points` is not of type Sequence[Sequence[int, int]].
@@ -2093,14 +2068,8 @@ class RandAugment(ImageTensorOperation):
             `num_magnitude_bins`. Default: ``9``.
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be no less than 2. Default: ``31``.
-        interpolation (Inter, optional): Image interpolation method. Default: ``Inter.NEAREST``.
-            It can be ``Inter.NEAREST``, ``Inter.BILINEAR``, ``Inter.BICUBIC`` or ``Inter.AREA``.
-
-            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
-            - ``Inter.BILINEA`` , bilinear interpolation.
-            - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` :, pixel area interpolation.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
             If int is provided, pad all RGB channels with this value.
@@ -2226,17 +2195,8 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
             If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
             from ( `shear` [0], `shear` [1]) and a shearing parallel to Y axis with a factor selected from
             ( `shear` [2], `shear` [3]) will be applied. Default: ``None``, means no shearing.
-        resample (Inter, optional): An optional resampling filter. Default: ``Inter.NEAREST``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``.
-
-            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
-
-            - ``Inter.AREA`` :, means resample method is pixel area interpolation.
-
+        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int]], optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
             Default: ``0``, filling is performed.
@@ -2669,20 +2629,8 @@ class RandomCropDecodeResize(ImageTensorOperation):
             original size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Image interpolation mode for resize operation. Default: ``Inter.BILINEAR``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``, ``Inter.PILCUBIC``.
-
-            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
-
-            - ``Inter.AREA`` :, means interpolation method is pixel area interpolation.
-
-            - ``Inter.PILCUBIC`` , means interpolation method is bicubic interpolation like implemented in pillow, input
-              should be in 3 channels format.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area. Default: ``10``.
             If exceeded, fall back to use center_crop instead. The `max_attempts` value must be positive.
 
@@ -3079,7 +3027,7 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
 
 class RandomHorizontalFlipWithBBox(ImageTensorOperation):
     """
-    Flip the input image horizontally randomly with a given probability and adjust bounding boxes accordingly.
+    Randomly flip the input image and its bounding box horizontally with a given probability.
 
     Args:
         prob (float, optional): Probability of the image being flipped,
@@ -3217,12 +3165,8 @@ class RandomPerspective(PyTensorOperation):
         distortion_scale (float, optional): Scale of distortion, in range of [0.0, 1.0]. Default: ``0.5``.
         prob (float, optional): Probability of performing perspective transformation, which
             must be in range of [0.0, 1.0]. Default: ``0.5``.
-        interpolation (Inter, optional): Method of interpolation. It can be ``Inter.BILINEAR``,
-            ``Inter.NEAREST`` or ``Inter.BICUBIC``. Default: ``Inter.BICUBIC``.
-
-            - ``Inter.BILINEA`` , bilinear interpolation.
-            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
-            - ``Inter.BICUBIC`` , bicubic interpolation.
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.BICUBIC``.
 
     Raises:
         TypeError: If `distortion_scale` is not of type float.
@@ -3344,22 +3288,8 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
             size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Method of interpolation. Default: ``Inter.BILINEAR``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``, ``Inter.PILCUBIC``.
-
-            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
-
-            - ``Inter.AREA`` :, means interpolation method is pixel area interpolation.
-
-            - ``Inter.PILCUBIC`` , means interpolation method is bicubic interpolation like implemented in pillow, input
-              should be in 3 channels format.
-
-            - ``Inter.ANTIALIAS`` , means the interpolation method is antialias interpolation.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop_area. Default: ``10``. If exceeded, fall back to use center_crop instead.
 
@@ -3445,15 +3375,8 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
             size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Image interpolation mode. Default: ``Inter.BILINEAR``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``.
-
-            - ``Inter.BILINEAR`` , means interpolation method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area. Default: ``10``. If exceeded, fall back to use center crop instead.
 
@@ -3619,17 +3542,8 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
-        resample (Inter, optional): An optional resampling filter. Default: ``Inter.NEAREST``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``.
-
-            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
-
-            - ``Inter.AREA`` :, means the interpolation method is pixel area interpolation.
-
+        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
             expand the output image to make it large enough to hold the entire rotated image.
             If set to ``False`` or omitted, make the output image the same size as the input.
@@ -4015,18 +3929,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation mode. Default: ``Inter.LINEAR``.
-            It can be ``Inter.BILINEAR``, ``Inter.LINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``,
-            ``Inter.PILCUBIC``, ``Inter.ANTIALIAS``.
-
-            - ``Inter.BILINEAR``, bilinear interpolation.
-            - ``Inter.LINEAR``, bilinear interpolation, here is the same as Inter.BILINEAR.
-            - ``Inter.NEAREST``, nearest-neighbor interpolation.
-            - ``Inter.BICUBIC``, bicubic interpolation.
-            - ``Inter.AREA``, pixel area interpolation.
-            - ``Inter.PILCUBIC``, bicubic interpolation like implemented in Pillow, only valid when the input is
-              a 3-channel image in the numpy.ndarray format.
-            - ``Inter.ANTIALIAS``, antialias interpolation.
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.LINEAR``.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -4101,14 +4005,8 @@ class ResizedCrop(ImageTensorOperation):
             If int is provided, the smaller edge of the image will be resized to this value,
             keeping the image aspect ratio the same.
             If Sequence[int, int] is provided, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation method. Default: ``Inter.BILINEAR``.
-            It can be ``Inter.LINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA`` or ``Inter.PILCUBIC``.
-
-            - ``Inter.LINEAR`` , bilinear interpolation.
-            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
-            - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` :, pixel area interpolation.
-            - ``Inter.PILCUBIC`` , cubic interpolation based on the implementation of Pillow
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.BILINEAR``.
 
     Raises:
         TypeError: If `top` is not of type int.
@@ -4170,14 +4068,8 @@ class ResizeWithBBox(ImageTensorOperation):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation mode. Default: ``Inter.LINEAR``.
-            It can be ``Inter.LINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``.
-
-            - ``Inter.LINEAR`` , means interpolation method is bilinear interpolation.
-
-            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
-
-            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.LINEAR``.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -4278,14 +4170,8 @@ class Rotate(ImageTensorOperation):
 
     Args:
         degrees (Union[int, float]): Rotation degrees.
-
-        resample (Inter, optional): An optional resampling filter. Default: ``Inter.NEAREST``.
-            It can be ``Inter.BILINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``.
-
-            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
-            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
-            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
-
+        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
             expand the output image to make it large enough to hold the entire rotated image.
             If set to ``False`` or omitted, make the output image the same size as the input.
@@ -4717,14 +4603,8 @@ class TrivialAugmentWide(ImageTensorOperation):
     Args:
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be greater than or equal to 2. Default: ``31``.
-        interpolation (Inter, optional): Image interpolation method. Default: ``Inter.NEAREST``.
-            It can be ``Inter.NEAREST``, ``Inter.BILINEAR``, ``Inter.BICUBIC`` or ``Inter.AREA``.
-
-            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
-            - ``Inter.BILINEA`` , bilinear interpolation.
-            - ``Inter.BICUBIC`` , bicubic interpolation.
-            - ``Inter.AREA`` :, pixel area interpolation.
-
+        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+            Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
             If int is provided, pad all RGB channels with this value.

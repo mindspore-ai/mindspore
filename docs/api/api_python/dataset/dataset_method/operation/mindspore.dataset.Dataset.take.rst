@@ -13,4 +13,4 @@ mindspore.dataset.Dataset.take
         - **count** (int, 可选) - 要从数据集对象中获取的数据条数。默认值： ``-1`` ，获取所有数据。
 
     返回：
-        TakeDataset，take操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

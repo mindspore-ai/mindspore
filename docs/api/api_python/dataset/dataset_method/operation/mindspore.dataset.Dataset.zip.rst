@@ -9,7 +9,7 @@ mindspore.dataset.Dataset.zip
         - **datasets** (Union[Dataset, tuple[Dataset]]) - 要合并的（多个）dataset对象。
 
     返回：
-        ZipDataset，合并后的dataset对象。
+        Dataset，应用了上述操作的新数据集对象。
 
     异常：
         - **TypeError** - `datasets` 参数不是dataset对象/tuple[dataset]。

@@ -25,4 +25,4 @@ mindspore.dataset.Dataset.padded_batch
           则将列名为"col1"的数据列扩充到shape为(224, 224)的Tensor，缺失的值使用0填充。如果 `pad_info={}` ，则每个 `batch` 中的所有样本会补齐至当前 `batch` 中样本最大的shape。默认值： ``None`` ，不填充。
 
     返回：
-        Dataset， `batch` 操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

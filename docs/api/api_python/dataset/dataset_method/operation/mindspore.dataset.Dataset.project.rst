@@ -10,4 +10,4 @@ mindspore.dataset.Dataset.project
         - **columns** (Union[str, list[str]]) - 要选择的数据列的列名列表。
 
     返回：
-        Dataset，project操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。
