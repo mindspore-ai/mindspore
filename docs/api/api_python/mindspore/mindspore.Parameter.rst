@@ -10,6 +10,7 @@
         - 并行场景下存在参数的形状发生变化的情况，用户可以调用 `Parameter` 的 `init_data` 方法得到原始数据。
         - 如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行数据类型转换。
         - 每一个 `Parameter` 使用唯一的名字可以帮助后续的操作和更新。如果有两个或多个 `Parameter` 在同一个网络中使用了相同的名字，将会提示在定义时使用唯一的名字。
+        - `Parameter` 直接打印时无法查看到里面实际包含的值，需要使用 `Parameter.asnumpy()` 方法来查看实际的值。
 
     参数：
         - **default_input** (Union[Tensor, int, float, numpy.ndarray, list]) - 初始化参数的输入值。
