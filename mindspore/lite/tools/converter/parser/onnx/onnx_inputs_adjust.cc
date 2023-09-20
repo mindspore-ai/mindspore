@@ -455,7 +455,8 @@ STATUS AdjustGatherD(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
   MS_CHECK_TRUE_RET(prim->GetAttr(ops::kDims) != nullptr, RET_ERROR);
   int32_t dim_val = GetValue<int32_t>(prim->GetAttr(ops::kDims));
-  auto dim_parameter_ptr = mindspore::opt::BuildIntValueParameterNode(func_graph, dim_val, "dim");
+  auto dim_parameter_ptr =
+    mindspore::opt::BuildIntValueParameterNode(func_graph, dim_val, cnode->fullname_with_scope() + "_dim");
   MS_CHECK_TRUE_RET(dim_parameter_ptr != nullptr, RET_ERROR);
   auto attr_index = cnode->input(THIRD_INPUT);
   MS_ASSERT(attr_index != nullptr);
