@@ -19,13 +19,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool ReluGradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool ReluGradV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -36,17 +35,14 @@ bool ReluGradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int ReluGradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ReluGradV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto shape = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeVector());
   element_num_ = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
-  input_size_list_.pop_back();
-  auto mask_size = (element_num_ + 31) / 32 * sizeof(uint32_t);
-  input_size_list_.push_back(mask_size);
   return KRET_OK;
 }
 
