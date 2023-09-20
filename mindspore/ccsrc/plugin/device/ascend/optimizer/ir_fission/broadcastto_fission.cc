@@ -60,7 +60,7 @@ const AnfNodePtr BroadcasttoFission::Process(const FuncGraphPtr &graph, const An
     return nullptr;
   }
   auto broad_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrShape);
-  auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
+  auto cast_to_node = AddCastNode(graph, kNumberTypeInt32, cnode, true);
   auto broadcastto_node = AddBroadCastToNode(graph, cast_to_node, broad_shape);
   if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue<std::string>(prim::kPrimBroadcastTo->name()),
@@ -109,7 +109,7 @@ const AnfNodePtr DynamicBroadcastToFission::Process(const FuncGraphPtr &graph, c
                                << common::AnfAlgo::GetInputTensorNum(cnode)
                                << ", node: " << cnode->fullname_with_scope();
   }
-  auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
+  auto cast_to_node = AddCastNode(graph, kNumberTypeInt32, cnode, true);
   auto dynamic_broadcastto_node = AddDynamicBroadCastToNode(graph, cnode, cast_to_node);
   if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue<std::string>(prim::kPrimDynamicBroadcastTo->name()),
