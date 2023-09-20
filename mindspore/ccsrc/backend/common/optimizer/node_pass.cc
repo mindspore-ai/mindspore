@@ -150,6 +150,10 @@ std::string GetCNodeKey(const AnfNodePtr &node) {
   }
 }
 
+bool IsNeedUnfoldSubGraph(const FuncGraphPtr &func_graph) {
+  return !func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !func_graph->has_flag(kFlagJitCallGraph);
+}
+
 void GenIndex(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_graph_index) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph_index);
@@ -195,7 +199,7 @@ void GenIndex(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_grap
     if (IsValueNode<FuncGraph>(node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(node);
       MS_EXCEPTION_IF_NULL(const_func_graph);
-      if (!const_func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      if (IsNeedUnfoldSubGraph(const_func_graph)) {
         (void)todo.emplace_back(const_func_graph->output(), const_func_graph);
       }
     } else if (node->isa<CNode>()) {
@@ -339,7 +343,7 @@ bool NodePass::ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManage
     if (new_node && IsValueNode<FuncGraph>(new_node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
       MS_EXCEPTION_IF_NULL(const_func_graph);
-      if (!const_func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      if (IsNeedUnfoldSubGraph(const_func_graph)) {
         (void)todo.emplace_back(const_func_graph->output(), const_func_graph);
       }
     } else if (new_node && new_node->isa<CNode>()) {
