@@ -418,19 +418,7 @@ class _MindsporeFunctionExecutor:
         if phase in ms_compile_cache:
             return phase
 
-        if full_function_name in function_phases:
-            warning_times = 1
-            if len(function_phases[full_function_name]) >= warning_times:
-                tips = "Try to decorate the function with @jit(hash_args=...) " \
-                       "or @jit(compile_once=True). " \
-                       "For more details, get instructions about `jit` at " \
-                       "https://www.mindspore.cn/search?inputValue=jit."
-
-                logger.warning(f"The function '{full_function_name}' has been compiled for "
-                               f"{len(function_phases[full_function_name])} times. "
-                               f"{tips} ")
-        else:
-            function_phases[full_function_name] = set()
+        self._check_recompile(full_function_name, create_time)
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -454,13 +442,29 @@ class _MindsporeFunctionExecutor:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
 
+        return phase
+
+    def _check_recompile(self, full_function_name, create_time):
+        """Warning when the function has been compiled."""
         ignore_dirs = ["mindspore/ops", "mindspore/nn"]
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
-            return phase
+            return
+
+        if full_function_name in function_phases:
+            warning_times = 1
+            if len(function_phases[full_function_name]) >= warning_times \
+                    and create_time not in function_phases[full_function_name]:
+                tips = "Try to decorate the function with @jit(hash_args=...) " \
+                       "or @jit(compile_once=True). " \
+                       "For more details, get instructions about `jit` at " \
+                       "https://www.mindspore.cn/search?inputValue=jit."
+
+                logger.warning(f"The function '{full_function_name}' has been compiled again. "
+                               f"{tips} ")
+        else:
+            function_phases[full_function_name] = set()
 
         function_phases[full_function_name].add(create_time)
-        logger.info(f"Compile the function '{full_function_name}' create time={create_time} ,key={key}")
-        return phase
 
     @staticmethod
     def _optimizer_state_init(opt_states):
@@ -667,6 +671,9 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
     """
 
     def wrap_mindspore(func):
+        if not isinstance(compile_once, bool):
+            logger.warning(f"The parameter `compile_once` of jit should be a bool, "
+                           f"but got {type(compile_once)}.")
         if hash_args:
             hash_obj = _get_jit_hash(hash_args)
         elif compile_once:
