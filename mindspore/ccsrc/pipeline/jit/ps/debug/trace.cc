@@ -315,16 +315,19 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
-  ofs << "# This is the analyze fail log to save the last message.\n"
-      << "# ===============================================================================\n"
-      << "\nCatch the exception:\n"
+  ofs << "# ===============================================================================================\n"
+      << "# The following shows the last analyze fail log message.\n"
+      << "# ===============================================================================================\n\n"
+      << "----------------------------------------------------\n"
+      << "- Caught exception:\n"
+      << "----------------------------------------------------\n"
       << StaticAnalysisException::Instance().msg();
 
-  ofs << "# ===============================================================================\n"
-      << "# 1. The rest shows the parsed IR info when graph evaluating failed to help find the problem.\n"
-      << "# 2. You can search the last \"------------------------>\" to the node which is inferred failed.\n"
-      << "# 3. Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n"
-      << "# ===============================================================================\n\n";
+  ofs << "# ===============================================================================================\n"
+      << "# The following shows the IR when the function graphs evaluation fails to help locate the problem.\n"
+      << "# You can search the last ------------------------> to the node which is evaluated failure.\n"
+      << "# Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n"
+      << "# ===============================================================================================\n\n";
 
   if (engine_ == nullptr) {
     engine_ = node_config_stack.front()->engine();
@@ -357,9 +360,10 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     ExportOneFuncGraph(fg, tagged_func_graphs[fg], buffer);
     ofs << buffer.str() << "\n\n";
   }
+  current_context_ = nullptr;
 
-  ofs << "#===============================================================================\n";
-  ofs << "# num of function graphs in stack: ";
+  ofs << "# ===============================================================================================\n";
+  ofs << "# The total of function graphs in evaluation stack: ";
   auto ignored_num = (node_config_stack.size() - printed_func_graphs.size());
   if (ignored_num == 0) {
     ofs << node_config_stack.size() << "\n";
@@ -367,10 +371,13 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     ofs << printed_func_graphs.size() << "/" << node_config_stack.size() << " (Ignored " << ignored_num
         << " internal frames).\n";
   }
+  ofs << "# ===============================================================================================\n";
 
-  ofs << "\n\n#===============================================================================\n";
-  ofs << "# The rest functions are the following.\n\n";
-  current_context_ = nullptr;
+  ofs << "\n\n# ===============================================================================================\n";
+  ofs << "# The rest function graphs are the following:\n";
+  ofs << "# ===============================================================================================\n";
+
+  bool has_rest_fg = false;
   TaggedNodeMap empty_map;
   for (const auto &fg : top_func->func_graphs_used_total()) {
     if (!printed_func_graphs.emplace(fg).second) {
@@ -379,7 +386,12 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     std::ostringstream buffer;
     ExportOneFuncGraph(fg, empty_map, buffer);
     ofs << buffer.str() << "\n\n";
+    has_rest_fg = true;
   }
+  if (!has_rest_fg) {
+    ofs << "No more function graphs.\n\n";
+  }
+
   ofs.close();
   ChangeFileMode(real_filepath.value(), S_IRUSR);
   return true;
@@ -410,7 +422,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     return;
   }
 
-  oss << "\nThe function call stack:\n";
+  oss << "\n";
   int index = 0;
   std::string last_location_info = "";
   for (size_t i = 0; i < stack.size(); ++i) {
@@ -448,7 +460,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   }
 #endif
   stack.clear();
-  MS_LOG(INFO) << "Get graph analysis information *end*";
+  MS_LOG(INFO) << "Get graph analysis information end";
 }
 
 // Trace the graph evaluator stack
