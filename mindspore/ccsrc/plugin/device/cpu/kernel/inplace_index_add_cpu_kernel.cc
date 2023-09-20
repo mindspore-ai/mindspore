@@ -127,12 +127,12 @@ bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInplaceIndexAddOutputsNum, kernel_name_);
   auto x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
-  auto y = GetDeviceAddress<T>(inputs, kIndex2);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(x);
+  auto indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
   MS_EXCEPTION_IF_NULL(indices);
+  auto y = GetDeviceAddress<T>(inputs, kIndex2);
   MS_EXCEPTION_IF_NULL(y);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output);
   CheckParams();
   // check indices's value is valid

@@ -158,7 +158,9 @@ bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
 
   const T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
   // Get some information of input
   size_t input_size = input_shape.size();
   // Compute
