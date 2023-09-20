@@ -57,13 +57,11 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
-    // Todo:
-    // auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-    // axis_ = kernel_ptr->get_axis();
-    // if (axis_ < 0) {
-    //   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-    //   axis_ += (SizeToInt(input_shape.size()) + 1);
-    // }
+    axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("axis")));
+    if (axis_ < 0) {
+      auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+      axis_ += (SizeToInt(input_shape.size()) + 1);
+    }
     auto origin_data_format = kOpFormat_DEFAULT;
     auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
     axis_ = AxisTransform(origin_data_format, input_format, axis_);

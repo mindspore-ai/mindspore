@@ -84,11 +84,8 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<KernelTensor *
   return true;
 }
 
-bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ScatterNdFunctorGPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto iter = kScatterNdFunctorTypeMap.find(kernel_name_);
   if (iter == kScatterNdFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION) << "Only support these scatter functors: "
@@ -97,7 +94,7 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   scatter_nd_functor_type_ = iter->second;
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->dtype_id() == kNumberTypeBool)) {
@@ -109,11 +106,9 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ScatterNdFunctorGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

@@ -182,9 +182,8 @@ std::vector<KernelAttr> ArrayReduceGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ArrayReduceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -207,9 +206,8 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
   InferArrayReduceType();
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
-  keep_dims_ = kernel_ptr->get_keep_dims();
-  skip_mode_ = kernel_ptr->get_skip_mode();
+  keep_dims_ = GetValue<int64_t>(primitive_->GetAttr("keep_dims"));
+  skip_mode_ = GetValue<bool>(primitive_->GetAttr("skip_mode"));
 
   return true;
 }
@@ -334,11 +332,10 @@ TransposeInfo ArrayReduceGpuKernelMod::GetTransposeInfo() {
   return transpose_info;
 }
 
-int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ArrayReduceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   ResetShapeInfo();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -349,12 +346,7 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
     return KRET_OK;
   }
-
-  std::vector<int64_t> attr_axis;
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
-  }
-
+  std::vector<int64_t> attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");

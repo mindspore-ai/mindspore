@@ -28,12 +28,7 @@ constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
 }  // namespace
-bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
+bool TileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
@@ -50,10 +45,8 @@ bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -75,8 +68,7 @@ int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "
                       << TILE_MAX_DIMENSION << ", but got " << output_shape_.size();
   }
-  std::vector<int64_t> multiples;
-  TryGetIntValue(inputs, kIndex1, kernel_name_, &multiples);
+  std::vector<int64_t> multiples = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   size_t filling_value = multiples.size() - input_shape_.size();
   (void)input_shape_.insert(input_shape_.begin(), filling_value, kIndex1);
   return KRET_OK;

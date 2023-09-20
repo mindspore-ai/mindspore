@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <map>
 #include <utility>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/arrays/strided_slice_gpu_common.h"
@@ -40,11 +41,8 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, outputs);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport();
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override {
     return {kShapexIndex_, kBeginIndex_, kEndIndex_, kStrideIndex_};
@@ -64,18 +62,18 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
                        const std::vector<kernel::KernelTensor *> &)>;
   template <typename T, typename S = int64_t>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  void FillEmptyDims(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
-                     ShapeVector *input_shape);
+  void FillEmptyDims(const std::string &kernel_name, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                     std::vector<int64_t> *stride, ShapeVector *input_shape);
   void ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
-                        const ops::PrimitiveCPtr &prim);
+                        const PrimitivePtr &primitive_);
   void ComputeEndMask(std::vector<int64_t> *end, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
-                      const ops::PrimitiveCPtr &prim);
+                      const PrimitivePtr &primitive_);
   void ComputeEllipsisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
-                           const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim);
+                           const ShapeVector &input_shape, const PrimitivePtr &primitive_);
   void ComputNewAxisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
-                         const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim);
+                         const ShapeVector &input_shape, const PrimitivePtr &primitive_);
   void ComputeShrinkAxisMask(const std::vector<int64_t> &begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
-                             const ops::PrimitiveCPtr &prim);
+                             const PrimitivePtr &primitive_);
   void *cuda_stream_{nullptr};
   StridedSliceGradLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, StridedSliceGradLaunchFunc>> func_list_;

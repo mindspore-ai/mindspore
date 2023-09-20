@@ -47,12 +47,8 @@ bool UnravelIndexGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-bool UnravelIndexGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UnravelIndex>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool UnravelIndexGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -60,14 +56,13 @@ bool UnravelIndexGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
 
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
 
   return true;
 }
 
-int UnravelIndexGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int UnravelIndexGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   constexpr size_t kInputsNum = 2;

@@ -24,19 +24,18 @@ const size_t DIM_0 = 0;
 const size_t DIM_1 = 1;
 const size_t DIM_2 = 2;
 const size_t DIM_3 = 3;
-bool SpaceToBatchGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SpaceToBatchGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  auto attr_pointer = std::dynamic_pointer_cast<ops::SpaceToBatch>(base_operator);
-  block_size_ = static_cast<size_t>(GetValue<int64_t>(base_operator->GetAttr("block_size")));
+
+  block_size_ = GetValue<int64_t>(primitive_->GetAttr("block_size"));
   if (block_size_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 1, but got "
                       << block_size_;
   }
-  paddings_ = attr_pointer->get_paddings();
+  paddings_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("paddings"));
   if (paddings_.size() != PADDING_SHAPE_0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'paddings' cannot be equal to " << PADDING_SHAPE_0
                       << ", but got " << paddings_.size();
@@ -48,9 +47,8 @@ bool SpaceToBatchGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SpaceToBatchGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SpaceToBatchGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
@@ -59,7 +57,7 @@ int SpaceToBatchGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // check input_shape

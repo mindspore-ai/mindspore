@@ -25,10 +25,8 @@ constexpr int kSearchSortedOutputsNum = 1;
 constexpr size_t kSearchSortedIndex0 = 0;
 constexpr size_t kSearchSortedIndex1 = 1;
 }  // namespace
-bool SearchSortedGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SearchSorted>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SearchSortedGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
   if (inputs.empty() || outputs.empty()) {
@@ -45,13 +43,12 @@ bool SearchSortedGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   sequence_per_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
   value_per_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
   unit_output_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
-  right = kernel_ptr_->get_right();
+  right = GetValue<bool>(primitive_->GetAttr("right"));
   return true;
 }
 
-int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SearchSortedGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

@@ -61,11 +61,9 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
    CreateUniqueWithPadKernelPtr<half, int32_t>}};
 }  // namespace
 
-bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto batch_rank = base_operator->get_batch_rank();
+bool UniqueWithPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto batch_rank = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
   if (batch_rank < 0) {
     return false;
   }
@@ -78,10 +76,9 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UniqueWithPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

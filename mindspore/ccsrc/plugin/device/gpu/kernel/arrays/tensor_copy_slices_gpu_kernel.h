@@ -59,15 +59,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    return true;
-  }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) { return true; }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();
@@ -85,9 +79,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
                         << ", but got " << input_shape_.size();
     }
-    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, true);
-    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, true);
-    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, true);
+    begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the size of 'begin' cannot be greater than the dimension of input, but got the "

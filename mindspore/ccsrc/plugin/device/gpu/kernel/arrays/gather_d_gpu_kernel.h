@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace kernel {
-<<<<<<< HEAD:mindspore/ccsrc/plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h
 constexpr auto kUnKnown = "UnKnown";
 constexpr auto kGather = "Gather";
 constexpr auto kSparseGatherV2 = "SparseGatherV2";

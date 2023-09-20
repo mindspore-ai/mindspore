@@ -18,10 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool MvlgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Mvlgamma>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool MvlgammaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -35,7 +32,7 @@ bool MvlgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = kernel_ptr_->get_p();
+  p_ = GetValue<int64_t>(primitive_->GetAttr("P"));
   if (p_ < 1) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1, "
                   << "but got " << p_ << ".";
@@ -44,9 +41,8 @@ bool MvlgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int MvlgammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int MvlgammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.

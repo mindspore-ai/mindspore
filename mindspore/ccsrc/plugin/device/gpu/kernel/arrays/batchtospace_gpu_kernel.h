@@ -67,22 +67,16 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    PrimitivePtr prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    kernel_name_ = prim->name();
-
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     // wait for primitive unified between lite and cloud.
-    block_size_ = GetValue<int64_t>(prim->GetAttr("block_size"));
+    block_size_ = GetValue<size_t>(primitive_->GetAttr("block_size"));
     if (block_size_ < 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 1, but got "
                         << block_size_;
     }
     // check crops
-    crops_ = GetValue<std::vector<std::vector<int64_t>>>(prim->GetAttr("crops"));
+    crops_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("crops"));
     if (crops_.size() != CROPS_SHAPE_0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'crops' must be " << CROPS_SHAPE_0 << ", but got "
                         << crops_.size();
@@ -97,11 +91,8 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     // check input_shape

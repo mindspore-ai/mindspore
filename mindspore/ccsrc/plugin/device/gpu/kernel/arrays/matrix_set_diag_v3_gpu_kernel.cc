@@ -26,9 +26,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MatrixSetDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MatrixSetDiagV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimMatrixSetDiagV3->name()) {
     MS_LOG(ERROR) << "For 'MatrixSetDiagV3GpuKernelMod', it should get MatrixSetDiagV3 but got invalid kernel name: "
                   << kernel_name_;
@@ -41,17 +40,15 @@ bool MatrixSetDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto kernel_ptr = std::make_shared<ops::MatrixSetDiagV3>(base_operator->GetPrim());
-  auto alignment = kernel_ptr->get_align();
+
+  auto alignment = GetValue<std::string>(primitive_->GetAttr("align"));
   alignment_ = GetAlignments(alignment);
   return true;
 }
 
-int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSetDiagV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();

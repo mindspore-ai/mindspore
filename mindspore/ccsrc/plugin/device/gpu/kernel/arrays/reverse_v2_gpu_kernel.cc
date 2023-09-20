@@ -24,13 +24,13 @@ constexpr size_t index2 = 2;
 }
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool ReverseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool ReverseV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReverseV2>(base_operator);
-  axis_ = kernel_ptr->get_axis();
-  kernel_name_ = base_operator->GetPrim()->name();
+
+  axis_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,10 +43,9 @@ bool ReverseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int ReverseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ReverseV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

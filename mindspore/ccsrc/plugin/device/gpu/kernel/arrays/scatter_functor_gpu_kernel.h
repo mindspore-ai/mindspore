@@ -32,7 +32,7 @@ namespace kernel {
 class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
  public:
   ScatterFunctorGPUKernelMod() = default;
-  explicit ScatterFunctorGPUKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
+  explicit ScatterFunctorGPUKernelMod(const std::string &kernel_name_) : kernel_type_(kernel_name_) {}
   ~ScatterFunctorGPUKernelMod() override = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -40,11 +40,9 @@ class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 

@@ -93,6 +93,7 @@ bool TransposeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   size_t input_num = inputs.size();
   size_t output_num = outputs.size();
+
   if (input_num != kPermInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kPermInputNum << ", but got "
                       << input_num;

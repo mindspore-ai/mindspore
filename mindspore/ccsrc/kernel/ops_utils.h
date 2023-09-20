@@ -78,6 +78,14 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
 }
 
 BACKEND_EXPORT std::vector<bool> Dec2Bin(const int64_t &mask);
+// ===========================New interface==========================================================
+BACKEND_EXPORT void FillEmptyDims(const std::string &kernel_name, std::vector<int64_t> *begin,
+                                  std::vector<int64_t> *end, std::vector<int64_t> *stride, ShapeVector *input_shape,
+                                  bool is_gpu_strided = false);
+BACKEND_EXPORT void ParseStrideSliceMasks(std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                                          std::vector<int64_t> *stride, const ShapeVector &input_shape);
+
+// ===========================Old interface==========================================================
 BACKEND_EXPORT void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
                                   std::vector<int64_t> *end, std::vector<int64_t> *stride, ShapeVector *input_shape,
                                   bool is_gpu_strided = false);

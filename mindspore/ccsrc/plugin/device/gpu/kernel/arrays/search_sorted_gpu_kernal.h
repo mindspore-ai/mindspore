@@ -43,10 +43,8 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
     }
     return kernel_func_(this, inputs, workspace, outputs, cuda_stream);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   void ResetResource() noexcept {
     sequence_size_ = 0;
     value_size_ = 0;
@@ -92,7 +90,7 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_{false};
   SearchSortedFunc kernel_func_{};
   cudaStream_t cuda_stream_;
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   static std::vector<std::pair<KernelAttr, SearchSortedFunc>> func_list_;
 };
 }  // namespace kernel

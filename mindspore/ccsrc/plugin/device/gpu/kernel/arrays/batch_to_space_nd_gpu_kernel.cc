@@ -60,26 +60,22 @@ bool BatchToSpaceNDGpuKernelMod::Launch(const std::vector<KernelTensor *> &input
   return true;
 }
 
-bool BatchToSpaceNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchToSpaceND>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool BatchToSpaceNDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->block_shape = kernel_ptr->get_block_shape();
-  attr_ptr_->crops = kernel_ptr->get_crops();
+  attr_ptr_->block_shape = GetValue<std::vector<int64_t>>(primitive_->GetAttr("block_shape"));
+  attr_ptr_->crops = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr("crops"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
-
   return true;
 }
 
-int BatchToSpaceNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BatchToSpaceNDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

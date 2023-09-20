@@ -20,12 +20,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
-bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Tril>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool TrilGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -38,15 +33,13 @@ bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  diagonal_ = kernel_ptr_->get_diagonal();
+  diagonal_ = GetValue<int64_t>(primitive_->GetAttr("diagonal"));
   auto attr_dtype = kernel_attr.GetInputAttr(kIndex0);
   unit_size_ = abstract::TypeIdSize(attr_dtype.dtype);
   return true;
 }
 
-int TrilGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int TrilGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   for (const auto &input : inputs) {

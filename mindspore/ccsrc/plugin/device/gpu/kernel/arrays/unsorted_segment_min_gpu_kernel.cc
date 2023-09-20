@@ -44,31 +44,27 @@ void UnsortedSegmentMinGpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
 }
 
-bool UnsortedSegmentMinGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
+bool UnsortedSegmentMinGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
 
   data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int UnsortedSegmentMinGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UnsortedSegmentMinGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

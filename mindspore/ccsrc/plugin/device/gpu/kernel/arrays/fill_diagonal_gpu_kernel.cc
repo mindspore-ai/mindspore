@@ -27,12 +27,10 @@ constexpr size_t kInputDimIndex1 = 1;
 constexpr int64_t kInputMinDim = 2;
 }  // namespace
 
-bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+bool FillDiagonalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr_, false);
-  kernel_name_ = kernel_ptr_->name();
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -46,9 +44,8 @@ bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-
-  fill_value_ = kernel_ptr_->get_fill_value();
-  wrap_ = kernel_ptr_->get_wrap();
+  fill_value_ = GetValue<float>(primitive_->GetAttr("fill_value"));
+  wrap_ = GetValue<bool>(primitive_->GetAttr("wrap"));
 
   if (IsOneOfUnsignedType(inputs.at(0)->dtype_id()) && fill_value_ < 0) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
@@ -58,9 +55,8 @@ bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int FillDiagonalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int FillDiagonalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just

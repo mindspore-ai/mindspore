@@ -48,12 +48,9 @@ bool SplitFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
   return true;
 }
 
-bool SplitFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool SplitFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Split>(base_operator);
-  output_num_ = kernel_ptr->get_output_num();
+  output_num_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("output_num")));
   outputs_host_ = std::make_unique<void *[]>(output_num_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -66,17 +63,14 @@ bool SplitFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int SplitFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SplitFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Split>(base_operator);
-  axis_ = kernel_ptr->get_axis();
+  axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
   auto input_shape = inputs[0]->GetShapeVector();
   int dims = SizeToInt(input_shape.size());
   if (axis_ < 0) {
@@ -120,8 +114,8 @@ int SplitFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return ret;
 }
 
-void SplitFwdGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) const {
+void SplitFwdGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) const {
   auto input_num = inputs.size();
   auto input_shape = inputs[0]->GetShapeVector();
   int dims = SizeToInt(input_shape.size());

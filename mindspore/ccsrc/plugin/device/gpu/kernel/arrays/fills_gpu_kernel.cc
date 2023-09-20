@@ -57,9 +57,7 @@ std::vector<std::pair<KernelAttr, FillsGpuKernelMod::FillsFunc>> FillsGpuKernelM
   FILLS_GPU_REG(kNumberTypeInt32, int32_t), FILLS_GPU_REG(kNumberTypeFloat16, half),
   FILLS_GPU_REG(kNumberTypeFloat32, float)};
 
-bool FillsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool FillsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -73,12 +71,10 @@ bool FillsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int FillsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FillsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();

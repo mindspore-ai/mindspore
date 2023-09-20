@@ -26,9 +26,8 @@ namespace kernel {
 constexpr size_t INPUT_BUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
 
-bool AdjustSaturationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool AdjustSaturationGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_BUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -41,11 +40,9 @@ bool AdjustSaturationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int AdjustSaturationGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int AdjustSaturationGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 template <typename T>

@@ -26,10 +26,8 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-bool StridedSliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool StridedSliceGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -39,18 +37,16 @@ bool StridedSliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int StridedSliceGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  TryGetIntValue(inputs, kShapexIndex_, kernel_name_, &shapex_);
-  TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_);
-  TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_);
-  TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_);
+  begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  shapex_ = inputs[kShapexIndex_]->GetValueWithCheck<std::vector<int64_t>>();
   input_shape_.clear();
   for (auto x : shapex_) {
     input_shape_.push_back(static_cast<size_t>(x));
@@ -59,16 +55,14 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", but got " << input_shape_.size();
   }
-
   auto shape_tmp = Convert2Long(input_shape_);
-  FillEmptyDims(&begin_, &end_, &strides_, &shape_tmp);
+  FillEmptyDims(kernel_name_, &begin_, &end_, &strides_, &shape_tmp);
   input_shape_ = Convert2SizeT(shape_tmp);
-  auto prim = base_operator->GetPrim();
-  ComputeBeginMask(&begin_, strides_, shape_tmp, prim);
-  ComputeEndMask(&end_, strides_, shape_tmp, prim);
-  ComputeEllipsisMask(&begin_, &end_, &strides_, shape_tmp, prim);
-  ComputNewAxisMask(&begin_, &end_, &strides_, shape_tmp, prim);
-  ComputeShrinkAxisMask(begin_, &end_, &strides_, prim);
+  ComputeBeginMask(&begin_, strides_, shape_tmp, primitive_);
+  ComputeEndMask(&end_, strides_, shape_tmp, primitive_);
+  ComputeEllipsisMask(&begin_, &end_, &strides_, shape_tmp, primitive_);
+  ComputNewAxisMask(&begin_, &end_, &strides_, shape_tmp, primitive_);
+  ComputeShrinkAxisMask(begin_, &end_, &strides_, primitive_);
   FillOutputDim();
   null_output_ = IsNullOutput();
   return KRET_OK;
@@ -329,14 +323,15 @@ std::vector<KernelAttr> StridedSliceGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void StridedSliceGradGpuKernelMod::FillEmptyDims(std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                                                 std::vector<int64_t> *stride, ShapeVector *input_shape) {
+void StridedSliceGradGpuKernelMod::FillEmptyDims(const std::string &kernel_name, std::vector<int64_t> *begin,
+                                                 std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                                                 ShapeVector *input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   auto &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
                          "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
                       << _begin.size() << ", the length of 'stride': " << _stride.size()
@@ -370,8 +365,8 @@ void StridedSliceGradGpuKernelMod::FillEmptyDims(std::vector<int64_t> *begin, st
 }
 
 void StridedSliceGradGpuKernelMod::ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride,
-                                                    const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim) {
-  auto begin_mask_value = prim->GetAttr(kAttrBeginMask);
+                                                    const ShapeVector &input_shape, const PrimitivePtr &primitive_) {
+  auto begin_mask_value = primitive_->GetAttr("attr_begin_mask");
   MS_EXCEPTION_IF_NULL(begin_mask_value);
   auto begin_mask_int = GetValue<int64_t>(begin_mask_value);
   std::vector<int64_t> &_begin = *begin;
@@ -384,8 +379,8 @@ void StridedSliceGradGpuKernelMod::ComputeBeginMask(std::vector<int64_t> *begin,
 }
 
 void StridedSliceGradGpuKernelMod::ComputeEndMask(std::vector<int64_t> *end, const std::vector<int64_t> &stride,
-                                                  const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim) {
-  auto end_mask_value = prim->GetAttr(kAttrEndMask);
+                                                  const ShapeVector &input_shape, const PrimitivePtr &primitive_) {
+  auto end_mask_value = primitive_->GetAttr("end_mask");
   MS_EXCEPTION_IF_NULL(end_mask_value);
   auto end_mask_int = GetValue<int64_t>(end_mask_value);
   std::vector<int64_t> &_end = *end;
@@ -399,8 +394,8 @@ void StridedSliceGradGpuKernelMod::ComputeEndMask(std::vector<int64_t> *end, con
 
 void StridedSliceGradGpuKernelMod::ComputeEllipsisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end,
                                                        std::vector<int64_t> *stride, const ShapeVector &input_shape,
-                                                       const ops::PrimitiveCPtr &prim) {
-  auto ellipsis_mask_value = prim->GetAttr(kAttrEllipsisMask);
+                                                       const PrimitivePtr &primitive_) {
+  auto ellipsis_mask_value = primitive_->GetAttr("ellipsis_mask");
   MS_EXCEPTION_IF_NULL(ellipsis_mask_value);
   auto ellipsis_mask_int = GetValue<int64_t>(ellipsis_mask_value);
   std::vector<int64_t> &_begin = *begin;
@@ -418,11 +413,11 @@ void StridedSliceGradGpuKernelMod::ComputeEllipsisMask(std::vector<int64_t> *beg
 
 void StridedSliceGradGpuKernelMod::ComputNewAxisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end,
                                                      std::vector<int64_t> *stride, const ShapeVector &input_shape,
-                                                     const ops::PrimitiveCPtr &prim) {
+                                                     const PrimitivePtr &primitive_) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto new_axis_mask_value = prim->GetAttr(kAttrNewAxisMask);
+  auto new_axis_mask_value = primitive_->GetAttr("new_axis_mask");
   MS_EXCEPTION_IF_NULL(new_axis_mask_value);
   auto new_axis_mask_int = GetValue<int64_t>(new_axis_mask_value);
   auto new_axis_mask = Dec2Bin(new_axis_mask_int);
@@ -436,8 +431,8 @@ void StridedSliceGradGpuKernelMod::ComputNewAxisMask(std::vector<int64_t> *begin
 }
 
 void StridedSliceGradGpuKernelMod::ComputeShrinkAxisMask(const std::vector<int64_t> &begin, std::vector<int64_t> *end,
-                                                         std::vector<int64_t> *stride, const ops::PrimitiveCPtr &prim) {
-  auto shrink_axis_mask_value = prim->GetAttr(kAttrShrinkAxisMask);
+                                                         std::vector<int64_t> *stride, const PrimitivePtr &primitive_) {
+  auto shrink_axis_mask_value = primitive_->GetAttr("shrink_axis_mask");
   MS_EXCEPTION_IF_NULL(shrink_axis_mask_value);
   auto shrink_axis_mask_int = GetValue<int64_t>(shrink_axis_mask_value);
   std::vector<int64_t> &_end = *end;

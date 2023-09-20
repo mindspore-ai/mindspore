@@ -40,11 +40,9 @@ class ConjugateTransposeGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -71,7 +69,7 @@ class ConjugateTransposeGpuKernelMod : public NativeGpuKernelMod {
   size_t x_one_count_{};
   size_t x_two_count_{};
   size_t y_count_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   void *cuda_stream_{nullptr};
   cudnnHandle_t cudnn_handle_{};
   curandGenerator_t curand_generator_{nullptr};

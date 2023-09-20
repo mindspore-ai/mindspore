@@ -36,13 +36,9 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   void SyncOutputShape() override;
@@ -63,7 +59,7 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
-  void InitUniqueConsecutiveAttrs(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs);
+  void InitUniqueConsecutiveAttrs(const std::vector<KernelTensor *> &inputs);
 
  private:
   void *stream_ptr_;

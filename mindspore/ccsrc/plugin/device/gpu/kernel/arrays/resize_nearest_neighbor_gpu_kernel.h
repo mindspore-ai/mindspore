@@ -56,10 +56,7 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     input_num_ = inputs.size();
     if (input_num_ != 1 && input_num_ != kInputNumTwo) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kInputNumTwo
@@ -67,16 +64,13 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
       return false;
     }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-    auto prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+
+    align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     auto input_shape = inputs.at(kIndex0)->GetShapeVector();

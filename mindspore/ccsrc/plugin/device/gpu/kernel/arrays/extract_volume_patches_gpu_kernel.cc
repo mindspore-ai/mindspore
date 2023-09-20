@@ -31,18 +31,14 @@ constexpr size_t kFormatNCDHWIndexD = 2;
 constexpr size_t kFormatNCDHWIndexH = 3;
 constexpr size_t kFormatNCDHWIndexW = 4;
 
-bool ExtractVolumePatchesGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractVolumePatches>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
-  kernel_size_ = kernel_ptr->get_kernel_size();
-  strides_ = kernel_ptr->get_strides();
-  padding_ = kernel_ptr->get_padding();
+bool ExtractVolumePatchesGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kstrides"));
+  padding_ = GetValue<std::string>(primitive_->GetAttr("padding"));
   size_t kernel_size_dims = kernel_size_.size();
   size_t strides_dims = strides_.size();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return KRET_RESIZE_FAILED;
   }
   if (kernel_size_dims != kDimSize5) {
@@ -63,11 +59,9 @@ bool ExtractVolumePatchesGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int ExtractVolumePatchesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ExtractVolumePatchesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

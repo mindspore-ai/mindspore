@@ -28,16 +28,9 @@ namespace kernel {
 namespace {
 constexpr size_t kNoRepeatNGramInputNum = 2;
 }  // namespace
-bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NoRepeatNGram>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' executing dynamic_pointer_cast failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
-  ngram_ = kernel_ptr->get_ngram();
+bool NoRepeatNGramGpuKernelMode::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  ngram_ = GetValue<int64_t>(primitive_->GetAttr("ngram_size"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,10 +44,9 @@ bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int NoRepeatNGramGpuKernelMode::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int NoRepeatNGramGpuKernelMode::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

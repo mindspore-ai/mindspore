@@ -41,11 +41,9 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -66,7 +64,7 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
   std::vector<int32_t> work_shape_;
 
   bool is_null_input_{false};
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   std::vector<KernelTensorPtr> outputs_{};
 
   void *stream_ptr_{nullptr};

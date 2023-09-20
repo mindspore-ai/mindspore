@@ -51,8 +51,7 @@ namespace kernel {
     REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt64, int64_t, kNumberTypeInt32, int, ValueEnumType, ValueImplType), \
     REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt64, int64_t, kNumberTypeInt64, int64_t, ValueEnumType, ValueImplType)
 
-bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
+bool OneHotGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   constexpr size_t min_input_num = 3;
   constexpr size_t max_input_num = 4;
@@ -61,7 +60,7 @@ bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -73,10 +72,8 @@ bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int OneHotGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());

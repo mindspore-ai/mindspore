@@ -66,20 +66,17 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
     if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-
-    const auto prim = primitive();
-    MS_EXCEPTION_IF_NULL(prim);
-    // Todo:
-    // axis_ = static_cast<int32_t>(GetValue<int64_t>(prim->GetAttr("axis")));
-    // origin_data_format_ = GetValue<std::string>(prim->GetAttr("operator_origin_format"));
+    axis_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("axis")));
     auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
-    // if (axis_ < 0) {
-    //   axis_ += SizeToInt(input_shape.size());
-    // }
-
+    if (axis_ < 0) {
+      axis_ += SizeToInt(input_shape.size());
+    }
+    // To do:
+    // origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
     // auto input_format = FormatEnumToString(inputs[0]->format());
     // axis_ = AxisTransform(origin_data_format_, input_format, axis_);
-    output_num_ = LongToSize(GetValue<int64_t>(prim->GetAttr("num")));
+
+    output_num_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("num")));
     outputs_host_ = std::make_unique<T *[]>(output_num_);
     ResetResource();
 

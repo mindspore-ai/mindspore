@@ -91,24 +91,21 @@ bool ConcatV2FwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-bool ConcatV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool ConcatV2FwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  ori_axis_ = GetValue<int64_t>(prim->GetAttr("axis"));
-  origin_data_format_ = GetValue<std::string>(prim->GetAttr("operator_origin_format"));
+
+  ori_axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
+  origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
   len_axis_.resize(inputs.size());
   return true;
 }
 
-int ConcatV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ConcatV2FwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_0_shape = inputs[0]->GetDeviceShapeVector();

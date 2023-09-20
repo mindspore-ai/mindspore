@@ -51,11 +51,7 @@ bool RollGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   return true;
 }
 
-bool RollGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Roll>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+bool RollGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -64,16 +60,14 @@ bool RollGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   MS_EXCEPTION_IF_NULL(helper_ptr_);
   MS_EXCEPTION_IF_NULL(attr_ptr_);
-  attr_ptr_->axis = kernel_ptr->get_axis();
-  attr_ptr_->shift = kernel_ptr->get_shift();
+  attr_ptr_->axis = GetValue<std::vector<int64_t>>(primitive_->GetAttr("batch_rank"));
+  attr_ptr_->shift = GetValue<std::vector<int64_t>>(primitive_->GetAttr("shift"));
   helper_ptr_->SetKernelParam(attr_ptr_);
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int RollGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &others) {
+int RollGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
   for (const auto &input : inputs) {

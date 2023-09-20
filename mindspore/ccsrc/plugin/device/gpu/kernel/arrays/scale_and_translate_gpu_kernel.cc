@@ -93,27 +93,22 @@ bool ScaleAndTranslateGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
   return true;
 }
 
-bool ScaleAndTranslateGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleAndTranslate>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool ScaleAndTranslateGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->kernel_type_ = kernel_ptr->get_kernel_type();
-  attr_ptr_->antialias_ = kernel_ptr->get_antialias();
+  attr_ptr_->kernel_type_ = GetValue<std::string>(primitive_->GetAttr("kernel_type"));
+  attr_ptr_->antialias_ = GetValue<bool>(primitive_->GetAttr("antialias"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int ScaleAndTranslateGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ScaleAndTranslateGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   for (const auto &inputtest : inputs) {
     auto inshape = inputtest->GetShapeVector();
     if (!IsValidShape(inshape)) {

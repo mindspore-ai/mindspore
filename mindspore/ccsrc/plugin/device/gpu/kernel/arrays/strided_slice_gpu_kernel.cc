@@ -41,9 +41,8 @@ bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   return true;
 }
 
-bool StridedSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool StridedSliceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -54,10 +53,9 @@ bool StridedSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int StridedSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -68,11 +66,10 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", but got " << input_shape_.size();
   }
-
-  TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_);
-  TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_);
-  TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_);
-  CollectInfo(base_operator);
+  begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  CollectInfo(kernel_name_);
 
   return ret;
 }

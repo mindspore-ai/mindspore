@@ -217,11 +217,7 @@ bool SliceGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   return true;
 }
 
-bool SliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Slice>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool SliceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -230,28 +226,25 @@ bool SliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   (void)CheckParam(inputs, outputs);
   if (!is_dynamic_attr_) {
-    size_ = kernel_ptr->get_size();
-    begin_ = kernel_ptr->get_begin();
+    size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("size"));
+    begin_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("begin"));
     ProccessAttr(inputs);
   }
   return true;
 }
 
-int SliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (is_dynamic_attr_) {
-    if (TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_) &&
-        TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
-      get_dynamic_attr_value_ = true;
-      ProccessAttr(inputs);
-    }
+    begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    size_ = inputs[kSizeIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    get_dynamic_attr_value_ = true;
+    ProccessAttr(inputs);
   }
   helper_ptr_->SetKernelParam(attr_ptr_);
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeVector(); });
+                 [](const KernelTensor *input) { return input->GetDeviceShapeVector(); });
   std::vector<int64_t> out_shape = outputs[0]->GetDeviceShapeVector();
   output_shapes.emplace_back(out_shape);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
@@ -270,8 +263,8 @@ std::vector<KernelAttr> SliceGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   constexpr size_t kDynamicSliceInputNum = 3;
   if (input_num != 1 && input_num != kDynamicSliceInputNum) {
@@ -297,7 +290,7 @@ void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
   }
 }
 
-void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs) {
+void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensor *> &inputs) {
   auto input_shape = inputs[0]->GetShapeVector();
   if (size_.size() != input_shape.size() || begin_.size() != input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

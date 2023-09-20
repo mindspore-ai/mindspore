@@ -21,9 +21,8 @@ namespace mindspore {
 namespace kernel {
 static std::unordered_map<std::string, int> op_type_map = {
   {"InplaceUpdate", INPLACE_OP_TYPE_UPDATE}, {"InplaceAdd", INPLACE_OP_TYPE_ADD}, {"InplaceSub", INPLACE_OP_TYPE_SUB}};
-bool InplaceOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool InplaceOpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto iter = op_type_map.find(kernel_name_);
   if (iter == op_type_map.end()) {
     MS_LOG(ERROR) << "For InplaceOp kernel, Can only support InplaceUpdate, InplaceAdd, InplaceSub, but got "
@@ -47,21 +46,21 @@ bool InplaceOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
   if (kernel_name_ == "InplaceUpdate") {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceUpdate>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    auto prim = std::make_shared<ops::InplaceUpdate>();
+    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
   } else if (kernel_name_ == "InplaceAdd") {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceAdd>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    auto prim = std::make_shared<ops::InplaceAdd>();
+    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
+
   } else {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceSub>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    auto prim = std::make_shared<ops::InplaceSub>();
+    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
   }
   return true;
 }
 
-int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int InplaceOpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

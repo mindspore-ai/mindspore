@@ -23,8 +23,8 @@ static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = 
   {"ScatterMax", SCATTER_FUNC_MAX},       {"ScatterMin", SCATTER_FUNC_MIN},
 };
 
-bool ScatterFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
+bool ScatterFunctorGPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto iter = kScatterFunctorTypeMap.find(kernel_type_);
   if (iter == kScatterFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION)
@@ -42,9 +42,8 @@ bool ScatterFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+int ScatterFunctorGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   const size_t correct_input_num = 3;
   if (input_num != correct_input_num) {
@@ -54,7 +53,7 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();

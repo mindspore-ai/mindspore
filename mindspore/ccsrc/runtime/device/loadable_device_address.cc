@@ -212,7 +212,6 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (status_ == DeviceAddressStatus::kInDevice) {
 #if defined(RT_MEMORY_P2PDMA)
-<<<<<<< HEAD
     if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
       storage_info_.file_name_ = GetSwapFileName();
     }

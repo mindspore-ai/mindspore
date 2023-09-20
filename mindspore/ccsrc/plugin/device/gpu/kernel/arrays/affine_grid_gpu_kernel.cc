@@ -94,13 +94,9 @@ bool PreLaunchKernel5D(const std::vector<int64_t> &theta_shape, const std::vecto
 }
 }  // namespace
 
-bool AffineGridGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AffineGrid>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  align_corners_ = kernel_ptr->get_align_corners();
-
+bool AffineGridGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -123,7 +119,7 @@ void AffineGridGpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-bool AffineGridGpuKernelMod::CheckShapeOfInputs(const std::vector<KernelTensorPtr> &inputs) {
+bool AffineGridGpuKernelMod::CheckShapeOfInputs(const std::vector<KernelTensor *> &inputs) {
   // Case spatial: theta(N, 2, 3) & size(4,)
   // Case volumetric: theta(N, 3, 4) & size(5,)
   theta_shape_ = inputs[0]->GetShapeVector();
@@ -147,7 +143,7 @@ bool AffineGridGpuKernelMod::CheckShapeOfInputs(const std::vector<KernelTensorPt
   return true;
 }
 
-bool AffineGridGpuKernelMod::CheckShapeOfOutputs(const std::vector<KernelTensorPtr> &outputs) {
+bool AffineGridGpuKernelMod::CheckShapeOfOutputs(const std::vector<KernelTensor *> &outputs) {
   // Case spatial: grid(N, H, W, 2)
   // Case volumetric: grid(N, D, H, W, 3)
   // Note: We only check the first item of shape, the last item of shape and the length of shape here.
@@ -165,14 +161,13 @@ bool AffineGridGpuKernelMod::CheckShapeOfOutputs(const std::vector<KernelTensorP
   return true;
 }
 
-int AffineGridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int AffineGridGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
   // set up input_size_list_ & output_size_list_ if <ops::AffineGrid> infer shape successfully.
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

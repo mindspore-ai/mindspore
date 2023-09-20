@@ -61,13 +61,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_ERROR_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    auto prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
     auto out = outputs.at(kIndex0);
     MS_EXCEPTION_IF_NULL(out);
     auto o_type = out->dtype_id();
@@ -75,9 +70,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }

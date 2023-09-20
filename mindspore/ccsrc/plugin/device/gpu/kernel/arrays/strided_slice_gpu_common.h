@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -35,12 +36,11 @@ class StridedSliceGpuCommon {
   ~StridedSliceGpuCommon() = default;
 
   inline bool IsEmptyInput(int input_size) { return input_size == 0; }
-
-  void CollectInfo(const BaseOperatorPtr &base_operator) {
+  void CollectInfo(const std::string &kernel_name) {
     auto shape_tmp = Convert2Long(input_shape_);
-    FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp, true);
+    FillEmptyDims(kernel_name, &begin_, &end_, &strides_, &shape_tmp, true);
     input_shape_ = Convert2SizeT(shape_tmp);
-    ParseStrideSliceMasks(base_operator, &begin_, &end_, &strides_, shape_tmp);
+    ParseStrideSliceMasks(&begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
     null_output_ = IsNullOutput();
   }

@@ -22,6 +22,8 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/arrays/adjust_contrast_v2_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adjust_contrast_v2_impl.cuh"
+#include "mindspore/core/ops/op_name.h"
+
 namespace mindspore {
 namespace kernel {
 #define ADJUST_CONTRAST_V2_GPU_REGISTER(T_DT, T)                                        \
@@ -46,9 +48,8 @@ void AdjustContrastV2GpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(total_ * per_batch_elements_ * data_unit_size_);
 }
 
-bool AdjustContrastV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool AdjustContrastV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
@@ -65,10 +66,8 @@ bool AdjustContrastV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int AdjustContrastV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int AdjustContrastV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.
