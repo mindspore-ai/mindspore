@@ -53,7 +53,7 @@ class ForParser(Parser):
     def modify_construct_ast(stree, ast_node, old_name, new_name):
         """Modify the ast node in construct function."""
         node_str: str = astunparse.unparse(ast_node)
-        node_str = node_str.replace(old_name, new_name)
+        node_str = node_str.replace(old_name+'(', new_name+'(')
         module_node = ast.parse(node_str)
         new_node = module_node.body[0]
         return new_node

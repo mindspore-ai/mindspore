@@ -25,6 +25,7 @@ import importlib
 import numpy as np
 
 import mindspore
+import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
@@ -1019,6 +1020,8 @@ class Model:
             ...                  loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
+        # prepare dataset for obfuscated model
+        train_dataset = self._prepare_obf_dataset(train_dataset)
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
             logger.info("For PS mode, reset datasink mode to False when using Ascend or CPU backend.")
@@ -1440,6 +1443,7 @@ class Model:
             - `Advanced Encapsulation: Model - Train and Save Model
               <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
         """
+        valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
 
         _device_number_check(self._parallel_mode, self._device_number)
@@ -1914,6 +1918,17 @@ class Model:
             Object, the instance of evaluate network.
         """
         return self._eval_network
+
+    def _prepare_obf_dataset(self, dataset):
+        if not hasattr(self._network, 'obf_ratios'):
+            return dataset
+        data_size = dataset.get_dataset_size()
+        obf_ratio_dataset = []
+        for _ in range(data_size):
+            obf_ratio_dataset.append(self._network.obf_ratios)
+        obf_ratio_dataset = ds.NumpySlicesDataset(data=obf_ratio_dataset, column_names=["y_obf"])
+        dataset = ds.zip((dataset, obf_ratio_dataset))
+        return dataset
 
 
 __all__ = ["Model"]

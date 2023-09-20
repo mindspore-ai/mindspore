@@ -31,6 +31,7 @@ from mindspore.profiler import Profiler, EnvProfiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters, \
     rank_list_for_transform, transform_checkpoint_by_rank, transform_checkpoints, merge_pipeline_strategys, shard
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
+from mindspore.safeguard import obfuscate_ckpt, load_obf_params_into_net
 from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
     is_invalid_or_jit_forbidden_method
 
@@ -43,4 +44,5 @@ __all__.extend(log.__all__)
 __all__.extend(context.__all__)
 __all__.extend(parallel.__all__)
 __all__.extend(rewrite.__all__)
+__all__.extend(safeguard.__all__)
 __all__.append("Profiler")

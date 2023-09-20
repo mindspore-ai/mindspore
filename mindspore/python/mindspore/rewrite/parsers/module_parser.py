@@ -164,8 +164,8 @@ class ModuleParser(Parser):
                 exec(test_code) # pylint: disable=W0122
             except ValueError as e:
                 # try upper level to avoid ValueError: attempted relative import beyond top-level package
-                logger.warning(f"For MindSpore Rewrite, in module parser, test import code: "
-                               f"{import_code} failed: {e}. Try upper level.")
+                logger.info(f"For MindSpore Rewrite, in module parser, test import code: "
+                            f"{import_code} failed: {e}. Try upper level.")
                 level_count += 1
                 continue
             except Exception as e: # pylint: disable=W0703
