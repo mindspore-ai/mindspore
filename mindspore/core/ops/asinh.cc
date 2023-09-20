@@ -39,6 +39,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr AsinhInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[kInputIndex0]->BuildShape();

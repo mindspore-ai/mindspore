@@ -94,6 +94,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     const int64_t kL2NormalizeInputsNum = 1;
     const int64_t input_num = kL2NormalizeInputsNum;

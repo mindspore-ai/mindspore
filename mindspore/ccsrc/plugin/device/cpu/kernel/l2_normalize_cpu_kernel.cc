@@ -61,6 +61,7 @@ class L2NormalizeCpuFunc : public CpuKernelFunc {
 template <typename T>
 void L2NormalizeCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);

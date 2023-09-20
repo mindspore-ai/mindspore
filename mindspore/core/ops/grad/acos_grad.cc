@@ -44,6 +44,7 @@ abstract::ShapePtr ACosGradInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr ACosGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
