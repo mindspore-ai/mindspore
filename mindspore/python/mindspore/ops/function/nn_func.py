@@ -5037,6 +5037,9 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     r"""
     Performs greedy decoding on the logits given in inputs.
 
+    Note:
+        On Ascend, 'merge_repeated' can not be set to false.
+
     Args:
         inputs (Tensor): The input Tensor must be a 3-D tensor whose shape is
             :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes,

@@ -166,8 +166,8 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   }
   for (int b = 0; b < sequence_shape_[0]; b++) {
     if (seq_host[b] > static_cast<int>(max_time_)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', sequence_length[" << b << "] " << seq_host[b]
-                    << " should be less than " << max_time_ << ".";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', sequence_length[" << b << "] should be less than "
+                        << max_time_ << ", but got " << seq_host[b] << ".";
     }
   }
 

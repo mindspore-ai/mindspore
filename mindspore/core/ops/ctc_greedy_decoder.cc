@@ -37,6 +37,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -67,6 +68,15 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto sequence_length_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto value_ptr = primitive->GetAttr(kMergeRepeated);
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    bool merge_repeated = GetValue<bool>(value_ptr);
+    if (!merge_repeated && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << ", 'merge_repeated' can't be set to false on ascend platform.";
+    }
     if (!IsDynamicRank(inputs_x_shape) && inputs_x_shape.size() != kInputsRank) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', inputs's dim must be 3, but got: " << inputs_x_shape.size() << ".";
