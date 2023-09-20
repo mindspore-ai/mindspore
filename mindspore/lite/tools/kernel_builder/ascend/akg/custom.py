@@ -32,10 +32,10 @@ FP16_MAX = 65504
 
 def copy_shape(shape):
     """Deep copy shape"""
-    ret = copy.deepcopy(shape)
-    if isinstance(ret, tuple):
-        ret = list(ret)
-    return ret
+    res = []
+    for _, s in enumerate(shape):
+        res.append(s)
+    return res
 
 
 class OpInfer:

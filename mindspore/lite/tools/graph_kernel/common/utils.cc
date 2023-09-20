@@ -106,6 +106,21 @@ int CalculateDynamicBatchSize(const TensorC *const *inputs, size_t inputs_size,
   }
   return RET_OK;
 }
+
+void SetAnfKernelInfoFormatFromAToB(const AnfNodePtr &node_a, const CNodePtr &node_b,
+                                    const std::vector<std::string> &formats) {
+  std::shared_ptr<device::KernelInfo> kernel_info = nullptr;
+  auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+  kernel_info_builder.SetOutputsFormat(formats);
+  if (node_a->kernel_info_ptr() != nullptr) {
+    kernel_info = std::make_shared<device::KernelInfo>();
+  } else {
+    kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node_a->kernel_info_ptr());
+  }
+  kernel_info->set_select_kernel_build_info(kernel_info_builder.Build());
+  node_b->set_kernel_info(kernel_info);
+}
+
 void SetKernelInfoWithFormatToAnfNode(const AnfNodePtr &node, const std::vector<std::string> &format) {
   auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
   kernel_info_builder.SetOutputsFormat(format);
@@ -113,5 +128,39 @@ void SetKernelInfoWithFormatToAnfNode(const AnfNodePtr &node, const std::vector<
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(kernel_build_info);
   node->set_kernel_info(kernel_info);
+}
+
+kernel::KernelBuildInfoPtr GetKernelInfo(const AnfNodePtr &node) {
+  if (!node->has_user_data("kernel_info")) {
+    return nullptr;
+  }
+  auto kernel_info_ptr = node->kernel_info_ptr();
+  if (kernel_info_ptr == nullptr) {
+    return nullptr;
+  }
+  auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(kernel_info_ptr);
+  if (kernel_info == nullptr) {
+    MS_LOG(ERROR) << "kernel info from " << node->fullname_with_scope() << " is nullptr.";
+    return nullptr;
+  }
+  auto kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  if (kernel_build_info == nullptr) {
+    MS_LOG(ERROR) << "kernel build info from " << node->fullname_with_scope() << " is nullptr.";
+    return nullptr;
+  }
+  return kernel_build_info;
+}
+
+std::string GetOutputFormatFromAnfNode(const AnfNodePtr &node, size_t output_idx) {
+  auto kernel_build_info = GetKernelInfo(node);
+  if (kernel_build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "kernel build info from " << node->fullname_with_scope() << " is empty.";
+  }
+  auto vec_size = kernel_build_info->GetOutputNum();
+  if (output_idx >= vec_size) {
+    MS_LOG(EXCEPTION) << "Index " << output_idx << " is out of the range of node output vector, output size is "
+                      << kernel_build_info->GetOutputNum() << ". node is " << node->fullname_with_scope();
+  }
+  return kernel_build_info->GetOutputFormat(output_idx);
 }
 }  // namespace mindspore::graphkernel
