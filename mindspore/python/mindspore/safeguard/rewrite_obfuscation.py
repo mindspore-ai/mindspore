@@ -228,7 +228,7 @@ def _check_valid_target(network, target_modules):
             elif isinstance(net, nn.Cell):
                 stk.append(net)
             else:
-                raise TypeError("Target_modules[0] should be a subgraph and it's type should be  nn.Cell(nn.CellList),"
+                raise TypeError("Target_modules[0] should be a subgraph and it's type should be nn.Cell(nn.CellList),"
                                 "but got type {}".format(type(net)))
     if target_modules[0] != '' and i != len(path_list):
         raise ValueError("the path {} does not exist.".format(target_modules[0]))
