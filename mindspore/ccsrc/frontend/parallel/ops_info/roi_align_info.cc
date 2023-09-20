@@ -92,18 +92,22 @@ Status ROIAlignInfo::InferBias() {
   auto features_shape = inputs_shape_.at(0);
   auto rois_strategy = strategies.at(1);
   auto rois_shape = inputs_shape_.at(1);
+
+  MS_EXCEPTION_IF_ZERO("features_strategy[0]", features_strategy[0]);
+  MS_EXCEPTION_IF_ZERO("rois_strategy[0]", rois_strategy[0]);
   if (features_shape[0] % features_strategy[0] != 0 || rois_shape[0] % rois_strategy[0] != 0) {
     return FAILED;
   }
 
+  int64_t dev_num =
+    std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  MS_EXCEPTION_IF_ZERO("dev_num", dev_num);
   features_slice_size_ = features_shape[0] / features_strategy[0];
   rois_slice_size_ = rois_shape[0] / rois_strategy[0];
   if (repeated_calc_num_ > 1 && !repeated_num_in_dev_matrix_right_) {
     bias_ = rank / dev_matrix_shape_[2] / dev_matrix_shape_[3] % dev_matrix_shape_[1] * features_slice_size_;
   } else {
-    bias_ = rank /
-            std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>()) *
-            features_slice_size_;
+    bias_ = rank / dev_num * features_slice_size_;
   }
   MS_LOG(INFO) << "Sharding batch, the rank is " << rank << ", features_slice size is " << features_slice_size_
                << ", rois_slice_size is " << rois_slice_size_ << ", bias is " << bias_;

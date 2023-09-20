@@ -371,6 +371,7 @@ Status MinMaxUpdatePerChannelInfo::InferAsLossDivisor() {
     as_loss_divisor_ = 1;
     return SUCCESS;
   }
+  MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[channel_axis_]", dev_matrix_shape_[channel_axis_]);
   as_loss_divisor_ = stage_device_size_ / dev_matrix_shape_[channel_axis_];
   return SUCCESS;
 }

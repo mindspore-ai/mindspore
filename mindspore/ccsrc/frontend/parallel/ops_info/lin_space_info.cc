@@ -121,6 +121,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
 
+  MS_EXCEPTION_IF_ZERO("split_num_", split_num_);
   int64_t slice_output_size = output_size_ / split_num_;
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), gen_g.virtual_input_node()});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), sub});
