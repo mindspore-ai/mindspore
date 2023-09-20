@@ -45,6 +45,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.Xdivy)
 @vmap_rules_getters.register(P.RealDiv)
 @vmap_rules_getters.register(P.FloorDiv)
+@vmap_rules_getters.register(P.FloorMod)
 @vmap_rules_getters.register(P.Maximum)
 @vmap_rules_getters.register(P.Minimum)
 @vmap_rules_getters.register(P.Atan2)
