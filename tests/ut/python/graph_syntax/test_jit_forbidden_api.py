@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore import context, jit, Tensor
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
+from mindspore import log as logger
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -271,3 +272,50 @@ def test_jit_forbidden_api_tensor_assign_value():
         output = net(x, y)
         assert x == output
     assert "Failed to compile in GRAPH_MODE because the 'Tensor' object's method 'assign_value'" in str(ex.value)
+
+
+def test_jit_forbidden_api_context_get_context():
+    """
+    Feature: mindspore.context
+    Description: test jit forbidden api 'context.get_context' in graph mode.
+    Expectation: throw RuntimeError
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    class ContextNet(nn.Cell):
+        def __init__(self):
+            super(ContextNet, self).__init__()
+
+        def construct(self, x):
+            if not context.get_context('mode'):
+                x = x - 1
+            else:
+                x = x + x
+            return x
+    net = ContextNet()
+    inputs = Tensor(np.random.randn(6, 3, 6, 6).astype(np.float32))
+    with pytest.raises(RuntimeError) as ex:
+        net(inputs)
+    assert "Failed to compile in GRAPH_MODE because the method "\
+        "or function 'mindspore.context.get_context'" in str(ex.value)
+
+
+def test_jit_forbidden_api_log_warning():
+    """
+    Feature: mindspore.log
+    Description: test jit forbidden api 'log.warning' in graph mode.
+    Expectation: throw RuntimeError
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    class LogWarningNet(nn.Cell):
+        def __init__(self):
+            super(LogWarningNet, self).__init__()
+
+        def construct(self, x):
+            logger.warning("some warnings.")
+            return x
+    net = LogWarningNet()
+    inputs = Tensor(np.random.randn(6, 3, 6, 6).astype(np.float32))
+    with pytest.raises(RuntimeError) as ex:
+        net(inputs)
+    assert "Failed to compile in GRAPH_MODE because the method "\
+        "or function 'mindspore.log.warning'" in str(ex.value)
