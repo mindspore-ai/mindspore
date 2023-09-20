@@ -116,7 +116,7 @@ def __directory_creation(path, concat_path):
     """
     path = os.path.join(path, concat_path)
     if not os.path.isdir(path):
-        os.makedirs(path, 0o750)
+        os.makedirs(path, 0o700)
     return path
 
 

@@ -2855,6 +2855,7 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
 
   // get Operator from op_cache_
   OperatorPtr op = Convert(node);
+  MS_EXCEPTION_IF_NULL(op);
   std::string name = op->GetOpType();
   // When IdentityN's input is Function or IdentityN, it can not find GEType mapping to MSType. There are ERROR logs
   // that do not affect the result. So it no need to set OutputDesc of IdentityN, It can be inferred by GE. eg:

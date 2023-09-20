@@ -173,7 +173,7 @@ void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
     auto config_path = kernel::tbe::TbeUtils::GetOpDebugPath();
     DIR *dir = opendir(config_path.c_str());
     if (dir == nullptr) {
-      auto ret = mkdir(config_path.c_str(), S_IRWXG | S_IRWXU);
+      auto ret = mkdir(config_path.c_str(), S_IRWXU);
       if (ret != 0) {
         MS_LOG(INFO) << "kernel dir: " << config_path << "not exist";
         return;
