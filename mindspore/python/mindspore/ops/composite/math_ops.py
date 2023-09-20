@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """math Operations."""
+import mindspore.ops as ops
 from mindspore.ops import functional as F
 from mindspore.ops.function.math_func import cummin as cummin_
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 
 def matmul(x1, x2, dtype=None):
@@ -117,10 +119,9 @@ def mm(input, mat2):
         >>> print(out.shape)
         (2, 4)
     """
-    if input.ndim != 2 or mat2.ndim != 2:
-        raise ValueError(f"For mm, the input tensor must be a matrix, "
-                         f"but got mat1.ndim:{input.ndim}, mat2.ndim:{mat2.ndim}")
-    return matmul(input, mat2)
+    _matmul = _get_cache_prim(ops.MatMul)()
+    out = _matmul(input, mat2)
+    return out
 
 
 def cummin(x, axis):
