@@ -105,8 +105,12 @@ bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   constexpr size_t kOutputsNum = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs.at(kIndex0)->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs.at(kIndex0)->addr);
+  auto *input0_ptr = GetDeviceAddress<float>(inputs, kIndex0);
+  auto *output0_ptr = GetDeviceAddress<float>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input0_ptr);
+  MS_EXCEPTION_IF_NULL(output0_ptr);
+  SetArgumentHandle(DNNL_ARG_SRC, input0_ptr);
+  SetArgumentHandle(DNNL_ARG_DST, output0_ptr);
   ExecutePrimitive();
   return true;
 }

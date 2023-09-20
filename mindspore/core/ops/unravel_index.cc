@@ -79,10 +79,14 @@ abstract::ShapePtr UravelIndexInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr UravelIndexInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
+  auto op_name = prim->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   (void)types.emplace("indices", input_args[0]->BuildType());
   (void)types.emplace("dims", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32, kInt64}, prim->name());

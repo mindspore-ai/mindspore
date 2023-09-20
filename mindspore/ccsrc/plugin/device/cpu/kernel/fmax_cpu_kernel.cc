@@ -110,9 +110,12 @@ bool FmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFmaxOutputsNum, kernel_name_);
 
-  T *input_x_ = static_cast<T *>(inputs[0]->addr);
-  T *input_y_ = static_cast<T *>(inputs[1]->addr);
-  T *output_ = static_cast<T *>(outputs[0]->addr);
+  T *input_x_ = GetDeviceAddress<T>(inputs, kIndex0);
+  T *input_y_ = GetDeviceAddress<T>(inputs, kIndex1);
+  T *output_ = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_x_);
+  MS_EXCEPTION_IF_NULL(input_y_);
+  MS_EXCEPTION_IF_NULL(output_);
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

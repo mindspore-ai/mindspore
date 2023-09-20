@@ -67,6 +67,10 @@ class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const T *rois = GetDeviceAddress<T>(inputs, 1);
     const int *mapping_channel = GetDeviceAddress<int>(inputs, 2);
     T *bottom_diff = GetDeviceAddress<T>(outputs, 0);
+    MS_EXCEPTION_IF_NULL(top_diff);
+    MS_EXCEPTION_IF_NULL(rois);
+    MS_EXCEPTION_IF_NULL(mapping_channel);
+    MS_EXCEPTION_IF_NULL(bottom_diff);
 
     PSROIPoolBackwardLauncher(top_diff, mapping_channel, batch_size_, num_rois_, spatial_scale_, channels_, height_,
                               width_, pooled_width_, pooled_height_, out_dim_, bottom_diff, rois,

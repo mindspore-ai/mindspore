@@ -111,6 +111,11 @@ TypePtr PSROIPoolingInferType(const PrimitivePtr &prim, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  const int64_t kInputNum = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat64, kFloat32, kFloat16},
                                                    prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat64, kFloat32, kFloat16},
