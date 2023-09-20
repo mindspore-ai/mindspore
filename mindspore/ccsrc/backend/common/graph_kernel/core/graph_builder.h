@@ -29,7 +29,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs);
 AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
                                            const std::string &postfix = "");
-bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
+bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
 bool EliminateMaketupleGetitem(const FuncGraphPtr &fg);
 void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
 }  // namespace mindspore::graphkernel

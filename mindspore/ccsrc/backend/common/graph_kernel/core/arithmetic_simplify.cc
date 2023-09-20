@@ -909,7 +909,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       if (new_funcgraph == nullptr) {
         continue;
       }
-      (void)ConvertNonscalarTensorToParameter(new_funcgraph, &input_nodes);
+      (void)ConvertTensorToParameter(new_funcgraph, &input_nodes);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, input_nodes);
       (void)mng->Replace(node, new_node);

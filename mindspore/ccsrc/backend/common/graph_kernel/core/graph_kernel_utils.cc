@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/model/graph_builder.h"
 #include "backend/common/graph_kernel/model/node.h"

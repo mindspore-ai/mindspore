@@ -30,7 +30,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/func_graph_cloner.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
 namespace mindspore::graphkernel {
 // find outputs of nodes
@@ -131,11 +131,7 @@ bool IsFiniteScalar(void *data, TypeId type_id) {
   return true;
 }
 
-bool IsKeepValueNode(const std::string &prim_name, size_t index) {
-  return ConvertOpUtils::NeedConvert(prim_name, index);
-}
-
-bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
+bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
   mindspore::OrderedSet<AnfNodePtr> value_nodes;
   for (const auto &cnode : cnodes) {
@@ -148,7 +144,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       }
       auto primitive = GetCNodePrimitive(cnode);
       // For some primitives, the value in valuenode is required for further optimization.
-      if (IsKeepValueNode(primitive->name(), i - 1)) {
+      if (ValueDependOpUtils::KeepValueNode(primitive->name(), i - 1)) {
         continue;
       }
       // data is nullptr means uninitialized.
@@ -311,7 +307,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
   // eliminate tuple of tuple, and set Abstract for output MakeTuple
   EliminateTupleOfTuple(fg);
   (void)EliminateMaketupleGetitem(fg);
-  (void)ConvertNonscalarTensorToParameter(fg, &inputs);
+  (void)ConvertTensorToParameter(fg, &inputs);
 
   return std::make_tuple(fg, inputs, outputs);
 }

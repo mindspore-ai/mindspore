@@ -61,7 +61,6 @@
 #include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 
@@ -238,7 +237,6 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
-  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
 #endif
