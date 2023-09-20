@@ -71,7 +71,11 @@ int ScatterNDUpdate(void *output, const void *update, int *output_unit_offsets, 
   int end = MSMIN(begin + unit_per_thread, param->num_unit);
 
   int data_type_len = param->data_type_len;
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(param->unit_size, data_type_len, NNACL_ERR);
+
   for (int i = begin; i < end; i++) {
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_unit_offsets[i], data_type_len, NNACL_ERR);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(i, param->unit_size * data_type_len, NNACL_ERR);
     (void)memcpy((int8_t *)output + output_unit_offsets[i] * data_type_len,
                  (int8_t *)update + i * param->unit_size * data_type_len, param->unit_size * data_type_len);
   }

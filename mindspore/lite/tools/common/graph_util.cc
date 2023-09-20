@@ -702,7 +702,7 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
     MS_LOG(ERROR) << "malloc model_buf failed";
     return RET_ERROR;
   }
-  (void)memcpy(*model_buf, content, *size);
+  (void)memcpy_s(*model_buf, *size, content, *size);
   return RET_OK;
 }
 
