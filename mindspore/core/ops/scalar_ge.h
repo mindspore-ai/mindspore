@@ -26,7 +26,7 @@ class MIND_API scalar_ge : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(scalar_ge);
   /// \brief Constructor.
-  scalar_ge() : BaseOperator(kScalarGeOpName) {}
+  scalar_ge() : BaseOperator(kScalarGeOpName) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

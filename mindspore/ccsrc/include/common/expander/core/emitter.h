@@ -64,6 +64,10 @@ class COMMON_EXPORT Emitter {
   NodePtr Len(const NodePtr &input) { return Emit(kSequenceLenOpName, {input}); }
   NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarAddOpName, {lhs, rhs}); }
   NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarSubOpName, {lhs, rhs}); }
+  NodePtr ScalarMul(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarMulOpName, {lhs, rhs}); }
+  NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarDivOpName, {lhs, rhs}); }
+  NodePtr ScalarFloordiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarFloordivOpName, {lhs, rhs}); }
+  NodePtr ScalarNeg(const NodePtr &node) { return Emit(kScalarUsubOpName, {node}); }
 
   NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
