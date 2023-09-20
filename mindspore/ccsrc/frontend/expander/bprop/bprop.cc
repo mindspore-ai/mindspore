@@ -93,9 +93,17 @@ class PynativeIRBuilder : public BpropIRBuilder {
     abs_list.reserve(input_nodes.size());
     (void)std::transform(input_nodes.cbegin(), input_nodes.cend(), std::back_insert_iterator(abs_list),
                          [](const NodePtr &no) { return no->abstract(); });
-    FuncGraphPtr &graph = bprop_map[abs_list];
+    FuncGraphPtr graph;
+    auto it = bprop_map.find(abs_list);
+    if (it == bprop_map.end()) {
+      bool skip_cache = false;
+      graph = BuildBpropOpGraph(input_nodes, attrs, handle, instance_name, &skip_cache);
+      bprop_map[abs_list] = skip_cache ? nullptr : graph;
+    } else {
+      graph = it->second;
+    }
     if (graph == nullptr) {
-      graph = BuildBpropOpGraph(input_nodes, attrs, handle, instance_name);
+      return Build(input_nodes, attrs, handle, instance_name);
     }
 
     need_infer_ = false;
@@ -141,14 +149,21 @@ class PynativeIRBuilder : public BpropIRBuilder {
 
  protected:
   FuncGraphPtr BuildBpropOpGraph(const NodePtrList &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
-                                 const BpropHandle &handle, const std::string &instance_name) {
+                                 const BpropHandle &handle, const std::string &instance_name, bool *skip_cache) {
     // This section of code can have a very long runtime with certain operations, such as the MaskedSelect operator.
     auto graph = std::make_shared<FuncGraph>();
     NodePtrList inputs;
     inputs.reserve(input_nodes.size());
-    for (auto &inp : input_nodes) {
+    std::vector<bool> value_index(input_nodes.size());
+    for (size_t i = 0; i < input_nodes.size(); i++) {
+      auto inp = input_nodes[i];
       auto p = inputs.emplace_back(NewNode(graph->add_parameter()));
       p->get()->set_abstract(inp->abstract()->Clone());
+      auto value = p->BuildValue();
+      if ((value == nullptr || value == kValueAny) && p->Value()) {
+        p->SetValue(inp->Value());
+        value_index[i] = true;
+      }
     }
 
     std::swap(graph, func_graph_);
@@ -166,6 +181,12 @@ class PynativeIRBuilder : public BpropIRBuilder {
       auto mt = graph->NewCNode(new_outputs);
       graph->set_output(mt);
       graph->set_flag("multi", true);
+    }
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (value_index[i] && inputs[i]->is_used_value()) {
+        *skip_cache = true;
+        break;
+      }
     }
     return graph;
   }
