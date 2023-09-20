@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
+#include "plugin/device/ascend/optimizer/mindir/specialized_prepare.h"
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-#include "include/backend/anf_runtime_algorithm.h"
 #include "mindspore/core/ops/other_ops.h"
 
 namespace mindspore {
 namespace opt {
-void GeTensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) {
+void TensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) {
   auto fg = node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto mgr = fg->manager();
@@ -44,7 +41,7 @@ void GeTensorArrayPrepare::InsertFlowOutputToTA(const AnfNodePtr &node) {
   }
 }
 
-void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node) {
+void TensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node) {
   auto ta_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(ta_node);
   int32_t res_size = 0;
@@ -88,18 +85,18 @@ void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node
   ta_node->set_abstract(new_ta_abstract);
 }
 
-std::vector<std::string> GeTensorArrayPrepare::MustExistPrimitiveName() const {
+std::vector<std::string> TensorArrayPrepare::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
   ret.emplace_back(prim::kPrimTensorArray->name());
   return ret;
 }
 
-const BaseRef GeTensorArrayPrepare::DefinePattern() const {
+const BaseRef TensorArrayPrepare::DefinePattern() const {
   VarPtr seq_xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimTensorArray, seq_xs});
 }
 
-const AnfNodePtr GeTensorArrayPrepare::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr TensorArrayPrepare::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   TransformTASizeFromAttrToInput(node);
   InsertFlowOutputToTA(node);

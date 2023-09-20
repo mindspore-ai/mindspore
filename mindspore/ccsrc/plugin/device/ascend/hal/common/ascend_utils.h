@@ -21,7 +21,6 @@
 #include <set>
 #include <vector>
 #include "common/util/error_manager/error_manager.h"
-#include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "include/backend/kernel_graph.h"
 
 namespace mindspore {
@@ -62,15 +61,9 @@ class ErrorManagerAdapter {
 
 bool IsGraphMode();
 bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph);
-
 std::string GetSocVersion();
 std::string GetAICoreNumber();
 std::string GetAscendPath();
-
-// Some NOP nodes have be hide in execution order, it doesn't have output device address, this function creates
-// output device address for these nodes, and the output device address is the same with input device address.
-void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
-
 std::string GetErrorMsg(uint32_t rt_error_code);
 }  // namespace ascend
 }  // namespace device

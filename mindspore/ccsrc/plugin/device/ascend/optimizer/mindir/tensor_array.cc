@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/ge_tensor_array.h"
+#include "plugin/device/ascend/optimizer/mindir/tensor_array.h"
 
 #include <memory>
 #include <utility>
@@ -25,13 +25,13 @@
 
 namespace mindspore {
 namespace opt {
-std::vector<std::string> GeTensorArrayAddFlowCond1::MustExistPrimitiveName() const {
+std::vector<std::string> TensorArrayAddFlowCond1::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
   ret.emplace_back(prim::kPrimTensorArrayWrite->name());
   return ret;
 }
 
-const BaseRef GeTensorArrayAddFlowCond1::DefinePattern() const {
+const BaseRef TensorArrayAddFlowCond1::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
   VarPtr x3 = std::make_shared<Var>();
@@ -39,21 +39,21 @@ const BaseRef GeTensorArrayAddFlowCond1::DefinePattern() const {
   return VectorRef({prim::kPrimTensorArrayWrite, x1, x2, x3, x4});
 }
 
-std::vector<std::string> GeTensorArrayAddFlowCond2::MustExistPrimitiveName() const {
+std::vector<std::string> TensorArrayAddFlowCond2::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
   ret.emplace_back(prim::kPrimTensorArrayGather->name());
   return ret;
 }
 
-const BaseRef GeTensorArrayAddFlowCond2::DefinePattern() const {
+const BaseRef TensorArrayAddFlowCond2::DefinePattern() const {
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
   VarPtr x3 = std::make_shared<Var>();
   return VectorRef({prim::kPrimTensorArrayGather, x1, x2, x3});
 }
 
-const AnfNodePtr GeTensorArrayAddFlow::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                               const EquivPtr &) const {
+const AnfNodePtr TensorArrayAddFlow::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                             const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto ta_node = node->cast<CNodePtr>();

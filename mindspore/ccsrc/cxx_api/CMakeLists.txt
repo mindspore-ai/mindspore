@@ -68,7 +68,6 @@ if(NOT BUILD_LITE)
 endif()
 
 if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
-    file(GLOB GE_PASS_FILES "" "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/ge/*.cc")
     list(APPEND MSLIB_SRC
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.cc"
@@ -79,8 +78,8 @@ if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/operator/ops_backend_infer_function.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_build_info.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_info.cc"
+        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/reduce_axis_update.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/ge_optimization.cc")
-    list(APPEND MSLIB_SRC ${GE_PASS_FILES})
     # MODE_ASCEND_ACL don't need reg akg kernel
     list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc")
 endif()

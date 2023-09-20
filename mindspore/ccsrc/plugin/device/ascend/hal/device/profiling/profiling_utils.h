@@ -27,8 +27,6 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "toolchain/prof_api.h"
 #include "runtime/rt_model.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
-using mindspore::ge::model_runner::ModelRunner;
 
 namespace mindspore {
 namespace device {

@@ -23,21 +23,21 @@
 #include "include/backend/optimizer/optimizer.h"
 namespace mindspore {
 namespace opt {
-class GeTensorArrayAddFlow : public PatternProcessPass {
+class TensorArrayAddFlow : public PatternProcessPass {
  public:
-  explicit GeTensorArrayAddFlow(const std::string &name = "", bool multigraph = true)
+  explicit TensorArrayAddFlow(const std::string &name = "", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {}
-  ~GeTensorArrayAddFlow() override = default;
+  ~TensorArrayAddFlow() override = default;
 
   const BaseRef DefinePattern() const override = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 
-class GeTensorArrayAddFlowCond1 : public GeTensorArrayAddFlow {
+class TensorArrayAddFlowCond1 : public TensorArrayAddFlow {
  public:
-  explicit GeTensorArrayAddFlowCond1(bool multigraph = true)
-      : GeTensorArrayAddFlow("ge_tensor_arry_add_flow_cond1", multigraph) {}
-  ~GeTensorArrayAddFlowCond1() override = default;
+  explicit TensorArrayAddFlowCond1(bool multigraph = true)
+      : TensorArrayAddFlow("tensor_arry_add_flow_cond1", multigraph) {}
+  ~TensorArrayAddFlowCond1() override = default;
 
   const BaseRef DefinePattern() const override;
 
@@ -45,11 +45,11 @@ class GeTensorArrayAddFlowCond1 : public GeTensorArrayAddFlow {
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
-class GeTensorArrayAddFlowCond2 : public GeTensorArrayAddFlow {
+class TensorArrayAddFlowCond2 : public TensorArrayAddFlow {
  public:
-  explicit GeTensorArrayAddFlowCond2(bool multigraph = true)
-      : GeTensorArrayAddFlow("ge_tensor_arry_add_flow_cond2", multigraph) {}
-  ~GeTensorArrayAddFlowCond2() override = default;
+  explicit TensorArrayAddFlowCond2(bool multigraph = true)
+      : TensorArrayAddFlow("tensor_arry_add_flow_cond2", multigraph) {}
+  ~TensorArrayAddFlowCond2() override = default;
 
   const BaseRef DefinePattern() const override;
 

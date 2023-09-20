@@ -27,6 +27,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"

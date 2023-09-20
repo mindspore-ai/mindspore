@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
-
+#include "plugin/device/ascend/optimizer/mindir/reduce_axis_update.h"
 #include <vector>
 #include <memory>
-
 #include "mindspore/core/ops/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace opt {

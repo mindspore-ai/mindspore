@@ -195,7 +195,7 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
 void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
   auto op_debug_config = common::GetEnv("MS_COMPILER_OP_DEBUG_CONFIG");
   if (!op_debug_config.empty()) {
-    auto config_path = kernel::tbe::TbeUtils::GetOpDebugPath();
+    auto config_path = Common::GetCompilerCachePath();
     DIR *dir = opendir(config_path.c_str());
     if (dir == nullptr) {
       auto ret = mkdir(config_path.c_str(), S_IRWXU);

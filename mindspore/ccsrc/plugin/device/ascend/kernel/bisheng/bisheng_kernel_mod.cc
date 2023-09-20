@@ -142,8 +142,8 @@ void BiShengKernelMod::DoTiling(std::vector<void *> *workspace_addrs) {
   // CopyHostToDevice
   auto rt_ret =
     aclrtMemcpy(tiling_addr_, tiling_data.size(), tiling_data.data(), tiling_data.size(), ACL_MEMCPY_HOST_TO_DEVICE);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpy failed, ret: " << rt_ret;
   }
 
   // Insert to workspace

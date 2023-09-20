@@ -30,11 +30,6 @@ class CreateNodeHelper {
 
  private:
   static CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info);
-  static CNodePtr CreateTargetOp(const CNodePtr &origin_op, const OpAdaptationInfo &op_adaptation_info);
-  static bool ConvertInputToAttr(const CNodePtr &origin_op, size_t i, const std::shared_ptr<AnfNode> &input_node,
-                                 const std::string &attr_data_type, const std::shared_ptr<Primitive> &target_primitive);
-  static void RenamePrimitiveName(const CNodePtr &origin_op, const std::string &me_op_name,
-                                  const std::string &backend_op_name);
 };
 }  // namespace mindspore::opt
 

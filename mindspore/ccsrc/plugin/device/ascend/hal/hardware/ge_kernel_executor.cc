@@ -16,42 +16,41 @@
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 #include <utility>
 #include <algorithm>
+#include "include/common/utils/parallel_context.h"
+#include "acl/acl_rt.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
-#include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "include/common/utils/parallel_context.h"
-#include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
-#include "toolchain/adx_datadump_callback.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
-#include "utils/anf_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
-#include "include/backend/optimizer/helper.h"
-#include "kernel/opapi/aclnn_kernel_build.h"
-#include "kernel/acl/acl_kernel_build.h"
-#include "kernel/aicpu/aicpu_kernel_build.h"
-#include "kernel/aicpu/aicpu_kernel_metadata.h"
-#include "kernel/host/host_kernel_build.h"
-#include "kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_build.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "utils/anf_utils.h"
 
-using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
@@ -158,7 +157,7 @@ std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> Que
     kernel::HcclMetadataInfo(cnode, &kernel_info_list);
     return {KernelType::HCCL_KERNEL, kernel_info_list};
   }
-  opt::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
+  kernel::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
   kernel::AicpuMetadataInfo(cnode, &kernel_info_list);
   if (!kernel_info_list.empty()) {
     return {KernelType::AICPU_KERNEL, kernel_info_list};
@@ -357,7 +356,6 @@ void GeKernelExecutor::Destroy() {
   if (!initialized_) {
     return;
   }
-  AscendGraphOptimization::GetInstance().Reset();
   res_manager_ = nullptr;
   graph_executor_ = nullptr;
   initialized_ = false;
@@ -365,11 +363,11 @@ void GeKernelExecutor::Destroy() {
 
 void GeKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
+  GEGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
 void GeKernelExecutor::AddMindIRPass(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().AscendMindIRPass(graph);
+  GEGraphOptimization::GetInstance().GEMindIRPass(graph);
 }
 
 void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
@@ -382,7 +380,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     return;
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
-  AscendGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
+  GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -410,13 +408,13 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
       }
     }
   }
-  AscendGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
+  GEGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   if (!nodes.empty() && common::IsEnableRefMode()) {
-    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(nodes[0]->func_graph());
+    auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(nodes[0]->func_graph());
     MS_EXCEPTION_IF_NULL(kernel_graph);
     // Not create kernel when use GE
     if (!kernel_graph->is_from_single_op() && kernel_graph->is_graph_run_mode()) {

@@ -313,6 +313,8 @@ class COMMON_EXPORT AnfAlgo {
   static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
   // Fetch the sub abstract from the top abstract by the index.
   static abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
+
+  static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {

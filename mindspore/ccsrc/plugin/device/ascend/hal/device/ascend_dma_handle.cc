@@ -63,8 +63,7 @@ void AscendDmaHandle::InitRuntimeInstance() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  runtime_instance_ = dynamic_cast<AscendKernelRuntime *>(
-    device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_));
+  runtime_instance_ = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
 }
 

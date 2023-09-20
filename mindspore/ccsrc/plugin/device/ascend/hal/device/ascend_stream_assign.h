@@ -27,9 +27,6 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
-#include "runtime/base.h"
-#include "runtime/rt_model.h"
-#include "runtime/stream.h"
 #include "include/backend/kernel_graph.h"
 #include "include/common/utils/contract.h"
 

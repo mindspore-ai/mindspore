@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_INPUT_TO_ATTR_REGISTRY_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_INPUT_TO_ATTR_REGISTRY_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_BUFFER_FUSION_UB_FUSION_OPTIMIZER_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_BUFFER_FUSION_UB_FUSION_OPTIMIZER_H_
 
-#include <map>
-#include <string>
-#include "kernel/kernel.h"
-
+#include <memory>
+#include "include/backend/kernel_graph.h"
 namespace mindspore {
-namespace kernel {
-bool GetAicpuOpInputToAttrInfo(const CNodePtr &kernel_node, std::map<size_t, std::string> *input_to_attr_info);
-}  // namespace kernel
+namespace opt {
+void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+}  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_INPUT_TO_ATTR_REGISTRY_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_BUFFER_FUSION_UB_FUSION_OPTIMIZER_H_

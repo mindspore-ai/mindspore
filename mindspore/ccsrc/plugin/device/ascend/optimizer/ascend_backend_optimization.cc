@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
-#include <algorithm>
-#include <list>
 #include <memory>
-#include <vector>
 #include <string>
 #include "include/backend/optimizer/optimizer.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/optimizer/ir_fission/dynamic_rnn_grad_fission_v2.h"
 #include "plugin/device/ascend/optimizer/ir_fission/dynamic_gru_v2_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
-#include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_split.h"
-#include "plugin/device/ascend/optimizer/ir_fission/batch_norm_bert_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/single_batch_norm_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_min_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/fused_batch_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/layer_norm_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/unsorted_segment_sum_replace.h"
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
@@ -38,11 +33,8 @@
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
-#include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/resize_linear1d_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
@@ -73,14 +65,12 @@
 #include "plugin/device/ascend/optimizer/ir_fission/conv2d_backprop_filter_mul_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/space_to_depth_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/max_pool3d_grad_grad_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/scale_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/maximum_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_grad_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/stateless_dropout_genmask_replace.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/momentum_lossscale_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_add_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_addn_fusion.h"
@@ -88,15 +78,12 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_biasadd_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/remove_reshape_pair.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/derelu_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/confusion_mul_grad_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_grad_ext_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/bn_reduce_grad_conv2d_backprop_filter_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/reselect_call_inline_format.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
@@ -107,11 +94,12 @@
 #include "plugin/device/ascend/optimizer/format_type/change_axis_of_reduce_kernel.h"
 #include "plugin/device/ascend/optimizer/format_type/convert_cast_format.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
+#include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
+#include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "backend/common/pass/optimize_dependence.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
-#include "plugin/device/ascend/optimizer/format_type/insert_identity.h"
 #include "plugin/device/ascend/optimizer/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/common/pass/eliminate_redundant_op.h"
 #include "backend/common/pass/common_subexpression_elimination.h"
@@ -119,25 +107,6 @@
 #include "plugin/device/ascend/optimizer/format_type/remove_host_kernel.h"
 #include "plugin/device/ascend/optimizer/format_type/check_consistency.h"
 #include "plugin/device/ascend/optimizer/format_type/eliminate_graph_output_transdata.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/multi_output_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/conv_single_in_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/conv_double_in_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/matmul_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/matmul_dropoutdomaskv3_add_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_dropoutdomaskv3_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_reducesum_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/conv_bnreduce_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/reduce_eltwise_fusion_pass.h"
-#include "plugin/device/ascend/optimizer/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/enhancer/skip_empty_tensor_output.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
@@ -149,7 +118,6 @@
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 #include "plugin/device/ascend/optimizer/ir_fission/addn_fission.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_getnext.h"
-#include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/split_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/splitv_fission.h"
 #include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
@@ -162,76 +130,34 @@
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather_output.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_reduce.h"
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_attr_for_3d_graph.h"
 #include "plugin/device/ascend/optimizer/enhancer/split_n_optimizer.h"
 #include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
-#include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
-#include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
-#include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "plugin/device/ascend/optimizer/mindir/maxpool_with_argmax_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/slice_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/update_input_names_strided_slice_grad.h"
-#include "plugin/device/ascend/optimizer/mindir/avg_pool_grad_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/mindir/bn_grad_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
-#include "plugin/device/ascend/optimizer/mindir/quant_dtype_cast_adjust.h"
-#include "plugin/device/ascend/optimizer/mindir/fse_decode_adjust.h"
-#include "plugin/device/ascend/optimizer/mindir/trans_depend_value_to_int32.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/padd_update_fusion.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include "backend/common/pass/optimize_gradients_allreduce_overlap.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include "utils/ms_context.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/format_type/replace_transdata_with_transpose.h"
-#include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
-#include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
-#include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
-#include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
-#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
-#include "plugin/device/ascend/optimizer/ge/convert_attr_to_input.h"
-#include "plugin/device/ascend/optimizer/ge/batchnorm_transform.h"
-#include "plugin/device/ascend/optimizer/ge/dropout_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
-#include "plugin/device/ascend/optimizer/ge/ge_tensor_array.h"
-#include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
-#include "plugin/device/ascend/hal/hardware/ge_utils.h"
-#include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/hcom/add_depend_for_all_gather.h"
-#include "plugin/device/ascend/optimizer/ge/adjust_print_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
-#include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
-#include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
-#include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
-#include "include/backend/debug/profiler/profiling.h"
-#include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/expand_dims_for_batchnorm.h"
-#include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
-#include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
-#include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
-#include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
-#include "include/common/utils/parallel_context.h"
+#include "plugin/device/ascend/optimizer/buffer_fusion/ub_fusion_optimizer.h"
+#include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr char kDisablePrebuildEnv[] = "MS_DEV_DISABLE_PREBUILD";
-
 void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
@@ -596,122 +522,6 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AfterInlineOptimization", 0, 0, 1);
 }
 
-void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACL", 0, 0, 0);
-  PROF_START(ascend_backend_optimize_acl);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_before_opt_acl_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
-  opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
-  opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
-  opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
-  opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
-  opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
-  opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
-  opt_acl_pm->AddPass(std::make_shared<SyncBnSplit>());
-  opt_acl_pm->AddPass(std::make_shared<SyncBnGradSplit>());
-  opt_acl_pm->AddPass(std::make_shared<ExpanderFallback>());
-  opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
-  opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
-  optimizer->AddPassManager(opt_acl_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_end_opt_acl_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  PROF_END(ascend_backend_optimize_acl);
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACL", 0, 0, 1);
-  MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
-}
-
-void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(DEBUG) << "Status record: start ascend backend optimize ge pass. graph id: " << kernel_graph->graph_id();
-  PROF_START(ascend_backend_optimize_ge);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_before_opt_ge_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
-  opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
-  opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
-  opt_ge_pm->AddPass(std::make_shared<opt::PrintToStringFormatPrint>());
-  opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
-  opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
-  opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
-  opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
-  optimizer->AddPassManager(opt_ge_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_end_opt_ge_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  PROF_END(ascend_backend_optimize_ge);
-  MS_LOG(DEBUG) << "Status record: end ascend backend optimize ge pass. graph id: " << kernel_graph->graph_id();
-}
-
-void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
-                << kernel_graph->graph_id();
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACLAfterKernelSelect", 0, 0,
-                            0);
-  PROF_START(ascend_backend_optimize_acl_after_kernel_select);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name =
-      "hwopt_d_before_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
-  optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name =
-      "hwopt_d_end_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  PROF_END(ascend_backend_optimize_acl_after_kernel_select);
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACLAfterKernelSelect", 0, 0,
-                            1);
-  MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
-}
-
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start ascend backend(data layer & mix precision ...) pass. graph id: "
@@ -795,134 +605,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
                << kernel_graph->graph_id();
 }
 
-void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
-    MS_LOG(INFO) << "UBFusion is not enable, skip";
-    return;
-  }
-  if (kernel_graph->is_dynamic_shape()) {
-    MS_LOG(INFO) << "Dynamic shape skip fusion";
-    return;
-  }
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 0);
-  auto pre_build = common::GetEnv(kDisablePrebuildEnv);
-  if (pre_build.empty() || (pre_build != "true" && pre_build != "True")) {
-    auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
-    build_manager.TbePreBuild(kernel_graph);
-  }
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-  }
-#endif
-  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
-  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
-  fusion_id_allocator->Init();
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto ub_fusion_pm = std::make_shared<PassManager>("ub_fusion_pm");
-  ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<Conv2DBackpropEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<ConvBnReduceFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<ConvSingleInFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<MatmulDropoutDoMaskV3AddFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BatchMatmulReduceSumFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<MultiOutputFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<MatmulConfusionTranposeFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BatchMatmulEltwiseFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BatchMatmulDropoutDoMaskV3FusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
-  optimizer->AddPassManager(ub_fusion_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-  }
-#endif
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 1);
-}
-
 PassManagerPtr GetAscendUnifyMindIRPassManager() {
-  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
-  unify_mindir_pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::ClipByNormFissionGe>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond1>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond2>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayPrepare>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
-
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  bool enable_ge = ms_context->backend_policy() == "ge";
-  bool graph_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
-  if (enable_ge && graph_mode) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else if (graph_mode) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else {
-    // Add PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR pass first to avoid the backward loss function
-    // from the python frontend matching the pattern defined in PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR.
-    // TODO(hbhu_bin): In mindspore, SparseSoftmaxCrossEntropyWithLogits has different outputs based on the "is_grad"
-    // attribute, but it has two outputs in CANN. These pass cann be removed when convert "is_grad" attribute to input.
-    unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  }
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::QuantDTypeCastAdjust>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FSEDecodeAdjust>());
-  // batchnorm
-  unify_mindir_pm->AddPass(std::make_shared<BnSplit>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<BnGradSplit>());
-  unify_mindir_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
-  unify_mindir_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
-  unify_mindir_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
-  unify_mindir_pm->AddPass(std::make_shared<TensorScatterAddFission>());
-  unify_mindir_pm->AddPass(std::make_shared<TensorScatterSubFission>());
-  unify_mindir_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
-  unify_mindir_pm->AddPass(std::make_shared<TensorScatterMinFission>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
-  // just rename primitive name
-  unify_mindir_pm->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
-
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
-
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("ascend_unify_mindir_pm");
+  GetBackendCommonUnifyMindIRPassManager(&unify_mindir_pm);
   return unify_mindir_pm;
 }
 
@@ -978,37 +663,6 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
   }
 #endif
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OpAdaptation", 0, 0, 1);
-}
-
-void AscendUnfoldInputsForSpecialNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name =
-      "hwopt_d_before_unfold_inputs_for_special_nodes_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-    DumpIRProto(kernel_graph,
-                "before_unfold_inputs_for_special_nodes_hwopt_" + std::to_string(kernel_graph->graph_id()));
-  }
-#endif
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto unfold_inputs_pm = std::make_shared<opt::PassManager>("unfold_inputs_for_special_nodes_pm");
-  unfold_inputs_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>());
-
-  optimizer->AddPassManager(unfold_inputs_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name =
-      "hwopt_d_after_unfold_inputs_for_special_nodes_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true, kWholeStack);
-  }
-#endif
-  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 1);
 }
 }  // namespace opt
 }  // namespace mindspore

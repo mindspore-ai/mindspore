@@ -44,8 +44,7 @@ void GeDeviceResManager::Initialize() {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    runtime_instance_ = dynamic_cast<AscendKernelRuntime *>(
-      device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id));
+    runtime_instance_ = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     if (!runtime_instance_->Init()) {
       MS_LOG(EXCEPTION) << "Kernel runtime init error.";

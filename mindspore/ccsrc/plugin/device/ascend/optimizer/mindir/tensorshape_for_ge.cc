@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
-#include <vector>
+#include "plugin/device/ascend/optimizer/mindir/tensorshape_for_ge.h"
 #include <memory>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"

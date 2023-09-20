@@ -39,15 +39,13 @@ if(ENABLE_ACL)
             )
     add_library(mindspore_axx_api_d_obj OBJECT ${API_INFER_D})
     list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
+    list(APPEND ASCEND_910B_OBJ_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
 endif()
 
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
-        hal/common
         hal/device
         hal/hardware
-        hal/hccl_adapter
-        hal/profiler
         kernel
         optimizer
         )
@@ -59,15 +57,40 @@ foreach(a_comp ${ASCEND_SUB_COMP})
         list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_plugin_device_ascend_${sub}_obj>)
         add_dependencies(_mindspore_plugin_device_ascend_${sub}_obj proto_input)
     endif()
+    if(TARGET _mindspore_plugin_device_ascend_${sub}_910b_obj)
+        list(APPEND ASCEND_910B_OBJ_SRC $<TARGET_OBJECTS:_mindspore_plugin_device_ascend_${sub}_910b_obj>)
+        add_dependencies(_mindspore_plugin_device_ascend_${sub}_910b_obj proto_input)
+    endif()
 endforeach()
 
-list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
-list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
-list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
-add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
+set(ASCEND_COMMON_SUB
+        hal/common
+        hal/hccl_adapter
+        hal/profiler
+        )
+
+foreach(a_comp ${ASCEND_COMMON_SUB})
+    add_subdirectory(${a_comp})
+    string(REPLACE "/" "_" sub ${a_comp})
+    if(TARGET _mindspore_plugin_device_ascend_${sub}_obj)
+        list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_plugin_device_ascend_${sub}_obj>)
+        add_dependencies(_mindspore_plugin_device_ascend_${sub}_obj proto_input)
+    endif()
+endforeach()
+
+list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
+list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
+
 if(${ASCEND_VERSION} STREQUAL "910")
+    #==============910a==========
+    list(APPEND ASCEND_SUB_OBJECTS_SRC ${ASCEND_COMMON_OBJECTS_SRC})
+    add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
     set_target_properties(mindspore_ascend PROPERTIES VERSION 1)
 elseif(${ASCEND_VERSION} STREQUAL "910b")
+    #==============910b==========
+    list(APPEND ASCEND_910B_OBJ_SRC ${ASCEND_COMMON_OBJECTS_SRC})
+    add_library(mindspore_ascend SHARED ${ASCEND_910B_OBJ_SRC})
     set_target_properties(mindspore_ascend PROPERTIES VERSION 2)
 endif()
 
