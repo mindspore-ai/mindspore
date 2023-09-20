@@ -52,6 +52,7 @@ class TensorRedistribution {
   double forward_comm_cost() const { return forward_comm_cost_; }
   double backward_comm_cost() const { return backward_comm_cost_; }
   double memory_cost() const { return memory_cost_; }
+  Shape input_shape() const { return from_origin_.slice_shape().array(); }
 
  private:
   Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
