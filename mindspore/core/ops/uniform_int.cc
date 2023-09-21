@@ -47,6 +47,7 @@ int64_t UniformInt::get_seed2() const {
 
 BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   abstract::AbstractTensorPtr minval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex1);
   MS_EXCEPTION_IF_NULL(minval);

@@ -69,6 +69,7 @@ bool MultinomialWithReplacement::get_replacement() const {
 
 abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &primitive,
                                                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
   const int64_t dyn_shape = abstract::Shape::kShapeDimAny;

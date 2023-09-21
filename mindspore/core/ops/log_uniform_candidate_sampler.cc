@@ -52,6 +52,7 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
     int64_t num_sampled = GetValue<int64_t>(primitive->GetAttr(kNumSampled));
     auto sampled_candidate_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector({num_sampled}));
     auto true_expected_shape_ptr = input_args[0]->BuildShape();
@@ -82,6 +83,8 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
     }
     // check input data type
     const std::set<TypePtr> valid_types = {kInt64};
+    MS_EXCEPTION_IF_NULL(primitive);
+    MS_EXCEPTION_IF_NULL(input_args[0]);
     CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_args[0]->BuildType(), valid_types,
                                                primitive->name());
 
