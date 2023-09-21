@@ -238,7 +238,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_weight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 
@@ -292,7 +292,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 
