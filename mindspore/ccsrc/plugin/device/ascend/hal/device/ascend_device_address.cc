@@ -28,7 +28,6 @@
 #include "runtime/device/convert_tensor_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
 #include "ir/dtype/type.h"

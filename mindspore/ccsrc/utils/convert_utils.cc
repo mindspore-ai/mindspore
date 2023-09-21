@@ -508,4 +508,18 @@ ShapeVector BaseShapeToShape(const abstract::BaseShapePtr &base_shape) {
   MS_LOG(WARNING) << "Invalid shape:" << base_shape->ToString();
   return {};
 }
+
+ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type) {
+  static std::set<std::string> kListDataType = {"listInt", "listStr", "listBool", "listFloat"};
+  auto iter = kListDataType.find(attr_data_type);
+  ValuePtr ret = value;
+  if (iter != kListDataType.end()) {
+    if (!value->isa<ValueSequence>()) {
+      std::vector<ValuePtr> value_vec;
+      value_vec.push_back(value);
+      ret = std::make_shared<ValueTuple>(value_vec);
+    }
+  }
+  return ret;
+}
 }  // namespace mindspore

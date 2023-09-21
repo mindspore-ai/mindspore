@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <dlfcn.h>
+#include <cxxabi.h>
 #include <set>
 #include <string>
 #if defined(ASCEND_910) || defined(ASCEND_910B)

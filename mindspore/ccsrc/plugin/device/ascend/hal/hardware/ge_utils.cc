@@ -18,6 +18,7 @@
 
 #include <tuple>
 #include <utility>
+#include "include/common/utils/anfalgo.h"
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/debug/anf_ir_dump.h"

@@ -26,10 +26,10 @@
 // This pass will split `ClipByNorm` op to smaller ops, such as `square`, `sqrt`, `reducesum` to achieve same function
 namespace mindspore {
 namespace opt {
-class ClipByNormFissionGe : public PatternProcessPass {
+class ClipByNormFission : public PatternProcessPass {
  public:
-  explicit ClipByNormFissionGe(bool multigraph = true) : PatternProcessPass("clip_by_norm_fission_ge", multigraph) {}
-  ~ClipByNormFissionGe() override = default;
+  explicit ClipByNormFission(bool multigraph = true) : PatternProcessPass("clip_by_norm_fission", multigraph) {}
+  ~ClipByNormFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 

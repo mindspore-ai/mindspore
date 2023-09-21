@@ -51,19 +51,6 @@ std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
 // Mark the kernel backoff with failure info when setting operator info fails.
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);
-
-class AscendGraphKernelInfo : public GraphKernelInfo {
- public:
-  AscendGraphKernelInfo() = default;
-  virtual ~AscendGraphKernelInfo() = default;
-  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override {
-#ifndef ENABLE_ACL
-    SetAscendKernelInfo(kernel_node, kernel_type);
-#endif
-  }
-};
-
-REG_GRAPH_KERNEL_INFO(kAscendDevice, AscendGraphKernelInfo);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

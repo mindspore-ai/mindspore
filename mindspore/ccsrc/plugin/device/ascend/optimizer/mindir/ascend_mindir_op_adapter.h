@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_IDENTITY_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_IDENTITY_H_
+
+#ifndef MINDSPORE_ASCEND_MINDIR_OP_ADAPTER_H
+#define MINDSPORE_ASCEND_MINDIR_OP_ADAPTER_H
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/optimizer/pattern_engine.h"
+#include <memory>
+#include <map>
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "ir/anf.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore {
 namespace opt {
-class InsertIdentity : public PatternProcessPass {
+class AscendMindIROpAdapter : public PatternProcessPass {
  public:
-  explicit InsertIdentity(bool multigraph = true) : PatternProcessPass("insert_identity", multigraph) {}
-  ~InsertIdentity() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  explicit AscendMindIROpAdapter(bool multigraph = true) : PatternProcessPass("ascend_mindir_op_adapter", multigraph) {}
+  ~AscendMindIROpAdapter() override = default;
+
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
+
 }  // namespace opt
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_IDENTITY_H_
+#endif  // MINDSPORE_ASCEND_MINDIR_OP_ADAPTER_H

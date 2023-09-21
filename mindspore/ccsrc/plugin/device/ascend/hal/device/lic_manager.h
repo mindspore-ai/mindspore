@@ -32,7 +32,6 @@ enum class OptPassEnum {
   ClipByNormNoDivSquareSumFusion,
   MomentumLossscaleFusion,
   DereluFusion,
-  FusedBatchNormFusion,
   MatmulEltwiseFusionPass,
   BatchMatmulFusedMulAddFusionPass,
   EltwiseFusionPass,

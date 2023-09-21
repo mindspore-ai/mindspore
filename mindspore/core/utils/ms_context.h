@@ -65,6 +65,7 @@ const char kDeviceUnDefined[] = "DeviceUnDefined";
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
+const char kAscendVM[] = "AscendVM";
 const char kDavinciInferenceDevice[] = "AscendInference";
 const char kDavinciMultiGraphInferenceDevice[] = "AscendMultiGraphInference";
 const char kGpuInferenceDevice[] = "GpuInference";

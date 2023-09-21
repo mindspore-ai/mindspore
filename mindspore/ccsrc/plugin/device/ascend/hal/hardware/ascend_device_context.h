@@ -57,6 +57,10 @@ class AscendDeviceContext : public DeviceInterface<AscendGraphExecutor, AscendKe
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
 };
+
+// Some NOP nodes have be hide in execution order, it doesn't have output device address, this function creates
+// output device address for these nodes, and the output device address is the same with input device address.
+void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

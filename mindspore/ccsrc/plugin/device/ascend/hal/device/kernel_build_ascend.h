@@ -20,6 +20,9 @@
 #include <vector>
 #include <map>
 #include "include/backend/kernel_graph.h"
+#include "utils/ms_context.h"
+#include "kernel/kernel_build_info.h"
+#include "kernel/graph_kernel_info.h"
 
 namespace mindspore {
 namespace device {

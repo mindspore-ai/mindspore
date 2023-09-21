@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace opt {
-class GeTensorArrayPrepare : public PatternProcessPass {
+class TensorArrayPrepare : public PatternProcessPass {
  public:
-  explicit GeTensorArrayPrepare(bool multigraph = true) : PatternProcessPass("ge_tensor_array_prepare", multigraph) {}
-  ~GeTensorArrayPrepare() override = default;
+  explicit TensorArrayPrepare(bool multigraph = true) : PatternProcessPass("tensor_array_prepare", multigraph) {}
+  ~TensorArrayPrepare() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 

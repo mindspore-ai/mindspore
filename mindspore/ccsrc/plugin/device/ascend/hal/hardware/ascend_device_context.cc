@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
@@ -155,58 +156,54 @@ DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
-#ifdef WITH_BACKEND
-namespace {
-void SetContextSocVersion(MsContext *ctx) {
-  constexpr auto k910AAscendVersion = "ascend910";
-  constexpr auto k910BAscendVersion = "ascend910b";
-  const std::map<std::string, std::string> kAscendSocVersions = {
-    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
-    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    version = soc_version;
-  }
-  auto iter = kAscendSocVersions.find(version);
-  if (iter == kAscendSocVersions.end()) {
-    MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
-    return;
-  }
-  if (iter->second == k910BAscendVersion) {
-    ctx->set_ascend_soc_version(k910BAscendVersion);
-  } else if (iter->second == k910AAscendVersion) {
-    ctx->set_ascend_soc_version(k910AAscendVersion);
-  }
-}
-}  // namespace
-#endif
-
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
 MS_REGISTER_DEVICE(kDavinciMultiGraphInferenceDevice, AscendDeviceContext);
-#ifdef WITH_BACKEND
-MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
-  MS_EXCEPTION_IF_NULL(ctx);
-  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
-  if (enable_ge == "1") {
-    if (ctx->backend_policy() != "ge") {
-      (void)ctx->set_backend_policy("ge");
+
+void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  for (auto output : outputs) {
+    if (!output->isa<CNode>() || !AnfUtils::IsRealKernel(output)) {
+      continue;
     }
-  } else {
-    if (ctx->backend_policy() != "ms") {
-      (void)ctx->set_backend_policy("ms");
+
+    if (!common::AnfAlgo::IsNopNode(output)) {
+      continue;
     }
+
+    if (!common::AnfAlgo::IsNeedSkipNopOpAddr(output)) {
+      continue;
+    }
+
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(output);
+    if (input_num != 1) {
+      MS_LOG(WARNING) << "The input number of nop node :" << output->fullname_with_scope() << " is " << input_num
+                      << ", not equal 1";
+      continue;
+    }
+
+    auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(output, 0);
+    auto pre_node_out_device_address = AnfAlgo::GetPrevNodeOutputAddr(output, real_input_index);
+    MS_EXCEPTION_IF_NULL(pre_node_out_device_address);
+    auto ptr = pre_node_out_device_address->GetPtr();
+    auto size = pre_node_out_device_address->GetSize();
+    std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
+    auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+      const_cast<void *>(ptr), size, output_format, output_type, trans::GetRuntimePaddingShape(output, 0));
+    // If graph has the flag kFlagEnableZeroCopyInGraph, it means the graph should run in graph mode, the device
+    // address of graph output should not be persisted, and its output addr will be replaced after RunGraph.
+    // As we fetch the output device address of a nopnode, we can only get the input device address of it, so we
+    // have to prevent the ptr persist flag of the device address here.
+    if (!graph->has_flag(kFlagEnableZeroCopyInGraph)) {
+      device_address->set_is_ptr_persisted(true);
+    }
+    device_address->set_host_shape(trans::GetRuntimePaddingShape(output, 0));
+    AnfAlgo::SetOutputAddr(device_address, 0, output.get());
+    common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
+    MS_LOG(INFO) << "Assign device address to output nop node " << output->fullname_with_scope();
   }
-  SetContextSocVersion(ctx);
-});
-#endif
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

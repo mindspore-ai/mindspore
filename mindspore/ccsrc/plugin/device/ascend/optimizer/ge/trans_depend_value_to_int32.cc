@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/mindir/trans_depend_value_to_int32.h"
+#include "plugin/device/ascend/optimizer/ge/trans_depend_value_to_int32.h"
 
 #include <string>
 #include <vector>
 #include <memory>
-
+#include <set>
 #include "ops/conv_pool_op_name.h"
 #include "ops/array_op_name.h"
 #include "abstract/ops/primitive_infer_map.h"

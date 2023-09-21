@@ -26,6 +26,10 @@
 #include "nlohmann/json.hpp"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#ifndef ASCEND_910B
+#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+using mindspore::ge::model_runner::ModelRunner;
+#endif
 
 namespace mindspore {
 namespace device {
@@ -560,6 +564,7 @@ void ProfilingUtils::InitProfTensorData(const CNodePtr &node, const size_t index
 }
 
 void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
+#ifndef ASCEND_910B
   uint32_t rt_model_id = 0;
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
   if (rt_model_ret != RT_ERROR_NONE) {
@@ -585,9 +590,11 @@ void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
   } else {
     report_event.emplace_back(model_load_event_);
   }
+#endif
 }
 
 void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
+#ifndef ASCEND_910B
   uint32_t rt_model_id = 0;
   rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(kernel_graph->graph_id());
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
@@ -616,6 +623,7 @@ void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
   } else {
     report_event.emplace_back(model_execute);
   }
+#endif
 }
 
 std::string ProfilingUtils::GetFullScopeName(const std::string &op_name, const bool is_op_name) {

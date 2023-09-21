@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include "acl/acl_base.h"
+#include "acl/acl.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "transform/acl_ir/acl_allocator.h"
 

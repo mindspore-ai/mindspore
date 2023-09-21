@@ -2272,5 +2272,24 @@ abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &a
   }
   MS_LOG(INTERNAL_EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
 }
+
+std::string AnfAlgo::GetInputName(const CNodePtr &origin_op, size_t input_index) {
+  auto origin_primitive = GetCNodePrimitive(origin_op);
+  MS_EXCEPTION_IF_NULL(origin_primitive);
+  auto input_names = origin_primitive->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "input_names are nullptr in cnode " << origin_op->fullname_with_scope()
+                               << ", debug string:" << origin_op->DebugString()
+                               << ", attr text:" << origin_primitive->GetAttrsText();
+  }
+
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  if (input_index >= input_names_vec.size()) {
+    MS_LOG(INFO) << "Input index is invalid. input index: " << input_index << ", input name size "
+                 << input_names_vec.size();
+    return "";
+  }
+  return input_names_vec[input_index];
+}
 }  // namespace common
 }  // namespace mindspore

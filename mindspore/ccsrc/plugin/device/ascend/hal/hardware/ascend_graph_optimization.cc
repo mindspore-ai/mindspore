@@ -16,17 +16,18 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 
-#include <set>
 #include <unordered_set>
 #include <string>
 #include <memory>
 #include <utility>
+#include <map>
 #include "ops/array_op_name.h"
-#include "ops/math_ops.h"
 #include "ops/framework_ops.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
+#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
+#include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/expander/fallback/expander_fallback.h"
@@ -290,60 +291,6 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   graph_manager_ = MakeManager();
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph", 1, 0, 1);
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
-}
-
-void AscendGraphOptimization::OptimizeACLGraph(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Status record: start optimize acl graph. graph id: " << graph->graph_id();
-  // empty graph dont entry to backend
-  if (graph->execution_order().empty()) {
-    MS_LOG(DEBUG) << graph->ToString() << " is empty graph.";
-    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
-    graph->set_executable(false);
-    MS_LOG(DEBUG) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
-  }
-  opt::AscendUnfoldInputsForSpecialNodes(graph);
-  opt::AscendBackendOptimizeACL(graph);
-  memo_.clear();
-  // clear and reset graph_manager_ after optimization
-  graph_manager_ = MakeManager();
-  MS_LOG(DEBUG) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
-}
-
-void AscendGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Status record: start optimize ge graph. graph id: " << graph->graph_id();
-  // empty graph dont entry to backend
-  if (graph->execution_order().empty()) {
-    MS_LOG(DEBUG) << graph->ToString() << " is empty graph.";
-    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
-    graph->set_executable(false);
-    MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
-  }
-  opt::AscendBackendOptimizeACL(graph);
-  opt::AscendBackendOptimizeGE(graph);
-
-  memo_.clear();
-  // clear and reset graph_manager_ after optimization
-  graph_manager_ = MakeManager();
-  MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
-}
-
-void AscendGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Status record: start optimize acl graph after kernel select. graph id: " << graph->graph_id();
-  // empty graph dont entry to backend
-  if (graph->execution_order().empty()) {
-    MS_LOG(DEBUG) << graph->ToString() << " is empty graph.";
-    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
-    graph->set_executable(false);
-    MS_LOG(DEBUG) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
-  }
-  opt::AscendBackendOptimizeACLAfterKernelSelect(graph);
-  memo_.clear();
-  // clear and reset graph_manager_ after optimization
-  graph_manager_ = MakeManager();
-  MS_LOG(DEBUG) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
 }
 
 void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph) {

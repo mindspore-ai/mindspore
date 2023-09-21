@@ -23,6 +23,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
+#include "utils/dlopen_macro.h"
 #include "runtime/dev.h"
 #include "runtime/config.h"
 #include "acl/error_codes/rt_error_codes.h"
@@ -233,52 +234,6 @@ std::string GetAICoreNumber() {
   }
   MS_LOG(DEBUG) << "AiCore number of device " << device_id << " is " << aicore_number;
   return std::to_string(aicore_number);
-}
-
-void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
-  for (auto output : outputs) {
-    if (!output->isa<CNode>() || !AnfUtils::IsRealKernel(output)) {
-      continue;
-    }
-
-    if (!common::AnfAlgo::IsNopNode(output)) {
-      continue;
-    }
-
-    if (!common::AnfAlgo::IsNeedSkipNopOpAddr(output)) {
-      continue;
-    }
-
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(output);
-    if (input_num != 1) {
-      MS_LOG(WARNING) << "The input number of nop node :" << output->fullname_with_scope() << " is " << input_num
-                      << ", not equal 1";
-      continue;
-    }
-
-    auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(output, 0);
-    auto pre_node_out_device_address = AnfAlgo::GetPrevNodeOutputAddr(output, real_input_index);
-    MS_EXCEPTION_IF_NULL(pre_node_out_device_address);
-    auto ptr = pre_node_out_device_address->GetPtr();
-    auto size = pre_node_out_device_address->GetSize();
-    std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
-    auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
-    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-      const_cast<void *>(ptr), size, output_format, output_type, trans::GetRuntimePaddingShape(output, 0));
-    // If graph has the flag kFlagEnableZeroCopyInGraph, it means the graph should run in graph mode, the device
-    // address of graph output should not be persisted, and its output addr will be replaced after RunGraph.
-    // As we fetch the output device address of a nopnode, we can only get the input device address of it, so we
-    // have to prevent the ptr persist flag of the device address here.
-    if (!graph->has_flag(kFlagEnableZeroCopyInGraph)) {
-      device_address->set_is_ptr_persisted(true);
-    }
-    device_address->set_host_shape(trans::GetRuntimePaddingShape(output, 0));
-    AnfAlgo::SetOutputAddr(device_address, 0, output.get());
-    common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
-    MS_LOG(INFO) << "Assign device address to output nop node " << output->fullname_with_scope();
-  }
 }
 
 std::string GetErrorMsg(uint32_t rt_error_code) {

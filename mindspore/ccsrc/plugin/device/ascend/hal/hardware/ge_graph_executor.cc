@@ -40,10 +40,8 @@
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
-#include "runtime/dev.h"
-#include "runtime/stream.h"
-#include "runtime/mem.h"
-#include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
+#include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "ge/ge_graph_compile_summary.h"
 #include "kernel/kernel_build_info.h"
@@ -568,8 +566,7 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto runtime_instance = dynamic_cast<AscendKernelRuntime *>(
-    device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id));
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
   for (auto &child_graph : kernel_graph->child_graph_order()) {
@@ -763,7 +760,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
       return false;
     }
   } else {
-    AscendGraphOptimization::GetInstance().OptimizeGEGraph(graph);
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph);
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   SetDynamicShapeAttr(graph);
@@ -825,7 +822,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
         return false;
       }
     } else {
-      AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
+      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg);
       (void)BuildDFGraph(kg, tensor_order_map, false);
     }
     SetDynamicShapeAttr(kg);

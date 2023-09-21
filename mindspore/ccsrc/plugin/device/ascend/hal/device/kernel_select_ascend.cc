@@ -24,32 +24,28 @@
 #include <utility>
 #include <vector>
 #include <tuple>
-#include <algorithm>
 #include <functional>
+#include "include/backend/optimizer/helper.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "ops/ascend_op_name.h"
-#include "ops/nn_optimizer_op_name.h"
 #include "ops/math_op_name.h"
 #include "ops/conv_pool_ops.h"
 #include "ops/other_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
-#include "plugin/device/ascend/kernel/kernel_query.h"
-#include "kernel/oplib/oplib.h"
-#include "kernel/oplib/super_bar.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/debug/anf_ir_dump.h"
-#include "frontend/operator/ops.h"
-#include "utils/trace_base.h"
 #include "ops/op_name.h"
 #include "kernel/common_utils.h"
-#include "kernel/kernel_build_info.h"
+#include "kernel/oplib/oplib.h"
+#include "kernel/oplib/super_bar.h"
+#include "plugin/device/ascend/kernel/kernel_query.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
-#include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.h"
+#include "frontend/operator/ops.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace device {
@@ -1335,7 +1331,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
                    << kernel_node->fullname_with_scope() << " in aicpu kernel select.";
     }
 
-    opt::ConvertAttrAndInputBeforeAicpuKernelSelect(kernel_node);
+    kernel::ConvertAttrAndInputBeforeAicpuKernelSelect(kernel_node);
     FallbackOps(kernel_node);
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
