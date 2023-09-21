@@ -394,9 +394,19 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "./lenet.ckpt",
         ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
-        >>> param_dict = ms.load_checkpoint("./lenet.ckpt")
-        >>> print(param_dict)
+        >>> param_dict1 = ms.load_checkpoint("./lenet.ckpt")
+        >>> print(param_dict1)
         {'conv2.weight': Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)}
+        >>> params_list = net.trainable_params()
+        >>> ms.save_checkpoint(params_list, "./lenet_list.ckpt",
+        ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv2"))
+        >>> param_dict2 = ms.load_checkpoint("./lenet_list.ckpt")
+        >>> print(param_dict2)
+        {'conv1.weight': Parameter (name=conv1.weight, shape=(6, 1, 5, 5), dtype=Float32, requires_grad=True)}
+        >>> ms.save_checkpoint(param_dict2, "./lenet_dict.ckpt")
+        >>> param_dict3 = ms.load_checkpoint("./lenet_dict.ckpt")
+        >>> print(param_dict3)
+        {'conv1.weight': Parameter (name=conv1.weight, shape=(6, 1, 5, 5), dtype=Float32, requires_grad=True)}
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
