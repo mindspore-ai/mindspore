@@ -574,6 +574,9 @@ bool GraphReusingAction(const ResourcePtr &resource) {
       MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
       continue;
     }
+    if (cell_key.find("lazy_inline") == cell_key.npos) {
+      continue;
+    }
     auto reusing_graph = GenerateReusingGraph(fg);
     if (reusing_graph == nullptr) {
       MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
