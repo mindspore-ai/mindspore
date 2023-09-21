@@ -32,6 +32,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "ops/ascend_op_name.h"
+#include "ops/framework_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -689,8 +690,19 @@ string HcclAdapter::GetHcomGroup(const CNodePtr &cnode) const {
                     ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
                     : std::vector<uint32_t>();
   auto new_group = DoGetHcomGroup(group_name, rank_ids);
+
   MS_LOG(INFO) << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
                << ", new group: " << new_group;
+
+  if (cnode->HasAttr(parallel::FIRST_RECEIVE)) {
+    return new_group;
+  }
+  const auto &node_name = common::AnfAlgo::GetCNodeName(cnode);
+  static const auto send_recv_parallel = (common::GetEnv("SEND_RECV_PARALLEL") == "1");
+  if ((node_name == kSendOpName || node_name == kReceiveOpName) && !send_recv_parallel) {
+    MS_LOG(DEBUG) << "hcom node: " << cnode->fullname_with_scope() << "is set to group: -1.";
+    return "-1";
+  }
 
   return new_group;
 }
