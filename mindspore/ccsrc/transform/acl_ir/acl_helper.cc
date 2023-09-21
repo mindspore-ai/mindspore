@@ -532,6 +532,22 @@ std::string AclHelper::GetFormatFromAttr(const PrimitivePtr &primitive) {
   return format;
 }
 
+bool AclHelper::GetDefaultFormatFlagFromAttr(const PrimitivePtr &primitive, bool is_input) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  bool is_default = true;
+  auto key = is_input ? kAttrInputDefaultFormat : kAttrOutputDefaultFormat;
+  auto attrs = primitive->attrs();
+  if (attrs.count(key) != 0) {
+    auto attr_value = attrs.at(key);
+    if (attr_value->isa<BoolImm>()) {
+      is_default = GetValue<bool>(attr_value);
+    } else {
+      MS_LOG(DEBUG) << "The attr: " << key << " is not a valid value.";
+    }
+  }
+  return is_default;
+}
+
 int64_t AclHelper::GetFracZGroupFromAttr(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto attrs = primitive->attrs();
@@ -541,7 +557,7 @@ int64_t AclHelper::GetFracZGroupFromAttr(const PrimitivePtr &primitive) {
     if (attr_value->isa<Int64Imm>()) {
       fracz_group = GetValue<int64_t>(attr_value);
     } else {
-      MS_LOG(DEBUG) << "The FracZGroup attr format is not a valid value.";
+      MS_LOG(DEBUG) << "The FracZGroup attr is not a valid value.";
     }
   }
   return fracz_group;

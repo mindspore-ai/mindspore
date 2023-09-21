@@ -52,15 +52,21 @@ void LaunchTransData::SetKernelBuildInfo() {
     std::vector<kernel::KernelObjectType> output_object_types{kernel::KernelObjectType::TENSOR};
     // set build info
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    builder->SetKernelType(KernelType::ACL_KERNEL);
     builder->SetInputsDeviceType(device_type);
     builder->SetOutputsDeviceType(device_type);
-    builder->SetKernelType(KernelType::ACL_KERNEL);
     builder->SetInputsFormat(inputs_format);
     builder->SetOutputsFormat(outputs_format);
     builder->SetInputsKernelObjectType(input_object_types);
     builder->SetOutputsKernelObjectType(output_object_types);
+    builder->SetInputsReshapeType({});
+    builder->SetOutputsReshapeType({});
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transdata_node.get());
     // set attr
+    bool in_def_flag = IsOneOfDefaultFormat(input_format);
+    bool out_def_flag = IsOneOfDefaultFormat(output_format);
+    common::AnfAlgo::SetNodeAttr(kAttrInputDefaultFormat, MakeValue(in_def_flag), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputDefaultFormat, MakeValue(out_def_flag), transdata_node);
     common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), transdata_node);
     common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), transdata_node);
     common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups_), transdata_node);
@@ -75,7 +81,7 @@ void LaunchTransData::ConstructKernelGraph() {
   std::vector<ShapeVector> input_shapes = {{shape_}};
   std::vector<ShapeVector> output_shapes = {{shape_}};
   kernel_graph_ = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
-    kTransDataOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
+    kIdentityOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
 }
 

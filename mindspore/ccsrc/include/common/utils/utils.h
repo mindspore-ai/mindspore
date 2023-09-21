@@ -46,6 +46,8 @@ constexpr auto kAttrBins = "bins";
 constexpr auto kAttrMin = "min";
 constexpr auto kAttrMax = "max";
 constexpr auto kAttrCopyData = "need_copy";
+constexpr auto kAttrInputDefaultFormat = "input_default_format";
+constexpr auto kAttrOutputDefaultFormat = "output_default_format";
 constexpr auto kAttrConvertAttrNode = "convert_attr_node";
 constexpr auto kAttrNeedCast = "need_cast";
 constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
@@ -609,6 +611,7 @@ COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &nam
 COMMON_EXPORT bool IsOneOfComputeDepend(const std::string &name);
 COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
+COMMON_EXPORT bool IsOneOfDefaultFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 COMMON_EXPORT bool IsOneOfDynRankNeedPadShape(const std::string &format);
 COMMON_EXPORT bool IsOneOfUnsignedType(const TypeId &type_id);

@@ -56,6 +56,7 @@ class AclHelper {
   // Get special information from kernel's attribute.
   static std::string GetFormatFromAttr(const PrimitivePtr &primitive);
   static int64_t GetFracZGroupFromAttr(const PrimitivePtr &primitive);
+  static bool GetDefaultFormatFlagFromAttr(const PrimitivePtr &primitive, bool is_input);
 
   // Get kernel's precision mode is FORCE_FP32.
   static bool GetMoreDataTypeSupported(TypeId data_type, const std::string &op_type);

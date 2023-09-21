@@ -220,6 +220,12 @@ bool IsOneOfHWSpecialFormat(const std::string &format) {
   return iter != kHWSpecialFormatSet.end();
 }
 
+bool IsOneOfDefaultFormat(const std::string &format) {
+  static const std::set<std::string> kOpDefaultFormatList = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCDHW,
+                                                             kOpFormat_NCHW};
+  return kOpDefaultFormatList.find(format) != kOpDefaultFormatList.end();
+}
+
 bool IsOneOfFormat(const std::string &format) {
   static const std::set<std::string> kOpFormatList = {
     kOpFormat_DEFAULT,        kOpFormat_NC1KHKWHWC0,  kOpFormat_ND,

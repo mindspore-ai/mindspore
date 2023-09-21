@@ -31,6 +31,6 @@ if(${try_result})
             LIBRARY DESTINATION lib/plugin/ascend
             )
 else()
-    message(WARNING "Ignore bisheng ops because bisheng toolchain test failed, message: \n ${out}")
+    message(WARNING "Ignore bisheng ops because bisheng toolchain test failed.")
 endif()
 
