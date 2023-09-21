@@ -60,6 +60,7 @@ def test_relu():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_relu_vmap():
     """
     Feature: test vmap function.
@@ -67,7 +68,7 @@ def test_relu_vmap():
     Expectation: expect correct result.
     """
     axes = -1
-    x = ms.Tensor(np.random.randint(low=-10, high=10, size=(4, 3, 2)).astype(np.float32)) * 0.1
+    x = ms.Tensor(np.random.uniform(low=-1, high=1, size=(4, 3, 2)).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(relu_forward_func, in_axes=axes, out_axes=axes), in_axes=axes, out_axes=axes)
     out = net_vmap(x)
     expect_out = relu_forward_func(x)

@@ -53,6 +53,7 @@ def test_relu_grad():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_relu_grad_vmap():
     """
     Feature: test vmap function.
@@ -61,7 +62,7 @@ def test_relu_grad_vmap():
     """
     axes = (-1, -1)
     dy = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))
-    x = ms.Tensor(np.random.randint(low=-10, high=10, size=(4, 3, 2)).astype(np.float32)) * 0.1
+    x = ms.Tensor(np.random.uniform(low=-1, high=1, size=(4, 3, 2)).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(relu_grad_func, in_axes=axes, out_axes=-1), in_axes=axes, out_axes=-1)
     out = net_vmap(dy, x)
     expect_out = relu_grad_func(dy, x)

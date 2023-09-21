@@ -68,7 +68,7 @@ def test_relu6_vmap():
     Expectation: expect correct result.
     """
     axes = -1
-    x = ms.Tensor(np.random.randint(low=-5, high=10, size=(4, 3, 2)).astype(np.float32))
+    x = ms.Tensor(np.random.uniform(low=-5, high=10, size=(4, 3, 2)).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(relu6_forward_func, in_axes=axes, out_axes=axes), in_axes=axes, out_axes=axes)
     out = net_vmap(x)
     expect_out = relu6_forward_func(x)

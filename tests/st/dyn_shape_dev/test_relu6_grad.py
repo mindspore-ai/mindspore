@@ -61,8 +61,8 @@ def test_relu6_grad_vmap():
     Expectation: expect correct result.
     """
     axes = (-1, -1)
-    dy = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))
-    x = ms.Tensor(np.random.randint(low=-5, high=10, size=(4, 3, 2)).astype(np.float32))
+    dy = ms.Tensor(np.random.uniform(size=(4, 3, 2)).astype(np.float32))
+    x = ms.Tensor(np.random.uniform(low=-5, high=10, size=(4, 3, 2)).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(relu6_grad_func, in_axes=axes, out_axes=-1), in_axes=axes, out_axes=-1)
     out = net_vmap(dy, x)
     expect_out = relu6_grad_func(dy, x)
