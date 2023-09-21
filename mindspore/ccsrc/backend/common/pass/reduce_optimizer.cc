@@ -19,7 +19,6 @@
 #include <set>
 #include <string>
 #include "ops/math_op_name.h"
-#include "ops/array_ops.h"
 #include "ops/gen_ops_primitive.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"

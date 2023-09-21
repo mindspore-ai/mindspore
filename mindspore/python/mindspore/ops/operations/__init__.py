@@ -34,7 +34,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
                         Eye, Fill, Gather, GatherD, GatherNd, Identity, Im2Col, InvertPermutation,
                         LowerBound, Lstsq, MaskedFill, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
-                        Padding, ParallelConcat, PopulationCount, Range, Rank, Reshape, ResizeNearestNeighbor,
+                        Padding, ParallelConcat, PopulationCount, Range, Reshape, ResizeNearestNeighbor,
                         ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
                         ScatterDiv, ScatterMax, ScatterMin, ScatterMul, ScatterNd, ScatterNdAdd, ScatterNdDiv,
                         ScatterNdMax, ScatterNdMin, ScatterNdSub, ScatterNdUpdate, ScatterSub,
@@ -136,6 +136,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BNTrainingReduce, BNTrainingUpdate, DropoutGenMask, Gelu, FastGelu,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
+from .manually_defined import (Rank,)
 
 __all__ = [
     'HSVToRGB',

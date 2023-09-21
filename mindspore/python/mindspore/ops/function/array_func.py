@@ -70,7 +70,6 @@ tile_ = P.Tile()
 unique_with_pad_ = P.UniqueWithPad()
 size_ = P.Size()
 shape_ = P.Shape()
-rank_ = P.Rank()
 tensor_shape_ = P.TensorShape()
 reshape_ = P.Reshape()
 tensor_slice = P.Slice()
@@ -1534,39 +1533,6 @@ def dyn_shape(input_x):
         [3 2 1]
     """
     return tensor_shape_(input_x)
-
-
-def rank(input_x):
-    """
-    Returns the rank of a tensor.
-
-    Returns a 0-D int32 Tensor representing the rank of input; the rank of a tensor
-    is the number of indices required to uniquely select each element of the tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
-
-    Returns:
-        Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`. The data type is an int.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.rank(input_tensor)
-        >>> print(output)
-        2
-        >>> print(type(output))
-        <class 'int'>
-    """
-    return rank_(input_x)
 
 
 def reshape(input, shape):
@@ -7664,7 +7630,6 @@ __all__ = [
     'full',
     'full_like',
     'dyn_shape',
-    'rank',
     'range',
     'arange',
     'reshape',

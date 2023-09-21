@@ -1271,38 +1271,6 @@ class Split(Primitive):
         self.add_prim_attr('num_split', self.output_num)
 
 
-class Rank(Primitive):
-    """
-    Returns the rank of a tensor.
-
-    Refer to :func:`mindspore.ops.rank` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> rank = ops.Rank()
-        >>> output = rank(input_tensor)
-        >>> print(output)
-        2
-        >>> print(type(output))
-        <class 'int'>
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Rank"""
-
-    def __call__(self, x):
-        if not isinstance(x, (Tensor, Tensor_)):
-            raise TypeError("the input x must be Tensor!")
-        return len(x.shape)
-
-
 class Size(Primitive):
     r"""
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the

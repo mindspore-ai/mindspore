@@ -15,18 +15,18 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import context
+from mindspore import Tensor, context
 from mindspore import ops
 
 
 @ms.jit
-def range_forward_func(start, limit, delta):
-    return ops.auto_generate.range(start, limit, delta, maxlen=10)
+def rank_forward_func(x):
+    return ops.operations.manually_defined.rank(x)
 
 
 @ms.jit
-def range_backward_func(start, limit, delta):
-    return ops.grad(range_forward_func, (0, 1, 2))(start, limit, delta)
+def rank_backward_func(x):
+    return ops.grad(rank_forward_func, (0))(x)
 
 
 @pytest.mark.level0
@@ -35,21 +35,17 @@ def range_backward_func(start, limit, delta):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_range_forward(mode):
+def test_rank_forward(mode):
     """
-    Feature: range ops.
-    Description: test ops range.
-    Expectation: output a sequence of numbers that begins at "start" and extlimits by increments of "delta" up to but
-    not including "limit".
+    Feature: rank ops.
+    Description: test ops rank.
+    Expectation: output the right rank of a tensor.
     """
     context.set_context(mode=mode)
-    start = 0
-    limit = 10
-    delta = 2
-    output = range_forward_func(start, limit, delta)
-    print("output:", output)
-    expect_output = np.array([0, 2, 4, 6, 8]).astype(np.int64)
-    np.testing.assert_array_equal(output.asnumpy(), expect_output)
+    x = Tensor(np.array([[2, 2], [2, 2]]).astype(np.float32))
+    output = rank_forward_func(x)
+    expect_output = 2
+    np.testing.assert_equal(output, expect_output)
 
 
 @pytest.mark.level0
@@ -58,15 +54,14 @@ def test_range_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_range_backward(mode):
+def test_rank_backward(mode):
     """
-    Feature: range ops.
-    Description: test auto grad of ops range.
+    Feature: rank ops.
+    Description: test auto grad of ops rank.
     Expectation: output the right grad.
     """
     context.set_context(mode=mode)
-    start = 0
-    limit = 10
-    delta = 2
-    output = range_backward_func(start, limit, delta)
-    print("output:", output)
+    x = Tensor(np.array([[2, 2], [2, 2]]).astype(np.float32))
+    output = rank_backward_func(x)
+    expect_output = np.array([[0, 0], [0, 0]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect_output)

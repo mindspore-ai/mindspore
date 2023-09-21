@@ -20,6 +20,8 @@ from mindspore.ops import signature as sig
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
+from mindspore.common import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 
 
 class BatchNorm(Primitive):
@@ -149,3 +151,69 @@ def batch_norm_(input_x,
     batch_norm_op = _get_cache_prim(BatchNorm)(is_training, epsilon, momentum,
                                                data_format)
     return batch_norm_op(input_x, scale, bias, mean, variance)
+
+class Rank(Primitive):
+    """
+    Returns the rank of a tensor.
+
+    Refer to :func:`mindspore.ops.rank` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> rank = ops.Rank()
+        >>> output = rank(input_tensor)
+        >>> print(output)
+        2
+        >>> print(type(output))
+        <class 'int'>
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Rank"""
+
+    def __call__(self, x):
+        if not isinstance(x, (Tensor, Tensor_)):
+            raise TypeError("the input x must be Tensor!")
+        return len(x.shape)
+
+
+def rank(x):
+    """
+    Returns the rank of a tensor.
+
+    Returns a 0-D int32 Tensor representing the rank of input; the rank of a tensor
+    is the number of indices required to uniquely select each element of the tensor.
+
+    Args:
+        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+
+    Returns:
+        Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`. The data type is an int.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> output = ops.rank(input_tensor)
+        >>> print(output)
+        2
+        >>> print(type(output))
+        <class 'int'>
+
+    """
+    rank_op = _get_cache_prim(Rank)()
+    return rank_op(x)
