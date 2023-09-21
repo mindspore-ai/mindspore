@@ -2579,9 +2579,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                        << "' to be nonconstant. To convert to PyExecute() afterwards";
           non_const_err_ = true;
         } else {
-          MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
+          MS_EXCEPTION(ValueError) << "When handling script '" << script << " in graph mode"
                                    << "', the inputs should be constant, but found variable '" << py_data_name
-                                   << "' to be nonconstant.";
+                                   << "' to be nonconstant. Try to set jit_syntax_level to LAX.";
         }
       }
     }
