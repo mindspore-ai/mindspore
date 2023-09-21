@@ -6144,7 +6144,8 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        axis (int): The dimension to reduce. Default: ``None`` .
+        axis (int): The dimension to reduce. When `axis` is ``None``, computing the maximum value of all elements
+            in `input` .Default: ``None`` .
         keepdims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
             the output will reduce dimension if false. Default: ``False`` .
 
