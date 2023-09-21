@@ -99,7 +99,7 @@ class AscendHCCLGenerator:
     @staticmethod
     def _rdma_analyse(groupby_transport):
         """rdma analyse"""
-        thread_groups, _, _, _ = np.unique(groupby_transport['tid'])
+        thread_groups = np.unique(groupby_transport['tid'])
         thread_information = []
         for thread_index in thread_groups:
             groupby_thread = groupby_transport[groupby_transport['tid'] == thread_index]
@@ -107,7 +107,7 @@ class AscendHCCLGenerator:
             rdma_communication_size = 0
             rdma_communication_wait_time = 0
             start_index = 0
-            end_index = groupby_thread.size - 1
+            end_index = groupby_thread.size - 2
             while start_index < end_index:
                 first_task_type = groupby_thread[start_index]['task_type']
                 if first_task_type == 'RDMASend':
@@ -234,7 +234,7 @@ class AscendHCCLGenerator:
             transport_information = dict()
             for transport_index in transport_groups:
                 groupby_transport = groupby_link_info[groupby_link_info['transport_type'] == transport_index]
-                if transport_index == 'SDMA':
+                if transport_index == 'SDMA' and groupby_transport.size > 0:
                     groupby_sdma = \
                         groupby_transport[np.isin(groupby_transport['task_type'], ['Memcpy', 'Reduce Inline'])][
                             ['dur', 'size']]
@@ -243,7 +243,7 @@ class AscendHCCLGenerator:
                     sdma_bandwidth = sdma_communication_size / sdma_communication_time * 1e-3 \
                         if sdma_communication_time != 0 else 0
                     transport_information['SDMA'] = [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
-                elif transport_index == 'RDMA':
+                elif transport_index == 'RDMA' and groupby_transport.size > 0:
                     transport_information['RDMA'] = self._rdma_analyse(groupby_transport)
             link_info_information[link_info_index] = transport_information
         return link_info_information
