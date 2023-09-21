@@ -21,7 +21,6 @@
 #include "utils/tensor_construct_utils.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
-#include "include/backend/optimizer/helper.h"
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/gcd.h"
 #include "ops/test_value_utils.h"

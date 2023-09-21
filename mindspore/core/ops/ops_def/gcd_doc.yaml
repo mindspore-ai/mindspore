@@ -27,7 +27,6 @@ gcd:
             >>> from mindspore import Tensor, ops
             >>> x1 = Tensor(np.array([7, 8, 9]))
             >>> x2 = Tensor(np.array([14, 6, 12]))
-            >>> gcd_ = ops.gcd()
-            >>> y = gcd_(x1, x2)
+            >>> y = ops.gcd(x1, x2)
             >>> print(y)
             [7 2 3]

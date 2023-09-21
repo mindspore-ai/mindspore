@@ -56,10 +56,7 @@ std::vector<KernelAttr> GeLUGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool GeLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto prim = base_operator->GetPrim();
-  auto kernel_name_ = prim->name();
+bool GeLUGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kGeluInputsNum || outputs.size() != kGeluOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kGeluInputsNum << " and "
                   << kGeluOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -78,11 +75,9 @@ bool GeLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int GeLUGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int GeLUGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
