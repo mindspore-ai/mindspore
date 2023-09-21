@@ -244,6 +244,7 @@ Status OperatorInfo::CheckLayoutConfigBase() {
 
       // divisible
       auto shard_num = dev_matrix_shape_[dev_matrix_size - LongToSize(map) - 1];
+      MS_EXCEPTION_IF_ZERO("shard_num", shard_num);
       if (inputs_shape_[j][k] % shard_num != 0) {
         MS_LOG(ERROR) << name_ << ": the shape is not divisible by layout, the input shape is " << inputs_shape_
                       << ", the dev matrix is " << dev_matrix_shape_ << ", and the tensor map is "
@@ -786,6 +787,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     return SUCCESS;
   }
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
+  MS_EXCEPTION_IF_ZERO("optimizer_weight_shard_size", optimizer_weight_shard_size);
   if (optimizer_weight_shard_size != -1) {
     // not fully use opt shard
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
@@ -818,6 +820,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     // create mirror group
     // eg: optimizer_weight_shard_size = 2, [0, 8, 16, 24] -> [0, 16], [8, 24]
     int64_t device_num = g_device_manager->stage_device_num();
+    MS_EXCEPTION_IF_ZERO("repeated_size", repeated_size);
     Shape dev_mat = {repeated_size, device_num / repeated_size};
     DeviceMatrix temp_dev_matrix(rank, stage_device_list_, dev_mat);
     RankList mirror_group_devices;
@@ -856,6 +859,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
   auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_aggregated_save();
   if (!integrated_save) {
     tensor_layout->set_opt_weight_shard_size(LongToInt(optimizer_weight_shard_size));
+    MS_EXCEPTION_IF_ZERO("SizeToLong(group_devices.size()) - 1", SizeToLong(group_devices.size()) - 1);
     int64_t opt_weight_shard_step =
       (group_devices.back() - group_devices.front()) / (SizeToLong(group_devices.size()) - 1);
     tensor_layout->set_opt_weight_shard_step(LongToInt(opt_weight_shard_step));
@@ -1499,6 +1503,7 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
   if (dev_num_2_power == 0) {
     return GenerateStrategiesForIndependentInputsBase(stage_id, dev_num, inputs_shape, splittable_inputs, sp_vector);
   }
+  MS_EXCEPTION_IF_ZERO("dev_num - dev_num_2_power", dev_num - dev_num_2_power);
   auto dev_num_not_2_power = dev_num / (dev_num - dev_num_2_power);
   std::vector<StrategyPtr> sp_vector_2_power_part;
   if (GenerateStrategiesForIndependentInputsBase(stage_id, dev_num - dev_num_2_power, inputs_shape, splittable_inputs,
@@ -1520,6 +1525,7 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
         auto new_stra_arrays{stra_arrays};
         new_stra_arrays[i][j] = new_stra_arrays[i][j] * UlongToLong(dev_num_not_2_power);
         // discard invalid strategy
+        MS_EXCEPTION_IF_ZERO("new_stra_arrays[i][j]", new_stra_arrays[i][j]);
         if (inputs_shape[i][j] % new_stra_arrays[i][j] != 0) {
           continue;
         }
@@ -1763,6 +1769,7 @@ void OperatorInfo::ApproximateStrategies() {
   }
   MS_LOG(INFO) << name_ << ": Approximating strategy-cost";
   auto epsilon = CostModelContext::GetInstance()->dp_algo_approxi_epsilon();
+  MS_EXCEPTION_IF_ZERO("epsilon", epsilon);
   auto target_num = static_cast<size_t>(std::ceil(1.0 / epsilon));
   if (strategy_cost_.size() <= target_num) {
     MS_LOG(INFO) << name_ << "'s strategy number is: " << strategy_cost_.size()
@@ -1783,6 +1790,7 @@ void OperatorInfo::ApproximateStrategies() {
       }
       return false;
     });
+  MS_EXCEPTION_IF_ZERO("target_num", target_num);
   size_t step_length = origin_stra_cost.size() / target_num;
   for (size_t i = 0; ret.size() < target_num && static_cast<size_t>(i * step_length) < origin_stra_cost.size(); ++i) {
     ret.push_back(origin_stra_cost[static_cast<size_t>(i * step_length)]);

@@ -87,16 +87,18 @@ Status CropAndResizeInfo::InferBias() {
   auto strategies = strategy_->GetInputDim();
   auto x_strategy = strategies.at(0);
   Shape x_shape = inputs_shape_.at(0);
+  MS_EXCEPTION_IF_ZERO("x_strategy[0]", x_strategy[0]);
   if (x_shape[0] % x_strategy[0] != 0) {
     return FAILED;
   }
+  int64_t dev_accu =
+    std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+  MS_EXCEPTION_IF_ZERO("dev_accu", dev_accu);
   slice_size_ = x_shape[0] / x_strategy[0];
   if (repeated_calc_num_ > 1 && !repeated_num_in_dev_matrix_right_) {
     bias_ = rank / dev_matrix_shape_[2] / dev_matrix_shape_[3] % dev_matrix_shape_[1] * slice_size_;
   } else {
-    bias_ = rank /
-            std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>()) *
-            slice_size_;
+    bias_ = rank / dev_accu * slice_size_;
   }
 
   MS_LOG(INFO) << "Sharding batch, the rank is " << rank << ", slice size is " << slice_size_ << ", bias is " << bias_;

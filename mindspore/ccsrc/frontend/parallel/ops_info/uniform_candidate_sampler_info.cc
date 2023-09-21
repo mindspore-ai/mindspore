@@ -202,6 +202,7 @@ Status UniformCandidateSamplerInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
+  MS_EXCEPTION_IF_ZERO("input_strategy[1]", input_strategy[1]);
   auto slice_num_true = num_true_ / input_strategy[1];
   // Get the attributes of the UnsortedSegmentMin
   Attr attr_num_ture = std::make_pair(NUM_TRUE, MakeValue(slice_num_true));

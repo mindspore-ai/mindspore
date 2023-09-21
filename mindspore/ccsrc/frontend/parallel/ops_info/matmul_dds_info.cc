@@ -60,6 +60,8 @@ Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
       return FAILED;
     }
   }
+  MS_EXCEPTION_IF_ZERO("stras[0][0]", stras[0][0]);
+  MS_EXCEPTION_IF_ZERO("stras[0][1]", stras[0][1]);
   if (stras[0][0] != stras[1][0] || num_heads_ % stras[0][0] != 0) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[0][0]:" << stras[0][0]
                   << " should be equal to strategys[1][0]:" << stras[1][0]
@@ -245,6 +247,8 @@ Status MatmulDDSInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   int64_t new_num_heads;
   int64_t batch_shard_num = strategy_->GetInputDim()[0][1];
   int64_t heads_shard_num = strategy_->GetInputDim()[0][0];
+  MS_EXCEPTION_IF_ZERO("batch_shard_num", batch_shard_num);
+  MS_EXCEPTION_IF_ZERO("heads_shard_num", heads_shard_num);
   new_batch_size = batch_size_ / batch_shard_num;
   new_num_heads = num_heads_ / heads_shard_num;
   ValuePtr new_bs_value = MakeValue(new_batch_size);

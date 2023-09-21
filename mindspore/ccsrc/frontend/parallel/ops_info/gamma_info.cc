@@ -143,10 +143,12 @@ void GammaInfo::ReplaceNodeInputOrAttrs() {
     seed_bias += SEED_NUM;
     ++SEED_NUM;
   }
+  MS_EXCEPTION_IF_ZERO("repeated_calc_num_", repeated_calc_num_);
   if (repeated_num_in_dev_matrix_right_) {
     seed_bias += rank_id / repeated_calc_num_;
   } else {
     int64_t device_num = stage_device_size_;
+    MS_EXCEPTION_IF_ZERO("device_num", device_num);
     seed_bias += rank_id % (device_num / repeated_calc_num_);
   }
 

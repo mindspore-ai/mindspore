@@ -101,6 +101,7 @@ Status TileInfo::InferDevMatrixShape() {
     if (full_multiples_[i] == 1) {
       continue;
     }
+    MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[i]", dev_matrix_shape_[i]);
     slice_multiples_[i] = slice_multiples_[i] / dev_matrix_shape_[i];
   }
   return SUCCESS;

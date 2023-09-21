@@ -405,7 +405,7 @@ Status ManualImpl::CheckStrategy(const Shape &param_strategy, const Shape &indic
                   << " must be equal to manual split size " << param_split_shapes_.size();
     return FAILED;
   }
-
+  MS_EXCEPTION_IF_ZERO("indices_strategy[indices_split_dim]", indices_strategy[indices_split_dim]);
   int64_t min_param_slice_row = inputs_shape_[1][indices_split_dim] / indices_strategy[indices_split_dim];
   bool invalid = std::any_of(param_split_shapes_.begin(), param_split_shapes_.end(),
                              [&min_param_slice_row](int64_t v) { return v < min_param_slice_row; });
@@ -589,6 +589,7 @@ Status ShardBatchAndAxisImpl::InferDevMatrixShape() {
     std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (shard_product < stage_device_size) {
+    MS_EXCEPTION_IF_ZERO("shard_product", shard_product);
     repeated_calculation_num_ = stage_device_size / shard_product;  // set repeated calculation num
   }
   return SUCCESS;
@@ -614,6 +615,7 @@ Status ShardBatchAndAxisImpl::InferBias() {
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->rank_index_in_stage();
   auto input_shape = inputs_shape_.at(0);
+  MS_EXCEPTION_IF_ZERO("param_strategy_[0]", param_strategy_[0]);
   slice_size_ = input_shape[0] / param_strategy_[0];
   bias_ = rank % param_strategy_[0] * slice_size_;
   MS_LOG(INFO) << name_ << ": Sharding batch and axis, the rank is " << rank << ", slice size is " << slice_size_
@@ -624,6 +626,7 @@ Status ShardBatchAndAxisImpl::InferBias() {
 void ShardAxisImpl::SetAttribute(const Shape &param_strategy) {
   // axis=0, index_shape(0)%param_strategy(0) must be 0
   Shape index_shape = inputs_shape_.at(1);
+  MS_EXCEPTION_IF_ZERO("param_strategy.at(0)", param_strategy.at(0));
   if ((axis_ == 0) && (index_shape.at(0) % param_strategy.at(0) != 0) && !dynamic_shape_indices_) {
     MS_LOG(INFO) << name_ << ": index_shape(0) can't be divided by param_strategy(0), use allreduce in forward";
     axis_split_forward_allreduce_ = true;
@@ -690,6 +693,7 @@ Status ShardAxisImpl::CheckStrategy(const Shape &param_strategy, const Shape &in
   }
 
   // axis != 0, param_shape(0)%(param_strategy(0)*param_strategy(axis)) must be 0
+  MS_EXCEPTION_IF_ZERO("param_strategy", param_strategy.at(0) * param_strategy.at(LongToSize(axis_)));
   if (axis_ != 0 && inputs_shape_[0][0] % (param_strategy.at(0) * param_strategy.at(LongToSize(axis_))) != 0) {
     MS_LOG(ERROR) << name_ << ": param_shape(0) can't be divided by (param_strategy(0)*param_strategy(axis)).";
     return FAILED;
@@ -727,6 +731,7 @@ Status ShardAxisImpl::InferDevMatrixShape() {
     std::accumulate(indices_strategy_.begin(), indices_strategy_.end(), 1, std::multiplies<int64_t>());
   auto stage_device_size = SizeToLong(g_device_manager->GetDeviceListInThisStage().size());
   if (param_product * index_product < stage_device_size) {
+    MS_EXCEPTION_IF_ZERO("param_product * index_product", param_product * index_product);
     repeated_calculation_num_ = stage_device_size / (param_product * index_product);  // set the repeat calc num
     if (repeated_num_in_dev_matrix_right_) {
       out_dev_matrix_shape_.push_back(repeated_calculation_num_);
@@ -879,6 +884,7 @@ Status ShardAxisImpl::InferBias() {
   auto input_shape = inputs_shape_.at(0);
   // params_size=1, axis=0
   if ((input_shape.size() == 1) && (axis_ == 0)) {
+    MS_EXCEPTION_IF_ZERO("param_strategy_.at(0)", param_strategy_.at(0));
     slice_size_ = input_shape.at(0) / param_strategy_.at(0);
     // if repeated calculation, because the repeated num in the right of dev-matrix, so rank need to div repeated num
     if (repeated_calculation_num_ > 1) {
@@ -893,6 +899,8 @@ Status ShardAxisImpl::InferBias() {
   }
   // params_size=2, axis=0
   if ((input_shape.size() == 2) && (axis_ == 0)) {
+    MS_EXCEPTION_IF_ZERO("param_strategy_.at(0)", param_strategy_.at(0));
+    MS_EXCEPTION_IF_ZERO("param_strategy_.at(1)", param_strategy_.at(1));
     slice_size_ = input_shape.at(0) / param_strategy_.at(0);
     // if repeated calculation, because the repeated num in the right of dev-matrix, so rank need to div repeated num
     if (repeated_calculation_num_ > 1) {
@@ -915,6 +923,7 @@ Status ShardAxisImpl::InferBias() {
   }
   // params_size=2, axis=1
   if ((input_shape.size() == 2) && (axis_ == 1)) {
+    MS_EXCEPTION_IF_ZERO("param_strategy_.at(1)", param_strategy_.at(1));
     slice_size_ = input_shape.at(1) / param_strategy_.at(1);
     bias_ = rank % param_strategy_.at(1) * slice_size_;
     return SUCCESS;
@@ -1010,6 +1019,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto param_strategy = input_dim[0];
   auto indices_strategy = input_dim[1];
   MS_LOG(INFO) << name_ << ": the indices shape is " << inputs_shape_[1] << ", the strategy is " << input_dim[1];
+  MS_EXCEPTION_IF_ZERO("param_strategy.at(param_strategy.size() - 1)", param_strategy.at(param_strategy.size() - 1));
   auto slice_shape = param_shape.at(param_shape.size() - 1) / param_strategy.at(param_strategy.size() - 1);
   if ((target_ != CPU) && (slice_shape % 8 != 0) && (slice_shape != 1)) {
     MS_LOG(WARNING) << "Gather: Last dim of param slice shape is not 32Byte aligned.";
@@ -1090,6 +1100,7 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
 
   auto in_stra = strategy_->GetInputDim();
   auto param_strategy = in_stra[0];
+  MS_EXCEPTION_IF_ZERO("param_strategy[0]", param_strategy[0]);
   if (inputs_shape_[1].empty() || (inputs_shape_[1][0] % param_strategy[0] != 0)) {
     MS_LOG(ERROR) << name_ << ": index_shape[0] can't be divided by param_strategy[0], can not set output strategy";
     return FAILED;
