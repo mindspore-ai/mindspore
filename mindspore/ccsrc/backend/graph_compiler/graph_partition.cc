@@ -65,7 +65,7 @@ void CheckDiffTargetNum(const std::vector<AnfNodePtr> &nodes) {
       continue;
     }
     std::string cur_target = GetCNodeTarget(node);
-    if (target_set.find(cur_target) != target_set.end()) {
+    if (target_set.find(cur_target) == target_set.end()) {
       (void)target_set.emplace(cur_target);
     }
   }

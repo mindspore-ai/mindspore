@@ -207,7 +207,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
         continue;
       }
 
-      if (AnfUtils::IsRealKernel(node)) {
+      if (AnfUtils::IsRealKernel(input)) {
         to_visit.emplace(input);
         if (!independent_nodes_.empty() && visit_with_refcount) {
           auto inode = independent_nodes_.top();
