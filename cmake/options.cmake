@@ -76,6 +76,7 @@ if(ENABLE_ASAN)
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -static-libsan")
     endif()
+    add_compile_definitions(ENABLE_ASAN)
 endif()
 
 if(DEBUG_MODE)

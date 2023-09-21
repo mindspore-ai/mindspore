@@ -30,6 +30,12 @@ endif()
 if(ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "*.cu")
     set_property(SOURCE ${CUDA_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+    if(ENABLE_ASAN)
+        list(REMOVE_ITEM CUDA_SRC_LIST "gpu_hash_table.cu")
+    else()
+        list(REMOVE_ITEM CUDA_SRC_LIST "gpu_hash_table_dummy.cu")
+    endif()
+
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0")
         string(REPLACE "-arch=sm_53;" "" CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
