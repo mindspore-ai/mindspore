@@ -67,12 +67,23 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
   }
 }
 
-bool ContainsAnyType(const AbstractBasePtrList &args_abs_list) {
-  // Not check sequence elements.
-  // We suppose all sequential types are reserved.
+bool ContainsAbstractAnyInner(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<AbstractSequence>()) {
+    auto abs_list = abs->cast<AbstractSequencePtr>();
+    const auto &elements = abs_list->elements();
+    return std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &e) {
+      MS_EXCEPTION_IF_NULL(e);
+      return ContainsAbstractAnyInner(e);
+    });
+  }
+  return abs->isa<AbstractAny>();
+}
+
+bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
   return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
     MS_EXCEPTION_IF_NULL(item);
-    return item->isa<AbstractAny>();
+    return ContainsAbstractAnyInner(item);
   });
 }
 
@@ -219,9 +230,12 @@ void PresetCertainSideEffect(const FuncGraphPtr &func_graph) {
 }
 }  // namespace
 
+// MakeTuple and MakeList will handle AbstractAny in ops infer.
 const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{
-  prim::kPrimReturn,      prim::kPrimDepend, prim::kPrimSwitch,     prim::kPrimSwitchLayer,
-  prim::kPrimUpdateState, prim::kPrimLoad,   prim::kPrimIsConstant, prim::kPrimMakeKeywordArg};
+  prim::kPrimReturn,         prim::kPrimDepend,       prim::kPrimSwitch,      prim::kPrimSwitchLayer,
+  prim::kPrimUpdateState,    prim::kPrimLoad,         prim::kPrimIsConstant,  prim::kPrimMakeKeywordArg,
+  prim::kPrimIsShapeUnknown, prim::kPrimIsDimUnknown, prim::kPrimListGetItem, prim::kPrimTupleGetItem,
+  prim::kPrimSequenceLen,    prim::kPrimMakeDict,     prim::kPrimMutable};
 
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList args_abs_list;
@@ -724,7 +738,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   bool ignore_any_type_checking =
     (standard_prim_eval != nullptr &&
      ignore_any_type_checking_prims.find(standard_prim_eval->prim()) != ignore_any_type_checking_prims.end());
-  if (!ignore_any_type_checking && ContainsAnyType(args_abs_list)) {
+  if (!ignore_any_type_checking && ContainsAbstractAny(args_abs_list)) {
     MS_LOG(INFO) << ToString() << " receives arguments that contain Any.";
     auto any_abstract = std::make_shared<AbstractAny>();
     const auto &dtype = GetArgsUniqueDtype(args_abs_list);
@@ -732,6 +746,12 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
       MS_EXCEPTION_IF_NULL(any_abstract->element());
       any_abstract->element()->set_type(dtype);
       any_abstract->set_supposed_tensor_dtype(true);
+    }
+    for (const auto &abs : args_abs_list) {
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractSequence>()) {
+        SetSequenceElementsUseFlagsRecursively(abs, true);
+      }
     }
     res = std::make_shared<EvalResult>(any_abstract, std::make_shared<AttrValueMap>());
   } else {
