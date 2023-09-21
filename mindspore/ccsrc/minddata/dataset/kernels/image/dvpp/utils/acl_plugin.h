@@ -92,6 +92,18 @@ PLUGIN_METHOD(DvppNormalize, int, const std::shared_ptr<mindspore::dataset::Devi
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, std::vector<float>, std::vector<float>,
               bool);
 
+PLUGIN_METHOD(DvppAdjustBrightness, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
+
+PLUGIN_METHOD(DvppAdjustContrast, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
+
+PLUGIN_METHOD(DvppAdjustHue, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
+
+PLUGIN_METHOD(DvppAdjustSaturation, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
+
 // acl
 PLUGIN_METHOD(GetSocName, int, std::string *);
 

@@ -92,8 +92,9 @@ namespace dataset {
 PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustBrightnessOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustBrightnessOperation>>(*m, "AdjustBrightnessOperation")
-                    .def(py::init([](float brightness_factor) {
-                      auto adjust_brightness = std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor);
+                    .def(py::init([](float brightness_factor, std::string device_target) {
+                      auto adjust_brightness =
+                        std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor, device_target);
                       THROW_IF_ERROR(adjust_brightness->ValidateParams());
                       return adjust_brightness;
                     }));
@@ -102,8 +103,9 @@ PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(AdjustContrastOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustContrastOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustContrastOperation>>(*m, "AdjustContrastOperation")
-                    .def(py::init([](float contrast_factor) {
-                      auto adjust_contrast = std::make_shared<vision::AdjustContrastOperation>(contrast_factor);
+                    .def(py::init([](float contrast_factor, std::string device_target) {
+                      auto adjust_contrast =
+                        std::make_shared<vision::AdjustContrastOperation>(contrast_factor, device_target);
                       THROW_IF_ERROR(adjust_contrast->ValidateParams());
                       return adjust_contrast;
                     }));
@@ -124,8 +126,8 @@ PYBIND_REGISTER(
   AdjustHueOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AdjustHueOperation, TensorOperation, std::shared_ptr<vision::AdjustHueOperation>>(
       *m, "AdjustHueOperation")
-      .def(py::init([](float hue_factor) {
-        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor);
+      .def(py::init([](float hue_factor, std::string device_target) {
+        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor, device_target);
         THROW_IF_ERROR(adjust_hue->ValidateParams());
         return adjust_hue;
       }));
@@ -134,8 +136,9 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustSaturationOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustSaturationOperation>>(*m, "AdjustSaturationOperation")
-                    .def(py::init([](float saturation_factor) {
-                      auto ajust_saturation = std::make_shared<vision::AdjustSaturationOperation>(saturation_factor);
+                    .def(py::init([](float saturation_factor, std::string device_target) {
+                      auto ajust_saturation =
+                        std::make_shared<vision::AdjustSaturationOperation>(saturation_factor, device_target);
                       THROW_IF_ERROR(ajust_saturation->ValidateParams());
                       return ajust_saturation;
                     }));

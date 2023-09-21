@@ -116,7 +116,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -137,8 +137,39 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.brightness_factor = brightness_factor
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustBrightness(2.0).device("Ascend")]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustBrightnessOperation(self.brightness_factor)
+        return cde.AdjustBrightnessOperation(self.brightness_factor, self.device_target)
 
     def _execute_py(self, img):
         """
@@ -168,7 +199,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -189,8 +220,39 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.contrast_factor = contrast_factor
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustContrast(0).device("Ascend")]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustContrastOperation(self.contrast_factor)
+        return cde.AdjustContrastOperation(self.contrast_factor, self.device_target)
 
     def _execute_py(self, img):
         """
@@ -283,7 +345,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -304,8 +366,39 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.hue_factor = hue_factor
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustHue(0.5).device("Ascend")]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustHueOperation(self.hue_factor)
+        return cde.AdjustHueOperation(self.hue_factor, self.device_target)
 
     def _execute_py(self, img):
         """
@@ -336,7 +429,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If channel of the input image is not 3.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -357,8 +450,39 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.saturation_factor = saturation_factor
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustSaturation(2.0).device("Ascend")]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustSaturationOperation(self.saturation_factor)
+        return cde.AdjustSaturationOperation(self.saturation_factor, self.device_target)
 
     def _execute_py(self, img):
         """

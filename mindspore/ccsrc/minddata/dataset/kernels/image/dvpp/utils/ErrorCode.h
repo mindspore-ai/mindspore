@@ -102,9 +102,13 @@ enum {
   // fail to set acldvppCreatePicDesc
   APP_ERR_DVPP_CONFIG_FAIL = APP_ERR_DVPP_BASE + 13,  // DVPP: fail to set dvpp configuration,such as
   // resize configuration,crop configuration
-  APP_ERR_DVPP_OBJ_FUNC_MISMATCH = APP_ERR_DVPP_BASE + 14,  // DVPP: DvppCommon object mismatch the function
-  APP_ERR_DVPP_NORMALIZE_FAIL = APP_ERR_DVPP_BASE + 15,     // DVPP: normalize fail
-  APP_ERR_DVPP_END,                                         // Not an error code, define the range of common error code
+  APP_ERR_DVPP_OBJ_FUNC_MISMATCH = APP_ERR_DVPP_BASE + 14,       // DVPP: DvppCommon object mismatch the function
+  APP_ERR_DVPP_NORMALIZE_FAIL = APP_ERR_DVPP_BASE + 15,          // DVPP: normalize fail
+  APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL = APP_ERR_DVPP_BASE + 16,  // DVPP: adjust brightness fail
+  APP_ERR_DVPP_ADJUST_CONTRAST_FAIL = APP_ERR_DVPP_BASE + 17,    // DVPP: adjust contrast fail
+  APP_ERR_DVPP_ADJUST_HUE_FAIL = APP_ERR_DVPP_BASE + 18,         // DVPP: adjust hue fail
+  APP_ERR_DVPP_ADJUST_SATURATION_FAIL = APP_ERR_DVPP_BASE + 19,  // DVPP: adjust saturation fail
+  APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference
   APP_ERR_INFER_BASE = 3000,
