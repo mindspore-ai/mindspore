@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SQRT_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SQRT_GRAD_H_
 
-#ifndef MINDSPORE_CORE_OPS_GRAD_SQRT_GRAD_H_
-#define MINDSPORE_CORE_OPS_GRAD_SQRT_GRAD_H_
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSqrtGrad = "SqrtGrad";
-class MIND_API SqrtGrad : public BaseOperator {
+class MIND_API SqrtGradFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(SqrtGrad);
-  SqrtGrad() : BaseOperator(kNameSqrtGrad) { InitIOName({"y", "dy"}, {"z"}); }
-  void Init() const {}
+  SqrtGradFuncImpl() = default;
+  ~SqrtGradFuncImpl() = default;
+
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_GRAD_SQRT_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SQRT_GRAD_H_

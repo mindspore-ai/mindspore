@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SQRT_H_
-#define MINDSPORE_CORE_OPS_SQRT_H_
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/sqrt_grad.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSqrt = "Sqrt";
-/// \brief Returns square root of a tensor element-wise. Refer to Python API @ref mindspore.ops.Sqrt for more details.
-class MIND_API Sqrt : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(Sqrt);
-  /// \brief Constructor.
-  Sqrt() : BaseOperator(kNameSqrt) { InitIOName({"x"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+BaseShapePtr SqrtGradFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) const {
+  return EltwiseGradInferShape(primitive, input_args);
+}
+
+TypePtr SqrtGradFuncImpl::InferType(const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const {
+  return EltwiseGradInferType(primitive, input_args);
+}
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_SQRT_H_
