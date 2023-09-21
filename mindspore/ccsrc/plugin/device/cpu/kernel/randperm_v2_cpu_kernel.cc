@@ -22,12 +22,11 @@
 #include "Eigen/Core"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/randperm_v2.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-const uint32_t kInputNum = 3;
+const uint32_t kInputNum = 4;
 const uint32_t kOutputNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
@@ -36,32 +35,21 @@ constexpr size_t kOutputIndex0 = 0;
 constexpr size_t kOutputShapeLen = 1;
 }  // namespace
 
-bool RandpermV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto randperm_ptr = std::dynamic_pointer_cast<ops::RandpermV2>(base_operator);
-  MS_EXCEPTION_IF_NULL(randperm_ptr);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool RandpermV2CPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
   output_type_ = outputs[kOutputIndex0]->dtype_id();
-  int64_t layout_ = GetValue<int64_t>(randperm_ptr->GetAttr("layout"));
   if (seed_ < 0 && seed_ != -1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the attr seed must be greater than 0 or equal to 0 or -1, but got data: " << seed_
                              << ".";
   }
-  if (layout_ < 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', the attr layout must be greater than or equal to 0, but got data: " << layout_
-                             << ".";
-  }
   return true;
 }
 
-int RandpermV2CPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandpermV2CPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  output
@@ -111,18 +99,10 @@ bool RandpermV2CPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 template <typename T1>
 bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
   auto output = reinterpret_cast<T1 *>(outputs[kIndex0]->device_ptr());
-  MS_EXCEPTION_IF_NULL(n_tensor);
-  MS_EXCEPTION_IF_NULL(seed_tensor);
-  MS_EXCEPTION_IF_NULL(offset_tensor);
-  MS_EXCEPTION_IF_NULL(output);
-
-  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr())[0];
-  seed_ = static_cast<int64_t *>(seed_tensor)[0];
-  offset_ = static_cast<int64_t *>(offset_tensor)[0];
+  n_data_ = inputs[kIndex0]->template GetValueWithCheck<int64_t>();
+  seed_ = inputs[kIndex1]->template GetValueWithCheck<int64_t>();
+  offset_ = inputs[kIndex2]->template GetValueWithCheck<int64_t>();
 
   std::vector<T1> temp;
   std::random_device rd;
@@ -142,18 +122,10 @@ bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 
 bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  int64_t *n_tensor = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
-  int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
-  int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr());
   auto output = reinterpret_cast<Eigen::half *>(outputs[kIndex0]->device_ptr());
-  MS_EXCEPTION_IF_NULL(n_tensor);
-  MS_EXCEPTION_IF_NULL(seed_tensor);
-  MS_EXCEPTION_IF_NULL(offset_tensor);
-  MS_EXCEPTION_IF_NULL(output);
-
-  n_data_ = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr())[0];
-  seed_ = static_cast<int64_t *>(seed_tensor)[0];
-  offset_ = static_cast<int64_t *>(offset_tensor)[0];
+  n_data_ = inputs[kIndex0]->template GetValueWithCheck<int64_t>();
+  seed_ = inputs[kIndex1]->template GetValueWithCheck<int64_t>();
+  offset_ = inputs[kIndex2]->template GetValueWithCheck<int64_t>();
 
   std::vector<float> temp;
   std::random_device rd;
@@ -173,44 +145,52 @@ bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<KernelTensor *> 
 
 std::vector<KernelAttr> RandpermV2CPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list = {KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeUInt8),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeFloat32),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeFloat16),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeFloat64),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeInt8),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeInt16),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeInt32),
                                           KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                             .AddOutputAttr(kNumberTypeInt64)};
   return support_list;
 }
