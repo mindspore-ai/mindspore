@@ -16,6 +16,7 @@
 # ============================================================================
 """Providing auto dynamic shape interface methods."""
 
+import os
 from mindspore import log as logger
 from mindspore._c_expression import GraphExecutor_, Tensor
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
@@ -210,6 +211,7 @@ class _AutoIdentifyDynamicShape:
         self.is_sink_mode = False
         self.is_enable_auto_dynamic_shape = True
         self.save_cache_number = 3
+        self.enable_auto_identify = os.getenv('MS_AUTO_DYNAMIC_SHAPE_ENABLE')
         self.auto_dynamic_shape_manager = _AutoDynamicShapeManager()
 
 
@@ -269,6 +271,12 @@ class _AutoIdentifyDynamicShape:
     def _is_enable_auto_dynamic_shape(self, args_list, is_sink_mode):
         """is enable auto identify shape"""
         if not is_sink_mode and not args_list:
+            return False
+
+        if not self.enable_auto_identify:
+            self.enable_auto_identify = "0"
+
+        if self.enable_auto_identify == "0":
             return False
 
         for elem in args_list:
