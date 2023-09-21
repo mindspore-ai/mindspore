@@ -98,13 +98,15 @@ NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodeP
     broadcast_axes = ib->BroadcastGradientArgs(inputs[0], inputs[1], shift);
   }
   for (size_t i = 0; i < kDim2; i++) {
-    if (!need_shapecalc[i]) {
+    auto dout_shape = ib->GetShape(reduce[i]);
+    if (!need_shapecalc[i] && IsDynamicRank(dout_shape)) {
+      MS_LOG(WARNING) << "The dynamic shape inference of" << reduce[i]->get()->ToString() << " is overly generalized.";
+    }
+    if (!need_shapecalc[i] && !IsDynamicRank(ib->GetShape(reduce[i]))) {
       if (!reduce_axis[i].empty()) {
-        auto dout_shape = ib->GetShape(reduce[i]);
-        auto x_shape = ib->GetShape(inputs[i]);
-        reduce[i] =
-          ib->ReduceSum(reduce[i], ib->Value<ShapeVector>(reduce_axis[i]), dout_shape.size() == x_shape.size(), true);
-        if (dout_shape.size() != x_shape.size() && reduce_axis[i].size() > dout_shape.size() - x_shape.size()) {
+        auto d_rank = dout_shape.size() - shape[i].size();
+        reduce[i] = ib->ReduceSum(reduce[i], ib->Value<ShapeVector>(reduce_axis[i]), d_rank == 0, true);
+        if (reduce_axis[i].size() > d_rank) {
           reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
         }
       }
