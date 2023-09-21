@@ -81,6 +81,8 @@ class NodeManager:
         # update node name
         new_node_name = self._manager_node_namer.get_name(new_node)
         new_node.set_name(new_node_name)
+        if isinstance(new_node, NodeManager):
+            new_node.set_manager_name(new_node_name)
         # insert node to list table
         if base_node is None:
             if self._nodes:

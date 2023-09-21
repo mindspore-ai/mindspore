@@ -41,6 +41,8 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
+CELL_CONTAINER_WHITE_LIST = [SequentialCell,]
+
 class AssignParser(Parser):
     """Parse ast.Assign in construct function to node of SymbolTree."""
 
@@ -395,7 +397,7 @@ class AssignParser(Parser):
         node = CallFunction(targets, func_scope_name, args, kwargs, node_name, ast_assign, ast_functiondef,
                             stree, instance)
         # expand ast codes
-        ast_functiondef = FlattenRecursiveStmt().transform(ast_functiondef, [func_scope_name.value])
+        ast_functiondef = FlattenRecursiveStmt().transform(ast_functiondef, [func_scope_name.value], stree)
         # parse ast codes into CallFunction Node
         parser = ParserRegister.instance().get_parser(ast.FunctionDef)
         parser.process(stree, ast_functiondef, node_manager=node)
@@ -453,7 +455,7 @@ class AssignParser(Parser):
                 node = Node.inner_create_call_function(func_name, ast_assign, func_name, func_inst, targets,
                                                        call_args, call_kwargs)
             return node
-        if isinstance(func_inst, SequentialCell):
+        if isinstance(func_inst, tuple(CELL_CONTAINER_WHITE_LIST)):
             node = AssignParser.cell_container_process(ast_assign, stree, targets, func_scope_name, call_args,
                                                        call_kwargs, func_name, func_inst)
             return node

@@ -65,6 +65,11 @@ class ForParser(Parser):
         """ Process ast.For node """
         if isinstance(node.target, ast.Name):
             targets = node.target.id
+        if isinstance(node.iter, ast.Str) or (isinstance(node.iter, ast.Constant) and
+                                              isinstance(node.iter.val, str)):
+            # Ast.For which has iter with type of str is converted to python node to avoid instruction injection
+            stree.try_append_python_node(node, node)
+            return
         iter_code = astunparse.unparse(node.iter)
         if not iter_code.startswith(EVAL_WHITE_LIST):
             logger.warning(

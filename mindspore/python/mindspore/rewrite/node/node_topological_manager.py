@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree nodes topological relationship manager."""
-from typing import Tuple
+from typing import Tuple, List
 from mindspore import log as logger
 from ..api.scoped_value import ScopedValue
 from .node import Node
@@ -25,7 +25,7 @@ class TopoManager(Observable):
     """SymbolTree topological-relationship manager."""
 
     @staticmethod
-    def get_node_users(node: Node) -> [Tuple[Node, int]]:
+    def get_node_users(node: Node) -> List[Tuple[Node, int]]:
         """
         Get all nodes which depend on node.
 
@@ -93,7 +93,7 @@ class TopoManager(Observable):
         return
 
     @staticmethod
-    def _update_target_users_by_node(node, index, provider: (Node, int)):
+    def _update_target_users_by_node(node, index, provider: Tuple[Node, int]):
         """
         Update node's _target_users by previous node when insert a new node.
         This function is called when target is found in previous nodes, which means a repeat target name is set.

@@ -1154,16 +1154,23 @@ class SymbolTree(Observer, Observable, NodeManager):
     def insert_to_ast_while_insert_node(self, new_node: Node, base_node: Node, before_node: bool,
                                         node_manager: NodeManager):
         """ insert_to_ast_while_insert_node. """
-        new_node_ast = new_node.get_ast()
-        if new_node_ast is None:
-            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
-            new_node_ast = new_node.update_ast_node()
-        if not isinstance(new_node_ast, (ast.Assign, ast.arg)):
-            raise RuntimeError(f"Only support insert ast.Assign or Input now, but get {type(new_node_ast)}")
-        # Save instance into _origin_network.
-        setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
-        if isinstance(new_node_ast, ast.Assign):
-            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+        if new_node.get_node_type() == NodeType.Input:
+            # insert a new input
+            self._inputs.append(new_node)
+            ast_construct = self.get_ast_root()
+            arg: str = new_node.get_targets()[0].value
+            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
+            AstModifier.append_arg_to_function(ast_construct, ast_arg)
+        else:
+            # insert a new assign statement
+            ast_assign = new_node.get_ast()
+            if ast_assign is None:
+                new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+                ast_assign = new_node.update_ast_node()
+            if not isinstance(ast_assign, ast.Assign):
+                raise ValueError(f"Only support insert ast.Assign or Input now, but get {type(ast_assign)}")
+            # Save instance into _origin_network.
+            setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
             # Insert ast to __init__ function
             if isinstance(new_node, TreeNode):
                 init_code = f"self.{new_node.get_name()} = " \
@@ -1178,13 +1185,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             if not ast_functiondef:
                 raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
                                    "when inserting the ast.")
-            AstModifier.insert_assign_ast_to_function(ast_functiondef, new_node_ast, ast_base_node, before_node)
-        elif isinstance(new_node_ast, ast.arg):
-            self._inputs.append(new_node)
-            ast_construct = self.get_ast_root()
-            arg: str = new_node.get_targets()[0].value
-            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
-            AstModifier.append_arg_to_function(ast_construct, ast_arg)
+            AstModifier.insert_assign_ast_to_function(ast_functiondef, ast_assign, ast_base_node, before_node)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):

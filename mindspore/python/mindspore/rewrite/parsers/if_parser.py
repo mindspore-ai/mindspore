@@ -14,18 +14,14 @@
 # ============================================================================
 """Parse ast.If in construct function to node of SymbolTree."""
 
-import sys
 import ast
 
 from ..symbol_tree import SymbolTree
 from .parser import Parser
-from .parser_register import reg_parser
-from ..node.node_manager import NodeManager
+from .parser_register import ParserRegister, reg_parser
+from ..node import NodeManager, ControlFlow
+from ..ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
 
-if sys.version_info >= (3, 9):
-    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
-else:
-    import astunparse
 
 class IfParser(Parser):
     """Parse ast.If in construct function to node of SymbolTree."""
@@ -36,7 +32,7 @@ class IfParser(Parser):
 
     def process(self, stree: SymbolTree, node: ast.If, node_manager: NodeManager):
         """
-        Parse ast.If and create a node in symbol tree.
+        Parse ast.If and create nodes into symbol tree.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
@@ -46,28 +42,26 @@ class IfParser(Parser):
         Raises:
             NotImplementedError: If test of ast.If can not be eval.
         """
+        # expand codes in ast.if
+        ast_if = FlattenRecursiveStmt().transform_if(node, stree)
+        # parse ast codes of if branch into ControlFlow Node
+        if_node = ControlFlow("if_node", ast_if.body, stree)
+        for body in ast_if.body:
+            parser: Parser = ParserRegister.instance().get_parser(type(body))
+            if parser is None:
+                stree.append_python_node(ast_if, body, node_manager=if_node)
+            else:
+                parser.process(stree, body, node_manager=if_node)
+        stree.append_origin_field(if_node, node_manager)
+        # parse ast codes of else branch into ControlFlow Node
+        if ast_if.orelse:
+            else_node = ControlFlow("else_node", ast_if.orelse, stree)
+            for body in ast_if.orelse:
+                parser: Parser = ParserRegister.instance().get_parser(type(body))
+                if parser is None:
+                    stree.append_python_node(ast_if, body, node_manager=else_node)
+                else:
+                    parser.process(stree, body, node_manager=else_node)
+            stree.append_origin_field(else_node, node_manager)
 
-        test_code = astunparse.unparse(node.test)
-        test_code = test_code.replace("self.", "stree.get_origin_network().")
-        bodies = None
-        try:
-            test_value = eval(test_code)
-        except (NameError, TypeError):
-            stree.try_append_python_node(node, node, node_manager)
-            return
-
-        bodies = node.body if test_value else node.orelse
-        ast_functiondef = node_manager.get_ast_functiondef()
-        if not ast_functiondef:
-            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                               "when parsing 'If' statement.")
-        index = ast_functiondef.body.index(node) + 1
-        info_node = ast.Name(id=f"# If node has been replaced by {bool(test_value)} branch.",
-                             lineno=0, col_offset=0, ctx=ast.Load)
-        exp_node = ast.Expr(value=info_node, lineno=0, col_offset=0, ctx=ast.Load)
-        ast_functiondef.body.insert(index-1, exp_node)
-        for body in bodies:
-            ast_functiondef.body.insert(index, body)
-            index += 1
-        ast_functiondef.body.remove(node)
 g_if_parser = reg_parser(IfParser())
