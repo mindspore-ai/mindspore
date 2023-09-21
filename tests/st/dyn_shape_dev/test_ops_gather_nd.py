@@ -1,0 +1,79 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+import pytest
+import numpy as np
+import mindspore as ms
+from mindspore import ops, Tensor
+
+
+@ms.jit
+def gather_nd_forward_func(input_x, indices):
+    return ops.auto_generate.gather_nd(input_x, indices)
+
+
+@ms.jit
+def gather_nd_backward_func(input_x, indices):
+    return ops.grad(gather_nd_forward_func, (0,))(input_x, indices)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_gather_nd_forward():
+    """
+    Feature: Ops.
+    Description: test op gather_nd.
+    Expectation: expect correct result.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), ms.float32)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), ms.int32)
+    output = gather_nd_forward_func(input_x, indices)
+    expect = [-0.1, 0.5]
+    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_gather_nd_backward():
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op gather_nd.
+    Expectation: expect correct result.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), ms.float32)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), ms.int32)
+    output = gather_nd_backward_func(input_x, indices)
+    expect = [[1., 0., 0.], [0., 1., 0.]]
+    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
+
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+def test_gather_nd_vmap():
+    """
+    Feature: test vmap function.
+    Description: test gather_nd op vmap.
+    Expectation: expect correct result.
+    """
+    input_x = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
+    indices = Tensor(np.array([[[[0, 0], [1, 1]]]]), ms.int32)
+    nest_vmap = ops.vmap(ops.vmap(gather_nd_forward_func, in_axes=0), in_axes=0)
+    output = nest_vmap(input_x, indices)
+    expect = [[[-0.1, 0.5]]]
+    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
