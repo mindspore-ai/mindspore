@@ -19,6 +19,14 @@ mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
         - **min_lr** (Union(float, list), 可选) - 标量或标量列表，所有参数组或每个组的学习率最小值。默认值：``0``。
         - **eps** (float, 可选) - 应用于学习率的最小衰减。如果学习率变化的差异小于 `eps`，则忽略更新。默认值：``1e-8``。
 
+
+    异常：
+        - **ValueError** - `factor` 大于等于1。
+        - **TypeError** - `optimizer` 不是 `Optimizer`。
+        - **ValueError** - `min_lr` 为list或tuple时，其长度不等于参数组数目。
+        - **ValueError** - `mode` 不是 ``'min'`` 或 ``'max'``。
+        - **ValueError** - `threshold_mode` 不是 ``'rel'`` 或 ``'abs'``。
+
     .. py:method:: get_last_lr()
 
         返回当前使用的学习率。

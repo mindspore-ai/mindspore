@@ -24,6 +24,11 @@ from mindspore import ops
 
 _adamw_opt = C.MultitypeFuncGraph("adamw_opt")
 
+op_mul = P.Mul()
+op_pow = P.Pow()
+op_sqrt = P.Sqrt()
+op_maximum = P.Maximum()
+
 
 @_adamw_opt.register("Float", "Tensor", "Bool", "Float", "Tensor", "Float", "Float", "Tensor", "Tensor",
                      "Tensor", "Tensor", "Tensor")
@@ -31,11 +36,6 @@ def _run_adamw_opt(weight_decay, lr, amsgrad, eps, state_step, beta1, beta2, par
                    exp_avg, exp_avg_sq, max_exp_avg_sq):
     """Apply adamw optimizer to the weight parameter."""
     success = True
-
-    op_mul = P.Mul()
-    op_pow = P.Pow()
-    op_sqrt = P.Sqrt()
-    op_maximum = P.Maximum()
     next_param = op_mul(param, 1 - lr * weight_decay)
     F.assign(exp_avg, op_mul(exp_avg, beta1) + op_mul(grad, 1 - beta1))
     F.assign(exp_avg_sq, ops.addcmul(op_mul(exp_avg_sq, beta2), grad, grad, 1 - beta2))

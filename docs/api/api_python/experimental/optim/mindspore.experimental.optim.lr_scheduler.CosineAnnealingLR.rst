@@ -24,4 +24,4 @@ mindspore.experimental.optim.lr_scheduler.CosineAnnealingLR
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
         - **T_max** (int) - 余弦函数的半周期。
         - **eta_min** (float, 可选) - 学习率的最小值。默认值：``0``。
-        - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。
+        - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值：``-1``。

@@ -21,7 +21,11 @@ mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts
         - **T_0** (int) - 余弦函数的初始周期数。
         - **T_mult** (int, 可选) - 迭代中对 :math:`T_{i}` 进行增长的乘法系数。默认值：``1``。
         - **eta_min** (float, 可选) - 学习率的最小值。默认值： ``0``。
-        - **last_epoch** (int，可选) - epoch/step数。默认值： ``-1``。
+        - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值： ``-1``。
+
+    异常：
+        - **ValueError** - `T_0` 小于等于0或不是int类型。
+        - **ValueError** - `T_mult` 小于等于1或不是int类型。
 
     .. py:method:: step(epoch=None)
 
