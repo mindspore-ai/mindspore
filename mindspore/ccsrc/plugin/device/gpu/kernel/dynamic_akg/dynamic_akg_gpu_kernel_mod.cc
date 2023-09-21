@@ -162,19 +162,18 @@ DynamicAkgGpuKernelMod::DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack)
   InitMappingInfo();
 }
 
-int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicAkgGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Start resize for DynamicAkgGpuKernelMod.";
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   UpdateShapeList(inputs, outputs);
   UpdateMappingInfo();
   MS_LOG(DEBUG) << "Done resize for DynamicAkgGpuKernelMod.";
   return ret;
 }
 
-void DynamicAkgGpuKernelMod::UpdateShapeList(const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
+void DynamicAkgGpuKernelMod::UpdateShapeList(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   ndims_.clear();
   shape_list_.clear();
   for (size_t i = 0; i < inputs.size(); i++) {

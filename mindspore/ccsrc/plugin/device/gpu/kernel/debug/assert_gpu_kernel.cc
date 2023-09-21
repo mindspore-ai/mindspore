@@ -24,23 +24,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool AssertGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assert>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast Assert ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  summarize_ = kernel_ptr->get_summarize();
-
+bool AssertGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  summarize_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("summarize")));
   return true;
 }
 
-int AssertGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AssertGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

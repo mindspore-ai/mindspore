@@ -49,12 +49,8 @@ std::vector<KernelAttr> MapTensorGetGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorGetGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetGradInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetGradOutputNum, kernel_name_);
@@ -78,10 +74,8 @@ bool MapTensorGetGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MapTensorGetGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));

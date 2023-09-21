@@ -121,14 +121,11 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->GetPrim()->name();
-    const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
-      if (base_operator->GetPrim()->HasAttr("path_from_env") &&
-          GetValue<bool>(base_operator->GetPrim()->GetAttr("path_from_env"))) {
+      if (primitive_->HasAttr("path_from_env") && GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
         const char *path_in_env = std::getenv(path.c_str());
         if (path_in_env == nullptr) {
           MS_LOG(WARNING) << "For '" << kernel_name_ << "' on GPU, the attr path_from_env is set but the env var ["
@@ -172,7 +169,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                    [](auto &str) { return str.c_str(); });
 
-    attrs_.SetKernelPrim(base_operator->GetPrim());
+    attrs_.SetKernelPrim(primitive_);
 
     if (!handle_) {
 #ifdef _MSC_VER
@@ -221,10 +218,8 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

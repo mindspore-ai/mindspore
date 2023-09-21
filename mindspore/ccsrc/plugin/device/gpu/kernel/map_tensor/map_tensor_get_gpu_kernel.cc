@@ -44,10 +44,9 @@ std::vector<KernelAttr> MapTensorGetGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
+bool MapTensorGetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = prim->name();
   insert_default_value_ = GetValue<bool>(prim->GetAttr(kAttrInsertDefaultValue));
@@ -71,9 +70,8 @@ bool MapTensorGetGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int MapTensorGetGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
