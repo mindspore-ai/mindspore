@@ -1054,6 +1054,8 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
     }
     if (new_parameter != nullptr) {
       graph_inputs->push_back(new_parameter);
+      MS_LOG(DEBUG) << "create new parameter for parameter:" << anf->DebugString() << " for graph:" << graph->ToString()
+                    << " backend node:" << new_parameter->DebugString();
       return new_parameter;
     }
     TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));

@@ -1058,6 +1058,12 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           MS_LOG(DEBUG) << "Init backend input node:" << input_node->DebugString() << " for host data source actor.";
         }
         MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+        // After graph partition and graph compile, multiple kernel graphs will share the same parameter. If the
+        // parameter is already in the data node map, there is no need to process it again.
+        if (host_queue_ds_actor->data_node_position_map_.find(std::make_pair(input_node, 0)) !=
+            host_queue_ds_actor->data_node_position_map_.end()) {
+          continue;
+        }
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
         // is saved in the host queue data source actor. Particularly, the same front parameter corresponds to multiple
         // backend parameters in heterogeneous scenarios, and these heterogeneous parameters need to be placed in the
