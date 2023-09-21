@@ -4413,10 +4413,40 @@ def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data
 
 
 def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
-    """
+    r"""
     MarginRankingLoss creates a criterion that measures the loss.
 
-    For details, please refer to :class:`mindspore.nn.MarginRankingLoss`.
+    Given two tensors :math:`input1`, :math:`input2` and a Tensor label :math:`target` with values 1 or -1,
+    the operation is as follows:
+
+    .. math::
+        \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
+
+    Args:
+        input1 (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
+        target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
+        margin (float, optional): Specify the adjustment factor of the operation. Default: ``0.0`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+
+    Returns:
+        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `margin` is not a float.
+        TypeError: If `input1`, `input2` or `target` is not a Tensor.
+        TypeError: If the types of `input1` and `input2` are inconsistent.
+        TypeError: If the types of `input1` and `target` are inconsistent.
+        ValueError: If the shape of `input1` and `input2` are inconsistent.
+        ValueError: If the shape of `input1` and `target` are inconsistent.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` , ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
