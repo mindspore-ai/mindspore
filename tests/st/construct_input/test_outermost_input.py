@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
+from mindspore.nn import Cell
 from mindspore import Tensor, Parameter, ParameterTuple, jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -434,3 +435,168 @@ def test_jit_mixed_arguments():
     context.set_context(mode=context.GRAPH_MODE)
     assert func(Tensor([1]), Tensor([2]), Tensor([3]), b=Tensor([4]), c=Tensor([5]), d=Tensor([6])).asnumpy() == [12]
     assert func(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cell_as_input():
+    """
+    Feature: Support all types of input for the top cell.
+    Description: Pass cell as input.
+    Expectation: No exception.
+    """
+
+    class LayerNorm(Cell):
+        def __init__(self, features, eps=1e-06):
+            super(LayerNorm, self).__init__()
+            self.a_2 = Parameter(ops.ones(features))
+            self.b_2 = Parameter(ops.zeros(features))
+            self.eps = eps
+
+        def forward(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+        def construct(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+    class ReLU(Cell):
+        def __init__(self):
+            super(ReLU, self).__init__()
+            self.relu = ops.ReLU()
+
+        def forward(self, x):
+            return self.relu(x)
+
+        def construct(self, *inputs):
+            return self.forward(*inputs)
+
+    class TestNet(Cell):
+        def __init__(self, size, dropout):
+            super(TestNet, self).__init__()
+            self.dropout = nn.Dropout(dropout)
+            self.norm = LayerNorm(size)
+
+        def construct(self, x, sublayer):
+            return x + self.dropout(sublayer(self.norm(x)))
+
+    context.set_context(mode=context.GRAPH_MODE)
+    block = ReLU()
+    x = Tensor(np.ones((4, 4, 4, 4)).astype(np.float32))
+    net = TestNet(4, 0.5)
+    out = net(x, block)
+    assert np.allclose(x.asnumpy(), out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tuple_cell_as_input():
+    """
+    Feature: Support all types of input for the top cell.
+    Description: Pass tuple cells as input.
+    Expectation: No exception.
+    """
+
+    class LayerNorm(Cell):
+        def __init__(self, features, eps=1e-06):
+            super(LayerNorm, self).__init__()
+            self.a_2 = Parameter(ops.ones(features))
+            self.b_2 = Parameter(ops.zeros(features))
+            self.eps = eps
+
+        def forward(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+        def construct(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+    class ReLU(Cell):
+        def __init__(self):
+            super(ReLU, self).__init__()
+            self.relu = ops.ReLU()
+
+        def forward(self, x):
+            return self.relu(x)
+
+        def construct(self, *inputs):
+            return self.forward(*inputs)
+
+    class TestNet(Cell):
+        def __init__(self, size, dropout):
+            super(TestNet, self).__init__()
+            self.dropout = nn.Dropout(dropout)
+            self.norm = LayerNorm(size)
+
+        def construct(self, x, sublayer):
+            return x + self.dropout(sublayer[0](self.norm(x)))
+
+    context.set_context(mode=context.GRAPH_MODE)
+    block = (ReLU(), ReLU())
+    x = Tensor(np.ones((4, 4, 4, 4)).astype(np.float32))
+    net = TestNet(4, 0.5)
+    out = net(x, block)
+    assert np.allclose(x.asnumpy(), out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dict_cell_as_input():
+    """
+    Feature: Support all types of input for the top cell.
+    Description: Pass dict cells as input.
+    Expectation: No exception.
+    """
+
+    class LayerNorm(Cell):
+        def __init__(self, features, eps=1e-06):
+            super(LayerNorm, self).__init__()
+            self.a_2 = Parameter(ops.ones(features))
+            self.b_2 = Parameter(ops.zeros(features))
+            self.eps = eps
+
+        def forward(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+        def construct(self, x):
+            mean = x.mean(-1, keep_dims=True)
+            std = x.std(axis=None, ddof=-1, keepdims=True)
+            return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+    class ReLU(Cell):
+        def __init__(self):
+            super(ReLU, self).__init__()
+            self.relu = ops.ReLU()
+
+        def forward(self, x):
+            return self.relu(x)
+
+        def construct(self, *inputs):
+            return self.forward(*inputs)
+
+    class TestNet(Cell):
+        def __init__(self, size, dropout):
+            super(TestNet, self).__init__()
+            self.dropout = nn.Dropout(dropout)
+            self.norm = LayerNorm(size)
+
+        def construct(self, x, sublayer):
+            return x + self.dropout(sublayer['a'](self.norm(x)))
+
+    context.set_context(mode=context.GRAPH_MODE)
+    block = {'a': ReLU(), 'b': ReLU()}
+    x = Tensor(np.ones((4, 4, 4, 4)).astype(np.float32))
+    net = TestNet(4, 0.5)
+    out = net(x, block)
+    assert np.allclose(x.asnumpy(), out.asnumpy())

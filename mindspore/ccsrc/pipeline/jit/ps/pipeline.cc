@@ -439,6 +439,33 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
   }
   return BaseRefToPyData(value, abs);
 }
+
+void AddManager(const FuncGraphManagerPtr &manager, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<FuncGraph>()) {
+    auto fg = value->cast<FuncGraphPtr>();
+    manager->AddFuncGraph(fg);
+  }
+  if (value->isa<ValueSequence>()) {
+    auto value_sequence = value->cast<ValueSequencePtr>();
+    for (const auto &elem : value_sequence->value()) {
+      AddManager(manager, elem);
+    }
+  }
+  if (value->isa<ValueDictionary>()) {
+    for (const auto &elem : value->cast<ValueDictionaryPtr>()->value()) {
+      AddManager(manager, elem.second);
+    }
+  }
+}
+
+void AddManagerForFuncGraphArgs(const ResourcePtr &resource, const ValuePtrList &arguments) {
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &arg : arguments) {
+    AddManager(manager, arg);
+  }
+}
 }  // namespace
 
 std::string GetObjDesc(const py::object &source) {
@@ -1027,6 +1054,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   bool is_auto_parallel = is_parallel_mode && !py::hasattr(source, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source, parallel::kKeepInputUnchanged);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = args.size() + kwargs.size();
