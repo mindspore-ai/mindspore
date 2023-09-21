@@ -115,7 +115,7 @@ TreeGetters::TreeGetters()
       estimated_row_shape_({}),
       init_flag_(false),
       first_row_obtained_(false) {
-  tree_adapter_lite_ = std::make_unique<TreeAdapterLite>();
+  tree_adapter_lite_ = std::make_unique<TreeAdapterLite>(TreeAdapterLite::UsageFlag::kDeGetter);
 }
 
 Status TreeGetters::Init(const std::shared_ptr<DatasetNode> &root) {

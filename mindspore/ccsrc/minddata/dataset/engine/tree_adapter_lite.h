@@ -33,7 +33,12 @@ class DatasetNode;
 
 class TreeAdapterLite {
  public:
-  TreeAdapterLite();
+  // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
+  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
+  // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
+  enum UsageFlag { kDeIterator = 0, kDeGetter = 1, kDeReset = 2 };
+
+  explicit TreeAdapterLite(UsageFlag usage = kDeGetter);
 
   ~TreeAdapterLite() = default;
 
@@ -52,10 +57,13 @@ class TreeAdapterLite {
 
  protected:
   // Run the mandatory pass checking the syntax and semantics of the IR tree
-  Status PrePass(std::shared_ptr<DatasetNode> ir) const;
+  Status PrePass(std::shared_ptr<DatasetNode> ir);
 
   // Run the mandatory pass augmenting the IR tree
   Status PostPass(std::shared_ptr<DatasetNode> ir) const;
+
+  // Return Offload Json
+  nlohmann::json GetOffloadJson();
 
   std::shared_ptr<DatasetNode> input_ir_;
   std::shared_ptr<DatasetNode> root_ir_;
@@ -66,6 +74,8 @@ class TreeAdapterLite {
 
   std::shared_ptr<DatasetOp> root_;  // current connector capacity of root op, used for profiling
   std::unique_ptr<ExecutionTree> tree_;
+  UsageFlag usage_;  // usage of this tree adapter (type of consumer)
+  nlohmann::json offload_json_;
 };
 
 }  // namespace dataset
