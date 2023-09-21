@@ -125,7 +125,7 @@ void GeDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
     GetKernelExecutor(false)->Initialize();
     // DynamicKernelExecutor and KernenlExecutor should be equal for GE

@@ -40,7 +40,7 @@ void GeAllocator::Free(::ge::MemBlock *block) {
 }
 
 void GeDeviceResManager::Initialize() {
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -123,7 +123,7 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
                                                          const string &format, TypeId type_id, const ShapeVector &shape,
                                                          const UserDataPtr &user_data) const {
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     auto device_address = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
                                                                 device_context_->device_context_key_.device_name_,
                                                                 device_context_->device_context_key_.device_id_);

@@ -82,10 +82,9 @@ class LiteInfer(BaseModel):
 
         import os
         # ms train need enable refmode
-        os.environ["MS_ENABLE_REF_MODE"] = "1"
         self._func_graph = self._get_func_graph(self._infer_network, *net_inputs)
         # ms lite need disable refmode
-        os.environ["MS_ENABLE_REF_MODE"] = "0"
+        os.environ["MS_DISABLE_REF_MODE"] = "1"
         self._build_from_fun_graph(self._func_graph, context)
 
     def _load_and_update_config(self, config: dict = None):

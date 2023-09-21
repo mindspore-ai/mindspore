@@ -56,7 +56,7 @@ enum class RefModeFlag {
   kRefModeNone,
   kRefModeVariable,  // Only Variables will be treated as RefData
   kRefModeAll,       // All Parameter including Variables and Constants will be treated as RefData
-  kRefModeEnv        // depend on MS_ENABLE_REF_MODE, when it's 1, ref mode type will be kRefModeAll
+  kRefModeEnv        // depend on REF_MODE, default value is on, ref mode type will be kRefModeAll
 };
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 
@@ -98,7 +98,7 @@ class DfGraphConvertor {
       : anf_graph_(anf_graph), extra_variables_names_(extra_variables_names), phase_prefix_(phase_prefix) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     if (ref_mode_type == RefModeFlag::kRefModeEnv) {
-      ref_mode_ = common::IsEnableRefMode();
+      ref_mode_ = IsEnableRefMode();
       ref_mode_type_ = RefModeFlag::kRefModeAll;
     } else {
       ref_mode_ = (ref_mode_type != RefModeFlag::kRefModeNone);

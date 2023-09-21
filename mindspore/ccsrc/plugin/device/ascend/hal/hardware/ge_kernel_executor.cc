@@ -376,7 +376,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // GE graph run mode do optimize in ProcessBeforeRun
-  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+  if (kernel_graph->is_graph_run_mode() && IsEnableRefMode()) {
     return;
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
@@ -413,7 +413,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
-  if (!nodes.empty() && common::IsEnableRefMode()) {
+  if (!nodes.empty() && IsEnableRefMode()) {
     auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(nodes[0]->func_graph());
     MS_EXCEPTION_IF_NULL(kernel_graph);
     // Not create kernel when use GE
@@ -450,7 +450,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   // use GE
-  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+  if (kernel_graph->is_graph_run_mode() && IsEnableRefMode()) {
     if (GraphWithNoRealKernel(kernel_graph)) {
       return;
     }

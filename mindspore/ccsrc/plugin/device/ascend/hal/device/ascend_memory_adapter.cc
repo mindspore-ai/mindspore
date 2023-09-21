@@ -52,7 +52,7 @@ bool AscendMemAdapter::IsMemoryPoolRecycle() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
-  return memory_pool_recycle == "1" && runtime_num_threads == 1 && common::IsEnableRefMode();
+  return memory_pool_recycle == "1" && runtime_num_threads == 1 && IsEnableRefMode();
 }
 
 bool AscendMemAdapter::Initialize() {
