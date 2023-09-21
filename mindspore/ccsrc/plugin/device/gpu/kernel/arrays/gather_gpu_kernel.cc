@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,262 +14,23 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <algorithm>
-
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h"
+#include <memory>
+#include "mindspore/core/ops/gather.h"
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
-
-template <typename T, typename S>
-bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
-  VARIABLE_NOT_USED(workspace);
-
-  auto input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto index_addr = reinterpret_cast<S *>(inputs.at(kIndex2)->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-
-  auto status = Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[kIndex2], dims_[kIndex3],
-                       cuda_stream, GET_CTX_DEVICE_ID);
-  CHECK_CUDA_STATUS(status, kernel_name_);
-  return true;
-}
-
-std::vector<std::pair<KernelAttr, GatherFwdGpuKernelMod::GatherFwdFunc>> GatherFwdGpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &GatherFwdGpuKernelMod::LaunchKernel<Complex<float>, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &GatherFwdGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &GatherFwdGpuKernelMod::LaunchKernel<Complex<double>, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &GatherFwdGpuKernelMod::LaunchKernel<Complex<double>, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &GatherFwdGpuKernelMod::LaunchKernel<double, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &GatherFwdGpuKernelMod::LaunchKernel<double, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &GatherFwdGpuKernelMod::LaunchKernel<float, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &GatherFwdGpuKernelMod::LaunchKernel<float, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &GatherFwdGpuKernelMod::LaunchKernel<half, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &GatherFwdGpuKernelMod::LaunchKernel<half, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<int, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<int, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt8),
-   &GatherFwdGpuKernelMod::LaunchKernel<int8_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt8),
-   &GatherFwdGpuKernelMod::LaunchKernel<int8_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt16),
-   &GatherFwdGpuKernelMod::LaunchKernel<int16_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt16),
-   &GatherFwdGpuKernelMod::LaunchKernel<int16_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt64),
-   &GatherFwdGpuKernelMod::LaunchKernel<int64_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt64),
-   &GatherFwdGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &GatherFwdGpuKernelMod::LaunchKernel<uchar, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &GatherFwdGpuKernelMod::LaunchKernel<uchar, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeBool)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeBool),
-   &GatherFwdGpuKernelMod::LaunchKernel<bool, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeBool)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeBool),
-   &GatherFwdGpuKernelMod::LaunchKernel<bool, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint32_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt64),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint64_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt64),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeUInt16),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint16_t, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt16),
-   &GatherFwdGpuKernelMod::LaunchKernel<uint16_t, int64_t>}};
-
-bool GatherFwdGpuKernelMod::SetDimParam(int64_t dim_value) {
-  int64_t x_rank = SizeToLong(input_shapes_.size());
-  if (dim_value < -x_rank || dim_value >= x_rank) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dim' must be in the range [-" << x_rank << "," << x_rank
-                  << "), but got " << dim_value;
-    return false;
-  }
-  if (dim_value < 0) {
-    dim_value += x_rank;
-  }
-
-  if (input_shapes_.size() <= LongToSize(dim_value) || output_shapes_.size() <= LongToSize(dim_value)) {
-    MS_LOG(EXCEPTION) << "Rank should be great than " << dim_value << ", but got inputs size " << input_shapes_.size()
-                      << ", outputs size: " << output_shapes_.size();
-  }
-
-  size_t dim_before_axis = 1;
-  for (size_t i = 0; i < LongToSize(dim_value); i++) {
-    dim_before_axis *= output_shapes_[i];
-  }
-  size_t dim_at_axis_input = input_shapes_[LongToSize(dim_value)];
-  size_t dim_at_axis_output = output_shapes_[LongToSize(dim_value)];
-  size_t dim_after_axis = 1;
-  for (size_t i = LongToSize(dim_value) + 1; i < output_shapes_.size(); i++) {
-    dim_after_axis *= output_shapes_[i];
-  }
-
-  dims_[0] = dim_before_axis;
-  dims_[1] = dim_at_axis_input;
-  dims_[kIndex2] = dim_at_axis_output;
-  dims_[kIndex3] = dim_after_axis;
-  return true;
-}
-
+const size_t kInputNum = 3;
 bool GatherFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  size_t input_num = inputs.size();
-  const size_t kInputNum = 3;
-  if (input_num != kInputNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
-    return false;
+  if (kernel_name_ == ops::kNameGather) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Gather>(base_operator);
+    MS_EXCEPTION_IF_NULL(kernel_ptr);
+    batch_dims_ = kernel_ptr->get_batch_dims();
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -278,67 +39,103 @@ bool GatherFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
-  dim_type_ = inputs.at(1)->GetDtype();
   kernel_func_ = func_list_[index].second;
 
+  input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  indices_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
+  axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
+  axis_type_ = inputs.at(kIndex2)->GetDtype();
   return true;
 }
 
 int GatherFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  if (ret != KRET_OK) {
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_)) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
+    return KRET_RESIZE_FAILED;
+  }
 
-  auto input_shapes = inputs[0]->GetShapeVector();
-  auto index_shapes = inputs[kIndex2]->GetShapeVector();
-  auto output_shapes = outputs[0]->GetShapeVector();
-
-  input_shapes_.clear();
-  index_shapes_.clear();
-  output_shapes_.clear();
-  std::transform(input_shapes.cbegin(), input_shapes.cend(), std::back_inserter(input_shapes_), LongToSize);
-  std::transform(index_shapes.cbegin(), index_shapes.cend(), std::back_inserter(index_shapes_), LongToSize);
-  std::transform(output_shapes.cbegin(), output_shapes.cend(), std::back_inserter(output_shapes_), LongToSize);
-
+  input_shapes_ = inputs[kIndexZero]->GetShapeVector();
+  indices_shapes_ = inputs[kIndexOne]->GetShapeVector();
+  output_shapes_ = outputs[kIndexZero]->GetShapeVector();
+  if (batch_dims_ < 0) {
+    batch_dims_ += SizeToLong(indices_shapes_.size());
+  }
   is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name_, "input") ||
-                   CHECK_SHAPE_NULL(index_shapes_, kernel_name_, "input_indices") ||
+                   CHECK_SHAPE_NULL(indices_shapes_, kernel_name_, "indices") ||
                    CHECK_SHAPE_NULL(output_shapes_, kernel_name_, "output");
   if (is_null_input_) {
     return KRET_OK;
   }
-
-  if (input_shapes_.size() != index_shapes_.size() || input_shapes_.size() != output_shapes_.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input and output must be the equal to the "
-                  << "dimension of index: " << index_shapes_.size()
-                  << ", but got the dimension of input: " << input_shapes_.size()
-                  << ", the dimension of output: " << output_shapes_.size();
-    return KRET_RESIZE_FAILED;
+  int dims = SizeToInt(input_shapes_.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
+                      << "), but got " << axis_;
   }
-
-  int64_t dim_value = 0;
-
-  if (TryGetIntValue(inputs, 1, kernel_name_, &dim_value)) {
-    if (!SetDimParam(dim_value)) {
-      return KRET_RESIZE_FAILED;
-    }
-  } else {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get dim.";
-    return KRET_RESIZE_FAILED;
-  }
-
+  Reshape();
   return KRET_OK;
 }
 
 std::vector<KernelAttr> GatherFwdGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, GatherFwdFunc> &pair) { return pair.first; });
+                       [](const std::pair<KernelAttr, GatherFunc> &pair) { return pair.first; });
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, GatherD, GatherFwdGpuKernelMod);
+template <typename T, typename S, typename G>
+bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  VARIABLE_NOT_USED(workspace);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto input_dim1 = input_shapes_[IntToSize(axis_)];
+  auto status = Gather(input_addr, indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
+                       dims_[kIndex3], LongToSize(input_dim1), reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_STATUS(status, kernel_name_);
+  return true;
+}
+
+#define GATHER_GPU_REG(MS_T, MS_S, MS_A, T, S, A)                                            \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddInputAttr(MS_A).AddOutputAttr(MS_T), \
+    &GatherFwdGpuKernelMod::LaunchKernel<T, S, A>
+
+#define GATHER_GPU_INDEX_REG(MS_T, T)                                                  \
+  {GATHER_GPU_REG(MS_T, kNumberTypeInt32, kNumberTypeInt32, T, int32_t, int32_t)},     \
+    {GATHER_GPU_REG(MS_T, kNumberTypeInt64, kNumberTypeInt64, T, int64_t, int64_t)},   \
+    {GATHER_GPU_REG(MS_T, kNumberTypeInt32, kNumberTypeInt64, T, int32_t, int64_t)}, { \
+    GATHER_GPU_REG(MS_T, kNumberTypeInt64, kNumberTypeInt32, T, int64_t, int32_t)      \
+  }
+
+std::vector<std::pair<KernelAttr, GatherFwdGpuKernelMod::GatherFunc>> GatherFwdGpuKernelMod::func_list_ = {{
+  GATHER_GPU_INDEX_REG(kNumberTypeComplex64, mindspore::utils::Complex<float>),
+  GATHER_GPU_INDEX_REG(kNumberTypeComplex128, mindspore::utils::Complex<double>),
+  GATHER_GPU_INDEX_REG(kNumberTypeFloat64, double),
+  GATHER_GPU_INDEX_REG(kNumberTypeFloat32, float),
+  GATHER_GPU_INDEX_REG(kNumberTypeFloat16, half),
+  GATHER_GPU_INDEX_REG(kNumberTypeInt64, int64_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeInt32, int32_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeInt16, int16_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeInt8, int8_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeUInt64, uint64_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeUInt32, uint32_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeUInt16, uint16_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeUInt8, uint8_t),
+  GATHER_GPU_INDEX_REG(kNumberTypeBool, bool),
+}};
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Gather,
+                                 []() { return std::make_shared<GatherFwdGpuKernelMod>(kGather); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, SparseGatherV2,
+                                 []() { return std::make_shared<GatherFwdGpuKernelMod>(kSparseGatherV2); });
 }  // namespace kernel
 }  // namespace mindspore

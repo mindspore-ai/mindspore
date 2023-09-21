@@ -17,9 +17,9 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_GATHER_D_TENSORRT_H_
 #include <string>
 #include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherd.cuh"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cuh"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
