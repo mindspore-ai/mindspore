@@ -335,7 +335,7 @@ inline TraceContext::TraceContext(const LocationPtr &loc) : location_(loc) {
   if (location_ != nullptr) {
     MS_LOG(DEBUG) << "location_: " << location_->DebugString();
   } else {
-    MS_LOG(INFO) << "location_ is null";
+    MS_LOG(DEBUG) << "location_ is null";
   }
 }
 
@@ -352,7 +352,7 @@ inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(
   if (location_ != nullptr) {
     MS_LOG(DEBUG) << "location_: " << location_->DebugString();
   } else {
-    MS_LOG(INFO) << "location_ is null";
+    MS_LOG(DEBUG) << "location_ is null";
   }
 }
 

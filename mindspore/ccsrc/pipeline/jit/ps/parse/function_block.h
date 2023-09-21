@@ -76,7 +76,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   py::tuple GetAstOpNameSpace(const py::object &op);
   AnfNodePtr MakeResolveAstOpNameSpace(const py::tuple &namespace_var);
-  AnfNodePtr MakeResolveClassMemberOrSelf(const std::string &attr_or_self);
+  AnfNodePtr MakeResolveClassObject();
+  AnfNodePtr MakeResolveClassMember(const std::string &attr_or_self);
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);

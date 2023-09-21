@@ -112,8 +112,6 @@ class ClassMemberNamespace(Namespace):
 
     def __getitem__(self, name):
         d, = self.dicts
-        if name == "self":
-            return d
         if name == "namespace":
             return self
         try:
@@ -134,34 +132,5 @@ class ClassMemberNamespace(Namespace):
             logger.info(f"'{cls.__name__}' object has no attribute or method: '{name}', so will return None.")
             raise AttributeError(name)
 
-
-class ClassAttrNamespace(Namespace):
-    """
-    Namespace of a class.
-
-    Args:
-        obj (Object): A python class object.
-    """
-
-    def __init__(self, obj):
-        name = f'{obj.__module__}..<{obj.__class__.__name__}::{id(obj)}>'
-        super().__init__(name, obj)
-
     def __getattr__(self, name):
-        d, = self.dicts
-        try:
-            if hasattr(d, name):
-                return getattr(d, name)
-            return d.__dict__[name]
-        except ValueError:
-            raise UnboundLocalError(name)
-        except KeyError:
-            # Class private attribute.
-            cls = d.__class__
-            if name.startswith("__"):
-                private_attr = "_" + cls.__name__ + name
-                if hasattr(d, private_attr):
-                    logger.warning(f"The private attribute or method '{name}' is used in '{cls.__name__}'. " + \
-                                   f"In graph mode, '{name}' will be adjusted to '{private_attr}' for parsing.")
-                    return getattr(d, private_attr)
-            raise AttributeError(f"'{cls.__name__}' object has no attribute or method: '{name}'.")
+        return self.__getitem__(name)
