@@ -19,7 +19,6 @@ import mindspore as ms
 from mindspore import ops, Tensor
 
 
-
 @ms.jit
 def erf_forward_func(x):
     return ops.auto_generate.erf(x)
@@ -68,6 +67,7 @@ def test_erf_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_erf_vmap():
     """
     Feature: test vmap function.
