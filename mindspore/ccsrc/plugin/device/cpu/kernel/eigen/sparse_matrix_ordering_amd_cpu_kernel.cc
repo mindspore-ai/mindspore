@@ -49,12 +49,8 @@ using SparseMatrix = Eigen::SparseMatrix<int32_t, Eigen::RowMajor>;
 using IndicesMap = Eigen::Map<Eigen::Matrix<int32_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 }  // namespace
 
-bool SparseMatrixOrderingAMDCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixOrderingAMD>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SparseMatrixOrderingAMDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -74,11 +70,9 @@ bool SparseMatrixOrderingAMDCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseMatrixOrderingAMDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseMatrixOrderingAMDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

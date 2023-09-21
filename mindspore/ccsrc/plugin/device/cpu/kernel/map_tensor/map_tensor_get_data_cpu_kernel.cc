@@ -47,12 +47,8 @@ std::vector<KernelAttr> MapTensorGetDataCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetDataCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorGetDataCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetDataInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetDataOutputNum, kernel_name_);
@@ -74,10 +70,8 @@ bool MapTensorGetDataCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MapTensorGetDataCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetDataCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex0));

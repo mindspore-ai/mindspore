@@ -30,13 +30,11 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
 }  // namespace
 
-bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool EighCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
 
-  compute_eigen_vectors_ = GetValue<bool>(base_operator->GetAttr(C_EIEH_VECTOR));
-  lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+  compute_eigen_vectors_ = GetValue<bool>(primitive_->GetAttr(C_EIEH_VECTOR));
+  lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -49,10 +47,8 @@ bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int EighCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EighCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

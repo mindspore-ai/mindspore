@@ -53,9 +53,7 @@ void CholeskyCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size
   outer_batch_ /= ((*row) * (*col));
 }
 
-bool CholeskyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CholeskyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[kIndex0]->dtype_id();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
@@ -66,24 +64,23 @@ bool CholeskyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  if (base_operator->HasAttr("upper")) {
+  if (primitive_->HasAttr("upper")) {
     flag_ = false;
-    upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
+    upper_ = GetValue<bool>(primitive_->GetAttr("upper"));
   }
   // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-  if (base_operator->HasAttr(CLEAN)) {
-    clean_ = GetValue<bool>(base_operator->GetAttr(CLEAN));
+  if (primitive_->HasAttr(CLEAN)) {
+    clean_ = GetValue<bool>(primitive_->GetAttr(CLEAN));
   }
-  if (base_operator->HasAttr(LOWER)) {
-    lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+  if (primitive_->HasAttr(LOWER)) {
+    lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
   }
   return true;
 }
 
-int CholeskyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CholeskyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

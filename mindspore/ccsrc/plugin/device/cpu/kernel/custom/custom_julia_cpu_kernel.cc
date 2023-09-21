@@ -23,12 +23,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  const auto &exec_info = GetValue<std::string>(kernel_ptr->GetAttr("func_name"));
+bool CustomJULIACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
   auto pos1 = exec_info.find(":");
   auto pos2 = exec_info.rfind(":");
   if (pos1 == std::string::npos || pos2 == std::string::npos || pos1 == pos2) {

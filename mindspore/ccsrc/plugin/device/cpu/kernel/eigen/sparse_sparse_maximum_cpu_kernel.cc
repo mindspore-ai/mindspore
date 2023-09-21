@@ -113,12 +113,9 @@ void UnionSparseIndicesAndValues(
 }
 }  // namespace
 
-bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool SparseSparseMaximumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;
-  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   TypeId a_dtype = inputs.at(kInputa_values)->dtype_id();
@@ -135,11 +132,9 @@ bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+int SparseSparseMaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
   input_size_list_.clear();
@@ -166,7 +161,7 @@ int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return KRET_OK;
 }
 
-void SparseSparseMaximumCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr> &inputs, const int64_t a_nnz,
+void SparseSparseMaximumCpuKernelMod::CheckInputShape(const std::vector<KernelTensor *> &inputs, const int64_t a_nnz,
                                                       const int64_t b_nnz, const int64_t num_dims) {
   const int64_t a_values_shape0 = inputs.at(kInputa_values)->GetShapeVector()[0];
   const int64_t b_values_shape0 = inputs.at(kInputb_values)->GetShapeVector()[0];

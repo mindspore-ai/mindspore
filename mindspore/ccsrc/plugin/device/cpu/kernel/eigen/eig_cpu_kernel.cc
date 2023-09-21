@@ -53,13 +53,11 @@ void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
   batch_size_ /= (row_size_ * col_size_);
 }
 
-bool EigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool EigCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (base_operator->HasAttr(COMPUTE_V)) {
-    compute_v_ = GetValue<bool>(base_operator->GetAttr(COMPUTE_V));
+  if (primitive_->HasAttr(COMPUTE_V)) {
+    compute_v_ = GetValue<bool>(primitive_->GetAttr(COMPUTE_V));
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -71,10 +69,8 @@ bool EigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int EigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EigCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

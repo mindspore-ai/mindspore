@@ -32,21 +32,17 @@ constexpr size_t kColIndex = 1;
 constexpr size_t kCholeskySolveInputNum = 2;
 constexpr size_t kCholeskySolveOutputNum = 1;
 
-bool CholeskySolveCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CholeskySolveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskySolveInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskySolveOutputNum, kernel_name_);
-  auto cholesky_solve_ptr = std::dynamic_pointer_cast<ops::CholeskySolve>(base_operator);
-  MS_ERROR_IF_NULL(cholesky_solve_ptr);
-  upper = cholesky_solve_ptr->get_upper();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  upper = GetValue<bool>(primitive_->GetAttr(ops::kUpper));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int CholeskySolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CholeskySolveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs[kIndex0]->GetShapeVector();

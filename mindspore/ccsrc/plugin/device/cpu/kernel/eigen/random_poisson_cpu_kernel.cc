@@ -150,18 +150,13 @@ bool AddrAlignedCheck(const void *addr, uint64_t alignment = 16) {
   return reinterpret_cast<uint64_t>(addr) % alignment == 0;
 }
 
-bool RandomPoissonCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  kernel_name_ = base_operator->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool RandomPoissonCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-
-  MS_EXCEPTION_IF_NULL(prim);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = PCG_XSH_RS_state(seed, seed2);
   rng_.seed(init_seed);
   return true;

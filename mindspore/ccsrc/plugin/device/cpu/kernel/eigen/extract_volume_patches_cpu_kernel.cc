@@ -39,27 +39,20 @@ Eigen::PaddingType String2EigenPadding(const std::string &padding) {
 }
 }  // namespace
 
-bool ExtractVolumePatchesKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractVolumePatches>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  kernel_size_ = kernel_ptr->get_kernel_size();
-  strides_ = kernel_ptr->get_strides();
-  padding_ = kernel_ptr->get_padding();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool ExtractVolumePatchesKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  padding_ = GetValue<int>(primitive_->GetAttr(ops::kPadding));
+
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ExtractVolumePatchesKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   constexpr size_t x_dim_num = 5;
   constexpr size_t out_dim_num = 5;
   if (inputs.empty() || outputs.empty()) {
@@ -67,7 +60,7 @@ int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
                       << ", outputs size: " << outputs.size();
   }
 
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

@@ -134,18 +134,16 @@ DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack)
   }
 }
 
-bool DynamicAkgCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */,
-                                  const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool DynamicAkgCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
   return true;
 }
 
-int DynamicAkgCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicAkgCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Start resize for DynamicAkgCpuKernelMod.";
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
 
   ndims_.clear();
   shape_list_.clear();

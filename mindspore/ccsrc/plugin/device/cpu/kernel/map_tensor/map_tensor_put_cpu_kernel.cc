@@ -44,11 +44,8 @@ std::vector<KernelAttr> MapTensorPutCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorPutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
@@ -66,19 +63,18 @@ bool MapTensorPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   input_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
-  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
-    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+  if (primitive_->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(primitive_->GetAttr(kAttrEnableEmbeddingStorage));
   }
-  if (base_operator->HasAttr(kAttrParameterKey)) {
-    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  if (primitive_->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(primitive_->GetAttr(kAttrParameterKey));
   }
 
   return true;
 }
 
-int MapTensorPutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorPutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));

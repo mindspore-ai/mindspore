@@ -41,13 +41,12 @@ CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 #endif
 }
 
-void CustomAOTCpuKernelMod::SetKernelPath(const BaseOperatorPtr &base_operator) {
-  const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
-
+bool CustomAOTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
-    if (base_operator->GetPrim()->HasAttr("path_from_env") &&
-        GetValue<bool>(base_operator->GetPrim()->GetAttr("path_from_env"))) {
+    if (primitive_->HasAttr("path_from_env") && GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
       const char *path_in_env = std::getenv(path.c_str());
       if (path_in_env == nullptr) {
         MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, the attr path_from_env is set but the env var ["
@@ -118,7 +117,7 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                        [](auto &v) { return &v[0]; });
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
-  attrs_.SetKernelPrim(base_operator->GetPrim());
+  attrs_.SetKernelPrim(primitive_);
 
 #if !defined(_WIN32) && !defined(_WIN64)
   if (!handle_) {
@@ -219,10 +218,9 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-int CustomAOTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int CustomAOTCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

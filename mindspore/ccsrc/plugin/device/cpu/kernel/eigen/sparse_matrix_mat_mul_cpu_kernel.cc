@@ -46,39 +46,32 @@ constexpr char kConjugateOutput[] = "conjugate_output";
     .AddInputAttr(kNumberType##valueT)  \
     .AddOutputAttr(kNumberType##valueT)
 }  // namespace
-bool SparseMatrixMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool SparseMatrixMatMulCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  PrimitivePtr primitive = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(primitive);
-
-  auto transpose_x1_ptr = primitive->GetAttr(kTransposeX1);
+  auto transpose_x1_ptr = primitive_->GetAttr(kTransposeX1);
   MS_EXCEPTION_IF_NULL(transpose_x1_ptr);
   transpose_x1_ = GetValue<bool>(transpose_x1_ptr);
 
-  auto transpose_x2_ptr = primitive->GetAttr(kTransposeX2);
+  auto transpose_x2_ptr = primitive_->GetAttr(kTransposeX2);
   MS_EXCEPTION_IF_NULL(transpose_x2_ptr);
   transpose_x2_ = GetValue<bool>(transpose_x2_ptr);
 
-  auto adjoint_x1_ptr = primitive->GetAttr(kAdjointX1);
+  auto adjoint_x1_ptr = primitive_->GetAttr(kAdjointX1);
   MS_EXCEPTION_IF_NULL(adjoint_x1_ptr);
   adjoint_x1_ = GetValue<bool>(adjoint_x1_ptr);
 
-  auto adjoint_x2_ptr = primitive->GetAttr(kAdjointX2);
+  auto adjoint_x2_ptr = primitive_->GetAttr(kAdjointX2);
   MS_EXCEPTION_IF_NULL(adjoint_x2_ptr);
   adjoint_x2_ = GetValue<bool>(adjoint_x2_ptr);
 
-  auto transpose_output_ptr = primitive->GetAttr(kTransposeOutput);
+  auto transpose_output_ptr = primitive_->GetAttr(kTransposeOutput);
   MS_EXCEPTION_IF_NULL(transpose_output_ptr);
   transpose_output_ = GetValue<bool>(transpose_output_ptr);
 
-  auto conjugate_output_ptr = primitive->GetAttr(kConjugateOutput);
+  auto conjugate_output_ptr = primitive_->GetAttr(kConjugateOutput);
   MS_EXCEPTION_IF_NULL(conjugate_output_ptr);
   conjugate_output_ = GetValue<bool>(conjugate_output_ptr);
 
@@ -95,11 +88,9 @@ bool SparseMatrixMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseMatrixMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseMatrixMatMulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

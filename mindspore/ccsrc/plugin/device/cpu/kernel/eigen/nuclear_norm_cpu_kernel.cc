@@ -39,18 +39,14 @@ const size_t DIM_SIZE7 = 7;
 const size_t DIM_SIZE8 = 8;
 }  // namespace
 
-bool NuclearNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NuclearNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNuclearNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNuclearNormOutputsNum, kernel_name_);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
 
   // Attr dim is the optional attribute. Default:[0, 1]
-  if (prim->HasAttr("dim")) {
-    dim_ = GetValue<std::vector<int64_t>>(prim->GetAttr("dim"));
+  if (primitive_->HasAttr("dim")) {
+    dim_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dim"));
     if (dim_.size() == 1 && dim_[0] == kDimIsNone) {
       dim_.clear();
       dim_.push_back(0);
@@ -59,17 +55,16 @@ bool NuclearNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   // Attr keepdim is the optional attribute. Default:false
-  if (prim->HasAttr("keepdim")) {
-    keepdim = GetValue<bool>(prim->GetAttr("keepdim"));
+  if (primitive_->HasAttr("keepdim")) {
+    keepdim = GetValue<bool>(primitive_->GetAttr("keepdim"));
   }
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int NuclearNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NuclearNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

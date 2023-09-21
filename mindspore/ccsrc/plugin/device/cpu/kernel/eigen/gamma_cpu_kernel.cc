@@ -27,13 +27,9 @@ namespace mindspore {
 namespace kernel {
 static constexpr size_t INPUT_NUM = 2;
 static constexpr size_t OUTPUT_NUM = 1;
-bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomGamma>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
-  int64_t seed = kernel_ptr->get_seed();
-  int64_t seed2 = kernel_ptr->get_seed2();
+bool GammaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  int64_t seed2 = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
 
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);
@@ -61,12 +57,10 @@ void GammaCpuKernelMod::InferShape(const std::vector<KernelTensor *> &inputs) {
   }
 }
 
-int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int GammaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     ret = KRET_UNKNOWN_OUT_SHAPE;
     return ret;

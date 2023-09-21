@@ -43,13 +43,10 @@ class DynamicAkgCpuKernelMod : public CpuKernelMod {
   explicit DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack);
   ~DynamicAkgCpuKernelMod() = default;
 
-  bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs, void *) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }

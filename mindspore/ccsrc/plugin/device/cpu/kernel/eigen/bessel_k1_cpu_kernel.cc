@@ -28,14 +28,7 @@ constexpr size_t kBesselK1InputsNum = 1;
 constexpr size_t kBesselK1OutputsNum = 1;
 }  // namespace
 
-bool BesselK1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BesselK1>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For 'BesselK1CpuKernelMod', BaseOperatorPtr can not dynamic cast to BesselK1 before initialize!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool BesselK1CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kBesselK1InputsNum || outputs.size() != kBesselK1OutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kBesselK1InputsNum << " and "
                   << kBesselK1OutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -61,11 +54,10 @@ bool BesselK1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int BesselK1CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+int BesselK1CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();

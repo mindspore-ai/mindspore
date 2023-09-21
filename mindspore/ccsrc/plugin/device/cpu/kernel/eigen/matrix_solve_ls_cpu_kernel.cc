@@ -359,20 +359,16 @@ bool MatrixSolveLsCpuKernelMod::RealCholesky(const std::vector<kernel::KernelTen
   return kMatrixSolveLsComputeOk;
 }
 
-bool MatrixSolveLsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixSolveLsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
 
   matrix_dtype_ = inputs[0]->dtype_id();
   rhs_dtype_ = inputs[1]->dtype_id();
 
-  if (prim->HasAttr(kFast)) {
-    qr_chole_ = GetValue<bool>(prim->GetAttr(kFast));
+  if (primitive_->HasAttr(kFast)) {
+    qr_chole_ = GetValue<bool>(primitive_->GetAttr(kFast));
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the attribute 'fast' does not exist.";
   }
@@ -386,10 +382,9 @@ bool MatrixSolveLsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int MatrixSolveLsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSolveLsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   matrix_shape_ = inputs[kMatrixInputIndex]->GetShapeVector();

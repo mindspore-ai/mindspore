@@ -44,17 +44,12 @@ const std::map<TypeId, size_t> means_type_size_map = {
   {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeFloat64, sizeof(double)}};
 }  // namespace
 
-bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ParameterizedTruncatedNormalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ParameterizedTruncatedNormal>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
   input_type_ = inputs[kInput0]->dtype_id();
@@ -63,14 +58,12 @@ bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_
   input_min_type_ = inputs[kInput3]->dtype_id();
   input_max_type_ = inputs[kInput4]->dtype_id();
   output_type_ = outputs[kOutputData]->dtype_id();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ParameterizedTruncatedNormalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ParameterizedTruncatedNormalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kInput0]->GetDeviceShapeVector();

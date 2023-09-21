@@ -43,13 +43,9 @@ std::vector<KernelAttr> MapTensorGetCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
-  insert_default_value_ = GetValue<bool>(prim->GetAttr(kAttrInsertDefaultValue));
+bool MapTensorGetCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  insert_default_value_ = GetValue<bool>(primitive_->GetAttr(kAttrInsertDefaultValue));
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetOutputNum, kernel_name_);
@@ -68,19 +64,18 @@ bool MapTensorGetCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   output_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
 
-  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
-    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+  if (primitive_->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(primitive_->GetAttr(kAttrEnableEmbeddingStorage));
   }
-  if (base_operator->HasAttr(kAttrParameterKey)) {
-    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  if (primitive_->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(primitive_->GetAttr(kAttrParameterKey));
   }
 
   return true;
 }
 
-int MapTensorGetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
