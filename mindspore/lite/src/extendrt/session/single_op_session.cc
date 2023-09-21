@@ -238,6 +238,7 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
   for (size_t i = 0; i < input_tensors.size(); i++) {
     auto &tensor = input_tensors[i];
     auto &kernel_tensor = kernel_args_.inputs[i];
+    MS_CHECK_TRUE_RET(kernel_tensor != nullptr, kCoreFailed);
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
     auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
     auto shape = kernel_tensor->GetShapeVector();
@@ -265,11 +266,11 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
 
 Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
-
+  MS_CHECK_TRUE_RET(graph != nullptr, kLiteNullptr);
   auto nodes = graph->TopoSort(graph->get_return());
   if (nodes.empty()) {
     MS_LOG(ERROR) << "There are no nodes in the graph";
-    return mindspore::kLiteNullptr;
+    return kLiteNullptr;
   }
   size_t cnode_count = 0;
   for (const auto &node : nodes) {
@@ -316,6 +317,7 @@ Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<tenso
 void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs) {
   for (size_t i = 0; i < kernel_args_.outputs.size(); ++i) {
     if (dyn_outshape_[i]) {
+      MS_CHECK_TRUE_RET_VOID(kernel_args_.outputs[i] != nullptr);
       ShapeVector shape = kernel_args_.outputs[i]->GetShapeVector();
       (*outputs)[i].set_shape(shape);
       kernel::AddressPtr host_addr = kernel_args_.outputs[i]->GetHostData();
@@ -346,6 +348,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     auto &kernel_input = kernel_args_.inputs[i];
+    MS_CHECK_TRUE_RET(kernel_input != nullptr, kLiteError);
     if (input.Size() != kernel_input->GetSizeInBytes()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input.Size()
                     << ", expected size " << kernel_input->GetSizeInBytes()
@@ -450,8 +453,10 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
       MS_LOG(ERROR) << "New shape of input " << i << " cannot be dynamic, new shape: " << new_shape;
       return kLiteError;
     }
+    MS_CHECK_TRUE_RET(inputs_[i] != nullptr, kLiteError);
     if (inputs_[i]->Shape() != new_shapes[i]) {
       input_changed = true;
+      MS_CHECK_TRUE_RET(kernel_args_.inputs[i] != nullptr, kLiteError);
       kernel_args_.inputs[i]->SetShapeVector(new_shapes[i]);
     }
   }

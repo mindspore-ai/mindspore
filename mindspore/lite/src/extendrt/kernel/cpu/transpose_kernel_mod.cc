@@ -21,6 +21,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "include/api/status.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -54,11 +55,14 @@ int TransposeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 
 bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_CHECK_TRUE_RET(base_operator == nullptr, false);
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
+  MS_CHECK_TRUE_RET(inputs[kIndex0] != nullptr && outputs[kIndex0] != nullptr, false);
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
+  MS_CHECK_TRUE_RET(inputs[kIndex1] != nullptr, false);
   auto address_ptr = inputs[kIndex1]->GetData();
   if (address_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Address ptr is nullptr.";

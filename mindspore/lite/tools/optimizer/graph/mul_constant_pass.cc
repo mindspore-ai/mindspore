@@ -104,7 +104,7 @@ bool MulConstantPass::Run(const FuncGraphPtr &func_graph) {
     }
     auto data = *static_cast<float *>(data_info.data_ptr_);
     if (data == 1.0f) {
-      (void)func_graph->manager()->Replace(node, cnode->input(1));
+      (void)manager->Replace(node, cnode->input(1));
     }
   }
   return true;

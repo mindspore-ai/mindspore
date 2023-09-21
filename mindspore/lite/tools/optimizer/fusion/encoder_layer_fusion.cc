@@ -993,13 +993,22 @@ std::shared_ptr<ops::EncoderLayer> EncoderLayerFusion::CreatePrim(const FuncGrap
 STATUS EncoderLayerFusion::InitAttributes(AnfNodePtr k_past, AnfNodePtr begin_expert_ids, AnfNodePtr weight_m,
                                           AnfNodePtr expert_capacity_node, int *ffn_hidden_size, int *expert_num,
                                           int *expert_offset, float *capacity_factor) const {
+  MS_ASSERT(k_past != nullptr && begin_expert_ids != nullptr && weight_m != nullptr && expert_capacity_node != nullptr);
+  MS_ASSERT(ffn_hidden_size != nullptr && expert_num != nullptr && expert_offset != nullptr &&
+            capacity_factor != nullptr);
   auto base_shape_ptr = weight_m->Shape();
+  MS_CHECK_TRUE_RET(base_shape_ptr != nullptr, RET_ERROR);
   auto input_shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
+  MS_CHECK_TRUE_RET(input_shape_ptr != nullptr, RET_ERROR);
   auto input_shape = input_shape_ptr->shape();
+  MS_CHECK_TRUE_RET(input_shape.size() > C2NUM, RET_ERROR);
   if (is_moe_) {
     auto begin_expert_ids_node = begin_expert_ids->cast<ValueNodePtr>();
+    MS_CHECK_TRUE_RET(begin_expert_ids_node != nullptr, RET_ERROR);
     *expert_num = (int64_t)input_shape[0];
-    *expert_offset = CastToInt(begin_expert_ids_node->value())[0];
+    auto offsets = CastToInt(begin_expert_ids_node->value());
+    MS_CHECK_TRUE_RET(!offsets.empty(), RET_ERROR);
+    *expert_offset = offsets[0];
     auto base_shape_k = k_past->Shape();
     auto k_shape_ptr = base_shape_k->cast<abstract::ShapePtr>();
     auto k_shape = k_shape_ptr->shape();
