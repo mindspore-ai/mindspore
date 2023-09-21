@@ -34,8 +34,7 @@ REGISTER_ACL_OP(BNTrainingUpdateGrad)
   .Input(0, {"NCHW"}, "NCH")
   .Input(1, {"NCHW"}, "NCH")
   .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Output(0, 0);
+  .Input(3, {"NCHW"});
 
 REGISTER_ACL_OP(BNTrainingReduceGrad)
   .Input(0, {"NCHW"}, "NCH")

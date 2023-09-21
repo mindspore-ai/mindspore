@@ -24,6 +24,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
+#include "ops/conv_pool_ops.h"
 #include "ops/structure_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/image_op_name.h"
@@ -86,6 +87,37 @@ bool GLogIsDebug() {
     is_submodule_debug = submodule[start_pos] == '0';
   }
   return is_debug || is_submodule_debug;
+}
+
+const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
+  {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
+
+std::string GetCastWeightFormat(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
+      !common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
+    MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
+                      << kAttrPynativeNextOpName << " has not been set yet!";
+  }
+  auto next_index = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
+  auto next_op_name = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
+  auto iter = kNextOpFormatList.find(next_op_name);
+  if (iter == kNextOpFormatList.end()) {
+    MS_LOG(INFO) << "The op name " << next_op_name << "has not been set in the next op map ";
+    return "";
+  }
+  if (iter->second.size() < next_index) {
+    MS_LOG(EXCEPTION) << "Next input index " << next_index << "is out of range in the next op map max size is "
+                      << iter->second.size();
+  }
+  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name()) {
+    MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
+    return "";
+  }
+  if (next_index == 0) {
+    return "";
+  }
+  return iter->second[next_index];
 }
 
 void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt) {
@@ -425,6 +457,18 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   size_t output_num = AnfUtils::GetOutputTensorNum(node);
   input_reshape_types->assign(input_num, "");
   output_reshape_types->assign(output_num, "");
+
+  if (common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, cnode)) {
+    auto cast_format = GetCastWeightFormat(cnode);
+    if (!cast_format.empty()) {
+      (void)input_formats->emplace_back(cast_format);
+      (void)output_formats->emplace_back(cast_format);
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      SetParameterFormat(kernel_with_index.first, cast_format, &input_format);
+      return;
+    }
+  }
 
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     std::vector<size_t> special_inputs;
