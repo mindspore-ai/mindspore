@@ -1,5 +1,5 @@
 mindspore.ops.std
-==================
+=================
 
 .. py:function:: mindspore.ops.std(input, axis=None, ddof=0, keepdims=False)
 
