@@ -690,14 +690,14 @@ bool IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
   auto tensor = param->default_param()->cast<tensor::TensorPtr>();
   if (tensor != nullptr) {
     tensor_proto->set_compression_type(static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
-  }
-  auto quant_params = tensor->quant_params();
-  for (const auto &quant_param : quant_params) {
-    auto quant_param_proto = tensor_proto->add_quant_params();
-    auto ret = SetQuantizationParamToAttrProto(quant_param, quant_param_proto);
-    if (ret != true) {
-      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
-      return false;
+    auto quant_params = tensor->quant_params();
+    for (const auto &quant_param : quant_params) {
+      auto quant_param_proto = tensor_proto->add_quant_params();
+      auto ret = SetQuantizationParamToAttrProto(quant_param, quant_param_proto);
+      if (ret != true) {
+        MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+        return false;
+      }
     }
   }
   return true;
