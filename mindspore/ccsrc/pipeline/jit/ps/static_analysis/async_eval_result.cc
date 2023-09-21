@@ -234,6 +234,12 @@ bool AsyncAbstract::SetPossibleResult(bool first) {
   }
   if (condition) {
     result_ = switchAbstract_->TryGetResult();
+    // Set the result with the other branches abstract
+    // when there are not available branches to infer.
+    // Just copy the type otherwise the two branches would be optimized to a const value.
+    if (!result_->BuildValue()->isa<ValueAny>()) {
+      result_ = AbstractBroaden(result_);
+    }
     if (NeedWaitForBranches(result_)) {
       result_ = AsyncAbstractFuncAtom::MakeShared(shared_from_this(), std::vector<size_t>{0});
     }
