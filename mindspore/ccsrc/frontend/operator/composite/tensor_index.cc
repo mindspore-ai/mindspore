@@ -521,6 +521,7 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
       (void)begin_strides.emplace_back(NewValueNode(static_cast<int64_t>(0)));
       (void)end_strides.emplace_back(NewValueNode(static_cast<int64_t>(1)));
       (void)step_strides.emplace_back(NewValueNode(static_cast<int64_t>(1)));
+      index_count += 1;
     } else if (index_type_id == kObjectTypeTensorType) {
       auto tensor_abs = index_abs->BuildValue()->cast<mindspore::tensor::TensorPtr>();
       int64_t start = 0;
@@ -625,6 +626,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       (void)begin_strides.emplace_back(zero_tensor_node);
       (void)end_strides.emplace_back(one_tensor_node);
       (void)step_strides.emplace_back(one_tensor_node);
+      index_count += 1;
     } else if (index_type_id == kObjectTypeTensorType) {
       new_index_node = res_graph_->NewCNode({MakeExpandDimsNode(), new_index_node, NewValueNode(0)});
       auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");

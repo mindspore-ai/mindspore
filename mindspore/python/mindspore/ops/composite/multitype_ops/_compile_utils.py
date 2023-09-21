@@ -1237,7 +1237,6 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value_tensor)
 
     if F.is_sequence_value_unknown(F.shape(data)):
-        _check_dim_shape_valid(data, index)
         return tensor_setitem_by_tuple_with_tensor(data, (index,), value_tensor.astype(data.dtype))
     return _tensor_setitem_by_bool_tensor_with_tensor(data, index, value_tensor)
 

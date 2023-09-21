@@ -1313,7 +1313,7 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
     auto new_data_shape = data_shape;
     if (step != 0) {
       auto new_shape_zero = (stop - start) / step;
-      new_data_shape[0] = (new_shape_zero <= 0 ? 0 : 1 + (stop - 1 - start) / step);
+      new_data_shape[0] = (new_shape_zero < 0 ? 0 : (stop + step - 1 - start) / step);
     }
     auto slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
     if (slice_output != py::none()) {
@@ -1535,7 +1535,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(step_info));
       (void)slice_op_info->data_indexs.emplace_back(0);
       (void)slice_op_infos.emplace_back(slice_op_info);
-      new_data_shape[dim] = 1 + (slice_info.stop() - 1 - slice_info.start()) / slice_info.step();
+      new_data_shape[dim] = (slice_info.stop() + slice_info.step() - 1 - slice_info.start()) / slice_info.step();
       dim++;
     } else if (py::isinstance<py::ellipsis>(obj)) {
       if (ellipsis_count > 0) {
