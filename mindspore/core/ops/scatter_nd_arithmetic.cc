@@ -32,6 +32,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr auto kIndexMinSize = 2;
+constexpr auto kUpdateMinSize = 1;
+
 abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -53,8 +56,10 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
   const int64_t indices_size = SizeToLong(indices_shape.size());
   const int64_t updates_size = SizeToLong(updates_shape.size());
 
-  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, kIndexMinSize,
+                                                  prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, kUpdateMinSize,
+                                                  prim_name);
 
   const int64_t last_dim = indices_shape.back();
   (void)CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,

@@ -72,7 +72,9 @@ def test_scatter_nd_update():
     net = NetScatterNdUpdate()
     x = Tensor(np.ones([5]).astype(np.float16))
     idx = Tensor(np.ones([1]).astype(np.int32))
-    net(idx, x)
+    with pytest.raises(ValueError) as ex:
+        net(idx, x)
+        assert "the dimension of \'indices\' must be greater than or equal to 2" in str(ex.value)
 
 
 def test_signature_error_info():

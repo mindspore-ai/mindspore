@@ -69,6 +69,7 @@ class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod,
   std::vector<size_t> batch_strides_;
   std::vector<size_t> input_shape_;
   float block_size_{128.0};
+  bool has_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
