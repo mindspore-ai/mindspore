@@ -770,7 +770,8 @@ def permute(input, axis):
           [ 8. 11.]
           [ 9. 12.]]]
     """
-    return transpose_(input, axis)
+    transpose_op = _get_cache_prim(P.Transpose)()
+    return transpose_op(input, axis)
 
 
 def ceil(input):
@@ -5082,7 +5083,8 @@ def minimum(input, other):
         >>> print(output.dtype)
         Float32
     """
-    return minimum_(input, other)
+    minimum_op = _get_cache_prim(P.Minimum)()
+    return minimum_op(input, other)
 
 
 def median(input, axis=-1, keepdims=False):
