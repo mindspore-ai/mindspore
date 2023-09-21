@@ -124,7 +124,7 @@ class TensorTensorImpl : public MutableTensorImpl {
     MS_LOG(ERROR) << "set device data in tensor utils.";
 #ifdef ENABLE_CLOUD_INFERENCE
     if (old_device_data != nullptr && device_own_data_) {
-      kernel::AscendAllocatorPlugin::GetInstance().Free(old_device_data);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(old_device_data, GetDeviceId());
     }
 #endif
     auto data_size = DataSize();

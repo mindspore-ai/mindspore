@@ -1107,8 +1107,9 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
       }
     } else {
       if (!user_defined_output_buf_[i]) {
-        output->SetDynOutput(std::unique_ptr<uint8_t[]>(new uint8_t[output_desc_size]));
-        output->SetHostData(std::make_shared<kernel::Address>(output->GetDynOutput(), output_desc_size));
+        // data_buf_ptr is passed to tensor ref data and will be freed in destructor
+        void *data_buf_ptr = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(output_desc_size);
+        output->SetHostData(std::make_shared<kernel::Address>(data_buf_ptr, output_desc_size));
         output->SetData(nullptr);
         dyn_out_sys_buf_addr_ = output->GetHostData()->addr;
         MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_;
