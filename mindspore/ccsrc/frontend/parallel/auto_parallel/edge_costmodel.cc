@@ -96,18 +96,18 @@ Status Edge::InitEdgeCost() {
     const auto fully_use = CostModelContext::GetInstance()->fully_use_device();
     const auto stra_follow = CostModelContext::GetInstance()->elementwise_stra_follow();
     if (fully_use) {
-      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
-                   << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
-                      "'fully_use_devices' false.";
+      MS_LOG(ERROR) << "Generating cost for edge: " << edge_name_
+                    << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
+                       "'fully_use_devices' false.";
     } else if (stra_follow) {
-      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
-                   << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
-                      "Try to set 'elementwise_op_strategy_follow' false.";
+      MS_LOG(ERROR) << "Generating cost for edge: " << edge_name_
+                    << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
+                       "Try to set 'elementwise_op_strategy_follow' false.";
     }
     if (edge_name_.find(RESHAPE) != std::string::npos) {
-      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
-                   << " failed, it may be caused by setting different strategies for operators following Reshape. "
-                      "Try to fix that.";
+      MS_LOG(ERROR) << "Generating cost for edge: " << edge_name_
+                    << " failed, it may be caused by setting different strategies for operators following Reshape. "
+                       "Try to fix that.";
     }
     MS_LOG(INFO) << "Generating cost for edge: " << edge_name_ << " failed.";
     return Status::FAILED;
