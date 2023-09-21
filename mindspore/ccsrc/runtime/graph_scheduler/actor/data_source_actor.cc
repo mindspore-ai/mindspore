@@ -282,41 +282,46 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   // Copy data from host tensor to device tensor.
   uint64_t start_time = 0;
   PROFILER_START(start_time);
-  for (size_t i = 0; i < host_tensors.size(); ++i) {
-    auto &host_tensor = host_tensors[i];
-    auto &device_tensor = device_tensors[i];
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    MS_EXCEPTION_IF_NULL(host_tensor);
-    // No used device address need skip.
-    if (TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagNotUsed)) {
-      MS_LOG(DEBUG) << GetAID().Name() << " input index " << i << " is not used.";
-      continue;
-    }
-    auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
-    // Sync data from host_tensor_device_address to device_tensor.
-    if (tensor_device_address != nullptr) {
-      if (tensor_device_address.get() == device_tensor) {
+  try {
+    for (size_t i = 0; i < host_tensors.size(); ++i) {
+      auto &host_tensor = host_tensors[i];
+      auto &device_tensor = device_tensors[i];
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      MS_EXCEPTION_IF_NULL(host_tensor);
+      // No used device address need skip.
+      if (TEST_FLAG(device_tensor->flag(), device::kDeviceAddressFlagNotUsed)) {
+        MS_LOG(DEBUG) << GetAID().Name() << " input index " << i << " is not used.";
         continue;
       }
-      if (!Copy(device_tensor, tensor_device_address.get())) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+      auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
+      // Sync data from host_tensor_device_address to device_tensor.
+      if (tensor_device_address != nullptr) {
+        if (tensor_device_address.get() == device_tensor) {
+          continue;
+        }
+        if (!Copy(device_tensor, tensor_device_address.get())) {
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+        }
+        continue;
       }
-      continue;
+      if (host_tensor->data_ptr() == nullptr && device_tensor->GetSize() == 0) {
+        MS_LOG(INFO) << "Empty tuple sync";
+        continue;
+      }
+      // Sync data from host_tensor to device_tensor.
+      if (!device_tensor->SyncHostToDevice(
+            trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
+            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->data_c(),
+            host_tensor->device_info().host_format_)) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
+      }
+      if (IsDynamic(device_tensor->host_shape())) {
+        device_tensor->set_host_shape(host_tensor->shape());
+      }
     }
-    if (host_tensor->data_ptr() == nullptr && device_tensor->GetSize() == 0) {
-      MS_LOG(INFO) << "Empty tuple sync";
-      continue;
-    }
-    // Sync data from host_tensor to device_tensor.
-    if (!device_tensor->SyncHostToDevice(
-          trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
-          LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->data_c(),
-          host_tensor->device_info().host_format_)) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
-    }
-    if (IsDynamic(device_tensor->host_shape())) {
-      device_tensor->set_host_shape(host_tensor->shape());
-    }
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Host data source actor run exception.");
   }
   PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name(), false);
 
