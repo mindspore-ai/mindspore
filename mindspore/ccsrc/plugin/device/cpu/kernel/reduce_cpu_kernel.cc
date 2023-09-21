@@ -50,17 +50,15 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
  public:
   ReduceCpuKernelFunc() = default;
   ~ReduceCpuKernelFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
-  void ChooseFunc(const std::string &kernel_name_);
+  void ChooseFunc();
   void HandleInputAxis();
   void SpecialExcute();
   void CalAxesAndStride(std::vector<size_t> *axes, size_t *stride);
@@ -264,13 +262,13 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
 }
 
 template <typename T>
-int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  input_shape_ = inputs[0]->GetDeviceShapeVector();
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axis_, false)) {
+int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  auto aixs = inputs[kIndex1]->GetValue<std::vector<int64_t>>();
+  if (!aixs.has_value()) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
   }
+  axis_ = aixs.value();
   if (inputs.size() > kAxisIndex_ &&
       AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kAxisIndex_]->GetShapeVector())) {
     need_skip_execute_ = true;
@@ -282,7 +280,7 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
+void ReduceCpuKernelFunc<T>::ChooseFunc() {
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == kReduceAll) {
       reduce_type_ = ReduceFuncType::kReduceAllType;
@@ -335,13 +333,11 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                      const std::vector<KernelTensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  ChooseFunc(kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
-  skip_mode_ = kernel_ptr->get_skip_mode();
+void ReduceCpuKernelFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &) {
+  kernel_name_ = primitive->name();
+  ChooseFunc();
+  skip_mode_ = GetValue<bool>(primitive->GetAttr(ops::kSkipMode));
 }
 
 template <typename T>
@@ -553,9 +549,7 @@ std::vector<KernelAttr> ReduceCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ReduceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -576,18 +570,16 @@ bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   }
 
   func_obj_ = kernel_attr_list[kernel_type_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ReduceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ReduceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  ret = func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
+  ret = func_obj_->Resize(inputs, outputs);
 
   return ret;
 }

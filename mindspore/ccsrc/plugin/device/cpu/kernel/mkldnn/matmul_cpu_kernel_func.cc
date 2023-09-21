@@ -41,28 +41,23 @@ constexpr size_t kRankMin = 2;
 using dims = dnnl::memory::dims;
 }  // namespace
 
-void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatMul ops failed!";
-  }
-  trans_a_ = kernel_ptr->get_transpose_a();
-  trans_b_ = kernel_ptr->get_transpose_b();
+void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  prim_ = primitive;
+  kernel_name_ = primitive->name();
+  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
+  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }
 
-int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto a_shape = inputs[kIndex0]->GetShapeVector();
   auto b_shape = inputs[kIndex1]->GetShapeVector();
-  if (base_operator->HasAttr(kAttrWithBiasAdd)) {
-    with_bias_add_ = GetValue<bool>(base_operator->GetAttr(kAttrWithBiasAdd));
+  if (prim_->GetAttr(kAttrWithBiasAdd) != nullptr) {
+    with_bias_add_ = GetValue<bool>(prim_->GetAttr(kAttrWithBiasAdd));
   }
 
-  if (base_operator->HasAttr(kAttrWithRelu)) {
-    with_relu_ = GetValue<bool>(base_operator->GetAttr(kAttrWithRelu));
+  if (prim_->GetAttr(kAttrWithRelu) != nullptr) {
+    with_relu_ = GetValue<bool>(prim_->GetAttr(kAttrWithRelu));
   }
 
   auto o_shape = outputs[kIndex0]->GetShapeVector();

@@ -28,20 +28,16 @@ class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
   MatMulCpuKernelFunc() = default;
   ~MatMulCpuKernelFunc() override = default;
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
 
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     return true;
   };
 
@@ -54,6 +50,7 @@ class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
   bool with_relu_{false};
   bool trans_a_{false};
   bool trans_b_{false};
+  PrimitivePtr prim_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

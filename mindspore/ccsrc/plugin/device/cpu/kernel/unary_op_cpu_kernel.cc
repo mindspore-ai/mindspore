@@ -68,11 +68,12 @@ template <typename T, typename S>
 class UnaryOpCpuKernelFunc : public CpuKernelFunc {
  public:
   UnaryOpCpuKernelFunc() = default;
-  explicit UnaryOpCpuKernelFunc(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   ~UnaryOpCpuKernelFunc() override = default;
   using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
 
-  void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
     GetUnaryOpFunc();
   }
 
@@ -111,11 +112,11 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
 };
 
 template <typename T, typename S>
-std::shared_ptr<CpuKernelFunc> SpecializeUnaryFunc(const std::string &kernel_name) {
-  return std::make_shared<UnaryOpCpuKernelFunc<T, S>>(kernel_name);
+std::shared_ptr<CpuKernelFunc> SpecializeUnaryFunc() {
+  return std::make_shared<UnaryOpCpuKernelFunc<T, S>>();
 }
 
-using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>(const std::string &kernel_name)>;
+using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 
 std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>> kernel_attr_list = {
   {prim::kPrimReal->name(),
@@ -208,8 +209,8 @@ bool UnaryOpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_attr << " does not support this kernel data type: " << kernel_attr;
   }
-  func_obj_ = kernel_attr_list[kernel_name_][index].second(kernel_name_);
-  func_obj_->InitFunc(inputs, outputs);
+  func_obj_ = kernel_attr_list[kernel_name_][index].second();
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 

@@ -137,9 +137,7 @@ std::vector<KernelAttr> MatMulCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MatMulCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -151,15 +149,13 @@ bool MatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   }
 
   func_obj_ = support_list_map[kernel_type_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int MatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MatMulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto shape0 = inputs[kIndex0]->GetShapeVector();
@@ -173,7 +169,7 @@ int MatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     launch_empty_tensor_func_ = empty_tensor_map_[dtype];
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMul,

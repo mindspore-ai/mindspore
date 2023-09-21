@@ -94,24 +94,17 @@ void MatmulDoubleCpuKernelFunc::MatMul(const std::vector<kernel::KernelTensor *>
   }
 }
 
-void MatmulDoubleCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast MatMul ops failed!";
-  }
-
-  trans_a_ = kernel_ptr->get_transpose_a();
-  trans_b_ = kernel_ptr->get_transpose_b();
+void MatmulDoubleCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  kernel_name_ = primitive->name();
+  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
+  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }
 
-int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto a_shape = inputs[kIndex0]->GetShapeVector();
-  auto b_shape = inputs[kIndex1]->GetShapeVector();
+int MatmulDoubleCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto &a_shape = inputs[kIndex0]->GetShapeVector();
+  const auto &b_shape = inputs[kIndex1]->GetShapeVector();
   auto out_shape = outputs[kIndex0]->GetShapeVector();
   if (a_shape.size() < kAMatrixDimNum || b_shape.size() < kAMatrixDimNum || out_shape.size() < kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be greater than or equal to " << kAMatrixDimNum;

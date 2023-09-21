@@ -84,7 +84,7 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
-  void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                 const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
@@ -737,9 +737,9 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
 
-void ArithmeticSelfCpuKernelFunc::InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+void ArithmeticSelfCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &) {
-  kernel_name_ = kernel_name;
+  kernel_name_ = primitive->name();
   dtype_ = inputs[kIndex0]->dtype_id();
 }
 
@@ -1146,7 +1146,7 @@ bool ArithmeticSelfCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   func_obj_ = arith_kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(kernel_name_, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 

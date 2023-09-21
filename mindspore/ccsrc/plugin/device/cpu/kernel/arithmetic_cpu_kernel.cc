@@ -137,9 +137,9 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     return KRET_OK;
   }
 
-  void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                 const std::vector<KernelTensor *> &outputs) override {
-    kernel_name_ = kernel_name;
+    kernel_name_ = primitive->name();
     InitComputeFunc();
   }
 
@@ -1261,7 +1261,7 @@ bool ArithmeticCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   func_obj_ = kernel_attr_list[kernel_name_][index].second();
-  func_obj_->InitFunc(kernel_name_, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 

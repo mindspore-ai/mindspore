@@ -36,6 +36,7 @@
 #include "mindspore/core/ops/base_operator.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
+#include "ops/op_name.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE

@@ -32,10 +32,9 @@ class L2NormalizeGradCpuFunc : public CpuKernelFunc {
  public:
   L2NormalizeGradCpuFunc() = default;
   ~L2NormalizeGradCpuFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
 
@@ -56,22 +55,16 @@ class L2NormalizeGradCpuFunc : public CpuKernelFunc {
 };
 
 template <typename T>
-void L2NormalizeGradCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto l2_normalize_grad_ptr = std::dynamic_pointer_cast<ops::L2NormalizeGrad>(base_operator);
-  if (l2_normalize_grad_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cast 'L2NormalizeGrad' ops failed!";
-  }
-  epsilon_ = static_cast<T>(l2_normalize_grad_ptr->get_epsilon());
-  axis_origin_ = LongToInt(l2_normalize_grad_ptr->get_axis());
+void L2NormalizeGradCpuFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  kernel_name_ = primitive->name();
+  epsilon_ = static_cast<T>(GetValue<float>(primitive->GetAttr(ops::kEpsilon)));
+  axis_origin_ = LongToInt(GetValue<int64_t>(primitive->GetAttr(ops::kAxis)));
 }
 
 template <typename T>
-int L2NormalizeGradCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int L2NormalizeGradCpuFunc<T>::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   input_shape_list_.clear();
   for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
     (void)input_shape_list_.emplace_back(inputs[i]->GetShapeVector());
@@ -244,8 +237,8 @@ std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_l
    SpecializeL2NormGradFunc<float16>}};
 }  // namespace
 
-bool L2NormalizeGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+bool L2NormalizeGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -253,18 +246,16 @@ bool L2NormalizeGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   func_obj_ = func_class_list[index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int L2NormalizeGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int L2NormalizeGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> L2NormalizeGradCpuKernelMod::GetOpSupport() {

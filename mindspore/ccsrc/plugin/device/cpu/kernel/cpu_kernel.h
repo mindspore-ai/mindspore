@@ -22,6 +22,7 @@
 #include <numeric>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 #include <map>
 #include <set>
@@ -269,7 +270,7 @@ class CpuKernelFunc {
   virtual ~CpuKernelFunc() = default;
   ///////////// new func ///////////////
   virtual void InitFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
-  virtual void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+  virtual void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                         const std::vector<KernelTensor *> &outputs) {}
   virtual int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     return KRET_OK;

@@ -55,7 +55,7 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
  public:
   EltWiseGradCpuTypeFunc() = default;
   ~EltWiseGradCpuTypeFunc() override = default;
-  void InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                 const std::vector<KernelTensor *> &outputs) override;
   bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                const std::vector<KernelTensor *> &outputs) override;
@@ -461,9 +461,9 @@ void EltWiseGradCpuTypeFunc<T>::SoftplusGrad(const T *input1, const T *input2, T
 }
 
 template <typename T>
-void EltWiseGradCpuTypeFunc<T>::InitFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &,
+void EltWiseGradCpuTypeFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
                                          const std::vector<KernelTensor *> &) {
-  kernel_name_ = kernel_name;
+  kernel_name_ = primitive->name();
   if constexpr (std::is_same_v<T, double>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
@@ -842,7 +842,7 @@ bool EltWiseGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
 
   func_obj_ = kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(kernel_name_, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
