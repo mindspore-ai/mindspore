@@ -33,7 +33,7 @@ from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_a
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
 from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
     is_invalid_or_jit_forbidden_method
-
+from mindspore.graph_jit import GraphJit
 
 __all__ = ["run_check"]
 __all__.extend(__version__)
@@ -44,3 +44,4 @@ __all__.extend(context.__all__)
 __all__.extend(parallel.__all__)
 __all__.extend(rewrite.__all__)
 __all__.append("Profiler")
+__all__.append("GraphJit")
