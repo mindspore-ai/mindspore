@@ -80,8 +80,9 @@ void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py
 py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
 bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
 bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs);
-// Handle python object for AnfNode.
+// Attach python object to abstract recursively using ExtraInfoHolder.
 void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
+// Handle python object for AnfNode.
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
 bool HasPyObjectInNode(const AnfNodePtr &node);
 py::object GetPyObjectFromNode(const AnfNodePtr &node);
