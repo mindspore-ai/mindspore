@@ -1,6 +1,6 @@
 # 使用ReWrite修改网络
 
-[![查看源文件](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.png)](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/rewrite/rewrite_tutorial.md)
+[![查看源文件](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg)](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/rewrite/rewrite_tutorial.md)
 
 此指南展示了[mindspore.rewrite](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html)模块中API的各种用法。
 

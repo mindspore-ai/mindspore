@@ -1,6 +1,6 @@
 # Modifying Network With ReWrite
 
-[![View Source On Gitee](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source_en.png)](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/samples/rewrite/rewrite_tutorial.md)
+[![View Source On Gitee](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source_en.svg)](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/samples/rewrite/rewrite_tutorial.md)
 
 This example illustrates the various usages of APIs available in the [mindspore.rewrite](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html) module.
 
