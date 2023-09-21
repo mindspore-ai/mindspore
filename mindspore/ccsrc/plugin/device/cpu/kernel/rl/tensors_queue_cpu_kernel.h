@@ -29,9 +29,9 @@ class TensorsQueueCreateCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCreateCpuKernelMod();
   ~TensorsQueueCreateCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
@@ -51,9 +51,9 @@ class TensorsQueuePutCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueuePutCpuKernelMod();
   ~TensorsQueuePutCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
@@ -70,9 +70,9 @@ class TensorsQueueGetCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueGetCpuKernelMod();
   ~TensorsQueueGetCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
@@ -89,9 +89,9 @@ class TensorsQueueClearCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueClearCpuKernelMod();
   ~TensorsQueueClearCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
@@ -105,9 +105,9 @@ class TensorsQueueCloseCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCloseCpuKernelMod();
   ~TensorsQueueCloseCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
@@ -121,9 +121,9 @@ class TensorsQueueSizeCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueSizeCpuKernelMod();
   ~TensorsQueueSizeCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {

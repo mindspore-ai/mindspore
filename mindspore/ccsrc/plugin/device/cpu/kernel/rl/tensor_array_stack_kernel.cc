@@ -28,19 +28,17 @@ TensorArrayStackCpuKernelMod::TensorArrayStackCpuKernelMod()
   ResetResource();
 }
 
-void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+bool TensorArrayStackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  kernel_node_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  auto max_element = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "max_element");
-  is_dynamic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_dynamic_shape");
-  auto size = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
+  auto shape = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
+  auto max_element = GetValue<int64_t>(primitive_->GetAttr("max_element"));
+  is_dynamic_ = GetValue<bool>(primitive_->GetAttr("is_dynamic_shape"));
+  auto size = GetValue<int64_t>(primitive_->GetAttr("size"));
   for (auto i : shape) {
     shapes_.push_back(LongToSize(i));
   }
-  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
   ele_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     ele_size_ *= i;
@@ -50,24 +48,32 @@ void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     value_size_ = ele_size_ * LongToSize(size);
   }
+  return true;
 }
 
-void TensorArrayStackCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+int TensorArrayStackCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
   output_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.push_back(value_size_);
-  input_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-void TensorArrayStackCpuKernelMod::PostExecute() {
+void TensorArrayStackCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  if (!is_dynamic_) {
+    return;
+  }
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_EXCEPTION_IF_NULL(tensors_);
   size_t tensor_size = tensors_->GetValidSize();
   auto shape = shapes_;
   (void)shape.insert(shape.cbegin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
-  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
+  outputs[kIndex0]->SetShapeVector(Convert2Long(shape));
+  outputs[kIndex0]->set_dtype_id(type_->type_id());
 }
 
 void TensorArrayStackCpuKernelMod::ResetResource() noexcept {
@@ -76,13 +82,13 @@ void TensorArrayStackCpuKernelMod::ResetResource() noexcept {
   ele_size_ = 0;
   is_dynamic_ = true;
   shapes_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
-bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool TensorArrayStackCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_EXCEPTION_IF_NULL(out_value);
@@ -90,7 +96,7 @@ bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 
   // Set out_value to zeros when TensorArray in static size.
   if (!is_dynamic_) {
-    auto ret = memset_s(out_value, outputs[0]->size, 0, value_size_);
+    auto ret = memset_s(out_value, outputs[0]->size(), 0, value_size_);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed, errorno(" << ret << ")";
     }
@@ -109,9 +115,6 @@ bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed, errorno(" << ret << ")";
     }
-  }
-  if (is_dynamic_) {
-    PostExecute();
   }
   return true;
 }
