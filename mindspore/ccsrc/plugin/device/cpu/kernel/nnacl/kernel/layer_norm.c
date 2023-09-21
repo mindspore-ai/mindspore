@@ -70,7 +70,7 @@ int LayerNormResize(KernelBase *self) {
   }
 
   compute->params_inner_size_ = 1;
-  for (size_t i = compute->begin_params_axis_; i < input->shape_[i]; ++i) {
+  for (size_t i = compute->begin_params_axis_; i < input->shape_size_; ++i) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->params_inner_size_, input->shape_[i], NNACL_ERR);
     compute->params_inner_size_ *= input->shape_[i];
   }
