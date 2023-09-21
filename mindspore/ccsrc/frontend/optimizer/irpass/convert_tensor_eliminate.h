@@ -35,12 +35,7 @@ class ConvertTensorEliminate : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(cnode);
     constexpr size_t tensor_index = 1;
     auto x = cnode->input(tensor_index);
-    bool is_adapter = IsAdapterTensor(x);
     if (IsPrimitiveCNode(node, prim::kPrimConvertToAdapterTensor)) {
-      // {prim::kPrimConvertToAdapterTensor, x} -> x
-      if (is_adapter) {
-        return x;
-      }
       // {prim::kPrimConvertToAdapterTensor, {prim::kPrimConvertToMsTensor, inp}} ->
       // {prim::kPrimConvertToAdapterTensor, inp}
       if (IsPrimitiveCNode(x, prim::kPrimConvertToMsTensor)) {
@@ -52,10 +47,6 @@ class ConvertTensorEliminate : public AnfVisitor {
       }
     }
     if (IsPrimitiveCNode(x, prim::kPrimConvertToMsTensor)) {
-      // {prim::kPrimConvertToMsTensor, x} -> x
-      if (!is_adapter) {
-        return x;
-      }
       // {prim::kPrimConvertToMsTensor, {prim::kPrimConvertToAdapterTensor, inp}} ->
       // {prim::kPrimConvertToMsTensor, inp}
       if (IsPrimitiveCNode(x, prim::kPrimConvertToAdapterTensor)) {
@@ -67,17 +58,6 @@ class ConvertTensorEliminate : public AnfVisitor {
       }
     }
     return nullptr;
-  }
-
- private:
-  bool IsAdapterTensor(const AnfNodePtr &node) const {
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(abs);
-    if (abs_tensor == nullptr) {
-      MS_LOG(EXCEPTION) << "Expect tensor type, but got " << abs->ToString();
-    }
-    return abs_tensor->is_adapter();
   }
 };
 
