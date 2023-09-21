@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "kernel/kernel.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#ifndef _MSC_VER
+#ifdef ENABLE_AKG
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #endif
 #include "backend/common/session/kernel_build_client.h"
@@ -150,7 +150,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
     }
   }
-#ifndef _MSC_VER
+#ifdef ENABLE_AKG
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
   (void)akg_gpu_kernel_builder.SingleOpParallelBuild(akg_nodes);
 #endif
