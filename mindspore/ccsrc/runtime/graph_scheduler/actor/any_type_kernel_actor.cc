@@ -395,6 +395,19 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
       actors = transform_func_(graph(), new_graph, device_contexts()[0]);
       actors_[current_data_type_] = actors;
       schedule_func_(actors);
+
+      for (const auto &node_pair : new_graph->front_backend_anf_map()) {
+        MS_EXCEPTION_IF_NULL(node_pair.first);
+        if (!node_pair.first->isa<CNode>()) {
+          continue;
+        }
+        MS_LOG(WARNING) << "Check for node:" << node_pair.first->DebugString();
+        const auto &cnode = node_pair.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
+          cnode->EraseAttr(kAttrReplaceRealKernelInBackend);
+        }
+      }
     } catch (const std::exception &e) {
       MsException::Instance().SetException();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
