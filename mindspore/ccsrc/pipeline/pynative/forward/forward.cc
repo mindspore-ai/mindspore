@@ -834,7 +834,6 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
   MS_EXCEPTION_IF_NULL(op_run_info);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
 
   VectorRef outputs;
@@ -872,7 +871,10 @@ compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_de
   if (iter != mindrt_backends_.end()) {
     return iter->second;
   } else {
-    auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id_);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
     MS_EXCEPTION_IF_NULL(backend);
     mindrt_backends_[cur_device_target] = backend;
     return backend;

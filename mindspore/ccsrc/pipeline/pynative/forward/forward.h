@@ -159,7 +159,6 @@ class ForwardExecutor {
   bool init_{false};
   bool enable_async_{true};
   bool is_jit_compiling_{false};
-  uint32_t device_id_{0};
   std::string device_target_;
   std::string last_target_{"Unknown"};
   std::stack<CellPtr> forward_cell_stack_;
