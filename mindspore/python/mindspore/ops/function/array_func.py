@@ -4443,7 +4443,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
 
-def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
+def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
     r"""
     Returns the diagonal part of input tensor.
     Returns a tensor with the k[0]-th to k[1]-th diagonals of `x`. Some diagonals are shorter than
@@ -4451,13 +4451,13 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
 
     Args:
         x (Tensor): The input Tensor with rank r, where r >= 2.
-        k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offset(s). Positive value means
+        k (Tensor): A Tensor of type int32. Diagonal offset(s). Positive value means
             superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be
             a single integer (for a single diagonal) or a pair of integers specifying the low and high ends
             of a matrix band. k[0] must not be larger than k[1]. The value of k has restructions, meaning
-            value of k must be in (-x.shape[-2], x.shape[-1]). Default: ``0``.
-        padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
-            The number to fill the area outside the specified diagonal band. Default: ``0`` .
+            value of k must be in (-x.shape[-2], x.shape[-1]).
+        padding_value (Tensor): A Tensor with only one value. Have the same dtype as x.
+            The number to fill the area outside the specified diagonal band.
         align (str, optional): An optional string from: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` ,
             ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` . Align is a string specifying how superdiagonals and subdiagonals
             should be aligned, respectively. ``"RIGHT_LEFT"`` aligns superdiagonals to the right (left-pads the row)
