@@ -4081,25 +4081,21 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   // b = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {
-    if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_)) {
-      // self.list_x = [xx, xx]
-      // y = self.list_x.pop()
-      MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
-    } else {
-      auto func_graph = block->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      auto new_list =
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
-      auto pop_node =
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+    auto func_graph = block->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto new_list =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
+    auto pop_node =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+    if (!(ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_))) {
       WriteAssignVars(block, list_pop_target_obj_, new_list);
-      if (count != 1) {
-        MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
-      }
-      auto pop_obj = py::cast<py::list>(targets_object)[0];
-      WriteAssignVars(block, pop_obj, pop_node);
-      return block;
     }
+    if (count != 1) {
+      MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
+    }
+    auto pop_obj = py::cast<py::list>(targets_object)[0];
+    WriteAssignVars(block, pop_obj, pop_node);
+    return block;
   }
   for (size_t i = 0; i < count; i++) {
     auto target_node = py::cast<py::list>(targets_object)[i];
