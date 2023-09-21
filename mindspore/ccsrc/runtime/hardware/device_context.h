@@ -142,6 +142,15 @@ class BACKEND_EXPORT DeviceResManager {
   virtual void *AllocateMemory(size_t size) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
 
+  virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    return;
+  }
+  virtual void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    return;
+  }
+
   // Relevant function to allocate and free device memory of DeviceAddress.
   virtual bool AllocateMemory(DeviceAddress *const &address) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
@@ -171,9 +180,21 @@ class BACKEND_EXPORT DeviceResManager {
                                                const UserDataPtr &user_data = nullptr) const = 0;
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
-  virtual bool CreateStream(size_t *stream_id) const { return true; }
+  virtual bool CreateStream(size_t *stream_id) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    return false;
+  }
+
+  virtual void *GetStream(size_t stream_id) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    return nullptr;
+  };
+
   // Destroy a stream bound to the input parameter "stream_id".
-  virtual bool DestroyStream(size_t stream_id) const { return true; }
+  virtual bool DestroyStream(size_t stream_id) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    return false;
+  }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // Using 'SyncStream' to block thread and wait for completing all tasks on specific stream.

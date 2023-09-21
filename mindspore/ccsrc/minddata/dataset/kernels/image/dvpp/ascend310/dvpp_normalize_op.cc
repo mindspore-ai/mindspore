@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_normalize_op.h"
 
 #include <algorithm>
 

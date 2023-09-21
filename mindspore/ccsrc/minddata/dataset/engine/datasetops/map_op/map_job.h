@@ -79,6 +79,14 @@ class MapJob {
   // A pure virtual run function to execute a particular map job
   virtual Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) = 0;
 
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // A pure virtual run function to execute a particular map job for Ascend910B DVPP
+  virtual Status Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
+                     mindspore::device::DeviceContext *device_context, const size_t &stream_id) = 0;
+#endif
+
+  virtual MapTargetDevice Type() = 0;
+
  protected:
   std::vector<std::shared_ptr<TensorOp>> ops_;
 };

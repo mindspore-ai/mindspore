@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_video_op.h"
+
 #include <string>
 #include <vector>
 
@@ -22,7 +24,6 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {

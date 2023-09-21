@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_jpeg_op.h"
+
 #include <string>
 #include <vector>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
-Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output) {
+// Compute() will be called when context=="Ascend310"
+Status DvppDecodeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output) {
   IO_CHECK(input, output);
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty.");
-    APP_ERROR ret = AclAdapter::GetInstance().PNG_D(processor_.get());
+    APP_ERROR ret = AclAdapter::GetInstance().JPEG_D(processor_.get());
     if (ret != APP_ERR_OK) {
       ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
@@ -48,16 +50,17 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
       RETURN_STATUS_UNEXPECTED(error);
     }
   } catch (const std::exception &e) {
-    std::string error = "[ERROR] Fail in DvppDecodePngOp: " + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppDecodeJpegOp: " + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }
 
-Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+// Compute() will be called when context=="CPU"
+Status DvppDecodeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  if (!IsNonEmptyPNG(input)) {
-    RETURN_STATUS_UNEXPECTED("DvppDecodePngOp only support process PNG image.");
+  if (!IsNonEmptyJPEG(input)) {
+    RETURN_STATUS_UNEXPECTED("DvppDecodeJpegOp only support process JPEG image.");
   }
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetBuffer() != nullptr, "The input image buffer is empty.");
@@ -85,24 +88,27 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
       std::string error = "Error in Init resource: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-
-    ret = AclAdapter::GetInstance().PNG_D_WITH_DATA(process.get(), imageInfo);
+    ret = AclAdapter::GetInstance().JPEG_D_WITH_DATA(process.get(), imageInfo);
     if (ret != APP_ERR_OK) {
       AclAdapter::GetInstance().Release();
       std::string error = "Error in dvpp processing: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-
     // Third part end where we execute the core function of dvpp
     auto *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
     DvppDataInfo *DecodeOut = AclAdapter::GetInstance().GetDecodeDeviceData(process.get());
     dsize_t dvpp_length = DecodeOut->dataSize;
+    uint32_t decoded_height = DecodeOut->height;
+    uint32_t decoded_heightStride = DecodeOut->heightStride;
+    uint32_t decoded_width = DecodeOut->width;
+    uint32_t decoded_widthStride = DecodeOut->widthStride;
 
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output);
+    RETURN_IF_NOT_OK(mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output));
+    RETURN_IF_NOT_OK((*output)->SetYuvShape(decoded_width, decoded_widthStride, decoded_height, decoded_heightStride));
     if (!((*output)->HasData())) {
-      std::string error = "[ERROR] Fail to get the Output result from memory!";
+      std::string error = "[ERROR] Fail to get the Output result from device memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
     ret = AclAdapter::GetInstance().DeviceMemoryRelease(process.get());
@@ -111,29 +117,29 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
-    std::string error = "[ERROR] Fail in DvppDecodePngOp: " + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppDecodeJpegOp: " + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }
 
-Status DvppDecodePngOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
-  outputs.clear();
-  TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 3 channels
-  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppDecodePng: inputs cannot be empty.");
-  if (inputs[0].Rank() == 1) {
-    outputs.emplace_back(out);
-  }
-  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "DvppDecodePng: Invalid input shape.");
-  return Status::OK();
-}
-
-Status DvppDecodePngOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
+Status DvppDecodeJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
   processor_ = resource->GetInstance();
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env.");
   }
+  return Status::OK();
+}
+
+Status DvppDecodeJpegOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
+  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
+  outputs.clear();
+  TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 3 channels
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppDecodeJpeg: inputs cannot be empty.");
+  if (inputs[0].Rank() == 1) {
+    (void)outputs.emplace_back(out);
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "DvppDecodeJpeg: Invalid input shape.");
   return Status::OK();
 }
 }  // namespace dataset

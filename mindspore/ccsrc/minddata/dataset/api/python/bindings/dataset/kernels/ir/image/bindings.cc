@@ -259,13 +259,8 @@ PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::DecodeOperation, TensorOperation, std::shared_ptr<vision::DecodeOperation>>(
                     *m, "DecodeOperation")
-                    .def(py::init([](bool rgb) {
-                      auto decode = std::make_shared<vision::DecodeOperation>(rgb);
-                      THROW_IF_ERROR(decode->ValidateParams());
-                      return decode;
-                    }))
-                    .def(py::init([](bool rgb) {
-                      auto decode = std::make_shared<vision::DecodeOperation>(rgb);
+                    .def(py::init([](bool rgb, std::string device_target) {
+                      auto decode = std::make_shared<vision::DecodeOperation>(rgb, device_target);
                       THROW_IF_ERROR(decode->ValidateParams());
                       return decode;
                     }));
@@ -385,11 +380,12 @@ PYBIND_REGISTER(
   NormalizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::NormalizeOperation, TensorOperation, std::shared_ptr<vision::NormalizeOperation>>(
       *m, "NormalizeOperation")
-      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc) {
-        auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc);
-        THROW_IF_ERROR(normalize->ValidateParams());
-        return normalize;
-      }));
+      .def(py::init(
+        [](const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc, std::string device_target) {
+          auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc, device_target);
+          THROW_IF_ERROR(normalize->ValidateParams());
+          return normalize;
+        }));
   }));
 
 PYBIND_REGISTER(
@@ -803,8 +799,9 @@ PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(ResizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::ResizeOperation, TensorOperation, std::shared_ptr<vision::ResizeOperation>>(
                     *m, "ResizeOperation")
-                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode) {
-                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode);
+                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode,
+                                     std::string device_target) {
+                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode, device_target);
                       THROW_IF_ERROR(resize->ValidateParams());
                       return resize;
                     }));

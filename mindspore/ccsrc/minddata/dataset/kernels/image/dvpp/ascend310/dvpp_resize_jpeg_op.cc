@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_resize_jpeg_op.h"
+
 #include <string>
 #include <vector>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 

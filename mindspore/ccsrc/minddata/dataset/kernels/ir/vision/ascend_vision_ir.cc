@@ -17,14 +17,14 @@
 
 #include <algorithm>
 
-#include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_png_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_resize_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_video_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_normalize_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_resize_jpeg_op.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/validators.h"
 

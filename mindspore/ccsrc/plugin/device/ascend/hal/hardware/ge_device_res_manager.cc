@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/transform/graph_ir/utils.h"
 
 namespace mindspore {
@@ -73,6 +74,14 @@ void GeDeviceResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->FreeMemFromMemPool(ptr);
+}
+
+void GeDeviceResManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
+  (void)mem_manager_->SwapIn(host_ptr, device_ptr, mem_size, stream);
+}
+
+void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
+  (void)mem_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
 }
 
 std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
@@ -149,6 +158,31 @@ bool GeDeviceResManager::BindDeviceToCurrentThread(bool /* force_bind */) const 
     runtime_instance_->SetContext();
   }
   return true;
+}
+
+bool GeDeviceResManager::CreateStream(size_t *stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  AscendStreamMng::GetInstance().CreateStream(stream_id);
+  return true;
+}
+
+void *GeDeviceResManager::GetStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return nullptr;
+  }
+  return AscendStreamMng::GetInstance().GetStream(stream_id);
+}
+
+bool GeDeviceResManager::SyncStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().SyncStream(stream_id);
 }
 }  // namespace ascend
 }  // namespace device

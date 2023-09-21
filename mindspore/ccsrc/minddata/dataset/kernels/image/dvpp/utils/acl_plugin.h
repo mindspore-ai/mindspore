@@ -20,7 +20,11 @@
 #include <string>
 
 #include "minddata/dataset/core/device_tensor.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/core/device_tensor_ascend910b.h"
+#endif
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/resouce_info.h"
 #include "utils/dlopen_macro.h"
 
@@ -74,5 +78,25 @@ PLUGIN_METHOD(SetCropParas, int, void *, uint32_t, uint32_t);
 ORIGIN_METHOD(aclrtMallocHost, int, void **, size_t);
 PLUGIN_METHOD(aclrtMemcpy, int, void *, size_t, const void *, size_t, int);
 ORIGIN_METHOD(aclrtFreeHost, int, void *);
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+// Ascend910B
+PLUGIN_METHOD(DvppResize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, int32_t, int32_t, double, double,
+              mindspore::dataset::InterpolationMode);
+
+PLUGIN_METHOD(DvppDecode, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *);
+
+PLUGIN_METHOD(DvppNormalize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, std::vector<float>, std::vector<float>,
+              bool);
+
+// acl
+PLUGIN_METHOD(GetSocName, int, std::string *);
+
+PLUGIN_METHOD(CreateAclTensor, int, const int64_t *, uint64_t, mindspore::TypeId, const int64_t *, int64_t,
+              const int64_t *, uint64_t, void *, bool, void **);
+#endif
 
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACL_PLUGIN_H_

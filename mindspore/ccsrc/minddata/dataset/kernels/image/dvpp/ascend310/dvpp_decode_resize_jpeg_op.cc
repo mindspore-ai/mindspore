@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend310/dvpp_decode_resize_jpeg_op.h"
 
 #include <string>
 #include <vector>

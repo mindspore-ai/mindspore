@@ -104,6 +104,16 @@ void AclAdapter::InitPlugin() {
   aclrt_malloc_host_fun_obj_ = DlsymFuncObj(aclrtMallocHost, plugin_handle_);
   aclrt_free_host_fun_obj_ = DlsymFuncObj(aclrtFreeHost, plugin_handle_);
   aclrt_memcpy_fun_obj_ = DlsymFuncObj(aclrtMemcpy, plugin_handle_);
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Ascend910B
+  dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
+  dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
+  dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
+
+  // acl
+  get_soc_name_fun_obj_ = DlsymFuncObj(GetSocName, plugin_handle_);
+  create_acl_tensor_fun_obj_ = DlsymFuncObj(CreateAclTensor, plugin_handle_);
+#endif
 #endif
 }
 
@@ -151,6 +161,15 @@ void AclAdapter::FinalizePlugin() {
   aclrt_malloc_host_fun_obj_ = nullptr;
   aclrt_free_host_fun_obj_ = nullptr;
   aclrt_memcpy_fun_obj_ = nullptr;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Ascend910B
+  dvpp_resize_fun_obj_ = nullptr;
+  dvpp_decode_fun_obj_ = nullptr;
+  dvpp_normalize_fun_obj_ = nullptr;
+  // acl
+  get_soc_name_fun_obj_ = nullptr;
+  create_acl_tensor_fun_obj_ = nullptr;
+#endif
 #if !defined(_WIN32) && !defined(_WIN64)
   (void)dlclose(plugin_handle_);
 #endif
@@ -437,5 +456,52 @@ int AclAdapter::FreeHost(void *host_ptr) const {
   }
   return aclrt_free_host_fun_obj_(host_ptr);
 }
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+// Ascend910B
+APP_ERROR AclAdapter::DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height,
+                                 int32_t output_width, double fx, double fy, InterpolationMode mode) {
+  if (!HasAclPlugin() || dvpp_resize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_resize_fun_obj_(input, output, output_height, output_width, fx, fy, mode);
+}
+
+APP_ERROR AclAdapter::DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_decode_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_decode_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
+                                    std::vector<float> std, bool is_hwc) {
+  if (!HasAclPlugin() || dvpp_normalize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_normalize_fun_obj_(input, output, mean, std, is_hwc);
+}
+
+// acl
+APP_ERROR AclAdapter::GetSocName(std::string *soc_name) {
+  if (!HasAclPlugin() || get_soc_name_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return get_soc_name_fun_obj_(soc_name);
+}
+
+APP_ERROR AclAdapter::CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,
+                                      const int64_t *stride, int64_t offset, const int64_t *storage_dims,
+                                      uint64_t storage_dims_num, void *tensor_data, bool is_hwc, void **acl_tensor) {
+  if (!HasAclPlugin() || create_acl_tensor_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return create_acl_tensor_fun_obj_(view_dims, view_dims_num, data_type, stride, offset, storage_dims, storage_dims_num,
+                                    tensor_data, is_hwc, acl_tensor);
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore
