@@ -987,7 +987,7 @@ FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list
 }
 
 GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param,
-                             bool get_by_position, bool has_aux, bool get_value, bool return_ids)
+                             bool get_by_position, bool has_aux, bool get_value, bool return_ids, bool merge_forward)
     : MetaFuncGraph(name),
       get_all_(get_all),
       get_by_list_(get_by_list),
@@ -995,7 +995,8 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
       get_by_position_(get_by_position),
       has_aux_(has_aux),
       get_value_(get_value),
-      return_ids_(return_ids) {
+      return_ids_(return_ids),
+      merge_forward_(merge_forward) {
   if (get_by_position) {
     signatures_ =
       // def grad(func:read, weight_list:ref, position_list:ref):
@@ -1274,6 +1275,9 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
   inputs.push_back(NewValueNode(prim::kPrimJ));
   inputs.push_back(param_graph);
   auto j = grad_fg->NewCNodeInOrder(inputs);
+  if (merge_forward_) {
+    j->AddAttr("merge_forward", MakeValue(true));
+  }
   // df is checked in GetGrad
   FuncGraphPtr k_child = nullptr;
   {

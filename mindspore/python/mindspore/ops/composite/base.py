@@ -336,7 +336,7 @@ class GradOperation(GradOperation_):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False, False)
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False, False, False)
         self.grad_fn = None
         self.fn = None
         self.weights_id = None
@@ -513,8 +513,8 @@ class _Grad(GradOperation_):
     A higher-order function which is used to generate the gradient function by position for the input function.
     """
 
-    def __init__(self, get_by_list=False, sens_param=False, get_by_position=False, has_aux=False, get_value=False,
-                 return_ids=False):
+    def __init__(self, get_all=False, get_by_list=False, sens_param=False, get_by_position=False, has_aux=False,
+                 get_value=False, return_ids=False, merge_forward=False):
         """Initialize _Grad."""
         if not isinstance(get_by_position, bool):
             raise TypeError(f"For '_Grad', the 'get_by_position' should be bool, "
@@ -534,14 +534,16 @@ class _Grad(GradOperation_):
         if not isinstance(return_ids, bool):
             raise TypeError(f"For '_Grad', the 'return_ids' should be bool, "
                             f"but got {type(return_ids).__name__}")
+        self.get_all = get_all
         self.get_by_position = get_by_position
         self.get_by_list = get_by_list
         self.sens_param = sens_param
         self.has_aux = has_aux
         self.get_value = get_value
         self.return_ids = return_ids
-        GradOperation_.__init__(self, 'grad', False, get_by_list, sens_param, get_by_position, has_aux, get_value,
-                                return_ids)
+        self.merge_forward = merge_forward
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, get_by_position, has_aux, get_value,
+                                return_ids, merge_forward)
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
@@ -564,8 +566,8 @@ class _Grad(GradOperation_):
                 res += (stop_gradient(item),)
             return res
 
-        grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position, self.has_aux, self.get_value,
-                      self.return_ids)
+        grad_ = _Grad(self.get_all, self.get_by_list, self.sens_param, self.get_by_position, self.has_aux,
+                      self.get_value, self.return_ids, self.merge_forward)
         # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.

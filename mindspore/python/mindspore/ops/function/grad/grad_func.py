@@ -862,7 +862,11 @@ def _check_tensor(inputs):
     return True
 
 
-def vjp(fn, *inputs, has_aux=False):
+_vjp_grad_op = _Grad(get_all=True, sens_param=True, merge_forward=True)
+_vjp_grad_op_with_weight = _Grad(get_all=True, get_by_list=True, sens_param=True, merge_forward=True)
+
+
+def vjp(fn, *inputs, weights=None, has_aux=False):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
     `reverse-mode differentiation
@@ -872,6 +876,9 @@ def vjp(fn, *inputs, has_aux=False):
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
             Tensors.
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
+        weights (Union[ParameterTuple, Parameter, list[Parameter]]): The parameters of the training network that need to
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
+            Default: ``None`` .
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
             Default: ``False``.
@@ -947,9 +954,12 @@ def vjp(fn, *inputs, has_aux=False):
             fn_ = aux_fn
         else:
             fn_ = fn
+        sens = v
         if len(v) == 1:
-            return _grad_all(fn_)(*inputs, v[0])
-        return _grad_all(fn_)(*inputs, v)
+            sens = v[0]
+        if weights is None:
+            return _vjp_grad_op(fn_)(*inputs, sens)
+        return _vjp_grad_op_with_weight(fn_, weights)(*inputs, sens)
 
     res = fn(*inputs)
     if has_aux:
