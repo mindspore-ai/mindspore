@@ -3,13 +3,17 @@ mindspore.dataset.config.set_enable_shared_mem
 
 .. py:function:: mindspore.dataset.config.set_enable_shared_mem(enable)
 
-    设置共享内存标志的是否启用。如果 `shared_mem_enable` 为 ``True`` ，则使用共享内存队列将数据传递给为数据集操作而创建的进程，而这些数据集操作将设置 `python_multiprocessing` 为 ``True`` 。
+    设置是否在开启数据处理多进程时使用共享内存进行进程间通信。
+
+    使用共享内存可以加速进程间的数据传递效率。
+
+    该功能默认开启。
 
     .. note::
-        Windows和MacOS平台尚不支持 `set_enable_shared_mem` 。
+        暂不支持Windows和MacOS系统。
 
     参数：
-        - **enable** (bool) - 表示当 `python_multiprocessing` 为 ``True`` 时，是否在数据集操作中使用共享内存。
+        - **enable** (bool) - 是否使用共享内存进行进程间通信。
 
     异常：
-        - **TypeError** - `enable` 不是bool类型。
+        - **TypeError** - 当 `enable` 不为bool类型。

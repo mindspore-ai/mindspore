@@ -3,15 +3,14 @@ mindspore.dataset.text.TruncateSequencePair
 
 .. py:class:: mindspore.dataset.text.TruncateSequencePair(max_length)
 
-    截断一对 1-D 字符串的内容，使其总长度小于给定长度。
-
-    TruncateSequencePair接收两个Tensor作为输入并返回两个Tensor作为输出。
+    对两列 1-D 字符串输入进行截断，使其总长度小于指定长度。
 
     参数：
-        - **max_length** (int) - 最大截断长度。
+        - **max_length** (int) - 字符串最大输出总长。当其大于或等于两列输入字符串总长时，不进行截断；
+          否则，优先截取两列输入中的较长者，直至其总长等于该值。
 
     异常：
-        - **TypeError** - 参数 `max_length` 的类型不是int。
+        - **TypeError** - 当 `max_length` 不为int类型。
 
     教程样例：
         - `文本变换样例库

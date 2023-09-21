@@ -9,20 +9,11 @@ mindspore.dataset.text.NormalizeUTF8
         Windows平台尚不支持 `NormalizeUTF8` 。
 
     参数：
-        - **normalize_form** (:class:`~.text.NormalizeForm`, 可选) - 指定不同的规范化形式，可以取值为
-          ``NormalizeForm.NONE`` 、 ``NormalizeForm.NFC`` 、 ``NormalizeForm.NFKC`` 、 ``NormalizeForm.NFD`` 、 ``NormalizeForm.NFKD`` 此四种unicode中的
-          任何一种形式。默认值： ``NormalizeForm.NFKC`` 。
-
-          - ``NormalizeForm.NONE``，对输入字符串不做任何处理。
-          - ``NormalizeForm.NFC``，对输入字符串进行C形式规范化。
-          - ``NormalizeForm.NFKC``，对输入字符串进行KC形式规范化。
-          - ``NormalizeForm.NFD``，对输入字符串进行D形式规范化。
-          - ``NormalizeForm.NFKD``，对输入字符串进行KD形式规范化。
-
-          有关规范化详细信息，请参阅 http://unicode.org/reports/tr15/。
+        - **normalize_form** (:class:`~.text.NormalizeForm`, 可选) - 想要使用的规范化模式。可选值详见 :class:`~.text.NormalizeForm` 。
+          默认值： ``NormalizeForm.NFKC`` 。
 
     异常：
-        - **TypeError** - 参数 `normalize_form` 的类型不是 :class:`mindspore.dataset.text.NormalizeForm` 。
+        - **TypeError** - 当 `normalize_form` 不为 :class:`~.text.NormalizeForm` 类型。
 
     教程样例：
         - `文本变换样例库

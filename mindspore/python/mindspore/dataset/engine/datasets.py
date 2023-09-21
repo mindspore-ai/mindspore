@@ -1069,16 +1069,19 @@ class Dataset:
     @check_take
     def take(self, count=-1):
         """
-        Takes at most given numbers of elements from the dataset.
-
-        Note:
-            1. If count is greater than the number of elements in the dataset or equal to -1,
-               all the elements in dataset will be taken.
-            2. The order of using take and batch matters. If take is before batch operation,
-               then take the given number of rows; otherwise take the given number of batches.
+        Take the first specified number of samples from the dataset.
 
         Args:
-            count (int, optional): Number of elements to be taken from the dataset. Default: ``-1`` .
+            count (int, optional): The desired number of samples to take. If the value exceeds
+                the total number of samples in the dataset, all data will be returned.
+                Default: ``-1`` , will return all data.
+
+        Note:
+            When there are operations that will change the number of samples of the dataset in
+            the data pipeline, the location of the `take` operation can change its effect.
+            For example, `batch` operation will combine the successive samples of the specified
+            `batch_size` into 1 sample, so `.batch(batch_size).take(1)` will be equivalent to
+            `.take(batch_size).batch(batch_size)`.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
