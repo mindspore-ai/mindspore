@@ -44,10 +44,10 @@ static ShapeVector BroadCastShape(const ShapeVector &x_shape, const ShapeVector 
     } else if (y_shape[y_shape_index] == 1 || x_shape[x_shape_index] == y_shape[y_shape_index]) {
       (void)broadcast_shape_back.emplace_back(x_shape[x_shape_index]);
     } else {
-      MS_EXCEPTION(ValueError) << "For 'get item', x.shape and y.shape need to broadcast. The value of x.shape["
-                               << std::to_string(x_shape_index) << "] or y.shape[" << std::to_string(y_shape_index)
-                               << "] must be 1 or -1 when they are not the same but got x.shape =" << x_shape
-                               << "and y.shape = " << y_shape;
+      MS_EXCEPTION(ValueError) << "For tensor getitem or setitem, x.shape and y.shape need to broadcast. "
+                               << "The value of x.shape[" << std::to_string(x_shape_index) << "] or y.shape["
+                               << std::to_string(y_shape_index) << "] must be 1 or -1 when they are not the same but "
+                               << "got x.shape =" << x_shape << "and y.shape = " << y_shape;
     }
   }
   ShapeVector broadcast_shape_front;
