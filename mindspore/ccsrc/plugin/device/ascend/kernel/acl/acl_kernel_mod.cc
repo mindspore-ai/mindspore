@@ -263,10 +263,11 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
                                << output_device_formats.size() << " and type's size:" << output_device_types.size();
   }
 
-  if (primitive_ptr_ == nullptr) {
+  if (primitive_ptr_ == nullptr && op_ != nullptr) {
     primitive_ptr_ = op_->GetPrim();
   }
-  auto in_def_flag = transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, true);
+  auto in_def_flag =
+    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, true);
   input_params_.resize(input_device_formats.size());
   for (size_t i = 0; i < input_device_formats.size(); i++) {
     input_params_[i].data_type = input_device_types[i];
@@ -277,7 +278,8 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
   }
   input_size_list_.resize(input_device_formats.size(), 0);
 
-  auto out_def_flag = transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, false);
+  auto out_def_flag =
+    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, false);
   output_params_.resize(output_device_formats.size());
   for (size_t i = 0; i < output_device_formats.size(); i++) {
     output_params_[i].data_type = output_device_types[i];
