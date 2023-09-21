@@ -33,7 +33,7 @@ uint32_t ReshapeCustCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   uint64_t data_size = input_tensor->GetDataSize();
-  memcpy_s(output_data, data_size, input_data, data_size);
+  (void)memcpy_s(output_data, data_size, input_data, data_size);
   return 0;
 }
 

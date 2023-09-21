@@ -219,7 +219,6 @@ int ConvolutionDelegateResize(struct KernelBase *self) {
     (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
     int ret = convolution_delegate->convolution_->base_.Prepare(&convolution_delegate->convolution_->base_);
     if (ret != NNACL_OK) {
-      self->Release(self);
       return ret;
     }
   }
@@ -227,7 +226,6 @@ int ConvolutionDelegateResize(struct KernelBase *self) {
   (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
   int ret = convolution_delegate->convolution_->base_.Resize(&convolution_delegate->convolution_->base_);
   if (ret != NNACL_OK) {
-    self->Release(self);
     return ret;
   }
 
