@@ -677,16 +677,6 @@ void AscendSession::BindAddressToTensor(
   }
 }
 
-void StoreCNodePrimitive(const KernelGraphPtr &graph) {
-  const auto &nodes = graph->execution_order();
-  for (auto &node : nodes) {
-    auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto new_primitive = std::make_shared<Primitive>(*primitive);
-    node->set_input(kAnfPrimitiveIndex, NewValueNode(new_primitive));
-  }
-}
-
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
@@ -959,11 +949,12 @@ void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
 static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();
   if (index >= node_sizes - 1) {
-    MS_LOG(EXCEPTION) << "there is no node after this node:" << kernel_nodes[index]->DebugString();
+    MS_LOG(EXCEPTION) << "There is no node after this node with node index [" << index << "] and total size ["
+                      << node_sizes << "].";
   }
   auto kernel = kernel_nodes[index + 1];
   if (common::AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
-    MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, index" << index
+    MS_LOG(EXCEPTION) << "The node is not labelset follow labelgoto/labelswitch, index" << index
                       << ", size: " << node_sizes;
   }
   return kernel;
