@@ -78,9 +78,11 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
 
 void DynamicStitchCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
                                                          const std::vector<KernelTensor *> &outputs) {
-  auto dtypes = inputs[kIndex1]->dtype_id();
-  outputs[kIndex0]->set_dtype_id(dtypes);
   outputs[kIndex0]->SetShapeVector(result_shape_);
+  auto data_dtype = inputs[kIndex1]->dtype_id();
+  auto data_dtype_size = GetTypeByte(TypeIdToType(data_dtype));
+  size_t batch_size = std::accumulate(result_shape_.cbegin(), result_shape_.cend(), 1, std::multiplies<size_t>());
+  outputs[kIndex0]->set_size(batch_size * data_dtype_size);
 }
 
 std::vector<std::pair<KernelAttr, DynamicStitchCpuKernelMod::DynamicStitchFunc>> DynamicStitchCpuKernelMod::func_list_ =

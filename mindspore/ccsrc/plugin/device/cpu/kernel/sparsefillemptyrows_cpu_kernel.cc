@@ -209,10 +209,22 @@ void SparseFillEmptyRowsCpuKernelMod::UpdateOutputShapeAndSize(const std::vector
   outputs[kIndex1]->SetShapeVector(out_values_shape);
   outputs[kIndex2]->SetShapeVector(out_empty_row_indicator_shape_);
   outputs[kIndex3]->SetShapeVector(out_reverse_index_shape_);
-  outputs[kIndex0]->set_dtype_id(output_indices_type_);
-  outputs[kIndex1]->set_dtype_id(output_values_type_);
-  outputs[kIndex2]->set_dtype_id(output_empty_row_indicator_type_);
-  outputs[kIndex3]->set_dtype_id(output_reverse_index_type_);
+  size_t out_indice_batch =
+    std::accumulate(out_indice_shape.cbegin(), out_indice_shape.cend(), 1, std::multiplies<size_t>());
+  auto out_indice_dtype_size = GetTypeByte(TypeIdToType(output_indices_type_));
+  size_t out_values_batch =
+    std::accumulate(out_values_shape.cbegin(), out_values_shape.cend(), 1, std::multiplies<size_t>());
+  auto out_values_dtype_size = GetTypeByte(TypeIdToType(output_values_type_));
+  size_t out_empty_row_indicator_batch = std::accumulate(
+    out_empty_row_indicator_shape_.cbegin(), out_empty_row_indicator_shape_.cend(), 1, std::multiplies<size_t>());
+  auto out_empty_row_indicator_dtype_size = GetTypeByte(TypeIdToType(output_empty_row_indicator_type_));
+  size_t out_reverse_index_batch =
+    std::accumulate(out_reverse_index_shape_.cbegin(), out_reverse_index_shape_.cend(), 1, std::multiplies<size_t>());
+  auto out_reverse_index_dtype_size = GetTypeByte(TypeIdToType(output_reverse_index_type_));
+  outputs[kIndex0]->set_size(out_indice_batch * out_indice_dtype_size);
+  outputs[kIndex1]->set_size(out_values_batch * out_values_dtype_size);
+  outputs[kIndex2]->set_size(out_empty_row_indicator_batch * out_empty_row_indicator_dtype_size);
+  outputs[kIndex3]->set_size(out_reverse_index_batch * out_reverse_index_dtype_size);
 }
 
 std::vector<KernelAttr> SparseFillEmptyRowsCpuKernelMod::GetOpSupport() {

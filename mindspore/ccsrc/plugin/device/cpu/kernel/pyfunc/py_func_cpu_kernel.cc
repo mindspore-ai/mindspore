@@ -236,11 +236,15 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }
 }  // namespace
 
-void PyFuncCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  func_id_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
-  fake_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
-  single_scalar_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
-  BuildFuncInfo(kernel_node);
+int PyFuncCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  func_id_ = GetValue<int64_t>(primitive_->GetAttr("fn_id"));
+  fake_output_ = GetValue<bool>(primitive_->GetAttr("fake_output"));
+  single_scalar_output_ = GetValue<bool>(primitive_->GetAttr("single_scalar_output"));
+  BuildFuncInfo(primitive_, inputs, outputs);
+  return KRET_OK;
 }
 
 bool PyFuncCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
@@ -253,46 +257,51 @@ bool PyFuncCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   return ExecuteKernel(inputs, outputs);
 }
 
-void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
+void PyFuncCpuKernelMod::BuildFuncInfo(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   std::vector<TypeId> in_types;
   std::vector<TypeId> out_types;
   std::vector<std::vector<int64_t>> in_shapes;
   std::vector<std::vector<int64_t>> out_shapes;
 
-  if (common::AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
-    const auto &in_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
+  if (primitive->HasAttr("in_types")) {
+    const auto &in_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("in_types"));
     (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(), [&in_types](auto p) {
       MS_EXCEPTION_IF_NULL(p);
       (void)in_types.emplace_back(p->type_id());
     });
   } else {
-    in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      in_types.emplace_back(inputs[i]->dtype_id());
+    }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
-    const auto &out_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
+  if (primitive->HasAttr("out_types")) {
+    const auto &out_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("out_types"));
     (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(), [&out_types](auto p) {
       MS_EXCEPTION_IF_NULL(p);
       (void)out_types.emplace_back(p->type_id());
     });
   } else {
-    out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      out_types.emplace_back(outputs[i]->dtype_id());
+    }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("in_shapes", kernel_node)) {
-    in_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
+  if (primitive->HasAttr("in_shapes")) {
+    in_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("in_shapes"));
   } else {
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel_node); i++) {
-      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+    for (size_t i = 0; i < inputs.size(); i++) {
+      const auto &in_shape = inputs[i]->GetShapeVector();
       (void)in_shapes.emplace_back(in_shape);
     }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("out_shapes", kernel_node)) {
-    out_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
+  if (primitive->HasAttr("out_shapes")) {
+    out_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("out_shapes"));
   } else {
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
-      auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    for (size_t i = 0; i < outputs.size(); i++) {
+      const auto &out_shape = outputs[i]->GetShapeVector();
       (void)out_shapes.emplace_back(out_shape);
     }
   }

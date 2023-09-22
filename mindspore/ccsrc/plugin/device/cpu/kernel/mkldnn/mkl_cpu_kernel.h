@@ -188,52 +188,6 @@ struct PaddingInfo {
   bool ceil_mode{false};
 };
 
-class DeprecatedMKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
- public:
-#ifdef USE_MS_THREADPOOL_FOR_DNNL
-  DeprecatedMKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {
-    auto thread_pool = GetActorMgrInnerThreadPool();
-    mkl_threadpool_ = std::make_shared<mkl_threadpool>(thread_pool);
-    MS_LOG(DEBUG) << "begin to invoke dnnl::threadpool_interop::make_stream";
-    stream_ = dnnl::threadpool_interop::make_stream(engine_, mkl_threadpool_.get());
-    MS_LOG(DEBUG) << "end to invoke dnnl::threadpool_interop::make_stream";
-  }
-#else
-  DeprecatedMKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
-#endif
-  ~DeprecatedMKLCpuKernelMod() override = default;
-
- protected:
-  bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
-                       std::vector<size_t> *dst_shape) const;
-  void GetPadding(const CNodePtr &kernel_node, const std::vector<int64_t> &src_shape,
-                  const PaddingInfo &padding_info) const;
-  void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
-  void SetArgumentHandle(int arg_key, void *ptr);
-  dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
-  dnnl::memory::desc GetDefaultMemDesc(const std::vector<int64_t> &shape) const;
-  void ExecutePrimitive();
-  inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) const {
-    MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory::desc";
-    auto desc = dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
-    MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory::desc";
-    return desc;
-  }
-  void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
-
-  size_t GetSize(const dnnl::memory::desc &desc) const;
-  void SetDataHandle(dnnl::memory mem, void *ptr);
-  void *GetDataHandle(const dnnl::memory &mem) const;
-
-  std::unordered_map<int, dnnl::memory> arguments_;
-  std::shared_ptr<dnnl::primitive> primitive_{nullptr};
-  dnnl::engine engine_;
-  dnnl::stream stream_;
-#ifdef USE_MS_THREADPOOL_FOR_DNNL
-  std::shared_ptr<dnnl::threadpool_interop::threadpool_iface> mkl_threadpool_{nullptr};
-#endif
-};
-
 class MKLCpuKernelMod : public NativeCpuKernelMod {
  public:
 #ifdef USE_MS_THREADPOOL_FOR_DNNL

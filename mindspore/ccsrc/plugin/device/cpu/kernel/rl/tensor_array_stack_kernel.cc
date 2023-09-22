@@ -73,7 +73,7 @@ void TensorArrayStackCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<Ke
   (void)shape.insert(shape.cbegin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
   outputs[kIndex0]->SetShapeVector(Convert2Long(shape));
-  outputs[kIndex0]->set_dtype_id(type_->type_id());
+  outputs[kIndex0]->set_size(value_size_);
 }
 
 void TensorArrayStackCpuKernelMod::ResetResource() noexcept {
