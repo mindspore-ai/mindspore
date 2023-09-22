@@ -1101,6 +1101,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   }
   const auto &input_datas = iter->second.ge_inputs;
   ge_inputs = input_datas;
+  bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
   for (auto &kv : iter->second.need_update_input) {
     auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
@@ -1132,9 +1133,12 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     }
     MS_LOG(DEBUG) << "[ZeroCopy] Update input " << kv.first->DebugString() << " address to "
                   << output_addr->GetMutablePtr();
-    std::vector<size_t> shape = Convert2SizeT(shapes);
-    size_t type_size = GetTypeByte(TypeIdToType(host_type));
-    size_t memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+    size_t memory_size = output_addr->GetSize();
+    if (is_dynamic_shape) {
+      std::vector<size_t> shape = Convert2SizeT(shapes);
+      size_t type_size = GetTypeByte(TypeIdToType(host_type));
+      memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+    }
     (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});
   }
