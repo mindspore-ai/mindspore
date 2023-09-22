@@ -23,14 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixInverse>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
-    return false;
-  }
+bool MatrixInverseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!pair.first) {
@@ -41,17 +35,16 @@ bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
   handle_cus = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-  adjoint_ = kernel_ptr->get_adjoint();
+  adjoint_ = GetValue<bool>(primitive_->GetAttr("adjoint"));
   if (adjoint_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' adjoint=True is not supported on GPU.";
   }
   return true;
 }
 
-int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixInverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();

@@ -36,12 +36,8 @@ class RenormGpuKernelMod : public NativeGpuKernelMod {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -60,7 +56,7 @@ class RenormGpuKernelMod : public NativeGpuKernelMod {
     std::function<bool(RenormGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
-  bool GetRenormAttr(const BaseOperatorPtr &base_operator);
+  bool GetRenormAttr();
   size_t axis_size_{1};
   size_t inner_size_{1};
   size_t stride_size_{1};

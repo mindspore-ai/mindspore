@@ -25,11 +25,8 @@ const int32_t kNumint64 = 2;
 const int32_t kSizeint32 = 4;
 const int32_t kSizeint64 = 8;
 
-bool NonDeterministicIntsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool NonDeterministicIntsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -71,11 +68,9 @@ bool NonDeterministicIntsGpuKernelMod::LaunchKernel(const std::vector<KernelTens
   return true;
 }
 
-int NonDeterministicIntsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NonDeterministicIntsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

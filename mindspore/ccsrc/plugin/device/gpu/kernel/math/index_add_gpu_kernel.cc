@@ -31,15 +31,8 @@ constexpr size_t kIndexAddInputsNum = 3;
 constexpr size_t kIndexAddOutputsNum = 1;
 };  // namespace
 
-bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexAdd>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast IndexAdd ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  axis_value_ = kernel_ptr->get_axis();
+bool IndexAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  axis_value_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexAddOutputsNum, kernel_name_);
 
@@ -53,10 +46,9 @@ bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int IndexAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

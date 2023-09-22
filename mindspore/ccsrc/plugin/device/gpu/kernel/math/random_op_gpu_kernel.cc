@@ -20,14 +20,12 @@
 namespace mindspore {
 namespace kernel {
 const size_t UNIFORM_INT_INPUT_NUM = 3;
-bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_type_ = base_operator->name();
-  auto iter = kRandomOpTypeMap.find(kernel_type_);
+bool RandomOpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_type_
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
-                      << kernel_type_;
+                      << kernel_name_;
   } else {
     random_op_type_ = iter->second;
   }
@@ -36,11 +34,11 @@ bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   } else {
     input_num_ = 1;
   }
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
-  if (base_operator->HasAttr("use_curand")) {
-    use_curand_ = GetValue<bool>(base_operator->GetAttr("use_curand"));
+  if (primitive_->HasAttr("use_curand")) {
+    use_curand_ = GetValue<bool>(primitive_->GetAttr("use_curand"));
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -52,9 +50,8 @@ bool RandomOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int RandomOpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto real_input_num = inputs.size();
   if (real_input_num != input_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of inputs should be " << input_num_ << ", but got "
@@ -64,7 +61,7 @@ int RandomOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs should be 1, but got " << output_num;
   }
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   workspace_size_list_.clear();

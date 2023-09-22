@@ -66,10 +66,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
   CholeskySolveGpuKernelMod() = default;
   ~CholeskySolveGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    upper_ = GetValue<bool>(primitive_->GetAttr("upper"));
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -158,10 +156,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
 

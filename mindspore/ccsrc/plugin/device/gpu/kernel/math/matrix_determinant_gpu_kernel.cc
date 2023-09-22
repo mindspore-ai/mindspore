@@ -28,10 +28,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MatrixDeterminantGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MatrixDeterminantGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -56,11 +54,9 @@ bool MatrixDeterminantGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixDeterminantGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());

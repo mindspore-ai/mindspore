@@ -46,11 +46,9 @@ class PolygammaGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   void ResetResource() noexcept {
@@ -75,7 +73,7 @@ class PolygammaGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_{0};
   size_t output_elements_;
   PolygammaFunc kernel_func_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, PolygammaFunc>> func_list_;

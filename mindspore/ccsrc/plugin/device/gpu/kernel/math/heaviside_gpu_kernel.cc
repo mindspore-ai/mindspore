@@ -64,11 +64,8 @@ bool HeavisideGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-bool HeavisideGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Heaviside>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool HeavisideGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -79,9 +76,8 @@ bool HeavisideGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int HeavisideGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int HeavisideGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     MS_ERROR_IF_NULL_W_RET_VAL(input, KRET_RESIZE_FAILED);
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.

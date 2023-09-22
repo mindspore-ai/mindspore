@@ -64,13 +64,9 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   return true;
 }
 
-bool CumProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  exclusive_ = kernel_ptr->GetExclusive();
-  reverse_ = kernel_ptr->GetReverse();
+bool CumProdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  exclusive_ = GetValue<bool>(primitive_->GetAttr("exclusive"));
+  reverse_ = GetValue<bool>(primitive_->GetAttr("reverse"));
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
   auto input_num = inputs.size();
   if (input_num != kCumProdInputsNum) {
@@ -78,17 +74,15 @@ bool CumProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int CumProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int CumProdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto shape_signed = inputs[kIndex0]->GetShapeVector();
@@ -100,7 +94,7 @@ int CumProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
 
   input_dim_length_ = SizeToInt(shape_.size());
-  workspace_size_list_.push_back(input_size_list_.at(kIndex0));
+  workspace_size_list_.push_back(inputs[kIndex0]->size());
   return KRET_OK;
 }
 

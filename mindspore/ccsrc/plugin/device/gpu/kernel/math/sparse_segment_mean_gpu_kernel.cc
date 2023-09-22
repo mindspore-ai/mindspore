@@ -18,14 +18,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseSegmentMeanGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentMeanGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 3;
   constexpr size_t outputs_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -36,18 +35,16 @@ bool SparseSegmentMeanGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseSegmentMeanGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseSegmentMeanGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto y_shape = outputs.at(kIndex0)->GetShapeVector();
-  batch_rank_ = LongToSize(base_operator->get_batch_rank());
+  batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
   outer_size_ = LongToSize(x_shape.at(batch_rank_));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});

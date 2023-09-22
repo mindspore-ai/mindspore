@@ -24,10 +24,8 @@ constexpr size_t kCumulativeLogsumexpStaticInputsNum = 1;
 constexpr size_t kCumulativeLogsumexpDynamicInputsNum = 2;
 }  // namespace
 
-bool CumulativeLogsumexpGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumulativeLogsumexpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   if (input_num == kCumulativeLogsumexpStaticInputsNum) {
     is_dynamic_shape_ = false;
@@ -47,11 +45,9 @@ bool CumulativeLogsumexpGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CumulativeLogsumexpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CumulativeLogsumexpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
@@ -61,8 +57,8 @@ int CumulativeLogsumexpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (is_null_input_) {
     return true;
   }
-  auto kernel_ptr = std::make_shared<ops::CumulativeLogsumexp>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  auto kernel_ptr = std::make_shared<ops::CumulativeLogsumexp>(primitive_);
+
   exclusive_ = kernel_ptr->get_exclusive();
   reverse_ = kernel_ptr->get_reverse();
   if (!is_dynamic_shape_) {

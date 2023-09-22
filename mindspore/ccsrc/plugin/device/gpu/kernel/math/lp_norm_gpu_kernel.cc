@@ -29,13 +29,13 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_type.cuh"
 namespace mindspore {
 namespace kernel {
-bool LpNormGpuKernelMod::GetLpNormAttr(const BaseOperatorPtr &base_operator) {
+bool LpNormGpuKernelMod::GetLpNormAttr() {
   if (kernel_name_ != prim::kPrimLpNorm->name()) {
     MS_LOG(ERROR) << "For '" << prim::kPrimLpNorm->name() << "' , it's kernel name must be equal to LpNorm, but got "
                   << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
+  auto kernel_ptr = std::make_shared<ops::LpNorm>(primitive_);
 
   axis_ = kernel_ptr->get_axis();
   p_ = kernel_ptr->get_p();
@@ -61,9 +61,7 @@ void LpNormGpuKernelMod::InitWorkSpaceSizeList() {
   }
 }
 
-bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool LpNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -75,13 +73,11 @@ bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  return GetLpNormAttr(base_operator);
+  return GetLpNormAttr();
 }
 
-int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LpNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   data_type_ = inputs.at(kIndex0)->dtype_id();

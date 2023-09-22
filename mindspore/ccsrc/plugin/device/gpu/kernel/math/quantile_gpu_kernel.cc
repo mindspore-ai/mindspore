@@ -27,14 +27,13 @@
 namespace mindspore {
 namespace kernel {
 constexpr int kQuantileDefaultDim = 10000;
-bool QuantileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(base_operator);
+bool QuantileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::make_shared<ops::Quantile>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
+
   dim_ = kernel_ptr->get_dim();
   ignorenan_ = kernel_ptr->get_ignorenan();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -72,9 +71,8 @@ uint32_t MaybeWrapDim(int dim, int dim_post_expr) {
   return dim;
 }
 
-int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int QuantileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();

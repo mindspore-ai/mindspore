@@ -52,12 +52,7 @@ bool IgammaGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   return true;
 }
 
-bool IgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Igamma>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool IgammaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -67,12 +62,10 @@ bool IgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int IgammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int IgammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   std::vector<std::vector<int64_t>> input_shapes;

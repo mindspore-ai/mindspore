@@ -60,9 +60,8 @@ void NMSWithOverlapsFwdGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(sizeof(int));                             // up_score list
 }
 
-bool NMSWithOverlapsFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
+bool NMSWithOverlapsFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -129,10 +128,8 @@ bool NMSWithOverlapsFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int NMSWithOverlapsFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NMSWithOverlapsFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;

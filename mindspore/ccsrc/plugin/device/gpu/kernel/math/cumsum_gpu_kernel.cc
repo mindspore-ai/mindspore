@@ -23,9 +23,7 @@ namespace {
 constexpr size_t kCumSumInputsNum = 2;
 }  // namespace
 
-bool CumSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumSumGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
   if (input_num != kCumSumInputsNum) {
@@ -43,10 +41,8 @@ bool CumSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int CumSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CumSumGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
@@ -56,11 +52,11 @@ int CumSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (is_null_input_) {
     return KRET_OK;
   }
-  auto kernel_ptr = std::make_shared<ops::CumSum>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  auto kernel_ptr = std::make_shared<ops::CumSum>(primitive_);
+
   exclusive_ = kernel_ptr->get_exclusive();
   reverse_ = kernel_ptr->get_reverse();
-  workspace_size_list_.push_back(input_size_list_.at(kIndex0));
+  workspace_size_list_.push_back(inputs[kIndex0]->size());
   return KRET_OK;
 }
 

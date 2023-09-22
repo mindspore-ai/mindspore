@@ -19,10 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool AssignAddFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::AssignAdd>(base_operator->GetPrim());
+bool AssignAddFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   constexpr int INPUT_NUM = 2;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size();
@@ -54,10 +52,9 @@ bool AssignAddFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int AssignAddFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AssignAddFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

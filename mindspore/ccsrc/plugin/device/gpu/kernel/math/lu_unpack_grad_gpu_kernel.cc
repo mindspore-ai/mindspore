@@ -23,12 +23,8 @@ constexpr const size_t kLuUnpackGradOutputNum = 2;
 constexpr const int64_t Min_Dim = 2;
 }  // namespace
 
-bool LuUnpackGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LuUnpackGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool LuUnpackGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kLuUnpackGradInputNum || outputs.size() != kLuUnpackGradOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kLuUnpackGradInputNum << " and "
                   << kLuUnpackGradOutputNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -53,10 +49,9 @@ bool LuUnpackGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int LuUnpackGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &others) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LuUnpackGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -308,13 +308,13 @@ const std::map<std::string, std::vector<std::pair<KernelAttr, SegmentOpsPtrCreat
      CreateSegmentOpsKernelPtr<uint64_t, int64_t>}}}};  // kernel_attr_map_
 }  // namespace
 
-bool SegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool SegmentOpsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 2;
   constexpr size_t outputs_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
 
@@ -338,9 +338,8 @@ bool SegmentOpsGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-int SegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SegmentOpsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

@@ -19,10 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool IdentityGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Identity>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool IdentityGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
@@ -31,7 +28,7 @@ bool IdentityGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;

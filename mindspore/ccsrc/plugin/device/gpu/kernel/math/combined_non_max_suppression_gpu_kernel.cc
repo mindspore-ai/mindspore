@@ -49,13 +49,11 @@ void CombinedNonMaxSuppressionGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(batch_size_ * num_classes_ * num_boxes_ * num_boxes_ * sizeof(bool));
 }
 
-bool CombinedNonMaxSuppressionGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CombinedNonMaxSuppression>(base_operator);
-  pad_per_class_ = kernel_ptr->get_pad_per_class();
-  clip_boxes_ = kernel_ptr->get_clip_boxes();
-  kernel_name_ = kernel_ptr->name();
+bool CombinedNonMaxSuppressionGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  pad_per_class_ = GetValue<bool>(primitive_->GetAttr("pad_per_class"));
+  clip_boxes_ = GetValue<bool>(primitive_->GetAttr("clip_boxes"));
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -67,11 +65,9 @@ bool CombinedNonMaxSuppressionGpuKernelMod::Init(const BaseOperatorPtr &base_ope
   return true;
 }
 
-int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CombinedNonMaxSuppressionGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

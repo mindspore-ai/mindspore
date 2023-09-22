@@ -40,13 +40,10 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   FFTWithSizeGpuKernelMod() = default;
   ~FFTWithSizeGpuKernelMod() override { ResetResource(); };
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    return resize_func_(this, base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return resize_func_(this, inputs, outputs);
   }
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -58,20 +55,14 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void ResetResource() noexcept;
-  bool MakeCufftPlan(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  int ResizeBase(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeIFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeRFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeIRFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                  const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  using FFTWithSizeResizeFunc =
-    std::function<int(FFTWithSizeGpuKernelMod *, const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
-                      const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &)>;
+  bool MakeCufftPlan(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeBase(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeIFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeIRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using FFTWithSizeResizeFunc = std::function<int(FFTWithSizeGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &)>;
   FFTWithSizeResizeFunc resize_func_{};
 
   template <typename T>

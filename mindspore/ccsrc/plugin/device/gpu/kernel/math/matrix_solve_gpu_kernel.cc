@@ -69,13 +69,11 @@ inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation
   return cublasZgetrsBatched(handle, trans, m, k, cu_matrix_array, m, pivot_array, cu_rhs_array, m, info, batch_size);
 }
 }  // namespace
-bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool MatrixSolveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   const auto dtype = inputs.at(kIndex0)->dtype_id();
 
-  auto kernel_ptr = std::make_shared<ops::MatrixSolve>(base_operator->GetPrim());
+  auto kernel_ptr = std::make_shared<ops::MatrixSolve>(primitive_);
   bool adjoint = kernel_ptr->get_adjoint();
 
   if (dtype == kNumberTypeComplex64 || dtype == kNumberTypeComplex128) {
@@ -89,17 +87,16 @@ bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSolveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

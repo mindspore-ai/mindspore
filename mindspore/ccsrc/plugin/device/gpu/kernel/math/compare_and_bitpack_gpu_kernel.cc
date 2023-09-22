@@ -29,17 +29,12 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kBitpack = 8;
-bool CompareAndBitpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CompareAndBitpackGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  kernel_ptr_ = std::make_shared<ops::CompareAndBitpack>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -54,12 +49,10 @@ bool CompareAndBitpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CompareAndBitpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+int CompareAndBitpackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_long_shape = inputs.at(kIndex0)->GetShapeVector();

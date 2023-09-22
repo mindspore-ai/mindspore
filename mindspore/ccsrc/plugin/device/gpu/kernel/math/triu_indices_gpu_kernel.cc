@@ -18,12 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::TriuIndices>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool TriuIndicesGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty outputs, which is invalid.";
     return false;
@@ -36,15 +32,14 @@ bool TriuIndicesGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  row_ = kernel_ptr_->get_row();
-  col_ = kernel_ptr_->get_col();
-  offset_ = kernel_ptr_->get_offset();
+  row_ = GetValue<int64_t>(primitive_->GetAttr("row"));
+  col_ = GetValue<int64_t>(primitive_->GetAttr("col"));
+  offset_ = GetValue<int64_t>(primitive_->GetAttr("offset"));
   return true;
 }
 
-int TriuIndicesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int TriuIndicesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   ResetResource();
   auto ret = KRET_OK;

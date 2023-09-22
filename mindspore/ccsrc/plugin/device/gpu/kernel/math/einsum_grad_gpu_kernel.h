@@ -69,10 +69,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    auto primitive = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto primitive = primitive_;
     MS_EXCEPTION_IF_NULL(primitive);
     node_name_ = primitive->name();
     size_t input_num = inputs.size();
@@ -84,10 +82,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -105,7 +101,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
       input_shapes_.push_back(in_shape);
     }
 
-    auto equation_ptr = base_operator->GetAttr("equation");
+    auto equation_ptr = primitive_->GetAttr("equation");
     MS_EXCEPTION_IF_NULL(equation_ptr);
     std::string equation = GetValue<std::string>(equation_ptr);
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());

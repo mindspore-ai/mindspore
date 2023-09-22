@@ -29,14 +29,12 @@
 namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
-bool BernoulliGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BernoulliGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  kernel_ptr_ = std::make_shared<ops::Bernoulli>(base_operator->GetPrim());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -48,10 +46,10 @@ bool BernoulliGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   p_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   if (!states_init_) {
     constexpr auto seed_str = "seed";
-    if (!kernel_ptr_->HasAttr(seed_str)) {
+    if (!primitive_->HasAttr(seed_str)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', has no attribute of seed";
     }
-    seed_ = GetValue<int64_t>(kernel_ptr_->GetAttr(seed_str));
+    seed_ = GetValue<int64_t>(primitive_->GetAttr(seed_str));
     if (seed_ < 0 && seed_ != -1) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'seed' must be -1 or positive integer, "
                     << "but got " << seed_;
@@ -63,9 +61,8 @@ bool BernoulliGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int BernoulliGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int BernoulliGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include "mindspore/core/ops/grad/median_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -76,10 +77,8 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::make_shared<ops::MedianGrad>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
       return false;
@@ -129,11 +128,8 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

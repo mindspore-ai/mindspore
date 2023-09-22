@@ -55,16 +55,13 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs.at(kIndex0)->dtype_id();
     dtype_size_ = abstract::TypeIdSize(dtype_);
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto input_shape = inputs[0]->GetShapeVector();
     auto output_shape = outputs[0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");

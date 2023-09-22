@@ -46,10 +46,8 @@ void EuclideanNormGpuKernelMod::InitWorkSpaceSizeList() {
   }
 }
 
-bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool EuclideanNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -64,21 +62,17 @@ bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EuclideanNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  keep_dims_ = kernel_ptr->get_keep_dims();
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axes_)) {
-    MS_LOG(EXCEPTION) << "For" << kernel_name_ << ", can't get axis value from input!";
-  }
+  auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(primitive_);
 
+  keep_dims_ = kernel_ptr->get_keep_dims();
+  axes_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   data_type_ = inputs.at(kIndex0)->dtype_id();

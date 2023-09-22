@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include "mindspore/core/ops/median.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -52,19 +53,13 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
-      return false;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (inputs.size() != kMedianInputsNum || outputs.size() > kMedianOutputsNum) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kMedianInputsNum << " and "
                     << kMedianOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
       return false;
     }
+    auto kernel_ptr = std::make_shared<ops::Median>(primitive_);
     if (kernel_ptr->get_ignore_nan()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attribute ignore_nan is not supported on GPU yet.";
       return false;
@@ -75,11 +70,8 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

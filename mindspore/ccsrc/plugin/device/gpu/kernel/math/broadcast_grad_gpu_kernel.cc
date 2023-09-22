@@ -43,9 +43,8 @@ bool BroadcastOpGradGpuKernelMod::GetOpType() {
   return true;
 }
 
-bool BroadcastOpGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BroadcastOpGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -54,25 +53,23 @@ bool BroadcastOpGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   if (op_type_ == BROADCAST_GRAD_TYPE_MAXIMUM) {
-    auto kernel_ptr = std::make_shared<ops::MaximumGrad>(base_operator->GetPrim());
+    auto kernel_ptr = std::make_shared<ops::MaximumGrad>(primitive_);
     grad_x_ = kernel_ptr->get_grad_x();
     grad_y_ = kernel_ptr->get_grad_y();
   } else {
-    auto kernel_ptr = std::make_shared<ops::MinimumGrad>(base_operator->GetPrim());
+    auto kernel_ptr = std::make_shared<ops::MinimumGrad>(primitive_);
     grad_x_ = kernel_ptr->get_grad_x();
     grad_y_ = kernel_ptr->get_grad_y();
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BroadcastOpGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x1_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());

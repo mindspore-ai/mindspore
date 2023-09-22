@@ -37,11 +37,8 @@ class SendGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-            const std::vector<KernelTensorPtr> &) override {
-    MS_ERROR_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    auto prim = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override {
+    auto prim = primitive_;
     MS_ERROR_IF_NULL(prim);
     record_event_ = reinterpret_cast<cudaEvent_t>(GetValue<uintptr_t>(prim->GetAttr(kAttrRecordEvent)));
     return true;

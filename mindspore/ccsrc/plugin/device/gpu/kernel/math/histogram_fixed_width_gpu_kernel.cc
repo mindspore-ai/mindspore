@@ -51,28 +51,23 @@ bool HistogramFixedWidthGpuKernelMod::Launch(const std::vector<KernelTensor *> &
   return true;
 }
 
-bool HistogramFixedWidthGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HistogramFixedWidth>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool HistogramFixedWidthGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_ptr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support its kernel data type. ";
     return false;
   }
-  attr_ptr_->nbins = kernel_ptr->get_nbins();
+  attr_ptr_->nbins = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("nbins")));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int HistogramFixedWidthGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int HistogramFixedWidthGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

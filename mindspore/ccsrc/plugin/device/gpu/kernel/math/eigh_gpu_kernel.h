@@ -43,18 +43,10 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
   EighGpuKernelMod() : is_null_input_(false) {}
   ~EighGpuKernelMod() = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
-
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Eigh>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel_ptr is null.";
-      return false;
-    }
-    compute_eigen_vectors_ = kernel_ptr->get_compute_eigen_vectors();
-    lower_ = kernel_ptr->get_lower();
+    compute_eigen_vectors_ = GetValue<bool>(primitive_->GetAttr("compute_eigenvectors"));
+    lower_ = GetValue<bool>(primitive_->GetAttr("lower"));
     if (compute_eigen_vectors_) {
       jobz_ = CUSOLVER_EIG_MODE_VECTOR;
     } else {
@@ -64,10 +56,8 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }

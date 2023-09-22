@@ -18,10 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NextAfterGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -65,9 +63,8 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int NextAfterGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -78,7 +75,7 @@ int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
+    if (!Init(inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
   }

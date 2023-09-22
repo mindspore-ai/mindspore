@@ -96,18 +96,15 @@ FFTVariety GetFFTVariety(const bool &is_inverse, const bool &is_real) {
 }
 }  // namespace
 
-bool FFTWithSizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool FFTWithSizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   // Get attribute
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FFTWithSize>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  rank_ = kernel_ptr->get_signal_ndim();
-  is_inverse_ = kernel_ptr->get_inverse();
-  is_real_ = kernel_ptr->get_real();
-  norm_type_ = kernel_ptr->get_norm();
-  is_onesided_ = kernel_ptr->get_onesided();
+  rank_ = GetValue<int64_t>(primitive_->GetAttr("signal_ndim"));
+  is_inverse_ = GetValue<bool>(primitive_->GetAttr("inverse"));
+  is_real_ = GetValue<bool>(primitive_->GetAttr("real"));
+  norm_type_ = GetValue<std::string>(primitive_->GetAttr("norm"));
+  is_onesided_ = GetValue<bool>(primitive_->GetAttr("onesided"));
   fft_variety_ = GetFFTVariety(is_inverse_, is_real_);
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
@@ -199,8 +196,8 @@ void FFTWithSizeGpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-bool FFTWithSizeGpuKernelMod::MakeCufftPlan(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+bool FFTWithSizeGpuKernelMod::MakeCufftPlan(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (cufft_plan_ != 0) {  // if there is already a plan, destroy it.
     CHECK_CUFFT_RET_WITH_ERROR_RET_FALSE(cufftDestroy(cufft_plan_),
                                          "For '" << kernel_name_ << "', it failed to call cufftDestroy.");
@@ -241,14 +238,12 @@ bool FFTWithSizeGpuKernelMod::MakeCufftPlan(const std::vector<KernelTensorPtr> &
   return true;
 }
 
-int FFTWithSizeGpuKernelMod::ResizeBase(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FFTWithSizeGpuKernelMod::ResizeBase(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -278,10 +273,9 @@ int FFTWithSizeGpuKernelMod::ResizeBase(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
-int FFTWithSizeGpuKernelMod::ResizeFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = ResizeBase(base_operator, inputs, outputs, inputsOnHost);
+int FFTWithSizeGpuKernelMod::ResizeFFT(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = ResizeBase(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -295,11 +289,9 @@ int FFTWithSizeGpuKernelMod::ResizeFFT(const BaseOperatorPtr &base_operator, con
   }
   return ret;
 }
-int FFTWithSizeGpuKernelMod::ResizeIFFT(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = ResizeBase(base_operator, inputs, outputs, inputsOnHost);
+int FFTWithSizeGpuKernelMod::ResizeIFFT(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  int ret = ResizeBase(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -314,11 +306,9 @@ int FFTWithSizeGpuKernelMod::ResizeIFFT(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
-int FFTWithSizeGpuKernelMod::ResizeRFFT(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = ResizeBase(base_operator, inputs, outputs, inputsOnHost);
+int FFTWithSizeGpuKernelMod::ResizeRFFT(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  int ret = ResizeBase(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -348,11 +338,9 @@ int FFTWithSizeGpuKernelMod::ResizeRFFT(const BaseOperatorPtr &base_operator,
   return ret;
 }
 
-int FFTWithSizeGpuKernelMod::ResizeIRFFT(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = ResizeBase(base_operator, inputs, outputs, inputsOnHost);
+int FFTWithSizeGpuKernelMod::ResizeIRFFT(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  int ret = ResizeBase(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

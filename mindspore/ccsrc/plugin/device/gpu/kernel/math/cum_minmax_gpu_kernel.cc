@@ -28,9 +28,8 @@ constexpr int kCumInputsNum = 1;
 constexpr int kCumOutputsNum = 2;
 }  // namespace
 
-bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumMinMaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -41,12 +40,12 @@ bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   kernel_func_ = func_list_[cum_op_type_][index].second;
   switch (cum_op_type_) {
     case CUMMIN: {
-      auto kernel_ptr = std::make_shared<ops::Cummin>(base_operator->GetPrim());
+      auto kernel_ptr = std::make_shared<ops::Cummin>(primitive_);
       axis_ = kernel_ptr->get_axis();
       break;
     }
     case CUMMAX: {
-      auto kernel_ptr = std::make_shared<ops::Cummax>(base_operator->GetPrim());
+      auto kernel_ptr = std::make_shared<ops::Cummax>(primitive_);
       axis_ = kernel_ptr->get_axis();
       break;
     }
@@ -58,10 +57,9 @@ bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CumMinMaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   outer_size_ = inner_size_ = axis_size_ = 1;

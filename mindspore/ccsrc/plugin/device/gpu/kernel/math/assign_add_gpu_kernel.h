@@ -45,13 +45,9 @@ class AssignAddFwdGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -81,7 +77,7 @@ class AssignAddFwdGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_;
   int64_t input_size_;
   int64_t input_elements_;
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   AssignAddFunc kernel_func_{};
   void *stream_ptr_{nullptr};
   static std::vector<std::pair<KernelAttr, AssignAddFunc>> func_list_;

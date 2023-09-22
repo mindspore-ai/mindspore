@@ -23,14 +23,7 @@ namespace {
 constexpr size_t kLinSpaceInputsNum = 3;
 constexpr size_t kLinSpaceOutputsNum = 1;
 }  // namespace
-bool LinSpaceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LinSpace>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast LinSpace ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool LinSpaceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLinSpaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLinSpaceOutputsNum, kernel_name_);
 
@@ -43,11 +36,10 @@ bool LinSpaceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   kernel_func_ = func_list_[index].second;
   return true;
 }
-int LinSpaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int LinSpaceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input1_shape = inputs[kIndex0]->GetShapeVector();
