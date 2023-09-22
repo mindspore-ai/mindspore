@@ -1853,6 +1853,21 @@ class AfterOptARewriter : public BaseRewriter {
     return convert_node;
   }
 
+  AnfNodePtr ConvertMakeRange(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
+      return nullptr;
+    }
+    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "range");
+    MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
+    return pyexecute_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -1887,7 +1902,8 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimIsInstance, &ThisClass::ConvertIsInstance},
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint},
-    {prim::kPrimFormat, &ThisClass::ConvertFormat}};
+    {prim::kPrimFormat, &ThisClass::ConvertFormat},
+    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,

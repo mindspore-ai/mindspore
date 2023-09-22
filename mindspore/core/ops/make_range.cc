@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,20 +46,15 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input size should within [" << min_args_size << ", "
                       << max_args_size << "] but got" << inputs_size;
   }
-  bool has_variable = false;
   for (size_t i = 0; i < input_args.size(); ++i) {
     auto element = input_args[i];
     MS_EXCEPTION_IF_NULL(element);
     auto element_type = element->BuildType();
-    if (element_type->type_id() != kInt64->type_id() && element_type->type_id() != kInt32->type_id()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
-                              << element->ToString();
-    }
-    if (!has_variable && element->BuildValue() == kValueAny) {
-      has_variable = true;
+    if (element->BuildValue() == kValueAny) {
+      return true;
     }
   }
-  return has_variable;
+  return false;
 }
 
 abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, const std::string &prim_name,

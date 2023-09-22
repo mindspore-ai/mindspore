@@ -1540,8 +1540,13 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   if (point_pos != std::string::npos && getattr_pos == std::string::npos) {
     constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
     std::stringstream script_buffer;
-    script_buffer << internal_getattr_owner_str;
-    script_buffer << expr.substr(point_pos);
+    if (expr.substr(point_pos) == ".__ms_iter__") {
+      // Convert iterable object to tuple.
+      script_buffer << "tuple(" << internal_getattr_owner_str << ")";
+    } else {
+      script_buffer << internal_getattr_owner_str;
+      script_buffer << expr.substr(point_pos);
+    }
     const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
     std::vector<ValuePtr> key_list;
     const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);

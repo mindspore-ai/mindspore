@@ -2988,14 +2988,21 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   return interpret_get_item;
 }
 
+void CloneInnerNodeLocation(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto debug_info = node->debug_info();
+  MS_EXCEPTION_IF_NULL(debug_info);
+  auto old_location = debug_info->location();
+  MS_EXCEPTION_IF_NULL(old_location);
+  LocationPtr new_location = std::make_shared<Location>(*old_location);
+  debug_info->set_location(new_location);
+}
+
 // Implement unroll for statement with tuple/getitem.
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
   MS_EXCEPTION_IF_NULL(block);
-
-  const py::function len_with_check = python_adapter::GetPyFn(kStandardMethodModelName, kMsLenWithCheck);
-  auto len_with_check_fg = ParsePythonCode(len_with_check);
-  auto op_len_with_check = NewValueNode(len_with_check_fg);
+  AnfNodePtr op_len_with_check = block->MakeResolveOperation(NAMED_PRIMITIVE_LEN);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
 
@@ -3021,6 +3028,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
+  auto less_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "less_right_str", "<");
+  CloneInnerNodeLocation(cond_node);
+  fallback::SetNodeExprSrc(cond_node, less_expr_src);
 
   // Generate the body of the for statement
   FunctionBlockPtr body_block = MakeFunctionBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
@@ -3036,6 +3046,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   } else {
     CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
     target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
+    auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
+    CloneInnerNodeLocation(target_var);
+    fallback::SetNodeExprSrc(target_var, new_expr_src);
   }
   header_block->UpdateGlobalPyParam(block->global_py_params());
   body_block->UpdateGlobalPyParam(block->global_py_params());
@@ -3044,8 +3057,12 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   // Create 'i = i + 1'
   std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
-  CNodePtr loop_var_inc =
-    body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, NewValueNode(static_cast<int64_t>(1))});
+  auto add_one = NewValueNode(static_cast<int64_t>(1));
+  CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, add_one});
+  auto add_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "add_right_str", "+");
+  CloneInnerNodeLocation(loop_var_inc);
+  fallback::SetNodeExprSrc(loop_var_inc, add_expr_src);
+
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
 
   // Link the variable name with the target

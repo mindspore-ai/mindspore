@@ -2362,7 +2362,7 @@ def itemset(data, *args):
 
 def ms_iter(xs):
     """Implementation of `iter`."""
-    return xs.__ms_iter__()
+    return xs.__ms_iter__
 
 
 def ms_next(it):
