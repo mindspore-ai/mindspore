@@ -26,12 +26,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-#define EIG_KERNEL_CPU_REGISTER(IN_DT, OUT_DT, IN_T, OUT_T)                                                   \
-  KernelAttr().AddInputAttr(IN_DT).AddInputAttr(kNumberTypeBool).AddOutputAttr(OUT_DT).AddOutputAttr(OUT_DT), \
+#define EIG_KERNEL_CPU_REGISTER(IN_DT, OUT_DT, IN_T, OUT_T) \
+  KernelAttr()                                              \
+    .AddInputAttr(IN_DT)                                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)       \
+    .AddOutputAttr(OUT_DT)                                  \
+    .AddOutputAttr(OUT_DT),                                 \
     &EigCpuKernelMod::LaunchKernel<IN_T, OUT_T>
-
-constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNum = 2;
 }  // namespace
 
 void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
@@ -54,11 +55,7 @@ void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
 }
 
 bool EigCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (primitive_->HasAttr(COMPUTE_V)) {
-    compute_v_ = GetValue<bool>(primitive_->GetAttr(COMPUTE_V));
-  }
+  compute_v_ = inputs[kIndex1]->GetValueWithCheck<bool>();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

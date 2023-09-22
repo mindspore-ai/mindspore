@@ -11,3 +11,5 @@ eig:
       dtype: tensor
     eigen_vectors:
       dtype: tensor
+  function:
+    name: eig_
