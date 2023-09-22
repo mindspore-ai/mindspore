@@ -67,7 +67,6 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
 
   // Alloc memory failed and dump the info.
   if (!device_addr) {
-    DumpDynamicMemPoolDebugInfo();
     DumpDynamicMemPoolStateInfo();
   }
 
