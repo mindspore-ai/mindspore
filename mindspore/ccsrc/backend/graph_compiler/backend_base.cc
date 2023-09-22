@@ -34,6 +34,7 @@
 #include "ops/nn_ops.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "utils/log_adapter.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
@@ -965,11 +966,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
       return;
     }
 
-    const auto &storage_info = t->storage_info();
-    if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
-      MS_LOG(DEBUG) << "Tensor is already contiguous.";
-      return;
-    }
+    GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
     RunContiguousTask(t, false);
   };
