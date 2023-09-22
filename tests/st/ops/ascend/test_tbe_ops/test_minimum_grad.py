@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import torch
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -56,18 +56,42 @@ def gen_data(inputA_np, inputB_np, grad_=None):
     if grad_ is None:
         grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
 
-    print(inputA_np)
-    print(inputB_np)
-    print(grad_)
-
     net_me = GradWrap(MinNetMe())
     net_me.set_train()
-    output = net_me(inputA_me, inputB_me, Tensor(grad))
-    print(output[0].asnumpy())
-    print(output[1].asnumpy())
+    output_me = net_me(inputA_me, inputB_me, Tensor(grad_))
+    ms_inputA_grad = output_me[0].asnumpy()
+    ms_inputB_grad = output_me[1].asnumpy()
+
+    torch_inputA = torch.tensor(inputA_np.astype(np.float32), requires_grad=True)
+    torch_inputB = torch.tensor(inputB_np.astype(np.float32), requires_grad=True)
+    output_pt = torch.min(torch_inputA, torch_inputB)
+    grad_pt = torch.from_numpy(grad_.astype(np.float32))
+    output_pt.backward(grad_pt)
+    torch_inputA_grad = torch_inputA.grad.detach().numpy()
+    torch_inputB_grad = torch_inputB.grad.detach().numpy()
+
+    assert np.allclose(ms_inputA_grad, torch_inputA_grad, rtol=1e-6, atol=1e-4)
+    assert np.allclose(ms_inputB_grad, torch_inputB_grad, rtol=1e-6, atol=1e-4)
 
 
 def test_min_tensor_grad_4d():
+    """
+    Feature: test minimum grad on ascend
+    Description: test the minimumgrad with 4D input.
+    Expectation: result match to torch result.
+    """
     inputA_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     inputB_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     gen_data(inputA_np, inputB_np)
+
+
+def test_min_tensor_grad_with_same_input():
+    """
+    Feature: test minimum grad on ascend
+    Description: test the minimumgrad with same input.
+    Expectation: result match to torch result.
+    """
+    inputA_np = np.array([2.1, 9.6, 6.7]).astype(np.float32)
+    inputB_np = np.array([2.3, 9.6, 5.8]).astype(np.float32)
+    grad_ = np.array([1.0, -1.0, 0]).astype(np.float32)
+    gen_data(inputA_np, inputB_np, grad_)

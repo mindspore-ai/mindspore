@@ -103,21 +103,6 @@ NodePtrList Conv2DTransposeBpropExpander(BpropIRBuilder *ib) {
   return {dx, dw, ib->OutZeros(f_sizes)};
 }
 
-NodePtrList CommonMaxMinGradBprop(BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto btmp = ib->TupleGetItem(out, 0);
-  auto btmp_type = ib->GetDtype(btmp);
-  auto out0 = ib->Cast(ib->NotEqual(btmp, ib->Tensor(0, btmp_type)), btmp_type);
-  auto btmp1 = ib->TupleGetItem(out, 1);
-  auto btmp1_type = ib->GetDtype(btmp1);
-  auto out1 = ib->Cast(ib->NotEqual(btmp1, ib->Tensor(0, btmp1_type)), btmp1_type);
-  auto dz = ib->Add(ib->Mul(out0, ib->TupleGetItem(dout, 0)), ib->Mul(out1, ib->TupleGetItem(dout, 1)));
-  return {ib->OutZeros(x), ib->OutZeros(y), dz};
-}
-
 class BiasAddGradShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
@@ -1939,9 +1924,6 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
     return {dx, ib->OutZeros(paddings)};
   }
 });
-
-REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
-REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
 
 REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto w = ib->GetInput(kIndex0);

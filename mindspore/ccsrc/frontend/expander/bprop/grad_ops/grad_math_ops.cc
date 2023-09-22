@@ -83,25 +83,6 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
   return {r1, r2};
 }
 
-inline bool IsScalar(const ShapeVector &shape) { return shape.empty() || (shape.size() == 1 && shape[0] == 1); }
-
-bool IsExpandMinMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
-  auto is_ascend = (ib->GetTargetFromContext() == kAscendDevice);
-  if (!is_ascend) {
-    return false;
-  }
-
-  auto x_shp = ib->GetShape(x);
-  auto y_shp = ib->GetShape(y);
-  // Expand to ops for dynamic case.
-  if (IsDynamic(x_shp) || IsDynamic(y_shp)) {
-    return true;
-  }
-
-  // Only expand to ops in scalar broadcast static case.
-  return (IsScalar(x_shp) != IsScalar(y_shp));
-}
-
 NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
   auto zeros = ib->ZerosLike(dout);
@@ -114,6 +95,12 @@ NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodeP
 
   auto grad_x = ib->Select(x_mask, dout, zeros);
   auto grad_y = ib->Select(x_mask, zeros, dout);
+
+  auto half_ratio = ib->Fill(2.0, ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  auto half_dout = ib->Div(dout, half_ratio);
+  NodePtr equal_mask = ib->Equal(x, y);
+  grad_x = ib->Select(equal_mask, half_dout, grad_x);
+  grad_y = ib->Select(equal_mask, half_dout, grad_y);
 
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
@@ -584,31 +571,14 @@ REG_BPROP_BUILDER("Minimum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-
-  if (IsExpandMinMaxGrad(ib, x, y)) {
-    MS_LOG(DEBUG) << "Expand MinimumGrad to ops.";
-    return MinimumMaximumGrad(ib, x, y, dout, true);
-  }
-  auto tmp = ib->Emit("MinimumGrad", {x, y, dout}, {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
-  auto dx = ib->TupleGetItem(tmp, 0);
-  auto dy = ib->TupleGetItem(tmp, 1);
-  return {dx, dy};
+  return MinimumMaximumGrad(ib, x, y, dout, true);
 });
 
 REG_BPROP_BUILDER("Maximum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-
-  if (IsExpandMinMaxGrad(ib, x, y)) {
-    MS_LOG(DEBUG) << "Expand MaximumGrad to ops.";
-    return MinimumMaximumGrad(ib, x, y, dout, false);
-  }
-
-  auto tmp = ib->Emit("MaximumGrad", {x, y, dout}, {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
-  auto dx = ib->TupleGetItem(tmp, 0);
-  auto dy = ib->TupleGetItem(tmp, 1);
-  return {dx, dy};
+  return MinimumMaximumGrad(ib, x, y, dout, false);
 });
 
 REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
@@ -1549,17 +1519,6 @@ REG_BPROP_BUILDER("NextAfter").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dx1 = ib->Reshape(ib->Mul(partial_x1, dout), s_x1);
   auto dx2 = ib->Reshape(ib->Mul(partial_x2, dout), s_x2);
   return {ib->Cast(dx1, dout_type), ib->Cast(dx2, dout_type)};
-});
-
-REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
-  auto x1 = ib->GetInput(kIndex0);
-  auto x2 = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex4);
-  auto tmp = ib->Emit("MinimumGradGrad", {x1, x2, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1)});
-  auto sopd_x1 = ib->OutZeros(x1);
-  auto sopd_x2 = ib->OutZeros(x2);
-  auto sopd_grads = ib->TupleGetItem(tmp, 2);
-  return {sopd_x1, sopd_x2, sopd_grads};
 });
 
 REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
