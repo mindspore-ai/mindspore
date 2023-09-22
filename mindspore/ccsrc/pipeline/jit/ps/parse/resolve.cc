@@ -570,8 +570,9 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   return CreateResolveNode(obj, attr, get_attr_node);
 }
 
-// Get attribute or method from ms_class obj.
-AnfNodePtr ResolveMsClassWithAttr(const py::object &cls_obj, const AnfNodePtr &attr, const AnfNodePtr &get_attr_node) {
+// Get attribute or method from ms_class obj or cell obj.
+AnfNodePtr ResolveClassObjectWithAttr(const py::object &cls_obj, const AnfNodePtr &attr,
+                                      const AnfNodePtr &get_attr_node) {
   MS_EXCEPTION_IF_NULL(get_attr_node);
   MS_LOG(DEBUG) << "Resolve ms_class obj (" << py::str(cls_obj) << ") with attr " << attr->ToString() << ".";
   TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
@@ -604,7 +605,7 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
   } else if (count_msclass == sequence_size) {
     // Resolve MsClass instances.
     for (size_t i = 0; i < sequence_size; ++i) {
-      auto res = ResolveMsClassWithAttr(sequence[i], attr, get_attr_node);
+      auto res = ResolveClassObjectWithAttr(sequence[i], attr, get_attr_node);
       (void)inputs.emplace_back(res);
     }
   } else {

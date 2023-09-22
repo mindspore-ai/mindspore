@@ -190,7 +190,7 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
                                  const AnfNodePtr &attr_node, const AnfNodePtr &node);
 AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &getitem_node,
                                   const AnfNodePtr &attr_node, const AnfNodePtr &node);
-AnfNodePtr ResolveMsClassWithAttr(const py::object &cls_obj, const AnfNodePtr &attr, const AnfNodePtr &node);
+AnfNodePtr ResolveClassObjectWithAttr(const py::object &cls_obj, const AnfNodePtr &attr, const AnfNodePtr &node);
 
 AnfNodePtr ResolveInterpretedObjectOfSetAttr(const AnfNodePtr &target_node, const AnfNodePtr &attr_node,
                                              const AnfNodePtr &value_node);
