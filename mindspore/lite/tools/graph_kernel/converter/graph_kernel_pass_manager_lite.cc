@@ -27,6 +27,7 @@
 #include "src/common/utils.h"
 #include "utils/anf_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "tools/graph_kernel/common/utils.h"
 
 namespace mindspore::graphkernel {
 namespace dumpir {
@@ -304,13 +305,17 @@ std::string PrintOutputTypeShapeFormat(const std::shared_ptr<AnfNode> &node) {
     return "";
   }
   std::ostringstream buffer;
-  size_t output_num = AnfUtils::GetOutputTensorNum(node);
+  auto kernel_build_info = GetKernelInfo(node);
+  if (kernel_build_info == nullptr) {
+    return "";
+  }
+  size_t output_num = kernel_build_info->GetOutputNum();
   buffer << "OutputFormats:";
   for (size_t i = 0; i < output_num; ++i) {
     if (i != 0) {
       buffer << ", ";
     }
-    auto format = AnfAlgo::GetOutputFormat(node, (node->isa<Parameter>() ? 0 : i));
+    auto format = GetOutputFormatFromAnfNode(node, i);
     if (!format.empty()) {
       buffer << format;
     }
@@ -349,7 +354,6 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
   if (nd->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Input of apply node is empty";
   }
-
   AnfNodePtr op = nd->input(0);
   DumpOperator(op, gsub);
   DumpOperands(nd, para_map, gsub);

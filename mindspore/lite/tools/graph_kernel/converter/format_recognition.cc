@@ -32,7 +32,7 @@ namespace mindspore::graphkernel {
 namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 
-std::pair<std::string, bool> GetLiteFormat(const CNodePtr &cnode) {
+std::pair<std::string, bool> GetLiteFormat(const CNodePtr &cnode, size_t idx = 0) {
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr || !prim->HasAttr("format")) {
     return std::make_pair(kOpFormat_DEFAULT, false);
@@ -42,8 +42,6 @@ std::pair<std::string, bool> GetLiteFormat(const CNodePtr &cnode) {
   auto format = GetValue<int64_t>(format_attr);
   if (format == 1) {
     return std::make_pair(kOpFormat_NHWC, false);
-  } else if (format == 0) {
-    return std::make_pair(kOpFormat_NCHW, false);
   } else {
     return std::make_pair(kOpFormat_DEFAULT, false);
   }
@@ -71,7 +69,7 @@ std::pair<std::string, bool> GetTransposeFormat(const CNodePtr &cnode) {
   if (perm_list == nh2nc_perm) {
     return std::make_pair(kOpFormat_NCHW, true);
   } else if (perm_list == nc2nh_perm) {
-    return std::make_pair(kOpFormat_NHWC, true);
+    return std::make_pair(kOpFormat_DEFAULT, true);
   } else {
     return GetLiteFormat(cnode);
   }
@@ -92,10 +90,9 @@ void SetOutputsFormat(const CNodePtr &cnode) {
     for (size_t i = 1; i < cnode->size(); i++) {
       if (cnode->input(i)->isa<CNode>()) {
         auto kernel_with_index = AnfUtils::VisitKernel(cnode->input(i), 0);
-        auto prev_cnode = kernel_with_index.first->cast<CNodePtr>();
-        auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(prev_cnode->kernel_info_ptr());
-        if (prev_cnode != nullptr && !kernel_info) {
-          auto kernel_build_info = kernel_info->select_kernel_build_info();
+        auto prev_cnode = kernel_with_index.first;
+        auto kernel_build_info = GetKernelInfo(prev_cnode);
+        if (prev_cnode != nullptr && kernel_build_info) {
           if (kernel_build_info->GetOutputNum() < kernel_with_index.second) {
             MS_LOG(EXCEPTION) << "cnode output num is wrong, required " << kernel_with_index.second
                               << ", but only have " << kernel_build_info->GetOutputNum()
@@ -117,13 +114,10 @@ void SetOutputsFormat(const CNodePtr &cnode) {
 }
 
 void FixFormatsBeforeTranspose(const CNodePtr &cnode) {
-  auto current_cnode_kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(cnode->kernel_info_ptr());
-  if (!current_cnode_kernel_info) {
-    MS_LOG(EXCEPTION) << "current cnode kernel_info is nullptr, from which node is: " << cnode->fullname_with_scope();
-  }
-  auto current_cnode_kernel_build_info = current_cnode_kernel_info->select_kernel_build_info();
+  auto current_cnode_kernel_build_info = GetKernelInfo(cnode);
   if (current_cnode_kernel_build_info == nullptr) {
-    MS_LOG(EXCEPTION) << "kernel build info is nullptr, from which node is: " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "The kernel build info of node " << cnode->fullname_with_scope() << " is nullptr.";
+    return;
   }
   if (current_cnode_kernel_build_info->GetOutputNum() == 0) {
     MS_LOG(INFO) << "The outputs_format of node " << cnode->fullname_with_scope() << " is empty.";
@@ -137,13 +131,14 @@ void FixFormatsBeforeTranspose(const CNodePtr &cnode) {
     if (prev_node->isa<CNode>()) {
       auto prev_cnode = prev_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(prev_cnode);
-      auto prev_format = current_cnode_kernel_build_info->GetOutputFormat(0);
+      auto current_format = current_cnode_kernel_build_info->GetOutputFormat(0);
+      std::string prev_format = current_format;
       if (ExtractOutputFormat(cnode).second) {
         // input node need to fix format when current node is nhwc->nchw or nchw->nhwc
-        if (prev_format == kOpFormat_NCHW) {
+        if (current_format == kOpFormat_DEFAULT) {
           prev_format = kOpFormat_NHWC;
-        } else {
-          prev_format = kOpFormat_NCHW;
+        } else if (current_format == kOpFormat_NHWC) {
+          prev_format = kOpFormat_DEFAULT;
         }
       }
       std::vector<std::string> outputs_formats(AnfUtils::GetOutputTensorNum(prev_cnode), prev_format);
