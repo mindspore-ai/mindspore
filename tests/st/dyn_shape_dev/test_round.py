@@ -33,20 +33,21 @@ def round_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_round():
     """
     Feature: Ops.
     Description: test op round.
     Expectation: expect correct result.
     """
-    np_array = np.random.uniform(low=-255, high=255, size=(4, 3, 2)).astype(np.float32)
+    np_array = np.array([0.8, 1.5, 2.3, 2.5, -4.5]).astype(np.float32)
     x = ms.Tensor(np_array)
     out = round_forward_func(x)
     expect_out = np.round(np_array).astype(np.float32)
     assert (out.asnumpy() == expect_out).all()
 
     grad = round_backward_func(x)
-    expect_grad = np.zeros(shape=(4, 3, 2)).astype(np.float32)
+    expect_grad = np.zeros(shape=(5,)).astype(np.float32)
     assert (grad.asnumpy() == expect_grad).all()
 
 
@@ -54,6 +55,7 @@ def test_round():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_round_vmap():
     """
     Feature: test vmap function.
