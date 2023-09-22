@@ -29,6 +29,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
+from mindspore.ops.auto_generate.gen_enum_def import Format
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -367,20 +368,17 @@ def get_bce_with_logits_loss_vamp_rule(prim, axis_size):
 @vmap_rules_getters.register(P.BiasAdd)
 def get_bias_add_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAdd` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        data_format = "NCHW"
-    else:
-        data_format = prim.data_format
     add_op = P.Add()
 
     @constexpr
-    def get_channal_pos_in_x(d_format):
-        return d_format.find('C') + 1
+    def get_channal_pos_in_x(d_format, n_dims):
+        if d_format == Format.NHWC:
+            return n_dims
+        return 2
 
     @_primexpr
     def get_bias_dst_shape(x_shape, n_dims, d_format, has_b_dim: bool):
-        pos = get_channal_pos_in_x(d_format)
+        pos = get_channal_pos_in_x(d_format, n_dims)
 
         bias_shape = []
         for i in range(n_dims):
@@ -394,13 +392,14 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
         return tuple(bias_shape)
 
-    def vmap_rule(x_bdim, bias_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, bias_bdim)
+    def vmap_rule(x_bdim, bias_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, bias_bdim, data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         b, b_dim = bias_bdim
+        data_format_data, _ = data_format_bdim
 
         x = _bdim_at_front(x, x_dim, axis_size)
         has_b_dim = False
@@ -410,7 +409,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
         x_shape = x.shape
         n_dims = len(x_shape)
-        b_shape = get_bias_dst_shape(x_shape, n_dims, data_format, has_b_dim)
+        b_shape = get_bias_dst_shape(x_shape, n_dims, data_format_data, has_b_dim)
 
         b = b.reshape(b_shape)
         result = add_op(x, b)
@@ -423,19 +422,15 @@ def get_bias_add_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.BiasAddGrad)
 def get_bias_add_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAddGrad` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        data_format = "NCHW"
-    else:
-        data_format = prim.data_format
-
     @constexpr
-    def get_channal_pos(d_format):
-        return d_format.find('C') + 1
+    def get_channal_pos(d_format, x_rank):
+        if d_format == Format.NHWC:
+            return x_rank
+        return 2
 
     @_primexpr
     def get_axis_for_reduce(x_shape_rank, data_format):
-        channal_pos = get_channal_pos(data_format)
+        channal_pos = get_channal_pos(data_format, x_shape_rank)
         axis_list = ()
         for i in range(1, x_shape_rank):
             if channal_pos == i:
@@ -444,16 +439,17 @@ def get_bias_add_grad_vmap_rule(prim, axis_size):
 
         return axis_list
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        data_format_data, _ = data_format_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape_rank = len(x.shape)
 
-        axis_for_reduce = get_axis_for_reduce(x_shape_rank, data_format)
+        axis_for_reduce = get_axis_for_reduce(x_shape_rank, data_format_data)
 
         result = x.sum(axis=axis_for_reduce)
         return (result, 0)

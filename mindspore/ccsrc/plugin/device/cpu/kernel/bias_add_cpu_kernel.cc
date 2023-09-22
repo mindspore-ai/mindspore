@@ -18,7 +18,7 @@
 #ifdef ENABLE_AVX
 #include <immintrin.h>
 #endif
-#include "ops/bias_add.h"
+#include "ops/ops_func_impl/bias_add.h"
 #include <map>
 #include <complex>
 
@@ -27,72 +27,29 @@ namespace kernel {
 namespace {
 constexpr size_t kBiasAddMinDim = 2;
 constexpr size_t kBiasAddMaxDim = 5;
-constexpr size_t kBiasAddInputsNum = 2;
+constexpr size_t kBiasAddInputsNum = 3;
 constexpr size_t kBiasAddOutputsNum = 1;
 }  // namespace
 
-bool BiasAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool BiasAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   return true;
 }
 
-int BiasAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BiasAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
   bias_shape_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
-  data_shape_ = input_shape_.size();
 
-  deformable_kernel_operator_ = std::make_shared<ops::BiasAdd>(base_operator->GetPrim());
-  data_format_ = deformable_kernel_operator_->get_str_format();
-  if ((input_shape_.size() < kBiasAddMinDim || input_shape_.size() > kBiasAddMaxDim) && data_format_ == "NHWC") {
-    MS_LOG(EXCEPTION)
-      << "For '" << kernel_name_
-      << "', the dimension of 'input_x' tensor must be 2D-5D when data_format is NHWC, but input tensor's dimension is "
-      << input_shape_.size();
-  }
-
-  if ((input_shape_.size() < kBiasAddMinDim || input_shape_.size() > kBiasAddMaxDim) && data_format_ == "NCHW") {
-    MS_LOG(EXCEPTION)
-      << "For '" << kernel_name_
-      << "', the dimension of 'input_x' tensor must be 2D-5D when data_format is NCHW, but input tensor's dimension is "
-      << input_shape_.size();
-  }
-  if (input_shape_.size() != kBiasAddMaxDim && (data_format_ == "NCDHW")) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' tensor must be 5D when data_format is NCDHW, but "
-                         "input tensor's dimension is "
-                      << input_shape_.size();
-  }
-  if (bias_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'bias' tensor must be 1D, but got dimension: " << bias_shape_.size();
-  }
-
-  if (data_format_ == "NHWC") {
-    if (input_shape_[input_shape_.size() - 1] != bias_shape_[0]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the first dimension length of 'bias' should be equal to "
-                           "the last dimension length of 'input_x', but got the first dimension length of 'bias': "
-                        << bias_shape_[0]
-                        << ", and the last dimension length of 'input_x': " << input_shape_[input_shape_.size() - 1];
-    }
-  } else if (data_format_ == "NCHW" || data_format_ == "NCDHW") {
-    if (input_shape_[1] != bias_shape_[0]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the first dimension length of 'bias' should be equal to "
-                           "the second dimension length of 'input_x', but got the first dimension length of 'bias': "
-                        << bias_shape_[0] << ", and the second dimension length of 'input_x': " << input_shape_[1];
-    }
+  data_format_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  if (data_format_ == Format::NCDHW && input_shape_.size() != kShape5dDims) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', NCDHW format only supports 5-D input on CPU, but got a "
+                             << input_shape_.size() << "-D input.";
   }
   return ret;
 }
@@ -162,7 +119,7 @@ bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
       for (size_t i = 2; i < input_shape_.size(); ++i) {
         hw_size *= input_shape_[i];
       }
-      if (data_format_ == "NHWC") {
+      if (data_format_ == Format::NHWC) {
         ComputeNHWC<T>(src_addr, bias_addr, output_addr, num_value, num_bias);
       } else {
         size_t c_size = input_shape_[kIndex1];
@@ -193,7 +150,7 @@ bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
       ParallelLaunchAutoSearch(task, LongToSize(input_shape_[kIndex0]), this, &parallel_search_info_);
     }
   } else {
-    if (data_format_ == "NHWC") {
+    if (data_format_ == Format::NHWC) {
       ComputeNHWC<T>(src_addr, bias_addr, output_addr, num_value, num_bias);
     } else {
       ComputeNCHW<T>(src_addr, bias_addr, output_addr, num_value, num_bias);
@@ -204,7 +161,11 @@ bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
 
 template <typename T>
 std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc> BiasAddCpuKernelMod::MakeKernelFunc(TypeId type_id) const {
-  return std::make_pair(KernelAttr().AddInputAttr(type_id).AddInputAttr(type_id).AddOutputAttr(type_id),
+  return std::make_pair(KernelAttr()
+                          .AddInputAttr(type_id)
+                          .AddInputAttr(type_id)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(type_id),
                         &BiasAddCpuKernelMod::LaunchKernel<T>);
 }
 

@@ -39,7 +39,7 @@ BaseShapePtr BetaincFuncImpl::InferShape(const PrimitivePtr &primitive,
   const auto &x_shape = x_shape_base->GetShapeVector();
   all_input_shapes.emplace_back(x_shape);
   if (IsDynamicRank(a_shape) && IsDynamicRank(b_shape) && IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   if (!(IsDynamic(a_shape) || IsDynamic(b_shape))) {
     if (a_shape != b_shape) {

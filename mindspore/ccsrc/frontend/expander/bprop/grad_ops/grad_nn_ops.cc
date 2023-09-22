@@ -107,16 +107,16 @@ class BiasAddGradShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
   DECLARE_SHAPE_CALC("ShapeCalc_BiasAddGrad", BiasAddGradShapeCalc)
-  explicit BiasAddGradShapeCalc(std::string format) : ShapeCalcFunctor("ShapeCalc_BiasAddGrad"), format_(format) {}
+  explicit BiasAddGradShapeCalc(int64_t format) : ShapeCalcFunctor("ShapeCalc_BiasAddGrad"), format_(format) {}
   ValuePtr ToValue() const override { return MakeValue(format_); }
-  void FromValue(const ValuePtr &value) override { format_ = GetValue<std::string>(value); }
+  void FromValue(const ValuePtr &value) override { format_ = GetValue<int64_t>(value); }
   ShapeArray Calc(const ShapeArray &inputs) const override {
     ShapeVector expanded_shape;
     ShapeVector tile_mults;
     ShapeVector one_vec{1};
     auto dy_shape = inputs.at(0);
     auto dout_shape = inputs.at(1);
-    if (format_ == "NCHW") {
+    if (format_ == Format::NCHW) {
       // expanded_shape = np.concatenate([np.ones_like(shape[:1]), bias_shape, np.ones_like(shape[2:])], axis=0)
       expanded_shape = one_vec + dout_shape;
       expanded_shape = dy_shape.size() > i2 ? expanded_shape + ShapeVector(1, dy_shape.size() - i2) : expanded_shape;
@@ -140,7 +140,7 @@ class BiasAddGradShapeCalc : public ShapeCalcFunctor {
   }
 
  protected:
-  std::string format_;
+  int64_t format_;
 };
 REG_FUNCTOR("ShapeCalc_BiasAddGrad", BiasAddGradShapeCalc);
 
@@ -272,13 +272,14 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex3);
-  auto format = GetValue<std::string>(ib->GetAttr("format"));
-  if (format == "NCDHW") {
-    format = "NCHW";
-  }
-  return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}})};
+REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
+  auto format = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto true_branch = [](Emitter *e) -> NodePtrList { return {e->EmitValue(MakeValue<int64_t>(Format::NCHW))}; };
+  auto false_branch = [&format](const Emitter *e) -> NodePtrList { return {format}; };
+  auto cond = ib->Equal(format, ib->Value<int64_t>(Format::NCDHW));
+  auto cond_block = ib->Conditional(cond, true_branch, false_branch);
+  return {dout, ib->Emit(kBiasAddGradOpName, {dout, cond_block}), ib->OutZeros(format)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc0)
@@ -1056,17 +1057,19 @@ REG_BPROP_BUILDER("ReLUV2").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto data_format = GetValue<std::string>(ib->GetAttr("format"));
+REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto res = ib->ShapeCalc(std::make_shared<BiasAddGradShapeCalc>(data_format), {dy, dout});
+  auto format = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto format_data = format->BuildValue();
+  MS_EXCEPTION_IF_CHECK_FAIL(format_data != nullptr, "The input format of 'BiasAddGrad' must be constant.");
+  auto res = ib->ShapeCalc(std::make_shared<BiasAddGradShapeCalc>(GetValue<int64_t>(format_data)), {dy, dout});
   NodePtr expanded_shape = res[0];
   NodePtr tile_mults = res[1];
 
   auto expanded_grad = ib->Reshape(dout, expanded_shape);
   auto tiled_grad = ib->Tile(expanded_grad, tile_mults);
-  return {tiled_grad};
+  return {tiled_grad, ib->OutZeros(format)};
 });
 
 REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {

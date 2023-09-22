@@ -109,14 +109,7 @@ int ScatterNdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
-  auto shape = inputs[kShapeIndex_]->GetValue<ShapeVector>();
-
-  if (!shape.has_value()) {
-    MS_LOG(WARNING) << "For " << kernel_name_ << "can't get the value of input [shape] at current stage!";
-    return KRET_UNKNOWN_SHAPE;
-  }
-  attr_shape_ = shape.value();
+  attr_shape_ = inputs[kShapeIndex_]->GetValueWithCheck<ShapeVector>();
   CalSize(inputs, outputs);
   return KRET_OK;
 }

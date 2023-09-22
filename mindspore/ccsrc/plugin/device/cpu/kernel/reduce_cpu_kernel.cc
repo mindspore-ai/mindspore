@@ -264,11 +264,7 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
 template <typename T>
 int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
-  auto aixs = inputs[kIndex1]->GetValue<std::vector<int64_t>>();
-  if (!aixs.has_value()) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
-  }
-  axis_ = aixs.value();
+  axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   if (inputs.size() > kAxisIndex_ &&
       AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kAxisIndex_]->GetShapeVector())) {
     need_skip_execute_ = true;

@@ -206,8 +206,8 @@ bool ArrayReduceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
   InferArrayReduceType();
 
-  keep_dims_ = GetValue<int64_t>(primitive_->GetAttr("keep_dims"));
-  skip_mode_ = GetValue<bool>(primitive_->GetAttr("skip_mode"));
+  keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+  skip_mode_ = GetValue<bool>(primitive_->GetAttr(ops::kSkipMode));
 
   return true;
 }
@@ -346,7 +346,8 @@ int ArrayReduceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
     return KRET_OK;
   }
-  std::vector<int64_t> attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+
+  auto attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");

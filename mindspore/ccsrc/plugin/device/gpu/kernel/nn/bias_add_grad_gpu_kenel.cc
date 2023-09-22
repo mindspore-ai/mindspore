@@ -25,24 +25,21 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-bool BiasAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool BiasAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   InitResource();
   return true;
 }
 
-int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int BiasAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto dy_shape = inputs.at(kIndex0)->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
   if (is_null_input_ || IsDynamic(dy_shape)) {
@@ -54,23 +51,13 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(dtype));
   num_dims_ = dy_shape.size();
-  if (num_dims_ < kDim2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
-                      << num_dims_;
-  }
-  auto input_device_format = GetFormatFromEnumToStr(inputs.at(kIndex0)->format());
-  cudnn_compute_format_ = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
+  auto input_device_format = inputs.at(kIndex0)->format();
+  cudnn_compute_format_ = (input_device_format == Format::NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
   data_format_ = input_device_format;
-  std::string format = GetValue<std::string>(base_operator->GetAttr("format"));
-  string::size_type pos = format.find("C");
-  if (pos == std::string::npos) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'data_format', but got " << format;
-  }
-  if (pos >= num_dims_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input dims must >= 4 when the 'data_format' is 'NHWC'.";
-  }
-  if (format == kOpFormat_NHWC) {
-    data_format_ = kOpFormat_NHWC;
+  auto format = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  size_t pos = 1;
+  if (format == Format::NHWC) {
+    data_format_ = format;
     pos = dy_shape.size() - 1;
   }
   bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
@@ -114,7 +101,7 @@ bool BiasAddGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
         "cudnnReduceTensor failed");
     } else {  // use own implementation which is more efficient but cannot process num_dim > 4
       cudaError_t status = cudaErrorNotReady;
-      if (data_format_ == kOpFormat_NHWC) {
+      if (data_format_ == Format::NHWC) {
         status = CalBiasAddGradNHWC(dy_num_, bias_size_, dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_));
         CHECK_CUDA_STATUS(status, kernel_name_);
       } else {
@@ -144,7 +131,7 @@ void BiasAddGradGpuKernelMod::ResetResource() noexcept {
   bias_size_ = 0;
   dy_shape_.clear();
   db_shape_.clear();
-  data_format_ = kOpFormat_NCHW;
+  data_format_ = Format::NCHW;
   cudnn_data_type_ = CUDNN_DATA_FLOAT;
   cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
   input_size_list_.clear();
@@ -159,7 +146,7 @@ void BiasAddGradGpuKernelMod::MethodSelection() {
     use_cudnn_ = true;
     return;
   }
-  if (data_format_ == kOpFormat_NHWC) {
+  if (data_format_ == Format::NHWC) {
     constexpr auto tile_size_large_mat = 32;
     auto required_shared_mem_size = tile_size_large_mat * (tile_size_large_mat + 1) * unit_size_;
     // nhwc opt implementation performs not so well when bias_size_ <= 6
@@ -230,11 +217,20 @@ void BiasAddGradGpuKernelMod::InitSizeLists() {
 const std::vector<std::pair<KernelAttr, BiasAddGradGpuKernelMod::KernelRunFunc>> &BiasAddGradGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, BiasAddGradGpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
      &BiasAddGradGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
      &BiasAddGradGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt8),
      &BiasAddGradGpuKernelMod::LaunchKernel<int8_t>},
   };
   return func_list;

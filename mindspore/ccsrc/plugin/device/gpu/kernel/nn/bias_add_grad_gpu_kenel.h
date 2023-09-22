@@ -33,10 +33,8 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
   BiasAddGradGpuKernelMod() { ResetResource(); }
   ~BiasAddGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -74,7 +72,7 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
   size_t bias_size_{0};   // for own implementation
   ShapeVector dy_shape_;  // for own implementation
   ShapeVector db_shape_;  // for own implementation
-  std::string data_format_{kOpFormat_NHWC};
+  int64_t data_format_{Format::NHWC};
   // for cudnn implementation
   void *stream_{nullptr};
   cudnnHandle_t cudnn_handle_{nullptr};

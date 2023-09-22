@@ -24,23 +24,19 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grad/bias_add_grad.h"
+#include "mindspore/core/ops/ops_func_impl/bias_add_grad.h"
 
 namespace mindspore {
 namespace kernel {
-using OpsBiasAddGradPtr = std::shared_ptr<ops::BiasAddGrad>;
-
 class BiasAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<BiasAddGradCpuKernelMod> {
  public:
   BiasAddGradCpuKernelMod() = default;
   ~BiasAddGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -52,7 +48,7 @@ class BiasAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
                     const std::vector<KernelTensor *> &outputs);
 
   std::vector<size_t> input_shape_;
-  std::string data_format_ = "NCHW";
+  int64_t data_format_ = Format::NCHW;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -265,9 +265,10 @@ OUTPUT_MAP(Expm1) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Expm1, kNameExpm1, ADPT_DESC(Expm1))
 
 // BiasAdd
-INPUT_MAP(BiasAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(bias)}};
-ATTR_MAP(BiasAdd) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-OUTPUT_MAP(BiasAdd) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(BiasAdd) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(bias)}};
+ATTR_MAP(BiasAdd) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BiasAdd) = {{kIndex3, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+OUTPUT_MAP(BiasAdd) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BiasAdd, kNameBiasAdd, ADPT_DESC(BiasAdd))
 
 // ZerosLike
