@@ -6182,9 +6182,14 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output, index,  = ops.max(x, keepdims=True)
+        >>> output, index = ops.max(x)
         >>> print(output, index)
         0.7 0
+        >>> y = Tensor(np.array([[0.0, 0.3, 0.4, 0.5, 0.1],
+        ...                      [3.2, 0.4, 0.1, 2.9, 4.0]]), mindspore.float32)
+        >>> output, index = ops.max(y, axis=0, keepdims=True)
+        >>> print(output, index)
+        [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int32))
