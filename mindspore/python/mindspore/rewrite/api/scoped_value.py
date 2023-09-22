@@ -121,8 +121,8 @@ class ScopedValue:
         return cls(ValueType.NamingValue, scope, name)
 
     @staticmethod
-    def create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None) \
-        -> List['ScopedValue']:
+    def create_name_values(names: Union[List[str], Tuple[str]],
+                           scopes: Union[List[str], Tuple[str]] = None) -> List['ScopedValue']:
         """
         Create a list of naming `ScopedValue`.
 
