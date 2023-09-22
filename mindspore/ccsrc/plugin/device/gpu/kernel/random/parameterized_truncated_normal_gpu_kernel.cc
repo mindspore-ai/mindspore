@@ -34,16 +34,13 @@ namespace mindspore {
 namespace kernel {
 using KernelRunFunc = ParameterizedTruncatedNormalGpuKernelMod::KernelRunFunc;
 
-bool ParameterizedTruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ParameterizedTruncatedNormalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -52,17 +49,15 @@ bool ParameterizedTruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
 
   // setup seed
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
 
   return true;
 }
 
-int ParameterizedTruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int ParameterizedTruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();

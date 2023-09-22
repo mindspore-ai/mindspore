@@ -36,13 +36,11 @@ bool LogNormalReverseGpuKernelMod::Launch(const std::vector<kernel::KernelTensor
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-bool LogNormalReverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogNormalReverse>(base_operator);
+bool LogNormalReverseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogNormalReverse>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
-  kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the inputs and outputs should not be empty, but got empty. ";
     return false;
@@ -75,8 +73,8 @@ bool LogNormalReverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                       << "but got input type: " << input_dtype_ << " and output type: " << output_dtype_ << ".";
   }
 
-  input_mean_ = GetValue<float>(base_operator->GetAttr("mean"));
-  input_std_ = GetValue<float>(base_operator->GetAttr("std"));
+  input_mean_ = GetValue<float>(primitive_->GetAttr("mean"));
+  input_std_ = GetValue<float>(primitive_->GetAttr("std"));
 
   kernel_func_ = func_list_[pair.second].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
@@ -95,10 +93,8 @@ bool LogNormalReverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int LogNormalReverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &others) {
+int LogNormalReverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

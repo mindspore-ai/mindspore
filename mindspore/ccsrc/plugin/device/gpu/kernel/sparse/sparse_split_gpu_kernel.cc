@@ -24,10 +24,9 @@ constexpr int64_t Kindex2 = 2;
 constexpr int64_t Kindex3 = 3;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
+bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(primitive_);
   num_split = kernel_ptr->get_num_split();
 
   input_dtype_ = inputs[kIndex2]->dtype_id();
@@ -55,11 +54,10 @@ bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
+int SparseSplitGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(primitive_);
   num_split = kernel_ptr->get_num_split();
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     auto input_indices_shape = inputs[kIndex1]->GetShapeVector();

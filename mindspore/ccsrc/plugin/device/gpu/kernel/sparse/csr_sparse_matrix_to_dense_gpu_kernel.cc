@@ -24,10 +24,9 @@ namespace kernel {
 constexpr size_t kISRSparseMatrixToDenseInputsNum = 5;
 constexpr size_t kISRSparseMatrixToDenseOutputsNum = 1;
 
-bool CSRSparseMatrixToDenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToDense>(base_operator);
+bool CSRSparseMatrixToDenseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToDense>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast CSRSparseMatrixToDense ops failed!";
     return false;
@@ -45,10 +44,8 @@ bool CSRSparseMatrixToDenseGpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int CSRSparseMatrixToDenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &others) {
+int CSRSparseMatrixToDenseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   dense_shape_shape_ = inputs[kIndex0]->GetShapeVector();
   batch_ptr_shape_ = inputs[kIndex1]->GetShapeVector();

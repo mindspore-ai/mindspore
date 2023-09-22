@@ -21,10 +21,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseFillEmptyRowsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseFillEmptyRows>(base_operator);
+bool SparseFillEmptyRowsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseFillEmptyRows>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast SparseFillEmptyRows ops failed!";
     return false;
@@ -67,10 +66,8 @@ void SparseFillEmptyRowsGpuKernelMod::ResetResource() noexcept {
   output_size_list_.clear();
 }
 
-int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &others) {
+int SparseFillEmptyRowsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;  // infershape dynamic in gpu kernel.
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.

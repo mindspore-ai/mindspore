@@ -29,10 +29,8 @@ constexpr size_t kRankWithBatch = 3;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
 constexpr size_t kTwo = 2;
-bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseTensorToCSRSparseMatrix->name()) {
     MS_LOG(ERROR) << "For 'SparseTensorToCSRSparseMatrixGpuKernelMod',"
                      "the kernel name must be 'SparseTensorToCSRSparseMatrix', but got "
@@ -55,10 +53,8 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
   return true;
 }
 
-int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   bapt = 0;
   elements[kZero] = 0;
   elements[kOne] = 0;

@@ -32,10 +32,9 @@ ReservoirReplayBufferCreateGpuKernel::~ReservoirReplayBufferCreateGpuKernel() {
   }
 }
 
-bool ReservoirReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferCreate>(base_operator);
+bool ReservoirReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferCreate>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferCreate ops failed!";
     return false;
@@ -94,10 +93,9 @@ ReservoirReplayBufferPushGpuKernel::~ReservoirReplayBufferPushGpuKernel() {
   }
 }
 
-bool ReservoirReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferPush>(base_operator);
+bool ReservoirReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferPush>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferPush ops failed!";
     return false;
@@ -140,10 +138,9 @@ std::vector<KernelAttr> ReservoirReplayBufferPushGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool ReservoirReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferSample>(base_operator);
+bool ReservoirReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferSample>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferSample ops failed!";
     return false;
@@ -175,10 +172,9 @@ std::vector<KernelAttr> ReservoirReplayBufferSampleGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool ReservoirReplayBufferDestroyGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(base_operator);
+bool ReservoirReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast ReservoirReplayBufferDestroy ops failed!";
     return false;

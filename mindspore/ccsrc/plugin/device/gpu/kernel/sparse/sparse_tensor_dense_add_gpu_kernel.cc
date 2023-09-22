@@ -253,9 +253,8 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ke
   return true;
 }
 
-bool SparseTensorDenseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+bool SparseTensorDenseAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSparseTensorDenseAddInputsNum || outputs.size() != kSparseTensorDenseAddOutputsNum) {
     MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', input and output size must be " << kSparseTensorDenseAddInputsNum
                   << " and " << kSparseTensorDenseAddOutputsNum << ", but got " << inputs.size() << " and "
@@ -275,12 +274,10 @@ bool SparseTensorDenseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int SparseTensorDenseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseTensorDenseAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }

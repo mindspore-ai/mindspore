@@ -19,7 +19,6 @@
 
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/ops/sparse_dense_cwise_add.h"
 #include "mindspore/core/ops/sparse_dense_cwise_div.h"
 #include "mindspore/core/ops/sparse_dense_cwise_mul.h"
@@ -40,7 +39,7 @@ namespace kernel {
 constexpr int64_t INPUT_DIMS_1 = 1;
 constexpr int64_t INPUT_DIMS_2 = 2;
 
-bool SparseDenseCwiseOperationGpuKernelMod::GetOpType(const BaseOperatorPtr &base_operator) {
+bool SparseDenseCwiseOperationGpuKernelMod::GetOpType() {
   static const std::map<std::string, SparseDenseCwiseOperationFunctionType> sparse_dense_cwise_op_map = {
     {prim::kPrimSparseDenseCwiseAdd->name(), SPARSE_DENSE_CWISE_OPERATION_FUNC_ADD},
     {prim::kPrimSparseDenseCwiseMul->name(), SPARSE_DENSE_CWISE_OPERATION_FUNC_MUL},
@@ -56,29 +55,25 @@ bool SparseDenseCwiseOperationGpuKernelMod::GetOpType(const BaseOperatorPtr &bas
   return true;
 }
 
-bool SparseDenseCwiseOperationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseDenseCwiseOperationGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetOpType(base_operator)) {
+  if (!GetOpType()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' it got op type and function type failed.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SparseDenseCwiseOperationGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SparseDenseCwiseOperationGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

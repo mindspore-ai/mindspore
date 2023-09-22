@@ -28,9 +28,8 @@ constexpr size_t kNumber3 = 3;
 constexpr size_t kNumber4 = 4;
 }  // namespace
 
-bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentOpsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (kernel_type_ == "SparseSegmentSum" || kernel_type_ == "SparseSegmentSqrtN") {
     flag_ = true;
   } else {
@@ -40,7 +39,7 @@ bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   size_t outputs_num = kNumber1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,10 +52,8 @@ bool SparseSegmentOpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseSegmentOpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseSegmentOpsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

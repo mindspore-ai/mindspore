@@ -83,12 +83,11 @@ std::vector<KernelAttr> SparseAddGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SparseAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAddGrad>(base_operator);
+bool SparseAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAddGrad>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
-  kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kSparseAddGradInputsNum || outputs.size() != kSparseAddGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSparseAddGradInputsNum
                   << " and " << kSparseAddGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -106,15 +105,14 @@ bool SparseAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                       [](KernelTensorPtr x) { return x->GetShapeVector(); });
+                       [](KernelTensor *x) { return x->GetShapeVector(); });
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_shapes),
-                       [](KernelTensorPtr x) { return x->GetShapeVector(); });
+                       [](KernelTensor *x) { return x->GetShapeVector(); });
 
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) != KRET_OK) {
     return KRET_UNKNOWN_SHAPE;

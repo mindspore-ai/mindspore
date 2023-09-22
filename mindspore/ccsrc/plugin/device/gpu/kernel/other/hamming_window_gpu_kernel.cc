@@ -18,11 +18,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool HammingWindowGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::HammingWindow>(base_operator);
+bool HammingWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::HammingWindow>(primitive_);
   MS_ERROR_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -43,9 +43,8 @@ bool HammingWindowGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int HammingWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int HammingWindowGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     MS_ERROR_IF_NULL_W_RET_VAL(input, KRET_RESIZE_FAILED);
     auto input_shape = input->GetShapeVector();

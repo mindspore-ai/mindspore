@@ -31,9 +31,8 @@ constexpr size_t kSparseSparseIndex4 = 4;
 constexpr size_t kSparseSparseIndex5 = 5;
 }  // namespace
 
-bool SparseSparseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SparseSparseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseOutputsNum, kernel_name_);
   if (inputs.empty() || outputs.empty()) {
@@ -53,9 +52,8 @@ bool SparseSparseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseSparseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

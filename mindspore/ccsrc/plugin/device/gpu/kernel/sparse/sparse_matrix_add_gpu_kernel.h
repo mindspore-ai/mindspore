@@ -88,9 +88,7 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   SparseMatrixAddGpuKernel() { handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle(); }
   ~SparseMatrixAddGpuKernel() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     is_need_retrieve_output_shape_ = true;
     type_id_ = inputs.at(InputList::X1_VALUE)->dtype_id();
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x1_descr_), "Create descriptor failed.");
@@ -105,9 +103,8 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
       return ret;
     }
     output_size_list_.clear();

@@ -35,20 +35,17 @@ constexpr int kInputsNum = 1;
 constexpr int kOutputsNum = 1;
 }  // namespace
 
-bool SequenceStackGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceStackGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceStackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -59,7 +56,7 @@ int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   std::vector<int64_t> shape_vec_item;
   std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceStack>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceStack>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   axis_ = kernel_ptr->get_axis();
   if (axis_ < 0) {

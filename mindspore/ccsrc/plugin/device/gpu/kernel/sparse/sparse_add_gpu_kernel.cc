@@ -39,9 +39,8 @@ constexpr size_t kSparseAddIndex7 = 7;
 constexpr size_t kSparseAddIndex8 = 8;
 }  // namespace
 
-bool SparseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SparseAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseAddOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -93,9 +92,8 @@ void SparseAddGpuKernelMod::CalWorkSpace() {
   workspace_size_list_.push_back(sum_count_size);
 }
 
-int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   auto a_indices_shape = inputs.at(kSparseAddIndex0)->GetShapeVector();
   auto a_values_shape = inputs.at(kSparseAddIndex1)->GetShapeVector();

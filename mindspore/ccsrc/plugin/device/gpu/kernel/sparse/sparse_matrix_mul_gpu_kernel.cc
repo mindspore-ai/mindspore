@@ -30,8 +30,8 @@ constexpr int kSparseMatrixMulAddIndex1 = 1;
 constexpr int kSparseMatrixMulAddIndex2 = 2;
 constexpr int kSparseMatrixMulAddIndex3 = 3;
 }  // namespace
-bool SparseMatrixMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -42,12 +42,10 @@ bool SparseMatrixMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SparseMatrixMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseMatrixMulGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }

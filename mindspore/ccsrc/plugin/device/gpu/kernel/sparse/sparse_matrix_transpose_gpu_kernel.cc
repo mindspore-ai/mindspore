@@ -57,11 +57,9 @@ void Csr2Csc(TypeId ms_type, cusparseHandle_t handle, int m, int n, int nnz, voi
 }
 }  // namespace
 
-bool SparseMatrixTransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  conjugate = GetValue<bool>(base_operator->GetPrim()->GetAttr("conjugate"));
+bool SparseMatrixTransposeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  conjugate = GetValue<bool>(primitive_->GetAttr("conjugate"));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseMatrixTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseMatrixTransposeOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -94,11 +92,9 @@ size_t SparseMatrixTransposeGpuKernelMod::GetBufferSize(size_t num_batches, int 
   return max_buffer_size;
 }
 
-int SparseMatrixTransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SparseMatrixTransposeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_dense_shape_shapes_ = inputs[kIndex0]->GetShapeVector();

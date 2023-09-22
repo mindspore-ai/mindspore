@@ -18,12 +18,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseMatrixSoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixSoftmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 5;
   constexpr size_t outputs_num = 5;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
 
@@ -45,12 +44,10 @@ bool SparseMatrixSoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseMatrixSoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseMatrixSoftmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }

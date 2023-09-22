@@ -38,16 +38,15 @@ void SparseMatrixSparseMatMulGpuKernelMod::MatrixTranspose(int m, int n, int nnz
   allocator.FreeTensorMem(csc_buffer);
 }
 
-bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixSparseMatMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   cusparseCreateMatDescr(&desc);
   cusparseSetMatType(desc, CUSPARSE_MATRIX_TYPE_GENERAL);
   cusparseSetMatIndexBase(desc, CUSPARSE_INDEX_BASE_ZERO);
 
   cusparseCreateCsrgemm2Info(&info);
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixSparseMatMul>(base_operator);
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixSparseMatMul>(primitive_);
   transpose_a = kernel_ptr->get_transpose_a();
   transpose_b = kernel_ptr->get_transpose_b();
   adjoint_a = kernel_ptr->get_adjoint_a();

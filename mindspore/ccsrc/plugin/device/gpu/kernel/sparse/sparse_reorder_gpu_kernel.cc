@@ -28,14 +28,14 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseReorderGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseReorder>(base_operator);
+bool SparseReorderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseReorder>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,9 +53,8 @@ bool SparseReorderGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseReorderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();

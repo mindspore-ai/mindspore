@@ -32,8 +32,7 @@ class ReservoirReplayBufferCreateGpuKernel : public NativeGpuKernelMod {
   ReservoirReplayBufferCreateGpuKernel() = default;
   ~ReservoirReplayBufferCreateGpuKernel() override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream) override;
@@ -51,8 +50,7 @@ class ReservoirReplayBufferPushGpuKernel : public NativeGpuKernelMod {
   ReservoirReplayBufferPushGpuKernel() = default;
   ~ReservoirReplayBufferPushGpuKernel() override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream) override;
@@ -70,8 +68,7 @@ class ReservoirReplayBufferSampleGpuKernel : public NativeGpuKernelMod {
   ReservoirReplayBufferSampleGpuKernel() = default;
   ~ReservoirReplayBufferSampleGpuKernel() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream) override;
@@ -91,8 +88,7 @@ class ReservoirReplayBufferDestroyGpuKernel : public NativeGpuKernelMod {
   ~ReservoirReplayBufferDestroyGpuKernel() override = default;
 
   // Init kernel from CNode.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

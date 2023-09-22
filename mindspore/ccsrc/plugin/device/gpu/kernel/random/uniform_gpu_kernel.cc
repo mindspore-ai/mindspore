@@ -19,10 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool UniformGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool UniformGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -34,18 +31,16 @@ bool UniformGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  from_ = GetValue<float>(base_operator->GetAttr("from"));
-  to_ = GetValue<float>(base_operator->GetAttr("to"));
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t offset = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("offset")));
+  from_ = GetValue<float>(primitive_->GetAttr("from"));
+  to_ = GetValue<float>(primitive_->GetAttr("to"));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t offset = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("offset")));
   seed_ = random::GetSeed(seed, offset);
   return true;
 }
 
-int UniformGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UniformGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

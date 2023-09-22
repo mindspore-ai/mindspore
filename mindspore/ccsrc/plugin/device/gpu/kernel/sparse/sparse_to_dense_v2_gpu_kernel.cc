@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/abstract/utils.h"
 #include "plugin/device/gpu/kernel/sparse/sparse_to_dense_v2_gpu_kernel.h"
 
@@ -32,10 +31,10 @@ constexpr size_t kSparseToDenseV2OneDim = 1;
 constexpr size_t kSparseToDenseV2ZeroDim = 0;
 }  // namespace
 
-bool SparseToDenseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseToDenseV2>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SparseToDenseV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseToDenseV2>(primitive_);
+
   validate_indices_ = kernel_ptr_->get_validate_indices();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseV2OutputsNum, kernel_name_);
@@ -51,10 +50,8 @@ bool SparseToDenseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SparseToDenseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseToDenseV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

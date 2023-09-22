@@ -32,10 +32,9 @@ PriorityReplayBufferCreateGpuKernel::~PriorityReplayBufferCreateGpuKernel() {
   }
 }
 
-bool PriorityReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferCreate>(base_operator);
+bool PriorityReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferCreate>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast PriorityReplayBufferCreate ops failed!";
     return false;
@@ -95,10 +94,9 @@ PriorityReplayBufferPushGpuKernel::~PriorityReplayBufferPushGpuKernel() {
   }
 }
 
-bool PriorityReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferPush>(base_operator);
+bool PriorityReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferPush>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast PriorityReplayBufferPush ops failed!";
     return false;
@@ -146,10 +144,9 @@ std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool PriorityReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferSample>(base_operator);
+bool PriorityReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferSample>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast PriorityReplayBufferSample ops failed!";
     return false;
@@ -197,10 +194,9 @@ PriorityReplayBufferUpdateGpuKernel::~PriorityReplayBufferUpdateGpuKernel() {
   }
 }
 
-bool PriorityReplayBufferUpdateGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferUpdate>(base_operator);
+bool PriorityReplayBufferUpdateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferUpdate>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast PriorityReplayBufferUpdate ops failed!";
     return false;
@@ -250,10 +246,9 @@ std::vector<KernelAttr> PriorityReplayBufferUpdateGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool PriorityReplayBufferDestroyGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferDestroy>(base_operator);
+bool PriorityReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferDestroy>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast PriorityReplayBufferDestroy ops failed!";
     return false;

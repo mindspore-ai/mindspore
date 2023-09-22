@@ -21,11 +21,11 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool SparseSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSliceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 5;
   constexpr size_t outputs_num = 3;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -39,10 +39,9 @@ bool SparseSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();

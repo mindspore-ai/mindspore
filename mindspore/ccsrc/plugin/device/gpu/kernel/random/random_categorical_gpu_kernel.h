@@ -96,14 +96,12 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(primitive_);
     MS_EXCEPTION_IF_NULL(kernel_ptr);
 
     size_t input_num = inputs.size();
@@ -116,16 +114,9 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
 
-    int64_t num_samples;
-    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &num_samples)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', can't get num_samples value from input.";
-    }
-    num_samples_ = LongToSize(num_samples);
-
+    num_samples_ = LongToSize(inputs[kIndex1]->GetValueWithCheck<int64_t>());
     int64_t input_seed;
-    if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &input_seed)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', can't get seed value from input.";
-    }
+    input_seed = inputs[kIndex2]->GetValueWithCheck<int64_t>();
     if (init_state_ || input_seed != init_seed_) {
       if (init_state_) {
         init_state_ = false;
@@ -146,10 +137,7 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     return ret;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (kernel_name_ != prim::kPrimRandomCategorical->name()) {
       MS_LOG(ERROR) << "For 'RandomCategorical', the kernel name must be 'RandomCategorical', but got " << kernel_name_;
       return false;

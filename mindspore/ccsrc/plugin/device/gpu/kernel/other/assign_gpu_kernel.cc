@@ -81,10 +81,9 @@ bool AssignGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   return true;
 }
 
-bool AssignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assign>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool AssignGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assign>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -96,9 +95,8 @@ bool AssignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int AssignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {  // check input size
+int AssignGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                               const std::vector<KernelTensor *> &outputs) {  // check input size
   if (inputs.size() != kAssignInputsNum || outputs.size() != kAssignOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kAssignInputsNum << " and "
                   << kAssignOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();

@@ -48,10 +48,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     constexpr size_t input_num = 1;
     if (inputs.size() != input_num) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
@@ -60,9 +57,8 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
       return ret;
     }

@@ -25,9 +25,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool CheckValidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CheckValidGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimCheckValid->name()) {
     MS_LOG(ERROR) << "For 'CheckValid', the kernel name must be 'CheckValid', but got " << kernel_name_;
     return false;
@@ -46,10 +45,9 @@ bool CheckValidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int CheckValidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CheckValidGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto anchor_boxes_shape = inputs.at(kIndex0)->GetShapeVector();

@@ -20,10 +20,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool CSRSparseMatrixToSparseTensorGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToSparseTensor>(base_operator);
+bool CSRSparseMatrixToSparseTensorGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToSparseTensor>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast CSRSparseMatrixToSparseTensor ops failed!";
     return false;
@@ -56,10 +55,8 @@ void CSRSparseMatrixToSparseTensorGpuKernelMod::ResetResource() noexcept {
   output_size_list_.clear();
 }
 
-int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &others) {
+int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   input_dense_shape_shapes_ = inputs[kIndex0]->GetShapeVector();
   input_batch_pointers_shapes_ = inputs[kIndex1]->GetShapeVector();

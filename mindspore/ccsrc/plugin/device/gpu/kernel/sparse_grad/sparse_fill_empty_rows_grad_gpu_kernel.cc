@@ -19,11 +19,10 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseFillEmptyRowsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseFillEmptyRowsGrad>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SparseFillEmptyRowsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseFillEmptyRowsGrad>(primitive_);
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -42,10 +41,8 @@ bool SparseFillEmptyRowsGradGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseFillEmptyRowsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseFillEmptyRowsGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

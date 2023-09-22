@@ -18,11 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool RandpermGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto randperm_ptr = std::dynamic_pointer_cast<ops::Randperm>(base_operator);
+bool RandpermGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto randperm_ptr = std::dynamic_pointer_cast<ops::Randperm>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(randperm_ptr, false);
 
   constexpr size_t input_num = 1;
@@ -44,10 +41,9 @@ bool RandpermGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int RandpermGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandpermGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   return KRET_OK;

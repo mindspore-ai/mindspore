@@ -43,9 +43,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    kernel_name_ = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     constexpr size_t outputs_num = 1;
     if (outputs.size() != outputs_num) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size();
@@ -58,8 +56,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     ResetResource();
     if (inputs[kIndex0]->IsDynamicShape()) {
       return KRET_UNKNOWN_SHAPE;
@@ -67,7 +64,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     auto input_shape = inputs[kIndex0]->GetShapeVector();
     auto rank = input_shape.size();
     auto rank_int = SizeToInt(rank);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ConcatOffset>(base_operator);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::ConcatOffset>(primitive_);
     int64_t axis = 0;
     if (kernel_ptr->HasAttr(kAttrAxis)) {
       axis = kernel_ptr->get_axis();
