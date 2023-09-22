@@ -71,7 +71,7 @@ bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, co
   }
   std::string set_format;
   if (!InitParameterKernelInfo(param, &set_format)) {
-    MS_LOG(ERROR) << "Init Param kernel info failed.";
+    MS_LOG(INFO) << "Please attention: init Param kernel info failed.";
     return false;
   }
   if (!set_format.empty() && IsOneOfHWSpecialFormat(set_format)) {
@@ -148,7 +148,7 @@ bool StorageFormatConvertor::InitParameterKernelInfo(const AnfNodePtr &param, st
     std::dynamic_pointer_cast<device::KernelInfo>(param->kernel_info_ptr());
   if (!kernel_info) {
     // create parameter node should create kernel info
-    MS_LOG(ERROR) << "Param: " << param->fullname_with_scope() << "don't have kernel info.";
+    MS_LOG(INFO) << "Please attention, param: " << param->fullname_with_scope() << "don't have kernel info.";
     return false;
   }
   kernel::KernelBuildInfoPtr build_info = kernel_info->GetMutableSelectKernelBuildInfo();

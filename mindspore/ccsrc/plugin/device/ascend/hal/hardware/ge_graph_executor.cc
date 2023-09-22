@@ -1077,6 +1077,11 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
     return nullptr;
   }
 
+  if (export_air) {
+    // export air can use session->AddGraph, it will cause atc error.
+    return anf_graph;
+  }
+
   GeDeviceResManager::CreateSessionAndGraphRunner();
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {

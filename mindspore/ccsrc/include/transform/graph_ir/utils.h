@@ -79,6 +79,7 @@ FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix = "");
 
 BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
+BACKEND_EXPORT void SetExportAir(const DfGraphConvertorPtr &converter, bool export_air);
 BACKEND_EXPORT void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                                const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps);
 void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors);

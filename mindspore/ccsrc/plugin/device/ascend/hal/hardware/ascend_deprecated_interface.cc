@@ -77,7 +77,8 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     if (enable_ge && !is_train) {
       infer = true;
     }
-    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end()) {
+    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end() &&
+        !common::IsEnableRefMode()) {
       continue;
     }
     if (py::isinstance<py::float_>(item.second.attr("data"))) {

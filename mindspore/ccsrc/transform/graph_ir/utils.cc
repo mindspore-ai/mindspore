@@ -336,6 +336,11 @@ void SetTraining(const DfGraphConvertorPtr &converter, bool training) {
   converter->set_training(training);
 }
 
+void SetExportAir(const DfGraphConvertorPtr &converter, bool export_air) {
+  MS_EXCEPTION_IF_NULL(converter);
+  converter->set_export_air(export_air);
+}
+
 void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                 const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
   MS_EXCEPTION_IF_NULL(converter);
