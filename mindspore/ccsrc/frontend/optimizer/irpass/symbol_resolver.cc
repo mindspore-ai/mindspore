@@ -18,7 +18,9 @@
 
 #include <string>
 #include <memory>
+
 #include "include/common/fallback.h"
+#include "mindspore/core/ir/cell.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "pipeline/jit/ps/fallback.h"
@@ -40,6 +42,8 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
   auto GetAttrLambda = [&node, &object, &attr, &optimizer]() -> AnfNodePtr {
     auto object_node = object.GetNode(node);
     auto attr_node = attr.GetNode(node);
+    MS_LOG(DEBUG) << "Handle getattr, object_node: " << object_node->DebugString()
+                  << ", attr_node: " << attr_node->DebugString();
     // {prim::kPrimGetAttr, {getitem, {prim::kPrimResolve, namespace, symbol}, index}, attr}
     // {prim::kPrimGetAttr, {getitem, {prim::kPrimGetAttr, ResolveNode, member}, index}, attr}
     if (parse::IsGetItemCNode(object_node)) {
@@ -55,18 +59,34 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
       auto name_space = GetValueNode<parse::NameSpacePtr>(object_node);
       auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
       parse::SymbolPtr symbol = std::make_shared<parse::Symbol>(attr_str);
-      auto ret = parse::ResolveSymbol(optimizer->manager(), name_space, symbol, node);
-      // If object has no attribute, ret will be null. The attribute may not be used.
+      auto res = parse::ResolveSymbol(optimizer->manager(), name_space, symbol, node);
+      // If object has no attribute, res will be null. The attribute may not be used.
       // Let getattr be resolved in static_analysis.
-      if (IsValueNode<TypeNull>(ret)) {
+      if (IsValueNode<TypeNull>(res)) {
         return nullptr;
       }
-      return ret;
+      return res;
+    }
+    // Handle premature converted Cell or MsClass object.
+    // {prim::kPrimGetAttr, ValueNode<FuncGraph>(), attr}
+    if (IsValueNode<FuncGraph>(object_node)) {
+      auto func_value = GetValueNode<FuncGraphPtr>(object_node);
+      MS_EXCEPTION_IF_NULL(func_value);
+      auto python_obj = func_value->python_obj();
+      if (python_obj != nullptr) {
+        auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(python_obj);
+        MS_EXCEPTION_IF_NULL(wrapper);
+        auto cls_obj = wrapper->obj();
+        if (py::isinstance<Cell>(cls_obj) || py::hasattr(cls_obj, PYTHON_MS_CLASS)) {
+          return parse::ResolveClassObjectWithAttr(cls_obj, attr_node, node);
+        }
+      }
+      return nullptr;
     }
     // {prim::kPrimGetAttr, MsClassObject, attr}
     if (IsValueNode<parse::MsClassObject>(object_node)) {
       auto ms_class = GetValueNode<parse::MsClassObjectPtr>(object_node)->obj();
-      return parse::ResolveMsClassWithAttr(ms_class, attr_node, node);
+      return parse::ResolveClassObjectWithAttr(ms_class, attr_node, node);
     }
     return nullptr;
   };
@@ -94,17 +114,19 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     auto name_space = GetValueNode<parse::NameSpacePtr>(ns_node.GetNode(node));
     auto symbol = GetValueNode<parse::SymbolPtr>(sym_node.GetNode(node));
     auto manager = optimizer->manager();
-    auto ret = parse::ResolveSymbol(manager, name_space, symbol, node);
-    // If object has no attribute, ret will be null. The attribute may not be used.
+    auto res = parse::ResolveSymbol(manager, name_space, symbol, node);
+    MS_LOG(DEBUG) << "Finish ResolveSymbol, namespace: " << name_space->ToString() << ", symbol: " << symbol->ToString()
+                  << ", result: " << (res != nullptr ? res->ToString() : "null");
+    // If object has no attribute, res will be null. The attribute may not be used.
     // Let getattr be resolved in static_analysis.
-    if (IsValueNode<TypeNull>(ret)) {
+    if (IsValueNode<TypeNull>(res)) {
       return nullptr;
     }
     if (fallback::HasPyObjectInNode(node)) {
       MS_LOG(DEBUG) << "Resolved node has python object, attach it to the node after resolve.";
-      fallback::SetPyObjectToNode(ret, fallback::GetPyObjectFromNode(node));
+      fallback::SetPyObjectToNode(res, fallback::GetPyObjectFromNode(node));
     }
-    return ret;
+    return res;
   };
 
   // {prim::kPrimGetAttr, object, attr}

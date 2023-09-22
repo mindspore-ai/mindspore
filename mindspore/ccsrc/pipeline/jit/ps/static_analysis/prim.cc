@@ -2037,22 +2037,20 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                            const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
-
   constexpr size_t data_index = 0;
   constexpr size_t item_index = 1;
   auto data_args = args_abs_list[data_index];
   auto item_args = args_abs_list[item_index];
   MS_EXCEPTION_IF_NULL(data_args);
   MS_EXCEPTION_IF_NULL(item_args);
-  MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString();
-  ValuePtr item_value = item_args->BuildValue();
-
-  ScopePtr scope = kDefaultScope;
-  if (out_conf != nullptr) {
-    MS_EXCEPTION_IF_NULL(out_conf->node());
-    scope = out_conf->node()->scope();
-  }
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString()
+                << ", node: " << out_conf->node()->DebugString(recursive_level);
+  ScopePtr scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
+  ValuePtr item_value = item_args->BuildValue();
   MS_EXCEPTION_IF_NULL(item_value);
   if (item_value->isa<ValueAny>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
