@@ -80,6 +80,29 @@ FuncGraphPtr DictClear::GenerateFuncGraph(const abstract::AbstractBasePtrList &a
   return ret;
 }
 
+AnfNodePtr GeneratePyExecuteNodeHasKey(const FuncGraphPtr &fg) {
+  auto dict_input = fg->add_parameter();
+  auto value_input = fg->add_parameter();
+
+  const std::string internal_dict = "__iternal_dict__";
+  const std::string internal_target = "__internal_target__";
+
+  std::stringstream script_buffer;
+  script_buffer << internal_target << " in " << internal_dict;
+  const std::string &script = script_buffer.str();
+  const auto script_str = std::make_shared<StringImm>(script);
+
+  std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_dict));
+  (void)key_value_names_list.emplace_back(NewValueNode(internal_target));
+  const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+  std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)key_value_list.emplace_back(dict_input);
+  (void)key_value_list.emplace_back(value_input);
+  const auto key_value_tuple = fg->NewCNode(key_value_list);
+  return fallback::CreatePyExecuteCNode(fg, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, nullptr);
+}
+
 FuncGraphPtr DictHasKey::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   constexpr size_t dict_has_key_args_size = 2;
   abstract::CheckArgsSize("DictHasKey", args_list, dict_has_key_args_size);
@@ -88,7 +111,20 @@ FuncGraphPtr DictHasKey::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ValuePtr key_value = args_list[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(dict);
   MS_EXCEPTION_IF_NULL(key_value);
-  auto elems = dict->elements();
+  const auto &elems = dict->elements();
+  FuncGraphPtr ret = std::make_shared<FuncGraph>();
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  ret->debug_info()->set_name("has_key");
+  // If key_value or value of dictionary has variable, then we convert has key operation to pyexecute.
+  bool has_variable = (key_value == kValueAny) || std::any_of(elems.cbegin(), elems.cend(),
+                                                              [&key_value](const abstract::AbstractElementPair &item) {
+                                                                return item.first->BuildValue() == kValueAny;
+                                                              });
+  if (has_variable) {
+    auto out = GeneratePyExecuteNodeHasKey(ret);
+    ret->set_output(out);
+    return ret;
+  }
   bool has_key = false;
   auto it = std::find_if(elems.cbegin(), elems.cend(), [&key_value](const abstract::AbstractElementPair &item) {
     return *key_value == *item.first->BuildValue();
@@ -97,9 +133,6 @@ FuncGraphPtr DictHasKey::GenerateFuncGraph(const abstract::AbstractBasePtrList &
     has_key = true;
   }
 
-  FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ret->debug_info()->set_name("has_key");
   (void)ret->add_parameter();
   (void)ret->add_parameter();
 

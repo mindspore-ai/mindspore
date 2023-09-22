@@ -95,7 +95,6 @@ std::shared_ptr<T> GetAbstract(const AnfNodePtr &node) {
   if (abs == nullptr) {
     return nullptr;
   }
-  MS_EXCEPTION_IF_NULL(abs);
   return dyn_cast<T>(abs);
 }
 
@@ -911,17 +910,20 @@ class AfterOptARewriter : public BaseRewriter {
       fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
     auto abs_dict = GetAbstract<AbstractDictionary>(data);
     if (abs_dict != nullptr) {
-      int64_t index = GetElementIndex(abs_dict->elements(), key);
-      const auto &val = abs_dict->elements()[index].second;
-      const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
-      if (tensor_val != nullptr) {
-        const auto &tensor_type = tensor_val->element()->BuildType();
-        fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
-        const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
-        MS_EXCEPTION_IF_NULL(tensor_shape);
-        fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
-        MS_LOG(DEBUG) << "key: " << key->abstract()->BuildValue()->ToString() << ", type: " << tensor_type->ToString()
-                      << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
+      size_t index = GetElementIndex(abs_dict->elements(), key);
+      const auto &elements = abs_dict->elements();
+      if (elements.size() > index) {
+        const auto &val = elements[index].second;
+        const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
+        if (tensor_val != nullptr) {
+          const auto &tensor_type = tensor_val->element()->BuildType();
+          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
+          const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
+          MS_EXCEPTION_IF_NULL(tensor_shape);
+          fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
+          MS_LOG(DEBUG) << "key: " << key->abstract()->BuildValue()->ToString() << ", type: " << tensor_type->ToString()
+                        << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
+        }
       }
     }
     MS_LOG(DEBUG) << "Made dict getitem node: " << dict_getitem_node->DebugString();

@@ -82,3 +82,22 @@ def test_dictcomp_with_multiple_generator():
         dict_generate()
     assert "The 'generators' supports 1 'comprehension' in DictComp/GeneratorExp" in str(
         ex.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dictcomp_with_pyexecute_input():
+    """
+    Feature: dict comp.
+    Description: support dict comp, which is generated from dict.
+    Expectation: No exception.
+    """
+    @jit
+    def dict_generate():
+        d = {'a': 1, 'b': 2, 'c': 3, 'A': 4, 'B': 5, 'D': 6}
+        res = {i.lower(): d.get(i.lower(), 0) + d.get(i.upper(), 0) for i in d}
+        return res
+
+    out = dict_generate()
+    assert out == {'a': 5, 'b': 7, 'c': 3, 'd': 6}
