@@ -51,7 +51,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
       static_cast<int32_t>(HCCL_SUCCESS)) {
-    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
     MS_LOG(ERROR) << "HcclCommInitRootInfo failed. " + error_message;
     return false;
   }
