@@ -1068,11 +1068,7 @@ def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
 @vmap_rules_getters.register(P.OneHot)
 def get_one_hot_vmap_rule(prim, axis_size):
     """VmapRule for `OneHot` operation."""
-    if isinstance(prim, str):
-        prim_name = prim
-        prim = Primitive(prim)
-    else:
-        prim_name = prim.name
+    prim_name = prim.name()
 
     def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim, axis_bdim):
         is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim,

@@ -89,10 +89,14 @@ OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopKD))
 REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 // OneHot
-INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
+INPUT_MAP(OneHot) = {{kIndex1, INPUT_DESC(x)},
+                     {kIndex2, INPUT_DESC(depth)},
+                     {kIndex3, INPUT_DESC(on_value)},
+                     {kIndex4, INPUT_DESC(off_value)}};
 ATTR_INPUT_MAP(OneHot) = {{"depth", "depth"}};
-ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(OneHot) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(OneHot) = {{kIndex5, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(OneHot) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
 REG_ADPT_DESC(OneHotD, prim::kPrimOneHotD->name(), ADPT_DESC(OneHot))
 
