@@ -21,6 +21,7 @@
 
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "include/common/expander/core/infer.h"
 #include "include/common/profiler.h"
 #include "include/backend/kernel_graph.h"
@@ -227,6 +228,15 @@ class PynativeIRBuilder : public BpropIRBuilder {
                                                  : func_graph_->NewCNode(cnode_inputs);
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
+    }
+    auto value_depend = abstract::GetValueDependArgIndices(cnode);
+    if (!value_depend.empty()) {
+      for (auto idx : value_depend) {
+        size_t i = LongToSize(idx);
+        if (i < inputs.size()) {
+          inputs[i]->abstract()->set_value(inputs[i]->BuildValue());
+        }
+      }
     }
     auto node = NewNode(cnode->cast<AnfNodePtr>());
     if (need_infer_) {
