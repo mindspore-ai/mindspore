@@ -238,7 +238,8 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     if start.shape != () or end.shape != () or step.shape != ():
         raise ValueError(f"For arange, the input args must be a TensorScalar,"
                          f" but got start shape:{start.shape}, end shape:{end.shape}, step shape:{step.shape}")
-    data = P.Range()(start, end, step)
+    range_op = _get_cache_prim(P.Range)()
+    data = range_op(start, end, step)
     if dtype is not None:
         data = cast_(data, dtype)
     return data
