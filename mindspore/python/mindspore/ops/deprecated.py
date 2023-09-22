@@ -239,7 +239,7 @@ class Unpack(Primitive):
 
 class ScatterNonAliasingAdd(Primitive):
     """
-    Please use ScatterNonAliasingAdd instead.
+    Please use TensorScatterAdd instead.
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
