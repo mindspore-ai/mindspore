@@ -67,7 +67,7 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     separately, connecting them into a vector, and then calculating the norm.
 
     Note:
-        The interface supports gradient clipping for scenarios where only float-type inputs are accepted.
+        The interface is suitable for gradient clipping scenarios, and only supports input of type float.
 
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input that wishes to be clipped.
