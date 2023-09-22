@@ -78,6 +78,12 @@ def _ones_like_func(x):
     return F.environ_create()
 
 
+@ones_like_leaf.register("None")
+def _ones_like_none(x):
+    """Returns none"""
+    return None
+
+
 ones_like = base.HyperMap(ones_like_leaf)
 """
 `ones_like` is a function which can generate a graph of `ones_like` operation according to input tensor dtype.

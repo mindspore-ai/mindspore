@@ -615,6 +615,7 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   auto prim = GetValueNode<PrimitivePtr>(value_node);
   if ((prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) ||
       (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name()) ||
+      (prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name()) ||
       StopGradientForScalar(primitive_user)) {
     MS_LOG(DEBUG) << "Should stop gradient for " << prim->ToString();
     need_cut_ = true;
@@ -847,7 +848,7 @@ void DFunctor::BroadCastStopFlag() {
       if (cnode != nullptr && !cnode->stop_gradient()) {
         // Cut off the cnode only when it's not referred any more
         if (cnode->IsApply(prim::kPrimStopGradient) || cnode->IsApply(prim::kPrimUpdateState) ||
-            AllReferencesStopped(cnode) || StopGradientForScalar(cnode)) {
+            AllReferencesStopped(cnode) || StopGradientForScalar(cnode) || cnode->IsApply(prim::kPrimPyExecute)) {
           MS_LOG(DEBUG) << "Set stop gradient flag for " << cnode->ToString() << ".";
           cnode->set_stop_gradient(true);
           // The stop set changed, more cut required

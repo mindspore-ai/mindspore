@@ -858,3 +858,39 @@ def test_none_in_nest_tuple_list_control_flow():
     x = ms.Tensor(10)
     out = func(x)
     assert out == (None, (None, [x, None]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_grad_with_return_none():
+    """
+    Feature: Support None.
+    Description: Support None used in grad.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(input_x):
+        return None
+
+    x = ms.Tensor([10])
+    out = ops.GradOperation()(func)(x)
+    assert out == Tensor([0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_grad_with_return_none_2():
+    """
+    Feature: Support None.
+    Description: Support None used in grad.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(input_x):
+        return [None]
+
+    x = ms.Tensor([10])
+    out = ops.GradOperation()(func)(x)
+    assert out == Tensor([0])

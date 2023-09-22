@@ -105,12 +105,6 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return meta;
   }
 
-  if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
-    MetaFuncGraphPtr meta = std::make_shared<prim::PyExecuteGradient>("PyExecuteGradient");
-    bprop_registry_meta_[prim::kPrimPyExecute] = meta;
-    return meta;
-  }
-
   if (IsPrimitiveEquals(prim, prim::kPrimMutable)) {
     MetaFuncGraphPtr meta = std::make_shared<prim::MutableGradient>("MutableGradient");
     bprop_registry_meta_[prim::kPrimMutable] = meta;
@@ -226,8 +220,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
   } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList) ||
-             IsPrimitiveEquals(prim, prim::kPrimMakeDict) || IsPrimitiveEquals(prim, prim::kPrimPyExecute) ||
-             IsPrimitiveEquals(prim, prim::kPrimMutable)) {
+             IsPrimitiveEquals(prim, prim::kPrimMakeDict) || IsPrimitiveEquals(prim, prim::kPrimMutable)) {
     // Return null to use Meta bprop.
     return nullptr;
   }
