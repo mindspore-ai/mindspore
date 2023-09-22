@@ -70,6 +70,13 @@ class UserData {
 
   bool has(const std::string &key) const { return (data_ != nullptr) && (data_->find(key) != data_->end()); }
 
+  size_t size() const {
+    if (data_ == nullptr) {
+      return 0;
+    }
+    return data_->size();
+  }
+
  private:
   void InitData() {
     if (data_ == nullptr) {

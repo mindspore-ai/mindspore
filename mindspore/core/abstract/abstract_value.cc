@@ -1439,6 +1439,10 @@ bool AbstractList::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractList>()) {
     return false;
   }
+  auto other_extra_info = static_cast<const AbstractList &>(other).extra_info();
+  if (extra_info_->size() != 0 && other_extra_info->size() != 0 && extra_info_ != other_extra_info) {
+    return false;
+  }
   return AbstractSequence::operator==(static_cast<const AbstractSequence &>(other));
 }
 
