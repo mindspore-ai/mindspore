@@ -3037,7 +3037,10 @@ def bidense(input1, input2, weight, bias=None):
     Applies bilinear dense connected layer for `input1` and `input2`. The bilinear dense function is defined as:
 
     .. math::
-        output = input1^{T} weight input2 + bias
+        output = x_{1}^{T}Ax_{2} + b
+
+    :math:`x_{1}` represents `input1` , :math:`x_{2}` represents `input2` , :math:`A` represents `weight` ,
+    :math:`b` represents `bias` .
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
