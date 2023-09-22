@@ -1503,6 +1503,13 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           break;
         }
 
+        // In dynamic shape scenarios, the situation op1->Shape->TupleGetItem->op2 will occur.
+        // The incoming operator of op2 should be op1 instead of Shape,
+        // so the Shape operator is skipped when looking for the incoming operator.
+        if (common::AnfAlgo::GetCNodeName(prev_cnode) == SHAPE_OP) {
+          break;
+        }
+
         is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
         if (is_cross) {
           name_inputs.push_back(prev_node->UniqueId());
