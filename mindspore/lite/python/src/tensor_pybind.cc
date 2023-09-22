@@ -289,8 +289,8 @@ py::buffer_info GetPyBufferInfo(const MSTensorPtr &tensor) {
   if (device_data != nullptr) {
     MS_LOG(INFO) << "need copy host data to device.";
     // device data is not nullptr, data in device, need copy device data to host.
-    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(device_data, tensor->MutableData(),
-                                                                                    tensor->DataSize());
+    auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(
+      device_data, tensor->MutableData(), tensor->DataSize(), tensor->GetDeviceId());
     if (status != kSuccess) {
       MS_LOG(ERROR) << "tensor has device data, then copy device data to host failed.";
       return py::buffer_info{nullptr, 0, format, 0, {}, {}};

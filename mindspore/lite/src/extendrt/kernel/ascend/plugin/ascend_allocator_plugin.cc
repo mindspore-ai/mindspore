@@ -176,7 +176,8 @@ void AscendAllocatorPlugin::FreeHost(void *host_data) {
   return;
 }
 
-Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size) {
+Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size,
+                                                   int device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -189,7 +190,7 @@ Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host
   if (ascend_allocator_plugin_impl_ == nullptr) {
     return kLiteMemoryFailed;
   }
-  return ascend_allocator_plugin_impl_->CopyDeviceDataToHost(device_data, host_data, data_size);
+  return ascend_allocator_plugin_impl_->CopyDeviceDataToHost(device_data, host_data, data_size, device_id);
 #endif
   return kSuccess;
 }

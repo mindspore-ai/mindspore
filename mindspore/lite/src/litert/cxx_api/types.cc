@@ -248,7 +248,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &
     auto host_form_device = malloc(tensor.DataSize());
     MS_CHECK_FALSE_MSG(host_form_device == nullptr, nullptr, "malloc host buf failed.");
     auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(
-      static_cast<MSTensor>(tensor).GetDeviceData(), host_form_device, tensor.DataSize());
+      static_cast<MSTensor>(tensor).GetDeviceData(), host_form_device, tensor.DataSize(), tensor.GetDeviceId());
     if (status != kSuccess) {
       free(host_form_device);
       return nullptr;
