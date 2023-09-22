@@ -64,6 +64,7 @@ int DynamicQuantCPUKernel::Prepare() {
 }
 
 int DynamicQuantCPUKernel::ReSize() {
+  freeTmpBuffer();
   auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   if (num_unit_ < kMinNums) {
@@ -95,7 +96,6 @@ int DynamicQuantCPUKernel::ReSize() {
   } else {
     min_max_array_size = kBucketNums;
   }
-  freeTmpBuffer();
   real_min_ = reinterpret_cast<float *>(malloc(min_max_array_size * sizeof(float)));
   real_max_ = reinterpret_cast<float *>(malloc(min_max_array_size * sizeof(float)));
   if (real_min_ == nullptr || real_max_ == nullptr) {
