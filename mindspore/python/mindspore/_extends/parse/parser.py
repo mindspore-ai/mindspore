@@ -43,7 +43,7 @@ from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore._checkparam import is_stub_tensor
 from mindspore.ops._tracefunc import _PackSourceBuilder
-from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
+from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE
 from ...common.api import _convert_python_data
@@ -519,14 +519,6 @@ def get_module_namespace(obj):
     else:
         logger.warning("Module(%r) is invalid, get namespace failure!", obj)
     return mod_namespace
-
-
-def get_class_attr_namespace_symbol(obj):
-    """Get class namespace."""
-    logger.debug("get class namespace, object: %r", obj)
-    class_namespace = ClassAttrNamespace(obj)
-    logger.debug("class namespace: %r", class_namespace)
-    return class_namespace
 
 
 def get_class_member_namespace_symbol(obj):
