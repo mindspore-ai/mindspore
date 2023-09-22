@@ -45,13 +45,19 @@ get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 
 
+def _old_norm(norm_type, x):
+    """Add norm function"""
+    out = F.pow((F.reduce_sum(F.pow(x, norm_type))), 1. / norm_type).astype(x.dtype)
+    return out
+
+
 @jit
 def _cal_total_norm(x, norm_type):
     if norm_type == float('inf'):
         func = lambda data: data.abs().max()
         total_norm = max(hyper_map(func, x))
     else:
-        total_norm = F.norm(F.stack(hyper_map(F.norm, x)))
+        total_norm = _old_norm(norm_type, F.stack(hyper_map(partial_op(_old_norm, norm_type), x)))
     return total_norm
 
 
@@ -59,6 +65,9 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     r"""
     Clip norm of a set of input Tensors. This norm is the result of calculating the norm of all elements in the input
     separately, connecting them into a vector, and then calculating the norm.
+
+    Note:
+        The interface supports gradient clipping for scenarios where only float-type inputs are accepted.
 
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input that wishes to be clipped.
