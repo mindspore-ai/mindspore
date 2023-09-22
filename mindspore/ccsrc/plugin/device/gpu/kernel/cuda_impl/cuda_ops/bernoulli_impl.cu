@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bernoulli_impl.cuh"
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
+
+template <typename T>
+__global__ void BernoulliCheckProbabilityKernel(const T *p) {
+  CUDA_KERNEL_ASSERT(p[0] >= 0 && p[0] <= 1);
+}
 
 template <typename T, typename S>
 __global__ void BernoulliForwardKernel(const T *p, S *output, uint64_t seed, const size_t num_count) {
@@ -76,6 +81,10 @@ template <typename T, typename S>
 cudaError_t BroadcastBernoulliForward(const std::vector<size_t> &x_dims, const std::vector<size_t> &p_dims,
                                       const T *input, S *output, uint64_t seed, const size_t num_count,
                                       const uint32_t &device_id, cudaStream_t cuda_stream) {
+  if (num_count == 0) {
+    BernoulliCheckProbabilityKernel<<<1, 1, 0, cuda_stream>>>(input);
+    return GetCudaStatus();
+  }
   int block_num = 256 > num_count ? num_count : 256;
   BroadcastBernoulliForwardKernel<<<CUDA_BLOCKS_CAL(device_id, num_count, block_num), block_num, 0, cuda_stream>>>(
     x_dims[0], x_dims[1], x_dims[2], x_dims[3], x_dims[4], x_dims[5], x_dims[6], p_dims[0], p_dims[1], p_dims[2],
