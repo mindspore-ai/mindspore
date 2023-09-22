@@ -1637,6 +1637,14 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     // The data arrow need skip the monad node.
     real_from_kernel_with_output_idx = common::AnfAlgo::FetchRealNodeSkipMonadControl(actor_pair.second);
     kernel_type = actor_pair.first->type_;
+
+    // The format of internal parameter need update in the heterogeneous scene.
+    auto parameter_device_address = AnfAlgo::GetMutableOutputAddr(internal_parameter, 0);
+    if ((parameter_device_address != nullptr) && !graph->is_graph_run_mode()) {
+      auto format =
+        AnfAlgo::GetOutputFormat(real_from_kernel_with_output_idx.first, real_from_kernel_with_output_idx.second);
+      parameter_device_address->set_format(format);
+    }
   }
 
   // Record the internal parameter of dynamic shape kernel.
