@@ -15,7 +15,6 @@
 
 """train mlp network with cell_attr_register"""
 
-import os
 import random
 import pytest
 import numpy as np
@@ -98,9 +97,8 @@ def get_pynative_mlp_cell_reuse_loss():
     return loss_list
 
 
-def get_mlp_cell_reuse_loss(reuse):
+def get_mlp_cell_reuse_loss():
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -110,7 +108,6 @@ def get_mlp_cell_reuse_loss(reuse):
     # cell reuse
     net = MLP()
     loss_list = train(net, data, label)
-    del os.environ['MS_DEV_CELL_REUSE']
 
     return loss_list
 
@@ -125,37 +122,7 @@ def test_mlp_cell_reuse_0():
     Description: MLP with cell reuse.
     Expectation: No exception.
     """
-    loss_graph = get_mlp_cell_reuse_loss(str(0))
-    loss_pynative = get_pynative_mlp_cell_reuse_loss()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_reuse_1():
-    """
-    Feature: cell reuse.
-    Description: MLP with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_loss(str(1))
-    loss_pynative = get_pynative_mlp_cell_reuse_loss()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_reuse_2():
-    """
-    Feature: cell reuse.
-    Description: MLP with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_loss(str(2))
+    loss_graph = get_mlp_cell_reuse_loss()
     loss_pynative = get_pynative_mlp_cell_reuse_loss()
     assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
 
@@ -206,9 +173,8 @@ def get_pynative_mlp_cell_reuse_loss_2():
     return loss_list
 
 
-def get_mlp_cell_reuse_loss_2(reuse):
+def get_mlp_cell_reuse_loss_2():
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -218,7 +184,6 @@ def get_mlp_cell_reuse_loss_2(reuse):
     # cell reuse
     net = MLP2()
     loss_list = train(net, data, label)
-    del os.environ['MS_DEV_CELL_REUSE']
     return loss_list
 
 
@@ -232,37 +197,7 @@ def test_mlp_cell_2_reuse_0():
     Description: MLP (need flatten maketuple) with cell reuse.
     Expectation: No exception.
     """
-    loss_graph = get_mlp_cell_reuse_loss_2(str(0))
-    loss_pynative = get_pynative_mlp_cell_reuse_loss_2()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_2_reuse_1():
-    """
-    Feature: cell reuse.
-    Description: MLP (need flatten maketuple) with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_loss_2(str(1))
-    loss_pynative = get_pynative_mlp_cell_reuse_loss_2()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_2_reuse_2():
-    """
-    Feature: cell reuse.
-    Description: MLP (need flatten maketuple) with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_loss_2(str(2))
+    loss_graph = get_mlp_cell_reuse_loss_2()
     loss_pynative = get_pynative_mlp_cell_reuse_loss_2()
     assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
 
@@ -315,9 +250,8 @@ def get_pynative_mlp_cell_reuse_infer():
     return ret.asnumpy()
 
 
-def get_mlp_cell_reuse_infer(reuse):
+def get_mlp_cell_reuse_infer():
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -326,7 +260,6 @@ def get_mlp_cell_reuse_infer(reuse):
     # cell reuse
     net = MLPWithControlFlow()
     ret = net(data)
-    del os.environ['MS_DEV_CELL_REUSE']
     return ret.asnumpy()
 
 
@@ -340,37 +273,7 @@ def test_mlp_cell_with_control_flow_reuse_0():
     Description: MLP with cell reuse.
     Expectation: No exception.
     """
-    loss_graph = get_mlp_cell_reuse_infer(str(0))
-    loss_pynative = get_pynative_mlp_cell_reuse_infer()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_with_control_flow_reuse_1():
-    """
-    Feature: cell reuse.
-    Description: MLP with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_infer(str(1))
-    loss_pynative = get_pynative_mlp_cell_reuse_infer()
-    assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mlp_cell_with_control_flow_reuse_2():
-    """
-    Feature: cell reuse.
-    Description: MLP with cell reuse.
-    Expectation: No exception.
-    """
-    loss_graph = get_mlp_cell_reuse_infer(str(2))
+    loss_graph = get_mlp_cell_reuse_infer()
     loss_pynative = get_pynative_mlp_cell_reuse_infer()
     assert np.allclose(loss_pynative, loss_graph, 0.001, 0.001)
 
@@ -419,7 +322,6 @@ def test_mlp_drop_cell_reuse():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_CELL_REUSE'] = str(1)
 
     # gen data
     seed_set()
@@ -429,4 +331,3 @@ def test_mlp_drop_cell_reuse():
     # cell reuse
     net = DropMLP()
     train(net, data, label)
-    del os.environ['MS_DEV_CELL_REUSE']

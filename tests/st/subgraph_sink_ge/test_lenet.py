@@ -176,13 +176,11 @@ def test_ascend_lenet_cell():
     seed_set()
     os.environ['MS_ENABLE_GE'] = str(1)
     os.environ['MS_ENABLE_REF_MODE'] = str(1)
-    os.environ['MS_DEV_CELL_REUSE'] = str(1)
     os.environ['MS_ENABLE_FORMAT_MODE'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = train_ascend_lenet()
     del os.environ['MS_ENABLE_GE']
     del os.environ['MS_ENABLE_REF_MODE']
-    del os.environ['MS_DEV_CELL_REUSE']
     del os.environ['MS_ENABLE_FORMAT_MODE']
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003
