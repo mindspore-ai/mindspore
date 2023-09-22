@@ -1,15 +1,15 @@
 mindspore.ops.matrix_diag_part
 ==============================
 
-.. py:function:: mindspore.ops.matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT")
+.. py:function:: mindspore.ops.matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT")
 
     返回输入Tensor的对角线部分。
     返回输入Tensor，内容为输入 `x` 的第k[0]到k[1]个对角线中的值。有些对角线的长度小于 `max_diag_len`，此时会使用 `padding_value` 填充。在图模式中，输入 `k` 和 `padding_value` 必须为常量Tensor。
 
     参数：
         - **x** (Tensor) - 输入Tensor，维度r需要满足 r >= 2。
-        - **k** (Union[int, Tensor], 可选) - int或int32类型的Tensor。对角线偏移。正值表示超对角线，0表示主对角线，负值表示次对角线。k可以是单个整数（对于单个对角线）或一对整数，指定矩阵带的上界和下界，且k[0]不得大于k[1]。该值必须在必须在（-x.shape[-2], x.shape[-1]）中。默认值： ``0`` 。
-        - **padding_value** (Union[int, float, Tensor], 可选) - 与 `x` 相同的数据类型的单值Tensor，表示填充对角线带外区域的数值，默认值： ``0`` 。
+        - **k** (Tensor) - int或int32类型的Tensor。对角线偏移。正值表示超对角线，0表示主对角线，负值表示次对角线。k可以是单个整数（对于单个对角线）或一对整数，指定矩阵带的上界和下界，且k[0]不得大于k[1]。该值必须在必须在（-x.shape[-2], x.shape[-1]）中。
+        - **padding_value** (Tensor) - 与 `x` 相同的数据类型的单值Tensor，表示填充对角线带外区域的数值。
         - **align** (str, 可选) - 一个字符串，指定超对角线和次对角线的对齐方式。可选字符串有： ``"RIGHT_LEFT"`` 、 ``"LEFT_RIGHT"`` 、 ``"LEFT_LEFT"`` 、 ``"RIGHT_RIGHT"`` 。例如， ``"RIGHT_LEFT"`` 表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。默认值： ``"RIGHT_LEFT"`` 。
 
     返回：
