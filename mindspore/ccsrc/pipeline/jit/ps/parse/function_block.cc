@@ -862,7 +862,7 @@ CNodePtr FunctionBlock::GetJumpNode(FunctionBlock *target_block) {
   return it->second;
 }
 
-void FunctionBlock::SetReturnStatementInside() { is_return_statement_inside_ = true; }
-void FunctionBlock::SetBreakContinueStatementInside() { is_break_continue_statement_inside_ = true; }
+void FunctionBlock::set_is_return_statement_inside() { is_return_statement_inside_ = true; }
+void FunctionBlock::set_break_continue_statement_inside() { is_break_continue_statement_inside_ = true; }
 }  // namespace parse
 }  // namespace mindspore

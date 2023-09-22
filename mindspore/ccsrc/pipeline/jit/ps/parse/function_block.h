@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +97,9 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   CNodePtr GetJumpNode(FunctionBlock *target_block);
 
   bool is_return_statement_inside() const { return is_return_statement_inside_; }
-  void SetReturnStatementInside();
+  void set_is_return_statement_inside();
   bool is_break_continue_statement_inside() const { return is_break_continue_statement_inside_; }
-  void SetBreakContinueStatementInside();
+  void set_break_continue_statement_inside();
 
   const std::string block_name() const { return block_name_; }
   void set_block_name(const std::string &block_name) { block_name_ = block_name; }

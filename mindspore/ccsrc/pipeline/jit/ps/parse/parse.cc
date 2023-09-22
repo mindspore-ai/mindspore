@@ -851,13 +851,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     if (sub_block != block && sub_block->is_return_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has return statement inside, propagate flag back to block: " << block->ToString();
-      block->SetReturnStatementInside();
+      block->set_is_return_statement_inside();
     }
     // Propagate flag of break or continue statement back;
     if (sub_block != block && sub_block->is_break_continue_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has break or continue statement inside, propagate flag back to block: " << block->ToString();
-      block->SetBreakContinueStatementInside();
+      block->set_break_continue_statement_inside();
     }
     sub_block = next_block;
 
@@ -879,10 +879,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
         // Skip statements after 'return' (or 'break', 'continue').
         break;
       }
-    } else {
-      if (sub_block->func_graph()->get_return() != nullptr && i != count - 1) {
-        sub_block->func_graph()->set_return(nullptr);
-      }
+    }
+    // If the current block has multi return statements,
+    // only parse the statements before first return statement.
+    // Statements after the continue and break statements are also not parsed.
+    if (ast_->GetNodeType(node)->node_name() == "Break" || ast_->GetNodeType(node)->node_name() == "Continue" ||
+        ast_->GetNodeType(node)->node_name() == "Return") {
+      break;
     }
   }
   return sub_block;
@@ -1128,7 +1131,7 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
   func_graph->set_return(return_cnode);
   MS_LOG(DEBUG) << "Inside the block has return statement, block: " << block->ToString();
-  block->SetReturnStatementInside();
+  block->set_is_return_statement_inside();
   return block;
 }
 
@@ -2551,7 +2554,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
     MS_LOG(DEBUG)
       << "Inside the branch block has return statement, ignore for transformation to parallel-if call, branch block:"
       << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
     return;
   }
   if (branch_block->is_break_continue_statement_inside()) {
@@ -2561,7 +2564,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
                   << ", block: " << block->ToString();
     MS_LOG(DEBUG) << "Propagate flag of break or continue statement from branch block to block, branch block:"
                   << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetBreakContinueStatementInside();
+    block->set_break_continue_statement_inside();
   } else if (branch_end->func_graph()->get_return() != nullptr) {
     // Currently, this can only happen with raise statement inside. As try/expect is not supported now,
     // and contional for raise will be evaluated in Compile time. If raise condition is met, it will
@@ -2879,7 +2882,7 @@ void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBloc
   if (body_block->is_return_statement_inside()) {
     MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
                   << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
   }
 }
 
@@ -4246,7 +4249,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
     TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock();
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has break statement, block: " << block->ToString();
 
   // Jump to the end_block.
@@ -4265,7 +4268,7 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
   if (loop.iterator != nullptr) {
     (void)args.emplace_back(loop.iterator);
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has continue statement, block: " << block->ToString();
 
   block->Jump(loop.header, args);
