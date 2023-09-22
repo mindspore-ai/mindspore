@@ -360,8 +360,7 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
-  return Emit(prim::kPrimReduceSum->name(), {x, axis},
-              {{"keep_dims", MakeValue(keep_dims)}, {"skip_mode", MakeValue(skip_mode)}});
+  return Emit(prim::kPrimReduceSum->name(), {x, axis, Value(keep_dims), Value(skip_mode)});
 }
 
 NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) {

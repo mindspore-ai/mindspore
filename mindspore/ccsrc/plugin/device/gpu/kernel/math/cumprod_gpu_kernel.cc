@@ -94,7 +94,9 @@ int CumProdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   }
 
   input_dim_length_ = SizeToInt(shape_.size());
-  workspace_size_list_.push_back(inputs[kIndex0]->size());
+  size_t input_size =
+    std::accumulate(shape_.begin(), shape_.end(), GetTypeByte(inputs[kIndex0]->dtype()), std::multiplies<size_t>());
+  workspace_size_list_.push_back(input_size);
   return KRET_OK;
 }
 

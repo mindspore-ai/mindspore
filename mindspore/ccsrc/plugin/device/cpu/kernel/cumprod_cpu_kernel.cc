@@ -15,9 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/cumprod_cpu_kernel.h"
-
+#include <functional>
 #include <thread>
-#include "mindspore/core/ops/cumprod.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -40,7 +39,7 @@ bool CumProdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
 
   dtype_ = inputs[kIndex0]->dtype_id();
   exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
-  reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
+  reverse_ = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
 
   auto input_num = inputs.size();
@@ -69,7 +68,9 @@ int CumProdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   shape_ = inputs[kIndex0]->GetShapeVector();
   dst_shape_ = outputs[kIndex0]->GetShapeVector();
   input_dim_length_ = SizeToInt(shape_.size());
-  workspace_size_list_.push_back(input_size_list_.at(kIndex0));
+  size_t input_size =
+    std::accumulate(shape_.begin(), shape_.end(), GetTypeByte(inputs[kIndex0]->dtype()), std::multiplies<size_t>());
+  workspace_size_list_.push_back(input_size);
   return KRET_OK;
 }
 

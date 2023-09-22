@@ -83,8 +83,8 @@ class CumProdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   size_t stride_{0};
   size_t stride2_{0};
   size_t dims_[3]{0};
-  int exclusive_{0};
-  int reverse_{0};
+  bool exclusive_{false};
+  bool reverse_{false};
   int axis_{0};
   TypeId dtype_{kTypeUnknown};
   bool is_dynamic_shape_{false};

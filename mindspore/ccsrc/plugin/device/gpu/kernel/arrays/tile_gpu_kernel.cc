@@ -92,45 +92,105 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
    &TileGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
    &TileGpuKernelMod::LaunchKernel<Complex<double>>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &TileGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
    &TileGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
    &TileGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
    &TileGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &TileGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
    &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
    &TileGpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex64),
    &TileGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex128),
    &TileGpuKernelMod::LaunchKernel<Complex<double>>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
    &TileGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &TileGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
    &TileGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt16),
    &TileGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
    &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt64),
    &TileGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt32),
    &TileGpuKernelMod::LaunchKernel<int>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
    &TileGpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> TileGpuKernelMod::GetOpSupport() {

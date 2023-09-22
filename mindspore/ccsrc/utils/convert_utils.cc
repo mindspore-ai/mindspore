@@ -442,6 +442,11 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(data_type);
   TypeId type_id = data_type->type_id();
   switch (type_id) {
+    case kNumberTypeBool: {
+      ret = GetTensorValue<bool, BoolImm>(tensor);
+      break;
+    }
+
     case kNumberTypeInt8: {
       ret = GetTensorValue<int8_t, Int8Imm>(tensor);
       break;

@@ -1,0 +1,36 @@
+reduce_std:
+  description: |
+    Returns the standard-deviation and mean of the input Tensor along dimension(s) specified by `axis`.
+    
+        Args:
+            x (Tensor[Number]): The input tensor.
+            axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``()`` , reduce all
+                dimensions. Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
+            unbiased(bool): Whether to use Bessel's correction.
+                If ``True`` , will use the Bessel correction unbiased estimation.
+                If ``False`` , will through the biased estimation to calculate the standard deviation.
+                Default: ``True`` .
+            keep_dims (bool): Whether the output Tensor has dim retained or not.
+                If ``True`` , keep these reduced dimensions specified by `axis` and the length is 1.
+                If ``False`` , don't keep these dimensions.
+                Default: ``Fasle`` .
+    
+        Returns:
+            output(tuple(Tensor)): (output_std, output_mean) containing the standard deviation and mean.
+    
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `input_x` is not a Tensor.
+            ValueError: If `axis` is not one of the following: int, tuple or list.
+    
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+    
+        Examples:
+            >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+            >>> output = ops.reduce_std(input_x, axis=1, unbiased=True, keep_dims=False)
+            >>> output_std, output_mean = output[0], output[1]
+            >>> print(output_std)
+            [1.        2.5166113]
+            >>> print(output_mean)
+            [2.        1.3333334]

@@ -237,6 +237,11 @@ void ReduceCpuKernelFunc<T>::SpecialExcute() {
 template <typename T>
 void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
+  if (axis_.empty()) {
+    for (int64_t i = 0; i < dimension; i++) {
+      axis_.push_back(i);
+    }
+  }
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (dimension == 0) {
       if (a != -1 && a != 0) {
@@ -265,6 +270,9 @@ template <typename T>
 int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  if (kernel_name_ == kReduceSum) {
+    skip_mode_ = inputs[kIndex3]->GetValueWithCheck<bool>();
+  }
   if (inputs.size() > kAxisIndex_ &&
       AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kAxisIndex_]->GetShapeVector())) {
     need_skip_execute_ = true;
@@ -333,7 +341,6 @@ void ReduceCpuKernelFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::
                                       const std::vector<KernelTensor *> &) {
   kernel_name_ = primitive->name();
   ChooseFunc();
-  skip_mode_ = GetValue<bool>(primitive->GetAttr(ops::kSkipMode));
 }
 
 template <typename T>
@@ -470,66 +477,75 @@ template <typename T>
 std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
   return std::make_shared<ReduceCpuKernelFunc<T>>();
 }
+
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
-#define REDUCE_CPU_REG(MS_T, MS_S, T) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), SpecializeReduceFunc<T>
+
+#define REDUCE_CPU_REG(MS_T, MS_S, T)                 \
+  KernelAttr()                                        \
+    .AddInputAttr(MS_T)                               \
+    .AddInputAttr(kObjectTypeTuple, MS_S)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(MS_T),                             \
+    SpecializeReduceFunc<T>
+
+#define REDUCE_SUM_CPU_REG(MS_T, MS_S, T)             \
+  KernelAttr()                                        \
+    .AddInputAttr(MS_T)                               \
+    .AddInputAttr(kObjectTypeTuple, MS_S)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(MS_T),                             \
+    SpecializeReduceFunc<T>
+
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_all_any_list = {
-  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)}, {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_max_min_list = {
-  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)}};
-static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_prod_mean_list = {
-  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)},
+
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_prod_mean_list = {
   {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
-  {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64)},
   {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64)},
-  {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128)},
   {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128)}};
+
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_list = {
+  {REDUCE_SUM_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128)}};
+
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
-  {prim::kPrimReduceSum->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceMean->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceProd->name(), kernel_sum_prod_mean_list},
-  {prim::kPrimReduceMax->name(), kernel_max_min_list},
-  {prim::kPrimReduceMin->name(), kernel_max_min_list},
-  {prim::kPrimReduceAll->name(), kernel_all_any_list},
+  {prim::kPrimReduceSum->name(), kernel_sum_list},        {prim::kPrimReduceMean->name(), kernel_prod_mean_list},
+  {prim::kPrimReduceProd->name(), kernel_prod_mean_list}, {prim::kPrimReduceMax->name(), kernel_max_min_list},
+  {prim::kPrimReduceMin->name(), kernel_max_min_list},    {prim::kPrimReduceAll->name(), kernel_all_any_list},
   {prim::kPrimReduceAny->name(), kernel_all_any_list}};
 }  // namespace
 

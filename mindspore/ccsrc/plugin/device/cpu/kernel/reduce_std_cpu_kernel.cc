@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/reduce_std_cpu_kernel.h"
-#include <thread>
 #include <memory>
 #include <algorithm>
 #include <utility>
-#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32/reduce_fp32.h"
-#include "mindspore/core/ops/reduce_std.h"
+#include "mindspore/core/ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,8 +37,6 @@ bool ReduceStdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  unbiased_ = GetValue<bool>(primitive_->GetAttr(ops::kUnbiased));
-  axis_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kAxis));
   dtype_ = inputs[0]->dtype_id();
   if (dtype_ != kNumberTypeFloat16 && dtype_ != kNumberTypeFloat32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
@@ -48,6 +44,7 @@ bool ReduceStdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   return true;
 }
+
 int ReduceStdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
@@ -55,6 +52,8 @@ int ReduceStdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   int64_t dimension = SizeToLong(input_shape_.size());
+
+  axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (a < -dimension || a >= dimension) {
       MS_LOG(EXCEPTION) << "For reduce std, the each axis element should be in [" << -dimension << ", " << dimension
@@ -65,6 +64,7 @@ int ReduceStdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
   (void)axis_.erase(last, axis_.end());
+  unbiased_ = inputs[kIndex2]->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
@@ -149,9 +149,6 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Kern
 bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceStdInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceStdOutputsNum, kernel_name_);
-
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (dtype_ == kNumberTypeFloat16) {
       RunReduceStd<float16>(inputs, outputs);
@@ -169,9 +166,20 @@ bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
 }
 
 std::vector<KernelAttr> ReduceStdCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+  std::vector<KernelAttr> support_list = {KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat16)
+                                            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  // axis
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  // unbiased
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  // keep_dims
+                                            .AddOutputAttr(kNumberTypeFloat16)
+                                            .AddOutputAttr(kNumberTypeFloat16),
+                                          KernelAttr()
+                                            .AddInputAttr(kNumberTypeFloat32)
+                                            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                            .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                            .AddOutputAttr(kNumberTypeFloat32)
+                                            .AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }
 

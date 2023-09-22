@@ -74,7 +74,7 @@ def test_erfinv_vmap():
     Description: test erfinv op vmap.
     Expectation: expect correct result.
     """
-    x = Tensor(np.array([[[0.5, 0], [0.5, -0.9]]]))
+    x = Tensor(np.array([[[0.5, 0], [0.5, -0.9]]]), ms.float32)
     nest_vmap = ops.vmap(ops.vmap(erfinv_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)
     expect = [[[0.47695306, 0.], [0.47695306, -1.1630805]]]

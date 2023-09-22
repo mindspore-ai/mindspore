@@ -385,17 +385,15 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.ReduceSum)
 @vmap_rules_getters.register(P.ReduceMax)
 @vmap_rules_getters.register(P.ReduceMin)
 @vmap_rules_getters.register(P.ReduceMean)
 @vmap_rules_getters.register(P.ReduceProd)
 @vmap_rules_getters.register(P.ReduceAll)
 @vmap_rules_getters.register(P.ReduceAny)
-def get_reducer_vmap_rule(prim, axis_size):
-    """VmapRule for reduce operations, such as `ReduceSum`."""
+def get_reduce_vmap_rule(prim, axis_size):
+    """VmapRule for reduce operations, such as `ReduceMean`."""
     reduce_op_map = {
-        "ReduceSum": P.ReduceSum,
         "ReduceMax": P.ReduceMax,
         "ReduceMin": P.ReduceMin,
         "ReduceMean": P.ReduceMean,
@@ -407,24 +405,43 @@ def get_reducer_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = reduce_op_map.get(prim)()
 
-    keep_dims = prim.keep_dims
-    prim_name = prim.name
-
-    def vmap_rule(operand_bdim, axis_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, operand_bdim, axis_bdim)
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, keep_dims_bdim)
         if is_all_none:
             return result
 
-        x, x_dim = operand_bdim
-        axis, axis_dim = axis_bdim
-        if axis_dim is not None:
-            _raise_value_error("The source axis of `axis` in `{}` must be None, "
-                               "but got {}.".format(prim_name, axis_dim))
+        x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        keep_dims, _ = keep_dims_bdim
 
         x_ndim = F.rank(x)
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
 
-        out = prim(x, batch_axis)
+        out = prim(x, batch_axis, keep_dims)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
+        return out, out_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.ReduceSum)
+def get_reduce_sum_vmap_rule(prim, axis_size):
+    """VmapRule for `ReduceSum`."""
+
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim, skip_mode_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, keep_dims_bdim, skip_mode_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        keep_dims, _ = keep_dims_bdim
+        skip_mode, _ = skip_mode_bdim
+
+        x_ndim = F.rank(x)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+
+        out = prim(x, batch_axis, keep_dims, skip_mode)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return out, out_dim
 
@@ -543,22 +560,21 @@ def get_svd_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(math_ops.ReduceStd)
-def get_reducer_std_vmap_rule(prim, axis_size):
-    """VmapRule for reduce operations, such as `ReduceStd`."""
-    axis = prim.axis
-    keep_dims = prim.keep_dims
-    unbiased = prim.unbiased
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+def get_reduce_std_vmap_rule(prim, axis_size):
+    """VmapRule for `ReduceStd`."""
+    def vmap_rule(x_bdim, axis_bdim, unbiased_bdim, keep_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, unbiased_bdim, keep_dims_bdim)
         if is_all_none:
             return result
+
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        unbiased, _ = unbiased_bdim
+        keep_dims, _ = keep_dims_bdim
         x_ndim = F.rank(x)
         # LpNorm is a reduction class op, so just reuse the common function.
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        reduce_std = math_ops.ReduceStd(batch_axis, unbiased=unbiased, keep_dims=keep_dims)
-        out_std, out_mean = reduce_std(x)
+        out_std, out_mean = prim(x, batch_axis, unbiased, keep_dims)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return (out_std, out_dim), (out_mean, out_dim)
 

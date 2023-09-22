@@ -30,7 +30,6 @@
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/conv_transpose_to_conv_bp.h"
-#include "backend/common/pass/reduce_optimizer.h"
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
@@ -77,7 +76,6 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
-  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
   // Disable const to tensor pass, ascend platform need to match the change in the future.
@@ -151,7 +149,6 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
-  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   // Disable const to tensor pass, ascend platform need to match the change in the future.
   // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());

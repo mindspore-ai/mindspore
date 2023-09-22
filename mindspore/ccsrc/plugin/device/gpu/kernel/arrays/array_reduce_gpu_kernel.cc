@@ -48,117 +48,98 @@ const std::map<std::string, ReduceType_t> kReduceTypeMap = {
   {"ReduceAny", ReduceAny}, {"ReduceAll", ReduceAll},   {"ReduceProd", ReduceProd},
 };
 
-#define REDUCE_REGISTER(INPUTX, AXIS, T) \
-  KernelAttr().AddInputAttr(INPUTX).AddInputAttr(AXIS).AddOutputAttr(INPUTX), &ArrayReduceGpuKernelMod::LaunchKernel<T>
+#define REDUCE_REGISTER(INPUTX, AXIS, T)              \
+  KernelAttr()                                        \
+    .AddInputAttr(INPUTX)                             \
+    .AddInputAttr(kObjectTypeTuple, AXIS)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(INPUTX),                           \
+    &ArrayReduceGpuKernelMod::LaunchKernel<T>
 
-#define REDUCE_REGISTER_COMPLEX(INPUTX, AXIS, T)                              \
-  KernelAttr().AddInputAttr(INPUTX).AddInputAttr(AXIS).AddOutputAttr(INPUTX), \
+#define REDUCE_REGISTER_COMPLEX(INPUTX, AXIS, T)      \
+  KernelAttr()                                        \
+    .AddInputAttr(INPUTX)                             \
+    .AddInputAttr(kObjectTypeTuple, AXIS)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(INPUTX),                           \
+    &ArrayReduceGpuKernelMod::LaunchComplexKernel<T>
+
+#define REDUCE_SUM_REGISTER(INPUTX, AXIS, T)          \
+  KernelAttr()                                        \
+    .AddInputAttr(INPUTX)                             \
+    .AddInputAttr(kObjectTypeTuple, AXIS)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(INPUTX),                           \
+    &ArrayReduceGpuKernelMod::LaunchKernel<T>
+
+#define REDUCE_SUM_REGISTER_COMPLEX(INPUTX, AXIS, T)  \
+  KernelAttr()                                        \
+    .AddInputAttr(INPUTX)                             \
+    .AddInputAttr(kObjectTypeTuple, AXIS)             \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(INPUTX),                           \
     &ArrayReduceGpuKernelMod::LaunchComplexKernel<T>
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::all_any_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
 };
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
   {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
   {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::sum_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
-  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
-  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
-  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
-  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
-  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_SUM_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_SUM_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
+  {REDUCE_SUM_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_SUM_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_SUM_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_SUM_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_SUM_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_SUM_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::max_min_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
-  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
   {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
   {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
 };
 
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::mean_list_ = {
-  {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
-  {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
-  {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
   {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
   {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
 
@@ -205,9 +186,6 @@ bool ArrayReduceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
   InferArrayReduceType();
-
-  keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
-  skip_mode_ = GetValue<bool>(primitive_->GetAttr(ops::kSkipMode));
 
   return true;
 }
@@ -342,12 +320,16 @@ int ArrayReduceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
   auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
   input_num_ = SizeOf(input_shape);
+  auto attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  keep_dims_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  if (kernel_name_ == "ReduceSum") {
+    skip_mode_ = inputs[kIndex3]->GetValueWithCheck<bool>();
+  }
 
   if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
     return KRET_OK;
   }
 
-  auto attr_axis = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");

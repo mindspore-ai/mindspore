@@ -127,14 +127,14 @@ class COMMON_EXPORT Emitter {
     return CmpOpWithCast(kGreaterEqualOpName, lhs, rhs, dst_type);
   }
   NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
-    auto value = lhs->BuildValue();
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>()) {
+    auto abs = lhs->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractTensor>()) {
       return CmpOpWithCast(kEqualOpName, lhs, rhs, dst_type);
-    } else if (value->isa<Scalar>()) {
+    } else if (abs->isa<abstract::AbstractScalar>()) {
       return CmpOpWithCast(kScalarEqOpName, lhs, rhs, dst_type);
     }
-    MS_LOG(EXCEPTION) << "'Equal' only support [Tensor] or [Scalar] input, but got: " << value->ToString();
+    MS_LOG(EXCEPTION) << "'Equal' only support [Tensor] or [Scalar] input, but got: " << abs->ToString();
   }
   NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast("NotEqual", lhs, rhs, dst_type);

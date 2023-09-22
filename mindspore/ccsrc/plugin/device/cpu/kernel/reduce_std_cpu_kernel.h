@@ -34,18 +34,17 @@ class ReduceStdCpuKernelMod : public NativeCpuKernelMod {
   ~ReduceStdCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T>
-  void RunReduceStd(const std::vector<kernel::KernelTensor *> &inputs,
-                    const std::vector<kernel::KernelTensor *> &outputs);
+  void RunReduceStd(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void RunReduceStdWithSAxis(const std::vector<kernel::KernelTensor *> &inputs,
-                             const std::vector<kernel::KernelTensor *> &outputs);
+  void RunReduceStdWithSAxis(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

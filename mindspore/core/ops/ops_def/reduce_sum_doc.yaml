@@ -1,0 +1,78 @@
+reduce_sum:
+  description: |
+    Reduces a dimension of a tensor by summing all elements in the dimension, by default. And also can reduce a
+        dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+        controlling `keep_dims`.
+    
+        Args:
+            x (Tensor[Number]): The input tensor.
+            axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``()`` , reduce all
+                dimensions when skip_mode is ``False`` . Must be in the range [-rank(`x`), rank(`x`)).
+            keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                If ``False`` , don't keep these dimensions. Default: ``False`` .
+            skip_mode (bool): If ``True`` and axis is empty tuple or empty list, the ReduceSum operation isn't 
+                performed, skip it. If ``True`` and axis is other values, the ReduceSum calculation is performed 
+                normally. If ``False``, do reduce. Default: ``False`` .
+    
+        Returns:
+            output(Tensor): has the same dtype as the `x`.
+    
+            - If axis is (), keep_dims is ``False`` , and skip_mode is ``False`` ,
+              the output is a 0-D tensor representing the sum of all elements in the input tensor.
+            - If axis is (), and skip_mode is ``True`` ,
+              the ReduceSum operation is not performed, output tensor is equal to the input tensor.
+            - If axis is int, set as 2, and keep_dims is ``False`` ,
+              the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+            - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is ``False`` ,
+              the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+    
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `skip_mode` is not a bool.
+            TypeError: If `x` is not a Tensor.
+            ValueError: If `axis` is None.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+            >>> op = ops.reduce_sum(x, 1, keep_dims=True)
+            >>> output.shape
+            (3, 1, 5, 6)
+            >>> # case 1: Reduces a dimension by summing all elements in the dimension.
+            >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+            ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+            ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+            >>> op = ops.reduce_sum(x, ()), keep_dims=True)
+            >>> print(output)
+            [[[270.]]]
+            >>> print(output.shape)
+            (1, 1, 1)
+            >>> # case 2: Reduces a dimension along axis 0.
+            >>> op = ops.reduce_sum(x, 0, keep_dims=True)
+            >>> print(output)
+            [[[12. 12. 12. 12. 12. 12.]
+              [15. 15. 15. 15. 15. 15.]
+              [18. 18. 18. 18. 18. 18.]]]
+            >>> # case 3: Reduces a dimension along axis 1.
+            >>> op = ops.reduce_sum(x, 1, keep_dims=True)
+            >>> print(output)
+            [[[ 6.  6.  6.  6.  6.  6.]]
+             [[15. 15. 15. 15. 15. 15.]]
+             [[24. 24. 24. 24. 24. 24.]]]
+            >>> # case 4: Reduces a dimension along axis 2.
+            >>> op = ops.reduce_sum(x, 2, keep_dims=True)
+            >>> print(output)
+            [[[ 6.]
+              [12.]
+              [18.]]
+             [[24.]
+              [30.]
+              [36.]]
+             [[42.]
+              [48.]
+              [54.]]]
