@@ -31,6 +31,9 @@ namespace dataset {
 
 Status UnicodeCharTokenizerOp::Tokenize(std::string_view str, std::vector<std::string> *splits,
                                         std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
+  RETURN_UNEXPECTED_IF_NULL(splits);
+  RETURN_UNEXPECTED_IF_NULL(offsets_start);
+  RETURN_UNEXPECTED_IF_NULL(offsets_limit);
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("UnicodeCharTokenizer: Decode utf8 string failed.");

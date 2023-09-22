@@ -109,16 +109,16 @@ Status SUN397Op::GetFileContent(const std::string &info_file, std::string *ans) 
   reader.seekg(0, std::ios::end);
   std::size_t size = reader.tellg();
   reader.seekg(0, std::ios::beg);
-  std::string buffer(size, 0);
+
+  CHECK_FAIL_RETURN_UNEXPECTED(size > 0, "Invalid file, the file size of " + info_file + " is unexpected, got size 0.");
+  std::string buffer(size, ' ');
   reader.read(&buffer[0], size);
-  buffer[size] = '\0';
   reader.close();
 
   // remove \n character in the buffer.
-  std::string so(buffer);
   std::regex pattern("([\\s\\n]+)");
   std::string fmt = " ";
-  std::string s = std::regex_replace(so, pattern, fmt);
+  std::string s = std::regex_replace(buffer, pattern, fmt);
 
   // remove the head and tail whiteblanks of the s.
   s.erase(0, s.find_first_not_of(" "));

@@ -39,6 +39,7 @@ FlickrOp::FlickrOp(int32_t num_workers, const std::string &dataset_dir, const st
 
 // Load 1 TensorRow (image, annotations) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status FlickrOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::pair<std::string, std::vector<std::string>> data = image_annotation_pairs_[static_cast<size_t>(row_id)];
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> annotations;
@@ -199,6 +200,7 @@ Status FlickrOp::CountDatasetInfo() {
 
 Status FlickrOp::CountTotalRows(const std::string &dir, const std::string &file, int64_t *count) {
   // the logic of counting the number of samples is copied from ParseFlickrData()
+  RETURN_UNEXPECTED_IF_NULL(count);
   *count = 0;
   const int64_t num_samples = 0;
   const int64_t start_index = 0;

@@ -33,6 +33,7 @@ ToNumberOp::ToNumberOp(const DataType &data_type) : cast_to_type_(data_type) {}
 ToNumberOp::ToNumberOp(const std::string &data_type) : cast_to_type_(DataType(data_type)) {}
 
 Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "ToNumber: input should be string datatype.");
 
   switch (cast_to_type_.value()) {
@@ -82,6 +83,7 @@ Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 void ToNumberOp::Print(std::ostream &out) const { out << "ToNumberOp: casting to " << '\n'; }
 
 Status ToNumberOp::OutputShape(const std::vector<TensorShape> &input_shapes, std::vector<TensorShape> &output_shapes) {
+  RETURN_IF_NOT_OK(TensorOp::OutputShape(input_shapes, output_shapes));
   (void)std::copy(input_shapes.begin(), input_shapes.end(), std::back_inserter(output_shapes));
   return Status::OK();
 }

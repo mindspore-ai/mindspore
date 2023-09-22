@@ -649,6 +649,7 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
 }
 
 Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_header, int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
   int32_t num_workers = GlobalContext::config_manager()->num_parallel_workers();
   int32_t op_connector_size = GlobalContext::config_manager()->op_connector_size();
   int32_t worker_connector_size = GlobalContext::config_manager()->worker_connector_size();

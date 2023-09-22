@@ -834,7 +834,6 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
       }
     }
   }
-  RETURN_UNEXPECTED_IF_NULL(table_pair.first);
   if (!table_pair.first->empty()) {
     table_pair.second = CBatchInfo(op_current_epochs_, batch_num_, batch_cnt_);
     // Generate row with batched tensors

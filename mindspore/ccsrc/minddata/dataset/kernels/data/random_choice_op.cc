@@ -76,6 +76,7 @@ Status RandomChoiceOp::OutputType(const std::vector<DataType> &inputs, std::vect
 }
 
 Status RandomChoiceOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
   size_t rand_num = rand_int_(gen_);
   CHECK_FAIL_RETURN_UNEXPECTED(rand_num < ops_.size(), "invalid rand_num:" + std::to_string(rand_num));
   RETURN_IF_NOT_OK(ops_[rand_num]->Compute(input, output));

@@ -23,11 +23,11 @@
 namespace mindspore {
 namespace dataset {
 Status AddTokenOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() == 1 || input->Rank() == 2,
                                "AddToken: input tensor rank should be 1 or 2.");
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "AddToken: input tensor type should be string.");
 
-  IO_CHECK(input, output);
   return AddToken(input, output, token_, begin_);
 }
 

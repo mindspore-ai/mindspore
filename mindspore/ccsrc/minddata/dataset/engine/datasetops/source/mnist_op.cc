@@ -40,6 +40,7 @@ MnistOp::MnistOp(std::string usage, int32_t num_workers, std::string folder_path
 
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
 Status MnistOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   MnistLabelPair mnist_pair = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   // make a copy of cached tensor
@@ -162,6 +163,8 @@ Status MnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_re
 }
 
 Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *label_reader, size_t index) {
+  RETURN_UNEXPECTED_IF_NULL(image_reader);
+  RETURN_UNEXPECTED_IF_NULL(label_reader);
   uint32_t num_images, num_labels;
   RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
   RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));

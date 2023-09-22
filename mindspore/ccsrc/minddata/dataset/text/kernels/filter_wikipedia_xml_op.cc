@@ -83,14 +83,14 @@ std::map<icu::UnicodeString, icu::UnicodeString> patterns = {{R"(<.*>)", ""},
                                                              {R"(\n\s*\n)", R"(\n)"}};
 
 Status FilterWikipediaXMLOp::FilterWikipediaXML(const std::string_view &text, std::string *out) const {
-  if (((text).find("#redirect") == -1) && ((text).find("#REDIRECT") == -1)) {
+  CHECK_FAIL_RETURN_UNEXPECTED((out != nullptr), "FilterWikipediaXML: icu init failed.");
+  if (((text).find("#redirect") == std::string::npos) && ((text).find("#REDIRECT") == std::string::npos)) {
     (*out) = text;
     UErrorCode icu_error = U_ZERO_ERROR;
     for (auto pattern_iter = patterns.begin(); pattern_iter != patterns.end(); pattern_iter++) {
       icu::RegexMatcher matcher(pattern_iter->first, 0, icu_error);
       CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(icu_error),
                                    "RegexReplace: create icu RegexMatcher failed, you may input an error pattern.");
-      CHECK_FAIL_RETURN_UNEXPECTED((out != nullptr), "FilterWikipediaXML: icu init failed.");
       icu::UnicodeString unicode_text = icu::UnicodeString::fromUTF8(*out);
       matcher.reset(unicode_text);
       icu::UnicodeString unicode_out = matcher.replaceAll(pattern_iter->second, icu_error);
