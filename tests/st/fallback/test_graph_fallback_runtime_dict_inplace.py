@@ -16,8 +16,9 @@
 import pytest
 import numpy as np
 
-from mindspore import jit, jit_class, nn
 from mindspore import context
+from mindspore import Tensor
+from mindspore import jit, jit_class, nn
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -366,3 +367,65 @@ def test_dict_inplace_setitem_with_attribute_3():
     assert ret == {"1": 10, "2": 2}
     assert net.x.attr == {"1": 10, "2": 2}
     assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_getitem_after_setitem():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.dict = {"Name": "b", "Age": 15}
+
+        def construct(self, y):
+            self.dict["Age"] = y
+            a = (self.dict["Age"] == y)
+            return self.dict, a
+
+    net = Net()
+    ret1, ret2 = net(Tensor([1]))
+    assert ret1 == {"Name": "b", "Age": Tensor([1])}
+    assert ret2
+
+
+global_dict_for_update = {'Name': 'a', 'Age': 7}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_getitem_after_setitem_2():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class DcitNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.dict = {'Name': 'b', 'Age': 15}
+
+        def construct(self, y, z):
+            self.dict['Age'] = y
+            if self.dict['Age'] == y:
+                global_dict_for_update.update({"Grade": 1})
+            z.update({"Grade": "college"})
+            return global_dict_for_update, self.dict, z
+
+    y = Tensor([16])
+    z = {'Name': 'c', 'Age': 18}
+    net = DcitNet()
+    ret1, ret2, ret3 = net(y, z)
+    assert ret1 == {'Name': 'a', 'Age': 7, 'Grade': 1}
+    assert ret2 == {'Name': 'b', 'Age': Tensor([16])}
+    assert ret3 == {'Name': 'c', 'Age': 18, 'Grade': 'college'}

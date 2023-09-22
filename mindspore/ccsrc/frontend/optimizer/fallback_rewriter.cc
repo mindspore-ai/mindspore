@@ -77,6 +77,8 @@ static const PrimitiveSet inplace_prim_set{prim::kPrimPyExecute,          prim::
                                            prim::kPrimListInplaceReverse, prim::kPrimListInplaceExtend,
                                            prim::kPrimListInplaceInsert,  prim::kPrimListInplacePop,
                                            prim::kPrimDictInplaceSetItem};
+static const PrimitiveSet sequence_getitem_prim_set{prim::kPrimListGetItem, prim::kPrimTupleGetItem,
+                                                    prim::kPrimDictGetItem};
 
 namespace {
 static constexpr size_t kMaxSeqRecursiveDepth = 6;
@@ -90,6 +92,9 @@ void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
 template <typename T>
 std::shared_ptr<T> GetAbstract(const AnfNodePtr &node) {
   auto abs = node->abstract();
+  if (abs == nullptr) {
+    return nullptr;
+  }
   MS_EXCEPTION_IF_NULL(abs);
   return dyn_cast<T>(abs);
 }
@@ -751,16 +756,20 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
   for (size_t i = 1; i < node_inputs.size(); ++i) {
     inputs_abs.push_back(node_inputs[i]->abstract());
   }
+
   auto output_abs = node->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
   if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
       !output_abs->isa<abstract::AbstractAny>()) {
     return nullptr;
   }
-  auto target_node = node_inputs[target_index];
-  auto target_abs = target_node->abstract();
-  if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
-    return nullptr;
+
+  if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
+    auto target_node = node_inputs[target_index];
+    auto target_abs = target_node->abstract();
+    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+      return nullptr;
+    }
   }
 
   const auto &fg = node->func_graph();
@@ -780,7 +789,7 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
   const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
   std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
   (void)key_value_list.emplace_back(node_inputs[sequence_index]);
-  (void)key_value_list.emplace_back(target_node);
+  (void)key_value_list.emplace_back(node_inputs[target_index]);
   const auto key_value_tuple = fg->NewCNode(key_value_list);
   auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
 
@@ -2435,7 +2444,7 @@ void FindValueWithInplace(const FuncGraphPtr &root, const pipeline::ResourcePtr 
 
 AnfNodePtr ConvertToPyExecuteGetItem(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!IsPrimitiveCNode(node, prim::kPrimListGetItem) && !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  if (!IsOneOfPrimitiveCNode(node, sequence_getitem_prim_set)) {
     return nullptr;
   }
   auto abs = node->abstract();
