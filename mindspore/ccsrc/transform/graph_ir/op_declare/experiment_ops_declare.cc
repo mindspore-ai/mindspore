@@ -27,12 +27,12 @@ INPUT_MAP(PromptFlashAttention) = {
   {5, INPUT_DESC(padding_mask)},       // optional input
   {6, INPUT_DESC(actual_seq_lengths)}  // optional input
 };
-ATTR_MAP(PromptFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<int64_t>())},
-                                  {"pre_tokens", ATTR_DESC(pre_tokens, AnyTraits<int64_t>())},
-                                  {"next_tokens", ATTR_DESC(next_tokens, AnyTraits<int64_t>())},
-                                  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
-                                  {"num_key_value_heads", ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())},
-                                  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())}};
+ATTR_MAP(PromptFlashAttention) = EMPTY_ATTR_MAP;
+
+INPUT_ATTR_MAP(PromptFlashAttention) = {
+  {7, ATTR_DESC(num_heads, AnyTraits<int64_t>())},         {8, ATTR_DESC(scale_value, AnyTraits<float>())},
+  {9, ATTR_DESC(pre_tokens, AnyTraits<int64_t>())},        {10, ATTR_DESC(next_tokens, AnyTraits<int64_t>())},
+  {11, ATTR_DESC(input_layout, AnyTraits<std::string>())}, {12, ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())}};
 OUTPUT_MAP(PromptFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(PromptFlashAttention, "PromptFlashAttention", ADPT_DESC(PromptFlashAttention))
 
