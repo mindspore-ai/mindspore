@@ -319,6 +319,52 @@ APP_ERROR PluginDvppNormalize(const std::shared_ptr<mindspore::dataset::DeviceTe
   return DvppNormalize(input, output, mean, std, is_hwc);
 }
 
+APP_ERROR PluginDvppAdjustBrightness(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                     std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                     float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustBrightness(input, output, factor);
+}
+
+APP_ERROR PluginDvppAdjustContrast(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                   std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustContrast(input, output, factor);
+}
+
+APP_ERROR PluginDvppAdjustHue(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustHue(input, output, factor);
+}
+
+APP_ERROR PluginDvppAdjustSaturation(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                     std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                     float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustSaturation(input, output, factor);
+}
+
 APP_ERROR PluginGetSocName(std::string *soc_name) { return mindspore::dataset::GetSocName(soc_name); }
 
 APP_ERROR PluginCreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,

@@ -19,6 +19,10 @@ if(NOT BUILD_LITE AND ENABLE_D)
 set(DVPP_IMAGE_SOURCE
         ${DVPP_IMAGE_SOURCE}
         # Ascend910B
+        ascend910b/dvpp_adjust_brightness.cc
+        ascend910b/dvpp_adjust_contrast.cc
+        ascend910b/dvpp_adjust_hue.cc
+        ascend910b/dvpp_adjust_saturation.cc
         ascend910b/dvpp_resize_op.cc
         ascend910b/dvpp_decode_op.cc
         ascend910b/dvpp_normalize_v2_op.cc

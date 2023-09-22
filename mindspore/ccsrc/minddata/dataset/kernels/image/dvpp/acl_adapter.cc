@@ -109,6 +109,10 @@ void AclAdapter::InitPlugin() {
   dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
   dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
   dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
+  dvpp_brightness_fun_obj_ = DlsymFuncObj(DvppAdjustBrightness, plugin_handle_);
+  dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
+  dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
+  dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
 
   // acl
   get_soc_name_fun_obj_ = DlsymFuncObj(GetSocName, plugin_handle_);
@@ -166,6 +170,10 @@ void AclAdapter::FinalizePlugin() {
   dvpp_resize_fun_obj_ = nullptr;
   dvpp_decode_fun_obj_ = nullptr;
   dvpp_normalize_fun_obj_ = nullptr;
+  dvpp_brightness_fun_obj_ = nullptr;
+  dvpp_contrast_fun_obj_ = nullptr;
+  dvpp_hue_fun_obj_ = nullptr;
+  dvpp_saturation_fun_obj_ = nullptr;
   // acl
   get_soc_name_fun_obj_ = nullptr;
   create_acl_tensor_fun_obj_ = nullptr;
@@ -483,6 +491,38 @@ APP_ERROR AclAdapter::DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_normalize_fun_obj_(input, output, mean, std, is_hwc);
+}
+
+APP_ERROR AclAdapter::DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                           std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_brightness_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_brightness_fun_obj_(input, output, factor);
+}
+
+APP_ERROR AclAdapter::DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                         std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_contrast_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_contrast_fun_obj_(input, output, factor);
+}
+
+APP_ERROR AclAdapter::DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_hue_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_hue_fun_obj_(input, output, factor);
+}
+
+APP_ERROR AclAdapter::DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                           std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_saturation_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_saturation_fun_obj_(input, output, factor);
 }
 
 // acl

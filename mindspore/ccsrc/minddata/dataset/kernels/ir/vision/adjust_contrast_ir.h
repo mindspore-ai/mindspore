@@ -33,7 +33,7 @@ constexpr char kAdjustContrastOperation[] = "AdjustContrast";
 
 class AdjustContrastOperation : public TensorOperation {
  public:
-  explicit AdjustContrastOperation(float contrast_factor);
+  explicit AdjustContrastOperation(float contrast_factor, const std::string &device_target = "CPU");
 
   ~AdjustContrastOperation() override = default;
 
@@ -47,8 +47,11 @@ class AdjustContrastOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float contrast_factor_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

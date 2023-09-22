@@ -86,6 +86,34 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                         std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
                         std::vector<float> std, bool is_hwc);
 
+/// \brief Returns image with adjusting brightness
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param factor: brightness factor.
+/// \param output: Augmented image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+/// \brief Returns image with adjusting contrast
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param factor: contrast factor.
+/// \param output: Augmented image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+/// \brief Returns image with adjusting hue
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param factor: hue factor.
+/// \param output: Augmented image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                        std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+/// \brief Returns image with adjusting saturation
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param factor: saturation factor.
+/// \param output: Augmented image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
 APP_ERROR GetSocName(std::string *soc_name);
 
 APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,

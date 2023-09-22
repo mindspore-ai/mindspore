@@ -94,6 +94,18 @@ class AclAdapter {
                           std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
                           std::vector<float> std, bool is_hwc);
 
+  APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
   // acl
   APP_ERROR GetSocName(std::string *soc_name);
 
@@ -155,6 +167,10 @@ class AclAdapter {
   DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppDecodeFunObj dvpp_decode_fun_obj_;
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;
+  DvppAdjustBrightnessFunObj dvpp_brightness_fun_obj_;
+  DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
+  DvppAdjustHueFunObj dvpp_hue_fun_obj_;
+  DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
 
   // acl interface
   GetSocNameFunObj get_soc_name_fun_obj_;

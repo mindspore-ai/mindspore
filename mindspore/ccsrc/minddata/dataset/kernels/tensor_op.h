@@ -81,6 +81,10 @@ constexpr char kDvppDecodePngOp[] = "DvppDecodePngOp";
 constexpr char kDvppNormalizeOp[] = "DvppNormalizeOp";  // used by Ascend310 and Ascend910B
 constexpr char kDvppResizeJpegOp[] = "DvppResizeJpegOp";
 // Ascend910B DVPP used for Python Interface API
+constexpr char kDvppAdjustBrightnessOp[] = "DvppAdjustBrightnessOp";
+constexpr char kDvppAdjustContrastOp[] = "DvppAdjustContrastOp";
+constexpr char kDvppAdjustHueOp[] = "DvppAdjustHueOp";
+constexpr char kDvppAdjustSaturationOp[] = "DvppAdjustSaturationOp";
 constexpr char kDvppDecodeOp[] = "DvppDecodeOp";
 constexpr char kDvppResizeOp[] = "DvppResizeOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
