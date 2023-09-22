@@ -246,13 +246,13 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
       vert_region[i * 2] -= rect_y0;
     }
     temp.Init(x_size, rect_y1 - rect_y0, 3, LDataType::UINT8, false);
-
+    if (temp.IsEmpty()) {
+      MS_LOG(ERROR) << "Image horizontal resize failed, got empty tensor";
+      return false;
+    }
     auto rc = ImagingHorizontalInterp(temp, input, rect_y0, horiz_kernel, horiz_region, horiz_coeff);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "Image horizontal resize failed, error msg is " << rc;
-      return false;
-    }
-    if (temp.IsEmpty()) {
       return false;
     }
     output = input = temp;

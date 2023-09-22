@@ -26,6 +26,7 @@ const int32_t RandomResizeWithBBoxOp::kDefTargetWidth = 0;
 Status RandomResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   // Randomly selects from the following four interpolation methods
   // 0-bilinear, 1-nearest_neighbor, 2-bicubic, 3-area
+  IO_CHECK_VECTOR(input, output);
   interpolation_ = static_cast<InterpolationMode>(distribution_(random_generator_));
   RETURN_IF_NOT_OK(ResizeWithBBoxOp::Compute(input, output));
   return Status::OK();

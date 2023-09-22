@@ -235,6 +235,7 @@ Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, i
 
 Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
                                    const mindrecord::json &columns_json, const mindrecord::TaskType task_type) {
+  RETURN_UNEXPECTED_IF_NULL(tensor_row);
   for (int32_t i_col = 0; i_col < columns_to_load_.size(); i_col++) {
     auto column_name = columns_to_load_[i_col];
 

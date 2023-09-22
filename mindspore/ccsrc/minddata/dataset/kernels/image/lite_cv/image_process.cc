@@ -408,6 +408,7 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
 }
 
 bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (dst_h <= 0 || dst_w <= 0) {
     return false;
   }
@@ -619,6 +620,7 @@ bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType d
 }
 
 bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (src.data_type_ != LDataType::UINT8) {
     return false;
   }
@@ -681,6 +683,7 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 
 template <typename T>
 static bool CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   int dst_h = h;
   int dst_w = w;
   int dst_c = src.channel_;
@@ -706,6 +709,7 @@ static bool CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
 }
 
 bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (x < 0 || y < 0 || w <= 0 || h <= 0) {
     return false;
   }
@@ -766,6 +770,7 @@ static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const
 
 bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
                             const std::vector<float> &std) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (!CheckMeanAndStd(src, dst, src.channel_, mean, std)) {
     return false;
   }
@@ -940,11 +945,12 @@ bool ExtractChannel(LiteMat &src, LiteMat &dst, int col) {
 }
 
 bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (src.data_type_ == LDataType::FLOAT32) {
     const float *src_start_p = src;
     for (int c = 0; c < src.channel_; c++) {
       LiteMat dst;
-      (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      dst.Init(src.width_, src.height_, 1, src.data_type_);
       RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       float *dst_start_p = dst;
       for (int h = 0; h < src.height_; h++) {
@@ -963,7 +969,7 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
     const uint8_t *src_start_p = src;
     for (int c = 0; c < src.channel_; c++) {
       LiteMat dst;
-      (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      dst.Init(src.width_, src.height_, 1, src.data_type_);
       RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       uint8_t *dst_start_p = dst;
       for (int h = 0; h < src.height_; h++) {
@@ -1012,7 +1018,7 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   LDataType data_type = mv[0].data_type_;
 
   // The arrays in list must be single-channel
-  if (std::any_of(mv.begin(), mv.end(), [](const LiteMat &m) { return m.channel_ != 1; })) {
+  if (std::any_of(mv.begin(), mv.end(), [](const LiteMat &m) { return m.IsEmpty() || m.channel_ != 1; })) {
     return false;
   }
 
@@ -1218,7 +1224,7 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 template <typename Pixel_Type>
 bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> &dsize,
                      Pixel_Type borderValue) {
-  if (dsize.size() != 2 || CheckZero(dsize)) {
+  if (src.IsEmpty() || dsize.size() != 2 || CheckZero(dsize)) {
     return false;
   }
 
@@ -1699,6 +1705,8 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
   double n[6];
   LiteMat src1(6, 6, m, LDataType(LDataType::DOUBLE));
   LiteMat src2(1, 6, n, LDataType(LDataType::DOUBLE));
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src1);
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src2);
 
   for (int i = 0; i < 3; i++) {
     int j = i * 12;
@@ -1724,6 +1732,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 }
 
 bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int h, LiteMat &mat) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (data_type == LDataType::UINT8) {
     if (src.IsEmpty()) {
       return false;
@@ -1757,6 +1766,7 @@ bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int 
 }
 
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (data_type == LDataType::UINT8) {
     if (src.IsEmpty()) {
       return false;

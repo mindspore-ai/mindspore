@@ -64,7 +64,7 @@ CelebAOp::CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_si
 #endif
 
 Status CelebAOp::RegisterAndLaunchThreads() {
-  ParallelOp::RegisterAndLaunchThreads();
+  RETURN_IF_NOT_OK(ParallelOp::RegisterAndLaunchThreads());
   RETURN_IF_NOT_OK(attr_info_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this), nullptr, id()));
@@ -250,6 +250,7 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
 }
 
 Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   std::pair<std::string, std::vector<int32_t>> &image_label = image_labels_vec_[row_id];
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;

@@ -46,6 +46,7 @@ ManifestOp::ManifestOp(int32_t num_works, std::string file, int32_t queue_size, 
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status ManifestOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::pair<std::string, std::vector<std::string>> data = image_labelname_[static_cast<size_t>(row_id)];
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;

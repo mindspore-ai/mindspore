@@ -41,7 +41,7 @@ SentencePieceTokenizerOp::SentencePieceTokenizerOp(const std::string &model_path
                                                    const SPieceTokenizerLoadType load_type,
                                                    const SPieceTokenizerOutType out_type)
     : load_type_(load_type), out_type_(out_type) {
-  (void)GetModelRealPath(model_path, model_filename);
+  file_path_ = (Path(model_path) / Path(model_filename)).ToString();
   auto status = processor_.Load(file_path_);
   if (!status.ok()) {
     std::string err_msg = "SentencePieceTokenizer: ";

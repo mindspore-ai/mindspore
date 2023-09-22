@@ -89,6 +89,7 @@ void VOCOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::string image_id = image_ids_[row_id];
   std::vector<std::string> path_list;
   const std::string kImageFile =
@@ -266,6 +267,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   }
   return Status::OK();
 }
+
 Status VOCOp::PrepareData() {
   RETURN_IF_NOT_OK(this->ParseImageIds());
   if (task_type_ == TaskType::Detection) {
@@ -273,6 +275,7 @@ Status VOCOp::PrepareData() {
   }
   return Status::OK();
 }
+
 Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
 #ifdef ENABLE_PYTHON
   RETURN_IF_NOT_OK(MappableLeafOp::ImageDecrypt(path, tensor, decrypt_));
