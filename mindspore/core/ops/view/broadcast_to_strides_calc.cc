@@ -76,7 +76,7 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
   std::vector<int64_t> new_shape(ndim);
   for (int i = ndim - 1; i >= 0; --i) {
     auto offset = ndim - 1 - i;
-    auto dim = tensor_ndim - 1 - offset;
+    int dim = tensor_ndim - 1 - offset;
     auto size = (dim >= 0) ? old_shape[dim] : 1;
     auto stride = (dim >= 0) ? old_strides[dim] : new_shape[i + 1] * new_strides[i + 1];
     auto target_size = input_x[i];

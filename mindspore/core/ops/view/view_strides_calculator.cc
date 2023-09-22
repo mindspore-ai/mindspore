@@ -89,7 +89,7 @@ OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor) {
   OldTensorInfo old_tensor_info;
   if (tensor->storage_info() == nullptr) {
     auto shape = tensor->shape();
-    auto strides = GetOriStrides(tensor->shape());
+    auto strides = GetOriStrides(shape);
     old_tensor_info.old_shape = shape;
     old_tensor_info.ori_shape = shape;
     old_tensor_info.ori_strides = strides;
