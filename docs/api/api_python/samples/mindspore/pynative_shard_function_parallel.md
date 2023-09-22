@@ -1,6 +1,6 @@
 # 函数式算子切分
 
-<a href="https://gitee.com/mindspore/mindspore/blob/r2.1/docs/api/api_python/samples/mindspore/pynative_shard_function_parallel.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/r2.1/resource/_static/logo_source.png"></a>
+<a href="https://gitee.com/mindspore/mindspore/blob/r2.1/docs/api/api_python/samples/mindspore/pynative_shard_function_parallel.md" target="_blank"><img src="https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/r2.1/resource/_static/logo_source.svg"></a>
 
 ## 概述
 
