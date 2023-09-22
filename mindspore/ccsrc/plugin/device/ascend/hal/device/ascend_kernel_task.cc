@@ -156,7 +156,7 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   MS_LOG(DEBUG) << "Start";
 
   auto input = MallocMemoryForDeviceAddressWithOffset(src_addr_info, device_context);
-  auto output = MallocMemoryForDeviceAddress(dst_addr_info->addr, device_context);
+  auto output = MallocMemoryForDeviceAddressWithOffset(dst_addr_info, device_context);
 
   auto prim = std::make_shared<Primitive>(transform::kNameAsStrided);
   prim->set_attr(ops::kSize, MakeValue(src_addr_info->storage->shape));
