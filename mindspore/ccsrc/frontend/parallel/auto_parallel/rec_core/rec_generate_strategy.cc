@@ -855,6 +855,7 @@ Dimensions CopyVirtualDataset(Graph::NodeType *node, const std::shared_ptr<Opera
   Dimensions strategy;
   auto input_stra_dim = op->inputs_shape()[0].size();
   auto virtual_dataset_str = CheckVirtualDatasetStrategy(node);
+  MS_EXCEPTION_IF_ZERO("Virtual_Dataset", virtual_dataset_str);
   if (input_stra_dim == 0) {
     return strategy;
   } else {
@@ -1907,9 +1908,7 @@ void RecStrategyPropagator::SetParamStrategy() {
         auto param_shape = ops_[user.first]->inputs_shape()[user.second];
         auto ratio = 0;
         for (size_t idx = 0; idx < strategy.size(); idx++) {
-          if (strategy[idx] == 0) {
-            MS_LOG(EXCEPTION) << "divisors cannot be 0!";
-          }
+          MS_EXCEPTION_IF_ZERO("strategy", strategy[idx]);
           ratio += param_shape[idx] / strategy[idx];
         }
 
@@ -1937,9 +1936,7 @@ Strategies MakeGatherStratFromParam(const std::shared_ptr<OperatorInfo> &op, Dim
     for (size_t i = 0; i < param_strategy.size(); i++) {
       num_device_used *= param_strategy[i];
     }
-    if (num_device_used == 0) {
-      MS_LOG(EXCEPTION) << "divisors cannot be 0!";
-    }
+    MS_EXCEPTION_IF_ZERO("num_device_used", num_device_used);
     index_strategy.push_back(g_device_manager->stage_device_num() / num_device_used);
   } else {
     index_strategy.push_back(1);
@@ -2079,6 +2076,7 @@ size_t RecStrategyPropagator::ModifyParamSharingOpsStrategy() {
             for (size_t i = 0; i < str_j.size(); i++) {
               num_device_used *= LongToSize(str_j[i]);
             }
+            MS_EXCEPTION_IF_ZERO("num_device_used", num_device_used);
             index_strategy.push_back(g_device_manager->stage_device_num() / num_device_used);
 
             for (size_t i = 1; i < ops_[op_i]->inputs_shape()[1].size(); ++i) {
