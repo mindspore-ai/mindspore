@@ -603,9 +603,12 @@ def _tensor_index_by_bool(data, bool_value):
     """Tensor getitem by a single bool value"""
     min_data_dim, max_data_dim = 0, 7
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+    output = data
     if bool_value:
-        return F.expand_dims(data, 0)
-    return const_utils.raise_index_error("When tensor is indexed by a bool object, the value only support 'True'.")
+        output = F.expand_dims(data, 0)
+    elif not F.is_sequence_value_unknown(F.shape(data)):
+        return const_utils.raise_index_error("When tensor is indexed by a bool object, the value only support 'True'.")
+    return output
 
 
 def get_stride_info_from_integer(tensor_int):
@@ -653,7 +656,8 @@ def _check_dim_shape_valid(data, tensor_index):
 
 def tensor_index_by_bool_tensor(data, tensor_index):
     """Tensor getitem by a bool tensor"""
-    _check_dim_shape_valid(data, tensor_index)
+    if not F.is_sequence_value_unknown(F.shape(data)):
+        _check_dim_shape_valid(data, tensor_index)
     tensor_index = tensor_index.nonzero()
     return F.gather_nd(data, tensor_index)
 
@@ -1103,7 +1107,7 @@ def _generate_updates_from_sequence(data, index, value, op_type):
 def _generate_updates_from_tensor(data, index, value, op_type):
     """Generate an updates tensor from a tensor."""
     value = value.astype(data.dtype)
-    if F.is_sequence_value_unknown(F.shape(data)):
+    if F.is_sequence_value_unknown(F.shape(data)) or F.is_sequence_value_unknown(F.shape(index)):
         data_shape = F.dyn_shape(data)
         index_shape = F.dyn_shape(index)
         updates_shape = const_utils.generate_updates_shape(data_shape, index_shape, op_type, True)
@@ -1422,6 +1426,7 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     for non_zero_shape in non_zero_shapes:
         if F.reduce_min(non_zero_shape) == 0:
             return data
+    value = value.astype(data.dtype)
     special_index, tuple_index, new_value_shape, idx_advanced = _pre_setitem_by_tuple(data, tuple_index, value)
     if special_index == 0:
         return data
@@ -1431,6 +1436,9 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
         return data
     indices = _tensor_index_setitem(data, tuple_index, value, idx_advanced)
     updates = _generate_updates_from_tensor(data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
+    if is_parameter(data):
+        F.scatter_nd_update(data, indices, updates)
+        return data
     return F.tensor_scatter_update(data, indices, updates)
 
 def tensor_itemset_by_tuple_with_tensor(data, tuple_index, value):
