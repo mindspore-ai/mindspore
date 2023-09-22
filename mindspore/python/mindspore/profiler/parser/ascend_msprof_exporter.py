@@ -14,6 +14,7 @@
 # ============================================================================
 """msprof PROF data export api file"""
 import os
+import shutil
 from collections import defaultdict
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
@@ -43,6 +44,7 @@ class AscendMsprofExporter:
     _msprof_cmd = "msprof"
     _ascend_mark = "Ascend"
     _summary_dir = "summary"
+    _timeline_dir = "timeline"
     _step_trace_mark = "step_trace"
     _op_summary_mark = "op_summary"
     _op_statistic_mark = "op_statistic"
@@ -139,6 +141,7 @@ class AscendMsprofExporter:
         """"generate model_id iteration_id dict"""
 
         summary_path = os.path.join(device_path, self._summary_dir)
+        timeline_path = os.path.join(device_path, self._timeline_dir)
 
         msprof_export_cmd = self._msprof_command_generator(prof_path)
         self._run_cmd(msprof_export_cmd)
@@ -165,6 +168,11 @@ class AscendMsprofExporter:
                     Iteration_ID = index
             for row in reader:
                 step_trace[int(row[Model_ID])].append(int(row[Iteration_ID]))
+
+        if os.path.isdir(summary_path):
+            shutil.rmtree(summary_path)
+        if os.path.isdir(timeline_path):
+            shutil.rmtree(timeline_path)
 
         return step_trace
 
