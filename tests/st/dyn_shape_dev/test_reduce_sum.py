@@ -35,6 +35,7 @@ def reduce_sum_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_sum(mode):
     """
@@ -49,16 +50,17 @@ def test_reduce_sum(mode):
     expect_out = np.array([[2.006294, 2.160638, 4.39038]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
 
-    grads = reduce_sum_backward_func(x)
+    grad = reduce_sum_backward_func(x)
     expect_grad = np.array([[1, 1, 1],
                             [1, 1, 1]]).astype(np.float32)
-    assert np.allclose(grads.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
+    assert np.allclose(grad.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_sum_vmap(mode):
     """

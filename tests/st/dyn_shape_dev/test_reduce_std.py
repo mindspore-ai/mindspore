@@ -34,7 +34,7 @@ def reduce_std_backward_func(x):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_std(mode):
     """
@@ -51,11 +51,17 @@ def test_reduce_std(mode):
     expect_mean = np.array([[1.003147, 1.080319, 2.19519]]).astype(np.float32)
     assert np.allclose(out[1].asnumpy(), expect_mean, rtol=1e-4, atol=1e-4)
 
+    grad = reduce_std_backward_func(x)
+    expect_grad = np.array([[-0.207107, 1.207107, -0.207107],
+                            [1.207107, -0.207107, 1.207107]]).astype(np.float32)
+    assert np.allclose(grad.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_std_vmap(mode):
     """

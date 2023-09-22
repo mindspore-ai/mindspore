@@ -1901,12 +1901,13 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
     return {std_d, std, mean_d, mean};
   };
-  auto cond = ib->LogicalAnd(ib->Equal(unbiased, ib->Value<bool>(false)), ib->Value<bool>(!(ib->GetShape(x).empty())));
+  auto keep_dims_t = ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value(kBool)});
+  auto cond = ib->LogicalAnd(keep_dims_t, ib->Tensor(!(ib->GetShape(x).empty()), kBool));
   auto cond_block = ib->Conditional(cond, true_branch, false_branch);
-  std_d = ib->TensorGetItem(cond_block, 0);
-  std = ib->TensorGetItem(cond_block, 1);
-  mean_d = ib->TensorGetItem(cond_block, 2);
-  mean = ib->TensorGetItem(cond_block, 3);
+  std_d = ib->TupleGetItem(cond_block, 0);
+  std = ib->TupleGetItem(cond_block, 1);
+  mean_d = ib->TupleGetItem(cond_block, 2);
+  mean = ib->TupleGetItem(cond_block, 3);
 
   auto dx = ib->Sub(x, mean);
   dx = ib->Mul(dx, std_d);
@@ -1919,9 +1920,8 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   };
   auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
   auto unbiased_cond_block = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
-  dx = ib->TensorGetItem(unbiased_cond_block, 0);
   auto temp = ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d)));
-  dx = ib->Add(dx, temp);
+  dx = ib->Add(unbiased_cond_block, temp);
   return {dx, ib->OutZeros(axis), ib->OutZeros(unbiased), ib->OutZeros(keep_dims)};
 });
 

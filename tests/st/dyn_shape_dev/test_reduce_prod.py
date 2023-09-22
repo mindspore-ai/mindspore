@@ -35,6 +35,7 @@ def reduce_prod_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_prod(mode):
     """
@@ -49,16 +50,17 @@ def test_reduce_prod(mode):
     expect_out = np.array([[0.646909, 3.578468]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
 
-    grads = reduce_prod_backward_func(x)
+    grad = reduce_prod_backward_func(x)
     expect_grad = np.array([[1.649469, 0.435752, 0.582241],
                             [2.217002, 5.293146, 1.091225]]).astype(np.float32)
-    assert np.allclose(grads.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
+    assert np.allclose(grad.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_prod_vmap(mode):
     """

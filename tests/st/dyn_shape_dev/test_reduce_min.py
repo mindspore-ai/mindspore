@@ -35,6 +35,7 @@ def reduce_min_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_min(mode):
     """
@@ -49,16 +50,17 @@ def test_reduce_min(mode):
     expect_out = np.array([0.248653, 0.004394]).astype(np.float32)
     assert (out.asnumpy() == expect_out).all()
 
-    grads = reduce_min_backward_func(x)
-    expect_grad = ms.Tensor(np.array([[1, 0, 0],
-                                      [0, 1, 0]]).astype(np.float32))
-    assert (grads.asnumpy() == expect_grad).all()
+    grad = reduce_min_backward_func(x)
+    expect_grad = np.array([[1, 0, 0],
+                            [0, 1, 0]]).astype(np.float32)
+    assert (grad.asnumpy() == expect_grad).all()
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_reduce_min_vmap(mode):
     """
