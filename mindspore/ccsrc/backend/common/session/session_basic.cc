@@ -160,7 +160,6 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
     tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   }
   MS_EXCEPTION_IF_NULL(tensor);
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
   if (is_internal_output) {
     tensor->set_sync_status(kNoNeedSync);
   } else {
@@ -227,7 +226,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{param_init_data_type});
   } else {
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
-    kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
+    kernel_build_info_builder->SetOutputsReshapeType({device_address->padding_type()});
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
     AnfAlgo::SetOutputAddr(device_address, 0, param.get());
   }

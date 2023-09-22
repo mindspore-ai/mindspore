@@ -376,6 +376,7 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       new_address->set_flag(old_address->flag());
       auto [node, index] = old_address->GetNodeIndex();
       new_address->SetNodeIndex(node, index);
+      new_address->set_padding_type(old_address->padding_type());
       AnfAlgo::SetOutputAddr(new_address, data_node_with_index.second, data_node_with_index.first.get());
     }
   }

@@ -225,6 +225,7 @@ void UpdateTensorAddress(const session::BackendOpRunInfoPtr &op_run_info,
     MS_EXCEPTION_IF_NULL(output_promise);
 
     const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
+    device_address->set_padding_type(AnfAlgo::GetOutputReshapeType(node_index.first, node_index.second));
     output_promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
     (void)outputs->emplace_back(output_tensor);
 
@@ -255,6 +256,7 @@ void UpdateTensorAddressDynamic(const session::BackendOpRunInfoPtr &op_run_info,
     MS_EXCEPTION_IF_NULL(output_tensor);
     auto &output_promise = output_promises[i];
     MS_EXCEPTION_IF_NULL(output_promise);
+    device_address_list[i]->set_padding_type(op_compiler_info->graph_outputs_padding_type_[i]);
     output_promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address_list[i], nullptr));
     (void)outputs->emplace_back(output_tensor);
     if (exec_mode != kPynativeMode) {
@@ -575,12 +577,12 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
   const auto &shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
   // Put device tensor into host tensor.
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
   device_tensor->SetNodeIndex(output_node, output_index);
+  device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   tensor->set_device_address(device_tensor);
   tensor->set_sync_status(kNeedSyncDeviceToHost);
 
@@ -606,10 +608,10 @@ TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_inf
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto tensor = std::make_shared<tensor::Tensor>(address->type_id(), address->host_shape());
-  tensor->set_padding_type(op_compiler_info->graph_outputs_padding_type_[idx_in_graph_outputs]);
 
   // Put device tensor into host tensor.
   address->SetNodeIndex(output_node, output_index);
+  address->set_padding_type(op_compiler_info->graph_outputs_padding_type_[idx_in_graph_outputs]);
   tensor->set_device_address(address);
 
   // MindRT is disabled in the multi graphs scenario

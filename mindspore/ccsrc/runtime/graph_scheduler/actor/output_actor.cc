@@ -230,7 +230,6 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   // Set tensor base shape for restoring the tuple output when output node is dynamic sequence.
   if (common::AnfAlgo::IsDynamicSequence(output_node)) {
     tensor->set_base_shape(output_node->Shape());
@@ -244,6 +243,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   if (device_context->GetDeviceType() != device_tensor->GetDeviceType()) {
     auto old_device_context = device_context;
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(

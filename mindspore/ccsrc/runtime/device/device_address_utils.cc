@@ -653,6 +653,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   new_device_address->ResetRefCount();
   auto node = old_device_address->GetNodeIndex();
   new_device_address->SetNodeIndex(node.first, node.second);
+  new_device_address->set_padding_type(old_device_address->padding_type());
   return new_device_address;
 }
 }  // namespace runtime
