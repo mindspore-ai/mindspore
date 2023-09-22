@@ -570,6 +570,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
   MS_LOG(DEBUG) << "Start AutoGradCellImpl, input size: " << input_param_values.size();
   ad_param()->variable_adjoint_set_.reserve(op_num_in_bprop_graph);
   ad_param()->anfnode_to_variable_adjoint_.reserve(op_num_in_bprop_graph);
+  ad_param()->users_.dout_user_.reserve(op_num_in_bprop_graph);
   weights_used_in_graph_.reserve(op_num_in_bprop_graph);
 
   for (size_t i = 0; i < input_param_values.size(); ++i) {
@@ -1969,17 +1970,11 @@ void AutoGradCellImpl::LazyAddUser(const AnfNodePtr &node, const CNodePtr &user,
 
 void AutoGradCellImpl::AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(ad_param_);
-  if (ad_param()->users_.dout_user_.find(node) == ad_param()->users_.dout_user_.end()) {
-    ad_param()->users_.dout_user_[node] = {};
-  }
   (void)ad_param()->users_.dout_user_[node].emplace_back(user, index);
 }
 
 void AutoGradCellImpl::AddTupleGetItemUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(ad_param_);
-  if (ad_param()->users_.tuple_getitem_user_.find(node) == ad_param()->users_.tuple_getitem_user_.end()) {
-    ad_param()->users_.tuple_getitem_user_[node] = {};
-  }
   (void)ad_param()->users_.tuple_getitem_user_[node].emplace_back(user, index);
 }
 
