@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include <string>
-#include "prof_mgr_core.h"
 #include "prof_callback.h"
 #include "acl/acl_prof.h"
 #include "toolchain/prof_api.h"
@@ -35,24 +34,6 @@ int RegisterEngine(const std::string &module, const EngineIntf *engine) { return
 
 }  // namespace Engine
 }  // namespace Msprof
-
-/**
- * @name  : ProfMgrStartUP
- * @berif : start Profiling task
- * @param : ProfMgrCfg cfg : config of start_up profiling
- * @return: NO_NULL (success)
- *        NULL (failed)
- */
-void *ProfMgrStartUp(const ProfMgrCfg *cfg) { return const_cast<void *>(reinterpret_cast<const void *>(cfg)); }
-
-/**
- * @name  : ProfMgrStop
- * @berif : stop Profiling task
- * @param : void * handle return by ProfMgrStartUP
- * @return: PROFILING_SUCCESS 0 (success)
- *        PROFILING_FAILED -1 (failed)
- */
-int ProfMgrStop(void *handle) { return 0; }
 
 namespace Analysis::Dvvp::ProfilerSpecial {
 uint32_t MsprofilerInit() { return 0; }

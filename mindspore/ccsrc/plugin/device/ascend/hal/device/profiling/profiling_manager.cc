@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include <cstdlib>
 #include "securec/include/securec.h"
-#include "./prof_mgr_core.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
