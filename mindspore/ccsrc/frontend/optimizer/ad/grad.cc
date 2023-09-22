@@ -269,11 +269,15 @@ bool MergeForward(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     if (!IsPrimitiveCNode(node, prim::kPrimJ)) {
       continue;
     }
-    if (!node->cast<CNodePtr>()->HasAttr("merge_forward")) {
+    auto cnode = node->cast<CNodePtr>();
+    auto merge_forward = cnode->user_data<bool>("merge_forward");
+    if (merge_forward == nullptr || !(*merge_forward)) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
     auto forward_fg = GetValueNode<FuncGraphPtr>(cnode->input(1));
+    if (forward_fg == nullptr) {
+      continue;
+    }
     (void)forward_fg_to_j_nodes[forward_fg].emplace_back(node);
   }
   bool change = false;

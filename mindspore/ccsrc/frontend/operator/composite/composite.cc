@@ -1276,7 +1276,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
   inputs.push_back(param_graph);
   auto j = grad_fg->NewCNodeInOrder(inputs);
   if (merge_forward_) {
-    j->AddAttr("merge_forward", MakeValue(true));
+    j->set_user_data<bool>("merge_forward", std::make_shared<bool>(true));
   }
   // df is checked in GetGrad
   FuncGraphPtr k_child = nullptr;
