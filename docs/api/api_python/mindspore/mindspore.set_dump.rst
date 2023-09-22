@@ -19,3 +19,10 @@ mindspore.set_dump
     参数：
         - **target** (Union[Cell, Primitive]) - 要设置Dump标志的Cell或Primitive的实例。
         - **enabled** (bool，可选) - ``True`` 表示启用Dump， ``False`` 表示禁用Dump，默认值： ``True`` 。
+
+    样例：
+
+    .. note::
+
+        运行此样例之前请设置环境变量 `MINDSPORE_DUMP_CONFIG` 到配置文件，并将配置文件中的 `dump_mode` 字段设置为2。
+        详细信息请参阅 `Dump功能文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/dump.html>`_ 。
