@@ -300,6 +300,7 @@ void AclRunner::SetOpPrecisionMode() {
   if (op_precision_mode.empty()) {
     return;
   }
+  MS_LOG(DEBUG) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
   auto ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set op precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
