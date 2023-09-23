@@ -19,13 +19,12 @@
 #include <string>
 #include <utility>
 #include "Eigen/Dense"
-#include "mindspore/core/ops/qr.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kAMatrixDimNumMin = 2;
-constexpr size_t kQRInputsNum = 1;
+constexpr size_t kQRInputsNum = 2;
 constexpr size_t kQROutputsNum = 2;
 constexpr size_t kPivotsIndex = 1;
 constexpr size_t kPermutationIndex = 2;
@@ -45,7 +44,7 @@ bool QrCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  full_matrices_ = GetValue<bool>(primitive_->GetAttr("full_matrices"));
+  full_matrices_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   return true;
 }
 
@@ -125,19 +124,32 @@ bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inp
 }
 
 std::vector<std::pair<KernelAttr, QrCpuKernelMod::QrFunc>> QrCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16),
    &QrCpuKernelMod::LaunchKernel<Eigen::half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &QrCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &QrCpuKernelMod::LaunchKernel<double>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex64)
      .AddOutputAttr(kNumberTypeComplex64),
    &QrCpuKernelMod::LaunchKernel<std::complex<float>>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
      .AddOutputAttr(kNumberTypeComplex128)
      .AddOutputAttr(kNumberTypeComplex128),
    &QrCpuKernelMod::LaunchKernel<std::complex<double>>}};

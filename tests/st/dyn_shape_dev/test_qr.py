@@ -20,13 +20,13 @@ from mindspore import ops
 
 
 @ms.jit
-def prelu_forward_func(x, weight):
-    return ops.auto_generate.prelu(x, weight)
+def qr_forward_func(x, full_matrices):
+    return ops.auto_generate.qr_(x, full_matrices)
 
 
 @ms.jit
-def prelu_backward_func(x, weight):
-    return ops.grad(prelu_forward_func, (0, 1))(x, weight)
+def qr_backward_func(x, full_matrices):
+    return ops.grad(qr_forward_func, (0, 1))(x, full_matrices)
 
 
 @pytest.mark.level0
@@ -35,33 +35,24 @@ def prelu_backward_func(x, weight):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_prelu_forward(mode):
+def test_qr_forward(mode):
     """
-    Feature: prelu ops.
-    Description: test ops prelu.
+    Feature: qr ops.
+    Description: test ops qr.
     Expectation: output right results.
     """
     context.set_context(mode=mode)
-    x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
-    weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
-    output = prelu_forward_func(x, weight)
-    print("output:", output)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_prelu_backward(mode):
-    """
-    Feature: prelu ops.
-    Description: test auto grad of ops prelu.
-    Expectation: output the right grad.
-    """
-    context.set_context(mode=mode)
-    x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
-    weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
-    output = prelu_backward_func(x, weight)
-    print("output:", output)
+    x = Tensor(np.array([[20., -31, 7],
+                         [4, 270, -90],
+                         [-8, 17, -32]]).astype(np.float32))
+    output_q, output_r = qr_forward_func(x, False)
+    print("output_q:\n", output_q)
+    print("output_r:\n", output_r)
+    expect_output_q = np.asarray([[-0.912871, 0.16366126, 0.37400758],
+                                  [-0.18257418, -0.9830709, -0.01544376],
+                                  [0.36514837, -0.08238228, 0.92729706]]).astype(np.float32)
+    expect_output_r = np.asarray([[-21.908903, -14.788506, -1.6431675],
+                                  [0., -271.9031, 92.25824],
+                                  [0., 0., -25.665514]]).astype(np.float32)
+    assert np.allclose(output_q.asnumpy(), expect_output_q)
+    assert np.allclose(output_r.asnumpy(), expect_output_r)

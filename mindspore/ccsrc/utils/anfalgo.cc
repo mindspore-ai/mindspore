@@ -2055,7 +2055,7 @@ const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePt
 
   // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
   if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node) ||
-      (node->isa<CNode>() &&
+      (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
        (mindspore::AnfAlgo::GetOutputKernelObjectType(node, 0) == kernel::KernelObjectType::TUPLE))) {
     MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
                                "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
