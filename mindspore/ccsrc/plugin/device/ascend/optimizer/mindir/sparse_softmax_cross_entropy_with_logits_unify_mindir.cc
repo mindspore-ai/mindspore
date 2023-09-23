@@ -335,11 +335,11 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
       tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), shape_node};
     } else {
       auto multiples = MakeValue(batch_size);
-      auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
-      MS_EXCEPTION_IF_NULL(multiples_node);
+      std::vector<int64_t> multiples_v = {batch_size};
       auto kernel_graph = graph->cast<KernelGraphPtr>();
       MS_EXCEPTION_IF_NULL(kernel_graph);
-      kernel_graph->AddValueNodeToGraph(multiples_node);
+      auto multiples_node = CreateTensorInput(kernel_graph, NewValueNode(multiples_v));
+      MS_EXCEPTION_IF_NULL(multiples_node);
       tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), multiples_node};
     }
   }
