@@ -21,6 +21,7 @@
 #include "transform/graph_ir/custom_op_proto/cust_elewise_calculation_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/array_ops.h"
+#include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/nn_optimizer_ops.h"
@@ -47,6 +48,7 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
+REG_ADPT_DESC(ScalarAdd, prim::kPrimScalarAdd->name(), ADPT_DESC(Add))
 
 // AddV2
 INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -406,6 +408,7 @@ INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cast, prim::kPrimCast->name(), ADPT_DESC(Cast))
+REG_ADPT_DESC(ScalarCast, prim::kPrimScalarCast->name(), ADPT_DESC(Cast))
 
 // Reciprocal
 INPUT_MAP(Reciprocal) = {{1, INPUT_DESC(x)}};
