@@ -84,10 +84,6 @@ CUST_INFER_FUNC_REG(AdaptiveAvgPool2DGrad, AdaptiveAvgPool2dGradInferShape);
 
 // --------- AdaptiveAvgPool3d ---------------
 IMPLEMT_COMMON_INFERFUNC(AdaptiveAvgPool3dInferShape) {
-  map<int, std::string> format2str = {
-    {ge::FORMAT_NCHW, "NCHW"},   {ge::FORMAT_NHWC, "NHWC"},   {ge::FORMAT_HWCN, "HWCN"},  {ge::FORMAT_DHWNC, "DHWNC"},
-    {ge::FORMAT_DHWCN, "DHWCN"}, {ge::FORMAT_NDHWC, "NDHWC"}, {ge::FORMAT_NCDHW, "NCDHW"}};
-
   // verify the dim of output_size
   std::vector<int64_t> output_size;
   if (GRAPH_SUCCESS != op.GetAttr("output_size", output_size)) {
@@ -102,18 +98,6 @@ IMPLEMT_COMMON_INFERFUNC(AdaptiveAvgPool3dInferShape) {
   // update data type
   DataType input_type = input_desc.GetDataType();
   out_desc.SetDataType(input_type);
-
-  // update format
-  Format input_format = input_desc.GetFormat();
-  std::string format_str = format2str[input_format];
-  if (input_format != FORMAT_NCHW) {
-    OP_LOGE("AdaptiveAvgPool3d",
-            "Input format only support NCHW"
-            ", input format is [%s]",
-            format_str.c_str());
-    return GRAPH_FAILED;
-  }
-  out_desc.SetFormat(input_format);
 
   std::vector<int64_t> input_size_shape = input_desc.GetShape().GetDims();
   auto input_size_dim_num = input_size_shape.size();
@@ -176,27 +160,11 @@ CUST_IMPLEMT_VERIFIER(AdaptiveAvgPool3dGrad, AdaptiveAvgPool3dGradVerify) {
 }
 
 IMPLEMT_COMMON_INFERFUNC(AdaptiveAvgPool3dGradInferShape) {
-  map<int, std::string> format2str = {
-    {ge::FORMAT_NCHW, "NCHW"},   {ge::FORMAT_NHWC, "NHWC"},   {ge::FORMAT_HWCN, "HWCN"},  {ge::FORMAT_DHWNC, "DHWNC"},
-    {ge::FORMAT_DHWCN, "DHWCN"}, {ge::FORMAT_NDHWC, "NDHWC"}, {ge::FORMAT_NCDHW, "NCDHW"}};
-
   auto input_desc = op.GetInputDescByName("input_grad");
   auto orig_input_shape_desc = op.GetInputDescByName("orig_input_shape");
   TensorDesc out_desc = op.GetOutputDescByName("output_grad");
   ge::AscendString op_name;
   (void)op.GetName(op_name);
-
-  // update format
-  Format input_format = input_desc.GetFormat();
-  std::string format_str = format2str[input_format];
-  if (input_format != FORMAT_NCHW) {
-    OP_LOGE("AdaptiveAvgPool3dGrad",
-            "Input format only support NCHW"
-            ", input format is [%s]",
-            format_str.c_str());
-    return GRAPH_FAILED;
-  }
-  out_desc.SetFormat(input_format);
 
   // update data type
   DataType input_type = input_desc.GetDataType();

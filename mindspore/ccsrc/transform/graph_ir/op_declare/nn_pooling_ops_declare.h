@@ -104,8 +104,12 @@ DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool3dGrad)
 DECLARE_CUST_OP_ADAPTER(AdaptiveMaxPool2dGrad)
 DECLARE_CUST_OP_USE_OUTPUT(AdaptiveMaxPool2dGrad)
 
+// hotfix only for lite
 DECLARE_OP_ADAPTER(AdaptiveAvgPool2d)
 DECLARE_OP_USE_OUTPUT(AdaptiveAvgPool2d)
+
+DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool2D)
+DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool2D)
 
 DECLARE_CUST_OP_ADAPTER(AdaptiveAvgPool3d)
 DECLARE_CUST_OP_USE_OUTPUT(AdaptiveAvgPool3d)
