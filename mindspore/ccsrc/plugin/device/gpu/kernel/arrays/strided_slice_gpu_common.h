@@ -34,6 +34,8 @@ class StridedSliceGpuCommon {
   StridedSliceGpuCommon() : null_output_(false) {}
   ~StridedSliceGpuCommon() = default;
 
+  inline bool IsEmptyInput(int input_size) { return input_size == 0; }
+
   void CollectInfo(const BaseOperatorPtr &base_operator) {
     auto shape_tmp = Convert2Long(input_shape_);
     FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp, true);
