@@ -8679,50 +8679,53 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Note:
-        - Currently, complex numbers are not supported.
-        - Running on ``Ascend`` platform is not supported when ord is `2` , `-2` or `nuc` .
+        Currently, complex numbers are not supported.
 
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ops.arange(-12, 13, dtype=ms.float32)
+        >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
+        >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
+        >>> x = data_range[data_range != 0]
         >>> y = x.reshape(5, 5)
         >>> print(ops.norm(x))
-        36.05551
+        38.327538
         >>> print(ops.norm(x, float('inf')))
-        12.0
+        13.0
         >>> print(ops.norm(x, float('-inf')))
-        0.0
+        1.0
         >>> print(ops.norm(x, 0))
-        24.0
+        25.0
         >>> print(ops.norm(x, 1))
-        156.0
+        169.0
         >>> print(ops.norm(x, -1))
-        0.0
+        0.15915091
         >>> print(ops.norm(x, 2))
-        36.05551
+        38.327538
         >>> print(ops.norm(x, -2))
-        0.0
+        0.5647041
         >>> print(ops.norm(x, 3))
-        23.000631
+        24.309084
         >>> print(ops.norm(x, -3))
-        0.0
+        0.74708974
         >>> print(ops.norm(y))
-        36.05551
+        38.327538
         >>> print(ops.norm(y, 'fro'))
-        36.05551
+        38.327538
         >>> print(ops.norm(y, 'nuc'))
-        42.42641
+        45.56681
         >>> print(ops.norm(y, float('inf')))
-        50.0
+        55.0
         >>> print(ops.norm(y, float('-inf')))
-        6.0
+        9.0
         >>> print(ops.norm(y, 1))
-        32.0
+        35.0
         >>> print(ops.norm(y, -1))
-        30.0
+        33.0
         >>> print(ops.norm(y, 2))
-        35.355343
+        37.57774
+        >>> print(ops.norm(y, -2))
+        1.590545e-07
         >>> m = ms.Tensor([[1., -1., 2.], [-2., 3., -4.]])
         >>> print(ops.norm(m, dim=0))
         [2.236068  3.1622777 4.472136 ]
@@ -8730,6 +8733,10 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         [2.4494898 5.3851647]
         >>> print(ops.norm(m, ord=1, dim=1))
         [4. 9.]
+        >>> print(ops.norm(m, ord=-2, dim=0))
+        [0.8944272  0.94868326 1.7888544 ]
+        >>> print(ops.norm(m, ord=2, dim=1))
+        [2.4494898 5.3851647]
         >>> n = ops.arange(27, dtype=ms.float32).reshape(3, 3, 3)
         >>> print(ops.norm(n, dim=(1, 2)))
         [14.282857 39.76179  66.45299 ]
