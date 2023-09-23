@@ -1507,7 +1507,8 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto data_args = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(data_args);
   // Not check if the data is from PyExecute CNode.
-  if (!IsPyExecuteData(data_args)) {
+  // Do not check the validity of the attribute in the variable scenario.
+  if (!IsPyExecuteData(data_args) && !raiseutils::HasVariableCondition(fg)) {
     TypePtr data_type = data_args->BuildType();
     MS_EXCEPTION_IF_NULL(data_type);
     auto item_args = args_abs_list[1];

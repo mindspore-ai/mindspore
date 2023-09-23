@@ -173,3 +173,36 @@ def test_get_attr_form_param_2():
     net = HyperMapNet(param_attr_fg)
     output = net(x)
     assert output == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_attr_in_control_flow_no_check():
+    """
+    Feature: test  the validity of the attribute in graph mode.
+    Description: Do not check the validity of the attribute in the variable scenario.
+    Expectation: success
+    """
+    class GetattrClass():
+        def __init__(self):
+            self.attr1 = 99
+            self.attr2 = 1
+
+        def method1(self, x):
+            return x + self.attr2
+
+    class SizeNet(ms.nn.Cell):
+        def __init__(self):
+            super(SizeNet, self).__init__()
+            self.cls = GetattrClass()
+
+        def construct(self, x):
+            if isinstance(self.cls.method1(x), dict):
+                return x.keys()
+            return x
+
+    net = SizeNet()
+    x = Tensor([4])
+    out = net(x)
+    assert out == 4
