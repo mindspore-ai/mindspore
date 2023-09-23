@@ -285,8 +285,10 @@ def check_statistic_dump(dump_file_path):
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
 
-def check_data_dump(dump_file_path):
+def check_data_dump(dump_file_path, is_ge=False):
     output_name = "Add.Add-op*.output.0.*.npy"
+    if is_ge:
+        output_name = "Add.*Add-op*.output.0.*.npy"
     output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
     real_path = os.path.realpath(output_path)
     output = np.load(real_path)
