@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/api/model.h"
 #include <jni.h>
+#include <cstring>
+#include "include/api/model.h"
 #include "common/log_adapter.h"
 #include "include/api/serialization.h"
 
@@ -461,7 +462,14 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *e
             release_ptr_to_java(env, ptr_array, jarr_inputs);
             return (jboolean) false;
         }
-        ms_tensor.SetData(java_data, false);
+        auto *local_data = ms_tensor.MutableData();
+        if (local_data == nullptr) {
+          MS_LOG(ERROR) << "data_arr or local_data is nullptr.";
+          env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
+          release_ptr_to_java(env, ptr_array, jarr_inputs);
+          return (jboolean) false;
+        }
+        std::memcpy(local_data, java_data, ms_tensor.DataSize());
     }
     auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
     auto status = lite_model_ptr->RunStep(nullptr, nullptr);
