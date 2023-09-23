@@ -106,6 +106,10 @@ bool CheckContainsDict(const AbstractBasePtr &abs) {
   if (abs->isa<AbstractDictionary>()) {
     return true;
   }
+  auto from_dict = abs->user_data<bool>("from_dict");
+  if (from_dict != nullptr && *from_dict) {
+    return true;
+  }
   if (abs->isa<AbstractSequence>()) {
     auto abs_seq = abs->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
