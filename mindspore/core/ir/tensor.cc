@@ -684,7 +684,6 @@ Tensor::Tensor(const Tensor &tensor)
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
-      padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
@@ -713,7 +712,6 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
-      padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
@@ -744,7 +742,6 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   base_shape_ptr_ = tensor.base_shape_ptr_;
   cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
   hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
-  padding_type_ = tensor.padding_type();
   device_event_ = tensor.device_event_;
   lazy_callback_ = tensor.lazy_callback_;
   pin_mem_register_ = tensor.pin_mem_register_;
@@ -948,7 +945,6 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     event_ = tensor.event_;
     need_wait_ = tensor.need_wait_;
     sync_status_ = tensor.sync_status_;
-    padding_type_ = tensor.padding_type_;
     device_event_ = tensor.device_event_;
   }
   return *this;

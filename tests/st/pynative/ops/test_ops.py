@@ -193,3 +193,33 @@ def test_primitive_avgpool():
     net1 = Net1()
     net2 = Net2()
     test_inner(net1, net2, input_1, kernel_size, strides, int_type, bool_type, none_type, output_grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bn_with_special_format():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test BatchNorm with special format.
+    Expectation: No exception.
+    """
+    data = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
+    ms_bn = ms.ops.BatchNorm(is_training=True, epsilon=1e-05)
+    input_x = ms.Tensor(data)
+    scale = ms.Parameter(ms.ops.ones(3).astype(ms.float32))
+    bias = ms.Parameter(ms.ops.zeros(3).astype(ms.float32))
+    mean = ms.Parameter(ms.ops.zeros(3).astype(ms.float32))
+    variance = ms.Parameter(ms.ops.ones(3).astype(ms.float32))
+
+    out1 = ms_bn(input_x, scale, bias, mean, variance)[0]
+    out1_except = np.array([[-0.9999978, -0.99999774, -0.99999785], [0.9999978, 0.99999785, 0.9999976]],
+                           dtype=np.float32)
+    assert (out1.asnumpy() == out1_except).all()
+
+    # out1 is a Tensor with 5d format.
+    out2 = ms_bn(out1, scale, bias, mean, variance)[0]
+    out2_except = np.array([[-0.99999505, -0.99999505, -0.999995], [0.99999505, 0.99999505, 0.999995]],
+                           dtype=np.float32)
+    assert (out2.asnumpy() == out2_except).all()

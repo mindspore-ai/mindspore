@@ -323,7 +323,7 @@ void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
       MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
       kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{address->format()});
       kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{address->type_id()});
-      kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
+      kernel_build_info_builder->SetOutputsReshapeType({address->padding_type()});
       AnfAlgo::SetOutputAddr(address, 0, parameter.get());
       AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), parameter.get());
 

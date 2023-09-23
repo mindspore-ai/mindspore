@@ -156,6 +156,8 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   const std::string &format() const { return format_; }
   void set_format(const std::string &format) { format_ = format; }
+  const std::string &padding_type() const { return padding_type_; }
+  void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
@@ -303,6 +305,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   mutable void *ptr_{nullptr};
   size_t size_{0};
   string format_{"DefaultFormat"};
+  std::string padding_type_;
   TypeId type_id_{kNumberTypeFloat16};
   mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
