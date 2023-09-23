@@ -80,27 +80,10 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
     MS_LOG(ERROR) << "device id is wrong, device id: " << device_id << ", device count: " << device_count;
     return nullptr;
   }
-  if (current_device_id != device_id) {
-    auto ret = aclrtSetDevice(device_id);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "aclrtSetDevice failed.";
-      return nullptr;
-    }
-  }
-  if (acl_contexts_.find(device_id) == acl_contexts_.end()) {
-    aclrtContext context;
-    auto ret = aclrtCreateContext(&context, device_id);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Acl create context failed.";
-      return nullptr;
-    }
-    acl_contexts_[device_id] = context;
-  } else {
-    auto ret = aclrtSetCurrentContext(acl_contexts_[device_id]);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Acl set context from stored map failed.";
-      return nullptr;
-    }
+  auto ret = aclrtSetDevice(device_id);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtSetDevice failed.";
+    return nullptr;
   }
   void *device_data = nullptr;
   auto acl_ret = aclrtMalloc(&device_data, size, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -108,24 +91,18 @@ void *AclAllocator::Malloc(size_t size, int device_id) {
     MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
     return nullptr;
   }
-  if (GetCurrentDeviceId() != current_device_id) {
-    ResetDeviceId(current_device_id);
-  }
+  MS_LOG(DEBUG) << "aclrtMalloc device data addr: " << device_data << ", device id: " << device_id;
   return device_data;
 }
 
 void AclAllocator::Free(void *device_data, int device_id) {
   if (device_data != nullptr) {
-    if (acl_contexts_.find(device_id) == acl_contexts_.end()) {
-      MS_LOG(ERROR) << "context with device " << device_id << " is nullptr";
+    auto ret = aclrtSetDevice(device_id);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclrtSetDevice failed.";
       return;
-    } else {
-      auto ret = aclrtSetCurrentContext(acl_contexts_[device_id]);
-      if (ret != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Acl set context from stored map failed.";
-        return;
-      }
     }
+    MS_LOG(DEBUG) << "aclrtFree device data addr: " << device_data << ", device id: " << device_id;
     aclrtFree(device_data);
     device_data = nullptr;
   }
@@ -142,24 +119,32 @@ void *AclAllocator::MallocHost(size_t size) {
     MS_LOG(ERROR) << "Call aclrtMallocHost failed, err_code = " << acl_ret;
     return nullptr;
   }
+  MS_LOG(DEBUG) << "aclrtMallocHost data addr: " << host_data;
   return host_data;
 }
 
 void AclAllocator::FreeHost(void *host_data) {
   if (host_data != nullptr) {
+    MS_LOG(DEBUG) << "aclrtFreeHost data addr: " << host_data;
     aclrtFreeHost(host_data);
     host_data = nullptr;
   }
 }
 
-Status AclAllocator::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size) {
+Status AclAllocator::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size, int device_id) {
   if (device_data == nullptr || host_data == nullptr) {
     MS_LOG(ERROR) << "device data or host data ptr is nullptr.";
     return kLiteMemoryFailed;
   }
-  auto ret = aclrtMemcpy(host_data, data_size, device_data, data_size, ACL_MEMCPY_DEVICE_TO_HOST);
+  auto ret = aclrtSetDevice(device_id);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "copy device data to host failed, data size: " << data_size;
+    MS_LOG(ERROR) << "aclrtSetDevice failed.";
+    return kLiteMemoryFailed;
+  }
+  ret = aclrtMemcpy(host_data, data_size, device_data, data_size, ACL_MEMCPY_DEVICE_TO_HOST);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "copy device data: " << device_data << " to host: " << host_data
+                  << " failed, data size: " << data_size;
     return kLiteMemoryFailed;
   }
   return kSuccess;
@@ -172,7 +157,8 @@ Status AclAllocator::CopyHostDataToDevice(void *host_data, void *device_data, si
   }
   auto ret = aclrtMemcpy(device_data, data_size, host_data, data_size, ACL_MEMCPY_HOST_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "copy host data to device failed, data size: " << data_size;
+    MS_LOG(ERROR) << "copy host data: " << host_data << " to device: " << device_data
+                  << " failed, data size: " << data_size;
     return kLiteMemoryFailed;
   }
   return kSuccess;

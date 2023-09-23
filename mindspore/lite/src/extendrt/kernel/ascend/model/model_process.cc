@@ -480,10 +480,12 @@ bool ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, 
 
 void ModelProcess::DestroyInputsBuffer() {
   for (const auto &item : input_infos_) {
-    if (!is_run_on_device_) {
-      aclrtFree(item.device_data);
-    } else {
-      aclrtFreeHost(item.device_data);
+    if (item.device_data != nullptr) {
+      if (!is_run_on_device_) {
+        aclrtFree(item.device_data);
+      } else {
+        aclrtFreeHost(item.device_data);
+      }
     }
     if (item.dynamic_acl_tensor_desc != nullptr) {
       aclDestroyTensorDesc(item.dynamic_acl_tensor_desc);
@@ -505,10 +507,12 @@ void ModelProcess::DestroyInputsBuffer() {
 void ModelProcess::DestroyOutputsBuffer() {
   if (!is_dynamic_output_) {
     for (const auto &item : output_infos_) {
-      if (!is_run_on_device_) {
-        aclrtFree(item.device_data);
-      } else {
-        aclrtFreeHost(item.device_data);
+      if (item.device_data != nullptr) {
+        if (!is_run_on_device_) {
+          aclrtFree(item.device_data);
+        } else {
+          aclrtFreeHost(item.device_data);
+        }
       }
     }
   }
@@ -1112,7 +1116,8 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
         output->SetHostData(std::make_shared<kernel::Address>(data_buf_ptr, output_desc_size));
         output->SetData(nullptr);
         dyn_out_sys_buf_addr_ = output->GetHostData()->addr;
-        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_;
+        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_
+                      << ", size: " << output_desc_size;
       } else {
         if (host_data == nullptr) {
           MS_LOG(ERROR) << "critical error! found user defined buffer nullptr";
