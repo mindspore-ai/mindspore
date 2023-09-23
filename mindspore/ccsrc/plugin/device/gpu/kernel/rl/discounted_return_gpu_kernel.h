@@ -30,26 +30,32 @@ constexpr auto kGammaAttrName = "gamma";
 constexpr size_t kInputNum = 3;
 
 template <typename T>
-class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class DiscountedReturnGpuKernelMod : public NativeGpuKernelMod {
  public:
   DiscountedReturnGpuKernelMod() = default;
   ~DiscountedReturnGpuKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    gamma_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    size_t input_num = inputs.size();
     if (input_num != kInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << kInputNum << ", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
                         << input_num;
     }
+    return true;
+  }
 
-    const std::vector<int64_t> &reward_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    const std::vector<int64_t> &done_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    for (const auto &input : inputs) {
+      auto input_shape = input->GetShapeVector();
+      if (!IsValidShape(input_shape)) {
+        return KRET_UNKNOWN_SHAPE;
+      }
+    }
+    gamma_ = GetValue<float>(primitive_->GetAttr(kGammaAttrName));
+    const std::vector<int64_t> &reward_shape = inputs[kIndex0]->GetDeviceShapeVector();
+    const std::vector<int64_t> &done_shape = inputs[kIndex1]->GetDeviceShapeVector();
     if (reward_shape.size() == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of reward cannot be 0, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of reward cannot be 0, but got "
                         << reward_shape.size();
     }
 
@@ -68,15 +74,12 @@ class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     MS_EXCEPTION_IF_ZERO("env_num", env_num_);
     element_per_env_ = total_elements / timestep_ / env_num_;
 
-    input_size_list_.push_back(total_elements * sizeof(T));
-    input_size_list_.push_back(timestep_ * env_num_ * sizeof(bool));
-    input_size_list_.push_back(env_num_ * element_per_env_ * sizeof(T));
     output_size_list_.push_back(total_elements * sizeof(T));
-    return true;
+    return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream) override {
     T *reward = GetDeviceAddress<T>(inputs, 0);
     bool *done = GetDeviceAddress<bool>(inputs, 1);
     T *last_value = GetDeviceAddress<T>(inputs, 2);
@@ -87,8 +90,6 @@ class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-
-  void InitSizeLists() override{};
 
  private:
   float gamma_ = 0.99;

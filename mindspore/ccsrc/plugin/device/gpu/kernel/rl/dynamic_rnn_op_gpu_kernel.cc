@@ -28,10 +28,7 @@ namespace {
 constexpr size_t kDimOfTensor = 3;
 }  // namespace
 
-bool DynamicRnnOpBaseMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool DynamicRnnOpBaseMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num_, kernel_name_);
   InitResource();
@@ -51,17 +48,17 @@ bool DynamicRnnOpBaseMod::Init(const BaseOperatorPtr &base_operator, const std::
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   max_seq_len_ = static_cast<int>(input_shape[0]);
   auto input_size = static_cast<int>(input_shape[kIndexTwo]);
-  input_size_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("input_size")));
+  input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
   if (input_size != input_size_) {
     MS_LOG(EXCEPTION) << "The input size from inputs :" << input_size
                       << " is not equal to input size from attrs: " << input_size_;
   }
-  hidden_size_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("hidden_size")));
-  num_layers_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("num_layers")));
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
-  bidirectional_ = GetValue<bool>(base_operator->GetAttr("bidirectional"));
-  dropout_ = GetValue<float>(base_operator->GetAttr("dropout"));
-  is_train_ = GetValue<bool>(base_operator->GetAttr("is_train"));
+  hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
+  num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
+  bidirectional_ = GetValue<bool>(primitive_->GetAttr("bidirectional"));
+  dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
+  is_train_ = GetValue<bool>(primitive_->GetAttr("is_train"));
   const auto &func_list = GetSupportFuncList();
   kernel_func_ = func_list[index].second;
   return true;
@@ -74,9 +71,7 @@ void DynamicRnnOpBaseMod::ResetResource() noexcept {
   reserved_size_ = 0;
 }
 
-int DynamicRnnOpBaseMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int DynamicRnnOpBaseMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   batch_size_ = static_cast<int>(input_shape[1]);
@@ -161,8 +156,9 @@ int DynamicRnnOpBaseMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool DynamicRnnOpBaseMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicRnnOpBaseMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   VARIABLE_NOT_USED(stream_ptr);
 
@@ -292,7 +288,7 @@ void DynamicRnnOpBaseMod::SetRNNDesc() {
 #endif
 }
 
-void DynamicRnnOpBaseMod::CheckWeightSize(const std::vector<KernelTensorPtr> &inputs) {
+void DynamicRnnOpBaseMod::CheckWeightSize(const std::vector<KernelTensor *> &inputs) {
   auto weight_shape = inputs[inputs_w_index_]->GetShapeVector();
   size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[kIndexTwo] * input_type_size_;
   if (weight_size != weight_size_) {

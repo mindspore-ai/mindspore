@@ -47,21 +47,21 @@ TagEnvironment::~TagEnvironment() {
   FinalizeAgentState(agent_state_host_);
 }
 
-bool TagEnvironment::InitGameSetting(const CNodePtr &cnode, GameSetting *setting_host) {
+bool TagEnvironment::InitGameSetting(const mindspore::PrimitivePtr &prim, GameSetting *setting_host) {
   MS_EXCEPTION_IF_NULL(setting_host);
 
-  setting_host->seed = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kSeedAttr);
-  setting_host->predator_num = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kPredatorNumAttr);
-  setting_host->max_timestep = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMaxTimestepAttr);
-  setting_host->map_length = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapLengthAttr);
-  setting_host->map_width = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapWidthAttr);
-  setting_host->wall_hit_penalty = common::AnfAlgo::GetNodeAttr<float>(cnode, kWallHitPenaltyAttr);
-  setting_host->catch_reward = common::AnfAlgo::GetNodeAttr<float>(cnode, kCatchRewardAttr);
-  setting_host->caught_penalty = common::AnfAlgo::GetNodeAttr<float>(cnode, kCaughtPenaltyAttr);
-  setting_host->step_cost = common::AnfAlgo::GetNodeAttr<float>(cnode, kStepCostAttr);
-  setting_host->partially_observation = common::AnfAlgo::GetNodeAttr<bool>(cnode, kPartiallyObsAttr);
+  setting_host->seed = GetValue<int64_t>(prim->GetAttr(kSeedAttr));
+  setting_host->predator_num = GetValue<int64_t>(prim->GetAttr(kPredatorNumAttr));
+  setting_host->max_timestep = GetValue<int64_t>(prim->GetAttr(kMaxTimestepAttr));
+  setting_host->map_length = GetValue<int64_t>(prim->GetAttr(kMapLengthAttr));
+  setting_host->map_width = GetValue<int64_t>(prim->GetAttr(kMapWidthAttr));
+  setting_host->wall_hit_penalty = GetValue<float>(prim->GetAttr(kWallHitPenaltyAttr));
+  setting_host->catch_reward = GetValue<float>(prim->GetAttr(kCatchRewardAttr));
+  setting_host->caught_penalty = GetValue<float>(prim->GetAttr(kCaughtPenaltyAttr));
+  setting_host->step_cost = GetValue<float>(prim->GetAttr(kStepCostAttr));
+  setting_host->partially_observation = GetValue<bool>(prim->GetAttr(kPartiallyObsAttr));
 
-  env_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kEnvNumAttr);
+  env_num_ = GetValue<int64_t>(prim->GetAttr(kEnvNumAttr));
   agent_num_ = setting_host->predator_num + 1;
   return true;
 }
@@ -95,8 +95,8 @@ bool TagEnvironment::FinalizeAgentState(const AgentState &agent_setting) {
   return true;
 }
 
-bool TagEnvironment::Init(const CNodePtr &cnode, void *stream_ptr) {
-  InitGameSetting(cnode, &game_setting_host_);
+bool TagEnvironment::Init(const mindspore::PrimitivePtr &prim, void *stream_ptr) {
+  InitGameSetting(prim, &game_setting_host_);
   InitAgentState(&agent_state_host_);
 
   // Move the game setting to device.
@@ -122,22 +122,22 @@ bool TagEnvironment::Init(const CNodePtr &cnode, void *stream_ptr) {
   return true;
 }
 
-bool TagEnvironment::Reset(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto state = reinterpret_cast<float *>(outputs[0]->addr);
+bool TagEnvironment::Reset(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto state = reinterpret_cast<float *>(outputs[0]->device_ptr());
   auto status = ResetEnv(env_num_, agent_num_, game_setting_device_, agent_state_device_, state,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, "Reset_ResetEnv");
   return true;
 }
 
-bool TagEnvironment::Step(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto action = reinterpret_cast<int *>(inputs[0]->addr);
-  auto state = reinterpret_cast<float *>(outputs[0]->addr);
-  auto reward = reinterpret_cast<float *>(outputs[1]->addr);
-  auto done = reinterpret_cast<bool *>(outputs[2]->addr);
-  auto team_reward = reinterpret_cast<float *>(workspace[0]->addr);
+bool TagEnvironment::Step(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto action = reinterpret_cast<int *>(inputs[0]->device_ptr());
+  auto state = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto reward = reinterpret_cast<float *>(outputs[1]->device_ptr());
+  auto done = reinterpret_cast<bool *>(outputs[2]->device_ptr());
+  auto team_reward = reinterpret_cast<float *>(workspace[0]->device_ptr());
   auto distance = reinterpret_cast<int *>(team_reward + env_num_);
   StepKernelProfiling(action, state, reward, done, team_reward, distance, reinterpret_cast<cudaStream_t>(stream_ptr));
   cudaError_t status = cudaErrorNotReady;
