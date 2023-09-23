@@ -286,7 +286,7 @@ def test_enumerate_start_type_error():
     net = Net()
     with pytest.raises(TypeError) as ex:
         net(x)
-    assert "For 'enumerate', the 'start'" in str(ex.value)
+    assert "input should be a int scalar but got" in str(ex.value)
 
 
 def test_fallback_enumerate_with_numpy():
