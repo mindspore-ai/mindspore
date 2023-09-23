@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#ifndef __linux__
 #include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel_func.h"
 #include <utility>
 #include <map>
@@ -165,4 +164,3 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
 }
 }  // namespace kernel
 }  // namespace mindspore
-#endif
