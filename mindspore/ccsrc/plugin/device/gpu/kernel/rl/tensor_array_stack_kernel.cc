@@ -30,17 +30,16 @@ TensorArrayStackKernelMod::TensorArrayStackKernelMod()
   ResetResource();
 }
 
-bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  auto shape = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  auto max_element = GetAttr<int64_t>(kernel_node, "max_element");
-  is_dynamic_ = GetAttr<bool>(kernel_node, "is_dynamic_shape");
-  auto size = GetAttr<int64_t>(kernel_node, "size");
+int TensorArrayStackKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto shape = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
+  auto max_element = GetValue<int64_t>(primitive_->GetAttr("max_element"));
+  is_dynamic_ = GetValue<bool>(primitive_->GetAttr("is_dynamic_shape"));
+  auto size = GetValue<int64_t>(primitive_->GetAttr("size"));
   for (auto i : shape) {
     shapes_.push_back(LongToSizeClipNeg(i));
   }
-  type_ = GetAttr<TypePtr>(kernel_node, "dtype");
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
   ele_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     ele_size_ *= i;
@@ -54,13 +53,20 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
     }
     value_size_ = ele_size_ * LongToSize(size);
   }
-  InitSizeLists();
+  output_size_list_.clear();
+  output_size_list_.push_back(value_size_);
+  return KRET_OK;
+}
+
+bool TensorArrayStackKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-void TensorArrayStackKernelMod::SyncOutputShape() {
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                             "TensorArrayStack cudaStreamSynchronized failed");
+void TensorArrayStackKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "TensorArrayStack cudaStreamSynchronized failed");
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_EXCEPTION_IF_NULL(tensors_);
   size_t tensor_size = tensors_->GetValidSize();
@@ -69,6 +75,7 @@ void TensorArrayStackKernelMod::SyncOutputShape() {
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
   // common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
   outputs_[0]->SetShapeVector(Convert2Long(shape));
+  outputs_[0]->set_size(value_size_);
 }
 
 void TensorArrayStackKernelMod::ResetResource() noexcept {
@@ -82,13 +89,8 @@ void TensorArrayStackKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-void TensorArrayStackKernelMod::InitSizeLists() {
-  output_size_list_.push_back(value_size_);
-  input_size_list_.push_back(sizeof(int64_t));
-}
-
-bool TensorArrayStackKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorArrayStackKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   stream_ptr_ = stream_ptr;
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
@@ -100,11 +102,11 @@ bool TensorArrayStackKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
 
   // Set out_value to zeros when TensorArray in static size.
   if (!is_dynamic_) {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(out_value, 0, outputs[0]->size, cuda_stream),
-                               "For 'TensorArrayStack', Cudamemset output value failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(out_value, 0, outputs[0]->size(), cuda_stream),
+                                       "For 'TensorArrayStack', Cudamemset output value failed");
   }
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&handle_, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&handle_, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream),
     "For 'TensorArrayStack', get handle to host failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "cuda Stream Sync Failed");
@@ -115,10 +117,9 @@ bool TensorArrayStackKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
     MS_LOG(EXCEPTION) << "Invalid TensorArray size, maybe should Clear() TensorArray before next usage.";
   }
   for (size_t i = 0; i < tensors_->GetValidSize(); i++) {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(out_value + ele_size_ * i, tensors_->GetTensorAddr(i), ele_size_,
-                                               cudaMemcpyDeviceToDevice, cuda_stream),
-                               "For 'TensorArrayStack', stack value failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(out_value + ele_size_ * i, tensors_->GetTensorAddr(i), ele_size_,
+                                                       cudaMemcpyDeviceToDevice, cuda_stream),
+                                       "For 'TensorArrayStack', stack value failed");
   }
   return true;
 }
