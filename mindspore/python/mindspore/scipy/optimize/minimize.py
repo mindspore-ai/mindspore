@@ -99,10 +99,14 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
             if it is a callable, it should be a function that returns the gradient vector:
             :math:`jac(x, *args) -> array\_like, shape (n,)`
             where x is an array with shape :math:`(n,)` and args is a tuple with the fixed parameters.
+        hess (Callable, optional): Method for calculating the Hessian Matrix. Not implemented yet.
+        hessp (Callable, optional): Hessian of objective function times an arbitrary vector `p`. Not implemented yet.
+        bounds (Sequence, optional): Sequence of `(min, max)` pairs for each element in `x`. Not implemented yet.
+        constraints (Callable, optional): representing the inequality constrains, each function in constrains indicates
+            the function < 0 as an inequality constrain.
         tol (float, optional): tolerance for termination. For detailed control, use solver-specific
             options. Default: ``None`` .
-        constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates
-            the function < 0 as an inequality constrain.
+        callback (Callable, optional): A callable called after each iteration. Not implemented yet.
         options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
             generic options. Default: ``None`` .
 
@@ -111,7 +115,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
             - maxiter (int): Maximum number of iterations to perform. Depending on the
               method each iteration may use several function evaluations.
 
-        The follow options are exclusive to Lagrange method:
+            The follow options are exclusive to Lagrange method:
 
             - save_tol (list): list of saving tolerance, with the same length with 'constrains'.
             - obj_weight (float): weight for objective function, usually between 1.0 - 100000.0.
