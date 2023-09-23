@@ -139,7 +139,11 @@ Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
+bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph);
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph);
+bool IsCommunicationOp(const PrimitivePtr &prim);
 }  // namespace parallel
 }  // namespace mindspore
 

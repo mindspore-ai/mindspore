@@ -729,6 +729,10 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
       replace_node->set_primal_attrs(node->primal_attrs());
     }
+    replace_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(replace_node->UniqueId()));
+    if (node->HasPrimalAttr(MICRO)) {
+      replace_node->AddPrimalAttr(MICRO, node->GetPrimalAttr(MICRO));
+    }
     replace_node->set_in_forward_flag(true);
     replace_input[0]->set_scope(scope);
     if (replace_op_info_flag && replace_op_info[index].first) {
@@ -3018,6 +3022,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
+  bool merged = MergeConcatSlice(all_nodes, manager);
+  if (merged) {
+    all_nodes = DeepScopedGraphSearch(ret);
+    std::reverse(all_nodes.begin(), all_nodes.end());
+  }
   if (pipeline_stages <= 1 && parallel_mode != kAutoParallel && ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }
