@@ -62,7 +62,7 @@ size_t OffloadContext::offload_cpu_size() {
     offload_cpu_size_ = mindspore::GetSystemMemorySize(kMemAvailable);
     MS_LOG(INFO) << "Offload cpu size is not set, please set this via the context.set_offload_context() method.";
   }
-  auto retention_mem_size = std::min(kGBToByte, static_cast<size_t>(offload_cpu_size_ * kMemRetentionTate));
+  auto retention_mem_size = static_cast<size_t>(offload_cpu_size_ * kMemRetentionTate);
   return offload_cpu_size_ - retention_mem_size;
 }
 
