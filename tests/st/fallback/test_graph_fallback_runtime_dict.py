@@ -19,6 +19,7 @@ import mindspore as ms
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import ops, Parameter, Tensor
 import mindspore.common.dtype as mstype
+from mindspore.nn import Cell
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -1043,3 +1044,43 @@ def test_return_dict_with_string_input_grad():
     x = Tensor(2)
     out = ops.grad(dict_net, grad_position=(0, 1))(x, "a")
     assert out == Tensor(1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_with_different_size_branch():
+    """
+    Feature: Support dict return.
+    Description: The if and else branch return dict of different size.
+    Expectation: Return the correct dict.
+    """
+    class InnerNet(Cell):
+        def construct(self, x, y):
+            return [x, y]
+
+    class DictNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.obj = InnerNet()
+
+        def construct(self, z):
+            x = [1, 2, 3]
+            y = [4, 5, 6]
+            if z >= 0:
+                ret = {k: v for k, v in zip(x, y)}
+            else:
+                d = [[i, sum(self.obj(x, y)[i])] for i in range(2)]
+                ret = {k: v for k, v in d}
+            return ret
+
+    ms_net = DictNet()
+    z = Tensor(0)
+    ms_out = ms_net(z)
+    assert ms_out == {1: 4, 2: 5, 3: 6}
+
+    z = Tensor(-1)
+    ms_out = ms_net(z)
+    assert ms_out == {0: 6, 1: 15}

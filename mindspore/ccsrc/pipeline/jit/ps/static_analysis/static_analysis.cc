@@ -1307,6 +1307,10 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
       auto joined_any = std::make_shared<AbstractJoinedAny>();
       joined_any->set_exception(AbstractJoinedAny::ExceptionType::kDefault);
       joined_any->set_message(info);
+      // Remove it when the transform form dict to tuple is disabled in Compatible or Lax mode.
+      if (joined_abs->isa<AbstractDictionary>()) {
+        joined_any->set_user_data<bool>("from_dict", std::make_shared<bool>(true));
+      }
       SetUseFlagsForJoinedAny(out_abs_list);
       return std::make_shared<EvalResult>(joined_any, std::make_shared<AttrValueMap>());
     }
