@@ -213,6 +213,21 @@ bool ValueProblem::operator==(const Value &other) const {
 
 bool ValueProblem::operator==(const ValueProblem &other) const { return err_type_ == other.err_type_; }
 
+std::string ValueNamedTuple::ToString() const {
+  std::ostringstream buffer;
+  buffer << "namedtuple[" << type_name_ << "](";
+  for (size_t i = 0; i < keys_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(keys_[i]);
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    buffer << "'" << keys_[i]->ToString() << "':" << elements_[i]->ToString();
+    if (i != keys_.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << ")";
+  return buffer.str();
+}
+
 std::size_t ValueSlice::hash() const {
   MS_EXCEPTION_IF_NULL(start_);
   MS_EXCEPTION_IF_NULL(stop_);

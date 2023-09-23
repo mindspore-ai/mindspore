@@ -221,6 +221,24 @@ py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBa
     }
     return res_sequeue.cast<py::list>();
   }
+  // Convert ValueNamedTuple whose object's type is tuple and size is not 0.
+  if (value->isa<ValueNamedTuple>()) {
+    auto value_named_tuple = value->cast<ValueNamedTuplePtr>();
+    MS_LOG(DEBUG) << "Convert ValueNamedTuple: " << value_named_tuple->ToString();
+    auto keys = value_named_tuple->key();
+    auto keys_size = keys.size();
+    py::tuple key_sequeue(keys_size);
+    py::tuple ele_sequeue(keys_size);
+    for (size_t i = 0; i < keys_size; i++) {
+      key_sequeue[i] = ValueToPyData(keys[i]);
+      ele_sequeue[i] = ValueToPyData(value_sequeue[i]);
+    }
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::str type_name = py::str(value_named_tuple->name());
+    py::object named_tuple =
+      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_TO_NAMEDTUPLE, type_name, key_sequeue, ele_sequeue);
+    return named_tuple;
+  }
   py::tuple res_sequeue(value_size);
   if (abs != nullptr && abs->isa<abstract::AbstractSequence>() &&
       abs->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {

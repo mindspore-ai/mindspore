@@ -244,7 +244,9 @@ ValuePtr ConvertNamedTuple(const py::object &obj, bool use_signature) {
     keys.push_back(key);
     values.push_back(value);
   }
-  return std::make_shared<ValueNamedTuple>(keys, values);
+  auto obj_name = obj.attr("__class__").attr("__name__");
+  std::string type_name = py::str(obj_name).cast<std::string>();
+  return std::make_shared<ValueNamedTuple>(type_name, keys, values);
 }
 
 ValuePtr ConvertStubTuple(const py::object &obj, bool use_signature) {
