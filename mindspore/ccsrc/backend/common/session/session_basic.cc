@@ -1128,6 +1128,24 @@ void SessionBasic::SetSummaryNodesForAllGraphs(KernelGraph *graph, const std::ve
   MS_LOG(INFO) << "The total summary nodes is: " << summary.size();
 }
 
+void SessionBasic::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
+  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
+  MS_EXCEPTION_IF_NULL(graph);
+  SetSummaryNodes(graph);
+  auto &summary_nodes = graph->summary_nodes();
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary;
+  summary.insert(summary_nodes.cbegin(), summary_nodes.cend());
+  auto &child_graphs = graph->child_graph_order();
+  for (auto &child_graph : child_graphs) {
+    SetSummaryNodes(child_graph.lock().get());
+    auto &child_graph_summary = child_graph.lock()->summary_nodes();
+    summary.insert(child_graph_summary.cbegin(), child_graph_summary.cend());
+    RecurseSetSummaryNodesForAllGraphs(child_graph.lock().get());
+  }
+  graph->set_summary_nodes(summary);
+  MS_LOG(INFO) << "The total summary nodes is: " << summary.size() << " for graph: " << graph->graph_id();
+}
+
 void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);

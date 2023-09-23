@@ -240,6 +240,7 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
 #ifndef ENABLE_SECURITY
   virtual void SetSummaryNodes(KernelGraph *graph);
   void SetSummaryNodesForAllGraphs(KernelGraph *graph, const std::vector<KernelGraphPtr> &all_graphs);
+  void RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph);
   void RecurseSetSummaryNodes(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs,
                               std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
 #endif
