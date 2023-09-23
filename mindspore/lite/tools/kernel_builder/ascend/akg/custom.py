@@ -33,6 +33,8 @@ FP16_MAX = 65504
 def copy_shape(shape):
     """Deep copy shape"""
     res = []
+    if isinstance(shape, int):
+        shape = [shape]
     for _, s in enumerate(shape):
         res.append(s)
     return res
@@ -350,31 +352,31 @@ class Reduce(OpInfer):
                 out_shape.append(s)
         return out_shape
 
-    def _get_axis(self, axis, rank):
-        axis_attr = self.get_attr("axis")
+    def _get_axis(self, rank):
+        axis_input = self.input_desc[1]["value"]
         axis = []
-        if isinstance(axis_attr, int):
-            axis = [axis_attr]
+        if isinstance(axis_input, int):
+            axis = [axis_input + rank if axis_input < 0 else axis_input]
         else:
-            axis = [i + rank if i < 0 else i for i in axis_attr]
+            axis = [i + rank if i < 0 else i for i in axis_input]
         return axis
 
     def supported_type(self):
         in_type = self.input_desc[0]["data_type"]
         if in_type == "float16":
-            return ["float16,float16", "float32,float32"]
+            return ["float16,int64,float16", "float32,int64,float32"]
         if in_type == "float32":
-            return ["float32,float32"]
+            return ["float32,int64,float32"]
         return ",".join([in_type, in_type])
 
     def supported_format(self):
-        supported_formats = ["ND,ND"]
+        supported_formats = ["ND,DefaultFormat,ND"]
         shape = self.input_desc[0]["shape"]
         rank = len(shape)
-        axis = self._get_axis(self.get_attr("axis"), rank)
+        axis = self._get_axis(rank)
         if self.is_nz(shape):
             if self._out_nz(rank, axis):
-                supported_formats.append("FRACTAL_NZ,FRACTAL_NZ")
+                supported_formats.append("FRACTAL_NZ,DefaultFormat,FRACTAL_NZ")
         return supported_formats
 
     def infer_shape(self):
@@ -383,7 +385,7 @@ class Reduce(OpInfer):
             ori_shape, cur_shape = self.input_desc[0]["ori_shape"], self.input_desc[0]["shape"]
             ori_rank = len(ori_shape)
             rank = len(cur_shape)
-            axis = [i + ori_rank if i < 0 else i for i in self.get_attr("axis")]
+            axis = self._get_axis(rank)
             new_axis = []
             for i in axis:
                 if i == ori_rank - 1:
@@ -392,7 +394,8 @@ class Reduce(OpInfer):
                     new_axis.extend([rank - 3, rank - 2])
                 else:
                     new_axis.append(i)
-            self.set_attr("axis", new_axis)
+            self.input_desc[1]["value"] = new_axis
+            self.input_desc[1]["shape"] = [len(new_axis)]
             self.output_desc[0]["shape"] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
         else:
             self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
@@ -400,7 +403,7 @@ class Reduce(OpInfer):
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
         rank = len(shape)
-        axis = self._get_axis(self.get_attr("axis"), rank)
+        axis = self._get_axis(rank)
         self.output_desc[0]["ori_shape"] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
 
 
@@ -408,7 +411,7 @@ class Reshape(OpInfer):
     """Reshape op."""
 
     def supported_format(self):
-        return ["ND,ND"]
+        return ["ND,DefaultFormat,ND"]
 
     def infer_shape(self):
         """Reshape keeps ND format, so the output shape will not be changed"""
@@ -416,7 +419,7 @@ class Reshape(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
-        out_shape = copy_shape(self.get_attr("shape"))
+        out_shape = copy_shape(self.input_desc[1]["value"])
         if -1 in out_shape:
             idx = out_shape.index(-1)
             tmp = []
@@ -445,7 +448,7 @@ class ExpandDimAndSqueeze(Reshape):
 
 class Squeeze(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.get_attr("axis"))
+        axis = self.copy_axis(self.input_desc[1]["value"])
         input_shape = copy_shape(self.input_desc[0]["shape"])
         for idx in axis:
             if input_shape[idx] != 1:
@@ -456,7 +459,7 @@ class Squeeze(ExpandDimAndSqueeze):
 
 class ExpandDim(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.get_attr("axis"))
+        axis = self.copy_axis(self.input_desc[1]["value"])
         input_shape = copy_shape(self.input_desc[0]["shape"])
         for idx in axis:
             input_shape.insert(idx, 1)
@@ -506,7 +509,7 @@ class Tile(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
-        multiples = self.get_attr("multiples")
+        multiples = self.input_desc[1]["value"]
         if len(multiples) < len(shape):
             raise ValueError("The length of attr 'multiples' must be >= the length of input shape, but got attr "
                              "'multiples': {}, input shape: {}".format(multiples, shape))

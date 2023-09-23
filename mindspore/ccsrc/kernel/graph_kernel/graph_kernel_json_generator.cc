@@ -277,38 +277,7 @@ void SetValueList(nlohmann::json *node_json, void *data, size_t data_size, TypeI
   }
 }
 
-bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
-                                                   ShapeVector *input_shape, nlohmann::json *node_json) const {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(node_json);
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->size()) {
-    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
-                                << ") in node [" << cnode->DebugString() << "]";
-  }
-
-  auto input_node = cnode->input(input_idx + 1);
-  if (!IsValueNode<tensor::Tensor>(input_node)) {
-    return false;
-  }
-
-  auto tensor = GetValueNode<tensor::TensorPtr>(input_node);
-  if (tensor == nullptr) {
-    MS_LOG(DEBUG) << "Value of input node is nullptr, op: [" << input_node->DebugString() << "]";
-    return false;
-  }
-
-  auto type_id = tensor->data_type();
-  auto *data = tensor->data_c();
-  auto data_size = tensor->DataSize();
-  MS_EXCEPTION_IF_NULL(data);
-  if (data_size > 1) {
-    SetValueList(node_json, data, data_size, type_id, cnode);
-    *input_shape = ShapeVector{static_cast<ShapeValueDType>(data_size)};
-    return true;
-  }
-
+void SetSingleValue(nlohmann::json *node_json, void *data, TypeId type_id, const AnfNodePtr &cnode, size_t input_idx) {
   if (type_id == kFloat64->type_id()) {
     (*node_json)["value"] = static_cast<double *>(data)[0];
   } else if (type_id == kFloat32->type_id()) {
@@ -340,8 +309,64 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
                       << " is not in supported list: [float64, float32, float16, uint64, uint32, uint16, uint8, int64, "
                          "int32, int16, int8, bool].";
   }
-  *input_shape = {1};
-  return true;
+}
+
+bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
+                                                   ShapeVector *input_shape, nlohmann::json *node_json) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(node_json);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+                                << ") in node [" << cnode->DebugString() << "]";
+  }
+
+  auto input_node = cnode->input(input_idx + 1);
+  if (!input_node->isa<ValueNode>()) {
+    return false;
+  }
+  auto input_value_node = input_node->cast<ValueNodePtr>();
+  auto &input_value = input_value_node->value();
+  if (input_value->isa<ValueSequence>()) {
+    auto value_seq = input_value->cast<ValueSequencePtr>()->value();
+    ShapeVector vec;
+    vec.reserve(value_seq.size());
+    for (auto v : value_seq) {
+      if (v->isa<Int32Imm>() || v->isa<Int64Imm>()) {
+        vec.emplace_back(AnfUtils::GetIntValue(v));
+      } else {
+        MS_LOG(EXCEPTION) << "Element in valuenode must be int" << input_node->fullname_with_scope();
+      }
+    }
+    (*node_json)["value"] = vec;
+    *input_shape = {static_cast<ShapeValueDType>(vec.size())};
+    return true;
+  } else if (input_value->isa<Int32Imm>() || input_value->isa<Int64Imm>()) {
+    (*node_json)["value"] = AnfUtils::GetIntValue(input_value);
+    *input_shape = {1};
+    return true;
+  } else if (input_value->isa<tensor::Tensor>()) {
+    auto tensor = input_value->cast<tensor::TensorPtr>();
+    if (tensor == nullptr) {
+      MS_LOG(DEBUG) << "Value of input node is nullptr, op: [" << input_node->DebugString() << "]";
+      return false;
+    }
+
+    auto type_id = tensor->data_type();
+    auto *data = tensor->data_c();
+    auto data_size = tensor->DataSize();
+    MS_EXCEPTION_IF_NULL(data);
+    if (data_size > 1) {
+      SetValueList(node_json, data, data_size, type_id, cnode);
+      *input_shape = ShapeVector{static_cast<ShapeValueDType>(data_size)};
+      return true;
+    }
+    SetSingleValue(node_json, data, type_id, cnode, input_idx);
+    *input_shape = {1};
+    return true;
+  }
+  return false;
 }
 
 void GraphKernelJsonGenerator::SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json) {
