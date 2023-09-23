@@ -126,7 +126,7 @@ uint32_t NoBcastComputeParallel(const CpuKernelContext &ctx, const BcastShapeTyp
 }
 
 template <typename T>
-void NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, const int64_t &data_num) {
+uint32_t NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, const int64_t &data_num) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
@@ -145,8 +145,9 @@ void NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, co
       break;
     default:
       KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
-      break;
+      return KERNEL_STATUS_PARAM_INVALID;
   }
+  return KERNEL_STATUS_OK;
 }
 
 template <typename T>
@@ -172,7 +173,11 @@ uint32_t HypotCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
       return res;
     }
   } else {
-    NoBcastComputeSingle<T>(type, in0, in1, out, data_num);
+    uint32_t res = NoBcastComputeSingle<T>(type, in0, in1, out, data_num);
+    if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+      KERNEL_LOG_ERROR("Hypot kernel NoBcastComputeSingle failed.");
+      return res;
+    }
   }
 
   return KERNEL_STATUS_OK;
