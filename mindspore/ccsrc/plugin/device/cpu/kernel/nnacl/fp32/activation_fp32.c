@@ -221,13 +221,18 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
 }
 
 int Softplus(const float *src, int length, float *dst) {
+  float log_max = 88.7228;
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(Softplus, i, src, length, dst);
 
   for (; i < length; ++i) {
     simd_exp32(src[i], dst + i);
-    dst[i] = log1p(dst[i]);
+    if (src[i] > log_max) {
+      dst[i] = src[i];
+    } else {
+      dst[i] = log1p(dst[i]);
+    }
   }
   return NNACL_OK;
 }
