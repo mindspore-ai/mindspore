@@ -117,7 +117,5 @@ def test_rewrite_control_flow():
                                        name="new_relu_2")
     sub_stree.replace(sub_relu, [new_relu_2])
     codes = stree.get_code()
-    stree.print_node_tabulate(True)
-    print(codes)
     assert codes.count("x = self.relu(x)") == 0
-    assert codes.count("x = self.new_relu(x)") == 1
+    assert codes.count("x = self.new_relu_2(x)") == 1
