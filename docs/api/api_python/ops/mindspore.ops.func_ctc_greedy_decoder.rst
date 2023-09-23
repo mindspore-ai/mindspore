@@ -5,6 +5,9 @@ mindspore.ops.ctc_greedy_decoder
 
     对输入中给定的logits执行贪婪解码。
 
+    .. note::
+        在Ascend平台上，目前不支持配置 :math:`merge_repeated=False` 。
+
     参数：
         - **inputs** (Tensor) - shape: :math:`(max\_time, batch\_size, num\_classes)`，数据类型必须是float32或者float64。`num_classes` 为 `num_labels + 1` classes，其中 `num_labels` 表示实际标签的个数，空标签默认使用 `num_classes - 1`。
         - **sequence_length** (Tensor) - shape: :math:`(batch\_size, )`，数据类型必须是int32，并且Tensor中的数值必须小于等于 `max_time`。

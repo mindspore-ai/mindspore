@@ -7386,6 +7386,9 @@ class CTCGreedyDecoder(Primitive):
 
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
 
+    Note:
+        On Ascend, 'merge_repeated' can not be set to false.
+
     Args:
         merge_repeated (bool, optional): If ``True`` , merge repeated classes in output. Default: ``True`` .
 

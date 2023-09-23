@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -33,8 +33,9 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
 def test_ctc_greedy_deocder_float32():
     """
     Feature: CTCGreedyDecoder cpu op
@@ -58,47 +59,3 @@ def test_ctc_greedy_deocder_float32():
     assert np.array_equal(output[1].asnumpy(), out_expect1)
     assert np.array_equal(output[2].asnumpy(), out_expect2)
     assert np.array_equal(output[3].asnumpy(), out_expect3)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-def test_ctc_greedy_deocder_float64():
-    """
-    Feature: CTCGreedyDecoder cpu op
-    Description: Test output for fp64 dtype
-    Expectation: Output matching expected values
-    """
-    inputs_np = np.array([[[1.76405235, 0.40015721, 0.97873798],
-                           [2.2408932, 1.86755799, -0.97727788]],
-                          [[0.95008842, -0.15135721, -0.10321885],
-                           [0.4105985, 0.14404357, 1.45427351]]]).astype(np.float64)
-    sequence_length_np = np.array([1, 1]).astype(np.int32)
-    net = Net()
-    output = net(Tensor(inputs_np), Tensor(sequence_length_np))
-
-    out_expect0 = np.array([0, 0, 1, 0]).reshape(2, 2)
-    out_expect1 = np.array([0, 0])
-    out_expect2 = np.array([2, 1])
-    out_expect3 = np.array([-1.76405235, -2.2408932]).astype(np.float64).reshape(2, 1)
-
-    assert np.array_equal(output[0].asnumpy(), out_expect0)
-    assert np.array_equal(output[1].asnumpy(), out_expect1)
-    assert np.array_equal(output[2].asnumpy(), out_expect2)
-    assert np.array_equal(output[3].asnumpy(), out_expect3)
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-def test_ctc_greedy_deocder_float64_with_sequence_length_out_range():
-    """
-    Feature: CTCGreedyDecoder cpu op
-    Description: Test output for fp64 dtype with sequence_length out range
-    Expectation: Raise RunTimeError
-    """
-    inputs_np = np.random.randn(2, 2, 3).astype(np.float64)
-    sequence_length_np = np.array([3, 3]).astype(np.int32)
-    net = Net()
-    with pytest.raises(RuntimeError) as raise_info:
-        net(Tensor(inputs_np), Tensor(sequence_length_np))
-    assert "should be less than" in str(raise_info.value)

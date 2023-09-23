@@ -7,6 +7,9 @@ mindspore.ops.CTCGreedyDecoder
 
     更多参考详见 :func:`mindspore.ops.ctc_greedy_decoder`。
 
+    .. note::
+        在Ascend平台上，目前不支持配置 :math:`merge_repeated=False` 。
+
     参数：
         - **merge_repeated** (bool，可选) - 返回的结果中是否合并重复的类。默认值： ``True`` 。
 
