@@ -45,6 +45,8 @@ inline constexpr size_t kMatchPathLenThree = 3;
 STATUS GetMatchNodeIndex(schema::MetaGraphT *graph,
                          const std::unordered_map<std::string, std::shared_ptr<lite::Path>> &matched_path,
                          const std::string &node_name, size_t *node_index);
+
+bool IsMultiOutputNode(schema::MetaGraphT *graph, size_t out_node_index);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_OPTIMIZER_COMMON_FUSION_UTILS_H_
