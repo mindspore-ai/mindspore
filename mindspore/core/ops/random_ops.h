@@ -22,6 +22,7 @@
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
 #include "ops/random_op_name.h"
+#include "ops/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {

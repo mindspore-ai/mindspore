@@ -6,6 +6,3 @@ real:
     returns:
         output:
             dtype: tensor
-    class:
-        name: Real
-        

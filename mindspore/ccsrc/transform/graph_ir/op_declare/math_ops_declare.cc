@@ -341,8 +341,9 @@ CUST_OUTPUT_MAP(Lgamma) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Lgamma, prim::kPrimLgamma->name(), CUST_ADPT_DESC(Lgamma));
 
 // Real
-INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
+INPUT_MAP(Real) = {{kIndex1, INPUT_DESC(input)}};
 ATTR_MAP(Real) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real));
+INPUT_ATTR_MAP(Real) = {{kIndex2, ATTR_DESC(Tout, AnyTraits<GEType>())}};
+OUTPUT_MAP(Real) = {{kIndex0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real))
 }  // namespace mindspore::transform

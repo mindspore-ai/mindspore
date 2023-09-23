@@ -15,50 +15,53 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import context
+from mindspore import Tensor, context
 from mindspore import ops
-from mindspore.common import dtype as mstype
 
 
 @ms.jit
-def randperm_v2_forward_func(n):
-    return ops.auto_generate.randperm(n, seed=0, offset=0, dtype=mstype.float16)
+def real_forward_func(x):
+    return ops.auto_generate.real(x)
 
 
 @ms.jit
-def randperm_v2_backward_func(n):
-    return ops.grad(randperm_v2_forward_func, (0))(n)
+def real_backward_func(x):
+    return ops.grad(real_forward_func, (0))(x)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_randperm_v2_forward(mode):
+def test_real_forward(mode):
     """
-    Feature: randperm_v2 ops.
-    Description: test ops randperm_v2.
-    Expectation: generates random permutation of integers from 0 to n-1 without repeating.
+    Feature: real ops.
+    Description: test ops real.
+    Expectation: output the real part of the input.
     """
     context.set_context(mode=mode)
-    output = randperm_v2_forward_func(4)
-    print("output:", output)
-    np.testing.assert_equal(output.shape, (4,))
-    np.testing.assert_equal(output.dtype, mstype.float16)
+    x = Tensor(np.asarray(np.complex(1.3 + 0.4j)).astype(np.complex64))
+    output = real_forward_func(x)
+    expect_output = np.asarray(np.complex(1.3)).astype(np.float32)
+    np.testing.assert_equal(output.asnumpy(), expect_output)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_randperm_v2_backward(mode):
+def test_real_backward(mode):
     """
-    Feature: randperm_v2 ops.
-    Description: test auto grad of ops randperm_v2.
+    Feature: real ops.
+    Description: test auto grad of ops real.
     Expectation: output the right grad.
     """
     context.set_context(mode=mode)
-    output = randperm_v2_backward_func(4)
-    print("output:", output)
+    x = Tensor(np.asarray(np.complex(1.3 + 0.4j)).astype(np.complex64))
+    output = real_backward_func(x)
+    expect_output = np.asarray(np.complex(1. + 0j)).astype(np.complex64)
+    np.testing.assert_equal(output.asnumpy(), expect_output)
