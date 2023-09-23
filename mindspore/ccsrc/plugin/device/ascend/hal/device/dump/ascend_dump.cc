@@ -21,6 +21,7 @@
 #include <map>
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ascend {
@@ -161,6 +162,11 @@ bool AscendAsyncDump::ConvertFormatForOneTensor(dump_data_t *dump_tensor_info) {
   std::string device_format = dump_tensor_info->format;
   if (dump_tensor_info->host_shape.size() == kNumFourDim) {
     host_format = kOpFormat_NCHW;
+  } else if (dump_tensor_info->host_shape.empty()) {
+    host_format = device_format;
+    dump_tensor_info->host_shape = dump_tensor_info->device_shape;
+    MS_LOG(WARNING) << "The host shape is empty for file: " << dump_tensor_info->dump_file_path
+                    << ", use device shape as host shape: " << dump_tensor_info->host_shape;
   } else {
     host_format = kOpFormat_ND;
   }
@@ -433,6 +439,9 @@ int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
   }
 
   if (isLastChunk == 1) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    std::string backend = context->backend_policy();
     // construct dump data object
     debugger::dump::DumpData dump_data;
     std::vector<char> data_buf;
@@ -448,6 +457,8 @@ int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
     if (file_base_name.rfind("Opdebug.Node_OpDebug.") == 0) {
       // save overflow data
       AscendAsyncDump::DumpOpDebugToFile(file_name, dump_data, data_buf.data());
+    } else if (backend == "ge") {
+      AscendAsyncDump::DumpTensorToFile(file_name, dump_data, data_buf.data());
     } else {
       // save tensor data
       // generate fully qualified file name
