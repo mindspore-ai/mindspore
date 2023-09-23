@@ -321,8 +321,7 @@ def write_json_file(aicpu_ops_info, json_file_path):
         os.remove(json_file_real_path)
     with os.fdopen(os.open(json_file_real_path, flags, modes), "w") as json_file:
         # Only the owner and group have rights
-        os.chmod(json_file_real_path, stat.S_IWGRP + stat.S_IWUSR + stat.S_IRGRP
-                 + stat.S_IRUSR)
+        os.chmod(json_file_real_path, stat.S_IWUSR + stat.S_IRUSR)
         json.dump(aicpu_ops_info, json_file, sort_keys=True,
                   indent=4, separators=(',', ':'))
     print("Compile aicpu op info cfg successfully.")
