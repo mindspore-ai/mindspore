@@ -238,7 +238,7 @@ class Model:
         self._lite_incremental_predictor = None
         self._mindspore_lite = None
         self._lite_infer = True  # if backend lite infer fails, set False
-        self._mindspore_lite_model_group_id = id(self)
+        self._mindspore_lite_model_group_id = id(self) & 0xFFFF
 
 
     def _check_for_graph_cell(self, kwargs):
