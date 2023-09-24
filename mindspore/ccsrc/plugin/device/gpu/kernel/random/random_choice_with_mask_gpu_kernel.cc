@@ -54,7 +54,6 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto input_shape_with_batch = inputs[kIndex0]->GetShapeVector();
   input_shape_size_ = input_shape_with_batch.size() - batch_rank_;
   input_shape_5D_.clear();

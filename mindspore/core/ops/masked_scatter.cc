@@ -38,6 +38,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
@@ -54,8 +55,11 @@ abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr MaskedScatterInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   std::set<TypePtr> valid_types;
   valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64, kBool};
   auto x_type = input_args[kInputIndex0]->BuildType();
@@ -73,9 +77,6 @@ TypePtr MaskedScatterInferType(const PrimitivePtr &prim, const std::vector<Abstr
 MIND_API_OPERATOR_IMPL(MaskedScatter, BaseOperator);
 AbstractBasePtr MaskedScatterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kMaskedScaterInputsNum = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedScaterInputsNum, primitive->name());
   auto infer_type = MaskedScatterInferType(primitive, input_args);
   auto infer_shape = MaskedScatterInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

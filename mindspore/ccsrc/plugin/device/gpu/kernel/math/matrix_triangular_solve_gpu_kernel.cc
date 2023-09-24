@@ -234,9 +234,14 @@ bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::A
   T *a = GetDeviceAddress<T>(inputs, kIndex0);
   T *b = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(a);
+  MS_EXCEPTION_IF_NULL(b);
+  MS_EXCEPTION_IF_NULL(output);
 
   auto a_device_array = GetDeviceAddress<T *>(workspace, kIndex0);  // broadcasted
   auto output_device_array = GetDeviceAddress<T *>(workspace, kIndex1);
+  MS_EXCEPTION_IF_NULL(a_device_array);
+  MS_EXCEPTION_IF_NULL(output_device_array);
 
   const uint64_t m = m_;
   const uint64_t n = n_;

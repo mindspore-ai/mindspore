@@ -168,9 +168,6 @@ int64_t RandomCategorical::get_seed() const {
 
 AbstractBasePtr RandomCategoricalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infertype = RandomCategoricalInferType(primitive, input_args);
   auto infershape = RandomCategoricalInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);

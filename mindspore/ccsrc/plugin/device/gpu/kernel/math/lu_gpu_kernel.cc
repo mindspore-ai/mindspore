@@ -29,6 +29,7 @@ namespace mindspore {
 namespace kernel {
 bool LuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
@@ -110,14 +111,20 @@ void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
                                 "cusolverDnSetStream failed");
   T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
   T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
+  MS_EXCEPTION_IF_NULL(batch_input_addr);
+  MS_EXCEPTION_IF_NULL(batch_output_addr);
   T *d_work_ = nullptr;
   S *batch_piv_output_addr = nullptr;
   if (pivot_on_) {
     batch_piv_output_addr = GetDeviceAddress<S>(outputs, kDim1);
+    MS_EXCEPTION_IF_NULL(batch_piv_output_addr);
   }
   int *info_output_addr = GetDeviceAddress<int>(workspace, kDim0);
   T *dev_work = GetDeviceAddress<T>(workspace, kDim1);
   int *dev_batch_piv = GetDeviceAddress<int>(workspace, kDim2);
+  MS_EXCEPTION_IF_NULL(info_output_addr);
+  MS_EXCEPTION_IF_NULL(dev_work);
+  MS_EXCEPTION_IF_NULL(dev_batch_piv);
   // query working space of getrf
   BufferSize(batch_output_addr, &lwork_);
   // Transpose input data from rowMajor to colMajor.

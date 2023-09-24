@@ -142,18 +142,18 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << "output(s).";
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(inputs[1]);
-  MS_EXCEPTION_IF_NULL(outputs[0]);
-
-  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
-  int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->addr)[0];
-  int input_seed = reinterpret_cast<int *>(inputs[kIndex2]->addr)[0];
-  T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->addr);
+  T1 *input_tensor = GetDeviceAddress<T1>(inputs, kIndex0);
+  int *num_sample_ptr = GetDeviceAddress<int>(inputs, kIndex1);
+  int *input_seed_ptr = GetDeviceAddress<int>(inputs, kIndex2);
+  T2 *output = GetDeviceAddress<T2>(outputs, kIndex0);
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
+  MS_EXCEPTION_IF_NULL(num_sample_ptr);
+  MS_EXCEPTION_IF_NULL(input_seed_ptr);
 
+  int num_sample = num_sample_ptr[0];
+  int input_seed = input_seed_ptr[0];
   int batch_size = input_shape_[0];
   int num_classes = input_shape_[input_shape_.size() - 1];
 

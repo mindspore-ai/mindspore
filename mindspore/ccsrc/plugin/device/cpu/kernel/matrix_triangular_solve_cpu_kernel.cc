@@ -113,9 +113,12 @@ template <typename T>
 bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &,
                                                      const std::vector<AddressPtr> &outputs) {
-  auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto a_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto b_addr = GetDeviceAddress<T>(inputs, kIndex1);
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(a_addr);
+  MS_EXCEPTION_IF_NULL(b_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
 
   size_t a_batch_size = m_ * m_;
   size_t b_batch_size = m_ * n_;

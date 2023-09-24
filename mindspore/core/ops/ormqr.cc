@@ -49,6 +49,9 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
   const size_t kTwo = 2;
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto left = GetValue<bool>(primitive->GetAttr(kAttrLeft));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
@@ -118,6 +121,9 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr OrmqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
+  MS_EXCEPTION_IF_NULL(prim);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   auto x_type = input_args[0]->BuildType();
   auto tau_type = input_args[kInputIndex1]->BuildType();
   auto other_type = input_args[kInputIndex2]->BuildType();
@@ -144,9 +150,6 @@ bool Ormqr::get_transpose() const { return GetValue<bool>(GetAttr(kAttrTranspose
 MIND_API_OPERATOR_IMPL(Ormqr, BaseOperator);
 AbstractBasePtr OrmqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = OrmqrInferType(primitive, input_args);
   auto infer_shape = OrmqrInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

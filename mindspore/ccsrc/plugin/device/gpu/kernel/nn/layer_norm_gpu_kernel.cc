@@ -103,6 +103,12 @@ void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto y = GetDeviceAddress<T>(outputs, kLayerNormOutputYIndex);
   auto mean = GetDeviceAddress<float>(outputs, kLayerNormOutputMeanIndex);
   auto variance = GetDeviceAddress<float>(outputs, kLayerNormOutputVarIndex);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(gamma);
+  MS_EXCEPTION_IF_NULL(beta);
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(mean);
+  MS_EXCEPTION_IF_NULL(variance);
 
   auto status =
     LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);

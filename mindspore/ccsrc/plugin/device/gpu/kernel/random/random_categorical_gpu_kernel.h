@@ -45,6 +45,8 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     }
     T *logits_addr = GetDeviceAddress<T>(inputs, 0);
     S *output_addr = GetDeviceAddress<S>(outputs, 0);
+    MS_EXCEPTION_IF_NULL(logits_addr);
+    MS_EXCEPTION_IF_NULL(output_addr);
 
     std::unique_ptr<double *[]> host_cdf;
     std::unique_ptr<double *[]> host_rand;

@@ -44,6 +44,8 @@ abstract::TupleShapePtr MapCacheIdxInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  constexpr int64_t kInputNum = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto hashmap_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto hashmap_shape = hashmap_shape_map[kShape];
   auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
@@ -67,8 +69,10 @@ abstract::TupleShapePtr MapCacheIdxInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr MapCacheIdxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  constexpr int64_t kInputNum = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto hashmap_type = input_args[0]->BuildType();
   auto indices_type = input_args[1]->BuildType();
 
@@ -83,9 +87,6 @@ TuplePtr MapCacheIdxInferType(const PrimitivePtr &prim, const std::vector<Abstra
 
 AbstractBasePtr MapCacheIdxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 5;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MapCacheIdxInferType(primitive, input_args);
   auto infer_shape = MapCacheIdxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

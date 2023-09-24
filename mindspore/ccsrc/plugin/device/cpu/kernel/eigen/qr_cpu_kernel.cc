@@ -71,9 +71,12 @@ template <typename T>
 bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_q = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_r = reinterpret_cast<T *>(outputs[1]->addr);
+  auto input_x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto output_q = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output_r = GetDeviceAddress<T>(outputs, kIndex1);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(output_q);
+  MS_EXCEPTION_IF_NULL(output_r);
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
   size_t p = std::min(m, n);
   size_t size_mn = m * n;

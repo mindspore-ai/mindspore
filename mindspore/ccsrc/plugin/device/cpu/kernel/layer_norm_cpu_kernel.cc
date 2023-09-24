@@ -115,12 +115,18 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   if (outputs[kLayerNormOutputMeanIndex]->size != outputs[kLayerNormOutputVarIndex]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of mean and var's shape must be " << block_num_;
   }
-  auto x = reinterpret_cast<T *>(inputs[kLayerNormInputXIndex]->addr);
-  auto gamma = reinterpret_cast<T *>(inputs[kLayerNormInputGammaIndex]->addr);
-  auto beta = reinterpret_cast<T *>(inputs[kLayerNormInputBetaIndex]->addr);
-  auto y = reinterpret_cast<T *>(outputs[kLayerNormOutputYIndex]->addr);
-  auto mean = reinterpret_cast<float *>(outputs[kLayerNormOutputMeanIndex]->addr);
-  auto var = reinterpret_cast<float *>(outputs[kLayerNormOutputVarIndex]->addr);
+  auto x = GetDeviceAddress<T>(inputs, kLayerNormInputXIndex);
+  auto gamma = GetDeviceAddress<T>(inputs, kLayerNormInputGammaIndex);
+  auto beta = GetDeviceAddress<T>(inputs, kLayerNormInputBetaIndex);
+  auto y = GetDeviceAddress<T>(outputs, kLayerNormOutputYIndex);
+  auto mean = GetDeviceAddress<float>(outputs, kLayerNormOutputMeanIndex);
+  auto var = GetDeviceAddress<float>(outputs, kLayerNormOutputVarIndex);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(gamma);
+  MS_EXCEPTION_IF_NULL(beta);
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(mean);
+  MS_EXCEPTION_IF_NULL(var);
   size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   if (block_num_ < thread_num) {
     thread_num = block_num_;
@@ -145,6 +151,7 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       if (block_var < 0) {
         block_var = 0;
       }
+      MS_EXCEPTION_IF_ZERO("Var + Epsilon", block_var + eps_);
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
         y[j] = (x[j] - static_cast<T>(block_mean)) / static_cast<T>(std::sqrt(block_var + eps_)) * gamma[param_shift] +
