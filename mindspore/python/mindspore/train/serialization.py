@@ -379,8 +379,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  be saved. Default: ``None`` .
         kwargs (dict): Configuration options dictionary.
 
-            - incremental (bool): Whether export checkpoint for MapParameter incrementally.
-
     Raises:
         TypeError: If the parameter `save_obj` is not :class:`mindspore.nn.Cell` , list or dict type.
         TypeError: If the parameter `integrated_save` or `async_save` is not bool type.

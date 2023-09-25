@@ -16,8 +16,6 @@ mindspore.save_checkpoint
         - **choice_func** (function) - 一个用于自定义控制保存参数的函数。函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被保存。 如果返回 ``False`` ，则未匹配自定义条件的Parameter不会被保存。默认值： ``None`` 。
         - **kwargs** (dict) - 配置选项字典。
 
-          - incremental (bool): 是否可以增量导出MapParameter的检查点。
-
     异常：
         - **TypeError** - 如果参数 `save_obj` 类型不为 :class:`mindspore.nn.Cell` 、list或者dict。
         - **TypeError** - 如果参数 `integrated_save` 或 `async_save` 不是bool类型。
