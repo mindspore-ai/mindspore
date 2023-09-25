@@ -152,9 +152,13 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
   transform::SetGraphRunner(graph_runner);
 }
 
-bool GeDeviceResManager::BindDeviceToCurrentThread(bool /* force_bind */) const {
+bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   if (runtime_instance_ != nullptr) {
-    runtime_instance_->SetContext();
+    if (force_bind) {
+      runtime_instance_->SetContextForce();
+    } else {
+      runtime_instance_->SetContext();
+    }
   }
   return true;
 }

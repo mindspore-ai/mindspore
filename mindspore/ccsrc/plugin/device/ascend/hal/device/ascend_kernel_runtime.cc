@@ -148,7 +148,7 @@ void AscendKernelRuntime::SetContext() {
   }
 }
 
-void AscendKernelRuntime::SetCurrentContext() {
+void AscendKernelRuntime::SetContextForce() {
   if (rt_context_ == nullptr) {
     return;
   }
@@ -159,7 +159,7 @@ void AscendKernelRuntime::SetCurrentContext() {
 }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-  SetCurrentContext();
+  SetContextForce();
   graph_kernel_events_map_.clear();
   if (runtime_core_ != nullptr) {
     runtime_core_->UnloadModelCore();
@@ -167,7 +167,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  SetCurrentContext();
+  SetContextForce();
   auto mem_scheduler = mem_scheduler_manager_.GetMemScheduler(graph_id);
   if (mem_scheduler != nullptr) {
     mem_scheduler->Clear();
@@ -244,7 +244,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     }
   }
 #endif
-  SetCurrentContext();
+  SetContextForce();
 
   // release ge runtime
   ClearGraphModelMap();
@@ -297,7 +297,7 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
   if (initialized_) {
-    SetCurrentContext();
+    SetContextForce();
     return true;
   }
 
@@ -564,7 +564,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
   current_graph_ = &graph;
-  SetCurrentContext();
+  SetContextForce();
   if (graph.is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
     return RunDynamicKernelAsync(graph);
@@ -576,7 +576,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 }
 
 bool AscendKernelRuntime::SyncStream() {
-  SetCurrentContext();
+  SetContextForce();
   if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
@@ -597,7 +597,7 @@ bool AscendKernelRuntime::SyncStream() {
 }
 
 bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  SetCurrentContext();
+  SetContextForce();
   if (size == 0) {
     MS_LOG(DEBUG) << "rtMemcpyAsync size is 0, copy kind:" << kind;
     return true;
@@ -684,7 +684,7 @@ bool AscendKernelRuntime::InitDevice() {
 }
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
-  SetCurrentContext();
+  SetContextForce();
   AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
     MS_LOG(ERROR) << "Fail to destroy all streams when reset device.";

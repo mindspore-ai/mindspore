@@ -425,6 +425,19 @@ void ClearForwardOutputAddress(const KernelGraphPtr &graph, const DeviceContext 
     }
   }
 }
+
+class ContextReset {
+ public:
+  explicit ContextReset(DeviceContext *device_context) : device_context_(device_context) {}
+  ~ContextReset() {
+    if (device_context_ != nullptr && device_context_->device_res_manager_ != nullptr) {
+      device_context_->device_res_manager_->BindDeviceToCurrentThread(true);
+    }
+  }
+
+ private:
+  DeviceContext *device_context_;
+};
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -806,6 +819,8 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
+  // cppcheck-suppress unreadVariable
+  ContextReset reset_context(device_context_);
   if (common::IsEnableRefMode()) {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);

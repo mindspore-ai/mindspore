@@ -156,7 +156,7 @@ void WriteGroup(const CNodePtr &cnode, std::ofstream *ofs) {
 void AscendRuntimeCore::InitCore() { kernel::OpImplModeConfig::GetInstance().Initialize(); }
 
 bool AscendRuntimeCore::GenTask(const session::KernelGraph &graph) {
-  SetCurrentContext();
+  SetContextForce();
   if (graph.is_dynamic_shape()) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with dataset_sink_mode.";
@@ -333,7 +333,7 @@ void AscendRuntimeCore::ProcessBoundaryEvent(
 }
 
 bool AscendRuntimeCore::LoadTask(const session::KernelGraph &graph) {
-  SetCurrentContext();
+  SetContextForce();
   if (graph.is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Skip Load Task Step";
     return true;
@@ -395,7 +395,7 @@ bool AscendRuntimeCore::RunTaskCore(const session::KernelGraph &graph) {
     }
   }
   current_graph_ = &graph;
-  SetCurrentContext();
+  SetContextForce();
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph.graph_id();
 
   auto context_ptr = MsContext::GetInstance();
@@ -818,7 +818,7 @@ void AscendRuntimeCore::LaunchDataDump(GraphId graph_id) {
 #endif
 
 void AscendRuntimeCore::UnloadModelCore(uint32_t graph_id) {
-  SetCurrentContext();
+  SetContextForce();
   if (graph_id != UINT32_MAX) {
     if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
       MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
