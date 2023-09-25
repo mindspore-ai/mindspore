@@ -18,7 +18,7 @@ mindspore.nn.Dropout1d
         - **x** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
 
     输出：
-        Tensor，输出，具有与输入 `x` 相同的shape和数据类型。
+        Tensor，具有与输入 `x` 相同的shape和数据类型。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

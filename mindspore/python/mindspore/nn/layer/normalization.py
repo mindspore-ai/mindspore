@@ -681,19 +681,18 @@ class LayerNorm(Cell):
 
     Args:
         normalized_shape (Union(tuple[int], list[int])): The normalization is performed over axis
-            `begin_norm_axis ... R - 1`.
+            `begin_norm_axis ... R - 1`. R is the dimension size of input `x`.
         begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
-            `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: ``-1`` .
-        begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters
-            will have dimensions `begin_params_axis: rank(inputs)` and will be broadcast with
-            the normalized inputs accordingly, the value should be in [-1, rank(input)). Default: ``-1`` .
+            `begin_norm_axis: R`, the value should be in [-1, R). Default: ``-1`` .
+        begin_params_axis (int): The begin axis of the parameter input :math:`(\gamma, \beta)` to
+            apply LayerNorm, the value should be in [-1, R). Default: ``-1`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
-        epsilon (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-7`` .
+        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
