@@ -100,6 +100,11 @@ bool EnableBackendCompileCache(const FuncGraphPtr &func_graph, const device::Dev
   if (device_type != device::DeviceType::kAscend) {
     return false;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
+    return false;
+  }
   return true;
 }
 
