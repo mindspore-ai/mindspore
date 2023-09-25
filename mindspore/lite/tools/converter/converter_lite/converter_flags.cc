@@ -93,8 +93,6 @@ Flags::Flags() {
           "Whether to do pre-inference after convert. "
           "true | false",
           "false");
-  AddFlag(&Flags::noFusionStr, "NoFusion",
-          "Avoid fusion optimization true|false. NoFusion is true when saveType is MINDIR.", "");
   AddFlag(&Flags::device, "device",
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
@@ -261,21 +259,9 @@ int Flags::InitPreInference() {
   return RET_OK;
 }
 
-int Flags::InitNoFusion() {
-  if (this->noFusionStr == "true") {
-    this->disableFusion = true;
-  } else if (this->noFusionStr == "false") {
-    this->disableFusion = false;
-  } else if (!this->noFusionStr.empty()) {
-    std::cerr << "INPUT ILLEGAL: NoFusion must be true|false " << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  return RET_OK;
-}
-
 int Flags::InitOptimize() {
   // For compatibility of interface, the check will be removed when nofusion is deleted
-  if (!this->noFusionStr.empty() || !this->device.empty()) {
+  if (!this->device.empty()) {
     return RET_OK;
   }
   if (this->optimizeStr == "none") {
@@ -424,12 +410,6 @@ int Flags::Init(int argc, const char **argv) {
   ret = InitSaveType();
   if (ret != RET_OK) {
     std::cerr << "Init save type failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  ret = InitNoFusion();
-  if (ret != RET_OK) {
-    std::cerr << "Init no fusion failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 

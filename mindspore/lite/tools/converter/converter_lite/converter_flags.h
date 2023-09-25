@@ -39,7 +39,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitEncrypt();
   int InitPreInference();
   int InitSaveFP16();
-  int InitNoFusion();
   int InitOptimize();
   int InitSaveType();
   int InitOptimizeTransformer();
@@ -54,7 +53,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string weightFile;
   std::string saveFP16Str = "off";
   bool saveFP16 = false;
-  std::string noFusionStr = "false";
   bool disableFusion = false;
   std::string inputDataTypeStr;
   DataType inputDataType;

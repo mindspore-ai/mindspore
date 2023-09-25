@@ -169,7 +169,7 @@ function parse_line() {
     suffix_print=""
     check_convert=0
     do_api=false
-    no_opt="--NoFusion=false"
+    no_opt="--optimize=general"
     expression=0
     model_name=${line_array[0]}_train
     while [[ $i < ${#line_array[@]} ]] ; do
@@ -217,7 +217,7 @@ function parse_line() {
           "expression")
             model_name="${line_array[0]}_expr"
             do_api=true
-            no_opt="--NoFusion=true"
+            no_opt="--optimize=none"
             expression=1
             ;;
           *)
