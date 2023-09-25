@@ -10585,7 +10585,7 @@ def accumulate_n(x):
         ValueError: If there is an input element with a different shape.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
