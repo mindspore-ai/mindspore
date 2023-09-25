@@ -382,4 +382,10 @@ INPUT_MAP(NthElement) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(n)}};
 ATTR_MAP(NthElement) = {{"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(NthElement) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NthElement, prim::kPrimNthElement->name(), ADPT_DESC(NthElement));
+
+// AdaptiveAvgPool
+INPUT_MAP(AdaptiveAvgPool) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(AdaptiveAvgPool) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdaptiveAvgPool) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdaptiveAvgPool, kNameAdaptiveAvgPool, ADPT_DESC(AdaptiveAvgPool));
 }  // namespace mindspore::transform

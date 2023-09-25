@@ -74,6 +74,17 @@ ATTR_MAP(ResizeBicubic) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<
 OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
 
+// Reszie
+INPUT_MAP(Resize) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(roi)}, {3, INPUT_DESC(scales)}, {4, INPUT_DESC(sizes)}};
+ATTR_MAP(Resize) = {
+  {"coordinate_transformation_mode", ATTR_DESC(coordinate_transformation_mode, AnyTraits<std::string>())},
+  {"cubic_coeff", ATTR_DESC(cubic_coeff_a, AnyTraits<float>())},
+  {"exclude_outside", ATTR_DESC(exclude_outside, AnyTraits<int32_t>())},
+  {"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
+  {"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(Resize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Resize, kNameResize, ADPT_DESC(Resize))
+
 // CropAndResize
 INPUT_MAP(CropAndResize) = {
   {1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};

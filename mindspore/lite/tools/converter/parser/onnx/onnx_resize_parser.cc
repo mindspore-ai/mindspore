@@ -61,6 +61,9 @@ PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const 
                                                                     {"bicubic", mindspore::ResizeMethod::CUBIC}};
       if (resize_mode.find(onnx_node_attr.s()) != resize_mode.end()) {
         prim->set_method(resize_mode[onnx_node_attr.s()]);
+        if (onnx_node_attr.s() == "bicubic") {
+          (void)prim_c->AddAttr(ops::kMode, MakeValue<std::string>(onnx_node_attr.s()));
+        }
       } else {
         MS_LOG(ERROR) << "Unsupported resize mode: " << attribute_name;
         return nullptr;

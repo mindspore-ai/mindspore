@@ -333,6 +333,16 @@ STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, cons
   if (fmk_type_ != converter::kFmkTypeOnnx || cnode->inputs().size() <= kNumInputSize) {
     return RET_OK;
   }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim == nullptr) {
+    return RET_ERROR;
+  }
+  auto val_ptr = prim->GetAttr(ops::kMode);
+  // ge::Resize sizes need nchw
+  if (val_ptr != nullptr && GetValue<std::string>(val_ptr) == "bicubic") {
+    return RET_OK;
+  }
+
   auto size_node = cnode->input(kNumInputSize);
   MS_CHECK_TRUE_RET(size_node != nullptr, RET_ERROR);
   if (utils::isa<ParameterPtr>(size_node) && size_node->cast<ParameterPtr>() != nullptr &&
