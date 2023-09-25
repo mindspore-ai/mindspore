@@ -659,7 +659,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
         ...
         >>> out = tensor_add_with_sig(x, y)
         ...
-        ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
+        ... # Set hash_args as fn, otherwise cache of compiled closure_fn will not be reused.
         ... # While fn differs during calling again, recompilation will be triggered.
         >>> def func(x):
         ...     return ops.exp(x)

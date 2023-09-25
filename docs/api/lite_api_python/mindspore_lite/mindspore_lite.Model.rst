@@ -81,7 +81,7 @@ mindspore_lite.Model
 
         参数：
             - **inputs** (list[Tensor]) - 包含所有输入Tensor的顺序列表。
-            - **outputs** (list[Tensor]) - 包含所有输出Tensor的顺序列表。
+            - **outputs** (list[Tensor]，可选) - 包含所有输出Tensor的顺序列表。
 
         返回：
             list[Tensor]，模型的输出Tensor列表。

@@ -54,7 +54,6 @@ class ReduceLROnPlateau(Callback):
             otherwise the valid monitor is ``"loss"``.
             When `monitor` is ``"loss"``, if train network has multiple outputs,
             the first element will be returned as training loss. Default: ``'eval_loss'``.
-
         factor (float): factor by which the learning rate will be reduced.
             `new_lr = lr * factor`. Default: ``0.1`` .
         patience (int): `monitor` value is better than history best value over
@@ -77,7 +76,7 @@ class ReduceLROnPlateau(Callback):
         min_lr (float): lower bound on the learning rate. Default: ``0`` .
 
     Raises:
-        ValueError: `mode` not in 'auto', 'min' or 'max'.
+        ValueError: `mode` not in ``'auto'``, ``'min'`` or ``'max'``.
         ValueError: The monitor value is not a scalar.
         ValueError: The learning rate is not a Parameter.
 
