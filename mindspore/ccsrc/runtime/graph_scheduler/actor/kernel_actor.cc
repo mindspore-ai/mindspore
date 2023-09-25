@@ -23,8 +23,8 @@
 #include "utils/log_adapter.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "kernel/framework_utils.h"
-#include "ops/op_def.h"
 
 namespace mindspore {
 namespace runtime {
@@ -687,52 +687,14 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::InferShapeAndResize() {
-  // Infer Shape.
-  auto op_def = mindspore::ops::GetOpDef(kernel_mod_->kernel_name());
-  MS_EXCEPTION_IF_NULL(op_def);
-  auto op_fun_impl = op_def->func_impl_;
-  MS_EXCEPTION_IF_NULL(op_fun_impl);
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-  auto base_shape = op_fun_impl->InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
-  PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferInner, GetAID().Name(), false);
+  // 1. Infer operator's output's Shape.
+  auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
   MS_EXCEPTION_IF_NULL(base_shape);
 
-  // Update output kernel tensor.
-  size_t output_num = output_device_tensors_.size();
-  if (output_num > 1) {
-    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
-    MS_EXCEPTION_IF_NULL(sequence_shape);
-    const auto &shapes = sequence_shape->shape();
-    if (shapes.size() != output_num) {
-      MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << output_num
-                        << ", but got: " << shapes.size();
-    }
-    for (size_t i = 0; i < output_num; i++) {
-      const auto &kernel_tensor = output_kernel_tensors_[i];
-      MS_EXCEPTION_IF_NULL(kernel_tensor);
-      kernel_tensor->SetShape(shapes[i]);
-    }
-  } else if (output_num == 1) {
-    const auto &kernel_tensor = output_kernel_tensors_[0];
-    MS_EXCEPTION_IF_NULL(kernel_tensor);
-    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
-    if (kernel_tensor->type_id() == kObjectTypeTensorType && sequence_shape != nullptr) {
-      // For the operator prototype whose output is of type Tuple, the back-end operator is expanded as Tensors, and for
-      // single-output scenarios, the InferShape result is TupleShape, and the back-end needs to expand it to
-      // TensorShape. For example, the output of the split operator is only a Tensor scene.
-      const auto &shapes = sequence_shape->shape();
-      if (shapes.size() != 1) {
-        MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << 1 << ", but got: " << shapes.size();
-      }
+  // 2. Update shape of output kernel tensor.
+  opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
 
-      kernel_tensor->SetShape(shapes[0]);
-    } else {
-      kernel_tensor->SetShape(base_shape);
-    }
-  }
-
-  // Resize kernel mod.
+  // 3. Resize kernel mod.
   int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
   if (ret != kernel::KRET_OK) {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();

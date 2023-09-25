@@ -17,6 +17,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 
 #include <memory>
+#include <algorithm>
 #include <stack>
 #include <set>
 #include <string>
@@ -30,11 +31,13 @@
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "kernel/framework_utils.h"
+#include "ops/op_def.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/common/profiler.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
+#include "backend/operator/ops_backend_infer_function.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -612,6 +615,66 @@ inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {
          kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
 }
 }  // namespace
+
+BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &op_name = primitive->name();
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
+                                     op_name, false);
+  auto shape_optional = abstract::InferShapeByFuncImpl(primitive, input_args, false);
+  if (shape_optional.has_value()) {
+    return shape_optional.value();
+  }
+
+  // The old register map for InferShape will be deleted in the future.
+  auto infer_impl = abstract::GetBackendPrimitiveInferImpl(primitive);
+  if (infer_impl.has_value()) {
+    auto infer = infer_impl.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferShape(primitive, input_args);
+    }
+  }
+  MS_LOG(EXCEPTION) << "The InferShape function of [" << op_name << "] is not defined.";
+}
+
+void UpdateKernelTensorShape(const BaseShapePtr &base_shape,
+                             const std::vector<kernel::KernelTensor *> &output_kernel_tensors) {
+  MS_EXCEPTION_IF_NULL(base_shape);
+  size_t output_num = output_kernel_tensors.size();
+  if (output_num > 1) {
+    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_shape);
+    const auto &shapes = sequence_shape->shape();
+    if (shapes.size() != output_num) {
+      MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << output_num
+                        << ", but got: " << shapes.size();
+    }
+    for (size_t i = 0; i < output_num; i++) {
+      const auto &kernel_tensor = output_kernel_tensors[i];
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      kernel_tensor->SetShape(shapes[i]);
+    }
+  } else if (output_num == 1) {
+    const auto &kernel_tensor = output_kernel_tensors[0];
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    auto sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    if ((kernel_tensor->type_id() != kObjectTypeTuple && kernel_tensor->type_id() != kObjectTypeList) &&
+        sequence_shape != nullptr) {
+      // For the operator prototype whose output is of type Tuple, the back-end operator is expanded as Tensors, and for
+      // single-output scenarios, the InferShape result is TupleShape, and the back-end needs to expand it to
+      // TensorShape. For example, the output of the split operator is only a Tensor scene.
+      const auto &shapes = sequence_shape->shape();
+      if (shapes.size() != 1) {
+        MS_LOG(EXCEPTION) << "Invalid SequenceShape, expected elements number: " << 1 << ", but got: " << shapes.size();
+      }
+
+      kernel_tensor->SetShape(shapes[0]);
+    } else {
+      kernel_tensor->SetShape(base_shape);
+    }
+  }
+}
+
 bool IsRealCNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n)) {
     CNodePtr cnode = utils::cast<CNodePtr>(n);

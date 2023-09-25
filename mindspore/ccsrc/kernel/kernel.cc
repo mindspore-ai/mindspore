@@ -128,6 +128,11 @@ void KernelTensor::SetType(const TypePtr &type) {
       dtype_id_ = dtype_->type_id();
     } break;
 
+    case kObjectTypeString: {
+      dtype_ = type;
+      dtype_id_ = dtype_->type_id();
+    } break;
+
     default:
       MS_LOG(EXCEPTION) << "Can not set object type for: " << type->ToString();
   }
@@ -445,7 +450,7 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(output);
     size_t type_size = GetTypeByte(output->dtype());
-    auto shape = output->GetShapeVector();
+    const auto &shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
       // Note:
       // If output shape is unknown, the op is a compute-depended op, and the output_size_list_ can be set by default
