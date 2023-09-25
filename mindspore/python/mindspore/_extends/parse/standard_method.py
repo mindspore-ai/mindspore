@@ -2858,17 +2858,11 @@ def enumerate_(x, start=0):
     """Enumerate list or tuple or tensor."""
     x_type = F.typeof(x)
     ret = ()
-    op_name = "enumerate"
-    if check_is_tuple_or_list_or_tensor(x_type, op_name, "first input") and \
-            check_is_const_int(start, op_name, "start"):
-        if check_is_tensor(x_type):
-            for i in range(x.shape[0]):
-                ret += ((start + i, x[i]),)
-        elif F.is_sequence_shape_unknown(x):
-            const_utils.raise_value_error(
-                "For 'enumerate', the dynamic length input is unsupported in graph mode")
-        else:
-            ret = zip(range(start, start + len(x)), x)
+    if check_is_tensor(x_type):
+        for i in range(x.shape[0]):
+            ret += ((start + i, x[i]),)
+    else:
+        ret = zip(range(start, start + len(x)), x)
     return ret
 
 

@@ -54,7 +54,9 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   bool has_any = std::any_of(args_abs_list.begin(), args_abs_list.end(),
                              [](const AbstractBasePtr &abs) { return fallback::ContainsSequenceAnyType(abs); });
-  if (allow_fallback_runtime && has_any) {
+  bool has_not_seq = std::any_of(args_abs_list.begin(), args_abs_list.end(),
+                                 [](const AbstractBasePtr &abs) { return !abs->isa<AbstractSequence>(); });
+  if (allow_fallback_runtime && (has_any || has_not_seq)) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
@@ -62,8 +64,17 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
     }
     auto make_tuple = ret_graph->NewCNode(make_tuple_inputs);
     auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(make_tuple, "zip");
-    MS_LOG(DEBUG) << "Convert: " << make_tuple->DebugString() << " -> " << pyexecute_node->DebugString();
-    ret_graph->set_output(pyexecute_node);
+    std::vector<AnfNodePtr> keys_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> values_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+    (void)keys_tuple_node_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>("key")));
+    (void)values_tuple_node_inputs.emplace_back(pyexecute_node);
+    auto script_node = NewValueNode(std::make_shared<StringImm>("tuple(key)"));
+    auto keys_tuple_node = ret_graph->NewCNodeInOrder(keys_tuple_node_inputs);
+    auto values_tuple_node = ret_graph->NewCNodeInOrder(values_tuple_node_inputs);
+    auto tuple_pyexecute_node = fallback::CreatePyExecuteCNodeInOrder(ret_graph, script_node, keys_tuple_node,
+                                                                      values_tuple_node, pyexecute_node->debug_info());
+    MS_LOG(DEBUG) << "Convert: " << make_tuple->DebugString() << " -> " << tuple_pyexecute_node->DebugString();
+    ret_graph->set_output(tuple_pyexecute_node);
     return ret_graph;
   }
 
