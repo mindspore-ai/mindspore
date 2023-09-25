@@ -520,6 +520,8 @@ class ModelParallelRunner:
 
         Args:
             inputs (list[Tensor]): A list that includes all input Tensors in order.
+            outputs (list[Tensor], optional): A list that includes all output Tensors in order,
+                this tensor include output data buffer.
 
         Returns:
             list[Tensor], outputs, the model outputs are filled in the container in sequence.
