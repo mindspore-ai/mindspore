@@ -26,6 +26,20 @@ def notequal_forward_func(x, y):
 
 
 @ms.jit
+def notequal_infervalue_func1():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
+    return ops.auto_generate.not_equal(x, y)
+
+
+@ms.jit
+def notequal_infervalue_func2():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([3]).astype(np.float32))
+    return ops.auto_generate.not_equal(x, y)
+
+
+@ms.jit
 def notequal_backward_func(x, y):
     return ops.grad(notequal_forward_func, (0, 1))(x, y)
 
@@ -55,6 +69,29 @@ def test_notequal_op_forward(context_mode, data_type):
     expect_out = np.array([True, True, True]).astype(np.bool)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
     print("out:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+def test_notequal_op_infervalue(context_mode):
+    """
+    Feature: Ops.
+    Description: test op notequal infervalue.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    out = notequal_infervalue_func1()
+    expect_out = np.array([False, False, True]).astype(np.bool)
+    np.testing.assert_array_equal(out.asnumpy(), expect_out)
+    print("out1:", out)
+    out = notequal_infervalue_func2()
+    expect_out = np.array([True, True, True]).astype(np.bool)
+    np.testing.assert_array_equal(out.asnumpy(), expect_out)
+    print("out2:", out)
 
 
 @pytest.mark.level0
