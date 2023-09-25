@@ -34,6 +34,7 @@ from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeH
 from mindspore.safeguard import obfuscate_ckpt, load_obf_params_into_net
 from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
     is_invalid_or_jit_forbidden_method
+from mindspore import _install_custom
 
 
 __all__ = ["run_check"]

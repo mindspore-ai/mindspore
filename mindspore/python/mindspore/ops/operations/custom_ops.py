@@ -162,6 +162,12 @@ class Custom(ops.PrimitiveWithInfer):
         - "julia": supports ["CPU"].
         - "aicpu": supports ["Ascend"].
 
+        If run on ge backend, use `CustomRegOp` to generate the registration information of "aicpu" and "tbe" operator,
+        use `custom_info_register` to bind the registration information to the `func` of the "tbe" operator,
+        then save the registration information of "aicpu" operator and the `func` implementation of "tbe" operator to
+        a file or separate files, keep these files in a separate directory, and set the absolute path of this directory
+        to environment variable "MS_DEV_CUSTOM_OPP_PATH" before running the network.
+
     Args:
         func (Union[function, str]):
 

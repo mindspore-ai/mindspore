@@ -21,6 +21,8 @@ mindspore.ops.Custom
         - "julia": ["CPU"].
         - "aicpu": ["Ascend"].
 
+        当运行在ge后端时，通过 `CustomRegOp` 生成"aicpu"和"tbe"类型的自定义算子的算子信息，通过 `custom_info_register` 将算子信息绑定到"tbe"类型的自定义算子的 `func` 上，然后将"aicpu"类型的自定义算子的算子信息以及"tbe"类型的自定义算子的 `func` 实现保存在一个或多个文件里，并且将这些文件保存在一个单独的目录里，在网络运行前将此目录的绝对路径设置到环境变量"MS_DEV_CUSTOM_OPP_PATH"。
+
     参数：
         - **func** (Union[function, str]) - 自定义算子的函数表达。
         - **out_shape** (Union[function, list, tuple]) - 自定义算子的输入的形状或者输出形状的推导函数。默认值： ``None`` 。
