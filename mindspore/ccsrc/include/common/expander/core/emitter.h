@@ -130,6 +130,7 @@ class COMMON_EXPORT Emitter {
   }
   NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalAnd", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalOr", {lhs, rhs}); }
+  NodePtr LogicalNot(const NodePtr &x) { return Emit("LogicalNot", {x}); }
 
   NodePtr OnesLike(const NodePtr &x) { return Emit("OnesLike", {x}); }
   NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) {
