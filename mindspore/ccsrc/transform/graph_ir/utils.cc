@@ -163,6 +163,20 @@ bool IsWhileNode(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsCallNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  bool in_kg = graph->type_name() == kKernelGraphTypeName;
+  auto cnode = node->cast<CNodePtr>();
+  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
+    return true;
+  }
+  return false;
+}
+
 bool CheckSwitchBranch(const AnfNodePtr &node) {
   AnfNodePtr value_node = nullptr;
   if (IsPartialCNode(node)) {
@@ -233,6 +247,9 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   }
   if (IsIfNode(cnode)) {
     return string(kNameIf);
+  }
+  if (IsCallNode(cnode)) {
+    return string(kNamePartitionedCall);
   }
   return GetCNodeFuncName(cnode);
 }

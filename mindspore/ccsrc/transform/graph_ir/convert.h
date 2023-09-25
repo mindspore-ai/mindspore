@@ -269,6 +269,7 @@ class DfGraphConvertor {
   void ConvertWhileCond(const AnfNodePtr &node);
   void ConvertWhileAfter(const AnfNodePtr &node);
   void BuildWhileAfterSubGraph();
+  void BuildCallSubGraphs(const AnfNodePtr &node);
   void GetCallNodeInputs(const CNodePtr &node);
   std::vector<Operator> GetWhileBodyOutputs();
   bool IsSubGraph() const { return graph_type_ == GraphType::kCond || graph_type_ == GraphType::kBody; }
@@ -323,7 +324,6 @@ class DfGraphConvertor {
   std::shared_ptr<DfGraph> restore_ckp_graph_{nullptr};
   std::shared_ptr<DfGraph> broadcast_graph_{nullptr};
   mindspore::HashMap<AnfNode *, DfGraph> branches_map_;
-  mindspore::HashMap<std::string, size_t> branches_repeat_times_;
   mindspore::HashMap<AnfNode *, OperatorPtr> op_cache_;
   /* record "getnext"<->"out_handler" mapping */
   mindspore::HashMap<AnfNode *, OutHandler> out_handle_cache_;
@@ -350,7 +350,7 @@ class DfGraphConvertor {
 
   AnfNodePtr while_cond_node_ = nullptr;
   mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<DfGraph>>> while_dfgraph_cache_;
-
+  mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<DfGraph>>> call_dfgraph_cache_;
   CNodePtr cur_while_node_ = nullptr;
   size_t cur_while_node_out_size_ = 0;
   mindspore::HashMap<size_t, OutHandler> while_const_input_index_;
