@@ -387,7 +387,12 @@ bool HasOutputElementsKernelObjectType(const std::vector<KernelObjectType> &outp
 
 void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  std::vector<KernelObjectType> input_kernel_object_types;
+  if (selected_kernel_attr.GetRealTuple()) {
+    input_kernel_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
+  } else {
+    input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  }
   auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
   std::vector<KernelObjectType> output_element_object_types;
   if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
@@ -427,6 +432,11 @@ KernelAttr &KernelAttr::AddSkipCheckAttr(const bool &skip_check) {
   return *this;
 }
 
+KernelAttr &KernelAttr::AddRealTuple(const bool &is_real_tuple) {
+  is_real_tuple_ = is_real_tuple;
+  return *this;
+}
+
 KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
   out_in_ref_map_[output_index] = input_index;
   return *this;
@@ -462,6 +472,12 @@ void KernelAttr::SetOutputAttrList(const std::vector<DataType> &addr_list) {
 std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   std::stringstream ss;
   ss << "[Kernel Attr] all same: " << kernel_attr.GetAllSame();
+  if (kernel_attr.GetSkipCheck()) {
+    ss << ", skip check: true";
+  }
+  if (kernel_attr.GetRealTuple()) {
+    ss << ", keep tuple target: inputs";
+  }
   size_t input_num = kernel_attr.GetInputSize();
   if (input_num > 0) {
     ss << ", input(";

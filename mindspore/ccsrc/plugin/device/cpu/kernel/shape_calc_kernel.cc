@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,14 @@ namespace kernel {
 bool ShapeCalcCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ShapeCalc>(base_operator);
-  if (!kernel_ptr) {
+  auto operator_ptr = std::dynamic_pointer_cast<ops::ShapeCalc>(base_operator);
+  if (!operator_ptr) {
     MS_LOG(ERROR) << "cast ShapeCalc ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
-  functor_ = kernel_ptr->get_functor();
+  kernel_name_ = operator_ptr->name();
+  functor_ = operator_ptr->get_functor();
+  value_depend_ = operator_ptr->get_value_depend();
   return true;
 }
 
@@ -41,16 +42,21 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
   is_need_retrieve_output_shape_ = (ret == KRET_UNKNOWN_OUT_SHAPE);
+
+  input_shapes_.clear();
   inputs_size_.clear();
   inputs_type_.clear();
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto input_shape = inputs[i]->GetShapeVector();
+    input_shapes_.push_back(input_shape);
+
     auto sz = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     inputs_size_.push_back(sz);
 
     auto type_id = inputs[i]->GetDtype();
-    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
-      MS_LOG(EXCEPTION) << "For ShapeCalc input should be int32 or int64, but got " << TypeIdToString(type_id);
+    if (value_depend_[i] && type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
+      MS_LOG(EXCEPTION) << "For ShapeCalc value-depended input[" << i << "] should be int32 or int64, but got "
+                        << TypeIdToString(type_id);
     }
     inputs_type_.push_back(type_id);
   }
@@ -62,6 +68,15 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
   }
   return ret;
+}
+
+ShapeVector ShapeCalcCpuKernelMod::GetInt64ValueFromAddr(void *addr, size_t idx) {
+  if (inputs_type_.at(idx) == kNumberTypeInt32) {
+    auto input_addr = reinterpret_cast<int32_t *>(addr);
+    return ShapeVector{input_addr, input_addr + inputs_size_[idx]};
+  }
+  auto input_addr = reinterpret_cast<int64_t *>(addr);
+  return ShapeVector{input_addr, input_addr + inputs_size_[idx]};
 }
 
 bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -82,14 +97,9 @@ bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   ShapeArray args;
   args.reserve(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
-    if (inputs_type_.at(i) == kNumberTypeInt32) {
-      auto input_addr = reinterpret_cast<int32_t *>(inputs[i]->addr);
-      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
-    } else {
-      auto input_addr = reinterpret_cast<int64_t *>(inputs[i]->addr);
-      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
-    }
+    args.push_back(value_depend_[i] ? GetInt64ValueFromAddr(inputs[i]->addr, i) : input_shapes_[i]);
   }
+
   outs_shape_ = functor_->Calc(args);
   if (outputs.size() != outs_shape_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -108,7 +118,7 @@ bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddRealTuple(true)};
   return support_list;
 }
 
@@ -117,6 +127,16 @@ void ShapeCalcCpuKernelMod::SyncOutputShape() {
     ShapeVector shape{static_cast<int64_t>(outs_shape_[i].size())};
     outputs_[i]->SetShapeVector(shape);
   }
+}
+
+std::vector<size_t> ShapeCalcCpuKernelMod::GetLaunchIgnoredInputAddressIdx() const {
+  std::vector<size_t> ignored_idx;
+  for (size_t i = 0; i < value_depend_.size(); ++i) {
+    if (!value_depend_[i]) {
+      ignored_idx.push_back(i);
+    }
+  }
+  return ignored_idx;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ShapeCalc, ShapeCalcCpuKernelMod);

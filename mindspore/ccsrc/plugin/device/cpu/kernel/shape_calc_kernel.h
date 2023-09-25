@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SHAPE_CALC_KERNEL_H_
 
 #include <map>
+#include <set>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -43,10 +44,16 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
 
   void SyncOutputShape() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
+
  private:
+  ShapeVector GetInt64ValueFromAddr(void *addr, size_t idx);
+
   ShapeCalcFunctorPtr functor_{nullptr};
+  std::vector<bool> value_depend_;
   std::vector<int64_t> inputs_size_;
   std::vector<TypeId> inputs_type_;
+  ShapeArray input_shapes_;
   ShapeArray outs_shape_;
 };
 }  // namespace kernel
