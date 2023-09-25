@@ -63,7 +63,8 @@ class ControlFlow(Node, NodeManager):
         if insert_to_ast:
             ast_assign = new_node.get_ast()
             if ast_assign is None:
-                new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+                func_name = new_node.get_belong_symbol_tree().unique_func_name(new_node.get_name())
+                new_node.set_func_name(ScopedValue.create_naming_value(func_name, "self"))
                 ast_assign = new_node.update_ast_node()
             # Save instance into _origin_network.
             stree = self.get_belong_symbol_tree()
