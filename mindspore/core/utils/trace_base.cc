@@ -250,7 +250,8 @@ std::string GetTracedDebugInfoStr(const DebugInfoPtr &debug_info, bool is_debug)
   }
   auto info_vec = GetSourceCodeDebugInfoVec(debug_info, is_debug);
   std::ostringstream oss;
-  for (const auto &info : info_vec) {
+  for (auto iter = info_vec.crbegin(); iter != info_vec.crend(); ++iter) {
+    const auto &info = *iter;
     MS_EXCEPTION_IF_NULL(info);
     auto loc = info->location();
     if (loc == nullptr) {

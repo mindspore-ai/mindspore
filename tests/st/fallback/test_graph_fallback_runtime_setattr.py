@@ -828,3 +828,70 @@ def test_setattr_for_attribute_no_exist_3():
     foo()
     assert hasattr(obj, "y")
     assert obj.y == 2
+
+
+class _Plain:
+    def __init__(self):
+        self.x = 1
+
+
+@ms.jit_class
+class _SubJitClass:
+    def __init__(self):
+        self.x = 1
+
+
+class _SubCell(ms.nn.Cell):
+    def __init__(self):
+        super(_SubCell, self).__init__()
+        self.x = 1
+
+    def construct(self):
+        return self.x
+
+
+class _Test(ms.nn.Cell):
+    def __init__(self, choice):
+        super(_Test, self).__init__()
+        if choice == 0:
+            self.attr = _Plain()
+        elif choice == 1:
+            self.attr = _SubJitClass()
+        else:
+            self.attr = _SubCell()
+
+    def construct(self):
+        return self.attr.x
+
+
+@pytest.mark.skip(reason="Unsupported setattr test cases")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('class_type_choice', [0, 1, 2])
+def test_getattr_assign(class_type_choice):
+    """
+    Feature: Feature setattr.
+    Description: Support "obj.attr.x = value" or "getattr(obj, 'attr').x = value"
+    Expectation: No exception.
+    """
+    test_obj = _Test(class_type_choice)
+
+    @ms.jit
+    def func1():
+        test_obj.attr.x = 2
+        return test_obj.attr.x
+
+    @ms.jit
+    def func2():
+        getattr(test_obj, 'attr').x = 2
+        return getattr(test_obj, 'attr').x
+
+    res1 = func1()
+    print('res1: {res1}')
+    res2 = func2()
+    print('res2: {res2}')
+
+    assert res1 == 2
+    assert res2 == 2

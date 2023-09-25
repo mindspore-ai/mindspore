@@ -3797,9 +3797,13 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr target_node = nullptr;
   auto node_type = ast()->GetNodeType(target_obj);
   const std::string &node_type_name = node_type->node_name();
-  MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
+  MS_LOG(DEBUG) << "node_type_name: " << node_type_name << ", target: " << py::str(target);
   if (node_type_name == "Attribute") {
-    // Do setattr for nested getattr target, parse getattr firstly.
+    // Prepare for setattr with nested getattr target, parse getattr firstly.
+    target_node = ParseExprNode(block, target_obj);
+    target_id_str = GetLocation(target_obj)->expr_src();
+  } else if (node_type_name == "Call") {
+    // Prepare for setattr with nested 'getattr' call target, parse 'getattr' call firstly.
     target_node = ParseExprNode(block, target_obj);
     target_id_str = GetLocation(target_obj)->expr_src();
   } else if (node_type_name == "Name") {
@@ -3870,8 +3874,8 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     }
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
-      auto obj_type = obj.attr("__class__").attr("__name__");
       if (!py::hasattr(obj, "__parameter__")) {
+        auto obj_type = obj.attr("__class__").attr("__name__");
         MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is not set to LAX" << var_name
                                 << " should be initialized as a 'Parameter' in the '__init__' function"
                                 << " to perform assign subscript, but got: " << py::str(obj).cast<std::string>()
