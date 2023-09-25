@@ -582,6 +582,24 @@ def test_filter_by_generator_get_dataset_size():
     assert data_sie == num_iter
 
 
+def test_filter_with_pull_mode():
+    """
+    Feature: Filter op
+    Description: Test Filter op to support pull mode
+    Expectation: Output is equal to the expected output
+    """
+    ds.config.set_debug_mode(True)
+    dataset = ds.GeneratorDataset(generator_1d, ["data"])
+    dataset = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
+    data_sie = dataset.get_dataset_size()
+
+    num_iter = 0
+    for _ in dataset.create_dict_iterator(num_epochs=1):
+        num_iter += 1
+    assert data_sie == num_iter
+    ds.config.set_debug_mode(False)
+
+
 if __name__ == '__main__':
     test_diff_predicate_func()
     test_filte_case_dataset_cifar10()
@@ -604,3 +622,4 @@ if __name__ == '__main__':
     test_filter_by_generator_with_zip_after()
     test_filter_by_generator_Partial()
     test_filter_by_generator_get_dataset_size()
+    test_filter_with_pull_mode()

@@ -175,5 +175,26 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 
   return Status(StatusCode::kSuccess, "FilterOp predicate func call succeed");
 }
+
+Status FilterOp::GetNextRowPullMode(TensorRow *const row) {
+  row->clear();
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+
+  if (row->eoe()) {
+    RETURN_IF_NOT_OK(EoeReceived(0));
+  } else if (row->eof()) {
+    RETURN_IF_NOT_OK(EofReceived(0));
+  } else {
+    RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
+    bool result = false;
+    RETURN_IF_NOT_OK(WorkerCompute(*row, &result));
+    if (result) {
+      return Status::OK();
+    } else {
+      RETURN_IF_NOT_OK(GetNextRowPullMode(row));
+    }
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

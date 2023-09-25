@@ -69,6 +69,16 @@ class FilterOp : public ParallelOp<TensorRow, TensorRow> {
   // @return Name of the current Op
   std::string Name() const override { return kFilterOp; }
 
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   // predicate_func python callable which returns a boolean value.
   std::shared_ptr<TensorOp> predicate_func_;
