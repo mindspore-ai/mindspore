@@ -16,6 +16,7 @@ mindspore.experimental.optim.lr_scheduler.LRScheduler
         - **TypeError** - `optimizer` 不是优化器。
         - **KeyError** - `last_epoch` 不是 -1 且 ``'initial_lr'`` 不在参数组内。
         - **ValueError** - `last_epoch` 不是int类型。
+        - **ValueError** - `last_epoch` 小于-1。
 
     .. py:method:: get_last_lr()
 
