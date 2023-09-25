@@ -261,23 +261,23 @@ def clamp(input, min=None, max=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # case 1: the data type of x is Tensor
+        >>> # case 1: the data type of input is Tensor
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> min_value = Tensor(5, mindspore.float32)
         >>> max_value = Tensor(20, mindspore.float32)
-        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> output = ops.clamp(x, min_value, max_value)
+        >>> input = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp(input, min_value, max_value)
         >>> print(output)
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
-        >>> # case 2: the data type of x is list[Tensor]
+        >>> # case 2: the data type of input is list[Tensor]
         >>> min_value = 5
         >>> max_value = 20
-        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> output = ops.clamp([x,y], min_value, max_value)
+        >>> input_x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> input_y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp([input_x,input_y], min_value, max_value)
         >>> for out in output:
         ...     print(out)
         [[ 5. 20.  5.  7.]

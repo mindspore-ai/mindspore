@@ -495,6 +495,7 @@ class SyncBatchNorm(_BatchNorm):
 
     Note:
         Currently, SyncBatchNorm only supports 2D and 4D inputs.
+        :math:`\gamma` and :math:`\beta` are trainable scale and shift.
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
@@ -676,8 +677,9 @@ class LayerNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
     Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It is applied across all channels
-    and pixel but only one batch size. It can be described using the following formula:
+    testing time. It is applied across all channels and pixel but only one batch size.
+    :math:`\gamma` and :math:`\beta` are trainable scale and shift.
+    It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -1061,7 +1063,9 @@ class GroupNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
-    and it performs very stable over a wide range of batch size. It can be described using the following formula:
+    and it performs very stable over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
+    and shift.
+    It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
