@@ -155,8 +155,8 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
                                             : common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   const auto dim = shape_vec.size();
   int64_t ddim = SizeToLong(dim);
-  std::vector<int64_t> axis;
-  for (int64_t i = 0; i < ddim; ++i) {
+  std::vector<int64_t> axis{0};
+  for (int64_t i = 1; i < ddim; ++i) {
     (void)axis.emplace_back(i);
   }
   const std::vector<AnfNodePtr> square_node_inputs = {NewValueNode(std::make_shared<Primitive>(kSquareOpName)),
