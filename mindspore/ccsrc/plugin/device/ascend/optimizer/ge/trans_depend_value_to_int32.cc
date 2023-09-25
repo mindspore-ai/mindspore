@@ -34,7 +34,7 @@ tensor::TensorPtr TransValueToInt32(const AnfNodePtr &input) {
   auto ori_value = ori_value_node->value();
   MS_EXCEPTION_IF_NULL(ori_value);
   if (!ori_value->isa<tensor::Tensor>()) {
-    MS_LOG(WARNING) << "Value is not tensor";
+    MS_LOG(INFO) << "Value is not tensor";
     return nullptr;
   }
   auto tensor = ori_value->cast<tensor::TensorPtr>();
