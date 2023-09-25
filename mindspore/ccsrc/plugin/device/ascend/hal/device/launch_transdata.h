@@ -26,10 +26,9 @@
 namespace mindspore::device::ascend {
 class LaunchTransData {
  public:
-  LaunchTransData(void *stream, uint8_t *input_addr, TypeId dtype, size_t total_size, std::string src_format,
-                  std::string dst_format, ShapeVector host_shape, int64_t groups)
+  LaunchTransData(void *stream, TypeId dtype, size_t total_size, std::string src_format, std::string dst_format,
+                  ShapeVector host_shape, int64_t groups)
       : stream_(stream),
-        input_addr_(input_addr),
         dtype_(dtype),
         total_size_(total_size),
         src_format_(std::move(src_format)),
@@ -40,6 +39,7 @@ class LaunchTransData {
   ~LaunchTransData() = default;
   void LaunchOpKernel();
   std::vector<uint8_t *> GetKernelOutputAddr();
+  void SetInputAddr(void *input_addr);
   void FreeDeviceMem();
 
  private:
@@ -49,7 +49,6 @@ class LaunchTransData {
   uint8_t *AllocDeviceMem(size_t size);
   std::vector<kernel::AddressPtr> CreateOutputAddr(const std::vector<size_t> &outputs_list);
   void *stream_;
-  uint8_t *input_addr_;
   TypeId dtype_;
   size_t total_size_;
   std::string src_format_;
@@ -58,6 +57,7 @@ class LaunchTransData {
   int64_t groups_;
   kernel::KernelModPtr kernel_mod_{nullptr};
   std::vector<uint8_t *> outputs_addr_;
+  void *input_addr_{nullptr};
   KernelGraphPtr kernel_graph_;
 };
 

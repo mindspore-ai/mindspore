@@ -29,6 +29,8 @@
 namespace mindspore::device::ascend {
 std::vector<uint8_t *> LaunchTransData::GetKernelOutputAddr() { return outputs_addr_; }
 
+void LaunchTransData::SetInputAddr(void *input_addr) { input_addr_ = input_addr; }
+
 void LaunchTransData::FreeDeviceMem() {
   input_addr_ = nullptr;
   for (size_t i = 0; i < outputs_addr_.size(); ++i) {
@@ -42,7 +44,7 @@ void LaunchTransData::FreeDeviceMem() {
 
 void LaunchTransData::SetKernelBuildInfo() {
   if (!kernel_graph_->execution_order().empty()) {
-    auto transdata_node = kernel_graph_->execution_order()[0];
+    auto new_op = kernel_graph_->execution_order()[0];
     std::vector<TypeId> device_type = {dtype_};
     auto input_format = (src_format_ == kOpFormat_NCHW) ? kOpFormat_DEFAULT : src_format_;
     auto output_format = (dst_format_ == kOpFormat_NCHW) ? kOpFormat_DEFAULT : dst_format_;
@@ -61,16 +63,16 @@ void LaunchTransData::SetKernelBuildInfo() {
     builder->SetOutputsKernelObjectType(output_object_types);
     builder->SetInputsReshapeType({});
     builder->SetOutputsReshapeType({});
-    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transdata_node.get());
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), new_op.get());
     // set attr
     bool in_def_flag = IsOneOfDefaultFormat(input_format);
     bool out_def_flag = IsOneOfDefaultFormat(output_format);
-    common::AnfAlgo::SetNodeAttr(kAttrInputDefaultFormat, MakeValue(in_def_flag), transdata_node);
-    common::AnfAlgo::SetNodeAttr(kAttrOutputDefaultFormat, MakeValue(out_def_flag), transdata_node);
-    common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), transdata_node);
-    common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), transdata_node);
-    common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups_), transdata_node);
-    common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups_), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrInputDefaultFormat, MakeValue(in_def_flag), new_op);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputDefaultFormat, MakeValue(out_def_flag), new_op);
+    common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), new_op);
+    common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), new_op);
+    common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups_), new_op);
+    common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups_), new_op);
   }
 }
 
