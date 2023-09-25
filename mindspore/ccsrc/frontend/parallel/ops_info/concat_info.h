@@ -49,6 +49,7 @@ class ConcatInfo : public OperatorInfo {
 
  private:
   size_t axis_ = 0;
+  bool skip_redistribution_ = false;
 };
 
 using ConcatInfoPtr = std::shared_ptr<ConcatInfo>;

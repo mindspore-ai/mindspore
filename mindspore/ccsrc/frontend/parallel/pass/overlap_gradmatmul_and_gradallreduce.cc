@@ -41,26 +41,6 @@ bool IsForwardNode(const CNodePtr &cnode) {
   return !(cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId) || cnode->HasAttr(kAttrDuplicated));
 }
 
-bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE); }
-
-FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
-  AnfNodePtr node = forward_graph->get_return();
-  Pattern patterns = {{prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
-  for (const auto &pattern : patterns) {
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (!IsPrimitiveCNode(cnode, pattern.first)) {
-      return nullptr;
-    }
-    auto prev_node_index = pattern.second;
-    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
-      return nullptr;
-    }
-    node = cnode->input(prev_node_index);
-  }
-  return GetValueNode<FuncGraphPtr>(node);
-}
-
 void ExtractForwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
                          std::vector<std::string> *forward_comm_node_unique_id_list,
                          std::vector<std::string> *forward_matmul_unique_id_list) {
