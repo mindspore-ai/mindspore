@@ -191,10 +191,13 @@ static inline MS_FLOAT32X8 MS256_LOG_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 res =
     MS_ADD256_F32(MS_MUL256_F32(ln2, expsPD), MS_MUL256_F32(MS_MUL256_F32(div, MS_ADD256_F32(tmp1, data5)), data6));
   // if (src == 0) res = -inf;
-  // if (src < 0) res = nan;
   MS_FLOAT32X8 mask = MS_CMP256_F32(src, MS_MOV256_F32(0.0f), _CMP_EQ_OQ);
   res = MS_BLEND256_F32(res, MS_MOV256_F32(-INFINITY), mask);
-  mask = MS_CMPLT256_F32(src, MS_MOV256_F32(0.0f));
+  // if (src == inf) res = inf;
+  mask = MS_CMP256_F32(src, MS_MOV256_F32(INFINITY), _CMP_EQ_OQ);
+  res = MS_BLEND256_F32(res, MS_MOV256_F32(INFINITY), mask);
+  // if (src < 0 || src == nan) res = nan;
+  mask = MS_OR256_F32(MS_CMPLT256_F32(src, MS_MOV256_F32(0.0f)), MS_CMP256_F32(src, MS_MOV256_F32(0.0f), _CMP_UNORD_Q));
   res = MS_BLEND256_F32(res, MS_MOV256_F32(NAN), mask);
   return res;
 }
