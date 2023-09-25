@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <complex>
 #include "plugin/device/cpu/kernel/copy_with_slice_cpu_kernel.h"
 
 #include "utils/log_adapter.h"
@@ -82,7 +83,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
       MS_LOG(EXCEPTION) << "src data_type:" << src_storage_info->data_type
                         << "  dst data_type:" << dst_storage_info->data_type;
     }
-    src_storage_offset = static_cast<int64_t>(src_storage_info->storage_offset);
+    src_storage_offset = src_storage_info->storage_offset;
   }
   auto src_is_contiguous = src_storage_info == nullptr || src_storage_info->is_contiguous;
 
@@ -103,7 +104,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
 
     auto task = [&](size_t start, size_t end) {
       for (size_t pos = start; pos < end; ++pos) {
-        int64_t dst_offset = OffsetCalc(dst_ndim, output_shape, pos, dst_strides);
+        size_t dst_offset = LongToSize(OffsetCalc(dst_ndim, output_shape, pos, dst_strides));
         self_addr[dst_offset + dst_storage_offset] = copy_src_addr[pos + src_storage_offset];
       }
     };
@@ -115,7 +116,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
 
     auto task = [&](size_t start, size_t end) {
       for (size_t pos = start; pos < end; ++pos) {
-        int64_t src_offset = OffsetCalc(src_ndim, input_shape, pos, src_strides);
+        size_t src_offset = LongToSize(OffsetCalc(src_ndim, input_shape, pos, src_strides));
         self_addr[pos + dst_storage_offset] = copy_src_addr[src_offset + src_storage_offset];
       }
     };
@@ -129,8 +130,8 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
 
     auto task = [&](size_t start, size_t end) {
       for (size_t pos = start; pos < end; ++pos) {
-        int64_t dst_offset = OffsetCalc(dst_ndim, output_shape, pos, dst_strides);
-        int64_t src_offset = OffsetCalc(src_ndim, input_shape, pos, src_strides);
+        size_t dst_offset = LongToSize(OffsetCalc(dst_ndim, output_shape, pos, dst_strides));
+        size_t src_offset = LongToSize(OffsetCalc(src_ndim, input_shape, pos, src_strides));
         self_addr[dst_offset + dst_storage_offset] = copy_src_addr[src_offset + src_storage_offset];
       }
     };

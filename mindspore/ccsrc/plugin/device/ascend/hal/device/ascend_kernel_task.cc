@@ -40,11 +40,11 @@ std::vector<int64_t> GetContiguousStrides(const std::vector<int64_t> &shape) {
     return {};
   }
 
-  std::vector<int64_t> ret{1};
+  std::vector<int64_t> ret(shape.size(), 1);
   int64_t strides = 1;
-  for (int64_t i = shape.size() - 1; i > 0; i--) {
+  for (size_t i = shape.size() - 1; i > 0; --i) {
     strides *= shape[i];
-    (void)ret.emplace(ret.begin(), strides);
+    ret[i - 1] = strides;
   }
   return ret;
 }
