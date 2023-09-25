@@ -433,7 +433,7 @@ Tensor::~Tensor() {
         }
       }
     }
-  } catch (py::error_already_set &e) {
+  } catch (const py::error_already_set &e) {
     // ignore exceptions as everything could be shutting down at this point
   }
 #endif

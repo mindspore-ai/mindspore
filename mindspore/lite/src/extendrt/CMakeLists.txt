@@ -230,19 +230,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         target_link_libraries(mindspore-extendrt mindspore_lite_drawer)
         target_link_libraries(mindspore-extendrt_static mindspore_lite_drawer)
     endif()
-
-    set(TEST_CLOUD_INFER off)
-
-    if(TEST_CLOUD_INFER)
-        set(CLOUD_INFER_TEST_SRC ${CLOUD_INFER_TEST_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/utils/cloud_infer_test.cc
-            ${LITE_DIR}/tools/common/flag_parser.cc
-            )
-
-        add_executable(cloud_infer_test ${CLOUD_INFER_TEST_SRC})
-        add_dependencies(cloud_infer_test mindspore-extendrt)
-        target_link_libraries(cloud_infer_test mindspore-extendrt)
-    endif()
 else()
     set(MSLITE_EXTEND_RUNTIME_SRC ${MODEL_LOADER_FRAMEWORK_SRC})
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})

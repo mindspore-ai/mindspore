@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,10 +49,17 @@ class MutableTensorImpl : public MSTensor::Impl {
       if (dim < 0) {
         return 0;
       }
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
+      if (INT64_MAX / ele_num < dim) {
+        MS_LOG(ERROR) << "The shape " << shape << " is invalid";
+        return 0;
+      }
+#else
       if (INT32_MAX / ele_num < dim) {
         MS_LOG(ERROR) << "The shape " << shape << " is invalid";
         return 0;
       }
+#endif
       ele_num *= dim;
     }
     return ele_num;
