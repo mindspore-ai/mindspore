@@ -1121,7 +1121,7 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = SumGrad(ib, x, axis, dout);
+  auto dx = SumGrad(ib, x, axis, dout, ib->GetAttr<bool>("keep_dims"));
   return {dx, ib->OutZeros(axis)};
 });
 
@@ -1130,16 +1130,15 @@ DEF_PURE_SHAPE_CALC(g_reduce_prod)
     auto input_shape = inputs.at(0);
     auto axis = inputs.at(1);
     auto output_shape_kept_dims = ReduceShape(input_shape, axis);
-    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
     auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
-    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
+    return {output_shape_kept_dims, pack_shape, perm, InvertPermutation(perm)};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
     if (!unknown_inputs.empty()) {
-      return {-1, -1, 2, -1, -1};
+      return {-1, 2, -1, -1};
     }
     auto size = SizeToLong(inputs.at(0).size());
-    return {size, size, 2, size, size};
+    return {size, 2, size, size};
   });
 REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
@@ -1149,19 +1148,20 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   }
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  if (ib->GetShape(x).empty()) {
-    return {SumGrad(ib, x, axis, dout), ib->OutZeros(axis)};
+  if (ib->GetRank(x) == 0) {
+    return {dout, ib->OutZeros(axis)};
   }
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
-  dout = ib->Reshape(dout, res[0]);
-  auto grad = ib->Tile(dout, res[1]);
-  auto permuted = ib->Transpose(x, res[3]);
+  auto grad = ib->GetAttr<bool>("keep_dims") ? dout : ib->Reshape(dout, res[0]);
+  grad = ib->BroadcastTo(grad, x);
+
+  auto permuted = ib->Transpose(x, res[2]);
   auto permuted_shape = ib->Shape(permuted);
-  auto reshaped = ib->Reshape(permuted, res[2]);
+  auto reshaped = ib->Reshape(permuted, res[1]);
   auto left = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, false);
   auto right = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, true);
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
-  auto out = ib->Mul(ib->Transpose(y, res[4]), grad);
+  auto out = ib->Mul(ib->Transpose(y, res[3]), grad);
   auto dx = ib->Reshape(out, ib->Shape(x));
   return {dx, ib->OutZeros(axis)};
 });
@@ -1203,7 +1203,7 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto grad = SumGrad(ib, x, axis, dout);
+  auto grad = SumGrad(ib, x, axis, dout, ib->GetAttr<bool>("keep_dims"));
   NodePtr div_shape_node;
   if (IsDynamic(ib->GetShape(x)) || IsDynamic(ib->GetShape(out))) {
     auto shape_out_sz = ib->DynSize(out, kFloat32);
