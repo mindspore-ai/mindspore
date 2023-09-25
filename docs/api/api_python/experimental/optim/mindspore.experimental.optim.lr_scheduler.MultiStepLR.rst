@@ -10,6 +10,11 @@ mindspore.experimental.optim.lr_scheduler.MultiStepLR
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
-        - **milestones** (list) - 表示epoch/step阈值的列表，为递增序列，当epoch/step数达到阈值时将学习率乘以 `gamma`。
+        - **milestones** (list) - 阈值列表，当 `last_epoch` 数达到阈值时将学习率乘以 `gamma`。
         - **gamma** (float，可选) - 学习率的乘法因子。默认值： ``0.1``。
-        - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。
+        - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值：``-1``。
+
+    异常：
+        - **ValueError** - `milestones` 不是列表。
+        - **TypeError** - `milestones` 的元素不是int类型。
+        - **ValueError** - `gamma` 不是float类型。

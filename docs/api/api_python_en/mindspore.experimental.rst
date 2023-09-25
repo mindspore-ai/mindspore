@@ -70,7 +70,6 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     mindspore.experimental.optim.lr_scheduler.LinearLR
     mindspore.experimental.optim.lr_scheduler.MultiplicativeLR
     mindspore.experimental.optim.lr_scheduler.MultiStepLR
-    mindspore.experimental.optim.lr_scheduler.OneCycleLR
     mindspore.experimental.optim.lr_scheduler.PolynomialLR
     mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
     mindspore.experimental.optim.lr_scheduler.SequentialLR

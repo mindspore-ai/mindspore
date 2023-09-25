@@ -160,6 +160,10 @@ class Callback:
         Called once before the network executing.
         A backwards compatibility alias for `on_train_begin` and `on_eval_begin`.
 
+        Note:
+            `begin` is deprecated and will be deleted in a future version,
+            please use `on_train_begin` and `on_eval_begin` instead.
+
         Args:
             run_context (RunContext): Include some information of the model.
         """
@@ -168,6 +172,10 @@ class Callback:
         """
         Called before each epoch beginning.
         A backwards compatibility alias for `on_train_epoch_begin` and `on_eval_epoch_begin`.
+
+        Note:
+            `epoch_begin` is deprecated and will be deleted in a future version,
+            please use `on_train_epoch_begin` and `on_eval_epoch_begin` instead.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -178,6 +186,10 @@ class Callback:
         Called after each epoch finished.
         A backwards compatibility alias for `on_train_epoch_end` and `on_eval_epoch_end`.
 
+        Note:
+            `epoch_end` is deprecated and will be deleted in a future version,
+            please use `on_train_epoch_end` and `on_eval_epoch_end` instead.
+
         Args:
             run_context (RunContext): Include some information of the model.
         """
@@ -186,6 +198,10 @@ class Callback:
         """
         Called before each step beginning.
         A backwards compatibility alias for `on_train_step_begin` and `on_eval_step_begin`.
+
+        Note:
+            `step_begin` is deprecated and will be deleted in a future version,
+            please use `on_train_step_begin` and `on_eval_step_begin` instead.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -196,6 +212,10 @@ class Callback:
         Called after each step finished.
         A backwards compatibility alias for `on_train_step_end` and `on_eval_step_end`.
 
+        Note:
+            `step_end` is deprecated and will be deleted in a future version,
+            please use `on_train_step_end` and `on_eval_step_end` instead.
+
         Args:
             run_context (RunContext): Include some information of the model.
         """
@@ -204,6 +224,10 @@ class Callback:
         """
         Called once after network training.
         A backwards compatibility alias for `on_train_end` and `on_eval_end`.
+
+        Note:
+            `end` is deprecated and will be deleted in a future version,
+            please use `on_train_end` and `on_eval_end` instead.
 
         Args:
             run_context (RunContext): Include some information of the model.
