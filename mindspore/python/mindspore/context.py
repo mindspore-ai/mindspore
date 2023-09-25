@@ -958,7 +958,11 @@ def set_offload_context(offload_config):
 
 def get_offload_context():
     """
-    Get offload context.
+    Gets the offload configuration parameters. Configure through interface mindspore.set_offload_context().
+    If the user is not set, the default configuration is obtained.
+
+    Returns:
+        Dict, heterogeneous training offload detailed configuration parameters.
 
     Examples:
         >>> from mindspore import context
