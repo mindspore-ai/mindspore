@@ -228,6 +228,14 @@ namespace gpu {
     }                                                                                            \
   } while (0);
 
+#define CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(expression, message)                                   \
+  do {                                                                                            \
+    int result = (expression);                                                                    \
+    if (result != ncclSuccess) {                                                                  \
+      MS_LOG(EXCEPTION) << "#umsg#NCCL Error:#umsg#" << message << " | Error Number: " << result; \
+    }                                                                                             \
+  } while (0);
+
 #define CHECK_CUSPARSE_RET_WITH_ERROR(expression, message)                           \
   do {                                                                               \
     cusparseStatus_t result = (expression);                                          \

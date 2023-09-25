@@ -74,27 +74,28 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
-    InferCommType(kernel_node);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    nccl_data_type_ = nccl_dtype(inputs[0]->dtype_id());
+    InferCommType(kernel_name_, primitive_);
 
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    SelectCollectiveHandle();
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    size_t input_num = inputs.size();
+    size_t output_num = outputs.size();
+    output_size_list_.clear();
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
+      auto shape = inputs[i]->GetDeviceShapeVector();
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= LongToSizeClipNeg(shape[j]);
       }
-      input_size_list_.push_back(size);
       // Framework memory allocation ensures memory alignment, but AllGather/ReduceScatter calculation cann‘t have
       // aligned gaps in single input scenarios.
       if (input_num > 1) {
@@ -103,10 +104,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       input_size_ += size;
     }
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
+      auto shape = outputs[i]->GetDeviceShapeVector();
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
       size_t size = sizeof(T);
@@ -122,14 +122,12 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       output_size_ += size;
     }
 
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-
-    SelectCollectiveHandle();
-    return true;
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
+    MS_LOG(INFO) << kernel_name_ << " for group " << group_name_;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     nccl_kernel_type_ = NCCL_INVALID_TYPE;
     nccl_reduce_type_ = ncclSum;
     input_size_ = 0;
@@ -137,13 +135,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     root_ = 0;
     is_null_input_ = false;
     collective_handle_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-
- protected:
-  void InitSizeLists() override { return; }
 
  private:
   void LaunchAllReduce(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
@@ -174,7 +168,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
                        void *stream_ptr) {
     T *input_addr = nullptr;
     T *output_addr = nullptr;
-    for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
+    for (int i = 0; i < SizeToInt(inputs.size()); ++i) {
       input_addr = GetDeviceAddress<T>(inputs, i);
       output_addr = GetDeviceAddress<T>(outputs, i);
       (void)Broadcast(input_addr, output_addr, output_size_list_[i] / sizeof(T), nccl_data_type_, root_,
@@ -182,8 +176,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     }
   }
 
-  void InferCommType(const CNodePtr &kernel_node) {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  void InferCommType(const std::string &kernel_name, const PrimitivePtr &prim) {
     auto iter = kNcclTypeMap.find(kernel_name);
     if (iter == kNcclTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllReduce, AllGather, Broadcast, "
@@ -192,7 +185,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       nccl_kernel_type_ = iter->second;
     }
 
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     auto reduce_op = prim->GetAttr(kAttrOp);
     if (reduce_op) {

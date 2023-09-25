@@ -55,40 +55,39 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    InferCommType(kernel_node);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    InferCommType(kernel_name_, primitive_);
+    SelectCollectiveHandle();
+    return true;
+  }
 
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    size_t input_num = inputs.size();
+    size_t output_num = outputs.size();
+    output_size_list_.clear();
     if (input_num > 0) {
-      input_nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
+      input_nccl_data_type_ = nccl_dtype(inputs[0]->dtype_id());
     }
     if (output_num > 0) {
-      output_nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
+      output_nccl_data_type_ = nccl_dtype(outputs[0]->dtype_id());
     }
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
+      auto shape = inputs[i]->GetDeviceShapeVector();
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= LongToSizeClipNeg(shape[j]);
       }
-      input_size_list_.push_back(size);
       // Framework memory allocation ensures memory alignment.
       input_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
     }
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
+      auto shape = outputs[i]->GetDeviceShapeVector();
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
       size_t size = sizeof(I);
@@ -100,43 +99,35 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
       output_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
     }
 
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
+    MS_LOG(INFO) << kernel_name_ << " for group " << group_name_;
 
     // Used by AlltoAllv
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto send_rank_ids_attr = prim->GetAttr(kAttrSendRankIds);
-    auto recv_rank_ids_attr = prim->GetAttr(kAttrRecvRankIds);
+    auto send_rank_ids_attr = primitive_->GetAttr(kAttrSendRankIds);
+    auto recv_rank_ids_attr = primitive_->GetAttr(kAttrRecvRankIds);
     if (send_rank_ids_attr && recv_rank_ids_attr) {
       send_rank_ids_ = GetValue<std::vector<int64_t>>(send_rank_ids_attr);
       recv_rank_ids_ = GetValue<std::vector<int64_t>>(recv_rank_ids_attr);
     }
 
-    auto need_drop_input_attr = prim->GetAttr(kAttrNeedDropInput);
+    auto need_drop_input_attr = primitive_->GetAttr(kAttrNeedDropInput);
     if (need_drop_input_attr) {
       need_drop_input_ = GetValue<bool>(need_drop_input_attr);
     }
-
-    SelectCollectiveHandle();
-    return true;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     nccl_kernel_type_ = NCCL_INVALID_TYPE;
     input_size_ = 0;
     output_size_ = 0;
     root_ = 0;
     is_null_input_ = false;
     collective_handle_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
     need_drop_input_ = false;
   }
-
- protected:
-  void InitSizeLists() override { return; }
 
  private:
   void LaunchAllToAllv(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
@@ -146,9 +137,9 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
 
     // send_rank_id and recv rank_id size needs to be equal to input_list size, unless there is a depend input in
     // the input_list.
-    if (send_rank_ids_.size() != input_size_list_.size() && !need_drop_input_) {
+    if (send_rank_ids_.size() != inputs.size() && !need_drop_input_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of send_rank_ids vector "
-                        << "should be " << input_size_list_.size() << ", but got " << send_rank_ids_.size();
+                        << "should be " << inputs.size() << ", but got " << send_rank_ids_.size();
     }
     if (recv_rank_ids_.size() != output_size_list_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of recv_rank_ids vector "
@@ -158,9 +149,9 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     // This implementation refers to NVIDIA NCCL 2.11 doc.
     (void)GroupStart();
     if (!need_drop_input_) {
-      for (size_t i = 0; i < input_size_list_.size(); ++i) {
+      for (size_t i = 0; i < inputs.size(); ++i) {
         input_addr = GetDeviceAddress<T>(inputs, i);
-        (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids_[i],
+        (void)Send(input_addr, inputs[i]->size() / sizeof(T), input_nccl_data_type_, send_rank_ids_[i],
                    reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
       }
     }
@@ -172,8 +163,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     (void)GroupEnd();
   }
 
-  void InferCommType(const CNodePtr &kernel_node) {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  void InferCommType(const std::string &kernel_name, const PrimitivePtr &prim) {
     auto iter = kNcclTypeMap.find(kernel_name);
     if (iter == kNcclTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllToAllv, NeighborExchange "
@@ -181,9 +171,6 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     } else {
       nccl_kernel_type_ = iter->second;
     }
-
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
 
     auto root_rank = prim->GetAttr(kAttrRootRank);
     if (root_rank) {

@@ -41,26 +41,28 @@ class NcclRecvGpuKernel : public NcclGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    size_t output_num = outputs.size();
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    src_rank_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "src_rank"));
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
+    SelectCollectiveHandle();
+    return true;
+  }
 
-    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    src_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("src_rank")));
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
+    nccl_data_type_ = nccl_dtype(outputs[0]->dtype_id());
+
+    auto shape_signed = outputs[0]->GetDeviceShapeVector();
     if (IsDynamic(shape_signed)) {
-      return true;
+      return KRET_UNKNOWN_OUT_SHAPE;
     }
+    output_size_list_.clear();
     auto output_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
+    is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
-      InitSizeLists();
       return true;
     }
     size_t output_size =
@@ -69,11 +71,8 @@ class NcclRecvGpuKernel : public NcclGpuKernelMod {
     MS_LOG(INFO) << "NcclRecv source rank is " << src_rank_ << ", group name is " << group_name_;
 
     SelectCollectiveHandle();
-    return true;
+    return KRET_OK;
   }
-
- protected:
-  void InitSizeLists() override {}
 
  private:
   int src_rank_;

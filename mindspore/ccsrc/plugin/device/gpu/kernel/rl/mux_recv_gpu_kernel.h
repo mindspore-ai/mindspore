@@ -42,8 +42,8 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
     }
   }
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs,
-              void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     // The value of `src_rank_` will not be changed once it's value is valid unless the value of `idle_` is set to true
     // by the `Launch` method.
     while (idle_.load() || src_rank_ == -1) {
@@ -70,7 +70,7 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     // Init the cluster component used for the address synchronization.
     cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
       distributed::cluster::ClusterContext::instance()->node_base());
@@ -78,26 +78,25 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
 
     InitServer();
 
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
+    SelectCollectiveHandle();
+    return true;
+  }
 
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
+    nccl_data_type_ = nccl_dtype(outputs[0]->dtype_id());
 
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
-
+    output_size_list_.clear();
     total_size_ = 0;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = outputs.size();
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, i);
+      auto shape_signed = outputs[i]->GetDeviceShapeVector();
       if (IsDynamic(shape_signed)) {
         return true;
       }
       auto output_shape = Convert2SizeTClipNeg(shape_signed);
-      is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
+      is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
       if (is_null_input_) {
-        InitSizeLists();
         return true;
       }
 
@@ -108,14 +107,8 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
       // Framework memory allocation ensures memory alignment.
       total_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(output_size);
     }
-
-    SelectCollectiveHandle();
-
-    return true;
+    return KRET_OK;
   }
-
- protected:
-  void InitSizeLists() override {}
 
  private:
   void InitServer() {
