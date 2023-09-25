@@ -1525,3 +1525,36 @@ def test_list_inplace_with_empty_list_3():
     ret = foo()
     assert ret == [0, 1, 2]
     assert id(ret) == id(empty_global_list_3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_same_value_list():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.y = [1, 2, 3]
+
+        def construct(self, z):
+            z.reverse()
+            return z
+
+    net = InnerNet()
+
+    @jit
+    def list_func(z):
+        y = net.y
+        y.reverse()
+        return net.y, net(z)
+
+    z = [1, 2, 3]
+    ret1, ret2 = list_func(z)
+    assert id(ret1) == id(net.y)
+    assert id(ret2) == id(z)
