@@ -124,7 +124,7 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     elif test_key == "test_Ascend_async_multi_root_graph_dump" or test_key == "test_ge_dump_net_multi_layer_mode1":
         data = async_dump_dict_3
         data["common_dump_settings"]["path"] = dump_path
-    elif test_key == "test_async_dump_npy":
+    elif test_key == "test_async_dump_npy" or test_key == "test_ge_dump_npy":
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
