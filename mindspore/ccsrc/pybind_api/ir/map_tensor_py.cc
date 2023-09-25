@@ -77,6 +77,13 @@ std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const Map
                          TensorPy::AsNumpy(*data.status_tensor));
 }
 
+std::tuple<py::bytes, py::bytes, py::bytes> MapTensorPy::ExportBytes(const MapTensorPtr &map_tensor, bool incremental) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  auto data = map_tensor->Export(incremental);
+  return std::make_tuple(TensorPy::GetBytes(*data.key_tensor), TensorPy::GetBytes(*data.value_tensor),
+                         TensorPy::GetBytes(*data.status_tensor));
+}
+
 std::tuple<py::array, py::array, py::array, bool> MapTensorPy::ExportSliceAsNumpy(const MapTensorPtr &map_tensor,
                                                                                   bool incremental) {
   MS_EXCEPTION_IF_NULL(map_tensor);
@@ -153,6 +160,7 @@ void RegMapTensor(const py::module *m) {
     .def_property_readonly("value_shape", &MapTensor::value_shape)
     .def_property_readonly("size", &MapTensor::size)
     .def("export_data", &MapTensorPy::ExportAsNumpy)
+    .def("export_bytes", &MapTensorPy::ExportBytes)
     .def("import_data", &MapTensorPy::UpdateFromNumpy)
     .def("export_slice_data", &MapTensorPy::ExportSliceAsNumpy)
     .def("export_persistent_slice_data", &MapTensorPy::ExportPersistentSliceAsNumpy)

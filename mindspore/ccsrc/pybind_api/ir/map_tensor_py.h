@@ -37,6 +37,9 @@ class MapTensorPy {
   static std::tuple<py::array, py::array, py::array> ExportAsNumpy(const MapTensorPtr &map_tensor,
                                                                    bool incremental = false);
 
+  static std::tuple<py::bytes, py::bytes, py::bytes> ExportBytes(const MapTensorPtr &map_tensor,
+                                                                 bool incremental = false);
+
   static std::tuple<py::array, py::array, py::array, bool> ExportSliceAsNumpy(const MapTensorPtr &map_tensor,
                                                                               bool incremental = false);
 

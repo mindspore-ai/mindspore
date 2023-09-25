@@ -111,6 +111,8 @@ class TensorPy {
   // param input [py::int_] slice num of data.
   static TensorPtr MakePersistentDataTensorOfNumpy(const py::array &input, const py::int_ slice_num);
 
+  static py::bytes GetBytes(const Tensor &tensor);
+
   static py::array SyncAsNumpy(const Tensor &tensor);
 
   static py::array AsNumpy(const Tensor &tensor);

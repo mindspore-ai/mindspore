@@ -16,6 +16,7 @@ import numpy as np
 from mindspore.nn import Cell, GraphCell
 from mindspore import ops, nn
 from mindspore import Tensor, export, load, Parameter, dtype, context
+from mindspore.common.initializer import initializer
 
 
 def test_export_control_flow():
@@ -104,3 +105,27 @@ def test_mindir_export_parameter_as_tensor():
     net_mindir = nn.GraphCell(graph)
     result_mindir = net_mindir(input_np_x_param)
     assert np.allclose(result_mindir.asnumpy(), out_net.asnumpy(), 0.0001, 0.001, equal_nan=True)
+
+def test_mindir_export_bfloat16():
+    """
+    Feature: Test MindIR Export model
+    Description: test mindir export bfloat16 types
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.val = Parameter(initializer("normal", [2, 2], dtype.bfloat16), 'val')
+            self.add = ops.Add()
+
+        def construct(self, x):
+            x = self.add(x, self.val)
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    input_x = Tensor(np.ones((2, 2)), dtype=dtype.bfloat16)
+    net = Net()
+    export(net, input_x, file_name="test", file_format="MINDIR")
+    graph = load("test.mindir")
+    net_mindir = nn.GraphCell(graph)
+    net_mindir(input_x)

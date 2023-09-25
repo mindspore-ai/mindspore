@@ -1804,7 +1804,7 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
         for param_proto in model.graph.parameter:
             name = param_proto.name[param_proto.name.find(":") + 1:]
             param = net_dict[name]
-            raw_data = param.data.asnumpy().tobytes()
+            raw_data = param.data.get_bytes()
             data_length = len(raw_data)
             append_size = 0
             if data_length % 64 != 0:
@@ -1931,7 +1931,7 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
     for param_proto in model.graph.parameter:
         param_name = param_proto.name[param_proto.name.find(":") + 1:]
         if param_name in net_dict.keys():
-            param_data = net_dict[param_name].data.asnumpy().tobytes()
+            param_data = net_dict[param_name].data.get_bytes()
             param_proto.raw_data = param_data
         else:
             raise ValueError("The parameter '{}' is not belongs to any cell,"
@@ -1941,10 +1941,10 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
         if map_param_name in net_dict.keys():
             map_parameter = net_dict[map_param_name]
-            key_nparr, value_nparr, status_nparr = map_parameter.export_data(incremental)
-            map_param_proto.key_tensor.raw_data = key_nparr.tobytes()
-            map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
-            map_param_proto.status_tensor.raw_data = status_nparr.tobytes()
+            key_bytes, value_bytes, status_bytes = map_parameter.export_bytes(incremental)
+            map_param_proto.key_tensor.raw_data = key_bytes
+            map_param_proto.value_tensor.raw_data = value_bytes
+            map_param_proto.status_tensor.raw_data = status_bytes
         else:
             raise ValueError("The map_parameter '{}' is not belongs to any cell,"
                              "the data of parameter cannot be exported.".format(map_param_proto.name))
@@ -1975,7 +1975,7 @@ def _save_together(net_dict, model):
     for param_proto in model.graph.parameter:
         name = param_proto.name[param_proto.name.find(":") + 1:]
         if name in net_dict.keys():
-            data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
+            data_total += sys.getsizeof(net_dict[name].data.get_bytes()) / 1024
         else:
             raise ValueError("The parameter '{}' is not belongs to any cell,"
                              "the data of parameter cannot be exported.".format(param_proto.name))

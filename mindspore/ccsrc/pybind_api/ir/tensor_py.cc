@@ -452,6 +452,15 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
   }
 }
 
+py::bytes TensorPy::GetBytes(const Tensor &tensor) {
+  py::gil_scoped_release gil_release;
+  if (tensor.NeedWait()) {
+    tensor.Wait();
+  }
+  tensor.data_sync();
+  return py::bytes(static_cast<const char *>(tensor.data_c()), tensor.Size());
+}
+
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
@@ -479,13 +488,6 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   if (data_numpy != nullptr) {
     // Return internal numpy array if tensor data is implemented base on it.
     return data_numpy->py_array(owner);
-  }
-  // Since bfloat16 is not supported in numpy, we copy tensor to a new tensor of type float32 here.
-  if (tensor.data_type() == TypeId::kNumberTypeBFloat16) {
-    Tensor tensor_f32 = Tensor(tensor, TypeId::kNumberTypeFloat32);
-    auto info_f32 = GetPyBufferInfo(tensor_f32);
-    py::object owner_f32 = py::cast(tensor_f32.data_ptr());
-    return py::array(py::dtype(info_f32), info_f32.shape, info_f32.strides, info_f32.ptr, owner_f32);
   }
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
@@ -701,6 +703,19 @@ void RegMetaTensor(const py::module *m) {
                              Examples:
                                  >>> a = np.ones((2, 3))
                                  >>> t = mindspore.Tensor.persistent_data_from_numpy(a, 1)
+                             )mydelimiter")
+    .def("get_bytes", &TensorPy::GetBytes, R"mydelimiter(
+                             Get raw data of tensor with type of bytes.
+
+                             Returns:
+                                 Bytes of tensor.
+
+                             Examples:
+                                 >>> import mindspore as ms
+                                 >>> from mindspore import Tensor
+                                 >>> x = ms.Tensor([1, 2, 3], ms.int16)
+                                 >>> print(x.get_bytes())
+                                 b'\x01\x00\x02\x00\x03\x00'
                              )mydelimiter")
     .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
