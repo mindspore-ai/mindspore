@@ -188,8 +188,8 @@ def test_matmul_dtypes():
     y_np = np.random.randn(k * n).astype(np.float32)
     x_np.shape = m, k
     y_np.shape = k, n
-    matmul = P.MatMul()
-    valid_dtypes = (mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
+    matmul = MatMulNet()
+    valid_dtypes = (mstype.int32, mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
