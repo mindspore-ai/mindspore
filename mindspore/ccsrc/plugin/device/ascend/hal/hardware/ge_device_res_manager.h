@@ -74,7 +74,7 @@ class GeDeviceResManager : public DeviceResManager {
     return true;
   }
 
-  bool BindDeviceToCurrentThread(bool /* force_bind */) const override;
+  bool BindDeviceToCurrentThread(bool force_bind) const override;
   void *GetStream() const {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     return runtime_instance_->compute_stream();

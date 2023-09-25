@@ -56,6 +56,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool SyncStream() override;
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
   void SetContext() override;
+  void SetContextForce() override;
   const void *context() const override { return rt_context_; }
   DeviceAddressPtr GetInternalDeviceAddress(const session::KernelGraph &graph, const AnfNodePtr &node) override;
   void GetShadowBackendNodeMap(const session::KernelGraph &graph,
@@ -88,7 +89,6 @@ class AscendKernelRuntime : public KernelRuntime {
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
-  void SetCurrentContext();
   inline static const session::KernelGraph *current_graph_ = nullptr;
 
  private:
