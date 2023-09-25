@@ -1186,7 +1186,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   for (auto &kv : iter->second.need_update_input) {
     auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
-    auto shapes = trans::GetRuntimePaddingShape(kv.first, 0);
+    auto shapes = output_addr->kernel_tensor()->GetShapeVector();
     auto host_type = common::AnfAlgo::GetOutputInferDataType(kv.first, 0);
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);

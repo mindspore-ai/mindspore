@@ -41,7 +41,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             Cummax, CumSum, CumProd, CumMax, CumMin)
+                             Cummax, CumSum, CumProd, CumMax, CumMin, Argmin)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -1615,53 +1615,6 @@ class InvertPermutation(PrimitiveWithInfer):
         return {'shape': x_shp,
                 'dtype': x['dtype'],
                 'value': tuple(y)}
-
-
-class Argmin(Primitive):
-    """
-    Returns the indices of the minimum value along a specified `axis` of a Tensor.
-
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
-    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
-
-    Args:
-        axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
-        output_type (:class:`mindspore.dtype`): Output data type.
-            Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor.
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, whose dtype is determined by `output_type`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `output_type` is neither int32 nor int64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-        >>> index = ops.Argmin()(input_x)
-        >>> print(index)
-        2
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=-1, output_type=mstype.int32):
-        """Initialize Argmin"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_type_name("output_type", output_type, [mstype.int32, mstype.int64], self.name)
-        self.axis = axis
-        self.add_prim_attr('output_type', output_type)
-        self.add_prim_attr('axis', axis)
 
 
 class ArgminV2(Primitive):

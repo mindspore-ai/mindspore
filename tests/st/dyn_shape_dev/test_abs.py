@@ -14,36 +14,11 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore import Tensor, context
+from mindspore import context
 from mindspore import ops
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
-
-def get_inputs_np(shapes, dtypes):
-    np.random.seed(10)
-    inputs_np = []
-    for shape, dtype in zip(shapes, dtypes):
-        inputs_np.append(np.random.randn(*shape).astype(dtype))
-    return inputs_np
-
-
-def get_inputs_tensor(inputs_np):
-    inputs = []
-    for input_np in inputs_np:
-        inputs.append(Tensor(input_np))
-    return inputs
-
-
-def compare(output, expect):
-    if isinstance(output, (tuple, list)):
-        for o_ele, e_ele in zip(output, expect):
-            compare(o_ele, e_ele)
-    else:
-        if expect.dtype == np.float32:
-            rtol, atol = 1e-4, 1e-4
-        else:
-            rtol, atol = 1e-3, 1e-3
-        assert np.allclose(output.asnumpy(), expect, rtol, atol)
+from test_utils import get_inputs_np, get_inputs_tensor, compare
 
 def eltwise_case(prim_func, expect_func, expect_grad_func, mode, inputs_np=None):
     if inputs_np is None:
@@ -130,7 +105,7 @@ def test_abs_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_dyn(mode):
     """
     Feature: Test abs op.

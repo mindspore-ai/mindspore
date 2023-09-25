@@ -60,6 +60,16 @@ int ShapeCalcCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     }
   }
   outs_shape_ = operator_ptr->get_calc_result();
+  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
+    // It is just a temporary modification.
+    // Formal modification, you need to synchronize the master branch.
+    output_size_list_.clear();
+    constexpr size_t kMaxDim = 8;
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      output_size_list_.push_back(kMaxDim * sizeof(int64_t));
+    }
+    return KRET_OK;
+  }
   return ret;
 }
 

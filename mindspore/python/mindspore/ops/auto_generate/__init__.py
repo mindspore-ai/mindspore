@@ -27,5 +27,6 @@ from .gen_arg_handler import *
 from .gen_labels import *
 from .gen_enum_def import *
 from ..operations.manually_defined.ops_def import *
+from .gen_inner_ops_def import *
 
 __all__ = []

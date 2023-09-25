@@ -38,7 +38,8 @@ from mindspore.communication.management import GlobalComm, get_rank
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
-from ..auto_generate import TensorCopySlices, SiLU, Cummin
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches
+
 
 # Bit operation
 bit_and = bit_and()
@@ -55,75 +56,6 @@ string_not = Primitive("string_not")
 string_in = Primitive("string_in")
 string_mul = Primitive("string_mul")
 string_getitem = Primitive("string_getitem")
-
-
-class ExtractImagePatches(Primitive):
-    r"""
-    Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NCHW.
-
-    Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-            and the format is [1, 1, ksize_row, ksize_col].
-        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            must be a tuple or list of int, and the format is [1, 1, stride_row, stride_col].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, must be a tuple or a list of integers, and the format is [1, 1, rate_row, rate_col].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
-            not case sensitive. Default: "valid".
-
-            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
-
-            - valid: Means that the taken patch area must be completely covered in the original image.
-
-    Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
-
-    Outputs:
-        Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
-        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
-        and
-
-        .. math::
-            out_depth=ksize\_row * ksize\_col * in\_depth
-
-        and
-        if 'padding' is "valid":
-
-        .. math::
-            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
-            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
-
-        if 'padding' is "same":
-
-        .. math::
-            out\_row=floor((in\_row - 1) / stride\_row) + 1
-            out\_col=floor((in\_col - 1) / stride\_col) + 1
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, ksizes, strides, rates, padding="valid"):
-        """init"""
-
-        def _check_tuple_or_list(arg_name, arg_val, prim_name):
-            validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
-            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s must be [1, {arg_name}_row, "
-                                 f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
-                                 f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
-                                 f"{arg_name}_col is {arg_val[3]}")
-
-        _check_tuple_or_list("ksize", ksizes, self.name)
-        _check_tuple_or_list("stride", strides, self.name)
-        _check_tuple_or_list("rate", rates, self.name)
-        validator.check_value_type('padding', padding, [str], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
 
 
 class Quant(PrimitiveWithInfer):
