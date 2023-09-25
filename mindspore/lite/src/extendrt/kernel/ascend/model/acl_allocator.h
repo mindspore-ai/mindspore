@@ -36,8 +36,8 @@ class AclAllocator : public AscendAllocatorPluginImpl {
   void FreeHost(void *host_data) override;
   Status CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size, int device_id) override;
   Status CopyHostDataToDevice(void *host_data, void *device_data, size_t data_size) override;
-  Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size, int src_device_id,
-                                int dst_device_id) override;
+  Status CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t src_data_size, size_t dst_data_size,
+                                int src_device_id, int dst_device_id) override;
 
  private:
   uint32_t GetDeviceCount();
