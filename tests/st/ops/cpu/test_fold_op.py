@@ -49,6 +49,21 @@ def test_fold_tensor_api():
     assert output.dtype == x.dtype
     assert output.shape == expected_shape
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_fold_functional_api_with_invalid_output_size():
+    """
+    Feature: test fold tensor API with invalid output size.
+    Description: test case for fold tensor API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = Tensor(np.ones([16, 64, 4]), mstype.float32)
+    output_size = Tensor([6, -1], mstype.int32)
+    with pytest.raises(ValueError, match=r"the value of 'output_size' must not be negative"):
+        F.fold(x, output_size, kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -69,3 +84,4 @@ def test_fold_tensor_functional_api_modes():
 
 if __name__ == '__main__':
     test_fold_tensor_functional_api_modes()
+    test_fold_functional_api_with_invalid_output_size()
