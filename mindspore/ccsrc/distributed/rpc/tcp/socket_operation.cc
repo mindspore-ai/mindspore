@@ -240,6 +240,14 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
   if (result > 0) {
     addr->saIn.sin_family = AF_INET;
     addr->saIn.sin_port = htons(port);
+    if (!common::GetEnv(kEnvWorkerIp).empty()) {
+      std::string ip_addr = common::GetEnv(kEnvWorkerIp);
+      SocketAddress v4_addr;
+      if (inet_pton(AF_INET, ip_addr.c_str(), &v4_addr.saIn.sin_addr) <= 0) {
+        MS_LOG(EXCEPTION) << "User-specified worker address " << ip_addr
+                          << " is not valid, we need to user IPv4 address.";
+      }
+    }
     return true;
   }
 
@@ -251,7 +259,8 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
       std::string ip_addr = common::GetEnv(kEnvWorkerIp);
       SocketAddress v6_addr;
       if (inet_pton(AF_INET6, ip_addr.c_str(), &(v6_addr.saIn6.sin6_addr)) <= 0) {
-        MS_LOG(EXCEPTION) << "Failed to use user-specified worker IPv6 address " << ip_addr;
+        MS_LOG(EXCEPTION) << "User-specified worker address " << ip_addr
+                          << " is not valid, we need to user IPv6 address.";
       }
       v6_addr.saIn6.sin6_family = AF_INET6;
       std::string if_name = GetInterfaceName(&v6_addr);

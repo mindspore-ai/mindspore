@@ -30,7 +30,7 @@ bool Initialize() {
   // If this process participates in the cluster building, we need to initialize cluster context.
   if (common::UseDynamicCluster()) {
     if (!InitializeCluster()) {
-      MS_LOG(EXCEPTION) << "Failed to initialize distributed training because some nodes  in the cluster are not "
+      MS_LOG(EXCEPTION) << "Failed to initialize distributed training because some nodes in the cluster are not "
                            "successfully launched. "
                            "Please check log of each node to find out which is the first one to throw exception. You "
                            "can search 'is timed out' in Scheduler's log to see which node is offline.";
