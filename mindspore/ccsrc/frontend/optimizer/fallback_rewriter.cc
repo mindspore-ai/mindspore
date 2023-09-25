@@ -559,7 +559,11 @@ class BeforeOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [extract_keyword_arg, arg, key]
     const size_t expect_inputs_size = 3;
-    CheckInputsSize(node, expect_inputs_size);
+    // Inputs should be [extract_keyword_arg, arg, key, monad]
+    const size_t expect_inputs_has_side_effect_size = 4;
+    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
+    }
     constexpr size_t key_index = 2;
     return node->input(key_index);
   }
