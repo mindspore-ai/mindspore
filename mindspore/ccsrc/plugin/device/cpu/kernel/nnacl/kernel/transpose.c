@@ -340,13 +340,16 @@ KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   transpose->base_.Prepare = TransposePrepare;
   transpose->base_.Resize = TransposeResize;
   transpose->base_.Compute = TransposeCompute;
-#ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
     transpose->nhwc2nchw_ = PackNHWCToNCHWFp16;
     transpose->optimize_ = TransposeDimsFp16;
     transpose->compute_ = DoTransposeFp16;
-  }
+#else
+    free(transpose);
+    return NULL;
 #endif
+  }
   return (KernelBase *)transpose;
 }
 
