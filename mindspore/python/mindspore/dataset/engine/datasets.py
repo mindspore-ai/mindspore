@@ -1182,7 +1182,7 @@ class Dataset:
                will be different in each epoch.
 
         Returns:
-            Tuple[Dataset], a tuple of new datasets splited from the original one.
+            Tuple[Dataset], a tuple of new datasets split from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -2450,7 +2450,7 @@ class MappableDataset(SourceDataset):
                shard may not be part of the same split.
 
         Returns:
-            Tuple[Dataset], a tuple of new datasets splited from the original one.
+            Tuple[Dataset], a tuple of new datasets split from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -3187,6 +3187,9 @@ class _MPWorker(multiprocessing.Process):
     def close(self):
         try:
             if self.is_alive():
+                # release the eager executor which is used by current process
+                transforms.transforms.clean_unused_executors()
+
                 logger.info(f"Closing worker with PID: {self.pid}")
                 self.pipe.master_close()
                 # del the handle which hold by master

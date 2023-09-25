@@ -17,6 +17,8 @@ The module transforms provides common operations, including Compose, OneHot and 
 """
 import json
 from abc import ABC
+import os
+import threading
 
 import sys
 from enum import IntEnum
@@ -36,6 +38,28 @@ from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..vision.py_transforms_util import is_pil
 
 
+# hold all the executor objects when in training procedure
+# key : pid_tid which distinguishes multiple executors by process_id + thread_id
+# value : executor object which lifecycle will always exist during training
+EXECUTORS_LIST = dict()
+
+
+# the follow case process / thread exit need call the function
+# 1. user defined dataset with process mode
+# 2. user defined dataset with thread mode
+# 3. user defined transform in map op with process mode
+# 4. user defined transform in map op with thread mode
+# 5. batch op with per_batch_map operation in process mode
+# 6. batch op with per_batch_map operation in thread mode
+def clean_unused_executors():
+    """
+    clean the unused executor object in UDF or map with PyFunc process / thread mode
+    """
+    key = str(os.getpid()) + "_" + str(threading.currentThread().ident)
+    if key in EXECUTORS_LIST:
+        EXECUTORS_LIST.pop(key)
+
+
 class TensorOperation:
     """
     Base class Tensor Ops
@@ -44,7 +68,6 @@ class TensorOperation:
     def __init__(self):
         super().__init__()
         self.implementation = None
-        self.callable_op_ = None
         self.device_target = "CPU"
 
     def __call__(self, *input_tensor_list):
@@ -63,9 +86,22 @@ class TensorOperation:
             except (RuntimeError, TypeError):
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
                                 .format(type(tensor), tensor))
-        if not hasattr(self, 'callable_op_') or self.callable_op_ is None:
-            self.callable_op_ = cde.Execute(self.parse())
-        output_tensor_list = self.callable_op_(tensor_row)
+
+        # get or create the executor from EXECUTORS_LIST
+        executor = None
+        key = str(os.getpid()) + "_" + str(threading.currentThread().ident)
+        if key in EXECUTORS_LIST:
+            # get the executor by process id and thread id
+            executor = EXECUTORS_LIST[key]
+            # remove the old transform which in executor and update the new transform
+            executor.UpdateOperation(self.parse())
+        else:
+            # create a new executor by process id and thread_id
+            executor = cde.Execute(self.parse())
+            # add the executor the global EXECUTORS_LIST
+            EXECUTORS_LIST[key] = executor
+
+        output_tensor_list = executor(tensor_row)
         output_numpy_list = [x.as_array() for x in output_tensor_list]
         return output_numpy_list[0] if len(output_numpy_list) == 1 else tuple(output_numpy_list)
 
@@ -348,6 +384,12 @@ class Compose(CompoundOperation):
         if any([t.implementation == Implementation.PY for t in self.transforms]):
             self.implementation = Implementation.PY
         return super().__call__(*args)
+
+    def release_resource(self):
+        # release the executor which is used by current thread/process when
+        # use transform in eager mode in map op
+        # this will be call in MapOp::WorkerEntry
+        clean_unused_executors()
 
 
 class Concatenate(TensorOperation):

@@ -48,6 +48,7 @@ from ..core.config import get_enable_shared_mem, get_prefetch_size, get_multipro
     get_enable_watchdog, get_debug_mode
 from ..core.datatypes import mstypelist_to_detypelist
 from ..core.py_util_helpers import ExceptionHandler
+from ..transforms import transforms
 
 
 def _iter_fn(dataset, num_samples):
@@ -126,6 +127,21 @@ def _fill_worker_indices(workers, indices, idx):
         except queue.Full:
             break
     return idx
+
+
+def _fill_worker_quit_flag(workers, worker_to_quit):
+    """
+    Worker index queue filler, fill worker index queue with QUIT flag.
+    """
+    num_worker = len(workers)
+    for i in range(num_worker):
+        # just put only one QUIT flag to the sub-thread / sub-process
+        if str(i) not in worker_to_quit:
+            try:
+                workers[i].put("QUIT")
+                worker_to_quit[str(i)] = "QUIT"
+            except queue.Full:
+                continue
 
 
 def _convert_row(row):
@@ -240,7 +256,11 @@ class SamplerFn:
         for w in self.workers:
             # Check whether the queue of the subprocess is empty.
             if not w.queue_empty():
-                raise Exception("The queue of the subprocess is not empty.")
+                # in failover reset scenario the QUIT flag should be pop first
+                while w.idx_queue.qsize() > 0:
+                    result = w.idx_queue.get()
+                    if result != "QUIT":
+                        raise Exception("The queue of the subprocess is not empty.")
             # Start all workers
             if not w.is_alive():
                 w.start()
@@ -248,6 +268,9 @@ class SamplerFn:
         # Fill initial index queues
         idx_cursor = 0
         idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
+
+        # worker to quit
+        worker_to_quit = {}
 
         # Fetch results
         for i in range(len(indices)):
@@ -287,6 +310,9 @@ class SamplerFn:
                 return
             if idx_cursor < len(indices):
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
+            else:
+                # send QUIT flag to workers
+                _fill_worker_quit_flag(self.workers, worker_to_quit)
             yield _convert_row(result)
 
     def _log_stuck_warning(self, worker, waiting_time):
@@ -473,6 +499,10 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
                 del result_queue
                 return
             # If end-of-file (eof) is not set, continue to get data from idx_queue
+            continue
+        if idx == "QUIT":
+            # all the data had been processed, so we release the executor which is used by the current thread/process
+            transforms.clean_unused_executors()
             continue
         if idx is None:
             # When the queue is out of scope from master process, a None item can be fetched from the queue.

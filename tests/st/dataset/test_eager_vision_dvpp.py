@@ -566,6 +566,120 @@ def test_eager_normalize_dvpp_exception():
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@ascend910b
+def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
+    """
+    Feature: Multi ops when Ascend910B with global executor
+    Description: Test eager support for multi op with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # decode(dvpp)
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+    assert img_decode.shape == (2268, 4032, 3)
+    assert img_decode.dtype == np.uint8
+
+    # resize(cpu)
+    img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+    assert img_resize.shape == (64, 32, 3)
+    assert img_resize.dtype == np.uint8
+
+    # normalize(dvpp)
+    mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+    std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+    img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+    assert img_normalize.shape == (64, 32, 3)
+    assert img_normalize.dtype == np.float32
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@ascend910b
+def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
+    """
+    Feature: Multi ops when Ascend910B with global executor
+    Description: Test eager support for multi op with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # decode(dvpp)
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+    assert img_decode.shape == (2268, 4032, 3)
+    assert img_decode.dtype == np.uint8
+
+    # resize(dvpp)
+    img_resize = vision.Resize(size=(64, 32)).device("Ascend")(img_decode)
+
+    assert img_resize.shape == (64, 32, 3)
+    assert img_resize.dtype == np.uint8
+
+    # normalize(cpu)
+    mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+    std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+    img_normalize = vision.Normalize(mean=mean_vec, std=std_vec)(img_resize)
+    assert img_normalize.shape == (64, 32, 3)
+    assert img_normalize.dtype == np.float32
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@ascend910b
+def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
+    """
+    Feature: Multi ops when Ascend910B with global executor
+    Description: Test eager support for multi op with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # decode(cpu)
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    img_decode = vision.Decode()(img_bytes)
+
+    assert img_decode.shape == (2268, 4032, 3)
+    assert img_decode.dtype == np.uint8
+
+    # resize(dvpp)
+    img_resize = vision.Resize(size=(64, 32)).device("Ascend")(img_decode)
+
+    assert img_resize.shape == (64, 32, 3)
+    assert img_resize.dtype == np.uint8
+
+    # normalize(dvpp)
+    mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+    std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+    img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+    assert img_normalize.shape == (64, 32, 3)
+    assert img_normalize.dtype == np.float32
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
 if __name__ == '__main__':
     test_eager_resize_dvpp()
     test_eager_resize_dvpp_exception()
@@ -573,3 +687,6 @@ if __name__ == '__main__':
     test_eager_decode_dvpp_exception()
     test_eager_normalize_dvpp()
     test_eager_normalize_dvpp_exception()
+    test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
+    test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
+    test_eager_multi_dvpp_op_cpu_dvpp_dvpp()

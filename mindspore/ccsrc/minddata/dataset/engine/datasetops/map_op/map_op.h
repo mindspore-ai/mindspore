@@ -229,6 +229,8 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
 
  private:
   Status RebuildMapErrorMsg(const TensorRow &input_row, const std::string &op_name, Status *rc);
+
+  Status ReleaseResource(int32_t worker_id);
 };
 }  // namespace dataset
 }  // namespace mindspore

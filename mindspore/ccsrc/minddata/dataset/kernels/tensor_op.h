@@ -334,6 +334,9 @@ class TensorOp {
 
   virtual bool IsHWC() { return true; }  // the input of the op is HWC in default
 
+  // Currently, it's used by PyFuncOp which can release global executor when map with thread/process mode
+  virtual Status ReleaseResource() { return Status::OK(); }
+
  protected:
   bool is_deterministic_{true};
 };
