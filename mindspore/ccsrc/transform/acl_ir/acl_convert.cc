@@ -458,7 +458,7 @@ void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std
     }
     auto tensor_value = CreateValueFromTensor(input_tensor);
     ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx, tensor_value, &ge_attr_value);
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, tensor_value, &ge_attr_value);
 
     AttrConverter attr_coverter;
     attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
