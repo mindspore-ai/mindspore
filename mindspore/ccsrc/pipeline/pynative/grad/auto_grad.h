@@ -143,7 +143,8 @@ using AdParamPtr = std::shared_ptr<AdParam>;
 class AutoGradCellImpl {
  public:
   AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async);
+                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
+                   bool grad_by_value);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
@@ -161,6 +162,7 @@ class AutoGradCellImpl {
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
+  inline bool grad_by_value() { return grad_by_value_; }
 
  private:
   FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
@@ -246,6 +248,7 @@ class AutoGradCellImpl {
   AnfNodePtrList weights_used_in_graph_;
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
+  bool grad_by_value_{false};
   bool need_do_manager_replace_{false};
   AsyncHqueuePtr assist_queue_{nullptr};
   bool enable_async_{false};

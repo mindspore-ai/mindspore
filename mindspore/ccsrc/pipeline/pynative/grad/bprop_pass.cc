@@ -151,24 +151,26 @@ void ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
   }
 }
 
-void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, autograd::AutoGradCellImpl *auto_grad_cell_ptr) {
+void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
+                                         autograd::AutoGradCellImpl *auto_grad_cell_ptr) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   if (!node->isa<CNode>()) {
     return;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->HasAttr(kIsKNode) || cnode->seen_ != kIndex0 || IsPrimitiveCNode(cnode, prim::kPrimBpropCut) ||
+  bool need_traverse = !auto_grad_cell_ptr->grad_by_value() && cnode->HasAttr(kIsKNode);
+  if (need_traverse || cnode->seen_ == seen || IsPrimitiveCNode(cnode, prim::kPrimBpropCut) ||
       !IsPrimitiveCNode(cnode)) {
     return;
   }
-  cnode->seen_ = NewSeenGeneration();
+  cnode->seen_ = seen;
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
-    ConvertMakeTupleInputToDynamicInput(cnode->input(kIndex1), auto_grad_cell_ptr);
+    ConvertMakeTupleInputToDynamicInput(cnode->input(kIndex1), seen, auto_grad_cell_ptr);
     return;
   }
   for (size_t i = 1; i < cnode->size(); ++i) {
-    ConvertMakeTupleInputToDynamicInput(cnode->input(i), auto_grad_cell_ptr);
+    ConvertMakeTupleInputToDynamicInput(cnode->input(i), seen, auto_grad_cell_ptr);
   }
 
   if (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
